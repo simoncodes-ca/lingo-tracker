@@ -15,7 +15,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.8.0",
   "engines": {
-    "node": ">=20.8.1",
+    "node": ">=22.16.0",
     "pnpm": ">=10"
   },
   "devDependencies": {
