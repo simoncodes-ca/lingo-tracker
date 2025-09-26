@@ -1,0 +1,30 @@
+@use '@angular/material' as mat;
+
+/* Respect the user's OS/browser preference by default */
+//:root { color-scheme: light dark; }
+
+/* Emit Material tokens (colors, typography, density) once */
+html {
+  color-scheme: light;
+  @include mat.theme((
+    color: mat.$violet-palette,   /* or your generated palette */
+    typography: (
+      plain-family: Roboto,
+      brand-family: Open Sans,
+      bold-weight: 900,
+      medium-weight: 500,
+      regular-weight: 300,
+    ),
+    density: -2
+  ));
+  margin: 0;
+}
+
+body {
+  margin: 0;
+}
+
+/* When you add the `dark` class at runtime, force dark mode */
+body.dark-theme { color-scheme: dark; }
+
+

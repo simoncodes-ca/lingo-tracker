@@ -1,0 +1,13 @@
+{
+  "translationsFolder": "i18n",
+  "exportFolder": "dist/lingo-export",
+  "importFolder": "dist/lingo-import",
+  "subfolderSplitThreshold": 100,
+  "baseLocale": "en",
+  "locales": [
+    "en",
+    "fr-ca",
+    "es",
+    "de"
+  ]
+}
