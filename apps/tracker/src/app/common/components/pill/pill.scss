@@ -1,7 +1,7 @@
 .pill {
   --_bg: var(--mat-sys-surface);
   --_fg: var(--mat-sys-on-surface);
-  --_dot: currentColor;
+  --_dot: var(--mat-sys-primary);
   --_border: var(--mat-sys-outline-variant);
 
   display: inline-flex;
@@ -14,12 +14,6 @@
   color: var(--_fg);
   border: 1px solid var(--_border);
 
-  .pill-dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--_dot);
-  }
 
   &[data-variant='info'] {
     --_bg: var(--mat-sys-secondary-container);

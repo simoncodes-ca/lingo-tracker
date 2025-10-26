@@ -1,12 +1,15 @@
 import {
   Injectable,
+  Scope,
+  Inject,
   NotFoundException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { LingoTrackerConfig } from '@simoncodes-ca/common';
-import { CONFIG_FILENAME } from '@simoncodes-ca/common';
+import { LingoTrackerConfig } from '@simoncodes-ca/core';
+import { CONFIG_FILENAME } from '@simoncodes-ca/core';
 
 @Injectable()
 export class ConfigService {
@@ -16,8 +19,11 @@ export class ConfigService {
 
     try {
       configContent = readFileSync(configPath, 'utf8');
-    } catch {
-      throw new NotFoundException('Configuration file not found');
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        throw new NotFoundException('Configuration file not found');
+      }
+      throw new InternalServerErrorException('Failed to read configuration file');
     }
 
     try {

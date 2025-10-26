@@ -1,5 +1,8 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "tui": {
+    "enabled": false
+  },
   "targetDefaults": {
     "test": {
       "cache": true
@@ -50,11 +53,11 @@
           "watchDepsName": "watch-deps"
         }
       },
-      "exclude": ["libs/common/*"]
+      "exclude": ["libs/core/*"]
     },
     {
       "plugin": "@nx/js/typescript",
-      "include": ["libs/common/*"],
+      "include": ["libs/core/*"],
       "options": {
         "typecheck": {
           "targetName": "typecheck"

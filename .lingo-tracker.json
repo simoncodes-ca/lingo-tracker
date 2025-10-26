@@ -1,5 +1,4 @@
 {
-  "translationsFolder": "i18n",
   "exportFolder": "dist/lingo-export",
   "importFolder": "dist/lingo-import",
   "subfolderSplitThreshold": 100,
@@ -9,5 +8,13 @@
     "fr-ca",
     "es",
     "de"
-  ]
+  ],
+  "collections": {
+    "Main": {
+      "translationsFolder": "i18n"
+    },
+    "Web": {
+      "translationsFolder": "apps/web/src/i18n"
+    }
+  }
 }

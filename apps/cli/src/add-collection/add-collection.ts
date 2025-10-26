@@ -1,16 +1,25 @@
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { InitOptions } from '../types/init-options.js';
 import { CONFIG_FILENAME, DEFAULT_CONFIG } from '@simoncodes-ca/core';
 import { LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
 
-export async function initCommand(options: InitOptions): Promise<void> {
+export async function addCollectionCommand(options: InitOptions): Promise<void> {
   const cwd = process.env.INIT_CWD || process.cwd();
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
-  if (existsSync(configPath)) {
-    console.log('ℹ️ - Lingo Tracker is already initialized in this folder. Nothing to do.');
+  if (!existsSync(configPath)) {
+    console.log('❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.');
+    return;
+  }
+
+  let existingConfig: LingoTrackerConfig;
+  try {
+    const configContent = readFileSync(configPath, 'utf8');
+    existingConfig = JSON.parse(configContent) as LingoTrackerConfig;
+  } catch {
+    console.log('❌ Invalid configuration file format.');
     return;
   }
 
@@ -23,25 +32,30 @@ export async function initCommand(options: InitOptions): Promise<void> {
   const baseLocale = answers.baseLocale;
   const locales = answers.locales;
 
-  // for the initial collection, we want to store only the translationsFolder, to store all other properties in the global config
-  // because more than likely 
-  const collection: LingoTrackerCollection = {
+  if (existingConfig.collections?.[collectionName]) {
+    console.log(`❌ Collection "${collectionName}" already exists.`);
+    return;
+  }
+
+  const newCollection: LingoTrackerCollection = {
     translationsFolder,
+    ...(exportFolder !== existingConfig.exportFolder && { exportFolder }),
+    ...(importFolder !== existingConfig.importFolder && { importFolder }),
+    ...(subfolderSplitThreshold !== existingConfig.subfolderSplitThreshold && { subfolderSplitThreshold }),
+    ...(baseLocale !== existingConfig.baseLocale && { baseLocale }),
+    ...(JSON.stringify(locales) !== JSON.stringify(existingConfig.locales) && { locales }),
   };
 
-  const config: LingoTrackerConfig = {
-    exportFolder,
-    importFolder,
-    subfolderSplitThreshold,
-    baseLocale,
-    locales,
+  const updatedConfig: LingoTrackerConfig = {
+    ...existingConfig,
     collections: {
-      [collectionName]: collection
+      ...(existingConfig.collections || {}),
+      [collectionName]: newCollection
     },
   };
 
-  writeFileSync(configPath, JSON.stringify(config, null, 2));
-  console.log(`Created ${CONFIG_FILENAME} in ${cwd}`);
+  writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2));
+  console.log(`✅ Added collection "${collectionName}" to ${CONFIG_FILENAME}`);
 }
 
 async function promptForMissing(options: InitOptions): Promise<{
@@ -70,7 +84,6 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'collectionName',
       message: 'Collection name',
-      initial: 'Main',
       validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required')
     });
   }
@@ -135,7 +148,7 @@ async function promptForMissing(options: InitOptions): Promise<{
   if (questions.length > 0 && process.stdout.isTTY) {
     const result = await prompts(questions, {
       onCancel: () => {
-        throw new Error('Initialization cancelled');
+        throw new Error('Add collection cancelled');
       }
     });
     Object.assign(responses, result);
@@ -149,7 +162,7 @@ async function promptForMissing(options: InitOptions): Promise<{
   }
 
   return {
-    collectionName: options.collectionName ?? (responses.collectionName as string) ?? 'default',
+    collectionName: options.collectionName ?? (responses.collectionName as string),
     translationsFolder: options.translationsFolder ?? (responses.translationsFolder as string),
     exportFolder: options.exportFolder ?? (responses.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
     importFolder: options.importFolder ?? (responses.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
@@ -158,4 +171,3 @@ async function promptForMissing(options: InitOptions): Promise<{
     locales: options.locales ?? (responses.locales as string[]) ?? DEFAULT_CONFIG.locales
   };
 }
-

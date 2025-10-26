@@ -145,3 +145,5 @@ dist
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+.idea

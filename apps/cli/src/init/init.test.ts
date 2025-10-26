@@ -19,6 +19,7 @@ describe('initCommand', () => {
     mockExistsSync.mockReturnValue(false);
 
     const options = {
+      collectionName: 'TestCollection',
       translationsFolder: 'src/i18n',
       exportFolder: 'dist/exports',
       importFolder: 'dist/imports',
@@ -31,12 +32,16 @@ describe('initCommand', () => {
 
     const expectedConfigPath = resolve('/test/project', '.lingo-tracker.json');
     const expectedConfig = {
-      translationsFolder: 'src/i18n',
       exportFolder: 'dist/exports',
       importFolder: 'dist/imports',
       subfolderSplitThreshold: 50,
       baseLocale: 'fr',
-      locales: ['fr', 'en', 'es']
+      locales: ['fr', 'en', 'es'],
+      collections: {
+        'TestCollection': {
+          translationsFolder: 'src/i18n'
+        }
+      }
     };
 
     expect(mockWriteFileSync).toHaveBeenCalledWith(
@@ -49,6 +54,7 @@ describe('initCommand', () => {
     mockExistsSync.mockReturnValue(false);
 
     const options = {
+      collectionName: 'Main',
       translationsFolder: 'src/translations'
     };
 
@@ -56,12 +62,16 @@ describe('initCommand', () => {
 
     const expectedConfigPath = resolve('/test/project', '.lingo-tracker.json');
     const expectedConfig = {
-      translationsFolder: 'src/translations',
       exportFolder: 'dist/lingo-export',
       importFolder: 'dist/lingo-import',
       subfolderSplitThreshold: 100,
       baseLocale: 'en',
-      locales: []
+      locales: [],
+      collections: {
+        'Main': {
+          translationsFolder: 'src/translations'
+        }
+      }
     };
 
     expect(mockWriteFileSync).toHaveBeenCalledWith(
@@ -74,6 +84,7 @@ describe('initCommand', () => {
     mockExistsSync.mockReturnValue(true);
 
     const options = {
+      collectionName: 'Main',
       translationsFolder: 'src/i18n'
     };
 

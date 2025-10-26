@@ -8,9 +8,12 @@
 - [x] Add baseLocale argument and property to the init command with default value of en
 - [x] Add locales array of string argument and property to the init command with default value of empty array
 
-## Common Library
-- [x] Create a pure modern Typescript library (with vitest) that will be shared by various packages
-- [x] Move all interfaces and constants from packages/cli/src/lib to the common library and update code to use values from that library
+## Core Library
+- [x] Create a pure modern Typescript library (with vitest) that will be shared by API and CLI packages
+- [x] Move all interfaces and constants from packages/cli/src/lib to the core library and update code to use values from that library
+
+## Data Transfer Library
+- [x] Create a pure modern Typescript library (with vitest) that will be shared by API and tracker App packages
 
 ## API
 - [x] Add version 11.1.6 of NestJs project (use context7 if necessary)
