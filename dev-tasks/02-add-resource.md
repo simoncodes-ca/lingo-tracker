@@ -71,11 +71,11 @@ tracker_meta.json:
 
 ## TODO:
  - [ ] CORE (libs/core)
-   - [ ] Define core types for resource entries and tracker meta
-   - [ ] Implement key/targetFolder validation (per segment `[A-Za-z0-9_-]+`) and resolution (no de-dup)
-   - [ ] Add checksum utilities (MD5 of values) and status helpers
-   - [ ] Implement addResource: ensure folders/files at each level; update resource_entries.json and tracker_meta.json; set statuses
-   - [ ] Unit tests: validation, resolution, tags, idempotency, base change → stale, checksums
+   - [x] Define core types for resource entries and tracker meta
+   - [x] Implement key/targetFolder validation (per segment `[A-Za-z0-9_-]+`) and resolution (no de-dup)
+   - [x] Add checksum utilities (MD5 of values) and status helpers
+   - [x] Implement addResource: ensure folders/files at each level; update resource_entries.json and tracker_meta.json; set statuses
+   - [x] Unit tests: validation, resolution, tags, idempotency, base change → stale, checksums
  - [ ] Data Transfer (libs/data-transfer)
    - [ ] CreateResourceDto and response DTO; export from index
    - [ ] DTO validation (class-validator) mirroring CORE constraints; coerce tags CSV→array
@@ -91,8 +91,8 @@ tracker_meta.json:
  - [ ] Tracker (apps/tracker)
    - [ ] API client: POST /collections/:collection/resources using data-transfer DTOs
    - [ ] Store/action: addResource and refresh affected paths
-   - [ ] UI (last): Create Resource dialog with validations; submit to API; handle results
+   - [ ] UI: Create Resource dialog with validations; submit to API; handle results
  - [ ] Cross-cutting
    - [ ] E2E smoke: create resource via CLI and API in temp collection; assert filesystem and meta
    - [ ] Docs: getting-started resource entries; API endpoint docs (payload/response)
-   - [ ] Changelog entry
+

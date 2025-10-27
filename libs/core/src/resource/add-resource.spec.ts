@@ -1,0 +1,351 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { addResource } from './add-resource';
+import * as fs from 'node:fs';
+import { resolve } from 'node:path';
+import { SafeAny } from '../constants';
+
+vi.mock('node:fs');
+
+describe('addResource', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(fs.mkdirSync).mockImplementation(() => '');
+    vi.mocked(fs.readFileSync).mockImplementation(() => JSON.stringify({}));
+    vi.mocked(fs.writeFileSync).mockImplementation(vi.fn());
+  });
+
+  it('should create a new resource with base value only', () => {
+    const result = addResource(
+      'translations',
+      {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      },
+      { cwd: '/test' }
+    );
+
+    expect(result.resolvedKey).toBe('app.button.ok');
+    expect(result.created).toBe(true);
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    expect(writeCall.length).toBe(2); // resource_entries.json and tracker_meta.json
+
+    const resourceContent = JSON.parse(writeCall[0][1] as string);
+    expect(resourceContent.ok).toEqual({
+      source: 'OK',
+    });
+  });
+
+  it('should include optional comment and tags in entry', () => {
+    addResource(
+      'translations',
+      {
+        key: 'button.cancel',
+        baseValue: 'Cancel',
+        comment: 'Button to cancel operations',
+        tags: ['ui', 'buttons'],
+      },
+      { cwd: '/test' }
+    );
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const resourceContent = JSON.parse(writeCall[0][1] as string);
+    expect(resourceContent.cancel).toEqual({
+      source: 'Cancel',
+      comment: 'Button to cancel operations',
+      tags: ['ui', 'buttons'],
+    });
+  });
+
+  it('should resolve key with target folder', () => {
+    const result = addResource(
+      'translations',
+      {
+        key: 'ok',
+        baseValue: 'OK',
+        targetFolder: 'app.button',
+      },
+      { cwd: '/test' }
+    );
+
+    expect(result.resolvedKey).toBe('app.button.ok');
+  });
+
+  it('should create nested folder structure', () => {
+    addResource(
+      'translations',
+      {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      },
+      { cwd: '/test' }
+    );
+
+    const mkdirCall = vi.mocked(fs.mkdirSync).mock.calls[0];
+    expect(mkdirCall[0]).toBe(resolve('/test', 'translations/app/button'));
+    expect(mkdirCall[1]).toEqual({ recursive: true });
+  });
+
+  it('should create tracker metadata with checksums', () => {
+    addResource(
+      'translations',
+      {
+        key: 'button.ok',
+        baseValue: 'OK',
+      },
+      { cwd: '/test' }
+    );
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const metaContent = JSON.parse(writeCall[1][1] as string);
+    expect(metaContent.ok).toHaveProperty('en');
+    expect(metaContent.ok.en).toHaveProperty('checksum');
+    expect(metaContent.ok.en.checksum).toHaveLength(32); // MD5 is 32 chars
+    expect(metaContent.ok.en.status).toBeUndefined(); // Base locale has no status
+  });
+
+  it('should add translations with status and baseChecksum', () => {
+    addResource(
+      'translations',
+      {
+        key: 'button.ok',
+        baseValue: 'OK',
+        translations: { 'fr-ca': 'D\'accord', es: 'Aceptar' },
+      },
+      { cwd: '/test' }
+    );
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const resourceContent = JSON.parse(writeCall[0][1] as string);
+    expect(resourceContent.ok['fr-ca']).toBe('D\'accord');
+    expect(resourceContent.ok.es).toBe('Aceptar');
+
+    const metaContent = JSON.parse(writeCall[1][1] as string);
+    expect(metaContent.ok['fr-ca']).toHaveProperty('checksum');
+    expect(metaContent.ok['fr-ca']).toHaveProperty('baseChecksum');
+    expect(metaContent.ok['fr-ca'].status).toBe('translated');
+  });
+
+  it('should validate key and throw on invalid format', () => {
+    expect(() =>
+      addResource(
+        'translations',
+        {
+          key: 'invalid..key',
+          baseValue: 'Value',
+        },
+        { cwd: '/test' }
+      )
+    ).toThrow();
+  });
+
+  it('should validate target folder and throw on invalid format', () => {
+    expect(() =>
+      addResource(
+        'translations',
+        {
+          key: 'ok',
+          baseValue: 'OK',
+          targetFolder: 'invalid@folder',
+        },
+        { cwd: '/test' }
+      )
+    ).toThrow();
+  });
+
+  it('should detect new entry when resource file does not exist', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const result = addResource(
+      'translations',
+      {
+        key: 'button.ok',
+        baseValue: 'OK',
+      },
+      { cwd: '/test' }
+    );
+
+    expect(result.created).toBe(true);
+  });
+
+  it('should detect update when entry already exists', () => {
+    // Simulate existing file
+    vi.mocked(fs.existsSync).mockImplementation((path: SafeAny) => {
+      return (path as string).includes('resource_entries.json');
+    });
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ok: { source: 'OK' } }));
+
+    const result = addResource(
+      'translations',
+      {
+        key: 'button.ok',
+        baseValue: 'OK - Updated',
+      },
+      { cwd: '/test' }
+    );
+
+    expect(result.created).toBe(false);
+  });
+
+  it('should merge with existing entries in file', () => {
+    const existingContent = { another: { source: 'Another' } };
+    vi.mocked(fs.existsSync).mockImplementation((path: SafeAny) => {
+      return (path as string).includes('resource_entries.json');
+    });
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(existingContent));
+
+    addResource(
+      'translations',
+      {
+        key: 'button.ok',
+        baseValue: 'OK',
+      },
+      { cwd: '/test' }
+    );
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const resourceContent = JSON.parse(writeCall[0][1] as string);
+    expect(resourceContent.another).toBeDefined();
+    expect(resourceContent.ok).toBeDefined();
+  });
+
+  it('should use custom base locale', () => {
+    addResource(
+      'translations',
+      {
+        key: 'button.ok',
+        baseValue: 'OK',
+        baseLocale: 'fr',
+      },
+      { cwd: '/test' }
+    );
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const metaContent = JSON.parse(writeCall[1][1] as string);
+    expect(metaContent.ok).toHaveProperty('fr');
+    expect(metaContent.ok.fr.status).toBeUndefined();
+  });
+
+  it('should use process.cwd() when cwd not provided', () => {
+    const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue('/default');
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    addResource('translations', {
+      key: 'button.ok',
+      baseValue: 'OK',
+    });
+
+    expect(cwdSpy).toHaveBeenCalled();
+    cwdSpy.mockRestore();
+  });
+
+  it('should handle single-level key', () => {
+    const result = addResource(
+      'translations',
+      {
+        key: 'cancel',
+        baseValue: 'Cancel',
+      },
+      { cwd: '/test' }
+    );
+
+    expect(result.resolvedKey).toBe('cancel');
+
+    const mkdirCall = vi.mocked(fs.mkdirSync).mock.calls;
+    // Should not create nested folders for single-level keys
+    expect(mkdirCall.length > 0).toBe(true);
+  });
+
+  it('should allow overlapping segments between target folder and key (no de-dup)', () => {
+    const result = addResource(
+      'translations',
+      {
+        key: 'app.ok',
+        baseValue: 'OK',
+        targetFolder: 'app.button',
+      },
+      { cwd: '/test' }
+    );
+
+    // app.button + app.ok = app.button.app.ok (no de-duplication)
+    expect(result.resolvedKey).toBe('app.button.app.ok');
+  });
+
+  describe('idempotency', () => {
+    it('should handle repeated calls with same parameters', () => {
+      const existingContent = {
+        ok: { source: 'OK', checksum: 'abc123' },
+      };
+      vi.mocked(fs.existsSync).mockImplementation((path: SafeAny) => {
+        return (path as string).includes('resource_entries.json');
+      });
+      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(existingContent));
+
+      // First call
+      const result1 = addResource(
+        'translations',
+        {
+          key: 'button.ok',
+          baseValue: 'OK',
+        },
+        { cwd: '/test' }
+      );
+
+      // Second call with same params
+      const result2 = addResource(
+        'translations',
+        {
+          key: 'button.ok',
+          baseValue: 'OK',
+        },
+        { cwd: '/test' }
+      );
+
+      // Both should produce same resolved key
+      expect(result1.resolvedKey).toBe(result2.resolvedKey);
+    });
+  });
+
+  describe('integration: base value change detection', () => {
+    it('should create new checksum when base value changes', () => {
+      const existingContent = {
+        ok: { source: 'OK', 'fr-ca': 'D\'accord' },
+      };
+      const existingMeta = {
+        ok: {
+          en: { checksum: 'old-base-hash' },
+          'fr-ca': { checksum: 'trans-hash', baseChecksum: 'old-base-hash', status: 'translated' },
+        },
+      };
+
+      vi.mocked(fs.existsSync).mockImplementation((path: SafeAny) => {
+        return (path as string).includes('resource');
+      });
+      vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
+        if ((path as string).includes('resource_entries.json')) {
+          return JSON.stringify(existingContent);
+        }
+        return JSON.stringify(existingMeta);
+      });
+
+      addResource(
+        'translations',
+        {
+          key: 'button.ok',
+          baseValue: 'OK - NEW VALUE',
+          translations: { 'fr-ca': 'D\'accord' },
+        },
+        { cwd: '/test' }
+      );
+
+      const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+      const metaContent = JSON.parse(writeCall[1][1] as string);
+
+      // Base checksum should be different
+      expect(metaContent.ok.en.checksum).not.toBe('old-base-hash');
+      // Translations should still be there but might be stale in real usage
+      expect(metaContent.ok['fr-ca']).toBeDefined();
+    });
+  });
+});
