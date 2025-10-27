@@ -2,7 +2,10 @@ import { writeFileSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { CONFIG_FILENAME } from '../constants';
 import { LingoTrackerConfig } from '../config/lingo-tracker-config';
-import { DeleteCollectionOptions } from './delete-collection-options';
+export interface DeleteCollectionOptions {
+  cwd?: string;
+}
+
 
 export function deleteCollectionByName(
   collectionName: string,

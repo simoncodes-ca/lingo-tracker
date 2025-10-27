@@ -90,4 +90,19 @@ export class CollectionSelector {
 
     return await firstValueFrom(dialogRef.afterClosed());
   }
+
+  openCreateDialog() {
+    import('../common/components/create-collection-dialog/create-collection-dialog').then(m => {
+      const dialogRef = this.dialog.open(m.CreateCollectionDialogComponent, {
+        width: '560px',
+        disableClose: true,
+      });
+      dialogRef.afterClosed().subscribe((result: { created: boolean, message?: string } | undefined) => {
+        if (result?.created) {
+          this.store.loadCollections();
+          this.snackBar.open(result.message || 'Collection created', 'Close', { duration: 3000 });
+        }
+      });
+    });
+  }
 }

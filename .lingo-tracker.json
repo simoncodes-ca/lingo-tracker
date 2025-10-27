@@ -15,6 +15,14 @@
     },
     "Web": {
       "translationsFolder": "apps/web/src/i18n"
+    },
+    "test": {
+      "translationsFolder": "fubar",
+      "exportFolder": "dist/output",
+      "locales": [
+        "en",
+        "fr-ca"
+      ]
     }
   }
 }

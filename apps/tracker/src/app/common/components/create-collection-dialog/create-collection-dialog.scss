@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+.dialog-header {
+  display: flex;
+  border-bottom: 1px solid var(--mat-sys-primary);
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 0.5rem;
+}
+
+.dialog-content {
+  padding: 2rem;
+}
+
+.close-button {
+  margin-right: 1rem;
+}
+
+.row {
+  display: flex;
+  gap: 2rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+

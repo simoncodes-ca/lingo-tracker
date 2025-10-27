@@ -12,4 +12,15 @@ export function mapCollectionToDto(collection: LingoTrackerCollection): LingoTra
   };
 }
 
+export function mapDtoToCollection(dto: LingoTrackerCollectionDto): LingoTrackerCollection {
+  return {
+    translationsFolder: dto.translationsFolder,
+    exportFolder: dto.exportFolder,
+    importFolder: dto.importFolder,
+    subfolderSplitThreshold: dto.subfolderSplitThreshold,
+    baseLocale: dto.baseLocale,
+    locales: dto.locales ? [...dto.locales] : undefined,
+  };
+}
+
 

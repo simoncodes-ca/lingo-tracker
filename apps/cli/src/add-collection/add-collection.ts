@@ -1,12 +1,13 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { InitOptions } from '../types/init-options.js';
-import { CONFIG_FILENAME, DEFAULT_CONFIG } from '@simoncodes-ca/core';
-import { LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
+
+type LingoTrackerConfig = { collections?: Record<string, unknown> };
 
 export async function addCollectionCommand(options: InitOptions): Promise<void> {
   const cwd = process.env.INIT_CWD || process.cwd();
+  const { CONFIG_FILENAME, addCollection } = await import('@simoncodes-ca/core');
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   if (!existsSync(configPath)) {
@@ -37,25 +38,21 @@ export async function addCollectionCommand(options: InitOptions): Promise<void> 
     return;
   }
 
-  const newCollection: LingoTrackerCollection = {
+  const newCollection = {
     translationsFolder,
-    ...(exportFolder !== existingConfig.exportFolder && { exportFolder }),
-    ...(importFolder !== existingConfig.importFolder && { importFolder }),
-    ...(subfolderSplitThreshold !== existingConfig.subfolderSplitThreshold && { subfolderSplitThreshold }),
-    ...(baseLocale !== existingConfig.baseLocale && { baseLocale }),
-    ...(JSON.stringify(locales) !== JSON.stringify(existingConfig.locales) && { locales }),
+    exportFolder,
+    importFolder,
+    subfolderSplitThreshold,
+    baseLocale,
+    locales,
   };
 
-  const updatedConfig: LingoTrackerConfig = {
-    ...existingConfig,
-    collections: {
-      ...(existingConfig.collections || {}),
-      [collectionName]: newCollection
-    },
-  };
-
-  writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2));
-  console.log(`✅ Added collection "${collectionName}" to ${CONFIG_FILENAME}`);
+  try {
+    const result = addCollection(collectionName, newCollection, { cwd });
+    console.log(`✅ ${result.message} in ${CONFIG_FILENAME}`);
+  } catch (e: unknown) {
+    console.log(`❌ ${e instanceof Error ? e.message : 'Failed to add collection'}`);
+  }
 }
 
 async function promptForMissing(options: InitOptions): Promise<{
@@ -67,6 +64,7 @@ async function promptForMissing(options: InitOptions): Promise<{
   baseLocale: string;
   locales: string[];
 }> {
+  const { DEFAULT_CONFIG } = await import('@simoncodes-ca/core');
   const responses: Partial<{
     collectionName: string;
     translationsFolder: string;

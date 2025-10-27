@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import prompts from 'prompts';
 import { readFileSync, existsSync } from 'node:fs';
-import type { LingoTrackerConfig } from '@simoncodes-ca/core';
+type LingoTrackerConfig = { collections?: Record<string, unknown> };
 
 export interface DeleteCollectionOptions {
   collectionName?: string;
