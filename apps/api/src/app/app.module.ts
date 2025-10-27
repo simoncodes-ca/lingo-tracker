@@ -4,12 +4,14 @@ import { AppService } from './app.service';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ConfigService } from './config/config.service';
+import { ConfigController } from './config/config.controller';
+import { CollectionsController } from './collections/collections.controller';
 
 @Module({
   imports: [ServeStaticModule.forRoot({
     rootPath: join(__dirname, '..', 'tracker', 'browser'),
   }),],
-  controllers: [AppController],
+  controllers: [AppController, ConfigController, CollectionsController],
   providers: [AppService, ConfigService],
 })
 export class AppModule {

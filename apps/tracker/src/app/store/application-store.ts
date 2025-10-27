@@ -2,7 +2,7 @@ import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 import { inject } from '@angular/core';
 import { CollectionWithName } from '../common/types/collection-with-name';
 import { ApiService } from '../services/api';
-import { LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
+import { LingoTrackerConfigDto, LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 import { kebabCase } from 'lodash';
 
 export interface ApplicationState {
@@ -31,7 +31,7 @@ export const applicationStore = signalStore(
         const startTime = Date.now();
         
         try {
-          const config = await new Promise<LingoTrackerConfig>((resolve, reject) => {
+          const config = await new Promise<LingoTrackerConfigDto>((resolve, reject) => {
             apiService.getConfig().subscribe({
               next: resolve,
               error: reject
@@ -39,7 +39,7 @@ export const applicationStore = signalStore(
           });
           
           const collectionsDict = config.collections || {};
-          const collections: CollectionWithName[] = Object.entries(collectionsDict).map(([name, collection]: [string, LingoTrackerCollection]) => ({
+          const collections: CollectionWithName[] = Object.entries(collectionsDict).map(([name, collection]: [string, LingoTrackerCollectionDto]) => ({
             name,
             encodedName: encodeURIComponent(kebabCase(name)),
             translationsFolder: collection.translationsFolder,

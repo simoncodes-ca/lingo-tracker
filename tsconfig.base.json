@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@simoncodes-ca/core": ["libs/core/src/index.ts"]
+      "@simoncodes-ca/core": ["libs/core/src/index.ts"],
+      "@simoncodes-ca/data-transfer": ["libs/data-transfer/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

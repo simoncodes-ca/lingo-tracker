@@ -1,7 +1,8 @@
 import { HttpClient } from "@angular/common/http";
+import { Injectable } from "@angular/core";
 import { inject } from "@angular/core";
 import { Observable } from "rxjs";
-import { LingoTrackerConfig } from "@simoncodes-ca/core";
+import { LingoTrackerConfigDto } from "@simoncodes-ca/data-transfer";
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -11,8 +12,8 @@ export class ApiService {
     return this.http.get<{ status: string }>('/api/health');
   }
 
-  getConfig(): Observable<LingoTrackerConfig> {
-    return this.http.get<LingoTrackerConfig>('/api/config');
+  getConfig(): Observable<LingoTrackerConfigDto> {
+    return this.http.get<LingoTrackerConfigDto>('/api/config');
   }
 
   deleteCollection(collectionName: string): Observable<{ message: string }> {
