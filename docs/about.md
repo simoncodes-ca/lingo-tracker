@@ -17,6 +17,10 @@ LingoTracker streamlines the entire translation workflow by providing intelligen
 - **CI/CD Integration**: Powerful CLI for automated validation in build pipelines
 - **Format Flexibility**: Import/export support for JSON, XLIFF, and other translation formats
 - **Resource Linking**: Symlink support for sharing resources across projects
+- **Explicit Status Workflow**: `new`, `translated`, `stale`, `verified` with automatic updates on base changes
+- **Entry Tagging**: Tags stored alongside entries for rich filtering and export
+- **Deterministic Checksums**: MD5-based checksums for both base and translated values
+- **Strict Key Rules**: Dot-delimited keys; per-segment allowed chars `[A-Za-z0-9_-]+`; no de-duplication with target folder
 
 ## Who It's For
 
