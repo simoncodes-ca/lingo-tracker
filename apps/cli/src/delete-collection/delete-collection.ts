@@ -1,8 +1,7 @@
 import { resolve } from 'node:path';
 import prompts from 'prompts';
 import { readFileSync, existsSync } from 'node:fs';
-import { LingoTrackerConfig } from '@simoncodes-ca/core';
-import { deleteCollectionByName } from '@simoncodes-ca/core';
+import type { LingoTrackerConfig } from '@simoncodes-ca/core';
 
 export interface DeleteCollectionOptions {
   collectionName?: string;
@@ -10,7 +9,7 @@ export interface DeleteCollectionOptions {
 
 export async function deleteCollectionCommand(options: DeleteCollectionOptions): Promise<void> {
   const cwd = process.env.INIT_CWD || process.cwd();
-  const { CONFIG_FILENAME } = await import('@simoncodes-ca/core');
+  const { CONFIG_FILENAME, deleteCollectionByName } = await import('@simoncodes-ca/core');
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   // Check if config exists
@@ -72,7 +71,7 @@ export async function deleteCollectionCommand(options: DeleteCollectionOptions):
   try {
     const result = deleteCollectionByName(collectionName, { cwd });
     console.log(result.message);
-  } catch (e: any) {
-    console.log(`❌ ${e.message || 'Failed to delete collection'}`);
+  } catch (e: unknown) {
+    console.log(`❌ ${e instanceof Error ? e.message : 'Failed to delete collection'}`);
   }
 }
