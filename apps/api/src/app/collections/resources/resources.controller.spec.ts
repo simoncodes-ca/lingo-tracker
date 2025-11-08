@@ -1,0 +1,464 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { HttpException, NotFoundException } from '@nestjs/common';
+import { TranslationStatus } from '@simoncodes-ca/core';
+import { ResourcesController } from './resources.controller';
+import { ConfigService } from '../../config/config.service';
+
+// Mock the core module
+jest.mock('@simoncodes-ca/core', () => {
+  const actual = jest.requireActual('@simoncodes-ca/core');
+  return {
+    ...actual,
+    addResource: jest.fn(),
+  };
+});
+
+// Mock the mapper
+jest.mock('../../mappers/resource.mapper', () => ({
+  mapDtoToAddResourceParams: jest.fn((dto) => dto),
+}));
+
+describe('ResourcesController', () => {
+  let resourcesModule: TestingModule;
+  let resourcesController: ResourcesController;
+  let configService: ConfigService;
+
+  const mockConfig = {
+    exportFolder: 'dist/lingo-export',
+    importFolder: 'dist/lingo-import',
+    subfolderSplitThreshold: 100,
+    baseLocale: 'en',
+    locales: ['en', 'fr-ca', 'es'],
+    collections: {
+      'test-collection': {
+        translationsFolder: './translations/test',
+        baseLocale: 'en',
+        locales: ['en', 'fr-ca', 'es'],
+      },
+    },
+  };
+
+  beforeEach(async () => {
+    resourcesModule = await Test.createTestingModule({
+      controllers: [ResourcesController],
+      providers: [
+        {
+          provide: ConfigService,
+          useValue: {
+            getConfig: jest.fn().mockReturnValue(mockConfig),
+          },
+        },
+      ],
+    }).compile();
+
+    resourcesController = resourcesModule.get<ResourcesController>(ResourcesController);
+    configService = resourcesModule.get<ConfigService>(ConfigService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('createResources', () => {
+    it('should successfully create a single resource', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      };
+
+      const result = await resourcesController.createResources('test-collection', dto);
+
+      expect(result).toEqual({
+        entriesCreated: 1,
+        created: true,
+      });
+      expect(addResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          key: 'app.button.ok',
+          baseValue: 'OK',
+          baseLocale: 'en',
+        }),
+      );
+    });
+
+    it('should successfully create multiple resources (bulk operation)', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource
+        .mockReturnValueOnce({ resolvedKey: 'app.button.ok', created: true })
+        .mockReturnValueOnce({ resolvedKey: 'app.button.cancel', created: true });
+
+      const dtos = [
+        { key: 'app.button.ok', baseValue: 'OK' },
+        { key: 'app.button.cancel', baseValue: 'Cancel' },
+      ];
+
+      const result = await resourcesController.createResources('test-collection', dtos);
+
+      expect(result).toEqual({
+        entriesCreated: 2,
+        created: true,
+      });
+      expect(addResource).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle idempotent repeat (update existing resource)', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: false });
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      };
+
+      const result = await resourcesController.createResources('test-collection', dto);
+
+      expect(result).toEqual({
+        entriesCreated: 0,
+        created: false,
+      });
+    });
+
+    it('should aggregate results correctly when some resources are created and some are updated', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource
+        .mockReturnValueOnce({ resolvedKey: 'app.button.ok', created: true })
+        .mockReturnValueOnce({ resolvedKey: 'app.button.cancel', created: false })
+        .mockReturnValueOnce({ resolvedKey: 'app.button.save', created: true });
+
+      const dtos = [
+        { key: 'app.button.ok', baseValue: 'OK' },
+        { key: 'app.button.cancel', baseValue: 'Cancel' },
+        { key: 'app.button.save', baseValue: 'Save' },
+      ];
+
+      const result = await resourcesController.createResources('test-collection', dtos);
+
+      expect(result).toEqual({
+        entriesCreated: 2,
+        created: true,
+      });
+      expect(addResource).toHaveBeenCalledTimes(3);
+    });
+
+    it('should use collection baseLocale when provided', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+
+      const configWithCustomBaseLocale = {
+        ...mockConfig,
+        collections: {
+          'test-collection': {
+            translationsFolder: './translations/test',
+            baseLocale: 'fr-ca',
+          },
+        },
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithCustomBaseLocale);
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      };
+
+      await resourcesController.createResources('test-collection', dto);
+
+      expect(addResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          baseLocale: 'fr-ca',
+        }),
+      );
+    });
+
+    it('should use DTO baseLocale when explicitly provided', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+        baseLocale: 'es',
+      };
+
+      await resourcesController.createResources('test-collection', dto);
+
+      expect(addResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          baseLocale: 'es',
+        }),
+      );
+    });
+
+    it('should URI decode collection names with special characters', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+
+      const configWithEncodedName = {
+        ...mockConfig,
+        collections: {
+          'My Collection': {
+            translationsFolder: './translations/my-collection',
+          },
+        },
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithEncodedName);
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      };
+
+      await resourcesController.createResources('My%20Collection', dto);
+
+      expect(addResource).toHaveBeenCalledWith(
+        './translations/my-collection',
+        expect.any(Object),
+      );
+    });
+
+    it('should throw NotFoundException when collection does not exist', async () => {
+      const configWithoutCollection = {
+        ...mockConfig,
+        collections: {},
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithoutCollection);
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      };
+
+      await expect(
+        resourcesController.createResources('non-existent', dto),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw HttpException when empty array is provided', async () => {
+      await expect(
+        resourcesController.createResources('test-collection', []),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('should throw HttpException (400) for invalid key validation', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockImplementation(() => {
+        throw new Error('Invalid key segment "invalid@key". Segments must match pattern [A-Za-z0-9_-]+');
+      });
+
+      const dto = {
+        key: 'invalid@key',
+        baseValue: 'OK',
+      };
+
+      await expect(
+        resourcesController.createResources('test-collection', dto),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.createResources('test-collection', dto);
+      } catch (error: any) {
+        expect(error.status).toBe(400);
+        expect(error.message).toContain('Validation error');
+      }
+    });
+
+    it('should throw HttpException (400) for empty key', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockImplementation(() => {
+        throw new Error('Key cannot be empty');
+      });
+
+      const dto = {
+        key: '',
+        baseValue: 'OK',
+      };
+
+      await expect(
+        resourcesController.createResources('test-collection', dto),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.createResources('test-collection', dto);
+      } catch (error: any) {
+        expect(error.status).toBe(400);
+      }
+    });
+
+    it('should throw HttpException (500) for unexpected errors', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockImplementation(() => {
+        throw new Error('Unexpected file system error');
+      });
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      };
+
+      await expect(
+        resourcesController.createResources('test-collection', dto),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.createResources('test-collection', dto);
+      } catch (error: any) {
+        expect(error.status).toBe(500);
+      }
+    });
+
+    it('should handle resource with all optional fields', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'apps.common.buttons.cancel', created: true });
+
+      const dto = {
+        key: 'cancel',
+        baseValue: 'Cancel',
+        comment: 'Cancel button is used to abort any operation',
+        tags: ['ui', 'buttons'],
+        targetFolder: 'apps.common.buttons',
+      };
+
+      const result = await resourcesController.createResources('test-collection', dto);
+
+      expect(result).toEqual({
+        entriesCreated: 1,
+        created: true,
+      });
+      expect(addResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          key: 'cancel',
+          baseValue: 'Cancel',
+          comment: 'Cancel button is used to abort any operation',
+          tags: ['ui', 'buttons'],
+          targetFolder: 'apps.common.buttons',
+        }),
+      );
+    });
+
+    it('should handle resource with translations', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+        translations: [
+          { locale: 'fr-ca', value: 'D\'accord', status: 'translated' as TranslationStatus },
+          { locale: 'es', value: 'De acuerdo', status: 'translated' as TranslationStatus },
+        ],
+      };
+
+      await resourcesController.createResources('test-collection', dto);
+
+      expect(addResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          translations: [
+            { locale: 'fr-ca', value: 'D\'accord', status: 'translated' },
+            { locale: 'es', value: 'De acuerdo', status: 'translated' },
+          ],
+        }),
+      );
+    });
+
+    it('should automatically create entries for all non-base locales when translations are not provided', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+        // No translations provided
+      };
+
+      await resourcesController.createResources('test-collection', dto);
+
+      expect(addResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          key: 'app.button.ok',
+          baseValue: 'OK',
+          baseLocale: 'en',
+          translations: [
+            { locale: 'fr-ca', value: 'OK', status: 'new' },
+            { locale: 'es', value: 'OK', status: 'new' },
+          ],
+        }),
+      );
+    });
+
+    it('should use collection locales when available, fall back to global locales', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+
+      const configWithCollectionLocales = {
+        ...mockConfig,
+        collections: {
+          'test-collection': {
+            translationsFolder: './translations/test',
+            baseLocale: 'en',
+            locales: ['en', 'fr-ca', 'es', 'de'],
+          },
+        },
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithCollectionLocales);
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      };
+
+      await resourcesController.createResources('test-collection', dto);
+
+      expect(addResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          translations: [
+            { locale: 'fr-ca', value: 'OK', status: 'new' },
+            { locale: 'es', value: 'OK', status: 'new' },
+            { locale: 'de', value: 'OK', status: 'new' },
+          ],
+        }),
+      );
+    });
+
+    it('should not create translations if locales array is empty', async () => {
+      const { addResource } = require('@simoncodes-ca/core');
+      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+
+      const configWithNoLocales = {
+        ...mockConfig,
+        collections: {
+          'test-collection': {
+            translationsFolder: './translations/test',
+            baseLocale: 'en',
+            // No locales property
+          },
+        },
+        locales: [], // Empty global locales
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithNoLocales);
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      };
+
+      await resourcesController.createResources('test-collection', dto);
+
+      expect(addResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          translations: undefined,
+        }),
+      );
+    });
+  });
+});
+

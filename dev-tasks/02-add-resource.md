@@ -81,14 +81,13 @@ tracker_meta.json:
    - [x] Interactive prompts and non-interactive validation; call CORE; print summary
    - [x] Tests for flags, prompts, validation failures, idempotency
    - [x] Update docs/getting-started with instructions on how to add resource
- - [ ] Data Transfer (libs/data-transfer)
-   - [ ] CreateResourceDto and response DTO; export from index
-   - [ ] DTO validation (class-validator) mirroring CORE constraints; coerce tags CSV→array
- - [ ] API (apps/api)
-   - [ ] DTO ↔ CORE mapping functions
-   - [ ] POST /collections/:collection/resources endpoint that calls CORE addResource
-   - [ ] Request/response validation and error mapping (400/409/500)
-   - [ ] Unit/E2E tests: happy path, invalid key, idempotent repeat, base change → stale
+ - [x] Data Transfer (libs/data-transfer)
+   - [x] CreateResourceDto and response DTO; export from index.
+ - [x] API (apps/api)
+   - [x] DTO ↔ CORE mapping functions
+   - [x] POST /collections/:collection/resources endpoint (must accept array of resource DTOs for bulk operation) that calls CORE addResource
+   - [x] Request/response validation and error mapping (400/409/500)
+   - [x] Unit tests: happy path, invalid key, idempotent repeat, base change → stale
  - [ ] Tracker (apps/tracker)
    - [ ] API client: POST /collections/:collection/resources using data-transfer DTOs
    - [ ] Store/action: addResource and refresh affected paths

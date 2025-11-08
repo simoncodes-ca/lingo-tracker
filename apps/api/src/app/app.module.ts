@@ -6,12 +6,13 @@ import { join } from 'path';
 import { ConfigService } from './config/config.service';
 import { ConfigController } from './config/config.controller';
 import { CollectionsController } from './collections/collections.controller';
+import { ResourcesController } from './collections/resources/resources.controller';
 
 @Module({
   imports: [ServeStaticModule.forRoot({
     rootPath: join(__dirname, '..', 'tracker', 'browser'),
   }),],
-  controllers: [AppController, ConfigController, CollectionsController],
+  controllers: [AppController, ConfigController, CollectionsController, ResourcesController],
   providers: [AppService, ConfigService],
 })
 export class AppModule {

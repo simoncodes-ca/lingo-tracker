@@ -6,4 +6,5 @@ export * from './tracker-metadata';
 export * from './resource-key';
 export * from './checksum';
 export * from './status-helpers';
+export * from './translation-helpers';
 export * from './add-resource';

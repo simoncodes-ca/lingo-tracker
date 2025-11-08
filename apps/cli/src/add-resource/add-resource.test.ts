@@ -9,18 +9,22 @@ vi.mock('prompts', () => ({
 }));
 
 vi.mock('node:fs');
-vi.mock('@simoncodes-ca/core', () => ({
-  CONFIG_FILENAME: '.lingo-tracker.json',
-  addResource: vi.fn().mockResolvedValue({ resolvedKey: 'test.key', created: true }),
-  resolveResourceKey: vi.fn((key: string, targetFolder?: string) => {
-    return targetFolder ? `${targetFolder}.${key}` : key;
-  }),
-  splitResolvedKey: vi.fn((key: string) => {
-    const parts = key.split('.');
-    const entryKey = parts.pop() || key;
-    return { folderPath: parts, entryKey };
-  }),
-}));
+vi.mock('@simoncodes-ca/core', async () => {
+  const actual = await vi.importActual('@simoncodes-ca/core');
+  return {
+    ...actual,
+    CONFIG_FILENAME: '.lingo-tracker.json',
+    addResource: vi.fn().mockResolvedValue({ resolvedKey: 'test.key', created: true }),
+    resolveResourceKey: vi.fn((key: string, targetFolder?: string) => {
+      return targetFolder ? `${targetFolder}.${key}` : key;
+    }),
+    splitResolvedKey: vi.fn((key: string) => {
+      const parts = key.split('.');
+      const entryKey = parts.pop() || key;
+      return { folderPath: parts, entryKey };
+    }),
+  };
+});
 
 describe('addResourceCommand', () => {
   beforeEach(() => {

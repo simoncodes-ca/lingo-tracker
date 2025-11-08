@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import prompts from 'prompts';
 import type { LingoTrackerConfig, TranslationStatus } from '@simoncodes-ca/core';
+import { createDefaultTranslations } from '@simoncodes-ca/core';
 
 export interface AddResourceOptions {
   collection?: string;
@@ -75,21 +76,9 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
     const locales = collectionConfig.locales || config.locales || [];
     
     // Build translations: use provided translations or create entries for all non-base locales with base value
-    let translations: Array<{ locale: string; value: string; status: TranslationStatus }> | undefined;
-    
-    if (answers.translations && answers.translations.length > 0) {
-      translations = answers.translations;
-    } else {
-      // Create entries for all non-base locales with base value and 'new' status
-      const nonBaseLocales = locales.filter(locale => locale !== baseLocale);
-      if (nonBaseLocales.length > 0) {
-        translations = nonBaseLocales.map(locale => ({
-          locale,
-          value: answers.value,
-          status: 'new' as TranslationStatus,
-        }));
-      }
-    }
+    const translations = answers.translations && answers.translations.length > 0
+      ? answers.translations
+      : createDefaultTranslations(locales, baseLocale, answers.value);
     
     const result = addResource(
       resolve(cwd, collectionConfig.translationsFolder),
