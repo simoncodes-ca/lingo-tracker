@@ -10,19 +10,24 @@
     "de"
   ],
   "collections": {
-    "Main": {
-      "translationsFolder": "i18n"
+    "TestDataPlayground": {
+      "translationsFolder": "sample-translations/playground",
+      "locales": [
+        "en",
+        "fr-ca",
+        "es",
+        "de",
+        "ru"
+      ]
+    },
+    "TestDataDesignSystem": {
+      "translationsFolder": "sample-translations/design-system"
+    },
+    "TestDataCore": {
+      "translationsFolder": "sample-translations/core"
     },
     "Web": {
       "translationsFolder": "apps/web/src/i18n"
-    },
-    "test": {
-      "translationsFolder": "fubar",
-      "exportFolder": "dist/output",
-      "locales": [
-        "en",
-        "fr-ca"
-      ]
     }
   }
 }

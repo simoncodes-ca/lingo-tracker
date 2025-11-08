@@ -10,7 +10,9 @@ import {
   splitResolvedKey,
 } from './resource-key';
 import { calculateChecksum } from './checksum';
-import { createBaseLocaleMetadata, createTranslatedMetadata } from './status-helpers';
+import { createBaseLocaleMetadata } from './status-helpers';
+import { TranslationStatus } from './translation-status';
+import { LocaleMetadata } from './locale-metadata';
 
 export interface AddResourceOptions {
   cwd?: string;
@@ -29,8 +31,12 @@ export interface AddResourceParams {
   targetFolder?: string;
   /** Base locale (defaults to "en") */
   baseLocale?: string;
-  /** Localized translations keyed by locale */
-  translations?: Record<string, string>;
+  /** Localized translations with locale, value, and status */
+  translations?: Array<{
+    locale: string;
+    value: string;
+    status: TranslationStatus;
+  }>;
 }
 
 const RESOURCE_ENTRIES_FILENAME = 'resource_entries.json';
@@ -86,7 +92,7 @@ export function addResource(
 
   // Add translations
   if (params.translations) {
-    Object.entries(params.translations).forEach(([locale, value]) => {
+    params.translations.forEach(({ locale, value }) => {
       resourceEntry[locale] = value;
     });
   }
@@ -103,11 +109,18 @@ export function addResource(
   trackerMeta[entryKey][baseLocale] = createBaseLocaleMetadata(baseChecksum);
 
   if (params.translations) {
-    Object.entries(params.translations).forEach(([locale, value]) => {
-      trackerMeta[entryKey][locale] = createTranslatedMetadata(
-        calculateChecksum(value),
-        baseChecksum
-      );
+    params.translations.forEach(({ locale, value, status }) => {
+      const checksum = calculateChecksum(value);
+      // If checksum matches baseChecksum, set status to 'new' regardless of provided status
+      const finalStatus = checksum === baseChecksum ? 'new' : status;
+      
+      const metadata: LocaleMetadata = {
+        checksum,
+        baseChecksum,
+        status: finalStatus,
+      };
+      
+      trackerMeta[entryKey][locale] = metadata;
     });
   }
 
@@ -117,6 +130,7 @@ export function addResource(
 
   return { resolvedKey, created: isNewEntry };
 }
+
 
 /**
  * Ensures that all folders in the path exist, creating them if necessary.

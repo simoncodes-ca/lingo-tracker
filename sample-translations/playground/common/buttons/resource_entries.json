@@ -1,0 +1,25 @@
+{
+  "apply": {
+    "source": "Apply",
+    "comment": "Button user presses to apply unsaved changes in UI",
+    "tags": [
+      "ui",
+      "common"
+    ],
+    "fr-ca": "Appliquer",
+    "es": "Aplicar",
+    "de": "Anwenden",
+    "ru": "Apply"
+  },
+  "cancel": {
+    "source": "Cancel",
+    "comment": "Button user presses to abort an operation",
+    "tags": [
+      "ui",
+      "common"
+    ],
+    "de": "Abbrechen",
+    "fr-ca": "Annuler",
+    "es": "Cancelar"
+  }
+}

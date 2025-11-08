@@ -70,12 +70,17 @@ tracker_meta.json:
 
 
 ## TODO:
- - [ ] CORE (libs/core)
+ - [x] CORE (libs/core)
    - [x] Define core types for resource entries and tracker meta
    - [x] Implement key/targetFolder validation (per segment `[A-Za-z0-9_-]+`) and resolution (no de-dup)
    - [x] Add checksum utilities (MD5 of values) and status helpers
    - [x] Implement addResource: ensure folders/files at each level; update resource_entries.json and tracker_meta.json; set statuses
    - [x] Unit tests: validation, resolution, tags, idempotency, base change → stale, checksums
+ - [x] CLI (apps/cli)
+   - [x] add-resource command with flags: --collection --key --value --comment --tags --targetFolder
+   - [x] Interactive prompts and non-interactive validation; call CORE; print summary
+   - [x] Tests for flags, prompts, validation failures, idempotency
+   - [x] Update docs/getting-started with instructions on how to add resource
  - [ ] Data Transfer (libs/data-transfer)
    - [ ] CreateResourceDto and response DTO; export from index
    - [ ] DTO validation (class-validator) mirroring CORE constraints; coerce tags CSV→array
@@ -84,10 +89,6 @@ tracker_meta.json:
    - [ ] POST /collections/:collection/resources endpoint that calls CORE addResource
    - [ ] Request/response validation and error mapping (400/409/500)
    - [ ] Unit/E2E tests: happy path, invalid key, idempotent repeat, base change → stale
- - [ ] CLI (apps/cli)
-   - [ ] add-resource command with flags: --collection --key --value --comment --tags --targetFolder
-   - [ ] Interactive prompts and non-interactive validation; call CORE; print summary
-   - [ ] Tests for flags, prompts, validation failures, idempotency
  - [ ] Tracker (apps/tracker)
    - [ ] API client: POST /collections/:collection/resources using data-transfer DTOs
    - [ ] Store/action: addResource and refresh affected paths
@@ -95,4 +96,3 @@ tracker_meta.json:
  - [ ] Cross-cutting
    - [ ] E2E smoke: create resource via CLI and API in temp collection; assert filesystem and meta
    - [ ] Docs: getting-started resource entries; API endpoint docs (payload/response)
-

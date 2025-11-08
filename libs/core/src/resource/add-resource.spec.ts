@@ -105,13 +105,16 @@ describe('addResource', () => {
     expect(metaContent.ok.en.status).toBeUndefined(); // Base locale has no status
   });
 
-  it('should add translations with status and baseChecksum', () => {
+  it('should add translations with status and baseChecksum using array format', () => {
     addResource(
       'translations',
       {
         key: 'button.ok',
         baseValue: 'OK',
-        translations: { 'fr-ca': 'D\'accord', es: 'Aceptar' },
+        translations: [
+          { locale: 'fr-ca', value: 'D\'accord', status: 'translated' },
+          { locale: 'es', value: 'Aceptar', status: 'verified' },
+        ],
       },
       { cwd: '/test' }
     );
@@ -125,6 +128,26 @@ describe('addResource', () => {
     expect(metaContent.ok['fr-ca']).toHaveProperty('checksum');
     expect(metaContent.ok['fr-ca']).toHaveProperty('baseChecksum');
     expect(metaContent.ok['fr-ca'].status).toBe('translated');
+    expect(metaContent.ok.es.status).toBe('verified');
+  });
+
+  it('should override status to "new" when translation checksum matches base checksum', () => {
+    addResource(
+      'translations',
+      {
+        key: 'button.ok',
+        baseValue: 'OK',
+        translations: [
+          { locale: 'fr-ca', value: 'OK', status: 'translated' }, // Same as base value
+        ],
+      },
+      { cwd: '/test' }
+    );
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const metaContent = JSON.parse(writeCall[1][1] as string);
+    expect(metaContent.ok['fr-ca'].status).toBe('new'); // Should be overridden to 'new'
+    expect(metaContent.ok['fr-ca'].checksum).toBe(metaContent.ok.en.checksum);
   });
 
   it('should validate key and throw on invalid format', () => {
@@ -334,7 +357,7 @@ describe('addResource', () => {
         {
           key: 'button.ok',
           baseValue: 'OK - NEW VALUE',
-          translations: { 'fr-ca': 'D\'accord' },
+          translations: [{ locale: 'fr-ca', value: 'D\'accord', status: 'translated' }],
         },
         { cwd: '/test' }
       );

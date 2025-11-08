@@ -47,5 +47,24 @@ program
     await deleteCollectionCommand(options);
   });
 
+program
+  .command('add-resource')
+  .description('Add a translation resource to a collection')
+  .option('--collection <name>', 'Name of the collection')
+  .option('--key <key>', 'Resource key (dot-delimited, e.g., apps.common.buttons.ok)')
+  .option('--value <value>', 'Base value (source text)')
+  .option('--comment <comment>', 'Optional context for translators')
+  .option('--tags <tags>', 'Optional tags (comma-separated)')
+  .option('--targetFolder <folder>', 'Optional target folder (dot-delimited)')
+  .option('--translations <json>', 'Optional translations as JSON array, e.g., \'[{"locale":"es","value":"Aplicar","status":"translated"}]\'')
+  .action(async (options) => {
+    const { addResourceCommand } = await import('./add-resource/add-resource');
+    const processedOptions = {
+      ...options,
+      translations: options.translations ? JSON.parse(options.translations) : undefined,
+    };
+    await addResourceCommand(processedOptions);
+  });
+
 program.parse();
 
