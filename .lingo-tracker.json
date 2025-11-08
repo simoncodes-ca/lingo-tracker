@@ -1,0 +1,33 @@
+{
+  "exportFolder": "dist/lingo-export",
+  "importFolder": "dist/lingo-import",
+  "subfolderSplitThreshold": 100,
+  "baseLocale": "en",
+  "locales": [
+    "en",
+    "fr-ca",
+    "es",
+    "de"
+  ],
+  "collections": {
+    "TestDataPlayground": {
+      "translationsFolder": "sample-translations/playground",
+      "locales": [
+        "en",
+        "fr-ca",
+        "es",
+        "de",
+        "ru"
+      ]
+    },
+    "TestDataDesignSystem": {
+      "translationsFolder": "sample-translations/design-system"
+    },
+    "TestDataCore": {
+      "translationsFolder": "sample-translations/core"
+    },
+    "Web": {
+      "translationsFolder": "apps/web/src/i18n"
+    }
+  }
+}

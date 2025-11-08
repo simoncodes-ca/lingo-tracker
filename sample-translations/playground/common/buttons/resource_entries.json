@@ -1,0 +1,74 @@
+{
+  "apply": {
+    "source": "Apply",
+    "comment": "Button user presses to apply unsaved changes in UI",
+    "tags": [
+      "ui",
+      "common"
+    ],
+    "fr-ca": "Appliquer",
+    "es": "Aplicar",
+    "de": "Anwenden",
+    "ru": "Apply"
+  },
+  "clear": {
+    "source": "Clear",
+    "comment": "Button the user clicks to clear a field or a filtered selection",
+    "tags": [
+      "ui",
+      "common"
+    ],
+    "fr-ca": "Clear",
+    "es": "Clear",
+    "de": "Clear",
+    "ru": "Clear"
+  },
+  "close": {
+    "source": "Close",
+    "comment": "Button the user clicks to close a dialog or a panel",
+    "tags": [
+      "ui",
+      "common"
+    ],
+    "fr-ca": "Close",
+    "es": "Close",
+    "de": "Close",
+    "ru": "Close"
+  },
+  "create": {
+    "source": "Create",
+    "comment": "Button the user clicks to create an entity in the system",
+    "tags": [
+      "ui",
+      "common"
+    ],
+    "fr-ca": "Create",
+    "es": "Create",
+    "de": "Create",
+    "ru": "Create"
+  },
+  "ok": {
+    "source": "OK",
+    "comment": "Button the user clicks to apply changes or to apply an action, usually used in dialogs",
+    "tags": [
+      "ui",
+      "common"
+    ],
+    "fr-ca": "OK",
+    "es": "OK",
+    "de": "OK",
+    "ru": "OK"
+  },
+  "cancel": {
+    "source": "Cancel",
+    "comment": "Button the user clicks to undo or discard changes or an action",
+    "tags": [
+      "ui",
+      "common"
+    ],
+    "fr-ca": "Cancel",
+    "es": "Cancel",
+    "de": "Cancel",
+    "ru": "Cancel"
+  }
+}

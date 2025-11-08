@@ -1,0 +1,61 @@
+<app-header />
+
+<main class="app-content">
+  @if (store.loading()) {
+  <!--  Loading state -->
+  <div class="centered-content">
+    <mat-card class="status-card">
+      <mat-card-content>
+        <div class="loading-content">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  } @else if (store.error()) {
+  <!--  Error state -->
+  <div class="centered-content">
+    <mat-card class="status-card error-card">
+      <!--  Card header -->
+      <mat-card-header>
+        <mat-icon mat-card-avatar>error</mat-icon>
+        <mat-card-title>Application Error</mat-card-title>
+        <mat-card-subtitle>Unable to load collections</mat-card-subtitle>
+      </mat-card-header>
+      <!--  Card content -->
+      <mat-card-content>
+        <p>
+          The application encountered an error while loading translation
+          collections. If you have not initialized Lingo Tracker yet then please
+          do so by running the following command in the terminal:
+        </p>
+        <div class="command-container">
+          <code>{{ initCommand }}</code>
+          <button
+            mat-icon-button
+            class="copy-button"
+            (click)="copyToClipboard()"
+            matTooltip="Copy to clipboard"
+            aria-label="Copy command to clipboard"
+          >
+            <mat-icon>content_copy</mat-icon>
+          </button>
+        </div>
+        <p>
+          If you have already initialized Lingo Tracker, then please check the
+          configuration file <em>.lingo-tracker.json</em> and ensure that it
+          exist and that it is valid.
+        </p>
+        <p>
+          If you are still having trouble, then please check the logs in the
+          terminal for more information and restart the application.
+        </p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  } @else if (store.hasLoadedCollections()) {
+  <!--  Collections loaded - show router outlet -->
+  <router-outlet />
+  }
+</main>
