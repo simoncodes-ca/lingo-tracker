@@ -66,5 +66,16 @@ program
     await addResourceCommand(processedOptions);
   });
 
+program
+  .command('delete-resource')
+  .description('Delete one or more translation resources from a collection')
+  .option('--collection <name>', 'Name of the collection')
+  .option('--key <keys>', 'Resource key(s) - single key or comma-separated (e.g., key1,key2,key3)')
+  .option('--yes', 'Skip confirmation prompt')
+  .action(async (options) => {
+    const { deleteResourceCommand } = await import('./commands/delete-resource');
+    await deleteResourceCommand(options);
+  });
+
 program.parse();
 

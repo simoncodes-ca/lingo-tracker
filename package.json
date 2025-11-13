@@ -10,7 +10,6 @@
     "build:api": "nx build api",
     "build:tracker": "nx build tracker",
     "build": "pnpm run build:cli && pnpm run build:api && pnpm run build:tracker",
-    "serve:cli": "nx serve cli",
     "serve:api": "nx serve api",
     "serve:tracker": "nx serve tracker",
     "prepare": "husky",
@@ -22,7 +21,8 @@
     "test:tracker": "nx test tracker",
     "test": "pnpm run test:cli && pnpm run test:api && pnpm run test:core &&pnpm run test:tracker",
     "test:release": "pnpm run release --dry-run",
-    "nx": "nx"
+    "nx": "nx",
+    "lingo-tracker": "node dist/apps/cli/main.js $1"
   },
   "keywords": [],
   "author": "Simon Nodel",

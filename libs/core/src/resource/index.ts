@@ -8,3 +8,4 @@ export * from './checksum';
 export * from './status-helpers';
 export * from './translation-helpers';
 export * from './add-resource';
+export * from './delete-resource';

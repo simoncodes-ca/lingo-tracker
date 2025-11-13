@@ -13,6 +13,7 @@ import { calculateChecksum } from './checksum';
 import { createBaseLocaleMetadata } from './status-helpers';
 import { TranslationStatus } from './translation-status';
 import { LocaleMetadata } from './locale-metadata';
+import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../constants';
 
 export interface AddResourceOptions {
   cwd?: string;
@@ -38,9 +39,6 @@ export interface AddResourceParams {
     status: TranslationStatus;
   }>;
 }
-
-const RESOURCE_ENTRIES_FILENAME = 'resource_entries.json';
-const TRACKER_META_FILENAME = 'tracker_meta.json';
 
 /**
  * Adds or updates a resource entry in the translations folder.

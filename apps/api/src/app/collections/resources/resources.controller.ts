@@ -1,14 +1,20 @@
 import {
   Controller,
   Post,
+  Delete,
   Param,
   Body,
   HttpException,
   HttpStatus,
   NotFoundException,
 } from '@nestjs/common';
-import { addResource, createDefaultTranslations } from '@simoncodes-ca/core';
-import { CreateResourceDto, CreateResourceResponseDto } from '@simoncodes-ca/data-transfer';
+import { addResource, createDefaultTranslations, deleteResource } from '@simoncodes-ca/core';
+import {
+  CreateResourceDto,
+  CreateResourceResponseDto,
+  DeleteResourceDto,
+  DeleteResourceResponseDto
+} from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
 
@@ -94,6 +100,51 @@ export class ResourcesController {
       // File system errors or other unexpected errors
       throw new HttpException(
         error?.message || 'Error creating resources',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Delete()
+  async delete(
+    @Param('collectionName') collectionName: string,
+    @Body() dto: DeleteResourceDto
+  ): Promise<DeleteResourceResponseDto> {
+    try {
+      const decodedCollectionName = decodeURIComponent(collectionName);
+      const config = this.configService.getConfig();
+
+      if (!config.collections || !config.collections[decodedCollectionName]) {
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
+      }
+
+      if (!dto.keys || !Array.isArray(dto.keys) || dto.keys.length === 0) {
+        throw new HttpException(
+          'Invalid request: keys array is required and must not be empty',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const collection = config.collections[decodedCollectionName];
+      const translationsFolder = collection.translationsFolder;
+
+      const result = deleteResource(translationsFolder, { keys: dto.keys });
+
+      return {
+        entriesDeleted: result.entriesDeleted,
+        errors: result.errors,
+      };
+    } catch (error: any) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        error?.message || 'Error deleting resources',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

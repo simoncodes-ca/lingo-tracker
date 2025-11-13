@@ -10,6 +10,7 @@ jest.mock('@simoncodes-ca/core', () => {
   return {
     ...actual,
     addResource: jest.fn(),
+    deleteResource: jest.fn(),
   };
 });
 
@@ -457,6 +458,195 @@ describe('ResourcesController', () => {
         expect.objectContaining({
           translations: undefined,
         }),
+      );
+    });
+  });
+
+  describe('delete', () => {
+    it('should successfully delete an existing resource', async () => {
+      const { deleteResource } = require('@simoncodes-ca/core');
+      deleteResource.mockReturnValue({
+        entriesDeleted: 1,
+        matchedKeys: ['app.button.ok']
+      });
+
+      const dto = {
+        keys: ['app.button.ok'],
+      };
+
+      const result = await resourcesController.delete('test-collection', dto);
+
+      expect(result).toEqual({
+        entriesDeleted: 1,
+        errors: undefined,
+      });
+      expect(deleteResource).toHaveBeenCalledWith(
+        './translations/test',
+        { keys: ['app.button.ok'] },
+      );
+    });
+
+    it('should successfully delete multiple resources (bulk operation)', async () => {
+      const { deleteResource } = require('@simoncodes-ca/core');
+      deleteResource.mockReturnValue({
+        entriesDeleted: 3,
+        matchedKeys: ['app.button.ok', 'app.button.cancel', 'app.button.save']
+      });
+
+      const dto = {
+        keys: ['app.button.ok', 'app.button.cancel', 'app.button.save'],
+      };
+
+      const result = await resourcesController.delete('test-collection', dto);
+
+      expect(result).toEqual({
+        entriesDeleted: 3,
+        errors: undefined,
+      });
+      expect(deleteResource).toHaveBeenCalledWith(
+        './translations/test',
+        { keys: ['app.button.ok', 'app.button.cancel', 'app.button.save'] },
+      );
+    });
+
+    it('should handle partial failures with errors array', async () => {
+      const { deleteResource } = require('@simoncodes-ca/core');
+      deleteResource.mockReturnValue({
+        entriesDeleted: 2,
+        matchedKeys: ['app.button.ok', 'app.button.cancel'],
+        errors: [
+          { key: 'app.button.invalid', error: 'Resource entry not found: app.button.invalid' }
+        ]
+      });
+
+      const dto = {
+        keys: ['app.button.ok', 'app.button.cancel', 'app.button.invalid'],
+      };
+
+      const result = await resourcesController.delete('test-collection', dto);
+
+      expect(result).toEqual({
+        entriesDeleted: 2,
+        errors: [
+          { key: 'app.button.invalid', error: 'Resource entry not found: app.button.invalid' }
+        ]
+      });
+    });
+
+    it('should URI decode collection names with special characters', async () => {
+      const { deleteResource } = require('@simoncodes-ca/core');
+      deleteResource.mockReturnValue({ entriesDeleted: 1 });
+
+      const configWithEncodedName = {
+        ...mockConfig,
+        collections: {
+          'My Collection': {
+            translationsFolder: './translations/my-collection',
+          },
+        },
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithEncodedName);
+
+      const dto = {
+        keys: ['app.button.ok'],
+      };
+
+      await resourcesController.delete('My%20Collection', dto);
+
+      expect(deleteResource).toHaveBeenCalledWith(
+        './translations/my-collection',
+        { keys: ['app.button.ok'] },
+      );
+    });
+
+    it('should throw NotFoundException when collection does not exist', async () => {
+      const configWithoutCollection = {
+        ...mockConfig,
+        collections: {},
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithoutCollection);
+
+      const dto = {
+        keys: ['app.button.ok'],
+      };
+
+      await expect(
+        resourcesController.delete('non-existent', dto),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw HttpException (400) for empty keys array', async () => {
+      const dto = {
+        keys: [],
+      };
+
+      await expect(
+        resourcesController.delete('test-collection', dto),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.delete('test-collection', dto);
+      } catch (error: any) {
+        expect(error.status).toBe(400);
+        expect(error.message).toContain('keys array is required');
+      }
+    });
+
+    it('should throw HttpException (400) for missing keys array', async () => {
+      const dto = {} as any;
+
+      await expect(
+        resourcesController.delete('test-collection', dto),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.delete('test-collection', dto);
+      } catch (error: any) {
+        expect(error.status).toBe(400);
+      }
+    });
+
+    it('should throw HttpException (500) for unexpected errors', async () => {
+      const { deleteResource } = require('@simoncodes-ca/core');
+      deleteResource.mockImplementation(() => {
+        throw new Error('Unexpected file system error');
+      });
+
+      const dto = {
+        keys: ['app.button.ok'],
+      };
+
+      await expect(
+        resourcesController.delete('test-collection', dto),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.delete('test-collection', dto);
+      } catch (error: any) {
+        expect(error.status).toBe(500);
+      }
+    });
+
+    it('should successfully delete nested resource', async () => {
+      const { deleteResource } = require('@simoncodes-ca/core');
+      deleteResource.mockReturnValue({
+        entriesDeleted: 1,
+        matchedKeys: ['apps.common.buttons.ok']
+      });
+
+      const dto = {
+        keys: ['apps.common.buttons.ok'],
+      };
+
+      const result = await resourcesController.delete('test-collection', dto);
+
+      expect(result).toEqual({
+        entriesDeleted: 1,
+        errors: undefined,
+      });
+      expect(deleteResource).toHaveBeenCalledWith(
+        './translations/test',
+        { keys: ['apps.common.buttons.ok'] },
       );
     });
   });
