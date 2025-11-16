@@ -96,7 +96,8 @@ export function isFolderEmpty(folderPath: string): boolean {
     // Empty if no entries in resource_entries.json
     return !hasEntries;
   } catch (error) {
-    // If we can't parse the file, consider it empty to allow cleanup
-    return true;
+    // If we can't parse the file, consider it NOT empty to prevent deletion
+    // This preserves corrupted files so they can be manually fixed
+    return false;
   }
 }

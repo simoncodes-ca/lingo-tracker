@@ -287,7 +287,7 @@ describe('Folder Utilities', () => {
       expect(isFolderEmpty(nonExistent)).toBe(true);
     });
 
-    it('should return true for folder with corrupted resource_entries.json', () => {
+    it('should return false for folder with corrupted resource_entries.json to prevent deletion', () => {
       const folder = '/test/corrupted';
       const resourceEntriesPath = path.join(folder, 'resource_entries.json');
 
@@ -301,7 +301,8 @@ describe('Folder Utilities', () => {
 
       vi.mocked(fs.readFileSync).mockReturnValue('invalid json{');
 
-      expect(isFolderEmpty(folder)).toBe(true);
+      // Should return false to prevent deletion of folders with corrupted JSON files
+      expect(isFolderEmpty(folder)).toBe(false);
     });
 
     it('should return false for folder with both entries and subfolders', () => {

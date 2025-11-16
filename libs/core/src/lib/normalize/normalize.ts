@@ -58,7 +58,7 @@ interface PersistResourcesResult {
   readonly filesUpdated: number;
 }
 
-function loadResourceFiles(folderPath: string): ResourceFiles {
+function loadResourceFiles(folderPath: string): ResourceFiles | null {
   const resourceEntriesPath = path.join(folderPath, 'resource_entries.json');
   const trackerMetaPath = path.join(folderPath, 'tracker_meta.json');
 
@@ -73,7 +73,12 @@ function loadResourceFiles(folderPath: string): ResourceFiles {
       resourceEntries = JSON.parse(content);
       resourceEntriesExisted = true;
     } catch (error) {
-      resourceEntries = {};
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('\n⚠️  Skipping folder due to invalid JSON:', folderPath);
+      console.error('    Error in file: resource_entries.json');
+      console.error('    Parse error:', errorMessage);
+      console.error('    Please fix the JSON syntax manually.\n');
+      return null;
     }
   }
 
@@ -83,7 +88,12 @@ function loadResourceFiles(folderPath: string): ResourceFiles {
       trackerMetadata = JSON.parse(content);
       trackerMetaExisted = true;
     } catch (error) {
-      trackerMetadata = {};
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('\n⚠️  Skipping folder due to invalid JSON:', folderPath);
+      console.error('    Error in file: tracker_meta.json');
+      console.error('    Parse error:', errorMessage);
+      console.error('    Please fix the JSON syntax manually.\n');
+      return null;
     }
   }
 
@@ -225,6 +235,11 @@ async function normalizeFolderResources(params: NormalizeFolderParams): Promise<
   const { folderPath, baseLocale, locales, dryRun, counters } = params;
 
   const resourceFiles = loadResourceFiles(folderPath);
+
+  // Skip this folder if there was a JSON parsing error
+  if (resourceFiles === null) {
+    return;
+  }
 
   const normalizedData = normalizeAllEntriesInFolder({
     resourceEntries: resourceFiles.resourceEntries,

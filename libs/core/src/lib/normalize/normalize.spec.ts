@@ -663,7 +663,7 @@ describe('Normalize', () => {
       expect(result.localesAdded).toBe(4); // 2 entries × 2 missing locales
     });
 
-    it('should handle corrupted JSON files gracefully', async () => {
+    it('should skip folders with corrupted JSON files without modifying them', async () => {
       const testDir = '/test-root';
       const entriesPath = path.join(testDir, 'resource_entries.json');
       const metaPath = path.join(testDir, 'tracker_meta.json');
@@ -675,6 +675,9 @@ describe('Normalize', () => {
       };
 
       setupMockFileSystem(mockFs);
+
+      // Spy on console.error to verify error message is logged
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
       vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
         foldersRemoved: 0,
@@ -689,8 +692,19 @@ describe('Normalize', () => {
 
       const result = await normalize(params);
 
-      // Should handle gracefully - starts with empty objects
+      // Should skip the folder and not process any entries
       expect(result.entriesProcessed).toBe(0);
+
+      // Should log an error message
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('⚠️  Skipping folder due to invalid JSON'),
+        testDir
+      );
+
+      // Should NOT write any files (folder is skipped)
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
     });
   });
 });
