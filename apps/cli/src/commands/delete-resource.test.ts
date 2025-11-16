@@ -26,7 +26,6 @@ describe('deleteResourceCommand', () => {
   const mockConfig = {
     exportFolder: 'dist/lingo-export',
     importFolder: 'dist/lingo-import',
-    subfolderSplitThreshold: 100,
     baseLocale: 'en',
     locales: ['en', 'fr'],
     collections: {

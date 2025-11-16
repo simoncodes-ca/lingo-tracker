@@ -29,7 +29,6 @@ export async function addCollectionCommand(options: InitOptions): Promise<void> 
   const translationsFolder = answers.translationsFolder;
   const exportFolder = answers.exportFolder;
   const importFolder = answers.importFolder;
-  const subfolderSplitThreshold = Number(answers.subfolderSplitThreshold);
   const baseLocale = answers.baseLocale;
   const locales = answers.locales;
 
@@ -42,7 +41,6 @@ export async function addCollectionCommand(options: InitOptions): Promise<void> 
     translationsFolder,
     exportFolder,
     importFolder,
-    subfolderSplitThreshold,
     baseLocale,
     locales,
   };
@@ -60,7 +58,6 @@ async function promptForMissing(options: InitOptions): Promise<{
   translationsFolder: string;
   exportFolder: string;
   importFolder: string;
-  subfolderSplitThreshold: number;
   baseLocale: string;
   locales: string[];
 }> {
@@ -70,7 +67,6 @@ async function promptForMissing(options: InitOptions): Promise<{
     translationsFolder: string;
     exportFolder: string;
     importFolder: string;
-    subfolderSplitThreshold: number;
     baseLocale: string;
     locales: string[];
   }> = {};
@@ -110,16 +106,6 @@ async function promptForMissing(options: InitOptions): Promise<{
       name: 'importFolder',
       message: 'Import folder',
       initial: DEFAULT_CONFIG.importFolder
-    });
-  }
-
-  if (!options.subfolderSplitThreshold) {
-    questions.push({
-      type: 'number',
-      name: 'subfolderSplitThreshold',
-      message: 'Subfolder split threshold',
-      initial: DEFAULT_CONFIG.subfolderSplitThreshold,
-      min: 1
     });
   }
 
@@ -164,7 +150,6 @@ async function promptForMissing(options: InitOptions): Promise<{
     translationsFolder: options.translationsFolder ?? (responses.translationsFolder as string),
     exportFolder: options.exportFolder ?? (responses.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
     importFolder: options.importFolder ?? (responses.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
-    subfolderSplitThreshold: Number(options.subfolderSplitThreshold ?? responses.subfolderSplitThreshold ?? DEFAULT_CONFIG.subfolderSplitThreshold),
     baseLocale: options.baseLocale ?? (responses.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
     locales: options.locales ?? (responses.locales as string[]) ?? DEFAULT_CONFIG.locales
   };

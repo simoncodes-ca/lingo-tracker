@@ -29,7 +29,6 @@ export class CreateCollectionDialogComponent {
     translationsFolder: this.fb.control<string>('', { validators: [Validators.required], nonNullable: true }),
     exportFolder: this.fb.control<string>(''),
     importFolder: this.fb.control<string>(''),
-    subfolderSplitThreshold: this.fb.control<number | null>(null),
     baseLocale: this.fb.control<string>(''),
     localesInput: this.fb.control<string>(''),
   });
@@ -55,7 +54,6 @@ export class CreateCollectionDialogComponent {
           exportFolder: raw.exportFolder || undefined,
           importFolder: raw.importFolder || undefined,
           baseLocale: raw.baseLocale || undefined,
-          subfolderSplitThreshold: raw.subfolderSplitThreshold ?? undefined,
           locales: locales.length ? locales : undefined,
         }
       }));

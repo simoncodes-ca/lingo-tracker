@@ -51,13 +51,6 @@ export function addCollection(
     minimalCollection.importFolder = collection.importFolder;
   }
 
-  if (
-    collection.subfolderSplitThreshold !== undefined &&
-    collection.subfolderSplitThreshold !== config.subfolderSplitThreshold
-  ) {
-    minimalCollection.subfolderSplitThreshold = collection.subfolderSplitThreshold;
-  }
-
   if (collection.baseLocale !== undefined && collection.baseLocale !== config.baseLocale) {
     minimalCollection.baseLocale = collection.baseLocale;
   }

@@ -12,7 +12,6 @@ export function mapConfigToDto(config: LingoTrackerConfig): LingoTrackerConfigDt
   return {
     exportFolder: config.exportFolder,
     importFolder: config.importFolder,
-    subfolderSplitThreshold: config.subfolderSplitThreshold,
     baseLocale: config.baseLocale,
     locales: [...config.locales],
     collections: mapConfigCollections(config.collections),

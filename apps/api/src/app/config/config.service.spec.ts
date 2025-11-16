@@ -40,7 +40,6 @@ describe('ConfigService', () => {
       const mockConfig = {
         exportFolder: 'dist/lingo-export',
         importFolder: 'dist/lingo-import',
-        subfolderSplitThreshold: 100,
         baseLocale: 'en',
         locales: ['en', 'fr', 'es'],
         collections: {
@@ -111,7 +110,6 @@ describe('ConfigService', () => {
       const minimalConfig = {
         exportFolder: 'export',
         importFolder: 'import',
-        subfolderSplitThreshold: 50,
         baseLocale: 'en',
         locales: [],
         collections: {
@@ -132,7 +130,6 @@ describe('ConfigService', () => {
       const configWithOverrides = {
         exportFolder: 'dist/export',
         importFolder: 'dist/import',
-        subfolderSplitThreshold: 100,
         baseLocale: 'en',
         locales: ['en', 'fr'],
         collections: {
@@ -147,7 +144,6 @@ describe('ConfigService', () => {
           Mobile: {
             translationsFolder: 'src/mobile/i18n',
             exportFolder: 'dist/mobile-export',
-            subfolderSplitThreshold: 50,
           },
         },
       };
@@ -163,7 +159,6 @@ describe('ConfigService', () => {
       const configWithEmptyCollections = {
         exportFolder: 'export',
         importFolder: 'import',
-        subfolderSplitThreshold: 50,
         baseLocale: 'en',
         locales: ['en'],
         collections: {},

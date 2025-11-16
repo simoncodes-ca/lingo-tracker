@@ -4,7 +4,7 @@
 - [x] Create NX workspace for a modern Typescript library that will be used to process command line commands using a modern and popular cli library
 - [x] Create init command
   - [x] look for presence of .lingo-tracker.json file in current folder. If it is found pretty print that Lingo Tracker is already initialized and there is nothing to do.
-  - [x] Perform initialization by asking the user for translationsFolder, exportFolder (default value: dist/lingo-export), importFolder (default value: dist/lingo-import), subfolderSplitThreshold (default value: 100), if they are not passed as command line arguments.  Finally create `.lingo-tracker.json` with those values in current folder.
+  - [x] Perform initialization by asking the user for translationsFolder, exportFolder (default value: dist/lingo-export), importFolder (default value: dist/lingo-import), if they are not passed as command line arguments.  Finally create `.lingo-tracker.json` with those values in current folder.
 - [x] Add baseLocale argument and property to the init command with default value of en
 - [x] Add locales array of string argument and property to the init command with default value of empty array
 

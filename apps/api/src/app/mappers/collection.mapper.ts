@@ -6,7 +6,6 @@ export function mapCollectionToDto(collection: LingoTrackerCollection): LingoTra
     translationsFolder: collection.translationsFolder,
     exportFolder: collection.exportFolder,
     importFolder: collection.importFolder,
-    subfolderSplitThreshold: collection.subfolderSplitThreshold,
     baseLocale: collection.baseLocale,
     locales: collection.locales ? [...collection.locales] : undefined,
   };
@@ -17,7 +16,6 @@ export function mapDtoToCollection(dto: LingoTrackerCollectionDto): LingoTracker
     translationsFolder: dto.translationsFolder,
     exportFolder: dto.exportFolder,
     importFolder: dto.importFolder,
-    subfolderSplitThreshold: dto.subfolderSplitThreshold,
     baseLocale: dto.baseLocale,
     locales: dto.locales ? [...dto.locales] : undefined,
   };

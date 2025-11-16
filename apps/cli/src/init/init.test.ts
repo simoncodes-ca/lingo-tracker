@@ -23,7 +23,6 @@ describe('initCommand', () => {
       translationsFolder: 'src/i18n',
       exportFolder: 'dist/exports',
       importFolder: 'dist/imports',
-      subfolderSplitThreshold: 50,
       baseLocale: 'fr',
       locales: ['fr', 'en', 'es']
     };
@@ -34,7 +33,6 @@ describe('initCommand', () => {
     const expectedConfig = {
       exportFolder: 'dist/exports',
       importFolder: 'dist/imports',
-      subfolderSplitThreshold: 50,
       baseLocale: 'fr',
       locales: ['fr', 'en', 'es'],
       collections: {
@@ -64,7 +62,6 @@ describe('initCommand', () => {
     const expectedConfig = {
       exportFolder: 'dist/lingo-export',
       importFolder: 'dist/lingo-import',
-      subfolderSplitThreshold: 100,
       baseLocale: 'en',
       locales: [],
       collections: {

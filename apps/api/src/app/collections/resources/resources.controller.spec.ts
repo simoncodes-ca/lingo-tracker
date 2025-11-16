@@ -27,7 +27,6 @@ describe('ResourcesController', () => {
   const mockConfig = {
     exportFolder: 'dist/lingo-export',
     importFolder: 'dist/lingo-import',
-    subfolderSplitThreshold: 100,
     baseLocale: 'en',
     locales: ['en', 'fr-ca', 'es'],
     collections: {

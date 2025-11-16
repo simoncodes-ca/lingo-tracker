@@ -92,7 +92,7 @@ libs/
 
 - **Global**: `.lingo-tracker.json` at project root
 - **Per-Collection**: Collections can override global settings
-- Key settings: `baseLocale`, `locales`, `translationsFolder`, `subfolderSplitThreshold`
+- Key settings: `baseLocale`, `locales`, `translationsFolder`
 
 #### Translation Status Lifecycle
 

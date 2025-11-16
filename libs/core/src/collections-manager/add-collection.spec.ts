@@ -10,7 +10,6 @@ describe('addCollection', () => {
   const baseConfig = {
     exportFolder: 'dist/lingo-export',
     importFolder: 'dist/lingo-import',
-    subfolderSplitThreshold: 100,
     baseLocale: 'en',
     locales: ['en'],
     // collections intentionally omitted in some tests to validate initialization
@@ -41,7 +40,6 @@ describe('addCollection', () => {
     expect(writtenConfig).toMatchObject({
       exportFolder: baseConfig.exportFolder,
       importFolder: baseConfig.importFolder,
-      subfolderSplitThreshold: baseConfig.subfolderSplitThreshold,
       baseLocale: baseConfig.baseLocale,
       locales: baseConfig.locales,
     });
@@ -66,7 +64,6 @@ describe('addCollection', () => {
         translationsFolder: './folder',
         exportFolder: baseConfig.exportFolder, // same -> should be omitted
         importFolder: 'custom/import', // different -> include
-        subfolderSplitThreshold: 50, // different -> include
         baseLocale: 'fr', // different -> include
         locales: ['en'], // same -> should be omitted
       },
@@ -78,7 +75,6 @@ describe('addCollection', () => {
     expect(writtenConfig.collections.diffs).toEqual({
       translationsFolder: './folder',
       importFolder: 'custom/import',
-      subfolderSplitThreshold: 50,
       baseLocale: 'fr',
     });
     expect(writtenConfig.collections.diffs.exportFolder).toBeUndefined();

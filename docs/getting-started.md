@@ -30,7 +30,6 @@ If you run it interactively, you will be prompted for missing values. In non‑i
   - `--translationsFolder <path>`: Path to the translations directory for this collection.
   - `--exportFolder <path>`: Output folder for exports. Default: `dist/lingo-export`.
   - `--importFolder <path>`: Input folder for imports. Default: `dist/lingo-import`.
-  - `--subfolderSplitThreshold <number>`: Split very large folders after N files. Default: `100`.
   - `--baseLocale <locale>`: Base/authoring locale. Default: `en`.
   - `--locales <locales...>`: Supported locales list. Example: `en fr-ca es de`.
 
@@ -42,7 +41,6 @@ lingo-tracker init \
   --translationsFolder apps/web/src/assets/i18n \
   --exportFolder dist/lingo-export \
   --importFolder dist/lingo-import \
-  --subfolderSplitThreshold 200 \
   --baseLocale en \
   --locales en fr-ca es de
 ```
@@ -55,7 +53,6 @@ Initialization writes a JSON config named `.lingo-tracker.json` at your project 
 {
   "exportFolder": "dist/lingo-export",
   "importFolder": "dist/lingo-import",
-  "subfolderSplitThreshold": 100,
   "baseLocale": "en",
   "locales": [
     "en"
@@ -68,7 +65,7 @@ Initialization writes a JSON config named `.lingo-tracker.json` at your project 
 }
 ```
 
-- Global fields (`exportFolder`, `importFolder`, `subfolderSplitThreshold`, `baseLocale`, `locales`) apply to all collections by default.
+- Global fields (`exportFolder`, `importFolder`, `baseLocale`, `locales`) apply to all collections by default.
 - Each collection requires `translationsFolder`. A collection may override any global field locally if needed.
 
 Collection shape:
@@ -78,7 +75,6 @@ Collection shape:
   "translationsFolder": "path/to/translations",
   "exportFolder": "optional/override",
   "importFolder": "optional/override",
-  "subfolderSplitThreshold": 100,
   "baseLocale": "en",
   "locales": ["en", "fr-ca"]
 }
@@ -98,7 +94,6 @@ lingo-tracker add-collection
   - `--translationsFolder <path>`
   - `--exportFolder <path>`
   - `--importFolder <path>`
-  - `--subfolderSplitThreshold <number>`
   - `--baseLocale <locale>`
   - `--locales <locales...>`
 
@@ -118,8 +113,7 @@ lingo-tracker add-collection \
 lingo-tracker add-collection \
   --collectionName Mobile \
   --translationsFolder apps/mobile/src/i18n \
-  --baseLocale en-GB \
-  --subfolderSplitThreshold 50
+  --baseLocale en-GB
 ```
 
 Notes:

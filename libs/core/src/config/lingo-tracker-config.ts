@@ -6,7 +6,6 @@ import { LingoTrackerCollection } from './lingo-tracker-collection';
 export interface LingoTrackerConfig {
   exportFolder: string;
   importFolder: string;
-  subfolderSplitThreshold: number;
   baseLocale: string;
   locales: string[];
   collections: Record<string, LingoTrackerCollection>;

@@ -29,16 +29,10 @@
         <input matInput formControlName="importFolder" />
       </mat-form-field>
     </div>
-    <div class="row">
-      <mat-form-field appearance="outline" class="flex-1">
-        <mat-label>Base locale (optional)</mat-label>
-        <input matInput formControlName="baseLocale" />
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="flex-1">
-        <mat-label>Subfolder split threshold (optional)</mat-label>
-        <input matInput type="number" formControlName="subfolderSplitThreshold" />
-      </mat-form-field>
-    </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Base locale (optional)</mat-label>
+      <input matInput formControlName="baseLocale" />
+    </mat-form-field>
     <mat-form-field appearance="outline">
       <mat-label>Locales (comma-separated, optional)</mat-label>
       <input matInput formControlName="localesInput" placeholder="en,fr-ca,es" />

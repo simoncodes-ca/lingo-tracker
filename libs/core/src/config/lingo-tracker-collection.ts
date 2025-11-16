@@ -6,7 +6,6 @@ export interface LingoTrackerCollection {
   translationsFolder: string;
   exportFolder?: string;
   importFolder?: string;
-  subfolderSplitThreshold?: number;
   baseLocale?: string;
   locales?: string[];
 }

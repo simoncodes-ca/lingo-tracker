@@ -45,7 +45,6 @@ export const applicationStore = signalStore(
             translationsFolder: collection.translationsFolder,
             exportFolder: collection.exportFolder ?? config.exportFolder,
             importFolder: collection.importFolder ?? config.importFolder,
-            subfolderSplitThreshold: collection.subfolderSplitThreshold ?? config.subfolderSplitThreshold,
             baseLocale: collection.baseLocale ?? config.baseLocale,
             locales: collection.locales ?? config.locales
           }));

@@ -15,7 +15,6 @@ program
   .option('--translationsFolder <path>')
   .option('--exportFolder <path>', 'dist/lingo-export')
   .option('--importFolder <path>', 'dist/lingo-import')
-  .option('--subfolderSplitThreshold <number>', '100')
   .option('--baseLocale <locale>', 'en')
   .option('--locales <locales...>', 'supported locales')
   .action(async (options) => {
@@ -30,7 +29,6 @@ program
   .option('--translationsFolder <path>')
   .option('--exportFolder <path>', 'dist/lingo-export')
   .option('--importFolder <path>', 'dist/lingo-import')
-  .option('--subfolderSplitThreshold <number>', '100')
   .option('--baseLocale <locale>', 'en')
   .option('--locales <locales...>', 'supported locales')
   .action(async (options) => {

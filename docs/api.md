@@ -54,7 +54,6 @@ Retrieves the current LingoTracker configuration including global settings and a
 interface LingoTrackerConfigDto {
   exportFolder: string;
   importFolder: string;
-  subfolderSplitThreshold: number;
   baseLocale: string;
   locales: string[];
   collections: Record<string, LingoTrackerCollectionDto>;
@@ -64,7 +63,6 @@ interface LingoTrackerCollectionDto {
   translationsFolder: string;
   exportFolder?: string;
   importFolder?: string;
-  subfolderSplitThreshold?: number;
   baseLocale?: string;
   locales?: string[];
 }
@@ -76,7 +74,6 @@ interface LingoTrackerCollectionDto {
 {
   "exportFolder": "./exports",
   "importFolder": "./imports",
-  "subfolderSplitThreshold": 5,
   "baseLocale": "en",
   "locales": ["en", "es", "fr", "de"],
   "collections": {
@@ -124,7 +121,6 @@ interface LingoTrackerCollectionDto {
   translationsFolder: string;
   exportFolder?: string;
   importFolder?: string;
-  subfolderSplitThreshold?: number;
   baseLocale?: string;
   locales?: string[];
 }
@@ -138,8 +134,7 @@ interface LingoTrackerCollectionDto {
   "collection": {
     "translationsFolder": "./apps/admin/src/i18n",
     "baseLocale": "en",
-    "locales": ["en", "es", "fr", "de"],
-    "subfolderSplitThreshold": 10
+    "locales": ["en", "es", "fr", "de"]
   }
 }
 ```

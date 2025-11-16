@@ -24,7 +24,6 @@ describe('deleteCollectionCommand', () => {
   const mockConfig = {
     exportFolder: 'dist/lingo-export',
     importFolder: 'dist/lingo-import',
-    subfolderSplitThreshold: 100,
     baseLocale: 'en',
     locales: ['en', 'fr'],
     collections: {
@@ -127,7 +126,6 @@ describe('deleteCollectionCommand', () => {
     const noCollectionsConfig = {
       exportFolder: 'dist/lingo-export',
       importFolder: 'dist/lingo-import',
-      subfolderSplitThreshold: 100,
       baseLocale: 'en',
       locales: ['en', 'fr']
     };

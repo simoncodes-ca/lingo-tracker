@@ -43,7 +43,6 @@ lingo-tracker init [options]
 - `--translationsFolder <path>` - Path to the translations directory for this collection (required in non-interactive mode)
 - `--exportFolder <path>` - Output folder for exports (default: `dist/lingo-export`)
 - `--importFolder <path>` - Input folder for imports (default: `dist/lingo-import`)
-- `--subfolderSplitThreshold <number>` - Split large folders after N files (default: `100`)
 - `--baseLocale <locale>` - Base/authoring locale (default: `en`)
 - `--locales <locales...>` - Space-separated list of supported locales (e.g., `en fr-ca es de`)
 
@@ -61,7 +60,6 @@ lingo-tracker init \
   --translationsFolder apps/web/src/assets/i18n \
   --exportFolder dist/lingo-export \
   --importFolder dist/lingo-import \
-  --subfolderSplitThreshold 200 \
   --baseLocale en \
   --locales en fr-ca es de
 ```
@@ -89,7 +87,6 @@ lingo-tracker add-collection [options]
 - `--translationsFolder <path>` - Path to the translations directory for this collection (required in non-interactive mode)
 - `--exportFolder <path>` - Override global export folder for this collection
 - `--importFolder <path>` - Override global import folder for this collection
-- `--subfolderSplitThreshold <number>` - Override global split threshold
 - `--baseLocale <locale>` - Override global base locale
 - `--locales <locales...>` - Override global locales list
 
@@ -112,8 +109,7 @@ With collection-specific overrides (only differences are saved):
 lingo-tracker add-collection \
   --collectionName Mobile \
   --translationsFolder apps/mobile/src/i18n \
-  --baseLocale en-GB \
-  --subfolderSplitThreshold 50
+  --baseLocale en-GB
 ```
 
 **Notes:**
@@ -443,7 +439,6 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
 {
   "exportFolder": "dist/lingo-export",
   "importFolder": "dist/lingo-import",
-  "subfolderSplitThreshold": 100,
   "baseLocale": "en",
   "locales": ["en", "fr-ca", "es"],
   "collections": {
@@ -458,7 +453,7 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
 }
 ```
 
-- **Global fields** (`exportFolder`, `importFolder`, `subfolderSplitThreshold`, `baseLocale`, `locales`) apply to all collections by default
+- **Global fields** (`exportFolder`, `importFolder`, `baseLocale`, `locales`) apply to all collections by default
 - **Per-collection fields** can override global settings for specific collections
 
 ---
