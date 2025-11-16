@@ -1,33 +1,43 @@
-# Feature: Create translation resource entries
+# Feature: Create Translation Resource Entries
 
 This feature lets users add translation resources. A resource is a key/value pair in the base locale, optionally annotated with metadata and translated values for other locales.
 
-## Create: required and optional fields
-- Key (required): dot-delimited string, e.g. `apps.common.buttons.ok`.
-- Base value (required): text in the base locale.
-- Comment (optional): context to aid translators.
-- Tags (optional): comma-separated list for filtering/exporting.
-- Target folder (optional): dot-delimited path relative to the translation folder. If omitted, the resource is added directly under the translation folder.
+## Required and Optional Fields
 
-Notes:
-- Target folder is a convenience. Example equivalence:
-  - Key `apps.common.buttons.cancel`, Target folder empty
-  - Key `buttons.cancel`, Target folder `apps.common`
-  Both resolve to the same on-disk location.
- - If `targetFolder` is provided and overlaps with the key prefix, no de-duplication is performed; segments may repeat.
-- Validation: each segment (between dots) of `key` and `targetFolder` may contain only alphanumeric characters, `_`, or `-` (regex per segment: `[A-Za-z0-9_-]+`).
+### Required
+- **Key**: Dot-delimited string (e.g., `apps.common.buttons.ok`)
+- **Base value**: Text in the base locale (stored as `source`)
 
-## Key resolution and filesystem layout
-1) Compute the resolved key: `resolvedKey = targetFolder ? targetFolder + '.' + key : key`.
-2) Split `resolvedKey` by `.`. All but the last segment form nested folders under the translation folder; the last segment is the resource entry key within `resource_entries.json`.
-3) Ensure each nested folder exists. At each folder level, ensure `resource_entries.json` and `tracker_meta.json` exist; create empty files if missing.
+### Optional
+- **Comment**: Context to aid translators
+- **Tags**: Comma-separated list for filtering/exporting
+- **Target folder**: Dot-delimited path relative to translation folder
 
-Example: resolved key `apps.common.buttons.cancel` → path segments `['apps','common','buttons','cancel']`.
-- Create/ensure folders: `apps/common/buttons/`
-- Use final segment `cancel` as the entry key in `resource_entries.json`
+## Key Resolution and Filesystem Layout
 
-## Example files under `apps/common/buttons/`
-resource_entries.json:
+### Resolution Logic
+1. Compute resolved key: `resolvedKey = targetFolder ? targetFolder + '.' + key : key`
+2. Split by `.` - all but last segment form nested folders
+3. Last segment becomes the entry key in `resource_entries.json`
+
+### Target Folder Convenience
+Target folder provides flexibility in how resources are organized:
+- `key: "apps.common.buttons.cancel"`, `targetFolder: ""` (empty)
+- `key: "buttons.cancel"`, `targetFolder: "apps.common"`
+
+Both resolve to the same location: `apps/common/buttons/cancel`
+
+**Note**: If `targetFolder` overlaps with key prefix, no de-duplication is performed.
+
+### Validation Rules
+Each segment (between dots) of `key` and `targetFolder` must match: `[A-Za-z0-9_-]+`
+
+## File Structure
+
+At each folder level, two files are maintained:
+
+### resource_entries.json
+Contains the actual translation data:
 ```json
 {
   "cancel": {
@@ -40,7 +50,8 @@ resource_entries.json:
 }
 ```
 
-tracker_meta.json:
+### tracker_meta.json
+Contains checksums and translation status:
 ```json
 {
   "cancel": {
@@ -56,42 +67,79 @@ tracker_meta.json:
 }
 ```
 
-## Status lifecycle
-- Allowed values: `new`, `translated`, `stale`, `verified`.
-- On creation: status is set automatically to `new`.
-- On import/update of translation values: status is updated accordingly (e.g., to `translated`).
-- When the base-locale source changes: existing non-base entries are marked `stale`.
- - `verified` can be set manually by users in the application or via imports from in-house language experts.
+## Status Lifecycle
+
+Translation entries use a status field to track their state:
+
+- **`new`**: Not yet translated (set automatically on creation)
+- **`translated`**: Has translation but not verified
+- **`stale`**: Base value changed, translation out of sync
+- **`verified`**: Reviewed and approved (set manually by users or language experts)
+
+### Status Transitions
+- On creation → `new`
+- On import/update of translation → `translated`
+- When base source changes → existing translations marked `stale`
 
 ## Checksums
-- Checksums are MD5 hashes of the locale values.
-- Base locale entry includes a `checksum` calculated from its base value.
-- Non-base entries include both `checksum` (their value) and `baseChecksum` (the base locale checksum at the time of translation).
 
+MD5 hashes are used to detect changes:
 
-## TODO:
- - [x] CORE (libs/core)
-   - [x] Define core types for resource entries and tracker meta
-   - [x] Implement key/targetFolder validation (per segment `[A-Za-z0-9_-]+`) and resolution (no de-dup)
-   - [x] Add checksum utilities (MD5 of values) and status helpers
-   - [x] Implement addResource: ensure folders/files at each level; update resource_entries.json and tracker_meta.json; set statuses
-   - [x] Unit tests: validation, resolution, tags, idempotency, base change → stale, checksums
- - [x] CLI (apps/cli)
-   - [x] add-resource command with flags: --collection --key --value --comment --tags --targetFolder
-   - [x] Interactive prompts and non-interactive validation; call CORE; print summary
-   - [x] Tests for flags, prompts, validation failures, idempotency
-   - [x] Update docs/getting-started with instructions on how to add resource
- - [x] Data Transfer (libs/data-transfer)
-   - [x] CreateResourceDto and response DTO; export from index.
- - [x] API (apps/api)
-   - [x] DTO ↔ CORE mapping functions
-   - [x] POST /collections/:collection/resources endpoint (must accept array of resource DTOs for bulk operation) that calls CORE addResource
-   - [x] Request/response validation and error mapping (400/409/500)
-   - [x] Unit tests: happy path, invalid key, idempotent repeat, base change → stale
- - [ ] Tracker (apps/tracker)
-   - [ ] API client: POST /collections/:collection/resources using data-transfer DTOs
-   - [ ] Store/action: addResource and refresh affected paths
-   - [ ] UI: Create Resource dialog with validations; submit to API; handle results
- - [ ] Cross-cutting
-   - [ ] E2E smoke: create resource via CLI and API in temp collection; assert filesystem and meta
-   - [ ] Docs: getting-started resource entries; API endpoint docs (payload/response)
+- **Base locale**: Has `checksum` calculated from base value
+- **Non-base locales**: Have both:
+  - `checksum`: Hash of the translation value
+  - `baseChecksum`: Hash of the base value at time of translation (for stale detection)
+
+## Usage
+
+### CLI
+```bash
+# Interactive mode
+lingo-tracker add-resource
+
+# Non-interactive mode
+lingo-tracker add-resource \
+  --collection default \
+  --key apps.common.buttons.ok \
+  --value "OK" \
+  --comment "OK button" \
+  --tags "ui,buttons"
+
+# With target folder
+lingo-tracker add-resource \
+  --collection default \
+  --key buttons.ok \
+  --targetFolder apps.common \
+  --value "OK"
+```
+
+### API
+```bash
+# Add single resource
+POST /api/collections/:collection/resources
+Content-Type: application/json
+
+[{
+  "key": "apps.common.buttons.ok",
+  "baseValue": "OK",
+  "comment": "OK button",
+  "tags": ["ui", "buttons"],
+  "targetFolder": ""
+}]
+```
+
+**Note**: API accepts an array of resources for bulk operations.
+
+## Implementation Status
+
+### Completed
+- ✅ Core library implementation with validation and checksum logic
+- ✅ CLI command with interactive and non-interactive modes
+- ✅ Data Transfer DTOs
+- ✅ API endpoint with bulk operation support
+- ✅ Unit tests for all layers
+- ✅ Documentation (getting-started, CLI, API)
+
+### Pending
+- Tracker UI implementation (Create Resource dialog)
+- E2E smoke tests

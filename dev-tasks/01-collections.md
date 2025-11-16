@@ -1,22 +1,65 @@
-# Feature: Support translation collections
+# Feature: Translation Collections
 
-In a monorepo context it maybe desirable to have multiple translation collections (translation sources) that lingo tracker should handle.
+In a monorepo context it may be desirable to have multiple translation collections (translation sources) that LingoTracker should handle.
 
-## TODO
-- [x] Update application configuration to handle multiple collections
-  - [x] Create a new interface LingoTrackerCollection from LingoTrackerConfig
-  - [x] Add collections property to LingoTrackerConfig
-  - [x] Update init cli command to ask for collection name
-- [x] Add ability to add new collection via CLI
-- [x] The app should load the configuration, then present a card list of collections to the user to pick (if there is only one collection then proceed).  The next view should show collection name.
-- [x] The user should be be able to switch (or navigate to collections card list view) collections.
-- [x] Add cli command to delete collection by name
-- [x] Add API end point to delete collection by name
-- [x] Add delete icon button on collection-card mat card to delete the collection
-  - [x] Clicking the button will prompt the user for confirmation then call API end point to delete collection
-- [x] Add ability to add collection from tracker app
-  - [x] Move business logic for adding collection to core library
-  - [x] Update CLI to call addCollection from core library
-  - [x] Add end point to create collection.  Create DTOs in data-transfer library and add mappers as needed.
-  - [x] Add create collection button in the collections view in tracker, this should open up a dialog to collect all required information to create new collection.  The dialog should have 2 buttons: Create and Cancel.  If the user clicks Create button call API to create the collection then show toast when successful and redirect to collections view.
-- [ ] Add ability to edit collection from tracker app
+## Overview
+
+Collections allow organizing translation resources into separate, isolated groups. Each collection has its own configuration and translation files, making it possible to manage translations for different applications or modules within the same project.
+
+## Implemented Features
+
+### Configuration Structure
+- **LingoTrackerCollection**: Interface extending base config for individual collections
+- **Collections Property**: Array of collections in main `.lingo-tracker.json`
+- **Collection-Specific Config**: Each collection can override global settings
+
+### CLI Commands
+- **Init**: Prompts for collection name during initialization
+- **Add Collection**: Create new collections via CLI
+- **Delete Collection**: Remove collections by name
+
+### API Endpoints
+- **Delete Collection**: DELETE endpoint for removing collections by name
+- **Create Collection**: POST endpoint with DTOs and mappers
+
+### Tracker UI
+- **Collection List View**: Card-based display of available collections
+- **Collection Selection**: Automatic selection for single collection, picker for multiple
+- **Collection Switching**: Navigate between collections
+- **Delete Collection**: Icon button on collection cards with confirmation dialog
+- **Create Collection**: Dialog-based creation with validation and API integration
+
+## Usage
+
+### CLI
+```bash
+# Initialize with collection
+lingo-tracker init
+
+# Add new collection
+lingo-tracker add-collection --name my-collection
+
+# Delete collection
+lingo-tracker delete-collection --name my-collection
+```
+
+### API
+```bash
+# Create collection
+POST /api/collections
+{
+  "name": "my-collection",
+  "config": { ... }
+}
+
+# Delete collection
+DELETE /api/collections/:name
+```
+
+## Future Enhancements
+
+- Edit collection functionality from Tracker UI
+
+---
+
+**Status**: Core collection management completed. Edit functionality pending.
