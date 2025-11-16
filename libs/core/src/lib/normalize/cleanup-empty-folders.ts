@@ -1,4 +1,4 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import { getAllFoldersBottomUp, isFolderEmpty } from './folder-utils';
 
 export interface CleanupResult {
@@ -37,7 +37,7 @@ export function cleanupEmptyFolders(
 
       if (!dryRun) {
         try {
-          fs.rmdirSync(folderPath, { recursive: true });
+          fs.rmSync(folderPath, { recursive: true });
         } catch (error) {
           // Folder may have been removed already as a child of another folder
           // or may not be accessible - skip silently

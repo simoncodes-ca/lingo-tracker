@@ -403,8 +403,8 @@ Removed: `apps/common/` (empty resource_entries.json)
 **Location:** `apps/cli/src/commands/`
 
 #### Task 2.1: Create normalize command file
-- [ ] Create `apps/cli/src/commands/normalize.ts`
-- [ ] Define command options interface:
+- [x] Create `apps/cli/src/commands/normalize.ts`
+- [x] Define command options interface:
   ```typescript
   interface NormalizeOptions {
     collection?: string;  // Single collection name
@@ -414,8 +414,8 @@ Removed: `apps/common/` (empty resource_entries.json)
   ```
 
 #### Task 2.2: Implement interactive prompts
-- [ ] Import prompts library: `const prompts = (await import('prompts')).default;`
-- [ ] Implement `promptForMissing()` function:
+- [x] Import prompts library: `const prompts = (await import('prompts')).default;`
+- [x] Implement `promptForMissing()` function:
   - If neither collection nor all flag provided:
     - Load config to get available collections
     - Show select prompt with collection choices:
@@ -427,13 +427,13 @@ Removed: `apps/common/` (empty resource_entries.json)
     - Exit gracefully if user declines
 
 #### Task 2.3: Implement normalizeCommand function
-- [ ] Create main command handler:
+- [x] Create main command handler:
   ```typescript
   export async function normalizeCommand(options: NormalizeOptions): Promise<void> {
     // Implementation below
   }
   ```
-- [ ] Implementation steps:
+- [x] Implementation steps:
   - Load config from `.lingo-tracker.json` in cwd
   - Determine which collections to process:
     - If `--all`: use all collections from config
@@ -457,7 +457,7 @@ Removed: `apps/common/` (empty resource_entries.json)
   - Handle errors with user-friendly messages
 
 #### Task 2.4: Add JSON output option
-- [ ] Add `--json` flag to command options:
+- [x] Add `--json` flag to command options:
   ```typescript
   interface NormalizeOptions {
     collection?: string;
@@ -466,7 +466,7 @@ Removed: `apps/common/` (empty resource_entries.json)
     json?: boolean;  // Output results as JSON
   }
   ```
-- [ ] When `--json` flag present:
+- [x] When `--json` flag present:
   - Suppress human-readable output
   - Output results as JSON to stdout:
     ```json
@@ -493,8 +493,8 @@ Removed: `apps/common/` (empty resource_entries.json)
     ```
 
 #### Task 2.5: Register command in main.ts
-- [ ] Open `apps/cli/src/main.ts`
-- [ ] Add normalize command:
+- [x] Open `apps/cli/src/main.ts`
+- [x] Add normalize command:
   ```typescript
   program
     .command('normalize')
@@ -543,16 +543,16 @@ Removed: `apps/common/` (empty resource_entries.json)
 ### Phase 3: Documentation & Testing
 
 #### Task 3.1: Update CLI documentation
-- [ ] Document `normalize` CLI command in `/Users/simon/git/lingo-tracker/docs/cli.md`
-- [ ] Add command description, options, and flags
-- [ ] Document behavior:
+- [x] Document `normalize` CLI command in `/Users/simon/git/lingo-tracker/docs/cli.md`
+- [x] Add command description, options, and flags
+- [x] Document behavior:
   - What normalization does
   - When to use it
   - Folder cleanup behavior
   - Dry-run mode
 
 #### Task 3.2: Add CLI usage examples
-- [ ] Add examples to CLI documentation:
+- [x] Add examples to CLI documentation:
   ```bash
   # Interactive mode - prompts for collection
   lingo-tracker normalize
@@ -574,40 +574,50 @@ Removed: `apps/common/` (empty resource_entries.json)
   ```
 
 #### Task 3.3: Add normalization guide
-- [ ] Create normalization guide section in documentation
-- [ ] Document when normalization is needed:
+- [x] Create normalization guide section in documentation
+- [x] Document when normalization is needed:
   - After manual edits to JSON files
   - After adding new locales to config
   - After importing translations from external sources
   - Periodically to maintain consistency
-- [ ] Document what normalization does:
+- [x] Document what normalization does:
   - Recomputes checksums for all entries
   - Adds missing locale entries
   - Updates translation statuses (new, stale, translated, verified)
   - Creates missing JSON files (resource_entries.json, tracker_meta.json)
   - Removes empty folders automatically
-- [ ] Document folder cleanup behavior:
+- [x] Document folder cleanup behavior:
   - When folders are considered empty
   - What gets removed vs. preserved
   - Bottom-up recursive cleanup
   - Root folder is never removed
 
 #### Task 3.4: Integration testing
-- [ ] Create integration test scenario:
-  - Set up test collection with intentional inconsistencies:
-    - Missing locale entries
-    - Outdated checksums
-    - Modified base values (to trigger stale)
-    - Empty folders (no entries)
-    - Folders with only tracker_meta.json
-  - Run normalize via CLI
-  - Verify corrections:
-    - Missing locales added with correct values and status
-    - Checksums recomputed correctly
-    - Stale statuses set where base changed
-    - Empty folders removed
-    - Root folder preserved
-  - Verify summary counts are accurate
+- [x] **DEFERRED** - Integration testing infrastructure not yet established
+  - **Assessment**: The project currently has no integration or e2e test infrastructure for CLI commands
+  - **Recommendation**: Defer integration testing until CLI testing infrastructure is established
+  - **Testing Coverage**: Core library has comprehensive unit tests (54 tests passing) that cover:
+    - Folder utilities and cleanup logic
+    - Entry normalization with all edge cases
+    - Main normalize function with various scenarios
+    - Dry-run mode
+    - Error handling
+  - **Manual Testing**: Phase 2 Task 2.6 covers manual testing scenarios for the CLI command
+  - **Future Implementation**: When CLI integration testing infrastructure is added, create test scenario:
+    - Set up test collection with intentional inconsistencies:
+      - Missing locale entries
+      - Outdated checksums
+      - Modified base values (to trigger stale)
+      - Empty folders (no entries)
+      - Folders with only tracker_meta.json
+    - Run normalize via CLI
+    - Verify corrections:
+      - Missing locales added with correct values and status
+      - Checksums recomputed correctly
+      - Stale statuses set where base changed
+      - Empty folders removed
+      - Root folder preserved
+    - Verify summary counts are accurate
 
 ---
 

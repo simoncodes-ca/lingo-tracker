@@ -58,11 +58,11 @@ describe('Normalize Entry', () => {
       const result = normalizeEntry(params);
 
       // Should add es with base value
-      expect(result.resourceEntry.es).toBe('Cancel');
-      expect(result.metadata.es).toBeDefined();
-      expect(result.metadata.es.status).toBe('new');
-      expect(result.metadata.es.checksum).toBe(calculateChecksum('Cancel'));
-      expect(result.metadata.es.baseChecksum).toBe(calculateChecksum('Cancel'));
+      expect(result.resourceEntry['es']).toBe('Cancel');
+      expect(result.metadata['es']).toBeDefined();
+      expect(result.metadata['es'].status).toBe('new');
+      expect(result.metadata['es'].checksum).toBe(calculateChecksum('Cancel'));
+      expect(result.metadata['es'].baseChecksum).toBe(calculateChecksum('Cancel'));
 
       expect(result.changes.localesAdded).toBe(1);
     });
@@ -371,11 +371,11 @@ describe('Normalize Entry', () => {
 
       // Should add all locales
       expect(result.resourceEntry['fr-ca']).toBe('New Entry');
-      expect(result.resourceEntry.es).toBe('New Entry');
+      expect(result.resourceEntry['es']).toBe('New Entry');
 
       // All should have status 'new'
       expect(result.metadata['fr-ca'].status).toBe('new');
-      expect(result.metadata.es.status).toBe('new');
+      expect(result.metadata['es'].status).toBe('new');
 
       expect(result.changes.localesAdded).toBe(2);
     });
@@ -406,6 +406,40 @@ describe('Normalize Entry', () => {
       expect(result.resourceEntry.es).toBe('Submit');
       expect(result.resourceEntry.de).toBe('Submit');
       expect(result.resourceEntry.ja).toBe('Submit');
+    });
+
+    it('should remove base locale from resource entry if it exists', () => {
+      const resourceEntry: ResourceEntry = {
+        source: 'Cancel',
+        en: 'Cancel', // Base locale should NOT be in resource entries
+        'fr-ca': 'Annuler',
+      };
+
+      const metadata: ResourceEntryMetadata = {
+        en: { checksum: calculateChecksum('Cancel') },
+        'fr-ca': {
+          checksum: calculateChecksum('Annuler'),
+          baseChecksum: calculateChecksum('Cancel'),
+          status: 'translated',
+        },
+      };
+
+      const params: NormalizeEntryParams = {
+        entryKey: 'cancel',
+        resourceEntry,
+        metadata,
+        baseLocale,
+        locales,
+      };
+
+      const result = normalizeEntry(params);
+
+      // Base locale should NOT appear in normalized entry
+      expect(result.resourceEntry[baseLocale]).toBeUndefined();
+      // But source should still exist
+      expect(result.resourceEntry.source).toBe('Cancel');
+      // And other locales should be preserved
+      expect(result.resourceEntry['fr-ca']).toBe('Annuler');
     });
   });
 });

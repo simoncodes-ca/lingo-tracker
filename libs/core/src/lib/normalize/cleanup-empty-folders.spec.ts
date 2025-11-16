@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { cleanupEmptyFolders } from './cleanup-empty-folders';
 import * as folderUtils from './folder-utils';
 
@@ -30,14 +30,14 @@ describe('Cleanup Empty Folders', () => {
         return folderPath === emptyFolder;
       });
 
-      // Mock rmdirSync to track calls
-      vi.mocked(fs.rmdirSync).mockImplementation(() => undefined);
+      // Mock rmSync to track calls
+      vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
       const result = cleanupEmptyFolders(testDir);
 
       expect(result.foldersRemoved).toBe(1);
       expect(result.removedPaths).toContain(emptyFolder);
-      expect(fs.rmdirSync).toHaveBeenCalledWith(emptyFolder, { recursive: true });
+      expect(fs.rmSync).toHaveBeenCalledWith(emptyFolder, { recursive: true });
     });
 
     it('should remove empty leaf folder (empty resource_entries.json)', () => {
@@ -46,13 +46,13 @@ describe('Cleanup Empty Folders', () => {
 
       vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([emptyFolder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
-      vi.mocked(fs.rmdirSync).mockImplementation(() => undefined);
+      vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
       const result = cleanupEmptyFolders(testDir);
 
       expect(result.foldersRemoved).toBe(1);
       expect(result.removedPaths).toContain(emptyFolder);
-      expect(fs.rmdirSync).toHaveBeenCalledWith(emptyFolder, { recursive: true });
+      expect(fs.rmSync).toHaveBeenCalledWith(emptyFolder, { recursive: true });
     });
 
     it('should remove folder with only tracker_meta.json', () => {
@@ -61,13 +61,13 @@ describe('Cleanup Empty Folders', () => {
 
       vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([folder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
-      vi.mocked(fs.rmdirSync).mockImplementation(() => undefined);
+      vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
       const result = cleanupEmptyFolders(testDir);
 
       expect(result.foldersRemoved).toBe(1);
       expect(result.removedPaths).toContain(folder);
-      expect(fs.rmdirSync).toHaveBeenCalledWith(folder, { recursive: true });
+      expect(fs.rmSync).toHaveBeenCalledWith(folder, { recursive: true });
     });
 
     it('should remove folder with only hidden files (.gitkeep)', () => {
@@ -76,13 +76,13 @@ describe('Cleanup Empty Folders', () => {
 
       vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([folder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
-      vi.mocked(fs.rmdirSync).mockImplementation(() => undefined);
+      vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
       const result = cleanupEmptyFolders(testDir);
 
       expect(result.foldersRemoved).toBe(1);
       expect(result.removedPaths).toContain(folder);
-      expect(fs.rmdirSync).toHaveBeenCalledWith(folder, { recursive: true });
+      expect(fs.rmSync).toHaveBeenCalledWith(folder, { recursive: true });
     });
 
     it('should preserve folders with entries in resource_entries.json', () => {
@@ -95,7 +95,7 @@ describe('Cleanup Empty Folders', () => {
       const result = cleanupEmptyFolders(testDir);
 
       expect(result.foldersRemoved).toBe(0);
-      expect(fs.rmdirSync).not.toHaveBeenCalled();
+      expect(fs.rmSync).not.toHaveBeenCalled();
     });
 
     it('should preserve folders with subfolders', () => {
@@ -113,7 +113,7 @@ describe('Cleanup Empty Folders', () => {
       const result = cleanupEmptyFolders(testDir);
 
       expect(result.foldersRemoved).toBe(0);
-      expect(fs.rmdirSync).not.toHaveBeenCalled();
+      expect(fs.rmSync).not.toHaveBeenCalled();
     });
 
     it('should remove empty intermediate folders recursively when children are removed', () => {
@@ -123,7 +123,7 @@ describe('Cleanup Empty Folders', () => {
 
       vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([common, apps, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
-      vi.mocked(fs.rmdirSync).mockImplementation(() => undefined);
+      vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
       const result = cleanupEmptyFolders(testDir);
 
@@ -131,8 +131,8 @@ describe('Cleanup Empty Folders', () => {
       expect(result.foldersRemoved).toBe(2);
       expect(result.removedPaths).toContain(common);
       expect(result.removedPaths).toContain(apps);
-      expect(fs.rmdirSync).toHaveBeenCalledWith(common, { recursive: true });
-      expect(fs.rmdirSync).toHaveBeenCalledWith(apps, { recursive: true });
+      expect(fs.rmSync).toHaveBeenCalledWith(common, { recursive: true });
+      expect(fs.rmSync).toHaveBeenCalledWith(apps, { recursive: true });
     });
 
     it('should never remove root translations folder (even if empty)', () => {
@@ -144,7 +144,7 @@ describe('Cleanup Empty Folders', () => {
       const result = cleanupEmptyFolders(testDir);
 
       expect(result.foldersRemoved).toBe(0);
-      expect(fs.rmdirSync).not.toHaveBeenCalled();
+      expect(fs.rmSync).not.toHaveBeenCalled();
     });
 
     it('should work correctly with multiple nested levels', () => {
@@ -171,7 +171,7 @@ describe('Cleanup Empty Folders', () => {
         return folderPath === buttons || folderPath === common;
       });
 
-      vi.mocked(fs.rmdirSync).mockImplementation(() => undefined);
+      vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
       const result = cleanupEmptyFolders(testDir);
 
@@ -204,7 +204,7 @@ describe('Cleanup Empty Folders', () => {
       expect(result.removedPaths).toContain(emptyFolder2);
 
       // Folders should not be deleted in dry-run
-      expect(fs.rmdirSync).not.toHaveBeenCalled();
+      expect(fs.rmSync).not.toHaveBeenCalled();
     });
 
     it('should return correct count and paths of removed folders', () => {
@@ -224,7 +224,7 @@ describe('Cleanup Empty Folders', () => {
         return folderPath === empty1 || folderPath === empty2;
       });
 
-      vi.mocked(fs.rmdirSync).mockImplementation(() => undefined);
+      vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
       const result = cleanupEmptyFolders(testDir);
 
@@ -241,12 +241,12 @@ describe('Cleanup Empty Folders', () => {
 
       vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([folder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
-      vi.mocked(fs.rmdirSync).mockImplementation(() => undefined);
+      vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
       const result = cleanupEmptyFolders(testDir);
 
       expect(result.foldersRemoved).toBe(1);
-      expect(fs.rmdirSync).toHaveBeenCalledWith(folder, { recursive: true });
+      expect(fs.rmSync).toHaveBeenCalledWith(folder, { recursive: true });
     });
 
     it('should handle errors during folder deletion gracefully', () => {
@@ -256,8 +256,8 @@ describe('Cleanup Empty Folders', () => {
       vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([emptyFolder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
 
-      // Mock rmdirSync to throw an error
-      vi.mocked(fs.rmdirSync).mockImplementation(() => {
+      // Mock rmSync to throw an error
+      vi.mocked(fs.rmSync).mockImplementation(() => {
         throw new Error('Permission denied');
       });
 

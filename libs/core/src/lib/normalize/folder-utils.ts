@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface FolderInfo {
   readonly path: string;
@@ -68,7 +68,7 @@ export function isFolderEmpty(folderPath: string): boolean {
   const entries = fs.readdirSync(folderPath);
 
   // Check for subfolders - if any exist, folder is not empty
-  const hasSubfolders = entries.some(entry => {
+  const hasSubfolders = entries.some((entry: string) => {
     const entryPath = path.join(folderPath, entry);
     const stats = fs.statSync(entryPath);
     return stats.isDirectory();

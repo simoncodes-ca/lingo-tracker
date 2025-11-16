@@ -307,6 +307,132 @@ lingo-tracker delete-resource \
 
 ---
 
+### normalize
+
+Normalize translation resources by recomputing checksums, adding missing locale entries, updating statuses, and cleaning up empty folders. This is a maintenance operation that ensures translation files are consistent and correct after manual edits, configuration changes, or imports.
+
+**Usage:**
+
+```bash
+lingo-tracker normalize [options]
+```
+
+**Options:**
+
+- `--collection <name>` - Collection name to normalize (required unless `--all` is used)
+- `--all` - Normalize all collections in the project
+- `--dry-run` - Preview changes without applying them (reports what would be changed)
+- `--json` - Output results as JSON (useful for scripts and automation)
+
+**What Normalization Does:**
+
+1. **Recomputes checksums**: Updates MD5 checksums for base locale and all translations
+2. **Adds missing locales**: Creates entries for any missing locales using the base value with status `new`
+3. **Updates statuses**: Sets correct translation status based on checksums
+   - `new` - Locale entry was just added or matches base value
+   - `stale` - Base value changed since last translation (checksum mismatch)
+   - `translated` / `verified` - Preserved when base value unchanged
+4. **Creates missing files**: Ensures `resource_entries.json` and `tracker_meta.json` exist at every folder level
+5. **Cleans up empty folders**: Removes folders with no entries (bottom-up recursive cleanup)
+
+**Folder Cleanup Behavior:**
+
+Normalization automatically removes empty folders to keep the translations directory clean:
+
+- Folders are considered **empty** if they contain:
+  - No `resource_entries.json` file, OR
+  - An empty `resource_entries.json` (no entries or `{}`), AND
+  - No subfolders
+- Folders containing only `tracker_meta.json` or hidden files (`.gitkeep`, `.DS_Store`) are removed
+- Cleanup uses bottom-up traversal (deepest folders first) to handle recursive removal
+- The root translations folder is **never removed**, even if empty
+
+**When to Use Normalize:**
+
+- After manually editing JSON translation files
+- After adding new locales to configuration
+- After importing translations from external sources
+- Periodically to maintain consistency and clean up the folder structure
+- When translation statuses seem incorrect
+
+**Examples:**
+
+Interactive mode (prompts for collection):
+```bash
+lingo-tracker normalize
+```
+
+Normalize a specific collection:
+```bash
+lingo-tracker normalize --collection Main
+```
+
+Normalize all collections:
+```bash
+lingo-tracker normalize --all
+```
+
+Preview changes without applying (dry-run):
+```bash
+lingo-tracker normalize --collection Main --dry-run
+```
+
+Output results as JSON (useful for scripts):
+```bash
+lingo-tracker normalize --collection Main --json
+```
+
+Normalize all collections with JSON output:
+```bash
+lingo-tracker normalize --all --json
+```
+
+**Output:**
+
+Human-readable format (default):
+```
+🔄 Normalizing collection: Main
+
+   ✅ Entries processed: 42
+   ✅ Locales added: 7
+   ✅ Files created: 2
+   ✅ Files updated: 15
+   ✅ Folders removed: 3
+```
+
+JSON format (`--json` flag):
+```json
+{
+  "collections": [
+    {
+      "collectionName": "Main",
+      "entriesProcessed": 42,
+      "localesAdded": 7,
+      "filesCreated": 2,
+      "filesUpdated": 15,
+      "foldersRemoved": 3
+    }
+  ],
+  "totals": {
+    "collectionsProcessed": 1,
+    "entriesProcessed": 42,
+    "localesAdded": 7,
+    "filesCreated": 2,
+    "filesUpdated": 15,
+    "foldersRemoved": 3
+  }
+}
+```
+
+**Notes:**
+- Normalization is **non-destructive**: it preserves existing translation values, comments, and tags
+- Only fills in missing data and corrects metadata
+- Dry-run mode counts folders that would be removed but doesn't delete them
+- In interactive mode, you'll be prompted to confirm when using `--all`
+- Best practice: run with `--dry-run` first to preview changes before applying
+
+---
+
 ## Configuration
 
 All commands read from `.lingo-tracker.json` in the project root. This file is created by the `init` command.

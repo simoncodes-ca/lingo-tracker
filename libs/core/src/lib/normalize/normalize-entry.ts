@@ -212,8 +212,16 @@ function processAllLocales(params: ProcessAllLocalesParams): ProcessAllLocalesRe
 export function normalizeEntry(params: NormalizeEntryParams): NormalizeEntryResult {
   const { resourceEntry, metadata, baseLocale, locales } = params;
 
+  if (!baseLocale) {
+    throw new Error('baseLocale parameter is required and cannot be undefined');
+  }
+
   const normalizedEntry: ResourceEntry = { ...resourceEntry };
   const normalizedMetadata: ResourceEntryMetadata = { ...metadata };
+
+  if (baseLocale in normalizedEntry && baseLocale !== 'source') {
+    delete normalizedEntry[baseLocale];
+  }
 
   const baseValue = resourceEntry.source;
   const currentBaseChecksum = calculateChecksum(baseValue);

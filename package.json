@@ -22,7 +22,7 @@
     "test": "pnpm run test:cli && pnpm run test:api && pnpm run test:core &&pnpm run test:tracker",
     "test:release": "pnpm run release --dry-run",
     "nx": "nx",
-    "lingo-tracker": "node dist/apps/cli/main.js $1"
+    "lingo-tracker": "node dist/apps/cli/main.js"
   },
   "keywords": [],
   "author": "Simon Nodel",

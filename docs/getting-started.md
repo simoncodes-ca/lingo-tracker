@@ -143,6 +143,119 @@ Both commands support fully non‑interactive runs; provide all required flags t
 
 That's it. You're ready to track and manage translations with Lingo Tracker.
 
+### Maintaining Translation Consistency
+
+After setting up your project, you may need to normalize your translation files to ensure consistency. Normalization is particularly useful in these scenarios:
+
+#### When to Normalize
+
+**After Manual Edits**
+If you or your team manually edit JSON translation files, checksums and statuses may become outdated. Normalization recomputes all checksums and updates statuses accordingly.
+
+**After Adding New Locales**
+When you add a new locale to your configuration (e.g., adding `de` to your locales list), existing resources won't have entries for the new locale. Normalization creates these missing entries with the base value and marks them as `new`.
+
+**After Importing Translations**
+External translation tools or services may provide translations without proper metadata. Normalization ensures all entries have correct checksums and statuses.
+
+**Periodic Maintenance**
+Running normalize periodically helps maintain consistency and cleans up your folder structure by removing empty directories.
+
+**When Statuses Seem Wrong**
+If translation statuses don't match reality (e.g., translations marked as `stale` when they shouldn't be), normalization corrects these based on actual checksums.
+
+#### What Normalization Does
+
+The `normalize` command performs these operations:
+
+1. **Recomputes Checksums**: Updates MD5 checksums for the base locale and all translations to reflect current values
+2. **Adds Missing Locales**: Creates entries for any configured locales that don't exist in a resource, using the base value with status `new`
+3. **Updates Statuses**: Sets correct translation statuses based on checksums:
+   - `new` - Locale entry was just added or matches the base value
+   - `stale` - Base value changed since the translation was last updated
+   - `translated` / `verified` - Preserved when base value hasn't changed
+4. **Creates Missing Files**: Ensures both `resource_entries.json` and `tracker_meta.json` exist at every folder level
+5. **Cleans Up Empty Folders**: Removes directories that no longer contain translation entries
+
+#### Folder Cleanup Details
+
+Normalization automatically removes empty folders to keep your translations directory clean and organized:
+
+- **Empty Folder Definition**: A folder is considered empty if it has:
+  - No `resource_entries.json` file, OR
+  - An empty `resource_entries.json` (no entries or `{}`), AND
+  - No subfolders containing entries
+
+- **What Gets Removed**:
+  - Folders with only `tracker_meta.json` (metadata without entries)
+  - Folders with only hidden files like `.gitkeep` or `.DS_Store`
+  - Parent folders that become empty after their children are removed
+
+- **What's Protected**:
+  - The root translations folder is never removed, even if empty
+  - Any folder containing `resource_entries.json` with actual entries
+  - Any folder with subfolders that contain entries
+
+- **Bottom-Up Cleanup**: The cleanup process starts with the deepest folders and works up to the root, allowing recursive removal of entire empty folder trees
+
+#### Running Normalize
+
+Preview what would change (recommended first step):
+```bash
+lingo-tracker normalize --collection Main --dry-run
+```
+
+Normalize a specific collection:
+```bash
+lingo-tracker normalize --collection Main
+```
+
+Normalize all collections:
+```bash
+lingo-tracker normalize --all
+```
+
+Get JSON output for automation:
+```bash
+lingo-tracker normalize --collection Main --json
+```
+
+#### Understanding the Output
+
+After normalization, you'll see a summary like this:
+
+```
+🔄 Normalizing collection: Main
+
+   ✅ Entries processed: 42
+   ✅ Locales added: 7
+   ✅ Files created: 2
+   ✅ Files updated: 15
+   ✅ Folders removed: 3
+```
+
+- **Entries processed**: Total number of translation resources examined
+- **Locales added**: Number of missing locale entries that were created
+- **Files created**: Number of new JSON files created (resource_entries.json or tracker_meta.json)
+- **Files updated**: Number of existing files that had metadata updated
+- **Folders removed**: Number of empty folders that were deleted
+
+#### Best Practices
+
+1. **Use Dry-Run First**: Always run with `--dry-run` to preview changes before applying them
+2. **Commit Before Normalizing**: Ensure you have a clean Git state so you can review changes
+3. **Normalize After Config Changes**: Any time you modify locale settings, run normalize to update all resources
+4. **Regular Maintenance**: Consider adding normalize to your CI/CD pipeline or running it periodically
+5. **Check Folder Cleanup**: Review the "Folders removed" count to understand what's being cleaned up
+
+#### Non-Destructive Operation
+
+Normalization is designed to be safe:
+- **Preserves Translation Values**: Never modifies existing translation text
+- **Preserves Comments and Tags**: Keeps all metadata intact
+- **Only Adds/Corrects**: Fills in missing data and fixes incorrect metadata
+- **Dry-Run Available**: Preview all changes before applying
+
 ### Next Steps
 
 - For managing translation resources and other CLI commands, see the [CLI Reference](./cli.md)

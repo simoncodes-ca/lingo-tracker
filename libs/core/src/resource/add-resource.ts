@@ -88,10 +88,13 @@ export function addResource(
     resourceEntry.tags = params.tags;
   }
 
-  // Add translations
+  // Add translations (skip base locale - it's in 'source')
   if (params.translations) {
     params.translations.forEach(({ locale, value }) => {
-      resourceEntry[locale] = value;
+      // Skip base locale - its value comes from 'source' property
+      if (locale !== baseLocale) {
+        resourceEntry[locale] = value;
+      }
     });
   }
 

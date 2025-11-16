@@ -77,5 +77,17 @@ program
     await deleteResourceCommand(options);
   });
 
+program
+  .command('normalize')
+  .description('Normalize translation resources (fix checksums, add missing locales, clean up empty folders)')
+  .option('--collection <name>', 'Collection name (required unless --all)')
+  .option('--all', 'Normalize all collections')
+  .option('--dry-run', 'Preview changes without applying them')
+  .option('--json', 'Output results as JSON')
+  .action(async (options) => {
+    const { normalizeCommand } = await import('./commands/normalize');
+    await normalizeCommand(options);
+  });
+
 program.parse();
 
