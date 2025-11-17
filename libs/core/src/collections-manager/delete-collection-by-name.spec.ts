@@ -18,7 +18,7 @@ describe('deleteCollectionByName', () => {
       },
     };
 
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as any);
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2));
 
     const result = deleteCollectionByName('spanish', { cwd: '/test' });
 
@@ -51,7 +51,7 @@ describe('deleteCollectionByName', () => {
       },
     };
 
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as any);
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2));
 
     expect(() => deleteCollectionByName('nonexistent', { cwd: '/test' })).toThrow(
       'Collection "nonexistent" not found'
@@ -59,7 +59,7 @@ describe('deleteCollectionByName', () => {
   });
 
   it('should throw an error if config file is invalid JSON', () => {
-    vi.mocked(fs.readFileSync).mockReturnValue('invalid json {' as any);
+    vi.mocked(fs.readFileSync).mockReturnValue('invalid json {');
 
     expect(() => deleteCollectionByName('any', { cwd: '/test' })).toThrow(
       'Failed to read or parse configuration file'
@@ -79,13 +79,13 @@ describe('deleteCollectionByName', () => {
     let currentConfig = initialConfig;
 
     vi.mocked(fs.readFileSync).mockImplementation(() =>
-      JSON.stringify(currentConfig, null, 2) as any
+      JSON.stringify(currentConfig, null, 2)
     );
 
     vi.mocked(fs.writeFileSync).mockImplementation(
-      ((_path, data) => {
+      (_path, data) => {
         currentConfig = JSON.parse(data as string);
-      }) as any
+      }
     );
 
     deleteCollectionByName('es', { cwd: '/test' });
@@ -106,7 +106,7 @@ describe('deleteCollectionByName', () => {
       },
     };
 
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as any);
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2));
 
     const result = deleteCollectionByName('english');
 

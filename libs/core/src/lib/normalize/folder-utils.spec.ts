@@ -28,7 +28,7 @@ describe('Folder Utilities', () => {
         return [testDir, level1, level2, level3].includes(filepath as string);
       });
 
-      vi.mocked(fs.statSync).mockImplementation(() => {
+      vi.mocked(fs.statSync).mockImplementation((_filepath) => {
         return { isDirectory: () => true } as fs.Stats;
       });
 

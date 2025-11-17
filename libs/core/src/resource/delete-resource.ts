@@ -34,10 +34,10 @@ export function deleteResource(
       if (deletionSucceeded) {
         entriesDeleted++;
       }
-    } catch (error) {
+    } catch (caughtError) {
       errors.push({
         key,
-        error: (error as { message?: string })?.message || 'Unknown error occurred',
+        error: (caughtError as { message?: string })?.message || 'Unknown error occurred',
       });
     }
   }
@@ -105,7 +105,7 @@ function loadJsonFile<T>(filePath: string): T {
   try {
     const content = readFileSync(filePath, 'utf8');
     return JSON.parse(content) as T;
-  } catch (_error) {
+  } catch {
     throw new Error(`Failed to read or parse file: ${filePath}`);
   }
 }
