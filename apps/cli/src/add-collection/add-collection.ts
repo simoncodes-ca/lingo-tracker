@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import prompts from 'prompts';
+import { CONFIG_FILENAME, addCollection, DEFAULT_CONFIG } from '@simoncodes-ca/core';
 import type { InitOptions } from '../types/init-options.js';
 
 type LingoTrackerConfig = { collections?: Record<string, unknown> };
 
 export async function addCollectionCommand(options: InitOptions): Promise<void> {
   const cwd = process.env.INIT_CWD || process.cwd();
-  const { CONFIG_FILENAME, addCollection } = await import('@simoncodes-ca/core');
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   if (!existsSync(configPath)) {
@@ -61,7 +61,6 @@ async function promptForMissing(options: InitOptions): Promise<{
   baseLocale: string;
   locales: string[];
 }> {
-  const { DEFAULT_CONFIG } = await import('@simoncodes-ca/core');
   const responses: Partial<{
     collectionName: string;
     translationsFolder: string;

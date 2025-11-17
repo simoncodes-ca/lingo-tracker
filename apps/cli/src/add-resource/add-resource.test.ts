@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { addResourceCommand } from './add-resource';
 import * as fs from 'node:fs';
 import prompts from 'prompts';
+import * as core from '@simoncodes-ca/core';
 
 // Mock prompts to avoid interactive input
 vi.mock('prompts', () => ({
@@ -122,7 +123,6 @@ describe('addResourceCommand', () => {
 
   it('should handle translations array format', async () => {
     const consoleSpy = vi.spyOn(console, 'log');
-    const { addResource } = await import('@simoncodes-ca/core');
     const config = {
       collections: {
         TestCollection: {
@@ -153,7 +153,7 @@ describe('addResourceCommand', () => {
     });
 
     // Should call addResource with translations array
-    expect(addResource).toHaveBeenCalledWith(
+    expect(core.addResource).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         translations: expect.arrayContaining([
@@ -230,7 +230,6 @@ describe('addResourceCommand', () => {
 
   it('should create entries for all locales when no translations provided', async () => {
     const consoleSpy = vi.spyOn(console, 'log');
-    const { addResource } = await import('@simoncodes-ca/core');
     const config = {
       collections: {
         TestCollection: {
@@ -264,7 +263,7 @@ describe('addResourceCommand', () => {
     });
 
     // Should call addResource with translations for all non-base locales
-    expect(addResource).toHaveBeenCalledWith(
+    expect(core.addResource).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         translations: expect.arrayContaining([

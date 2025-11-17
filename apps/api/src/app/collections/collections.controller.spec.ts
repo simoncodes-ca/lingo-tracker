@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
 import { CollectionsController } from './collections.controller';
+import * as core from '@simoncodes-ca/core';
 
 // Mock the core module
 jest.mock('@simoncodes-ca/core', () => ({
@@ -25,7 +26,7 @@ describe('CollectionsController', () => {
 
   describe('deleteCollection', () => {
     it('should successfully delete a collection', async () => {
-      const { deleteCollectionByName } = require('@simoncodes-ca/core');
+      const deleteCollectionByName = core.deleteCollectionByName as jest.Mock;
       deleteCollectionByName.mockReturnValue({ message: 'Collection "test-collection" deleted successfully' });
 
       const result = await collectionsController.deleteCollection('test-collection');
@@ -35,7 +36,7 @@ describe('CollectionsController', () => {
     });
 
     it('should URI decode collection names with special characters', async () => {
-      const { deleteCollectionByName } = require('@simoncodes-ca/core');
+      const deleteCollectionByName = core.deleteCollectionByName as jest.Mock;
       deleteCollectionByName.mockReturnValue({ message: 'Collection "My Collection" deleted successfully' });
 
       const result = await collectionsController.deleteCollection('My%20Collection');
@@ -45,7 +46,7 @@ describe('CollectionsController', () => {
     });
 
     it('should throw HttpException when collection not found', async () => {
-      const { deleteCollectionByName } = require('@simoncodes-ca/core');
+      const deleteCollectionByName = core.deleteCollectionByName as jest.Mock;
       deleteCollectionByName.mockImplementation(() => {
         throw new Error('Collection not found');
       });
@@ -55,7 +56,7 @@ describe('CollectionsController', () => {
     });
 
     it('should throw HttpException when deletion fails', async () => {
-      const { deleteCollectionByName } = require('@simoncodes-ca/core');
+      const deleteCollectionByName = core.deleteCollectionByName as jest.Mock;
       deleteCollectionByName.mockImplementation(() => {
         throw new Error('Failed to delete collection');
       });

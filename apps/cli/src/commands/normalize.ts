@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
+import { CONFIG_FILENAME, normalize } from '@simoncodes-ca/core';
 
 export interface NormalizeOptions {
   collection?: string;
@@ -33,7 +34,6 @@ interface NormalizeCommandResult {
 
 export async function normalizeCommand(options: NormalizeOptions): Promise<void> {
   const cwd = process.env.INIT_CWD || process.cwd();
-  const { CONFIG_FILENAME, normalize } = await import('@simoncodes-ca/core');
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   let config: LingoTrackerConfig;

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { deleteCollectionCommand } from './delete-collection';
+import * as core from '@simoncodes-ca/core';
 
 vi.mock('node:fs');
 vi.mock('prompts');
@@ -38,10 +39,9 @@ describe('deleteCollectionCommand', () => {
   };
 
   it('should delete specified collection from config', async () => {
-    const { deleteCollectionByName } = await import('@simoncodes-ca/core');
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
-    vi.mocked(deleteCollectionByName).mockReturnValue({ message: 'Collection "Collection1" deleted successfully' });
+    vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "Collection1" deleted successfully' });
 
     const options = {
       collectionName: 'Collection1'
@@ -49,11 +49,10 @@ describe('deleteCollectionCommand', () => {
 
     await deleteCollectionCommand(options);
 
-    expect(deleteCollectionByName).toHaveBeenCalledWith('Collection1', { cwd: '/test/project' });
+    expect(core.deleteCollectionByName).toHaveBeenCalledWith('Collection1', { cwd: '/test/project' });
   });
 
   it('should handle deletion of last remaining collection', async () => {
-    const { deleteCollectionByName } = await import('@simoncodes-ca/core');
     const singleCollectionConfig = {
       ...mockConfig,
       collections: {
@@ -65,7 +64,7 @@ describe('deleteCollectionCommand', () => {
 
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(singleCollectionConfig));
-    vi.mocked(deleteCollectionByName).mockReturnValue({ message: 'Collection "OnlyCollection" deleted successfully' });
+    vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "OnlyCollection" deleted successfully' });
 
     const options = {
       collectionName: 'OnlyCollection'
@@ -73,7 +72,7 @@ describe('deleteCollectionCommand', () => {
 
     await deleteCollectionCommand(options);
 
-    expect(deleteCollectionByName).toHaveBeenCalledWith('OnlyCollection', { cwd: '/test/project' });
+    expect(core.deleteCollectionByName).toHaveBeenCalledWith('OnlyCollection', { cwd: '/test/project' });
   });
 
   it('should not write file if config does not exist', async () => {
@@ -89,7 +88,6 @@ describe('deleteCollectionCommand', () => {
   });
 
   it('should not write file if config is invalid JSON', async () => {
-    const { deleteCollectionByName } = await import('@simoncodes-ca/core');
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue('invalid json');
 
@@ -99,11 +97,10 @@ describe('deleteCollectionCommand', () => {
 
     await deleteCollectionCommand(options);
 
-    expect(deleteCollectionByName).not.toHaveBeenCalled();
+    expect(core.deleteCollectionByName).not.toHaveBeenCalled();
   });
 
   it('should not write file if no collections exist', async () => {
-    const { deleteCollectionByName } = await import('@simoncodes-ca/core');
     const emptyCollectionsConfig = {
       ...mockConfig,
       collections: {}
@@ -118,11 +115,10 @@ describe('deleteCollectionCommand', () => {
 
     await deleteCollectionCommand(options);
 
-    expect(deleteCollectionByName).not.toHaveBeenCalled();
+    expect(core.deleteCollectionByName).not.toHaveBeenCalled();
   });
 
   it('should not write file if collections property is missing', async () => {
-    const { deleteCollectionByName } = await import('@simoncodes-ca/core');
     const noCollectionsConfig = {
       exportFolder: 'dist/lingo-export',
       importFolder: 'dist/lingo-import',
@@ -139,11 +135,10 @@ describe('deleteCollectionCommand', () => {
 
     await deleteCollectionCommand(options);
 
-    expect(deleteCollectionByName).not.toHaveBeenCalled();
+    expect(core.deleteCollectionByName).not.toHaveBeenCalled();
   });
 
   it('should not write file if specified collection does not exist', async () => {
-    const { deleteCollectionByName } = await import('@simoncodes-ca/core');
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
 
@@ -153,11 +148,10 @@ describe('deleteCollectionCommand', () => {
 
     await deleteCollectionCommand(options);
 
-    expect(deleteCollectionByName).not.toHaveBeenCalled();
+    expect(core.deleteCollectionByName).not.toHaveBeenCalled();
   });
 
   it('should handle single collection when no collection name provided', async () => {
-    const { deleteCollectionByName } = await import('@simoncodes-ca/core');
     const singleCollectionConfig = {
       ...mockConfig,
       collections: {
@@ -169,17 +163,16 @@ describe('deleteCollectionCommand', () => {
 
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(singleCollectionConfig));
-    vi.mocked(deleteCollectionByName).mockReturnValue({ message: 'Collection "OnlyCollection" deleted successfully' });
+    vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "OnlyCollection" deleted successfully' });
 
     const options = {};
 
     await deleteCollectionCommand(options);
 
-    expect(deleteCollectionByName).toHaveBeenCalledWith('OnlyCollection', { cwd: '/test/project' });
+    expect(core.deleteCollectionByName).toHaveBeenCalledWith('OnlyCollection', { cwd: '/test/project' });
   });
 
   it('should preserve other config properties when deleting collection', async () => {
-    const { deleteCollectionByName } = await import('@simoncodes-ca/core');
     const configWithExtraProps = {
       ...mockConfig,
       customProperty: 'customValue',
@@ -188,7 +181,7 @@ describe('deleteCollectionCommand', () => {
 
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(configWithExtraProps));
-    vi.mocked(deleteCollectionByName).mockReturnValue({ message: 'Collection "Collection1" deleted successfully' });
+    vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "Collection1" deleted successfully' });
 
     const options = {
       collectionName: 'Collection1'
@@ -196,6 +189,6 @@ describe('deleteCollectionCommand', () => {
 
     await deleteCollectionCommand(options);
 
-    expect(deleteCollectionByName).toHaveBeenCalledWith('Collection1', { cwd: '/test/project' });
+    expect(core.deleteCollectionByName).toHaveBeenCalledWith('Collection1', { cwd: '/test/project' });
   });
 });

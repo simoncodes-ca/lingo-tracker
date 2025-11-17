@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 import prompts from 'prompts';
 import { readFileSync, existsSync } from 'node:fs';
+import { CONFIG_FILENAME, deleteCollectionByName } from '@simoncodes-ca/core';
 type LingoTrackerConfig = { collections?: Record<string, unknown> };
 
 export interface DeleteCollectionOptions {
@@ -9,7 +10,6 @@ export interface DeleteCollectionOptions {
 
 export async function deleteCollectionCommand(options: DeleteCollectionOptions): Promise<void> {
   const cwd = process.env.INIT_CWD || process.cwd();
-  const { CONFIG_FILENAME, deleteCollectionByName } = await import('@simoncodes-ca/core');
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   // Check if config exists

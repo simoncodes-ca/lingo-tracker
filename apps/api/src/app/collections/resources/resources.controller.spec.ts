@@ -3,6 +3,7 @@ import { HttpException, NotFoundException } from '@nestjs/common';
 import { TranslationStatus } from '@simoncodes-ca/core';
 import { ResourcesController } from './resources.controller';
 import { ConfigService } from '../../config/config.service';
+import * as core from '@simoncodes-ca/core';
 
 // Mock the core module
 jest.mock('@simoncodes-ca/core', () => {
@@ -61,7 +62,7 @@ describe('ResourcesController', () => {
 
   describe('createResources', () => {
     it('should successfully create a single resource', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
 
       const dto = {
@@ -86,7 +87,7 @@ describe('ResourcesController', () => {
     });
 
     it('should successfully create multiple resources (bulk operation)', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource
         .mockReturnValueOnce({ resolvedKey: 'app.button.ok', created: true })
         .mockReturnValueOnce({ resolvedKey: 'app.button.cancel', created: true });
@@ -106,7 +107,7 @@ describe('ResourcesController', () => {
     });
 
     it('should handle idempotent repeat (update existing resource)', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: false });
 
       const dto = {
@@ -123,7 +124,7 @@ describe('ResourcesController', () => {
     });
 
     it('should aggregate results correctly when some resources are created and some are updated', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource
         .mockReturnValueOnce({ resolvedKey: 'app.button.ok', created: true })
         .mockReturnValueOnce({ resolvedKey: 'app.button.cancel', created: false })
@@ -145,7 +146,7 @@ describe('ResourcesController', () => {
     });
 
     it('should use collection baseLocale when provided', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
 
       const configWithCustomBaseLocale = {
@@ -175,7 +176,7 @@ describe('ResourcesController', () => {
     });
 
     it('should use DTO baseLocale when explicitly provided', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
 
       const dto = {
@@ -195,7 +196,7 @@ describe('ResourcesController', () => {
     });
 
     it('should URI decode collection names with special characters', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
 
       const configWithEncodedName = {
@@ -245,7 +246,7 @@ describe('ResourcesController', () => {
     });
 
     it('should throw HttpException (400) for invalid key validation', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockImplementation(() => {
         throw new Error('Invalid key segment "invalid@key". Segments must match pattern [A-Za-z0-9_-]+');
       });
@@ -268,7 +269,7 @@ describe('ResourcesController', () => {
     });
 
     it('should throw HttpException (400) for empty key', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockImplementation(() => {
         throw new Error('Key cannot be empty');
       });
@@ -290,7 +291,7 @@ describe('ResourcesController', () => {
     });
 
     it('should throw HttpException (500) for unexpected errors', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockImplementation(() => {
         throw new Error('Unexpected file system error');
       });
@@ -312,7 +313,7 @@ describe('ResourcesController', () => {
     });
 
     it('should handle resource with all optional fields', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'apps.common.buttons.cancel', created: true });
 
       const dto = {
@@ -342,7 +343,7 @@ describe('ResourcesController', () => {
     });
 
     it('should handle resource with translations', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
 
       const dto = {
@@ -368,7 +369,7 @@ describe('ResourcesController', () => {
     });
 
     it('should automatically create entries for all non-base locales when translations are not provided', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
 
       const dto = {
@@ -394,7 +395,7 @@ describe('ResourcesController', () => {
     });
 
     it('should use collection locales when available, fall back to global locales', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
 
       const configWithCollectionLocales = {
@@ -429,7 +430,7 @@ describe('ResourcesController', () => {
     });
 
     it('should not create translations if locales array is empty', async () => {
-      const { addResource } = require('@simoncodes-ca/core');
+      const addResource = core.addResource as jest.Mock;
       addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
 
       const configWithNoLocales = {
@@ -463,7 +464,7 @@ describe('ResourcesController', () => {
 
   describe('delete', () => {
     it('should successfully delete an existing resource', async () => {
-      const { deleteResource } = require('@simoncodes-ca/core');
+      const deleteResource = core.deleteResource as jest.Mock;
       deleteResource.mockReturnValue({
         entriesDeleted: 1,
         matchedKeys: ['app.button.ok']
@@ -486,7 +487,7 @@ describe('ResourcesController', () => {
     });
 
     it('should successfully delete multiple resources (bulk operation)', async () => {
-      const { deleteResource } = require('@simoncodes-ca/core');
+      const deleteResource = core.deleteResource as jest.Mock;
       deleteResource.mockReturnValue({
         entriesDeleted: 3,
         matchedKeys: ['app.button.ok', 'app.button.cancel', 'app.button.save']
@@ -509,7 +510,7 @@ describe('ResourcesController', () => {
     });
 
     it('should handle partial failures with errors array', async () => {
-      const { deleteResource } = require('@simoncodes-ca/core');
+      const deleteResource = core.deleteResource as jest.Mock;
       deleteResource.mockReturnValue({
         entriesDeleted: 2,
         matchedKeys: ['app.button.ok', 'app.button.cancel'],
@@ -533,7 +534,7 @@ describe('ResourcesController', () => {
     });
 
     it('should URI decode collection names with special characters', async () => {
-      const { deleteResource } = require('@simoncodes-ca/core');
+      const deleteResource = core.deleteResource as jest.Mock;
       deleteResource.mockReturnValue({ entriesDeleted: 1 });
 
       const configWithEncodedName = {
@@ -606,7 +607,7 @@ describe('ResourcesController', () => {
     });
 
     it('should throw HttpException (500) for unexpected errors', async () => {
-      const { deleteResource } = require('@simoncodes-ca/core');
+      const deleteResource = core.deleteResource as jest.Mock;
       deleteResource.mockImplementation(() => {
         throw new Error('Unexpected file system error');
       });
@@ -627,7 +628,7 @@ describe('ResourcesController', () => {
     });
 
     it('should successfully delete nested resource', async () => {
-      const { deleteResource } = require('@simoncodes-ca/core');
+      const deleteResource = core.deleteResource as jest.Mock;
       deleteResource.mockReturnValue({
         entriesDeleted: 1,
         matchedKeys: ['apps.common.buttons.ok']

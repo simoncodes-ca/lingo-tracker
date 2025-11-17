@@ -2,7 +2,13 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import prompts from 'prompts';
 import type { LingoTrackerConfig, TranslationStatus } from '@simoncodes-ca/core';
-import { createDefaultTranslations } from '@simoncodes-ca/core';
+import {
+  createDefaultTranslations,
+  CONFIG_FILENAME,
+  addResource,
+  resolveResourceKey,
+  splitResolvedKey
+} from '@simoncodes-ca/core';
 
 export interface AddResourceOptions {
   collection?: string;
@@ -20,7 +26,6 @@ export interface AddResourceOptions {
 
 export async function addResourceCommand(options: AddResourceOptions): Promise<void> {
   const cwd = process.env.INIT_CWD || process.cwd();
-  const { CONFIG_FILENAME, addResource } = await import('@simoncodes-ca/core');
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   let config: LingoTrackerConfig;
@@ -43,7 +48,6 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
 
   try {
     // Check if resource already exists
-    const { resolveResourceKey, splitResolvedKey } = await import('@simoncodes-ca/core');
     const resolvedKey = resolveResourceKey(answers.key, answers.targetFolder || undefined);
     const { folderPath, entryKey } = splitResolvedKey(resolvedKey);
     
