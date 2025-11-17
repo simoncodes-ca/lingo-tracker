@@ -164,7 +164,9 @@ describe('resource-loader', () => {
     });
 
     it('should skip invalid JSON files and log warning', () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+        // Empty implementation to suppress console output during tests
+      });
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue('{ invalid json }');

@@ -194,7 +194,7 @@ function getBundleOutputPath(
   bundleDefinition: BundleDefinition,
   locale: string
 ): string {
-  let fileName = bundleDefinition.bundleName.replace('{locale}', locale);
+  const fileName = bundleDefinition.bundleName.replace('{locale}', locale);
 
   // Handle subdirectory pattern (e.g., "{locale}/main")
   if (fileName.includes('/')) {

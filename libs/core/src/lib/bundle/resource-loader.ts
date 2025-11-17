@@ -70,7 +70,7 @@ function loadFolderResources(
           });
         }
       }
-    } catch (error) {
+    } catch {
       // Skip invalid JSON files
       console.warn(`⚠️  Skipping invalid JSON: ${resourceEntriesPath}`);
     }
