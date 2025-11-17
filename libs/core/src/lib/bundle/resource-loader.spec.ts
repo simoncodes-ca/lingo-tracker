@@ -20,7 +20,7 @@ describe('resource-loader', () => {
     it('should return empty array when folder does not exist', () => {
       vi.spyOn(fs, 'existsSync').mockReturnValue(false);
 
-      const result = loadCollectionResources('/non/existent/path', 'en');
+      const result = loadCollectionResources('/non/existent/path', 'en', 'en');
 
       expect(result).toEqual([]);
     });
@@ -35,7 +35,7 @@ describe('resource-loader', () => {
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockResourceEntries));
       vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
 
-      const result = loadCollectionResources('/translations', 'fr');
+      const result = loadCollectionResources('/translations', 'fr', 'en');
 
       expect(result).toEqual([
         { key: 'ok', value: 'D\'accord', tags: undefined },
@@ -52,7 +52,7 @@ describe('resource-loader', () => {
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockResourceEntries));
       vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
 
-      const result = loadCollectionResources('/translations', 'en');
+      const result = loadCollectionResources('/translations', 'en', 'en');
 
       expect(result).toEqual([
         { key: 'ok', value: 'OK', tags: ['ui', 'buttons'] },
@@ -69,7 +69,7 @@ describe('resource-loader', () => {
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockResourceEntries));
       vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
 
-      const result = loadCollectionResources('/translations', 'fr');
+      const result = loadCollectionResources('/translations', 'fr', 'en');
 
       expect(result).toEqual([
         { key: 'ok', value: 'D\'accord', tags: undefined },
@@ -113,7 +113,7 @@ describe('resource-loader', () => {
         return [];
       });
 
-      const result = loadCollectionResources(translationsFolder, 'en');
+      const result = loadCollectionResources(translationsFolder, 'en', 'en');
 
       expect(result).toContainEqual({ key: 'welcome', value: 'Welcome', tags: undefined });
       expect(result).toContainEqual({ key: 'buttons.ok', value: 'OK', tags: undefined });
@@ -156,7 +156,7 @@ describe('resource-loader', () => {
         return [];
       });
 
-      const result = loadCollectionResources(translationsFolder, 'en');
+      const result = loadCollectionResources(translationsFolder, 'en', 'en');
 
       expect(result).toEqual([
         { key: 'apps.common.buttons.ok', value: 'OK', tags: undefined },
@@ -172,7 +172,7 @@ describe('resource-loader', () => {
       vi.spyOn(fs, 'readFileSync').mockReturnValue('{ invalid json }');
       vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
 
-      const result = loadCollectionResources('/translations', 'en');
+      const result = loadCollectionResources('/translations', 'en', 'en');
 
       expect(result).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -192,7 +192,7 @@ describe('resource-loader', () => {
         { name: TRACKER_META_FILENAME, isDirectory: () => false },
       ] as fs.Dirent[]);
 
-      const result = loadCollectionResources('/translations', 'en');
+      const result = loadCollectionResources('/translations', 'en', 'en');
 
       expect(result).toEqual([
         { key: 'ok', value: 'OK', tags: undefined },

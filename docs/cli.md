@@ -429,6 +429,195 @@ JSON format (`--json` flag):
 
 ---
 
+### bundle
+
+Generate translation bundles for deployment.
+
+**Usage:**
+
+```bash
+lingo-tracker bundle [options]
+```
+
+**Options:**
+
+- `--name <names>` - Bundle name(s) to generate (comma-separated). If not specified, generates all configured bundles
+- `--locale <locales>` - Specific locale(s) to generate (comma-separated). If not specified, generates all locales
+- `--verbose` - Show detailed output including all warnings
+
+**What Bundle Generation Does:**
+
+1. **Reads bundle configuration** from `.lingo-tracker.json` `bundles` section
+2. **Collects translations** from specified collections based on selection rules
+3. **Applies filters** using pattern matching and tag-based selection
+4. **Resolves conflicts** using merge strategies (merge or override)
+5. **Transforms to hierarchical JSON** (flat keys → nested objects)
+6. **Writes bundle files** to configured output directories with `{locale}` placeholder replacement
+
+**When to Use Bundle:**
+
+- Before deploying your application to production
+- As part of your build pipeline
+- After translator completes translations
+- When you need to generate bundles for specific locales only
+- To preview bundle contents with `--verbose` flag
+
+**Examples:**
+
+Interactive mode (prompts for bundle selection):
+```bash
+lingo-tracker bundle
+```
+
+Generate all configured bundles:
+```bash
+lingo-tracker bundle
+```
+
+Generate specific bundle(s):
+```bash
+lingo-tracker bundle --name core
+lingo-tracker bundle --name core,admin
+```
+
+Generate bundles for specific locale(s):
+```bash
+lingo-tracker bundle --locale en,fr
+```
+
+Verbose output (shows all warnings):
+```bash
+lingo-tracker bundle --verbose
+```
+
+Combined options:
+```bash
+lingo-tracker bundle --name core --locale en,fr --verbose
+```
+
+**Output:**
+
+Normal output (default):
+```
+🔄 Generating bundle: core
+
+   ✅ Files generated: 3
+   ✅ Locales: en, fr-ca, es
+   ⚠️  Warnings: 2
+```
+
+Verbose output (`--verbose` flag):
+```
+🔄 Generating bundle: core
+   Locales: en, fr-ca
+
+   ✅ Files generated: 2
+   ✅ Locales: en, fr-ca
+   ⚠️  Warnings: 1
+      - Bundle 'core' for locale 'es' is empty
+```
+
+Summary for multiple bundles:
+```
+🔄 Generating bundle: core
+
+   ✅ Files generated: 3
+   ✅ Locales: en, fr-ca, es
+
+🔄 Generating bundle: admin
+
+   ✅ Files generated: 3
+   ✅ Locales: en, fr-ca, es
+
+📊 Summary (2 bundles):
+   Total files generated: 6
+```
+
+**Bundle Configuration:**
+
+Bundles are configured in `.lingo-tracker.json`:
+
+```json
+{
+  "bundles": {
+    "main": {
+      "bundleName": "{locale}",
+      "dist": "./dist/i18n",
+      "collections": "All"
+    },
+    "admin": {
+      "bundleName": "admin-{locale}",
+      "dist": "./dist/admin/i18n",
+      "collections": [
+        {
+          "name": "Admin",
+          "entriesSelectionRules": "All"
+        }
+      ]
+    },
+    "core": {
+      "bundleName": "resources.{locale}",
+      "dist": "./src/assets/i18n",
+      "collections": [
+        {
+          "name": "Common",
+          "bundledKeyPrefix": "common",
+          "entriesSelectionRules": [
+            {
+              "matchingPattern": "apps.common.*",
+              "matchingTags": ["ui"],
+              "matchingTagOperator": "All"
+            }
+          ],
+          "mergeStrategy": "merge"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Bundle Definition Fields:**
+
+- `bundleName` - Output filename pattern (use `{locale}` placeholder for locale substitution)
+- `dist` - Output directory path (relative to project root)
+- `collections` - Either `"All"` or array of collection definitions
+  - `name` - Collection name from config
+  - `bundledKeyPrefix` (optional) - Prefix to add to all keys from this collection
+  - `entriesSelectionRules` - Either `"All"` or array of selection rules
+    - `matchingPattern` - Pattern to match keys: `"*"` (all), `"apps.*"` (wildcard), or exact key
+    - `matchingTags` (optional) - Tags to filter by
+    - `matchingTagOperator` (optional) - `"All"` (requires all tags) or `"Any"` (requires any tag, default)
+  - `mergeStrategy` (optional) - `"merge"` (first wins, default) or `"override"` (later wins)
+
+**Merge Strategies:**
+
+When multiple collections contribute the same key:
+
+- **`merge`** (default): First collection wins - key from earlier collection is kept
+- **`override`**: Later collection wins - key from later collection overwrites previous
+
+**Pattern Matching:**
+
+- `"*"` - Matches all keys
+- `"apps.*"` - Matches `apps` and all keys starting with `apps.`
+- `"apps.common.buttons.ok"` - Exact match only
+
+**Tag Filtering:**
+
+- `matchingTags: ["ui"]` with `matchingTagOperator: "Any"` - Entry must have `ui` tag
+- `matchingTags: ["ui", "buttons"]` with `matchingTagOperator: "All"` - Entry must have both tags
+- `matchingTags: ["*"]` - Entry must have at least one tag (any tag)
+
+**Notes:**
+- Bundle generation is **read-only**: it never modifies source translation files
+- Empty bundles (no matching entries) generate a warning but don't create files
+- Base locale translations use the `source` property; other locales use their locale key
+- Warnings include empty bundles, missing collections, and missing translations
+- For detailed examples and integration guides, see [Bundling Guide](./guides/bundling.md)
+
+---
+
 ## Configuration
 
 All commands read from `.lingo-tracker.json` in the project root. This file is created by the `init` command.

@@ -28,5 +28,12 @@
     "Web": {
       "translationsFolder": "apps/web/src/i18n"
     }
+  },
+  "bundles": {
+    "main": {
+      "bundleName": "resources.{locale}",
+      "dist": "./dist/i18n",
+      "collections": "All"
+    }
   }
 }

@@ -87,5 +87,16 @@ program
     await normalizeCommand(options);
   });
 
+program
+  .command('bundle')
+  .description('Generate translation bundles for deployment')
+  .option('--name <names>', 'Bundle name(s) - single name or comma-separated (e.g., core,admin)')
+  .option('--locale <locales>', 'Locale(s) to generate - comma-separated (e.g., en,fr)')
+  .option('--verbose', 'Show detailed output including warnings')
+  .action(async (options) => {
+    const { bundleCommand } = await import('./commands/bundle');
+    await bundleCommand(options);
+  });
+
 program.parse();
 

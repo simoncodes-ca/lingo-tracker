@@ -19,11 +19,13 @@ export interface FlatResource {
  *
  * @param translationsFolder - Path to collection's translations folder
  * @param locale - Target locale to extract values for
+ * @param baseLocale - Base locale (source values use 'source' property)
  * @returns Array of flat resources with keys, values, and tags
  */
 export function loadCollectionResources(
   translationsFolder: string,
-  locale: string
+  locale: string,
+  baseLocale: string
 ): FlatResource[] {
   const resources: FlatResource[] = [];
 
@@ -31,7 +33,7 @@ export function loadCollectionResources(
     return resources;
   }
 
-  loadFolderResources(translationsFolder, '', locale, resources);
+  loadFolderResources(translationsFolder, '', locale, baseLocale, resources);
 
   return resources;
 }
@@ -42,12 +44,14 @@ export function loadCollectionResources(
  * @param folderPath - Current folder path
  * @param keyPrefix - Accumulated key prefix
  * @param locale - Target locale
+ * @param baseLocale - Base locale (source values use 'source' property)
  * @param resources - Accumulator array
  */
 function loadFolderResources(
   folderPath: string,
   keyPrefix: string,
   locale: string,
+  baseLocale: string,
   resources: FlatResource[]
 ): void {
   const resourceEntriesPath = path.join(folderPath, RESOURCE_ENTRIES_FILENAME);
@@ -59,7 +63,9 @@ function loadFolderResources(
 
       for (const [entryKey, entry] of Object.entries(entries)) {
         const fullKey = keyPrefix ? `${keyPrefix}.${entryKey}` : entryKey;
-        const value = entry[locale];
+
+        // For base locale, use 'source' property; for others, use locale key
+        const value = locale === baseLocale ? entry.source : entry[locale];
 
         // Extract translation value (skip if missing)
         if (typeof value === 'string') {
@@ -82,7 +88,7 @@ function loadFolderResources(
     if (entry.isDirectory()) {
       const subfolderPath = path.join(folderPath, entry.name);
       const subKeyPrefix = keyPrefix ? `${keyPrefix}.${entry.name}` : entry.name;
-      loadFolderResources(subfolderPath, subKeyPrefix, locale, resources);
+      loadFolderResources(subfolderPath, subKeyPrefix, locale, baseLocale, resources);
     }
   }
 }

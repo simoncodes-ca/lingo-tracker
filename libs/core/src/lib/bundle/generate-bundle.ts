@@ -84,6 +84,8 @@ function collectBundleData(
 ): Record<string, string> {
   const bundleData: Record<string, string> = {};
 
+  const baseLocale = config.baseLocale;
+
   if (bundleDefinition.collections === 'All') {
     for (const [collectionName, collectionConfig] of Object.entries(
       config.collections
@@ -96,6 +98,7 @@ function collectBundleData(
         collectionBundleDef,
         collectionConfig.translationsFolder,
         locale,
+        baseLocale,
         bundleData
       );
     }
@@ -114,6 +117,7 @@ function collectBundleData(
         collectionBundleDef,
         collectionConfig.translationsFolder,
         locale,
+        baseLocale,
         bundleData
       );
     }
@@ -129,9 +133,10 @@ function processCollection(
   collectionDef: CollectionBundleDefinition,
   translationsFolder: string,
   locale: string,
+  baseLocale: string,
   bundleData: Record<string, string>
 ): void {
-  const resources = loadCollectionResources(translationsFolder, locale);
+  const resources = loadCollectionResources(translationsFolder, locale, baseLocale);
   const filteredResources = filterResources(resources, collectionDef);
   const mergeStrategy = collectionDef.mergeStrategy ?? 'merge';
 

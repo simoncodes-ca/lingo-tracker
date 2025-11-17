@@ -131,8 +131,8 @@ describe('generate-bundle', () => {
 
       generateBundle(params);
 
-      expect(loadSpy).toHaveBeenCalledWith('/translations/default', 'en');
-      expect(loadSpy).toHaveBeenCalledWith('/translations/admin', 'en');
+      expect(loadSpy).toHaveBeenCalledWith('/translations/default', 'en', 'en');
+      expect(loadSpy).toHaveBeenCalledWith('/translations/admin', 'en', 'en');
     });
 
     it('should process specific collections with selection rules', () => {

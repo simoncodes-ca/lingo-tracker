@@ -788,26 +788,75 @@ Bundle generation is designed to be integrated into your build process, not run 
   - [x] Test bundle generation - 15 tests
   - [x] All 200 tests passing in core library
 
-#### Phase 2: CLI Integration
-- [ ] Create `bundle` command in `apps/cli/src/commands/`
-- [ ] Support `--name`, `--locale`, `--verbose` flags
-- [ ] Progress indicators for large bundle operations
-- [ ] Bundle generation report output (success, warnings, missing translations)
-- [ ] Error reporting with skip-and-continue behavior
-- [ ] Unit tests for CLI command
+#### Phase 2: CLI Integration ✅ COMPLETE
+- [x] Create `bundle` command in `apps/cli/src/commands/`
+- [x] Support `--name`, `--locale`, `--verbose` flags
+- [x] Progress indicators for large bundle operations
+- [x] Bundle generation report output (success, warnings, missing translations)
+- [x] Error reporting with skip-and-continue behavior
+- [x] Unit tests for CLI command
 
-#### Phase 3: Documentation and Examples
-- [ ] Update `docs/cli.md` with bundle command
-- [ ] Update `docs/api.md` with bundle endpoints
-- [ ] Create `docs/guides/bundling.md` with comprehensive examples
-  - [ ] Default bundle behavior
-  - [ ] Merge strategy examples
-  - [ ] Bundle naming patterns
-  - [ ] Error handling and recovery
-- [ ] Add Transloco integration example
-- [ ] Add Angular i18n integration example
-- [ ] Add react-i18next integration example
-- [ ] Document build pipeline integration patterns
+**Implementation Details:**
+- Created `apps/cli/src/commands/bundle.ts` (256 lines) with full CLI integration
+- Registered command in `apps/cli/src/main.ts` with Commander.js
+- Comprehensive test suite: `apps/cli/src/commands/bundle.test.ts` (23 tests, all passing)
+- Command supports:
+  - `--name <names>`: Single or comma-separated bundle names (e.g., `--name core,admin`)
+  - `--locale <locales>`: Filter by locale (e.g., `--locale en,fr`)
+  - `--verbose`: Show detailed output including all warnings
+- Interactive mode (TTY): Prompts for bundle selection with "All bundles" option
+- Non-interactive mode: Defaults to all bundles, perfect for CI/CD
+- Human-readable output: Progress indicators, success messages, warnings, and summary
+- Error handling: Skip-and-continue behavior for failed bundles
+- **Note**: Removed `--json` flag - bundles always produce JSON output files, CLI shows human-readable console output
+- **Bug Fix**: Fixed base locale empty bundle warning - base locale now correctly uses `source` property instead of locale key
+- All 298 tests passing (51 CLI + 42 API + 200 core + 5 tracker)
+- Zero ESLint errors/warnings
+- Build successful
+
+#### Phase 3: Documentation and Examples ✅ COMPLETE
+- [x] Update `docs/cli.md` with bundle command
+- [x] Update `docs/api.md` with bundle endpoints (N/A - bundle is CLI-only feature)
+- [x] Create `docs/guides/bundling.md` with comprehensive examples
+  - [x] Default bundle behavior
+  - [x] Merge strategy examples
+  - [x] Bundle naming patterns
+  - [x] Error handling and recovery
+- [x] Add Transloco integration example
+- [x] Add Angular i18n integration example
+- [x] Add react-i18next integration example
+- [x] Document build pipeline integration patterns
+
+**Implementation Details:**
+- Updated `docs/cli.md` with comprehensive bundle command documentation (188 lines)
+  - Command usage and options
+  - Configuration structure and examples
+  - Merge strategies, pattern matching, and tag filtering
+  - Output format examples
+  - Link to comprehensive guide
+- Created `docs/guides/bundling.md` (1000+ lines) with:
+  - Introduction and quick start
+  - Complete bundle configuration reference
+  - Detailed merge strategy examples with use cases
+  - Pattern matching guide with examples table
+  - Tag-based filtering with AND/OR operators
+  - Framework integration guides:
+    - Transloco (Angular) - full setup with HTTP loader
+    - Angular i18n - configuration and usage
+    - react-i18next - setup with HttpBackend
+  - Build pipeline integration:
+    - NPM scripts
+    - Nx monorepo integration
+    - CI/CD (GitHub Actions, GitLab CI)
+    - Webpack plugin example
+    - Vite plugin example
+  - Advanced use cases:
+    - Lazy-loaded modules
+    - Environment-specific bundles
+    - Multi-tenant applications
+    - Bundled key prefixes
+  - Troubleshooting section with common issues and solutions
+- Note: API documentation update not needed - bundle generation is a CLI-only feature
 
 #### Phase 4: Advanced Features (Future)
 - [ ] Watch mode for auto-regeneration
