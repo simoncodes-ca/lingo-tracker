@@ -71,11 +71,12 @@ export class ResourcesController {
             entriesCreated++;
             hasCreated = true;
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Validation errors (invalid key, etc.) should return 400
-          if (error.message?.includes('Invalid') || error.message?.includes('cannot be empty')) {
+          const errorMessage = error instanceof Error ? error.message : '';
+          if (errorMessage.includes('Invalid') || errorMessage.includes('cannot be empty')) {
             throw new HttpException(
-              `Validation error for resource: ${error.message}`,
+              `Validation error for resource: ${errorMessage}`,
               HttpStatus.BAD_REQUEST,
             );
           }
@@ -88,7 +89,7 @@ export class ResourcesController {
         entriesCreated,
         created: hasCreated,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof HttpException) {
         throw error;
       }
@@ -98,10 +99,8 @@ export class ResourcesController {
       }
 
       // File system errors or other unexpected errors
-      throw new HttpException(
-        error?.message || 'Error creating resources',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Error creating resources';
+      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -134,7 +133,7 @@ export class ResourcesController {
         entriesDeleted: result.entriesDeleted,
         errors: result.errors,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -143,10 +142,8 @@ export class ResourcesController {
         throw error;
       }
 
-      throw new HttpException(
-        error?.message || 'Error deleting resources',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Error deleting resources';
+      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

@@ -10,14 +10,18 @@ import { CONFIG_FILENAME } from '@simoncodes-ca/core';
 
 @Injectable()
 export class ConfigService {
+  private isNodeError(error: unknown): error is NodeJS.ErrnoException {
+    return error instanceof Error && 'code' in error;
+  }
+
   getConfig(): LingoTrackerConfig {
     const configPath = join(process.cwd(), CONFIG_FILENAME);
     let configContent: string;
 
     try {
       configContent = readFileSync(configPath, 'utf8');
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
+    } catch (error: unknown) {
+      if (this.isNodeError(error) && error.code === 'ENOENT') {
         throw new NotFoundException('Configuration file not found');
       }
       throw new InternalServerErrorException('Failed to read configuration file');

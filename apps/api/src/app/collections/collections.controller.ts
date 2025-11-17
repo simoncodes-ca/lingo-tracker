@@ -11,11 +11,9 @@ export class CollectionsController {
       const decodedCollectionName = decodeURIComponent(collectionName);
       deleteCollectionByName(decodedCollectionName);
       return { message: `Collection "${decodedCollectionName}" deleted successfully` };
-    } catch (error: any) {
-      throw new HttpException(
-        error?.message || 'Error deleting collection',
-        HttpStatus.BAD_REQUEST,
-      );
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error deleting collection';
+      throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -25,11 +23,9 @@ export class CollectionsController {
       const { name, collection } = body;
       const result = addCollection(name, mapDtoToCollection(collection));
       return { message: result.message };
-    } catch (error: any) {
-      throw new HttpException(
-        error?.message || 'Error creating collection',
-        HttpStatus.BAD_REQUEST,
-      );
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error creating collection';
+      throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
     }
   }
 }
