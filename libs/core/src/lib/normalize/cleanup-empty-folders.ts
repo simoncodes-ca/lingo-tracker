@@ -38,7 +38,7 @@ export function cleanupEmptyFolders(
       if (!dryRun) {
         try {
           fs.rmSync(folderPath, { recursive: true });
-        } catch (error) {
+        } catch (_) {
           // Folder may have been removed already as a child of another folder
           // or may not be accessible - skip silently
         }

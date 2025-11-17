@@ -1,10 +1,7 @@
 import {
   Injectable,
-  Scope,
-  Inject,
   NotFoundException,
   InternalServerErrorException,
-  Logger,
 } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { join } from 'path';

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { noop } from 'lodash';
 import { addCollection } from './add-collection';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -22,7 +23,7 @@ describe('addCollection', () => {
   it('adds a minimal collection (only translationsFolder) and preserves root config', () => {
     const config = { ...baseConfig };
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
 
     const result = addCollection(
       'myCollection',
@@ -56,7 +57,7 @@ describe('addCollection', () => {
     };
 
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
 
     addCollection(
       'diffs',
@@ -119,7 +120,7 @@ describe('addCollection', () => {
     const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue('/default-cwd');
     const config = { ...baseConfig, collections: {} };
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
 
     const result = addCollection('default', { translationsFolder: './t' });
 
@@ -153,7 +154,7 @@ describe('addCollection', () => {
     };
 
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
 
     addCollection('newOne', { translationsFolder: './new' }, { cwd: '/test' });
 

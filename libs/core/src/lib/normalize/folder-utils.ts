@@ -43,9 +43,9 @@ export function getAllFoldersBottomUp(rootPath: string): string[] {
   collectFoldersRecursively(rootPath, 0);
 
   // Sort by depth descending (deepest folders first) for bottom-up processing
-  const sortedFolders = foldersWithDepth.sort((a, b) => b.depth - a.depth);
-
-  return sortedFolders.map(folder => folder.path);
+  return foldersWithDepth
+    .sort((a, b) => b.depth - a.depth)
+    .map(folder => folder.path);
 }
 
 /**
@@ -95,7 +95,7 @@ export function isFolderEmpty(folderPath: string): boolean {
 
     // Empty if no entries in resource_entries.json
     return !hasEntries;
-  } catch (error) {
+  } catch (_) {
     // If we can't parse the file, consider it NOT empty to prevent deletion
     // This preserves corrupted files so they can be manually fixed
     return false;

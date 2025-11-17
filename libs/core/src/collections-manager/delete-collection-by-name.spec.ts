@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { deleteCollectionByName } from './delete-collection-by-name';
 import * as fs from 'node:fs';
-import * as path from 'node:path';
 
 vi.mock('node:fs');
 

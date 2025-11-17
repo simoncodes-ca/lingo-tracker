@@ -48,9 +48,9 @@ export class CreateCollectionDialogComponent {
 
     try {
       const result = await firstValueFrom(this.api.createCollection({
-        name: raw.name!,
+        name: raw.name ?? 'unknown',
         collection: {
-          translationsFolder: raw.translationsFolder!,
+          translationsFolder: raw.translationsFolder ?? '',
           exportFolder: raw.exportFolder || undefined,
           importFolder: raw.importFolder || undefined,
           baseLocale: raw.baseLocale || undefined,
@@ -58,7 +58,7 @@ export class CreateCollectionDialogComponent {
         }
       }));
       this.dialogRef.close({ created: true, message: result.message });
-    } catch (e: any) {
+    } catch (_error) {
       this.submitting = false;
       // Keep the dialog open; user will see snack in parent
     }
