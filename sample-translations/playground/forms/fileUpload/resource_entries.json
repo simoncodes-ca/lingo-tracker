@@ -1,0 +1,106 @@
+{
+  "acceptedFormatsX": {
+    "source": "Accepted formats: {{ formats }}",
+    "comment": "A message shown in a file upload component, telling user acceptable file formats",
+    "tags": [
+      "ui",
+      "forms",
+      "fileUpload"
+    ],
+    "de": "Zugelassene Formate: {{ formats }}",
+    "es": "Formatos aceptados: {{ formats }}",
+    "fr-fr": "Formats acceptés : {{ formats }}",
+    "ja": "許容される形式： {{ formats }}"
+  },
+  "dropYourFileHere": {
+    "source": "Drag & drop file here or",
+    "comment": "A message shown to the user on a file upload component, telling the user they can drag and drop a file onto it",
+    "tags": [
+      "ui",
+      "forms",
+      "fileUpload"
+    ],
+    "de": "Datei hierher ziehen und ablegen oder",
+    "es": "Arrastre y suelte el archivo aquí o",
+    "fr-fr": "Glisser-déposer le fichier ici ou",
+    "ja": "ここにファイルをドラッグ＆ドロップするか"
+  },
+  "fileFailedToUpload": {
+    "source": "File failed to upload",
+    "comment": "An error message show to the user when a file upload fails",
+    "tags": [
+      "ui",
+      "forms",
+      "fileUpload"
+    ],
+    "de": "Hochladen der Datei ist fehlgeschlagen",
+    "es": "Falló la carga del archivo",
+    "fr-fr": "Échec du téléchargement du fichier",
+    "ja": "アップロードに失敗したファイル"
+  },
+  "fileTypeNotAllowed": {
+    "source": "File type not allowed",
+    "comment": "An error message shown to the user when they try to upload invalid file type",
+    "tags": [
+      "ui",
+      "forms",
+      "fileUpload"
+    ],
+    "de": "Dateityp ist nicht zugelassen",
+    "es": "El tipo del archivo no está permitido",
+    "fr-fr": "Type de fichier non autorisé",
+    "ja": "ファイルの種別が許可されていません"
+  },
+  "fileSizeExceedsX": {
+    "source": "File size exceeds {{ maxSize }}",
+    "comment": "An error message shown to the user when the file they try to upload is too large",
+    "tags": [
+      "ui",
+      "forms",
+      "fileUpload"
+    ],
+    "de": "Dateigröße übersteigt {{ maxSize }}",
+    "es": "El tamaño del campo excede {{ maxSize }}",
+    "fr-fr": "La taille du fichier dépasse {{ maxSize }}",
+    "ja": "ファイルサイズが {{ maxSize }} を超えています"
+  },
+  "fileWasOverwritten": {
+    "source": "File '{{filename}}' was overwritten",
+    "comment": "A message shown to the user when they upload a file that overrode a previously uploaded file",
+    "tags": [
+      "ui",
+      "forms",
+      "fileUpload"
+    ],
+    "de": "Datei „{{filename}}“ wurde überschrieben",
+    "es": "Se sobrescribió el archivo '{{filename}}'",
+    "fr-fr": "Le fichier « {{filename}} » a été écrasé",
+    "ja": "ファイル '{{filename}}' が上書きされました"
+  },
+  "dropYourFilesHere": {
+    "source": "Drag & drop files here or",
+    "comment": "A message shown to the user when uploading files, telling the user they can drag and drop multiple files onto it",
+    "tags": [
+      "ui",
+      "forms",
+      "fileUpload"
+    ],
+    "de": "Dateien hierher ziehen und ablegen oder",
+    "es": "Arrastre y suelte los archivos aquí o",
+    "fr-fr": "Glisser-déposer les fichiers ici ou",
+    "ja": "ここにファイルをドラッグ＆ドロップするか"
+  },
+  "duplicateFileNotAllowed": {
+    "source": "Duplicate file '{{filename}}' already exists. Delete the existing file to upload.",
+    "comment": "Message shown when user try to upload same file again",
+    "tags": [
+      "ui",
+      "forms",
+      "fileUpload"
+    ],
+    "de": "Duplikat-Datei „{{filename}}“ ist bereits vorhanden. Löschen Sie zum Hochladen die vorhandene Datei.",
+    "es": "Ya existe el archivo duplicado '{{filename}}'. Elimine el archivo existente para cargarlo.",
+    "fr-fr": "Un doublon du fichier « {{filename}} » existe déjà. Pour le téléverser, supprimez le fichier existant.",
+    "ja": "重複するファイル '{{filename}}' がすでに存在します。アップロードするには既存のファイルを削除してください。"
+  }
+}

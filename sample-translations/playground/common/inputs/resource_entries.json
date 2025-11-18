@@ -1,0 +1,15 @@
+{
+  "search": {
+    "source": "Search...",
+    "comment": "Placeholder for query input",
+    "tags": [
+      "ui",
+      "common",
+      "inputs"
+    ],
+    "de": "Suche...",
+    "es": "Buscar...",
+    "fr-fr": "Recherche...",
+    "ja": "検索..."
+  }
+}

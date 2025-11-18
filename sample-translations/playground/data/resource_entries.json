@@ -1,0 +1,26 @@
+{
+  "noData": {
+    "source": "No data to display",
+    "comment": "Message shown to the user when there is no data available for display",
+    "tags": [
+      "ui",
+      "data"
+    ],
+    "de": "Es sind keine Daten zum Anzeigen vorhanden",
+    "es": "No hay datos para mostrar",
+    "fr-fr": "Pas de données à afficher",
+    "ja": "表示するデータがありません。"
+  },
+  "emptySearchResults": {
+    "source": "Your search did not bring up any results",
+    "comment": "Body text when search filter has no results",
+    "tags": [
+      "ui",
+      "data"
+    ],
+    "de": "Ihre Suche hat keine Ergebnisse erbracht",
+    "es": "Su búsqueda no arrojó ningún resultado",
+    "fr-fr": "Votre recherche n’a donné aucun résultat",
+    "ja": "検索結果が得られませんでした"
+  }
+}

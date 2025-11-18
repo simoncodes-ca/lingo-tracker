@@ -1,74 +1,144 @@
 {
   "apply": {
     "source": "Apply",
-    "comment": "Button user presses to apply unsaved changes in UI",
+    "comment": "Button the user clicks to apply changes made",
     "tags": [
       "ui",
-      "common"
+      "common",
+      "buttons"
     ],
-    "fr-ca": "Appliquer",
-    "es": "Aplicar",
     "de": "Anwenden",
-    "ru": "Apply"
-  },
-  "clear": {
-    "source": "Clear",
-    "comment": "Button the user clicks to clear a field or a filtered selection",
-    "tags": [
-      "ui",
-      "common"
-    ],
-    "fr-ca": "Clear",
-    "es": "Clear",
-    "de": "Clear",
-    "ru": "Clear"
-  },
-  "close": {
-    "source": "Close",
-    "comment": "Button the user clicks to close a dialog or a panel",
-    "tags": [
-      "ui",
-      "common"
-    ],
-    "fr-ca": "Close",
-    "es": "Close",
-    "de": "Close",
-    "ru": "Close"
-  },
-  "create": {
-    "source": "Create",
-    "comment": "Button the user clicks to create an entity in the system",
-    "tags": [
-      "ui",
-      "common"
-    ],
-    "fr-ca": "Create",
-    "es": "Create",
-    "de": "Create",
-    "ru": "Create"
-  },
-  "ok": {
-    "source": "OK",
-    "comment": "Button the user clicks to apply changes or to apply an action, usually used in dialogs",
-    "tags": [
-      "ui",
-      "common"
-    ],
-    "fr-ca": "OK",
-    "es": "OK",
-    "de": "OK",
-    "ru": "OK"
+    "es": "Aplicar",
+    "fr-fr": "Appliquer",
+    "ja": "適用"
   },
   "cancel": {
     "source": "Cancel",
     "comment": "Button the user clicks to undo or discard changes or an action",
     "tags": [
       "ui",
-      "common"
+      "common",
+      "buttons"
     ],
-    "fr-ca": "Cancel",
-    "es": "Cancel",
-    "de": "Cancel",
-    "ru": "Cancel"
+    "de": "Abbrechen",
+    "es": "Cancelar",
+    "fr-fr": "Annuler",
+    "ja": "キャンセル"
+  },
+  "clear": {
+    "source": "Clear",
+    "comment": "Button the user clicks to clear a field or filter selection",
+    "tags": [
+      "ui",
+      "common",
+      "buttons"
+    ],
+    "de": "Löschen",
+    "es": "Borrar",
+    "fr-fr": "Effacer",
+    "ja": "クリア"
+  },
+  "close": {
+    "source": "Close",
+    "comment": "Button the user clicks to close a dialog or a panel",
+    "tags": [
+      "ui",
+      "common",
+      "buttons"
+    ],
+    "de": "Schließen",
+    "es": "Cerrar",
+    "fr-fr": "Fermer",
+    "ja": "閉じる"
+  },
+  "create": {
+    "source": "Create",
+    "comment": "Button the user clicks to create an entity in the system",
+    "tags": [
+      "ui",
+      "common",
+      "buttons"
+    ],
+    "de": "Erstellen",
+    "es": "Crear",
+    "fr-fr": "Créer",
+    "ja": "作成"
+  },
+  "ok": {
+    "source": "OK",
+    "comment": "Button the user clicks to apply changes or to apply an action, usually used in dialogs",
+    "tags": [
+      "ui",
+      "common",
+      "buttons"
+    ],
+    "de": "OK",
+    "es": "Aceptar",
+    "fr-fr": "OK",
+    "ja": "OK"
+  },
+  "reset": {
+    "source": "Reset",
+    "comment": "Button the user clicks to reset a value of a form field to previous value",
+    "tags": [
+      "ui",
+      "common",
+      "buttons"
+    ],
+    "de": "Zurücksetzen",
+    "es": "Restablecer",
+    "fr-fr": "Réinitialiser",
+    "ja": "リセット"
+  },
+  "signOut": {
+    "source": "Sign out",
+    "comment": "Button user clicks to log out of the application",
+    "tags": [
+      "ui",
+      "common",
+      "buttons"
+    ],
+    "de": "Abmelden",
+    "es": "Cerrar sesión",
+    "fr-fr": "Se déconnecter",
+    "ja": "サインアウト"
+  },
+  "add": {
+    "source": "Add",
+    "tags": [
+      "ui",
+      "common",
+      "buttons"
+    ],
+    "de": "Hinzufügen",
+    "es": "Agregar",
+    "fr-fr": "Ajouter",
+    "ja": "追加"
+  },
+  "back": {
+    "source": "Back",
+    "comment": "Button user click to navigate back to previous view/menu etc",
+    "tags": [
+      "ui",
+      "common",
+      "buttons"
+    ],
+    "de": "Zurück",
+    "es": "Atrás",
+    "fr-fr": "Retour",
+    "ja": "戻る"
+  },
+  "toggle": {
+    "source": "Toggle",
+    "comment": "Button user click to switch between opposite states, e.g. open / toggle",
+    "tags": [
+      "ui",
+      "common",
+      "buttons"
+    ],
+    "de": "Umschalter",
+    "es": "Alternar",
+    "fr-fr": "Basculer",
+    "ja": "切り替え"
   }
 }

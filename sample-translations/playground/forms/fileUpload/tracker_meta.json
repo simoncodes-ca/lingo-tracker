@@ -1,0 +1,202 @@
+{
+  "acceptedFormatsX": {
+    "en": {
+      "checksum": "f378798e35eca740143589ce40eb424d"
+    },
+    "de": {
+      "checksum": "f51efe54f92e8155f4a477aa48994f33",
+      "baseChecksum": "f378798e35eca740143589ce40eb424d",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "a68dee75e0e8eecffb3afa0ee5ae1d6a",
+      "baseChecksum": "f378798e35eca740143589ce40eb424d",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "e33f25ce01c9af574c8bf20d98a20da8",
+      "baseChecksum": "f378798e35eca740143589ce40eb424d",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "977f792993f1f9c1375697ff3a0cd141",
+      "baseChecksum": "f378798e35eca740143589ce40eb424d",
+      "status": "translated"
+    }
+  },
+  "dropYourFileHere": {
+    "en": {
+      "checksum": "d7ae4a308a526b19f7e9ff750daf9be9"
+    },
+    "de": {
+      "checksum": "1a02efbbaa8b3922439afc1c8ce70e87",
+      "baseChecksum": "d7ae4a308a526b19f7e9ff750daf9be9",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "a21008de4300dec0d66ffeb39682074e",
+      "baseChecksum": "d7ae4a308a526b19f7e9ff750daf9be9",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "4695a59ab0bd2f63ba31084a6492666c",
+      "baseChecksum": "d7ae4a308a526b19f7e9ff750daf9be9",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "408243b8aefdf7152950ef7db3529df7",
+      "baseChecksum": "d7ae4a308a526b19f7e9ff750daf9be9",
+      "status": "translated"
+    }
+  },
+  "fileFailedToUpload": {
+    "en": {
+      "checksum": "ccc8cd36932c1df68e3a08fda0f7bcd3"
+    },
+    "de": {
+      "checksum": "2508020a3f49337c2106e2a17d1de568",
+      "baseChecksum": "ccc8cd36932c1df68e3a08fda0f7bcd3",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "8cd4d6acbfe525a1e1d80cab1b26db51",
+      "baseChecksum": "ccc8cd36932c1df68e3a08fda0f7bcd3",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "fcdfd5cf6cfc086848fa495ee3dd6ea1",
+      "baseChecksum": "ccc8cd36932c1df68e3a08fda0f7bcd3",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "f6bd7437e8323031ebf6f93d7f56908c",
+      "baseChecksum": "ccc8cd36932c1df68e3a08fda0f7bcd3",
+      "status": "translated"
+    }
+  },
+  "fileTypeNotAllowed": {
+    "en": {
+      "checksum": "8d0689f0778fe7360da93d53cd88c37f"
+    },
+    "de": {
+      "checksum": "5b4f59b21e257fdb4b8d8d6803375e06",
+      "baseChecksum": "8d0689f0778fe7360da93d53cd88c37f",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "9cb4745443d79e47570727c892152889",
+      "baseChecksum": "8d0689f0778fe7360da93d53cd88c37f",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "9eee54905c19379dd09f8741ce9615ff",
+      "baseChecksum": "8d0689f0778fe7360da93d53cd88c37f",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "9ab33c5697501cb0b1e0c8abab351167",
+      "baseChecksum": "8d0689f0778fe7360da93d53cd88c37f",
+      "status": "translated"
+    }
+  },
+  "fileSizeExceedsX": {
+    "en": {
+      "checksum": "729a15074a65573b8502ea98965bd3e1"
+    },
+    "de": {
+      "checksum": "ea2416de62748c4e4de0e6fffe2342d0",
+      "baseChecksum": "729a15074a65573b8502ea98965bd3e1",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "a55246206c7bd5cef70544660ab049f7",
+      "baseChecksum": "729a15074a65573b8502ea98965bd3e1",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "0bd231253bf1808ec97d4f3d98e90b0c",
+      "baseChecksum": "729a15074a65573b8502ea98965bd3e1",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "1a4a41165cff0c6ad7f6c279713e4274",
+      "baseChecksum": "729a15074a65573b8502ea98965bd3e1",
+      "status": "translated"
+    }
+  },
+  "fileWasOverwritten": {
+    "en": {
+      "checksum": "7affae3854e1343255a6971f1b98cb22"
+    },
+    "de": {
+      "checksum": "482645d2978d4518150c87056a712f87",
+      "baseChecksum": "7affae3854e1343255a6971f1b98cb22",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "36adbd6454c11d17286dcde186e726e6",
+      "baseChecksum": "7affae3854e1343255a6971f1b98cb22",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "45c8db583423241ba6e78af77264b36a",
+      "baseChecksum": "7affae3854e1343255a6971f1b98cb22",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "8f6929493076bdc956967e4825cc0e43",
+      "baseChecksum": "7affae3854e1343255a6971f1b98cb22",
+      "status": "translated"
+    }
+  },
+  "dropYourFilesHere": {
+    "en": {
+      "checksum": "7afa34b0f1e91b44d419f126f121ee05"
+    },
+    "de": {
+      "checksum": "d2b4ecea677123b1a1ca7e15bb47f5e5",
+      "baseChecksum": "7afa34b0f1e91b44d419f126f121ee05",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "119fe2a467191f5d5804ae3849582cb7",
+      "baseChecksum": "7afa34b0f1e91b44d419f126f121ee05",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "f7d940a881b9e632716c79265b532715",
+      "baseChecksum": "7afa34b0f1e91b44d419f126f121ee05",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "408243b8aefdf7152950ef7db3529df7",
+      "baseChecksum": "7afa34b0f1e91b44d419f126f121ee05",
+      "status": "translated"
+    }
+  },
+  "duplicateFileNotAllowed": {
+    "en": {
+      "checksum": "322361151ea5823f52989afe7857ff32"
+    },
+    "de": {
+      "checksum": "f454c1d7e853373ee0cfe8afb47ac448",
+      "baseChecksum": "322361151ea5823f52989afe7857ff32",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "b9028a2e1a57c0134aa4337ba0200074",
+      "baseChecksum": "322361151ea5823f52989afe7857ff32",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "75a5398351830a332c0022e76aa75fb7",
+      "baseChecksum": "322361151ea5823f52989afe7857ff32",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "beec8b9ca0709ab58ebd47ee2ab1c926",
+      "baseChecksum": "322361151ea5823f52989afe7857ff32",
+      "status": "translated"
+    }
+  }
+}

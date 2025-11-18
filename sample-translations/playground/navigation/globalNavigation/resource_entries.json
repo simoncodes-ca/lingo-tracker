@@ -1,0 +1,41 @@
+{
+  "home": {
+    "source": "Home",
+    "comment": "Tooltip shown over a home button in navigation bar",
+    "tags": [
+      "ui",
+      "navigation",
+      "globalNavigation"
+    ],
+    "de": "Home",
+    "es": "Inicio",
+    "fr-fr": "Page d’accueil",
+    "ja": "ホーム"
+  },
+  "more": {
+    "source": "More",
+    "comment": "A button that user clicks to access more navigation menu items",
+    "tags": [
+      "ui",
+      "navigation",
+      "globalNavigation"
+    ],
+    "de": "Mehr",
+    "es": "Más",
+    "fr-fr": "Plus",
+    "ja": "もっと"
+  },
+  "moreInitialMessage": {
+    "source": "Select a menu option",
+    "comment": "A placeholder text shown to the user in 'more' navigation panel",
+    "tags": [
+      "ui",
+      "navigation",
+      "globalNavigation"
+    ],
+    "de": "Wählen Sie eine Menüoption",
+    "es": "Seleccionar una opción del menú",
+    "fr-fr": "Sélectionner une option du menu",
+    "ja": "メニューオプションの選択"
+  }
+}

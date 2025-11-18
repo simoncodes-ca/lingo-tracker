@@ -1,0 +1,28 @@
+{
+  "originalValueX": {
+    "source": "Original value: <strong>{{ uncorrectedValue }}</strong>",
+    "comment": "A message shown below a form control when its value was programmatically changed",
+    "tags": [
+      "ui",
+      "forms",
+      "numericTextbox"
+    ],
+    "de": "Ursprünglicher Wert: <strong>{{ uncorrectedValue }}</strong>",
+    "es": "Valor original: <strong>{{ uncorrectedValue }}</strong>",
+    "fr-fr": "Valeur initiale : <strong>{{ uncorrectedValue }}</strong>",
+    "ja": "元の値： <strong>{{ uncorrectedValue }}</strong>"
+  },
+  "valueHasBeenCorrectedToXDecimals": {
+    "source": "Value has been corrected to {decimals, plural, =1 {1 decimal place} other {# decimal places}}.",
+    "comment": "A message shown to the user when a number they entered was changed because of rounding rules. Translate {1 decimal place} and {# decimal places} where # is placeholder. e.g. {2 decimal places}. Do not touch other parts inside {}.",
+    "tags": [
+      "ui",
+      "forms",
+      "numericTextbox"
+    ],
+    "de": "Der Wert wurde korrigiert auf {decimals, plural, =1 {1 Dezimalstelle} other {# Dezimalstellen}}.",
+    "es": "El valor se ha corregido y ahora tiene {decimals, plural, =1 {1 lugar decimal} other {# lugares decimales}}.",
+    "fr-fr": "La valeur a été corrigée de la façon suivante {decimals, plural, =1 {1 décimale} other {# décimales}}.",
+    "ja": "値が {decimals, plural, =1 {1 桁} other {# 桁}} に訂正されました。"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "noResults": {
+    "source": "No results",
+    "comment": "Header text when search or filter action has no results",
+    "tags": [
+      "ui",
+      "forms",
+      "select"
+    ],
+    "de": "Keine Ergebnisse",
+    "es": "No hay resultados",
+    "fr-fr": "Aucun résultat",
+    "ja": "結果がありません。"
+  },
+  "valueNotFound": {
+    "source": "Value not found",
+    "comment": "Warning to display when selected value is not found in datasource for dropdown, combobox or multiselect",
+    "tags": [
+      "ui",
+      "forms",
+      "select"
+    ],
+    "de": "Wert nicht gefunden",
+    "es": "Valor no encontrado",
+    "fr-fr": "Valeur introuvable",
+    "ja": "値が見つかりません"
+  },
+  "valuesNotFound": {
+    "source": "Some values were not found",
+    "comment": "Warning to display when multiple selected values are not found in datasource for multiselect",
+    "tags": [
+      "ui",
+      "forms",
+      "select"
+    ],
+    "de": "Einige Werte wurden nicht gefunden",
+    "es": "No se encontraron algunos valores",
+    "fr-fr": "Certaines valeurs sont introuvables",
+    "ja": "一部の値が見つかりませんでした"
+  },
+  "showingAllResults": {
+    "source": "Showing all results, type to filter more",
+    "comment": "When Select controls use remote filtering, and the current filter returns a small enough amount of data that all items can be shown",
+    "tags": [
+      "ui",
+      "forms",
+      "select"
+    ],
+    "de": "Es werden alle Ergebnisse angezeigt. Tippen, um nach mehr zu filtern",
+    "es": "Se muestran todos los resultados, escriba para aplicar más filtros",
+    "fr-fr": "Tous les résultats sont affichés, tapez pour filtrer davantage",
+    "ja": "すべての結果が表示されています。さらにフィルタリングするには入力してください"
+  },
+  "loadingFilteredResults": {
+    "source": "Loading filtered results...",
+    "comment": "Message to display while API is fetching results based on the user's filter",
+    "tags": [
+      "ui",
+      "forms",
+      "select"
+    ],
+    "de": "Gefilterte Ergebnisse werden geladen ...",
+    "es": "Cargando resultados filtrados…",
+    "fr-fr": "Chargement des résultats filtrés...",
+    "ja": "フィルタ結果の読み込み中..."
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "home": {
+    "en": {
+      "checksum": "8cf04a9734132302f96da8e113e80ce5"
+    },
+    "de": {
+      "checksum": "8cf04a9734132302f96da8e113e80ce5",
+      "baseChecksum": "8cf04a9734132302f96da8e113e80ce5",
+      "status": "new"
+    },
+    "es": {
+      "checksum": "bf89f6756d11a04ddc3bbac67a272020",
+      "baseChecksum": "8cf04a9734132302f96da8e113e80ce5",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "bc769391ac2e780b2b24fc6a4eed78bd",
+      "baseChecksum": "8cf04a9734132302f96da8e113e80ce5",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "3eaf708610cff30a289e653a3813a4f8",
+      "baseChecksum": "8cf04a9734132302f96da8e113e80ce5",
+      "status": "translated"
+    }
+  },
+  "more": {
+    "en": {
+      "checksum": "d3da97e2d9aee5c8fbe03156ad051c99"
+    },
+    "de": {
+      "checksum": "7bb2046a9d1157eb64f7445140d0d61a",
+      "baseChecksum": "d3da97e2d9aee5c8fbe03156ad051c99",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "f1caef3babb4a742f839a4cd855000fe",
+      "baseChecksum": "d3da97e2d9aee5c8fbe03156ad051c99",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "32ba78fe43257d3e7f88e3935a8ea0d4",
+      "baseChecksum": "d3da97e2d9aee5c8fbe03156ad051c99",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "7a740eef08c42027a95e8ac31fd4e0ec",
+      "baseChecksum": "d3da97e2d9aee5c8fbe03156ad051c99",
+      "status": "translated"
+    }
+  },
+  "moreInitialMessage": {
+    "en": {
+      "checksum": "61b2ef12af40f6fe68faeb70dc314d9d"
+    },
+    "de": {
+      "checksum": "dedbc8fd9afc22119b6783a05af36355",
+      "baseChecksum": "61b2ef12af40f6fe68faeb70dc314d9d",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "7acb1a5b0a63dc24dc7dec274f7ce8a2",
+      "baseChecksum": "61b2ef12af40f6fe68faeb70dc314d9d",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "c6fb20e8b293618cc29e618d41624fa2",
+      "baseChecksum": "61b2ef12af40f6fe68faeb70dc314d9d",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "338c53dd912fc940d5a1e668873f185d",
+      "baseChecksum": "61b2ef12af40f6fe68faeb70dc314d9d",
+      "status": "translated"
+    }
+  }
+}

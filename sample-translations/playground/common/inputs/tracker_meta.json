@@ -1,0 +1,27 @@
+{
+  "search": {
+    "en": {
+      "checksum": "2a37324bb4c331c859044121df3f576b"
+    },
+    "de": {
+      "checksum": "94d5b3b8991ca95ab34a88f118f9bfc2",
+      "baseChecksum": "2a37324bb4c331c859044121df3f576b",
+      "status": "translated"
+    },
+    "es": {
+      "checksum": "7ae8b43332fae10e1930f45401046425",
+      "baseChecksum": "2a37324bb4c331c859044121df3f576b",
+      "status": "translated"
+    },
+    "fr-fr": {
+      "checksum": "b11a29b759a40cd6b0f430e6cbaf9498",
+      "baseChecksum": "2a37324bb4c331c859044121df3f576b",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "e181ccf7a84a84e197be28b1e600c412",
+      "baseChecksum": "2a37324bb4c331c859044121df3f576b",
+      "status": "translated"
+    }
+  }
+}
