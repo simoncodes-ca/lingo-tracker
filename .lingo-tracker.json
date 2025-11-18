@@ -31,7 +31,7 @@
   },
   "bundles": {
     "main": {
-      "bundleName": "resources.{locale}",
+      "bundleName": "{locale}",
       "dist": "./dist/i18n",
       "collections": "All"
     }

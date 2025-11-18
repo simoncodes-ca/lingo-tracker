@@ -35,6 +35,13 @@ export async function initCommand(options: InitOptions): Promise<void> {
     collections: {
       [collectionName]: collection
     },
+    bundles: {
+      main: {
+        bundleName: '{locale}',
+        dist: './dist/i18n',
+        collections: 'All',
+      },
+    },
   };
 
   writeFileSync(configPath, JSON.stringify(config, null, 2));

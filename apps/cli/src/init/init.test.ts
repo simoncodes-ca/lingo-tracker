@@ -39,7 +39,14 @@ describe('initCommand', () => {
         'TestCollection': {
           translationsFolder: 'src/i18n'
         }
-      }
+      },
+      bundles: {
+        main: {
+          bundleName: '{locale}',
+          dist: './dist/i18n',
+          collections: 'All',
+        },
+      },
     };
 
     expect(mockWriteFileSync).toHaveBeenCalledWith(
@@ -68,7 +75,14 @@ describe('initCommand', () => {
         'Main': {
           translationsFolder: 'src/translations'
         }
-      }
+      },
+      bundles: {
+        main: {
+          bundleName: '{locale}',
+          dist: './dist/i18n',
+          collections: 'All',
+        },
+      },
     };
 
     expect(mockWriteFileSync).toHaveBeenCalledWith(
