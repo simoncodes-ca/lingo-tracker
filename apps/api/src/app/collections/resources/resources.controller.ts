@@ -8,19 +8,26 @@ import {
   HttpStatus,
   NotFoundException,
 } from '@nestjs/common';
-import { addResource, createDefaultTranslations, deleteResource } from '@simoncodes-ca/core';
+import {
+  addResource,
+  createDefaultTranslations,
+  deleteResource,
+  moveResource
+} from '@simoncodes-ca/core';
 import {
   CreateResourceDto,
   CreateResourceResponseDto,
   DeleteResourceDto,
-  DeleteResourceResponseDto
+  DeleteResourceResponseDto,
+  MoveResourceDto,
+  MoveResourceResponseDto
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
 
 @Controller('collections/:collectionName/resources')
 export class ResourcesController {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) { }
 
   @Post()
   async createResources(
@@ -53,7 +60,7 @@ export class ResourcesController {
       for (const resource of resources) {
         try {
           const resourceBaseLocale = resource.baseLocale || baseLocale;
-          
+
           // If no translations provided, create entries for all non-base locales with base value
           const translations = resource.translations && resource.translations.length > 0
             ? resource.translations
@@ -143,6 +150,79 @@ export class ResourcesController {
       }
 
       const errorMessage = error instanceof Error ? error.message : 'Error deleting resources';
+      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  @Post('move')
+  async move(
+    @Param('collectionName') collectionName: string,
+    @Body() dto: MoveResourceDto
+  ): Promise<MoveResourceResponseDto> {
+    try {
+      const decodedCollectionName = decodeURIComponent(collectionName);
+      const config = this.configService.getConfig();
+
+      if (!config.collections || !config.collections[decodedCollectionName]) {
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
+      }
+
+      const collection = config.collections[decodedCollectionName];
+      const translationsFolder = collection.translationsFolder;
+
+      const result: MoveResourceResponseDto = {
+        movedCount: 0,
+        warnings: [],
+        errors: []
+      };
+
+      if (!dto.moves || !Array.isArray(dto.moves) || dto.moves.length === 0) {
+        throw new HttpException(
+          'Invalid request: moves array is required and must not be empty',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      for (const moveOp of dto.moves) {
+        let destinationTranslationsFolder: string | undefined;
+
+        if (moveOp.toCollection) {
+          const destCollectionName = decodeURIComponent(moveOp.toCollection);
+          if (!config.collections || !config.collections[destCollectionName]) {
+            // We could throw here, or treat it as an error for this specific move op
+            // For consistency with other bulk ops, let's add it to errors and continue
+            result.errors = result.errors || [];
+            result.errors.push(`Destination collection "${destCollectionName}" not found`);
+            continue;
+          }
+          destinationTranslationsFolder = config.collections[destCollectionName].translationsFolder;
+        }
+
+        const moveResult = moveResource(translationsFolder, {
+          source: moveOp.source,
+          destination: moveOp.destination,
+          override: moveOp.override,
+          destinationTranslationsFolder: destinationTranslationsFolder
+        });
+
+        result.movedCount += moveResult.movedCount;
+        if (moveResult.warnings && result.warnings) {
+          result.warnings.push(...moveResult.warnings);
+        }
+        if (moveResult.errors && result.errors) {
+          result.errors.push(...moveResult.errors);
+        }
+      }
+
+      return result;
+
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof HttpException) {
+        throw error;
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Error moving resources';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

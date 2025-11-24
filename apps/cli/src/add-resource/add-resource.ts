@@ -50,11 +50,11 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
     // Check if resource already exists
     const resolvedKey = resolveResourceKey(answers.key, answers.targetFolder || undefined);
     const { folderPath, entryKey } = splitResolvedKey(resolvedKey);
-    
+
     const fullFolderPath = folderPath.length
       ? join(collectionConfig.translationsFolder, ...folderPath)
       : collectionConfig.translationsFolder;
-    
+
     const entryResourcePath = resolve(cwd, fullFolderPath, 'resource_entries.json');
     const resourceExists = existsSync(entryResourcePath) && hasEntryKey(entryResourcePath, entryKey);
 
@@ -64,7 +64,7 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
         const confirm = await prompts({
           type: 'confirm',
           name: 'value',
-          message: `Resource "${resolvedKey}" already exists. Overwrite?`,
+          message: `Resource "${resolvedKey}" already exists. Override?`,
           initial: false,
         });
 
@@ -72,18 +72,18 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
           console.log('❌ Add resource cancelled.');
           return;
         }
-      } 
+      }
     }
 
     const tagsArray = answers.tags ? answers.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
     const baseLocale = collectionConfig.baseLocale || config.baseLocale;
     const locales = collectionConfig.locales || config.locales || [];
-    
+
     // Build translations: use provided translations or create entries for all non-base locales with base value
     const translations = answers.translations && answers.translations.length > 0
       ? answers.translations
       : createDefaultTranslations(locales, baseLocale, answers.value);
-    
+
     const result = addResource(
       resolve(cwd, collectionConfig.translationsFolder),
       {
@@ -219,9 +219,9 @@ async function promptForMissing(
     const collectionConfig = config.collections?.[collection];
     const baseLocale = collectionConfig?.baseLocale || config.baseLocale;
     const locales = collectionConfig?.locales || config.locales || [];
-    
+
     const nonBaseLocales = locales.filter(locale => locale !== baseLocale);
-    
+
     if (nonBaseLocales.length > 0) {
       const shouldAddTranslations = await prompts({
         type: 'confirm',
@@ -238,10 +238,10 @@ async function promptForMissing(
             name: 'value',
             message: `Translation for ${locale} (press enter to use base value)`,
           });
-          
+
           const baseValue = options.value ?? (responses.value as string);
           const translationValue = translationPrompt.value || baseValue;
-          
+
           const statusPrompt = await prompts({
             type: 'select',
             name: 'value',
@@ -253,7 +253,7 @@ async function promptForMissing(
             ],
             initial: 1, // Default to 'translated'
           });
-          
+
           translations.push({
             locale,
             value: translationValue,

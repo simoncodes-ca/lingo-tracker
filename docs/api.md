@@ -693,7 +693,91 @@ Response:
 }
 ```
 
-## Error Responses
+## Move Resource(s)
+
+Moves or renames translation resources within a collection. Supports single resource moves and wildcard pattern moves.
+
+**Endpoint**: `POST /api/collections/:collectionName/resources/move`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
+
+**Request Body**:
+
+```typescript
+interface MoveResourceDto {
+  moves: MoveOperationDto[];
+}
+
+interface MoveOperationDto {
+  /** Source key or pattern (e.g., "common.buttons.ok" or "common.buttons.*") */
+  source: string;
+  /** Destination key (e.g., "common.actions.ok" or "common.actions") */
+  destination: string;
+  /** Whether to overwrite the destination if it exists */
+  override?: boolean;
+  /** Optional destination collection name (defaults to source collection) */
+  toCollection?: string;
+}
+```
+
+**Example Request**:
+
+```json
+{
+  "moves": [
+    {
+      "source": "common.buttons.ok",
+      "destination": "common.actions.ok"
+    },
+    {
+      "source": "common.buttons.cancel",
+      "destination": "common.actions.cancel",
+      "override": true
+    },
+    {
+      "source": "common.buttons.save",
+      "destination": "common.buttons.save",
+      "toCollection": "admin-portal"
+    }
+  ]
+}
+```
+
+**Response**:
+
+```typescript
+interface MoveResourceResponseDto {
+  /** Total number of resources moved */
+  movedCount: number;
+  /** List of warnings (e.g., destination exists and override was false) */
+  warnings: string[];
+  /** List of errors */
+  errors: string[];
+}
+```
+
+**Example Response**:
+
+```json
+{
+  "movedCount": 2,
+  "warnings": [],
+  "errors": []
+}
+```
+
+**Status Codes**:
+- `201 Created`: Move operation completed (check `movedCount` and `errors` for details)
+- `400 Bad Request`: Invalid request body
+- `404 Not Found`: Collection not found
+- `500 Internal Server Error`: Unexpected error during move
+
+**Notes**:
+- Wildcard moves (`source: "prefix.*"`) will move all matching resources to the `destination` prefix.
+- The operation is atomic per move entry but not transactional across all moves.
+
+
 
 All error responses follow a consistent format:
 

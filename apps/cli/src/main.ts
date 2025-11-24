@@ -76,6 +76,19 @@ program
   });
 
 program
+  .command('move')
+  .description('Move or rename translation resources')
+  .option('--collection <name>', 'Name of the collection')
+  .option('--source <source>', 'Source key or pattern (e.g., common.buttons.ok or common.buttons.*)')
+  .option('--dest <dest>', 'Destination key (e.g., common.actions.ok)')
+  .option('--override', 'Override destination if it exists')
+  .option('--verbose', 'Show detailed output')
+  .action(async (options) => {
+    const { moveResourceCommand } = await import('./commands/move');
+    await moveResourceCommand(options);
+  });
+
+program
   .command('normalize')
   .description('Normalize translation resources (fix checksums, add missing locales, clean up empty folders)')
   .option('--collection <name>', 'Collection name (required unless --all)')

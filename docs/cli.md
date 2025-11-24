@@ -303,6 +303,74 @@ lingo-tracker delete-resource \
 
 ---
 
+### move
+
+Move or rename translation resources. Supports moving single resources as well as bulk moves using wildcard patterns.
+
+**Usage:**
+
+```bash
+lingo-tracker move [options]
+```
+
+**Options:**
+
+- `--collection <name>` - Collection to move resources in (required in non-interactive mode)
+- `--source <key>` - Source key or pattern (e.g., `common.buttons.ok` or `common.buttons.*`) (required in non-interactive mode)
+- `--dest <key>` - Destination key (e.g., `common.actions.ok` or `common.actions`) (required in non-interactive mode)
+- `--destCollection <name>` - Optional destination collection (defaults to source collection)
+- `--override` - Overwrite destination if it already exists
+- `--verbose` - Print detailed output for each moved resource
+
+**Examples:**
+
+Interactive mode:
+```bash
+lingo-tracker move
+```
+
+Move a single resource:
+```bash
+lingo-tracker move \
+  --collection Main \
+  --source common.buttons.ok \
+  --dest common.actions.ok
+```
+
+Move multiple resources using a wildcard pattern:
+```bash
+lingo-tracker move \
+  --collection Main \
+  --source "common.buttons.*" \
+  --dest "common.actions"
+```
+*Result: `common.buttons.ok` -> `common.actions.ok`, `common.buttons.cancel` -> `common.actions.cancel`*
+
+Move resource to another collection:
+```bash
+lingo-tracker move \
+  --collection Main \
+  --source common.buttons.ok \
+  --dest common.buttons.ok \
+  --destCollection Admin
+```
+
+Force move (overwrite destination):
+```bash
+lingo-tracker move \
+  --collection Main \
+  --source old.key \
+  --dest new.key \
+  --override
+```
+
+**Notes:**
+- When using wildcard patterns, the suffix matched by `*` is appended to the destination key.
+- Moving a resource preserves its comments, tags, and translations.
+- The source resource is deleted after a successful move.
+
+---
+
 ### normalize
 
 Normalize translation resources by recomputing checksums, adding missing locale entries, updating statuses, and cleaning up empty folders. This is a maintenance operation that ensures translation files are consistent and correct after manual edits, configuration changes, or imports.

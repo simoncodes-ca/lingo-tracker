@@ -12,6 +12,8 @@ jest.mock('@simoncodes-ca/core', () => {
     ...actual,
     addResource: jest.fn(),
     deleteResource: jest.fn(),
+    moveResource: jest.fn(),
+    moveResourcesByPattern: jest.fn(),
   };
 });
 
@@ -648,6 +650,158 @@ describe('ResourcesController', () => {
         './translations/test',
         { keys: ['apps.common.buttons.ok'] },
       );
+    });
+
+  });
+
+  describe('move', () => {
+    it('should successfully move resources', async () => {
+      const moveResource = core.moveResource as jest.Mock;
+      moveResource.mockReturnValue({
+        movedCount: 1,
+        warnings: [],
+        errors: []
+      });
+
+      const dto = {
+        moves: [{ source: 'app.button.ok', destination: 'app.actions.ok' }],
+      };
+
+      const result = await resourcesController.move('test-collection', dto);
+
+      expect(result).toEqual({
+        movedCount: 1,
+        warnings: [],
+        errors: [],
+      });
+      expect(moveResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          source: 'app.button.ok',
+          destination: 'app.actions.ok',
+        }),
+      );
+    });
+
+    it('should pass override flag', async () => {
+      const moveResource = core.moveResource as jest.Mock;
+      moveResource.mockReturnValue({
+        movedCount: 1,
+        warnings: [],
+        errors: []
+      });
+
+      const dto = {
+        moves: [{ source: 'app.button.ok', destination: 'app.actions.ok', override: true }],
+      };
+
+      await resourcesController.move('test-collection', dto);
+
+      expect(moveResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          source: 'app.button.ok',
+          destination: 'app.actions.ok',
+          override: true
+        }),
+      );
+    });
+
+    it('should aggregate results from multiple moves', async () => {
+      const moveResource = core.moveResource as jest.Mock;
+      moveResource
+        .mockReturnValueOnce({ movedCount: 1, warnings: [], errors: [] })
+        .mockReturnValueOnce({ movedCount: 0, warnings: ['Exists'], errors: [] });
+
+      const dto = {
+        moves: [
+          { source: 'a', destination: 'b' },
+          { source: 'c', destination: 'd' }
+        ],
+      };
+
+      const result = await resourcesController.move('test-collection', dto);
+
+      expect(result.movedCount).toBe(1);
+      expect(result.warnings).toContain('Exists');
+      expect(moveResource).toHaveBeenCalledTimes(2);
+    });
+
+    it('should throw BadRequest if moves array is empty', async () => {
+      const dto = { moves: [] };
+      await expect(resourcesController.move('test-collection', dto)).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('should throw BadRequest if moves is missing', async () => {
+      const dto = {} as any;
+      await expect(resourcesController.move('test-collection', dto)).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('should handle cross-collection move', async () => {
+      const moveResource = core.moveResource as jest.Mock;
+      moveResource.mockReturnValue({
+        movedCount: 1,
+        warnings: [],
+        errors: []
+      });
+
+      const dto = {
+        moves: [
+          {
+            source: 'app.button.ok',
+            destination: 'app.actions.ok',
+            toCollection: 'other-collection'
+          }
+        ],
+      };
+
+      // Mock config with other collection
+      const configWithOtherCollection = {
+        ...mockConfig,
+        collections: {
+          ...mockConfig.collections,
+          'other-collection': {
+            translationsFolder: './translations/other',
+          },
+        },
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithOtherCollection);
+
+      const result = await resourcesController.move('test-collection', dto);
+
+      expect(result.movedCount).toBe(1);
+      expect(moveResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          source: 'app.button.ok',
+          destination: 'app.actions.ok',
+          destinationTranslationsFolder: './translations/other'
+        }),
+      );
+    });
+
+    it('should report error if destination collection not found', async () => {
+      const moveResource = core.moveResource as jest.Mock;
+
+      const dto = {
+        moves: [
+          {
+            source: 'app.button.ok',
+            destination: 'app.actions.ok',
+            toCollection: 'non-existent'
+          }
+        ],
+      };
+
+      const result = await resourcesController.move('test-collection', dto);
+
+      expect(result.movedCount).toBe(0);
+      expect(result.errors).toContain('Destination collection "non-existent" not found');
+      expect(moveResource).not.toHaveBeenCalled();
     });
   });
 });
