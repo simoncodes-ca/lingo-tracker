@@ -297,4 +297,24 @@ describe('deleteResource', () => {
       expect(result.errors).toBeUndefined();
     });
   });
+
+  describe('Security', () => {
+    it('should reject invalid keys with path traversal characters', () => {
+      const result = deleteResource('translations', {
+        keys: ['../secret.key']
+      });
+
+      expect(result.entriesDeleted).toBe(0);
+      expect(result.errors).toBeDefined();
+      expect(result.errors![0].error).toContain('Invalid key segment');
+    });
+
+    it('should NOT attempt to delete files for invalid paths', () => {
+      deleteResource('translations', {
+        keys: ['../secret.key']
+      });
+
+      expect(vi.mocked(fs.unlinkSync)).not.toHaveBeenCalled();
+    });
+  });
 });

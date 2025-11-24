@@ -338,4 +338,24 @@ describe('Move Resource', () => {
             expect(destContent.cancel).toBeDefined();
         });
     });
+
+    describe('Security', () => {
+        it('should handle invalid characters in pattern during scanning', () => {
+            // Test with invalid characters that shouldn't be allowed in keys
+            const invalidPattern = 'invalid@char*';
+            const invalidPath = join(testDir, 'invalid@char');
+
+            const result = moveResource(testDir, {
+                source: invalidPattern,
+                destination: 'dest'
+            });
+
+            // It should NOT try to check if the folder exists because validation should fail first
+            expect(fs.existsSync).not.toHaveBeenCalledWith(invalidPath);
+
+            // It should return error
+            expect(result.errors.length).toBeGreaterThan(0);
+            expect(result.errors[0]).toContain('Invalid key segment');
+        });
+    });
 });

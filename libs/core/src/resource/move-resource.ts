@@ -190,6 +190,15 @@ function moveResourcesByPattern(
   const rootFolderParts = cleanPrefix.split('.');
   const rootFolderPath = join(sourceTranslationsFolder, ...rootFolderParts);
 
+  if (cleanPrefix.length > 0) {
+    try {
+      validateKey(cleanPrefix);
+    } catch (error) {
+      result.errors.push((error as Error).message);
+      return result;
+    }
+  }
+
   if (existsSync(rootFolderPath)) {
     scanFolder(rootFolderPath, cleanPrefix);
   } else {

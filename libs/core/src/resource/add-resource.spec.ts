@@ -371,4 +371,43 @@ describe('addResource', () => {
       expect(metaContent.ok['fr-ca']).toBeDefined();
     });
   });
+
+  describe('Security', () => {
+    it('should reject invalid keys with path traversal characters', () => {
+      expect(() => {
+        addResource('translations', {
+          key: '../secret.key',
+          baseValue: 'test'
+        });
+      }).toThrow('Invalid key segment');
+    });
+
+    it('should reject invalid targetFolder with path traversal characters', () => {
+      expect(() => {
+        addResource('translations', {
+          key: 'valid.key',
+          targetFolder: '../secret',
+          baseValue: 'test'
+        });
+      }).toThrow('Invalid targetFolder segment');
+    });
+
+    it('should NOT create folders for invalid paths', () => {
+      try {
+        addResource('translations', {
+          key: 'valid.key',
+          targetFolder: '../secret',
+          baseValue: 'test'
+        });
+      } catch (e) {
+        // Ignore error
+      }
+
+      const mkdirCall = vi.mocked(fs.mkdirSync).mock.calls;
+      const secretPath = resolve('translations', '..', 'secret');
+      // Check that no call was made with the secret path
+      const callWithSecret = mkdirCall.find(call => call[0].toString().includes('secret'));
+      expect(callWithSecret).toBeUndefined();
+    });
+  });
 });
