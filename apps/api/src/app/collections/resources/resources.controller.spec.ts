@@ -14,6 +14,7 @@ jest.mock('@simoncodes-ca/core', () => {
     deleteResource: jest.fn(),
     moveResource: jest.fn(),
     moveResourcesByPattern: jest.fn(),
+    editResource: jest.fn(),
   };
 });
 
@@ -796,7 +797,6 @@ describe('ResourcesController', () => {
           }
         ],
       };
-
       const result = await resourcesController.move('test-collection', dto);
 
       expect(result.movedCount).toBe(0);
@@ -804,5 +804,93 @@ describe('ResourcesController', () => {
       expect(moveResource).not.toHaveBeenCalled();
     });
   });
-});
 
+  describe('update', () => {
+    it('should successfully update a resource', async () => {
+      const editResource = core.editResource as jest.Mock;
+      editResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        updated: true,
+      });
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK Updated',
+      };
+
+      const result = await resourcesController.update('test-collection', dto);
+
+      expect(result).toEqual({
+        resolvedKey: 'app.button.ok',
+        updated: true,
+        message: undefined,
+      });
+      expect(editResource).toHaveBeenCalledWith(
+        './translations/test',
+        expect.objectContaining({
+          key: 'app.button.ok',
+          baseValue: 'OK Updated',
+          baseLocale: 'en',
+        }),
+      );
+    });
+
+    it('should return no-op message when no changes detected', async () => {
+      const editResource = core.editResource as jest.Mock;
+      editResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        updated: false,
+        message: 'No changes detected',
+      });
+
+      const dto = {
+        key: 'app.button.ok',
+        baseValue: 'OK',
+      };
+
+      const result = await resourcesController.update('test-collection', dto);
+
+      expect(result).toEqual({
+        resolvedKey: 'app.button.ok',
+        updated: false,
+        message: 'No changes detected',
+      });
+    });
+
+    it('should throw NotFoundException when resource not found', async () => {
+      const editResource = core.editResource as jest.Mock;
+      editResource.mockImplementation(() => {
+        throw new Error('Resource not found: app.button.missing');
+      });
+
+      const dto = {
+        key: 'app.button.missing',
+      };
+
+      await expect(
+        resourcesController.update('test-collection', dto),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException for validation errors', async () => {
+      const editResource = core.editResource as jest.Mock;
+      editResource.mockImplementation(() => {
+        throw new Error('Invalid key segment');
+      });
+
+      const dto = {
+        key: 'invalid..key',
+      };
+
+      await expect(
+        resourcesController.update('test-collection', dto),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.update('test-collection', dto);
+      } catch (error: any) {
+        expect(error.status).toBe(400);
+      }
+    });
+  });
+});

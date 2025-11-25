@@ -301,6 +301,68 @@ lingo-tracker delete-resource \
 - In non-interactive mode, you must provide all required options
 - Errors for individual keys don't halt the operation; other keys continue to be processed
 
+
+---
+
+### edit-resource
+
+Edit an existing translation resource.
+
+**Usage:**
+
+```bash
+lingo-tracker edit-resource [options]
+```
+
+**Options:**
+
+- `--collection <name>` - Collection containing the resource (required in non-interactive mode)
+- `--key <key>` - Resource key (required in non-interactive mode)
+- `--baseValue <text>` - New base value (updates source text)
+- `--comment <text>` - New comment
+- `--tags <tags>` - New tags (comma-separated, replaces existing)
+- `--targetFolder <folder>` - New target folder
+- `--locale <locale>` - Locale to update (requires `--localeValue`)
+- `--localeValue <text>` - New translation value for the specified locale
+
+**Examples:**
+
+Interactive mode:
+```bash
+lingo-tracker edit-resource
+```
+
+Update base value (marks other locales as stale):
+```bash
+lingo-tracker edit-resource \
+  --collection Main \
+  --key buttons.save \
+  --baseValue "Save Item"
+```
+
+Update a specific translation:
+```bash
+lingo-tracker edit-resource \
+  --collection Main \
+  --key buttons.save \
+  --locale fr-ca \
+  --localeValue "Enregistrer l'article"
+```
+
+Update metadata:
+```bash
+lingo-tracker edit-resource \
+  --collection Main \
+  --key buttons.save \
+  --comment "Main save button" \
+  --tags "ui,primary"
+```
+
+**Notes:**
+- Updating `baseValue` triggers a checksum update and marks all other existing translations as `stale`.
+- Updating a locale value sets its status to `translated` and updates its checksum.
+- If no changes are detected (values match existing), the command reports "No changes detected".
+
 ---
 
 ### move

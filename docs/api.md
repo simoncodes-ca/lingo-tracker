@@ -693,6 +693,86 @@ Response:
 }
 ```
 
+
+### Edit Resource
+
+Modifies an existing translation resource. Supports updating base value, comments, tags, and locale-specific translations.
+
+**Endpoint**: `PATCH /api/collections/:collectionName/resources`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
+
+**Request Body**:
+
+```typescript
+interface UpdateResourceDto {
+  /** The key of the resource to update */
+  key: string;
+  /** Optional new base value */
+  baseValue?: string;
+  /** Optional new comment */
+  comment?: string;
+  /** Optional new tags (replaces existing tags) */
+  tags?: string[];
+  /** Optional target folder override */
+  targetFolder?: string;
+  /** Optional base locale override */
+  baseLocale?: string;
+  /** Optional map of locale updates */
+  locales?: Record<string, {
+    value: string;
+  }>;
+}
+```
+
+**Example Request**:
+
+```json
+{
+  "key": "apps.common.buttons.save",
+  "baseValue": "Save Item",
+  "comment": "Main save button",
+  "tags": ["ui", "primary"],
+  "locales": {
+    "fr-ca": { "value": "Enregistrer l'article" }
+  }
+}
+```
+
+**Response**:
+
+```typescript
+interface UpdateResourceResponseDto {
+  /** The resolved key of the updated resource */
+  resolvedKey: string;
+  /** Whether any changes were actually made */
+  updated: boolean;
+  /** Optional message (e.g., "No changes detected") */
+  message?: string;
+}
+```
+
+**Example Response**:
+
+```json
+{
+  "resolvedKey": "apps.common.buttons.save",
+  "updated": true
+}
+```
+
+**Status Codes**:
+- `200 OK`: Resource updated successfully (or no changes detected)
+- `400 Bad Request`: Invalid request body or validation error
+- `404 Not Found`: Collection or resource not found
+- `500 Internal Server Error`: Unexpected error
+
+**Notes**:
+- Updating `baseValue` will mark all non-base translations as `stale` (unless they are also updated in the same request).
+- Updating a locale value will set its status to `translated` and update its checksums.
+- If no changes are detected (values match existing), `updated` will be `false`.
+
 ## Move Resource(s)
 
 Moves or renames translation resources within a collection. Supports single resource moves and wildcard pattern moves.

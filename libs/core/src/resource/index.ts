@@ -10,3 +10,4 @@ export * from './translation-helpers';
 export * from './add-resource';
 export * from './delete-resource';
 export * from './move-resource';
+export * from './edit-resource';

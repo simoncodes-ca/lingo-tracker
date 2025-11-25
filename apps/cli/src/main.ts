@@ -65,6 +65,22 @@ program
   });
 
 program
+  .command('edit-resource')
+  .description('Edit an existing translation resource')
+  .option('--collection <name>', 'Name of the collection')
+  .option('--key <key>', 'Resource key (dot-delimited)')
+  .option('--baseValue <value>', 'New base value (source text)')
+  .option('--comment <comment>', 'New comment')
+  .option('--tags <tags>', 'New tags (comma-separated)')
+  .option('--targetFolder <folder>', 'New target folder (dot-delimited)')
+  .option('--locale <locale>', 'Locale to update (requires --localeValue)')
+  .option('--localeValue <value>', 'New value for the specified locale')
+  .action(async (options) => {
+    const { editResourceCommand } = await import('./commands/edit-resource');
+    await editResourceCommand(options);
+  });
+
+program
   .command('delete-resource')
   .description('Delete one or more translation resources from a collection')
   .option('--collection <name>', 'Name of the collection')

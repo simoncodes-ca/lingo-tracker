@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Delete,
+  Patch,
   Param,
   Body,
   HttpException,
@@ -12,7 +13,8 @@ import {
   addResource,
   createDefaultTranslations,
   deleteResource,
-  moveResource
+  moveResource,
+  editResource
 } from '@simoncodes-ca/core';
 import {
   CreateResourceDto,
@@ -20,7 +22,9 @@ import {
   DeleteResourceDto,
   DeleteResourceResponseDto,
   MoveResourceDto,
-  MoveResourceResponseDto
+  MoveResourceResponseDto,
+  UpdateResourceDto,
+  UpdateResourceResponseDto
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
@@ -223,6 +227,53 @@ export class ResourcesController {
       }
 
       const errorMessage = error instanceof Error ? error.message : 'Error moving resources';
+      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Patch()
+  async update(
+    @Param('collectionName') collectionName: string,
+    @Body() dto: UpdateResourceDto
+  ): Promise<UpdateResourceResponseDto> {
+    try {
+      const decodedCollectionName = decodeURIComponent(collectionName);
+      const config = this.configService.getConfig();
+
+      if (!config.collections || !config.collections[decodedCollectionName]) {
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
+      }
+
+      const collection = config.collections[decodedCollectionName];
+      const translationsFolder = collection.translationsFolder;
+      const baseLocale = collection.baseLocale || config.baseLocale || 'en';
+
+      const result = editResource(translationsFolder, {
+        ...dto,
+        baseLocale
+      });
+
+      return {
+        resolvedKey: result.resolvedKey,
+        updated: result.updated,
+        message: result.message
+      };
+
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof HttpException) {
+        throw error;
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Error updating resource';
+
+      if (errorMessage.includes('Resource not found')) {
+        throw new NotFoundException(errorMessage);
+      }
+
+      if (errorMessage.includes('Invalid')) {
+        throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
+      }
+
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
