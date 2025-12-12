@@ -188,6 +188,7 @@ describe('editResourceCommand', () => {
 
         expect(mockEditResource).not.toHaveBeenCalled();
     });
+
     it('should prompt for baseValue if not provided', async () => {
         mockExistsSync.mockReturnValue(true);
         mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
