@@ -118,25 +118,5 @@ Effect
 }
 ```
 
-## TODO:
- - [x] CORE (libs/core)
-   - [x] Extend types for edit inputs (baseValue?, comment?, tags?, localeUpdates?)
-   - [x] Implement existence check and edit pipeline (validate, resolve, read/merge/write)
-   - [x] Implement base change logic (recompute base checksum, mark non‑base stale)
-   - [x] Implement non‑base updates (checksum, baseChecksum, status translated/verified)
-   - [x] Unit tests: not found, no‑op, base change → stale, non‑base edit, tags replace
- - [x] Data Transfer (libs/data-transfer)
-   - [x] UpdateResourceDto (PATCH semantics) and response DTO; export from index
-   - [x] DTO validation (segment regex, arrays, optional fields)
- - [x] API (apps/api)
-   - [x] DTO ↔ CORE mapping for updates
-   - [x] PATCH /collections/:collection/resources endpoint; 200 on edit, 204 if no‑op, 404 not found, 400 validation
-   - [x] Tests: base edit, locale edit, not found, invalid key, no‑op
- - [x] CLI (apps/cli)
-   - [x] edit-resource command with flags: --collection --key --comment --tags --targetFolder --value (base) --locale <code> --localeValue <val>
-   - [x] Interactive prompts; validation; call CORE; print diff/summary
-   - [x] Tests: base edit, locale edit, invalid input, no‑op
- - [x] Cross‑cutting
-   - [x] Docs: add/Edit resource sections; API endpoint docs (PATCH semantics)
 
 
