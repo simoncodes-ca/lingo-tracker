@@ -20,7 +20,7 @@ LingoTracker is designed with scalability in mind. By storing metadata in separa
 Tired of dealing with incorrect variable names or placeholders in ICU message format? LingoTracker has your back! Our built-in validation checks your translations, ensuring accuracy and correctness, putting such hassles in the past.
 
 ### Type Safety
-Experience compile-time guarantees with generated translation key tokens. This feature ensures that your application uses the correct and valid translation keys, along with type completion, adding an extra layer of confidence to your translations.
+Experience compile-time guarantees with generated translation key tokens. This feature ensures that your application uses the correct and valid translation keys, along with type completion, adding an extra layer of confidence to your translations. [Learn more](docs/features/bundle-type-generation.md).
 
 ### CLI Support
 Fully backed by a powerful Command Line Interface, LingoTracker allows for easy CI integration. Validate your resources prior to a release, making sure everything is in tip-top shape before going live!

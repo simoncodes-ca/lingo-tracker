@@ -82,7 +82,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
     }
 
     try {
-      const result = generateBundle({
+      const result = await generateBundle({
         bundleKey,
         bundleDefinition,
         config,
@@ -98,6 +98,23 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
 
       console.log(`   ✅ Files generated: ${result.filesGenerated}`);
       console.log(`   ✅ Locales: ${result.localesProcessed.join(', ')}`);
+
+      if (result.typeGenerationResult) {
+        if (result.typeGenerationResult.fileGenerated) {
+          console.log(
+            `   └─ Types: ${result.typeGenerationResult.typeDist} (${result.typeGenerationResult.keysCount} keys)`
+          );
+        } else if (result.typeGenerationResult.skippedReason) {
+          console.log(
+            `   └─ Types: Skipped (${result.typeGenerationResult.skippedReason})`
+          );
+        }
+      } else if (bundleDefinition.typeDist) {
+        // Should have result if configured, but just in case
+        console.log(`   └─ Types: Failed (No result returned)`);
+      } else {
+        console.log(`   └─ Types: Skipped (no typeDist configured)`);
+      }
 
       if (result.warnings.length > 0) {
         console.log(`   ⚠️  Warnings: ${result.warnings.length}`);

@@ -14,6 +14,7 @@ import { loadCollectionResources, FlatResource } from './resource-loader';
 import { matchesPattern } from './pattern-matcher';
 import { matchesTags } from './tag-filter';
 import { buildHierarchy } from './hierarchy-builder';
+import { generateBundleTypes, GenerateTypesResult } from './type-generation/generate-types';
 
 export interface GenerateBundleParams {
   readonly bundleKey: string;
@@ -27,6 +28,7 @@ export interface GenerateBundleResult {
   readonly filesGenerated: number;
   readonly warnings: string[];
   readonly localesProcessed: string[];
+  readonly typeGenerationResult?: GenerateTypesResult;
 }
 
 /**
@@ -35,9 +37,9 @@ export interface GenerateBundleResult {
  * @param params - Bundle generation parameters
  * @returns Result with count of files generated and any warnings
  */
-export function generateBundle(
+export async function generateBundle(
   params: GenerateBundleParams
-): GenerateBundleResult {
+): Promise<GenerateBundleResult> {
   const { bundleKey, bundleDefinition, config, locales } = params;
   const warnings: string[] = [];
   const localesProcessed: string[] = [];
@@ -65,11 +67,28 @@ export function generateBundle(
     localesProcessed.push(locale);
   }
 
+  // Generate types if configured
+  let typeGenerationResult: GenerateTypesResult | undefined;
+  if (bundleDefinition.typeDist) {
+    try {
+      typeGenerationResult = await generateBundleTypes(bundleKey, config);
+      if (typeGenerationResult.fileGenerated) {
+        // We don't increment filesGenerated here as it tracks bundle JSON files
+        // But we could add a note to warnings or a new field if needed
+      } else if (typeGenerationResult.skippedReason === 'empty-bundle') {
+        warnings.push(`Type generation skipped for '${bundleKey}': Bundle is empty`);
+      }
+    } catch (error) {
+      warnings.push(`Type generation failed for '${bundleKey}': ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
   return {
     bundleKey,
     filesGenerated,
     warnings,
     localesProcessed,
+    typeGenerationResult,
   };
 }
 

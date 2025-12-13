@@ -8,6 +8,9 @@ import * as resourceLoader from './resource-loader';
 // Mock fs and resourceLoader modules
 vi.mock('fs');
 vi.mock('./resource-loader');
+vi.mock('./type-generation/generate-types');
+
+import { generateBundleTypes } from './type-generation/generate-types';
 
 describe('generate-bundle', () => {
   let mockConfig: LingoTrackerConfig;
@@ -41,7 +44,7 @@ describe('generate-bundle', () => {
   });
 
   describe('generateBundle', () => {
-    it('should generate bundle for all locales by default', () => {
+    it('should generate bundle for all locales by default', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: 'main.{locale}',
         dist: '/dist/bundles',
@@ -58,14 +61,14 @@ describe('generate-bundle', () => {
         config: mockConfig,
       };
 
-      const result = generateBundle(params);
+      const result = await generateBundle(params);
 
       expect(result.filesGenerated).toBe(3); // en, fr, es
       expect(result.localesProcessed).toEqual(['en', 'fr', 'es']);
       expect(result.warnings).toHaveLength(0);
     });
 
-    it('should generate bundle for specific locales when provided', () => {
+    it('should generate bundle for specific locales when provided', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -83,13 +86,13 @@ describe('generate-bundle', () => {
         locales: ['en', 'fr'],
       };
 
-      const result = generateBundle(params);
+      const result = await generateBundle(params);
 
       expect(result.filesGenerated).toBe(2);
       expect(result.localesProcessed).toEqual(['en', 'fr']);
     });
 
-    it('should warn about empty bundles', () => {
+    it('should warn about empty bundles', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: 'main.{locale}',
         dist: '/dist/bundles',
@@ -104,7 +107,7 @@ describe('generate-bundle', () => {
         config: mockConfig,
       };
 
-      const result = generateBundle(params);
+      const result = await generateBundle(params);
 
       expect(result.filesGenerated).toBe(0);
       expect(result.warnings).toContain("Bundle 'main' for locale 'en' is empty");
@@ -112,7 +115,7 @@ describe('generate-bundle', () => {
       expect(result.warnings).toContain("Bundle 'main' for locale 'es' is empty");
     });
 
-    it('should process all collections when collections is "All"', () => {
+    it('should process all collections when collections is "All"', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -129,13 +132,13 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       expect(loadSpy).toHaveBeenCalledWith('/translations/default', 'en', 'en');
       expect(loadSpy).toHaveBeenCalledWith('/translations/admin', 'en', 'en');
     });
 
-    it('should process specific collections with selection rules', () => {
+    it('should process specific collections with selection rules', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -161,7 +164,7 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
       const writtenData = JSON.parse(writeCall[1] as string);
@@ -170,7 +173,7 @@ describe('generate-bundle', () => {
       expect(writtenData).not.toHaveProperty('other');
     });
 
-    it('should warn about non-existent collections', () => {
+    it('should warn about non-existent collections', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -189,12 +192,12 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      const result = generateBundle(params);
+      const result = await generateBundle(params);
 
       expect(result.warnings).toContain("Collection 'nonexistent' not found in config");
     });
 
-    it('should apply bundledKeyPrefix', () => {
+    it('should apply bundledKeyPrefix', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -218,7 +221,7 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
       const writtenData = JSON.parse(writeCall[1] as string);
@@ -228,7 +231,7 @@ describe('generate-bundle', () => {
       expect(writtenData.common.buttons.ok).toBe('OK');
     });
 
-    it('should apply merge strategy "merge" (first wins)', () => {
+    it('should apply merge strategy "merge" (first wins)', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -264,7 +267,7 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
       const writtenData = JSON.parse(writeCall[1] as string);
@@ -272,7 +275,7 @@ describe('generate-bundle', () => {
       expect(writtenData.shared.title).toBe('Default Title');
     });
 
-    it('should apply merge strategy "override"', () => {
+    it('should apply merge strategy "override"', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -307,7 +310,7 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
       const writtenData = JSON.parse(writeCall[1] as string);
@@ -315,7 +318,7 @@ describe('generate-bundle', () => {
       expect(writtenData.shared.title).toBe('Admin Title');
     });
 
-    it('should filter by tags with "Any" operator', () => {
+    it('should filter by tags with "Any" operator', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -346,7 +349,7 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
       const writtenData = JSON.parse(writeCall[1] as string);
@@ -356,7 +359,7 @@ describe('generate-bundle', () => {
       expect(writtenData.internal).toBeUndefined();
     });
 
-    it('should filter by tags with "All" operator', () => {
+    it('should filter by tags with "All" operator', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -387,7 +390,7 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
       const writtenData = JSON.parse(writeCall[1] as string);
@@ -397,7 +400,7 @@ describe('generate-bundle', () => {
       expect(writtenData.internal).toBeUndefined();
     });
 
-    it('should handle bundle naming with {locale} placeholder in filename', () => {
+    it('should handle bundle naming with {locale} placeholder in filename', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: 'main.{locale}',
         dist: '/dist/bundles',
@@ -415,7 +418,7 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         '/dist/bundles/main.en.json',
@@ -424,7 +427,7 @@ describe('generate-bundle', () => {
       );
     });
 
-    it('should handle bundle naming with {locale} placeholder in subdirectory', () => {
+    it('should handle bundle naming with {locale} placeholder in subdirectory', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}/main',
         dist: '/dist/bundles',
@@ -442,7 +445,7 @@ describe('generate-bundle', () => {
         locales: ['fr'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         '/dist/bundles/fr/main.json',
@@ -451,7 +454,7 @@ describe('generate-bundle', () => {
       );
     });
 
-    it('should create output directory if it does not exist', () => {
+    it('should create output directory if it does not exist', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -470,7 +473,7 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       expect(fs.mkdirSync).toHaveBeenCalledWith(
         '/dist/bundles',
@@ -478,7 +481,7 @@ describe('generate-bundle', () => {
       );
     });
 
-    it('should write properly formatted JSON', () => {
+    it('should write properly formatted JSON', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -496,7 +499,7 @@ describe('generate-bundle', () => {
         locales: ['en'],
       };
 
-      generateBundle(params);
+      await generateBundle(params);
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
       const writtenJson = writeCall[1] as string;
@@ -505,6 +508,85 @@ describe('generate-bundle', () => {
       expect(writtenJson).toContain('{\n  "apps": {\n    "welcome": "Welcome"');
       // Should be valid JSON
       expect(() => JSON.parse(writtenJson)).not.toThrow();
+    });
+    it('should invoke type generation when typeDist is configured', async () => {
+      const bundleDefinition: BundleDefinition = {
+        bundleName: '{locale}',
+        dist: '/dist/bundles',
+        collections: 'All',
+        typeDist: 'src/generated/types.ts',
+      };
+
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+        { key: 'test', value: 'Test' },
+      ]);
+      (generateBundleTypes as any).mockResolvedValue({
+        fileGenerated: true,
+      });
+
+      const params: GenerateBundleParams = {
+        bundleKey: 'main',
+        bundleDefinition,
+        config: mockConfig,
+        locales: ['en'],
+      };
+
+      await generateBundle(params);
+
+      expect(generateBundleTypes).toHaveBeenCalledWith('main', mockConfig);
+    });
+
+    it('should not invoke type generation when typeDist is missing', async () => {
+      const bundleDefinition: BundleDefinition = {
+        bundleName: '{locale}',
+        dist: '/dist/bundles',
+        collections: 'All',
+      };
+
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+        { key: 'test', value: 'Test' },
+      ]);
+      (generateBundleTypes as any).mockClear();
+
+      const params: GenerateBundleParams = {
+        bundleKey: 'main',
+        bundleDefinition,
+        config: mockConfig,
+        locales: ['en'],
+      };
+
+      await generateBundle(params);
+
+      expect(generateBundleTypes).not.toHaveBeenCalled();
+    });
+
+    it('should capture type generation errors in warnings', async () => {
+      const bundleDefinition: BundleDefinition = {
+        bundleName: '{locale}',
+        dist: '/dist/bundles',
+        collections: 'All',
+        typeDist: 'src/generated/types.ts',
+      };
+
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+        { key: 'test', value: 'Test' },
+      ]);
+      (generateBundleTypes as any).mockRejectedValue(
+        new Error('Type gen failed')
+      );
+
+      const params: GenerateBundleParams = {
+        bundleKey: 'main',
+        bundleDefinition,
+        config: mockConfig,
+        locales: ['en'],
+      };
+
+      const result = await generateBundle(params);
+
+      expect(result.warnings).toContain(
+        "Type generation failed for 'main': Type gen failed"
+      );
     });
   });
 });

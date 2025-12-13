@@ -101,4 +101,12 @@ export interface BundleDefinition {
    * - Array: Fine-grained control with selection rules per collection
    */
   collections: 'All' | CollectionBundleDefinition[];
+
+  /**
+   * Optional output path for generated TypeScript type definitions
+   * If specified, a .ts file containing type constants will be generated
+   * Can be absolute or relative to project root
+   * Example: "./src/generated/common-tokens.ts"
+   */
+  typeDist?: string;
 }

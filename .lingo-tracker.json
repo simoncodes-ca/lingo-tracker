@@ -33,7 +33,8 @@
     "main": {
       "bundleName": "{locale}",
       "dist": "./dist/i18n",
-      "collections": "All"
+      "collections": "All",
+      "typeDist": "./dist/i18n-types/main.ts"
     }
   }
 }

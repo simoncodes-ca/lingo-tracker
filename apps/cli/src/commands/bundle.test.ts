@@ -265,6 +265,65 @@ describe('bundleCommand', () => {
       expect(console.log).toHaveBeenCalledWith('   Total files generated: 5');
       expect(console.log).toHaveBeenCalledWith('   Total warnings: 1');
     });
+
+    it('should display type generation success', async () => {
+      mockGenerateBundle.mockReturnValue({
+        bundleKey: 'core',
+        filesGenerated: 3,
+        warnings: [],
+        localesProcessed: ['en'],
+        typeGenerationResult: {
+          bundleKey: 'core',
+          typeDist: 'src/generated/core-tokens.ts',
+          keysCount: 100,
+          fileGenerated: true,
+        },
+      });
+
+      await bundleCommand({ name: 'core' });
+
+      expect(console.log).toHaveBeenCalledWith(
+        '   └─ Types: src/generated/core-tokens.ts (100 keys)'
+      );
+    });
+
+    it('should display type generation skipped (empty)', async () => {
+      mockGenerateBundle.mockReturnValue({
+        bundleKey: 'core',
+        filesGenerated: 3,
+        warnings: [],
+        localesProcessed: ['en'],
+        typeGenerationResult: {
+          bundleKey: 'core',
+          typeDist: null,
+          keysCount: 0,
+          fileGenerated: false,
+          skippedReason: 'empty-bundle',
+        },
+      });
+
+      await bundleCommand({ name: 'core' });
+
+      expect(console.log).toHaveBeenCalledWith(
+        '   └─ Types: Skipped (empty-bundle)'
+      );
+    });
+
+    it('should display type generation skipped (no config)', async () => {
+      mockGenerateBundle.mockReturnValue({
+        bundleKey: 'core',
+        filesGenerated: 3,
+        warnings: [],
+        localesProcessed: ['en'],
+        // No typeGenerationResult
+      });
+
+      await bundleCommand({ name: 'core' });
+
+      expect(console.log).toHaveBeenCalledWith(
+        '   └─ Types: Skipped (no typeDist configured)'
+      );
+    });
   });
 
   describe('error handling', () => {
