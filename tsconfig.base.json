@@ -14,6 +14,7 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
+    "typeRoots": ["./node_modules/@types", "./types"],
     "paths": {
       "@simoncodes-ca/core": ["libs/core/src/index.ts"],
       "@simoncodes-ca/data-transfer": ["libs/data-transfer/src/index.ts"]

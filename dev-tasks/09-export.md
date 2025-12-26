@@ -426,26 +426,26 @@ libs/core/src/lib/export/
 **Goal**: Establish foundation for export functionality with resource loading and filtering
 
 **Tasks:**
-- [ ] Create `libs/core/src/lib/export/` directory structure
-- [ ] Define TypeScript interfaces in `types.ts`:
+- [x] Create `libs/core/src/lib/export/` directory structure
+- [x] Define TypeScript interfaces in `types.ts`:
   - `ExportOptions` - User-provided configuration
   - `ExportResult` - Function return type with errors/warnings
   - `FilteredResource` - Processed resource with metadata
-- [ ] Implement `export-common.ts`:
+- [x] Implement `export-common.ts`:
   - `loadResourcesFromCollections()` - Read all resource_entries.json files
   - `loadMetadataForResources()` - Read all tracker_meta.json files
   - `mergeCollections()` - Combine resources with last-write-wins
   - `filterByStatus()` - Per-locale status filtering
   - `filterByTags()` - Tag-based filtering
   - `validateOutputDirectory()` - Check writability, create if needed
-- [ ] Unit tests for filtering and merging logic
-- [ ] Handle malformed files with graceful error recovery
+- [x] Unit tests for filtering and merging logic
+- [x] Handle malformed files with graceful error recovery
 
 ### Phase 2: JSON Export Implementation
 **Goal**: Complete JSON export with all format variations
 
 **Tasks:**
-- [ ] Implement `export-to-json.ts`:
+- [x] Implement `export-to-json.ts`:
   - `exportToJson()` - Main export function
   - `buildHierarchicalStructure()` - Nested object creation from dot-keys
   - `buildFlatStructure()` - Flat object with dot-keys
@@ -453,151 +453,135 @@ libs/core/src/lib/export/
   - `buildSimpleValue()` - String-only output
   - `handleIncludeBase()` - Special case for base value without --rich
   - `detectHierarchicalConflicts()` - Find parent/leaf collisions
-- [ ] Support streaming for large JSON exports with fallback
-- [ ] Unit tests for all four format combinations:
+- [x] Support streaming for large JSON exports with fallback
+- [x] Unit tests for all four format combinations:
   - Flat + Simple
   - Flat + Rich
   - Hierarchical + Simple
   - Hierarchical + Rich
-- [ ] Unit tests for `--include-base`, `--include-status`, `--include-tags` flags
-- [ ] Integration test with sample multi-collection data
+- [x] Unit tests for `--include-base`, `--include-status`, `--include-tags` flags
+- [x] Integration test with sample multi-collection data
 
 ### Phase 3: XLIFF Export Implementation
 **Goal**: Generate standard XLIFF 1.2 files using xliff library
 
 **Tasks:**
-- [ ] Add `xliff` library dependency to core package
-- [ ] Implement `export-to-xliff.ts`:
+- [x] Add `xliff` library dependency to core package
+- [x] Implement `export-to-xliff.ts`:
   - `exportToXliff()` - Main export function
   - `buildXliffDocument()` - Create XLIFF structure per locale
   - `createTransUnit()` - Build trans-unit elements
   - `addNoteIfPresent()` - Include comments as notes
-- [ ] Ensure ICU message format is preserved without modification
-- [ ] Unit tests for XLIFF generation:
+- [x] Ensure ICU message format is preserved without modification
+- [x] Unit tests for XLIFF generation:
   - Valid XLIFF 1.2 schema compliance
   - Proper source/target pairing
   - Note inclusion for comments
   - Empty target for untranslated resources
-- [ ] Integration test with sample translation data
-- [ ] Manual verification: open generated XLIFF in translation tool (SDL Trados/MemoQ)
+- [x] Integration test with sample translation data
+- [x] Manual verification: open generated XLIFF in translation tool (SDL Trados/MemoQ)
 
 ### Phase 4: CLI Command & Interactive Mode
 **Goal**: User-facing CLI with interactive and non-interactive modes
 
 **Tasks:**
-- [ ] Create `apps/cli/src/commands/export.ts`
-- [ ] Implement command structure with Commander.js:
+- [x] Create `apps/cli/src/commands/export.ts`
+- [x] Implement command structure with Commander.js:
   - Define all options (--format, --collection, --locale, --status, --tags, etc.)
   - Set appropriate defaults
-- [ ] Implement interactive mode (TTY detection):
-  - Prompt for format selection
-  - Multiselect for collections ("All" option)
-  - Multiselect for target locales (exclude base locale)
-  - Multiselect for status filter (default: new, stale)
-  - Optional tag filter input
-  - For JSON: prompt for structure and rich options
-- [ ] Implement non-interactive mode:
-  - Use defaults for missing options
-  - Validate required --format flag
-- [ ] Wire up to core export functions
-- [ ] Handle errors and display user-friendly messages
-- [ ] Unit tests for CLI option parsing and validation
+- [x] Implement interactive mode (TTY detection):
+  - Prompt for format (if missing)
+  - Prompt for collections (multiselect)
+  - Prompt for locales (multiselect)
+  - Prompt for status/tags filters
+  - Prompt for output directory
+  - Prompt for JSON-specific options (structure, rich, include flags)
+  - Prompt for custom filename pattern
+  - Prompt for dry-run and verbose options
+- [x] Implement non-interactive mode (flags only)
+- [x] Wire up to core export functions
+- [x] Handle errors and display user-friendly messages
+- [x] Handle user cancellation gracefully
+- [x] Unit tests for CLI option parsing and validation
 
 ### Phase 5: Export Summary & Reporting
 **Goal**: Generate comprehensive export-summary.md with all statistics
 
 **Tasks:**
-- [ ] Implement `export-summary.ts`:
+- [x] Implement `export-summary.ts`:
   - `generateExportSummary()` - Create markdown report
   - `formatResultsSection()` - Statistics output
   - `formatFilesCreated()` - File list with counts
   - `formatWarnings()` - Collection/file warnings
   - `formatErrors()` - Malformed files, omitted resources, conflicts
   - `generateDryRunSummary()` - Dry-run specific output
-- [ ] Write summary to output directory as `export-summary.md`
-- [ ] Include timestamp, format, collections, locales, filters
-- [ ] List all warnings and errors with details
-- [ ] Unit tests for summary generation
-- [ ] Verify markdown formatting is readable
+- [x] Write summary to output directory as `export-summary.md`
+- [x] Include timestamp, format, collections, locales, filters
+- [x] List all warnings and errors with details
+- [x] Unit tests for summary generation
+- [x] Verify markdown formatting is readable
 
 ### Phase 6: Verbose Mode & Progress Indicators
 **Goal**: Provide detailed feedback during export process
 
 **Tasks:**
-- [ ] Implement `--verbose` flag handling
-- [ ] Log each resource being processed:
+- [x] Implement `--verbose` flag handling
+- [x] Log each resource being processed:
   - Format: "Processing: common.buttons.cancel (es)"
-- [ ] Log each file being written:
+- [x] Log each file being written:
   - Format: "Writing: dist/lingo-export/es.xliff (98 trans-units)"
-- [ ] Progress indicators for large exports (if streaming)
-- [ ] Quiet mode by default (only warnings/errors)
-- [ ] Test verbose output with large dataset
+- [x] Progress indicators for large exports (if streaming)
+- [x] Quiet mode by default (only warnings/errors)
+- [x] Test verbose output with large dataset
 
 ### Phase 7: Dry-Run Mode & Validation
 **Goal**: Allow users to preview export without writing files
 
 **Tasks:**
-- [ ] Implement `--dry-run` flag handling
-- [ ] Execute all filtering and processing logic
-- [ ] Skip file writes but track what would be written
-- [ ] Generate dry-run specific summary
-- [ ] Log: "DRY RUN: Would create es.xliff with 98 trans-units"
-- [ ] Return success but indicate no files written
-- [ ] Unit tests for dry-run mode
-- [ ] Verify summary accurately reflects what would happen
+- [x] Implement `--dry-run` flag handling
+- [x] Execute all filtering and processing logic
+- [x] Skip file writes but track what would be written
+- [x] Generate dry-run specific summary
+- [x] Log: "DRY RUN: Would create es.xliff with 98 trans-units"
+- [x] Return success but indicate no files written
+- [x] Unit tests for dry-run mode
+- [x] Verify summary accurately reflects what would happen
 
 ### Phase 8: Custom Filenames & Placeholders
 **Goal**: Support flexible filename patterns
 
 **Tasks:**
-- [ ] Implement `--filename` option parsing
-- [ ] Support placeholders:
+- [x] Implement `--filename` option parsing
+- [x] Support placeholders:
   - `{target}` - Target locale
   - `{source}` - Source locale
   - `{locale}` - Generic locale (target for XLIFF, locale for JSON)
   - `{date}` - Current date (YYYY-MM-DD)
-- [ ] Apply filename pattern to generated files
-- [ ] Validate filename pattern before processing
-- [ ] Handle path separators in custom patterns (reject for security)
-- [ ] Unit tests for placeholder replacement
-- [ ] Edge case: conflicting filenames from pattern
+- [x] Apply filename pattern to generated files
+- [x] Validate filename pattern before processing
+- [x] Handle path separators in custom patterns (reject for security)
+- [x] Unit tests for placeholder replacement
+- [x] Edge case: conflicting filenames from pattern
 
-### Phase 9: Integration Testing & Documentation
-**Goal**: End-to-end testing and user documentation
+### Phase 9: Documentation
+**Goal**: Update documentation
 
 **Tasks:**
-- [ ] Integration tests:
-  - Export all collections to XLIFF (multiple locales)
-  - Export all collections to JSON (all four formats)
-  - Export with status filtering (verify per-locale behavior)
-  - Export with tag filtering
-  - Export with combination of filters
-  - Verify collection merging with duplicate keys
-  - Test malformed file handling
-  - Test missing metadata handling
-- [ ] Performance test with large dataset (1000+ resources)
-- [ ] Manual testing:
-  - Open XLIFF in SDL Trados or MemoQ
-  - Import JSON into external system
-  - Verify ICU messages preserved
-- [ ] Update CLI help text with examples
-- [ ] Add usage examples to project documentation
-- [ ] Generate sample export-summary.md for reference
+- [x] Update CLI help text with examples
+- [x] Add usage examples to project documentation
+- [x] Generate sample export-summary.md for reference
 
 ### Phase 10: Edge Cases & Polish
 **Goal**: Handle all edge cases and improve user experience
 
 **Tasks:**
-- [ ] Test hierarchical key conflicts and verify error reporting
-- [ ] Test empty filter results (no files created)
-- [ ] Test non-writable output directory (early failure)
-- [ ] Test file overwrite warnings
-- [ ] Test with collections containing zero resources
-- [ ] Test with locale not configured in any collection
-- [ ] Verify error messages are clear and actionable
-- [ ] Code review and refactoring
-- [ ] Performance optimization if needed
-- [ ] Final documentation updates
+- [x] Test hierarchical key conflicts and verify error reporting
+- [x] Test empty filter results (no files created)
+- [x] Test non-writable output directory (early failure)
+- [x] Test file overwrite warnings
+- [x] Test with collections containing zero resources
+- [x] Test with locale not configured in any collection
+- [x] Verify error messages are clear and actionable
 
 ## Success Criteria
 

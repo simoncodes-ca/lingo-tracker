@@ -748,6 +748,258 @@ When multiple collections contribute the same key:
 
 ---
 
+### export
+
+Export translation resources to XLIFF or JSON format for integration with translation services, external systems, and third-party tools.
+
+**Usage:**
+
+```bash
+lingo-tracker export [options]
+```
+
+**Options:**
+
+- `-f, --format <format>` - Export format: `xliff` or `json` (required in non-interactive mode)
+- `-c, --collection <names>` - Specific collection(s) to export (comma-separated). If not specified, exports all collections
+- `-l, --locale <locales>` - Target locale(s) to export (comma-separated). If not specified, exports all target locales (excludes base locale)
+- `-s, --status <statuses>` - Filter by translation status (comma-separated). Default: `new,stale`
+  - Valid values: `new`, `translated`, `stale`, `verified`
+- `-t, --tags <tags>` - Filter by tags (comma-separated). Only resources with matching tags are included
+- `-o, --output <path>` - Output directory path. Default: from config `exportFolder` or `dist/lingo-export`
+- `--filename <pattern>` - Custom filename pattern with placeholders
+- `--dry-run` - Preview export without writing files (shows what would be exported)
+- `--verbose` - Show detailed export progress
+
+**JSON-Specific Options:**
+
+- `--structure <type>` - JSON structure: `hierarchical` (nested objects) or `flat` (dot-delimited keys). Default: `hierarchical`
+- `--rich` - Include metadata in JSON objects (creates objects instead of string values). Default: `false`
+- `--include-base` - Include base locale value in rich objects. Default: `false`
+- `--include-status` - Include translation status in rich objects. Default: `false`
+- `--include-comment` - Include translator comments in rich objects. Default: `true`
+- `--include-tags` - Include tags array in rich objects. Default: `false`
+
+**Filename Placeholders:**
+
+Customize output filenames using these placeholders:
+
+- `{locale}` - Target locale code (e.g., `es`, `fr-ca`)
+- `{target}` - Alias for `{locale}`
+- `{source}` - Base locale code (e.g., `en`)
+- `{date}` - Current date in YYYY-MM-DD format
+
+**What Export Does:**
+
+1. **Loads resources** from specified collections
+2. **Filters resources** by locale, status, and tags
+3. **Transforms data** to target format (XLIFF or JSON)
+4. **Writes files** to output directory (one file per locale)
+5. **Generates summary** report with statistics, warnings, and errors
+
+**When to Use Export:**
+
+- Sending translations to translation agencies (use XLIFF format)
+- Integrating with Translation Management Systems (TMS)
+- Extracting translations for review or backup
+- Generating custom translation deliverables
+- Exporting subsets of translations using status/tag filters
+
+**Examples:**
+
+Interactive mode (prompts for options):
+```bash
+lingo-tracker export
+```
+
+Export all collections to XLIFF for all target locales:
+```bash
+lingo-tracker export --format xliff
+```
+
+Export specific collection to JSON:
+```bash
+lingo-tracker export --format json --collection Main
+```
+
+Export multiple collections for Spanish only:
+```bash
+lingo-tracker export --format xliff --collection Main,Admin --locale es
+```
+
+Export only untranslated and stale translations (default):
+```bash
+lingo-tracker export --format xliff --locale es
+# Same as: --status new,stale
+```
+
+Export all translations regardless of status:
+```bash
+lingo-tracker export --format json --locale es --status new,translated,stale,verified
+```
+
+Export only verified translations:
+```bash
+lingo-tracker export --format xliff --status verified
+```
+
+Export with tag filtering:
+```bash
+lingo-tracker export --format json --tags ui,buttons
+```
+
+Export with custom filename pattern:
+```bash
+lingo-tracker export --format xliff --filename "translation-{source}-{target}-{date}"
+# Generates: translation-en-es-2025-12-14.xliff
+```
+
+JSON export with hierarchical structure (default):
+```bash
+lingo-tracker export --format json --locale es
+```
+
+Output:
+```json
+{
+  "common": {
+    "buttons": {
+      "ok": "Aceptar",
+      "cancel": "Cancelar"
+    }
+  }
+}
+```
+
+JSON export with flat structure:
+```bash
+lingo-tracker export --format json --locale es --structure flat
+```
+
+Output:
+```json
+{
+  "common.buttons.ok": "Aceptar",
+  "common.buttons.cancel": "Cancelar"
+}
+```
+
+JSON export with rich objects (includes metadata):
+```bash
+lingo-tracker export --format json --locale es --rich --include-base --include-status
+```
+
+Output:
+```json
+{
+  "common": {
+    "buttons": {
+      "ok": {
+        "value": "Aceptar",
+        "baseValue": "OK",
+        "status": "translated",
+        "comment": "OK button in dialogs"
+      }
+    }
+  }
+}
+```
+
+Dry-run to preview export:
+```bash
+lingo-tracker export --format json --collection Main --locale es --dry-run
+```
+
+Output:
+```
+🔄 Exporting to JSON...
+   Collections: Main
+   Locales: es
+   Output: /path/to/dist/lingo-export
+   [DRY RUN]
+   Processing es (42 resources)
+
+📊 Export Summary:
+   Files Created: 0
+   Resources Exported: 42
+```
+
+Verbose output for detailed progress:
+```bash
+lingo-tracker export --format json --locale es --verbose
+```
+
+Output:
+```
+🔄 Exporting to JSON...
+   Collections: Main
+   Locales: es
+   Output: /path/to/dist/lingo-export
+   Processing es (42 resources)
+   Writing /path/to/dist/lingo-export/es.json
+   ✅ es: Exported 42 resources to es.json
+
+📊 Export Summary:
+   Files Created: 1
+   Resources Exported: 42
+
+📄 Summary written to: /path/to/dist/lingo-export/export-summary.md
+```
+
+**Export Summary Report:**
+
+Every export generates an `export-summary.md` file in the output directory containing:
+
+- Export configuration (format, collections, locales, filters)
+- Statistics (resources exported, files created)
+- List of created files with resource counts
+- Warnings (overwritten files, empty results)
+- Errors (malformed files, missing metadata, hierarchical conflicts)
+
+**XLIFF Format Notes:**
+
+- Generates XLIFF 1.2 format (industry standard)
+- One file per source-target locale pair
+- `<source>` contains base locale value
+- `<target>` contains translation
+- `<note>` contains translator comments (if present)
+- Compatible with professional translation tools (SDL Trados, MemoQ, etc.)
+- ICU message format preserved as-is
+
+**JSON Format Notes:**
+
+- Flexible format for custom integrations
+- Supports both hierarchical (nested) and flat (dot-delimited) structures
+- Simple format (string values) ideal for direct use in applications
+- Rich format (object values) includes metadata for validation and processing
+- Collections are merged into single output (last write wins for duplicate keys)
+
+**Filtering Behavior:**
+
+- **Status filtering** is per-locale: a resource is included in a locale if it matches the filter for that locale
+- **Tag filtering** uses OR logic: resource must have at least one of the specified tags
+- **Base locale** is never exported (only target locales)
+- Resources without metadata are omitted and logged in errors
+- Empty export results don't create files (warning logged)
+
+**Error Handling:**
+
+- Malformed files: Skipped with detailed warning, export continues
+- Missing metadata: Resource omitted, logged in errors
+- Hierarchical conflicts: Logged when a key is both a parent and leaf value (JSON hierarchical only)
+- Non-writable output directory: Fails with clear error message
+- Empty results: No files created, warning shown
+
+**Notes:**
+
+- Export is **read-only**: never modifies source translation files
+- Multiple collections merge into single output file per locale (last write wins)
+- Base locale is excluded from export (use bundle command for base locale)
+- Dry-run shows accurate resource counts without creating files
+- For detailed format specifications and examples, see [Export Feature Documentation](../features/export.md)
+
+---
+
 ## Configuration
 
 All commands read from `.lingo-tracker.json` in the project root. This file is created by the `init` command.
@@ -812,6 +1064,19 @@ lingo-tracker delete-resource \
   --collection Main \
   --key "deprecated.old.feature" \
   --yes
+
+# Export translations to XLIFF for translation agency
+lingo-tracker export \
+  --format xliff \
+  --collection Main \
+  --status new,stale \
+  --verbose
+
+# Export all translations to JSON for backup
+lingo-tracker export \
+  --format json \
+  --status new,translated,stale,verified \
+  --filename "backup-{locale}-{date}"
 ```
 
 ---

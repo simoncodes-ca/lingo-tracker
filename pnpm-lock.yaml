@@ -65,6 +65,9 @@ importers:
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
+      xliff:
+        specifier: ^6.2.2
+        version: 6.2.2
       zone.js:
         specifier: ~0.15.0
         version: 0.15.1
@@ -180,6 +183,9 @@ importers:
       '@types/node':
         specifier: 20.19.9
         version: 20.19.9
+      '@types/prompts':
+        specifier: ^2.4.9
+        version: 2.4.9
       '@typescript-eslint/utils':
         specifier: ^8.40.0
         version: 8.44.1(eslint@9.36.0(jiti@2.4.2))(typescript@5.9.2)
@@ -3766,6 +3772,9 @@ packages:
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
 
+  '@types/prompts@2.4.9':
+    resolution: {integrity: sha512-qTxFi6Buiu8+50/+3DGIWLHM6QuWsEKugJnnP6iv2Mc4ncxE4A/OJkjuVOA+5X0X1S/nq5VJRa8Lu+nwcvbrKA==}
+
   '@types/qs@6.14.0':
     resolution: {integrity: sha512-eOunJqu0K1923aExK6y8p6fsihYEn/BYuQ4g0CxAAgFc4b/ZLN4CrsRZ55srTdqoiLzU2B2evC+apEIxprEzkQ==}
 
@@ -6639,6 +6648,7 @@ packages:
   keygrip@1.1.0:
     resolution: {integrity: sha512-iYSchDJ+liQ8iwbSI2QqsQOvqv58eJCEanyJPJi+Khyu8smkcKSFUCbPwzFcL7YVtZ6eONjqRX/38caJ7QjRAQ==}
     engines: {node: '>= 0.6'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
@@ -9579,6 +9589,13 @@ packages:
   wsl-utils@0.1.0:
     resolution: {integrity: sha512-h3Fbisa2nKGPxCpm89Hk33lBLsnaGBvctQopaBSOW/uIs6FTe1ATyAnKFJrzVs9vpGdsTe73WF3V4lIsk4Gacw==}
     engines: {node: '>=18'}
+
+  xliff@6.2.2:
+    resolution: {integrity: sha512-8j1NITWDF3oRV3wkE514g1yYpk9pv3MKiOrVVaxY8YWtcQs1Ux12tfVmIwKeP5/GVfS7g0N6oRm1TqjR2MeEaw==}
+
+  xml-js@1.6.11:
+    resolution: {integrity: sha512-7rVi2KMfwfWFl+GpPg6m80IVMWXLRjO+PxTq7V2CDhoGak0wzYzFgUY2m4XJ47OGdXd8eLE8EmwfAmdjw7lC1g==}
+    hasBin: true
 
   xml-name-validator@4.0.0:
     resolution: {integrity: sha512-ICP2e+jsHvAj2E2lIHxa5tjXRlKDJo4IdvPvCXbXQGdzSfmSpNVyIKMvoZHjDY9DP0zV17iI85o90vRFXNccRw==}
@@ -13960,6 +13977,11 @@ snapshots:
   '@types/normalize-package-data@2.4.4': {}
 
   '@types/parse-json@4.0.2': {}
+
+  '@types/prompts@2.4.9':
+    dependencies:
+      '@types/node': 20.19.9
+      kleur: 3.0.3
 
   '@types/qs@6.14.0': {}
 
@@ -18991,8 +19013,7 @@ snapshots:
     optionalDependencies:
       '@parcel/watcher': 2.5.1
 
-  sax@1.4.1:
-    optional: true
+  sax@1.4.1: {}
 
   saxes@6.0.0:
     dependencies:
@@ -20300,6 +20321,14 @@ snapshots:
   wsl-utils@0.1.0:
     dependencies:
       is-wsl: 3.1.0
+
+  xliff@6.2.2:
+    dependencies:
+      xml-js: 1.6.11
+
+  xml-js@1.6.11:
+    dependencies:
+      sax: 1.4.1
 
   xml-name-validator@4.0.0: {}
 

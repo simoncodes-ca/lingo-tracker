@@ -127,5 +127,28 @@ program
     await bundleCommand(options);
   });
 
+program
+  .command('export')
+  .description('Export translation resources to XLIFF or JSON')
+  .option('-f, --format <format>', 'Export format (xliff | json)')
+  .option('-c, --collection <names>', 'Specific collection(s) to export (comma-separated)')
+  .option('-l, --locale <locales>', 'Target locale(s) to export (comma-separated)')
+  .option('-s, --status <statuses>', 'Filter by translation status (comma-separated)', 'new,stale')
+  .option('-t, --tags <tags>', 'Filter by tags (comma-separated)')
+  .option('-o, --output <path>', 'Output directory path')
+  .option('--structure <type>', 'JSON structure (flat | hierarchical)', 'hierarchical')
+  .option('--rich', 'Include metadata in JSON objects', false)
+  .option('--include-base', 'Include base locale value (JSON only)', false)
+  .option('--include-status', 'Include status in rich objects (JSON only)', false)
+  .option('--include-comment', 'Include comment in rich objects (JSON only)', true)
+  .option('--include-tags', 'Include tags array in rich objects (JSON only)', false)
+  .option('--filename <pattern>', 'Custom filename pattern')
+  .option('--dry-run', 'Show what would be exported without writing files', false)
+  .option('--verbose', 'Show detailed export progress', false)
+  .action(async (options) => {
+    const { exportCommand } = await import('./commands/export-cmd');
+    await exportCommand(options);
+  });
+
 program.parse();
 
