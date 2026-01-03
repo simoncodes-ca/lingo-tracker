@@ -150,5 +150,78 @@ program
     await exportCommand(options);
   });
 
+program
+  .command('import')
+  .description('Import translation resources from XLIFF or JSON')
+  .option('-f, --format <format>', 'Import format (xliff | json) - auto-detected from file extension if omitted')
+  .option('-s, --source <path>', 'Path to import file (required)')
+  .option('-l, --locale <locale>', 'Target locale for import (e.g., es, fr-ca)')
+  .option('-c, --collection <name>', 'Target collection to import into')
+  .option('--strategy <strategy>', 'Import strategy (translation-service | verification | migration | update)', 'translation-service')
+  .option('--update-comments', 'Update resource comments from import data', false)
+  .option('--update-tags', 'Update resource tags from rich JSON', false)
+  .option('--preserve-status', 'Allow rich JSON to specify status (advanced)', false)
+  .option('--create-missing', 'Create new resources if they don\'t exist')
+  .option('--validate-base', 'Warn if source base value differs from existing', true)
+  .option('--dry-run', 'Show what would be imported without modifying files', false)
+  .option('--verbose', 'Show detailed import progress', false)
+  .addHelpText('after', `
+Examples:
+  # Import XLIFF from translation service (most common workflow)
+  $ lingo-tracker import --source translations-es.xlf --locale es
+
+  # Import with dry-run to preview changes first
+  $ lingo-tracker import --source translations-fr.xlf --locale fr --dry-run
+
+  # Import JSON file (format auto-detected from .json extension)
+  $ lingo-tracker import --source translated-de.json --locale de
+
+  # Migrate from another translation system with rich metadata
+  $ lingo-tracker import --source old-system.json --locale es \\
+      --strategy migration --create-missing --update-comments --update-tags
+
+  # Language expert verification workflow
+  $ lingo-tracker import --source verified-ja.xlf --locale ja --strategy verification
+
+  # Bulk update existing translations (preserves current status)
+  $ lingo-tracker import --source updates-pt.json --locale pt --strategy update
+
+  # Import to specific collection with verbose logging
+  $ lingo-tracker import --source admin-ko.xlf --locale ko \\
+      --collection admin --verbose
+
+Import Strategies:
+  translation-service  Professional translation import (default)
+                       - Updates existing resources only (no creation)
+                       - Sets status to 'translated'
+                       - Best for workflow with translation agencies
+
+  verification        Language expert review workflow
+                       - Sets status to 'verified' for reviewed translations
+                       - Used after native speaker review
+                       - Indicates higher confidence level
+
+  migration           Migrate from another translation system
+                       - Allows creating missing resources (with --create-missing)
+                       - Resolves Transloco-style references: {{t('key')}}
+                       - Can update comments and tags
+                       - Best for one-time migration
+
+  update              Bulk update existing translations
+                       - Preserves current translation status
+                       - Updates values without changing metadata
+                       - Best for automated batch updates
+
+Notes:
+  - Format is auto-detected from file extension (.xlf, .xliff, .json)
+  - Use --dry-run to preview changes before committing
+  - Summary report saved to {translationsFolder}/import-summary.md
+  - Large files (>5MB) will show a warning
+`)
+  .action(async (options) => {
+    const { importCommand } = await import('./commands/import-cmd');
+    await importCommand(options);
+  });
+
 program.parse();
 

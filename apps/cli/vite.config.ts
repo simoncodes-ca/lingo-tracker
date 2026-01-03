@@ -22,5 +22,10 @@ export default defineConfig(() => ({
       reportsDirectory: '../../coverage/apps/cli',
       provider: 'v8' as const,
     },
+    server: {
+      deps: {
+        inline: ['@simoncodes-ca/core'],
+      },
+    },
   },
 }));

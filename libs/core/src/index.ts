@@ -11,5 +11,6 @@ export * from './lib/export/export-common';
 export * from './lib/export/export-to-json';
 export * from './lib/export/export-to-xliff';
 export * from './lib/export/export-summary';
+export * from './lib/import';
 
 
