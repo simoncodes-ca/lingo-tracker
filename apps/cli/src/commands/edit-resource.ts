@@ -37,7 +37,16 @@ export async function editResourceCommand(options: EditResourceOptions): Promise
     }
 
     // Prepare edit options
-    const editOptions: any = {
+    const editOptions: {
+        key: string;
+        cwd: string;
+        baseLocale: string;
+        targetFolder?: string;
+        baseValue?: string;
+        comment?: string;
+        tags?: string[];
+        locales?: Record<string, { value: string }>;
+    } = {
         key: answers.key,
         cwd: resolve(cwd),
         baseLocale: collectionConfig.baseLocale || config.baseLocale || 'en',

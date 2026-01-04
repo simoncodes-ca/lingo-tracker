@@ -99,10 +99,10 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
 
     const allCollections = Object.entries(config.collections || {}).map(([name, col]) => ({
         name,
-        path: (col as any).translationsFolder
+        path: col.translationsFolder
     }));
 
-    const collectionsToProcess = allCollections.filter((c: any) =>
+    const collectionsToProcess = allCollections.filter((c) =>
         !collectionNames || collectionNames.includes(c.name)
     );
 
@@ -157,7 +157,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
         onProgress: options.verbose ? (msg) => console.log(`   ${msg}`) : undefined
     };
 
-    let totalFiles = 0;
+    const totalFiles = 0;
     let totalResources = 0;
     const allWarnings: string[] = [];
     const allErrors: string[] = [];
@@ -174,9 +174,9 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
         try {
             let result: ExportResult;
             if (options.format === 'xliff') {
-                result = await exportToXliff(filtered, { ...exportOptions, locale } as any, config.baseLocale);
+                result = await exportToXliff(filtered, { ...exportOptions, locales: [locale] }, config.baseLocale);
             } else {
-                result = exportToJson(filtered, { ...exportOptions, locale } as any, config.baseLocale);
+                result = exportToJson(filtered, { ...exportOptions, locales: [locale] }, config.baseLocale);
             }
 
             totalResources += result.resourcesExported;
@@ -366,7 +366,7 @@ async function promptForMissing(
         // JSON structure
         if (options.structure === undefined) {
             questions.push({
-                type: (prev: any, values: any) => {
+                type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
                     const selectedFormat = options.format || values.format;
                     return selectedFormat === 'json' ? 'select' : null;
                 },
@@ -383,7 +383,7 @@ async function promptForMissing(
         // Rich JSON
         if (options.rich === undefined) {
             questions.push({
-                type: (prev: any, values: any) => {
+                type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
                     const selectedFormat = options.format || values.format;
                     return selectedFormat === 'json' ? 'toggle' : null;
                 },
@@ -398,7 +398,7 @@ async function promptForMissing(
         // Include base value
         if (options.includeBase === undefined) {
             questions.push({
-                type: (prev: any, values: any) => {
+                type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
                     const selectedFormat = options.format || values.format;
                     const isRich = options.rich !== undefined ? options.rich : values.rich;
                     return selectedFormat === 'json' && isRich ? 'toggle' : null;
@@ -414,7 +414,7 @@ async function promptForMissing(
         // Include status
         if (options.includeStatus === undefined) {
             questions.push({
-                type: (prev: any, values: any) => {
+                type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
                     const selectedFormat = options.format || values.format;
                     const isRich = options.rich !== undefined ? options.rich : values.rich;
                     return selectedFormat === 'json' && isRich ? 'toggle' : null;
@@ -430,7 +430,7 @@ async function promptForMissing(
         // Include comment
         if (options.includeComment === undefined) {
             questions.push({
-                type: (prev: any, values: any) => {
+                type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
                     const selectedFormat = options.format || values.format;
                     const isRich = options.rich !== undefined ? options.rich : values.rich;
                     return selectedFormat === 'json' && isRich ? 'toggle' : null;
@@ -446,7 +446,7 @@ async function promptForMissing(
         // Include tags
         if (options.includeTags === undefined) {
             questions.push({
-                type: (prev: any, values: any) => {
+                type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
                     const selectedFormat = options.format || values.format;
                     const isRich = options.rich !== undefined ? options.rich : values.rich;
                     return selectedFormat === 'json' && isRich ? 'toggle' : null;

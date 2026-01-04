@@ -7,7 +7,7 @@ vi.mock('fs');
 
 const mockJsToXliff12 = vi.fn();
 vi.mock('xliff', () => ({
-    jsToXliff12: (data: any, options: any, cb: any) => mockJsToXliff12(data, options, cb)
+    jsToXliff12: (data: unknown, options: unknown, cb: (err: Error | null, result: string) => void) => mockJsToXliff12(data, options, cb)
 }));
 
 describe('export-to-xliff', () => {
@@ -31,7 +31,7 @@ describe('export-to-xliff', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
+        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
     });
 
     afterEach(() => {
@@ -39,7 +39,7 @@ describe('export-to-xliff', () => {
     });
 
     it('should export XLIFF file', async () => {
-        mockJsToXliff12.mockImplementation((data, opts, cb) => {
+        mockJsToXliff12.mockImplementation((_data, _opts, cb) => {
             cb(null, '<xliff>mock content</xliff>');
         });
 
@@ -72,7 +72,7 @@ describe('export-to-xliff', () => {
     });
 
     it('should use custom filename pattern', async () => {
-        mockJsToXliff12.mockImplementation((data, opts, cb) => {
+        mockJsToXliff12.mockImplementation((_data, _opts, cb) => {
             cb(null, '<xliff>mock content</xliff>');
         });
 
@@ -87,7 +87,7 @@ describe('export-to-xliff', () => {
     });
 
     it('should handle errors from xliff library', async () => {
-        mockJsToXliff12.mockImplementation((data, opts, cb) => {
+        mockJsToXliff12.mockImplementation((_data, _opts, cb) => {
             cb(new Error('XLIFF generation failed'), null);
         });
 

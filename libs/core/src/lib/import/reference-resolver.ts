@@ -116,7 +116,10 @@ function resolveKey(
     return null;
   }
 
-  const value = resourceMap.get(key)!;
+  const value = resourceMap.get(key);
+  if (!value) {
+    return null;
+  }
 
   // If the value contains references, resolve them recursively
   if (hasReferences(value)) {

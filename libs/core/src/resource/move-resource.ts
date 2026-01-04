@@ -8,6 +8,7 @@ import {
   validateKey,
 } from './resource-key';
 import { ResourceEntries } from './resource-entry';
+import { TranslationStatus } from './translation-status';
 import { RESOURCE_ENTRIES_FILENAME } from '../constants';
 
 export interface MoveResourceParams {
@@ -107,7 +108,7 @@ function moveSingleResource(
   }
 
   // 3. Perform Move
-  const translations: Array<{ locale: string; value: string; status: any }> = [];
+  const translations: Array<{ locale: string; value: string; status: TranslationStatus }> = [];
 
   Object.keys(sourceData).forEach((key) => {
     if (key !== 'source' && key !== 'comment' && key !== 'tags') {
@@ -172,7 +173,7 @@ function moveResourcesByPattern(
         Object.keys(entries).forEach(key => {
           keysToMove.push(`${currentKeyPrefix}.${key}`);
         });
-      } catch (e) {
+      } catch (_e) {
         result.errors.push(`Failed to read file at ${resourcePath}`);
       }
     }

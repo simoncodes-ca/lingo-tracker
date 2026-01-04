@@ -5,7 +5,7 @@ import { ExportOptions, FilteredResource } from './types';
 
 vi.mock('fs');
 vi.mock('xliff', () => ({
-    jsToXliff12: (_obj: any, _opt: any, cb: any) => cb(null, '<xliff>...</xliff>'),
+    jsToXliff12: (_obj: unknown, _opt: unknown, cb: (err: Error | null, result: string) => void) => cb(null, '<xliff>...</xliff>'),
 }));
 
 describe('Verbose Logging', () => {

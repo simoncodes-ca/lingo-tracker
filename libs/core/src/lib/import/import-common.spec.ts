@@ -78,7 +78,7 @@ describe('import-common', () => {
 
     it('should detect XLIFF format from .xlf extension', () => {
       expect(detectImportFormat('translations.xlf')).toBe('xliff');
-      expect(detectImportFormat('/path/to/file.XLF')).toBe('xliff');0
+      expect(detectImportFormat('/path/to/file.XLF')).toBe('xliff');
     });
 
     it('should detect JSON format from .json extension', () => {

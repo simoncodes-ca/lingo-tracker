@@ -77,7 +77,7 @@ describe('importFromJson - integration tests', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       // Execute import
       const options: ImportOptions = {
@@ -194,7 +194,7 @@ describe('importFromJson - integration tests', () => {
         if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
         return '{}';
       });
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/import.json',
@@ -245,7 +245,7 @@ describe('importFromJson - integration tests', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/import.json',
@@ -297,7 +297,7 @@ describe('importFromJson - integration tests', () => {
         if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
         return '{}';
       });
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/import.json',
@@ -341,7 +341,7 @@ describe('importFromJson - integration tests', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/import.json',
@@ -389,7 +389,7 @@ describe('importFromJson - integration tests', () => {
         if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
         return '{}';
       });
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/import.json',

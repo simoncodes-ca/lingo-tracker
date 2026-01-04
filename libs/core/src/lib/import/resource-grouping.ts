@@ -115,10 +115,13 @@ export function groupResourcesByFolder(
       });
     }
 
-    groups.get(fullFolderPath)!.resources.push({
-      resource,
-      entryKey,
-    });
+    const group = groups.get(fullFolderPath);
+    if (group) {
+      group.resources.push({
+        resource,
+        entryKey,
+      });
+    }
   }
 
   return groups;

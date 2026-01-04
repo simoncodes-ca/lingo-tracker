@@ -12,7 +12,7 @@ describe('addResource', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
     vi.mocked(fs.mkdirSync).mockImplementation(() => '');
     vi.mocked(fs.readFileSync).mockImplementation(() => JSON.stringify({}));
-    vi.mocked(fs.writeFileSync).mockImplementation(vi.fn());
+    vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
   });
 
   it('should create a new resource with base value only', () => {
@@ -399,12 +399,12 @@ describe('addResource', () => {
           targetFolder: '../secret',
           baseValue: 'test'
         });
-      } catch (e) {
+      } catch (_e) {
         // Ignore error
       }
 
       const mkdirCall = vi.mocked(fs.mkdirSync).mock.calls;
-      const secretPath = resolve('translations', '..', 'secret');
+      const _secretPath = resolve('translations', '..', 'secret');
       // Check that no call was made with the secret path
       const callWithSecret = mkdirCall.find(call => call[0].toString().includes('secret'));
       expect(callWithSecret).toBeUndefined();

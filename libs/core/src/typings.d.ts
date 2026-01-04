@@ -5,16 +5,22 @@ declare module 'xliff' {
         indent?: string;
     }
 
+    export interface XliffJsObject {
+        resources: Record<string, Record<string, { source: string; target: string; note?: string }>>;
+        sourceLanguage?: string;
+        targetLanguage?: string;
+    }
+
     export function jsToXliff12(
-        obj: any,
+        obj: XliffJsObject,
         options?: XliffOptions,
         cb?: (err: Error | null, res: string) => void
     ): Promise<string>;
 
     export function xliff12ToJs(
         xliff: string,
-        cb?: (err: Error | null, res: any) => void
-    ): Promise<any>;
+        cb?: (err: Error | null, res: XliffJsObject) => void
+    ): Promise<XliffJsObject>;
 
     export function createxliff12(
         sourceLanguage: string,

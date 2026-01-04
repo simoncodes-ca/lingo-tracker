@@ -407,7 +407,7 @@ describe('import-from-json', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/path/to/file.json',
@@ -629,7 +629,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -678,7 +678,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -729,7 +729,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -778,7 +778,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -829,7 +829,8 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -872,7 +873,8 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -915,7 +917,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -964,7 +966,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -1011,7 +1013,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const result = extractFromFlat(data);
 
@@ -1048,7 +1050,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1057,7 +1059,7 @@ describe('import-from-json', () => {
           // Don't specify updateComments/updateTags - should use strategy defaults (false)
         };
 
-        const result = importFromJson('/translations/common', options);
+        const _result = importFromJson('/translations/common', options);
 
         // Verify comment and tags were NOT updated (strategy defaults)
         const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
@@ -1097,7 +1099,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1146,7 +1148,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1197,7 +1199,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1206,7 +1208,7 @@ describe('import-from-json', () => {
           // Don't specify updateComments/updateTags - should use strategy defaults (true)
         };
 
-        const result = importFromJson('/translations/common', options);
+        const _result = importFromJson('/translations/common', options);
 
         // Verify comment and tags WERE updated (strategy defaults)
         const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
@@ -1241,7 +1243,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1249,7 +1251,7 @@ describe('import-from-json', () => {
           strategy: 'migration',
         };
 
-        const result = importFromJson('/translations/common', options);
+        const _result = importFromJson('/translations/common', options);
 
         const metaCall = writeFileSyncSpy.mock.calls.find(call =>
           String(call[0]).includes('tracker_meta.json')
@@ -1287,7 +1289,8 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1326,7 +1329,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1334,7 +1337,7 @@ describe('import-from-json', () => {
           strategy: 'update',
         };
 
-        const result = importFromJson('/translations/common', options);
+        const _result = importFromJson('/translations/common', options);
 
         const metaCall = writeFileSyncSpy.mock.calls.find(call =>
           String(call[0]).includes('tracker_meta.json')
@@ -1372,7 +1375,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1381,7 +1384,7 @@ describe('import-from-json', () => {
           // Don't specify updateComments/updateTags - should use strategy defaults (false)
         };
 
-        const result = importFromJson('/translations/common', options);
+        const _result = importFromJson('/translations/common', options);
 
         // Verify comment and tags were NOT updated (strategy defaults)
         const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
@@ -1423,7 +1426,8 @@ describe('import-from-json', () => {
           if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
           return '{}';
         });
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1464,7 +1468,8 @@ describe('import-from-json', () => {
           if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
           return '{}';
         });
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1509,7 +1514,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1568,7 +1573,8 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1604,7 +1610,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1651,7 +1657,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1706,7 +1712,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1757,7 +1763,8 @@ describe('import-from-json', () => {
         });
 
         const mkdirSyncSpy = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1792,7 +1799,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
         vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
@@ -1833,7 +1840,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
         vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
@@ -1842,7 +1849,7 @@ describe('import-from-json', () => {
           strategy: 'migration',
         };
 
-        const result = importFromJson('/translations', options);
+        const _result = importFromJson('/translations', options);
 
         const entriesCall = writeFileSyncSpy.mock.calls.find(call =>
           String(call[0]).includes('resource_entries.json')
@@ -1872,7 +1879,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
         vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
@@ -1881,7 +1888,7 @@ describe('import-from-json', () => {
           strategy: 'migration',
         };
 
-        const result = importFromJson('/translations', options);
+        const _result = importFromJson('/translations', options);
 
         const entriesCall = writeFileSyncSpy.mock.calls.find(call =>
           String(call[0]).includes('resource_entries.json')
@@ -1910,7 +1917,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
         vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
@@ -1951,7 +1958,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
         vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
@@ -1992,7 +1999,7 @@ describe('import-from-json', () => {
           return '{}';
         });
 
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
         vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
@@ -2001,7 +2008,7 @@ describe('import-from-json', () => {
           strategy: 'translation-service',
         };
 
-        const result = importFromJson('/translations', options);
+        const _result = importFromJson('/translations', options);
 
         const entriesCall = writeFileSyncSpy.mock.calls.find(call =>
           String(call[0]).includes('resource_entries.json')

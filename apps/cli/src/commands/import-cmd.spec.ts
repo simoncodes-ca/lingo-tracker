@@ -76,7 +76,7 @@ describe('import-cmd', () => {
 
     it('should exit with error if config file not found', async () => {
       vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
       vi.spyOn(process, 'exit').mockImplementation((code) => {
         throw new Error(`Process exit: ${code}`);
       });
@@ -96,7 +96,7 @@ describe('import-cmd', () => {
     it('should exit with error if config file is malformed', async () => {
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue('{ invalid json');
-      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
       vi.spyOn(process, 'exit').mockImplementation((code) => {
         throw new Error(`Process exit: ${code}`);
       });
@@ -143,7 +143,7 @@ describe('import-cmd', () => {
         errors: [],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
         source: '/test/import.xliff',
@@ -185,7 +185,7 @@ describe('import-cmd', () => {
         errors: [],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -217,7 +217,7 @@ describe('import-cmd', () => {
       vi.mocked(detectImportFormat).mockImplementation(() => {
         throw new Error('Cannot auto-detect format from .txt extension');
       });
-      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
       vi.spyOn(process, 'exit').mockImplementation((code) => {
         throw new Error(`Process exit: ${code}`);
       });
@@ -264,7 +264,7 @@ describe('import-cmd', () => {
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
       vi.mocked(importFromJson).mockReturnValue(importResult);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -313,7 +313,7 @@ describe('import-cmd', () => {
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
       vi.mocked(importFromXliff).mockResolvedValue(importResult);
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
         source: '/test/import.xliff',
@@ -351,8 +351,8 @@ describe('import-cmd', () => {
       vi.mocked(importFromJson).mockImplementation(() => {
         throw new Error('Source file not found');
       });
-      vi.spyOn(console, 'error').mockImplementation(() => {});
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
       vi.spyOn(process, 'exit').mockImplementation((code) => {
         throw new Error(`Process exit: ${code}`);
       });
@@ -398,7 +398,7 @@ describe('import-cmd', () => {
         errors: [],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       // Mock prompts to return strategy when prompted
       vi.mocked(prompts).mockResolvedValue({ strategy: 'translation-service' });
@@ -447,7 +447,7 @@ describe('import-cmd', () => {
         errors: [],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       // Mock non-TTY
       Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
@@ -494,7 +494,7 @@ describe('import-cmd', () => {
         errors: [],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -534,7 +534,7 @@ describe('import-cmd', () => {
         errors: [],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -575,7 +575,7 @@ describe('import-cmd', () => {
         errors: ['Error 1', 'Error 2'],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
       vi.spyOn(process, 'exit').mockImplementation((code) => {
         throw new Error(`Process exit: ${code}`);
       });
@@ -617,7 +617,7 @@ describe('import-cmd', () => {
         errors: [],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -664,7 +664,7 @@ describe('import-cmd', () => {
         errors: [],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -708,7 +708,7 @@ describe('import-cmd', () => {
         errors: [],
         changes: [],
       });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',

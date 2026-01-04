@@ -1,4 +1,4 @@
-import { ImportOptions, ImportResult, ImportChange, StatusTransition } from './types';
+import { ImportOptions, ImportResult, ImportChange, StatusTransition, ICUAutoFix, ICUAutoFixError } from './types';
 
 /**
  * Generates a comprehensive markdown summary of the import operation.
@@ -408,7 +408,7 @@ function formatFailedChanges(changes: ImportChange[]): string {
  * @returns Formatted markdown list of auto-fixes
  * @internal
  */
-function formatICUAutoFixes(autoFixes: any[], isDryRun: boolean): string {
+function formatICUAutoFixes(autoFixes: ICUAutoFix[], isDryRun: boolean): string {
     const maxToShow = 20;
     const fixesToShow = autoFixes.slice(0, maxToShow);
     const remaining = autoFixes.length - maxToShow;
@@ -445,7 +445,7 @@ function formatICUAutoFixes(autoFixes: any[], isDryRun: boolean): string {
  * @returns Formatted markdown list of auto-fix errors
  * @internal
  */
-function formatICUAutoFixErrors(autoFixErrors: any[]): string {
+function formatICUAutoFixErrors(autoFixErrors: ICUAutoFixError[]): string {
     const maxToShow = 20;
     const errorsToShow = autoFixErrors.slice(0, maxToShow);
     const remaining = autoFixErrors.length - maxToShow;

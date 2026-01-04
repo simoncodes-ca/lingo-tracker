@@ -49,7 +49,7 @@ describe('export-to-json', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
+        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
     });
 
     afterEach(() => {

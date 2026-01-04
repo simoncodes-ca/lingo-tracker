@@ -51,7 +51,7 @@ describe('exportCommand', () => {
     console.log = vi.fn();
     console.error = vi.fn();
     console.warn = vi.fn();
-    process.exit = vi.fn() as any;
+    process.exit = vi.fn() as unknown as (code?: number | string | null | undefined) => never;
     process.exitCode = 0;
 
     // Set to non-TTY by default to avoid prompts
@@ -63,7 +63,7 @@ describe('exportCommand', () => {
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockConfig));
-    vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+    vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
 
     mockValidateOutputDirectory.mockReturnValue(undefined);
     mockLoadResourcesFromCollections.mockReturnValue([]);
@@ -154,7 +154,7 @@ describe('exportCommand', () => {
   describe('non-interactive mode', () => {
     it('should export to JSON with all required options', async () => {
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
 
       await exportCommand({
@@ -180,7 +180,7 @@ describe('exportCommand', () => {
 
     it('should export to XLIFF with all required options', async () => {
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
 
       await exportCommand({
@@ -196,7 +196,7 @@ describe('exportCommand', () => {
 
     it('should export all collections when none specified', async () => {
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
 
       await exportCommand({
@@ -213,7 +213,7 @@ describe('exportCommand', () => {
 
     it('should export all target locales when none specified', async () => {
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
 
       await exportCommand({
@@ -227,7 +227,7 @@ describe('exportCommand', () => {
 
     it('should use default status filter when not provided', async () => {
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
 
       await exportCommand({
@@ -245,7 +245,7 @@ describe('exportCommand', () => {
 
     it('should handle dry run mode', async () => {
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
 
       await exportCommand({
@@ -260,7 +260,7 @@ describe('exportCommand', () => {
 
     it('should use custom output directory when provided', async () => {
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
 
       await exportCommand({
@@ -275,7 +275,7 @@ describe('exportCommand', () => {
 
     it('should filter by tags when provided', async () => {
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
 
       await exportCommand({
@@ -332,7 +332,7 @@ describe('exportCommand', () => {
         configurable: true,
       });
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
     });
 
@@ -598,7 +598,7 @@ describe('exportCommand', () => {
   describe('export execution', () => {
     beforeEach(() => {
       mockFilterResources.mockReturnValue([
-        { key: 'test', locale: 'fr', value: 'test-fr' } as any,
+        { key: 'test', locale: 'fr', value: 'test-fr', baseValue: '', status: 'translated', collection: '' },
       ]);
     });
 

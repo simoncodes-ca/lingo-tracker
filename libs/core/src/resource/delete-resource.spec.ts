@@ -23,7 +23,7 @@ describe('deleteResource', () => {
       }
       return JSON.stringify(trackerMeta);
     });
-    vi.mocked(fs.writeFileSync).mockImplementation(vi.fn());
+    vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
 
     const result = deleteResource('translations', { keys: ['app.button.ok'] });
 
@@ -86,7 +86,7 @@ describe('deleteResource', () => {
       }
       return JSON.stringify(trackerMeta);
     });
-    vi.mocked(fs.unlinkSync).mockImplementation(vi.fn());
+    vi.mocked(fs.unlinkSync).mockImplementation(() => undefined);
 
     const result = deleteResource('translations', { keys: ['app.button.ok'] });
 
@@ -113,8 +113,8 @@ describe('deleteResource', () => {
       }
       return JSON.stringify(trackerMeta);
     });
-    vi.mocked(fs.writeFileSync).mockImplementation(vi.fn());
-    vi.mocked(fs.unlinkSync).mockImplementation(vi.fn());
+    vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
+    vi.mocked(fs.unlinkSync).mockImplementation(() => undefined);
 
     const result = deleteResource('translations', { keys: ['app.button.ok'] });
 
@@ -135,7 +135,7 @@ describe('deleteResource', () => {
       }
       return JSON.stringify(trackerMeta);
     });
-    vi.mocked(fs.unlinkSync).mockImplementation(vi.fn());
+    vi.mocked(fs.unlinkSync).mockImplementation(() => undefined);
 
     const result = deleteResource('translations', { keys: ['apps.common.buttons.ok'] });
 
@@ -154,7 +154,7 @@ describe('deleteResource', () => {
       return true;
     });
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(resourceEntries));
-    vi.mocked(fs.unlinkSync).mockImplementation(vi.fn());
+    vi.mocked(fs.unlinkSync).mockImplementation(() => undefined);
 
     const result = deleteResource('translations', { keys: ['app.button.ok'] });
 
@@ -185,7 +185,7 @@ describe('deleteResource', () => {
         }
         return JSON.stringify(trackerMeta);
       });
-      vi.mocked(fs.writeFileSync).mockImplementation(vi.fn());
+      vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
 
       const result = deleteResource('translations', {
         keys: ['app.button.ok', 'app.button.cancel']
@@ -210,7 +210,7 @@ describe('deleteResource', () => {
         }
         return JSON.stringify(trackerMeta);
       });
-      vi.mocked(fs.writeFileSync).mockImplementation(vi.fn());
+      vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
 
       const result = deleteResource('translations', {
         keys: ['app.button.ok', 'invalid key!', 'app.button.cancel']
@@ -254,7 +254,7 @@ describe('deleteResource', () => {
         }
         return JSON.stringify(trackerMeta);
       });
-      vi.mocked(fs.writeFileSync).mockImplementation(vi.fn());
+      vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
 
       const result = deleteResource('translations', {
         keys: ['app.button.ok', 'app.button.notfound', 'app.button.missing']
@@ -306,7 +306,8 @@ describe('deleteResource', () => {
 
       expect(result.entriesDeleted).toBe(0);
       expect(result.errors).toBeDefined();
-      expect(result.errors![0].error).toContain('Invalid key segment');
+      expect(result.errors?.length).toBeGreaterThan(0);
+      expect((result.errors || [])[0]?.error).toContain('Invalid key segment');
     });
 
     it('should NOT attempt to delete files for invalid paths', () => {

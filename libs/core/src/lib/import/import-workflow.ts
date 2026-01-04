@@ -1,4 +1,4 @@
-import { ImportOptions, ImportResult, StatusTransition } from './types';
+import { ImportOptions, ImportResult, StatusTransition, ImportChange, ICUAutoFix, ICUAutoFixError } from './types';
 import { getStrategyDefaults } from './import-common';
 
 /**
@@ -131,12 +131,12 @@ export function buildImportResult(params: {
     resourcesFailed: number;
   };
   statusTransitions: StatusTransition[];
-  changes: any[];
+  changes: ImportChange[];
   filesModified: Set<string>;
   warnings: string[];
   errors: string[];
-  icuAutoFixes?: any[];
-  icuAutoFixErrors?: any[];
+  icuAutoFixes?: ICUAutoFix[];
+  icuAutoFixErrors?: ICUAutoFixError[];
 }): ImportResult {
   const {
     format,

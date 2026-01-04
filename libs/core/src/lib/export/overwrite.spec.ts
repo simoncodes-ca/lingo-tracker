@@ -21,7 +21,7 @@ describe('Overwrite Warning', () => {
     it('should add warning if file exists', () => {
         // Mock fs.existsSync to return true
         vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
+        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const result = exportToJson(mockResources, mockOptions);
 
@@ -31,7 +31,7 @@ describe('Overwrite Warning', () => {
     it('should not add warning if file does not exist', () => {
         // Mock fs.existsSync to return false
         vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
+        vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const result = exportToJson(mockResources, mockOptions);
 

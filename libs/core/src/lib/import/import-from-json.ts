@@ -265,7 +265,10 @@ function loadBaseLocaleValues(
       folderToKeys.set(fullFolderPath, []);
     }
 
-    folderToKeys.get(fullFolderPath)!.push({ key: resource.key, entryKey });
+    const folderKeys = folderToKeys.get(fullFolderPath);
+    if (folderKeys) {
+      folderKeys.push({ key: resource.key, entryKey });
+    }
   }
 
   // Load base values from each folder
@@ -286,7 +289,7 @@ function loadBaseLocaleValues(
           baseValues.set(key, entry.source);
         }
       }
-    } catch (error) {
+    } catch {
       // Skip files that can't be read
       continue;
     }

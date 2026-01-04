@@ -63,15 +63,16 @@ export async function extractFromXliff(
 
   try {
     // Parse XLIFF content using callback-based API
-    const parsed = await new Promise<{ resources: Record<string, Record<string, { source: string; target?: string; note?: string }>> }>((resolve, reject) => {
-      xliff.xliff12ToJs(xliffContent, (err: Error | null, res: any) => {
+    type ParsedXliff = { resources: Record<string, Record<string, { source: string; target?: string; note?: string }>> };
+    const parsed = await new Promise<ParsedXliff>((resolve, reject) => {
+      xliff.xliff12ToJs(xliffContent, (err: Error | null, res: unknown) => {
         if (err) reject(err);
-        else resolve(res);
+        else resolve(res as ParsedXliff);
       });
     });
 
     // Extract resources from each file
-    for (const [fileId, fileData] of Object.entries(parsed.resources)) {
+    for (const fileData of Object.values(parsed.resources)) {
       const transUnits = fileData as Record<string, { source: string; target?: string; note?: string }>;
 
       for (const [key, unit] of Object.entries(transUnits)) {
@@ -137,7 +138,10 @@ function loadBaseLocaleValues(
       folderToKeys.set(fullFolderPath, []);
     }
 
-    folderToKeys.get(fullFolderPath)!.push({ key: resource.key, entryKey });
+    const folderKeys = folderToKeys.get(fullFolderPath);
+    if (folderKeys) {
+      folderKeys.push({ key: resource.key, entryKey });
+    }
   }
 
   // Load base values from each folder
@@ -158,7 +162,7 @@ function loadBaseLocaleValues(
           baseValues.set(key, entry.source);
         }
       }
-    } catch (error) {
+    } catch {
       // Skip files that can't be read
       continue;
     }

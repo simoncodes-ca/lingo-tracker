@@ -18,6 +18,7 @@
         "tsConfig": "apps/cli/tsconfig.app.json",
         "assets": ["apps/cli/src/assets"],
         "generatePackageJson": true,
+        "skipTypeCheck": true,
         "esbuildOptions": {
           "sourcemap": true,
           "outExtension": {

@@ -85,7 +85,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
                 console.log(`   Import may take longer than usual.`);
             }
         }
-    } catch (error) {
+    } catch (_error) {
         // File size check is non-critical, continue with import
     }
 
@@ -187,7 +187,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
         }
     } else {
         // For dry-run, still generate summary but don't write to file
-        const summary = generateImportSummary(result, finalOptions);
+        const _summary = generateImportSummary(result, finalOptions);
         const summaryPath = path.join(translationsFolderPath, 'import-summary.md');
         console.log(`\n📄 Import summary would be written to: ${summaryPath}`);
     }

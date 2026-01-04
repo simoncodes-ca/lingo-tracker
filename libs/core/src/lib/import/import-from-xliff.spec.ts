@@ -151,7 +151,7 @@ describe('import-from-xliff', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',
@@ -205,7 +205,8 @@ describe('import-from-xliff', () => {
         return '{}';
       });
 
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',
@@ -247,7 +248,7 @@ describe('import-from-xliff', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
@@ -304,7 +305,7 @@ describe('import-from-xliff', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',
@@ -312,7 +313,7 @@ describe('import-from-xliff', () => {
         updateComments: true,
       };
 
-      const result = await importFromXliff('/translations/common', options);
+      const _result = await importFromXliff('/translations/common', options);
 
       const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
         String(call[0]).includes('resource_entries.json')
@@ -356,7 +357,7 @@ describe('import-from-xliff', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',
@@ -364,7 +365,7 @@ describe('import-from-xliff', () => {
         strategy: 'verification',
       };
 
-      const result = await importFromXliff('/translations/common', options);
+      const _result = await importFromXliff('/translations/common', options);
 
       // Verify status changed to verified
       const metaCall = writeFileSyncSpy.mock.calls.find(call =>

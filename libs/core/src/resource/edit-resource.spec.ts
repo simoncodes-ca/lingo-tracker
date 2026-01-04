@@ -13,7 +13,7 @@ describe('editResource', () => {
         vi.clearAllMocks();
         vi.mocked(fs.existsSync).mockReturnValue(true);
         vi.mocked(fs.readFileSync).mockReturnValue('{}');
-        vi.mocked(fs.writeFileSync).mockImplementation(vi.fn());
+        vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
     });
 
     it('should throw error if resource file does not exist', () => {

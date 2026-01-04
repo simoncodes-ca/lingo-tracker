@@ -42,7 +42,7 @@ export function exportToJson(
             const filename = getFilename(locale, options, baseLocale);
             const filePath = path.join(options.outputDirectory, filename);
 
-            let content: Record<string, any>;
+            let content: Record<string, unknown>;
             const conflicts: string[] = [];
 
             if (options.jsonStructure === 'flat') {
@@ -100,8 +100,8 @@ function getFilename(locale: string, options: ExportOptions, baseLocale?: string
 export function buildFlatStructure(
     resources: FilteredResource[],
     options: ExportOptions
-): Record<string, any> {
-    const result: Record<string, any> = {};
+): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
 
     for (const res of resources) {
         result[res.key] = formatValue(res, options);
@@ -114,8 +114,8 @@ export function buildHierarchicalStructure(
     resources: FilteredResource[],
     options: ExportOptions,
     conflicts: string[]
-): Record<string, any> {
-    const result: Record<string, any> = {};
+): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
 
     // Sort resources by key length to process shorter keys first (parents before children)
     // Actually, processing order matters for conflict detection.
@@ -164,7 +164,9 @@ export function buildHierarchicalStructure(
                     break;
                 }
 
-                current = current[part];
+                // At this point we've verified current[part] is an object and not a rich value,
+                // so we can safely treat it as a Record<string, unknown> for traversal
+                current = current[part] as Record<string, unknown>;
             }
         }
     }
@@ -172,32 +174,32 @@ export function buildHierarchicalStructure(
     return result;
 }
 
-function isRichValue(obj: any): boolean {
-    return obj && typeof obj === 'object' && 'value' in obj && Object.keys(obj).every(k =>
+function isRichValue(obj: unknown): boolean {
+    return obj !== null && typeof obj === 'object' && 'value' in obj && Object.keys(obj).every(k =>
         ['value', 'baseValue', 'comment', 'status', 'tags'].includes(k)
     );
 }
 
-function formatValue(resource: FilteredResource, options: ExportOptions): any {
+function formatValue(resource: FilteredResource, options: ExportOptions): unknown {
     if (options.richJson) {
-        const richObj: any = {
+        const richObj: Record<string, unknown> = {
             value: resource.value
         };
 
         if (options.includeBase && resource.baseValue) {
-            richObj.baseValue = resource.baseValue;
+            richObj['baseValue'] = resource.baseValue;
         }
 
         if (options.includeComment && resource.comment) {
-            richObj.comment = resource.comment;
+            richObj['comment'] = resource.comment;
         }
 
         if (options.includeStatus) {
-            richObj.status = resource.status;
+            richObj['status'] = resource.status;
         }
 
         if (options.includeTags && resource.tags && resource.tags.length > 0) {
-            richObj.tags = resource.tags;
+            richObj['tags'] = resource.tags;
         }
 
         return richObj;

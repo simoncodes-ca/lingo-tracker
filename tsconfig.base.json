@@ -16,8 +16,8 @@
     "baseUrl": ".",
     "typeRoots": ["./node_modules/@types", "./types"],
     "paths": {
-      "@simoncodes-ca/core": ["libs/core/src/index.ts"],
-      "@simoncodes-ca/data-transfer": ["libs/data-transfer/src/index.ts"]
+      "@simoncodes-ca/core": ["libs/core/src"],
+      "@simoncodes-ca/data-transfer": ["libs/data-transfer/src"]
     }
   },
   "exclude": ["node_modules", "tmp"]

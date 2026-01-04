@@ -100,7 +100,7 @@ describe('import error handling integration', () => {
         return false;
       });
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(importData));
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
@@ -130,7 +130,7 @@ describe('import error handling integration', () => {
         return false;
       });
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(importData));
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
@@ -158,7 +158,7 @@ describe('import error handling integration', () => {
         return false;
       });
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(importData));
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
@@ -190,7 +190,7 @@ describe('import error handling integration', () => {
         return false;
       });
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(importData));
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
@@ -230,7 +230,7 @@ describe('import error handling integration', () => {
         if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
         return '{}';
       });
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.json',
@@ -283,7 +283,7 @@ describe('import error handling integration', () => {
         return false;
       });
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(importData));
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
@@ -313,7 +313,7 @@ describe('import error handling integration', () => {
         return false;
       });
       vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(importData));
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
@@ -359,7 +359,7 @@ describe('import error handling integration', () => {
         if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
         return '{}';
       });
-      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.json',

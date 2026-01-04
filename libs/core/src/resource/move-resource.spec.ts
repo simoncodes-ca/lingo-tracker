@@ -134,7 +134,9 @@ describe('Move Resource', () => {
             const destFile = join(destFolder, RESOURCE_ENTRIES_FILENAME);
             expect(mockFileSystem.has(destFile)).toBe(true);
 
-            const destContent = JSON.parse(mockFileSystem.get(destFile)!);
+            const destFileContent = mockFileSystem.get(destFile);
+            expect(destFileContent).toBeDefined();
+            const destContent = JSON.parse(destFileContent as string);
             expect(destContent.ok).toBeDefined();
             expect(destContent.ok.source).toBe('OK');
         });
@@ -167,7 +169,9 @@ describe('Move Resource', () => {
             expect(result.warnings[0]).toContain('already exists');
 
             // Verify no change
-            const sourceContent = JSON.parse(mockFileSystem.get(sourceFile)!);
+            const sourceFileContent = mockFileSystem.get(sourceFile);
+            expect(sourceFileContent).toBeDefined();
+            const sourceContent = JSON.parse(sourceFileContent as string);
             expect(sourceContent.key).toBeDefined();
         });
 
@@ -197,7 +201,9 @@ describe('Move Resource', () => {
             expect(result.movedCount).toBe(1);
 
             // Verify dest updated
-            const destContent = JSON.parse(mockFileSystem.get(destFile)!);
+            const destFileContent = mockFileSystem.get(destFile);
+            expect(destFileContent).toBeDefined();
+            const destContent = JSON.parse(destFileContent as string);
             expect(destContent.key.source).toBe('Source');
         });
     });
@@ -226,7 +232,9 @@ describe('Move Resource', () => {
             const destFile = join(destFolder, RESOURCE_ENTRIES_FILENAME);
             expect(mockFileSystem.has(destFile)).toBe(true);
 
-            const destContent = JSON.parse(mockFileSystem.get(destFile)!);
+            const destFileContent = mockFileSystem.get(destFile);
+            expect(destFileContent).toBeDefined();
+            const destContent = JSON.parse(destFileContent as string);
             expect(destContent.ok).toBeDefined();
             expect(destContent.cancel).toBeDefined();
         });
@@ -257,12 +265,16 @@ describe('Move Resource', () => {
             // Verify dest
             const actionsFolder = join(testDir, 'common', 'actions');
             const actionsFile = join(actionsFolder, RESOURCE_ENTRIES_FILENAME);
-            const actionsContent = JSON.parse(mockFileSystem.get(actionsFile)!);
+            const actionsFileContent = mockFileSystem.get(actionsFile);
+            expect(actionsFileContent).toBeDefined();
+            const actionsContent = JSON.parse(actionsFileContent as string);
             expect(actionsContent.ok).toBeDefined();
 
             const subActionsFolder = join(actionsFolder, 'sub');
             const subActionsFile = join(subActionsFolder, RESOURCE_ENTRIES_FILENAME);
-            const subActionsContent = JSON.parse(mockFileSystem.get(subActionsFile)!);
+            const subActionsFileContent = mockFileSystem.get(subActionsFile);
+            expect(subActionsFileContent).toBeDefined();
+            const subActionsContent = JSON.parse(subActionsFileContent as string);
             expect(subActionsContent.item).toBeDefined();
         });
     });
@@ -299,7 +311,9 @@ describe('Move Resource', () => {
             const destFile = join(destFolder, RESOURCE_ENTRIES_FILENAME);
             expect(mockFileSystem.has(destFile)).toBe(true);
 
-            const destContent = JSON.parse(mockFileSystem.get(destFile)!);
+            const destFileContent = mockFileSystem.get(destFile);
+            expect(destFileContent).toBeDefined();
+            const destContent = JSON.parse(destFileContent as string);
             expect(destContent.ok).toBeDefined();
             expect(destContent.ok.source).toBe('OK');
         });
@@ -333,7 +347,9 @@ describe('Move Resource', () => {
             const destFile = join(destFolder, RESOURCE_ENTRIES_FILENAME);
             expect(mockFileSystem.has(destFile)).toBe(true);
 
-            const destContent = JSON.parse(mockFileSystem.get(destFile)!);
+            const destFileContent = mockFileSystem.get(destFile);
+            expect(destFileContent).toBeDefined();
+            const destContent = JSON.parse(destFileContent as string);
             expect(destContent.ok).toBeDefined();
             expect(destContent.cancel).toBeDefined();
         });
