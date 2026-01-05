@@ -223,5 +223,136 @@ Notes:
     await importCommand(options);
   });
 
+program
+  .command('validate')
+  .description('Verify translation completeness and readiness for production release')
+  .option('--allow-translated', 'Treat translated status as warning instead of error', false)
+  .addHelpText('after', `
+Examples:
+  # Basic validation (strict mode - requires all translations verified)
+  $ lingo-tracker validate
+
+  # Relaxed mode - allow translated status with warnings
+  $ lingo-tracker validate --allow-translated
+
+  # Use in CI pipeline (exits with code 1 on validation failure)
+  $ lingo-tracker validate || exit 1
+
+Example Output (Success):
+  ✅ Validation PASSED
+
+  📊 Validation Statistics:
+  ──────────────────────────────────────────────────
+    Total Resources Validated: 450
+    Unique Resource Keys: 150
+    Locales Validated: 3
+    Collections Validated: 1
+
+  📈 Status Breakdown:
+  ──────────────────────────────────────────────────
+    ✅ Verified: 450
+    ✏️  Translated: 0
+    ⚠️  Stale: 0
+    ❌ New: 0
+
+  ──────────────────────────────────────────────────
+  📋 Summary:
+    Total Failures: 0
+    Total Successes: 450
+
+  ✅ Validation passed successfully!
+
+Example Output (Failures):
+  ❌ Validation FAILED
+
+  📊 Validation Statistics:
+  ──────────────────────────────────────────────────
+    Total Resources Validated: 450
+    Unique Resource Keys: 150
+    Locales Validated: 3
+    Collections Validated: 1
+
+  📈 Status Breakdown:
+  ──────────────────────────────────────────────────
+    ✅ Verified: 420
+    ✏️  Translated: 15
+    ⚠️  Stale: 10
+    ❌ New: 5
+
+  ❌ Failures (30):
+  ──────────────────────────────────────────────────
+    Locale: es (10 failures)
+      ❌ [main] common.buttons.submit (new)
+      ⚠️  [main] dashboard.title (stale)
+      ✏️  [main] settings.description (translated)
+      ...
+
+    Locale: fr (10 failures)
+      ...
+
+  ──────────────────────────────────────────────────
+  📋 Summary:
+    Total Failures: 30
+    Total Successes: 420
+
+  ❌ Validation failed. Please review the failures above.
+
+CI Integration Examples:
+
+  # GitHub Actions
+  - name: Validate translations
+    run: |
+      npm install -g lingo-tracker
+      lingo-tracker validate
+      # Or with relaxed mode: lingo-tracker validate --allow-translated
+
+  # GitLab CI
+  validate-translations:
+    stage: test
+    script:
+      - npm install -g lingo-tracker
+      - lingo-tracker validate
+    only:
+      - main
+      - merge_requests
+
+  # CircleCI
+  - run:
+      name: Validate translations
+      command: |
+        npm install -g lingo-tracker
+        lingo-tracker validate
+
+  # Jenkins
+  stage('Validate Translations') {
+    steps {
+      sh 'npm install -g lingo-tracker'
+      sh 'lingo-tracker validate'
+    }
+  }
+
+Validation Rules:
+  ❌ new        Resource not yet translated → FAILURE
+  ⚠️  stale      Translation out of sync with source → FAILURE
+  ✏️  translated Has translation but not verified → FAILURE (default)
+                                                  → WARNING (--allow-translated)
+  ✅ verified   Translation reviewed and approved → SUCCESS
+
+Exit Codes:
+  0  All validations passed (all resources verified)
+  1  Validation failures found (new/stale/translated resources)
+
+Notes:
+  - Validates ALL collections and ALL target locales (no filtering)
+  - Collects ALL failures before reporting (comprehensive check)
+  - Perfect for pre-release quality gates in CI/CD pipelines
+  - Use --allow-translated for staging environments
+  - Strict mode (default) recommended for production releases
+`)
+  .action(async (options) => {
+    const { validateCommand } = await import('./commands/validate');
+    await validateCommand({ allowTranslated: options.allowTranslated });
+  });
+
 program.parse();
 

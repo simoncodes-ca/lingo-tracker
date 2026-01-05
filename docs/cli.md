@@ -748,6 +748,190 @@ When multiple collections contribute the same key:
 
 ---
 
+## Validation Commands
+
+### validate
+
+Validate translation completeness and readiness for production release. This command checks all resources across all locales and collections, ensuring translations meet quality standards before deployment.
+
+**Usage:**
+
+```bash
+lingo-tracker validate [options]
+```
+
+**Options:**
+
+- `--allow-translated` - Treat 'translated' status as warning instead of failure (default: false)
+
+**What Validate Does:**
+
+1. **Loads all resources** from all configured collections
+2. **Checks translation status** for every resource in every target locale
+3. **Collects all validation results** (does not stop at first error)
+4. **Categorizes findings** into failures, warnings, and successes
+5. **Reports comprehensive results** grouped by locale
+
+**Validation Rules:**
+
+| Status | Default Behavior | With `--allow-translated` |
+|--------|------------------|---------------------------|
+| `new` | ❌ Failure | ❌ Failure |
+| `stale` | ❌ Failure | ❌ Failure |
+| `translated` | ❌ Failure | ⚠️ Warning |
+| `verified` | ✅ Success | ✅ Success |
+
+**Exit Codes:**
+
+- `0` - All validations passed (all resources verified)
+- `1` - Validation failures found (new/stale resources or translated without `--allow-translated` flag)
+
+**When to Use Validate:**
+
+- As a quality gate in CI/CD pipelines before release
+- Before deploying to production environments
+- To verify all translations are complete and verified
+- To enforce translation quality standards in automated builds
+- During staging deployments (with `--allow-translated` for relaxed requirements)
+
+**Examples:**
+
+Strict validation (production):
+```bash
+lingo-tracker validate
+```
+
+Output on failure:
+```
+❌ Translation Validation FAILED
+
+Validation Summary by Locale:
+  es:
+    new: 3
+    stale: 2
+    translated: 1
+    verified: 45
+
+  fr-ca:
+    new: 1
+    stale: 0
+    translated: 2
+    verified: 48
+
+Failures (6 resources):
+  es:
+    - apps.common.buttons.submit (new)
+    - apps.common.errors.network (new)
+    - apps.features.dashboard.title (new)
+    - apps.common.buttons.save (stale)
+    - apps.features.settings.label (stale)
+    - apps.common.buttons.cancel (translated)
+
+  fr-ca:
+    - apps.common.buttons.submit (new)
+    - apps.features.dashboard.subtitle (translated)
+    - apps.features.profile.header (translated)
+
+Total: 6 failures, 0 warnings
+```
+
+Relaxed validation (staging):
+```bash
+lingo-tracker validate --allow-translated
+```
+
+Output with warnings:
+```
+⚠️  Translation Validation PASSED with warnings
+
+Validation Summary by Locale:
+  es:
+    new: 3
+    stale: 2
+    translated: 1
+    verified: 45
+
+  fr-ca:
+    new: 1
+    stale: 0
+    translated: 2
+    verified: 48
+
+Failures (5 resources):
+  es:
+    - apps.common.buttons.submit (new)
+    - apps.common.errors.network (new)
+    - apps.features.dashboard.title (new)
+    - apps.common.buttons.save (stale)
+    - apps.features.settings.label (stale)
+
+  fr-ca:
+    - apps.common.buttons.submit (new)
+
+Warnings (3 resources):
+  es:
+    - apps.common.buttons.cancel (translated)
+
+  fr-ca:
+    - apps.features.dashboard.subtitle (translated)
+    - apps.features.profile.header (translated)
+
+Total: 5 failures, 3 warnings
+```
+
+CI/CD Integration Examples:
+
+**GitHub Actions:**
+```yaml
+- name: Validate translations
+  run: lingo-tracker validate
+```
+
+**GitLab CI:**
+```yaml
+validate-translations:
+  script:
+    - lingo-tracker validate
+```
+
+**Jenkins:**
+```groovy
+sh 'lingo-tracker validate'
+```
+
+**CircleCI:**
+```yaml
+- run:
+    name: Validate translations
+    command: lingo-tracker validate
+```
+
+Staging pipeline (allow translated):
+```yaml
+- name: Validate translations (staging)
+  run: lingo-tracker validate --allow-translated
+```
+
+**Comprehensive Validation:**
+
+The validate command performs a comprehensive check:
+- Validates **ALL** collections (no filtering)
+- Validates **ALL** target locales (excludes base locale)
+- Collects **ALL** validation results before reporting
+- Shows **COMPLETE** summary of all failures and warnings
+- Does **NOT** stop at first error
+
+**Notes:**
+
+- Non-interactive only (designed for CI/CD, never prompts)
+- Validates all target locales (base locale is excluded)
+- Validates all collections (no collection filtering)
+- Reports all issues comprehensively before exiting
+- Exit code reflects overall validation status after checking everything
+- Use `--allow-translated` for staging deployments where not all translations may be verified yet
+
+---
+
 ### export
 
 Export translation resources to XLIFF or JSON format for integration with translation services, external systems, and third-party tools.
@@ -1065,6 +1249,12 @@ lingo-tracker delete-resource \
   --key "deprecated.old.feature" \
   --yes
 
+# Validate translations before deployment (production)
+lingo-tracker validate
+
+# Validate translations with relaxed requirements (staging)
+lingo-tracker validate --allow-translated
+
 # Export translations to XLIFF for translation agency
 lingo-tracker export \
   --format xliff \
@@ -1077,6 +1267,42 @@ lingo-tracker export \
   --format json \
   --status new,translated,stale,verified \
   --filename "backup-{locale}-{date}"
+```
+
+**Complete CI/CD Pipeline Example:**
+
+```yaml
+# GitHub Actions example
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # Validate translations as quality gate
+      - name: Validate translations
+        run: lingo-tracker validate
+
+      # Only build and deploy if validation passes
+      - name: Build
+        run: pnpm run build
+
+      - name: Deploy
+        run: pnpm run deploy
 ```
 
 ---
