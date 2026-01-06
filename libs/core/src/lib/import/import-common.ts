@@ -9,20 +9,7 @@ import { ImportFormat, ImportStrategy } from './types';
  * @throws Error if key is invalid (empty, consecutive dots, invalid characters)
  */
 export function validateImportKey(key: string): void {
-  if (!key || key.trim() === '') {
-    throw new Error('Key cannot be empty');
-  }
-
-  if (key.includes('..')) {
-    throw new Error(`Invalid key format: "${key}" (consecutive dots)`);
-  }
-
-  if (key.startsWith('.') || key.endsWith('.')) {
-    throw new Error(`Invalid key format: "${key}" (leading or trailing dot)`);
-  }
-
-  // Use existing validation from resource-key
-  validateKey(key);
+  validateKey(key, { errorContext: 'Import validation' });
 }
 
 /**

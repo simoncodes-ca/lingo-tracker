@@ -379,7 +379,7 @@ describe('addResource', () => {
           key: '../secret.key',
           baseValue: 'test'
         });
-      }).toThrow('Invalid key segment');
+      }).toThrow('Key validation: Invalid key format');
     });
 
     it('should reject invalid targetFolder with path traversal characters', () => {

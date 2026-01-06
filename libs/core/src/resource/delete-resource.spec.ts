@@ -307,7 +307,7 @@ describe('deleteResource', () => {
       expect(result.entriesDeleted).toBe(0);
       expect(result.errors).toBeDefined();
       expect(result.errors?.length).toBeGreaterThan(0);
-      expect((result.errors || [])[0]?.error).toContain('Invalid key segment');
+      expect((result.errors || [])[0]?.error).toContain('Key validation: Invalid key format');
     });
 
     it('should NOT attempt to delete files for invalid paths', () => {

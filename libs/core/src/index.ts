@@ -14,4 +14,10 @@ export * from './lib/export/export-summary';
 export * from './lib/import';
 export * from './lib/validate';
 
+// Export new utilities
+export * from './lib/file-io';
+export * from './lib/resource';
+export * from './lib/config';
+export * from './lib/errors';
+
 

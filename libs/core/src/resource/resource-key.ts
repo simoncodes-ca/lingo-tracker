@@ -13,22 +13,52 @@ export function isValidSegment(segment: string): boolean {
   return SEGMENT_PATTERN.test(segment);
 }
 
+export interface KeyValidationOptions {
+  /** Allow leading/trailing dots (default: false) */
+  readonly allowLeadingTrailingDots?: boolean;
+  /** Allow consecutive dots (default: false) */
+  readonly allowConsecutiveDots?: boolean;
+  /** Custom error message prefix */
+  readonly errorContext?: string;
+}
+
 /**
- * Validates a dot-delimited key string.
- * All segments must match [A-Za-z0-9_-]+.
+ * Validates a dot-delimited key string with configurable rules.
+ *
+ * Default validation:
+ * - No empty keys
+ * - No leading or trailing dots
+ * - No consecutive dots
+ * - All segments match [A-Za-z0-9_-]+
+ *
  * @param key - The key to validate (e.g., "apps.common.buttons.ok")
- * @throws Error if any segment is invalid
+ * @param options - Validation options
+ * @throws Error if any validation rule is violated
  */
-export function validateKey(key: string): void {
+export function validateKey(key: string, options: KeyValidationOptions = {}): void {
+  const {
+    allowLeadingTrailingDots = false,
+    allowConsecutiveDots = false,
+    errorContext = 'Key validation'
+  } = options;
+
   if (!key || key.trim() === '') {
-    throw new Error('Key cannot be empty');
+    throw new Error(`${errorContext}: Key cannot be empty`);
+  }
+
+  if (!allowConsecutiveDots && key.includes('..')) {
+    throw new Error(`${errorContext}: Invalid key format "${key}" (consecutive dots not allowed)`);
+  }
+
+  if (!allowLeadingTrailingDots && (key.startsWith('.') || key.endsWith('.'))) {
+    throw new Error(`${errorContext}: Invalid key format "${key}" (leading or trailing dot not allowed)`);
   }
 
   const segments = key.split('.');
   for (const segment of segments) {
     if (!isValidSegment(segment)) {
       throw new Error(
-        `Invalid key segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`
+        `${errorContext}: Invalid key segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`
       );
     }
   }

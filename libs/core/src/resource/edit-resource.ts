@@ -1,15 +1,8 @@
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
-import { ResourceEntries } from './resource-entry';
-import { TrackerMetadata } from './tracker-metadata';
-import {
-    validateKey,
-    validateTargetFolder,
-    resolveResourceKey,
-    splitResolvedKey,
-} from './resource-key';
+import { existsSync } from 'node:fs';
 import { calculateChecksum } from './checksum';
-import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../constants';
+import { validateAndResolvePaths } from '../lib/resource/resource-file-paths';
+import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
+import { updateMetadataForBaseValueChange } from '../lib/resource/metadata-operations';
 
 export interface EditResourceOptions {
     key: string;
@@ -34,56 +27,39 @@ export function editResource(
 ): EditResourceResult {
     const { cwd = process.cwd(), baseLocale = 'en' } = options;
 
-    validateKey(options.key);
-    if (options.targetFolder) {
-        validateTargetFolder(options.targetFolder);
+    const paths = validateAndResolvePaths({
+        key: options.key,
+        translationsFolder,
+        targetFolder: options.targetFolder,
+        cwd,
+    });
+
+    if (!existsSync(paths.resourceEntriesPath) || !existsSync(paths.trackerMetaPath)) {
+        throw new Error(`Resource not found: ${paths.resolvedKey}`);
     }
 
-    const resolvedKey = resolveResourceKey(options.key, options.targetFolder);
-    const { folderPath, entryKey } = splitResolvedKey(resolvedKey);
+    const resourceEntries = readResourceEntries(paths.resourceEntriesPath);
+    const trackerMeta = readTrackerMetadata(paths.trackerMetaPath);
 
-    const fullFolderPath = folderPath.length
-        ? join(translationsFolder, ...folderPath)
-        : translationsFolder;
-
-    const entryResourcePath = resolve(cwd, fullFolderPath, RESOURCE_ENTRIES_FILENAME);
-    const entryMetaPath = resolve(cwd, fullFolderPath, TRACKER_META_FILENAME);
-
-    if (!existsSync(entryResourcePath) || !existsSync(entryMetaPath)) {
-        throw new Error(`Resource not found: ${resolvedKey}`);
+    if (!resourceEntries[paths.entryKey] || !trackerMeta[paths.entryKey]) {
+        throw new Error(`Resource not found: ${paths.resolvedKey}`);
     }
 
-    const resourceEntries: ResourceEntries = loadFile(entryResourcePath);
-    const trackerMeta: TrackerMetadata = loadFile(entryMetaPath);
-
-    if (!resourceEntries[entryKey] || !trackerMeta[entryKey]) {
-        throw new Error(`Resource not found: ${resolvedKey}`);
-    }
-
-    const resourceEntry = resourceEntries[entryKey];
-    const metaEntry = trackerMeta[entryKey];
+    const resourceEntry = resourceEntries[paths.entryKey];
+    let metaEntry = trackerMeta[paths.entryKey];
     let hasChanges = false;
 
     // 1. Update Base Value
     if (options.baseValue !== undefined && options.baseValue !== resourceEntry.source) {
         resourceEntry.source = options.baseValue;
-        const newBaseChecksum = calculateChecksum(options.baseValue);
 
-        // Update base locale checksum
-        if (!metaEntry[baseLocale]) {
-            // Should not happen if resource exists, but handle gracefully
-            metaEntry[baseLocale] = { checksum: newBaseChecksum };
-        } else {
-            metaEntry[baseLocale].checksum = newBaseChecksum;
-        }
-
-        // Update non-base locales
-        Object.keys(metaEntry).forEach((locale) => {
-            if (locale !== baseLocale) {
-                metaEntry[locale].baseChecksum = newBaseChecksum;
-                metaEntry[locale].status = 'stale';
-            }
+        metaEntry = updateMetadataForBaseValueChange({
+            metadata: metaEntry,
+            newBaseValue: options.baseValue,
+            baseLocale,
         });
+
+        trackerMeta[paths.entryKey] = metaEntry;
         hasChanges = true;
     }
 
@@ -129,11 +105,6 @@ export function editResource(
                 } else {
                     metaEntry[locale].checksum = newChecksum;
                     metaEntry[locale].baseChecksum = currentBaseChecksum;
-                    // If explicitly verified logic is needed, it would go here. 
-                    // For now, edit implies 'translated' unless we add a specific flag for verification status.
-                    // But if the value changes, it usually means it's a new translation or correction.
-                    // The spec says: Set `status` to `translated` unless explicitly set to `verified` via a trusted import/UI action.
-                    // Since we don't have a 'verified' flag in options yet, we default to 'translated'.
                     metaEntry[locale].status = 'translated';
                 }
                 hasChanges = true;
@@ -142,19 +113,10 @@ export function editResource(
     }
 
     if (hasChanges) {
-        writeFileSync(entryResourcePath, JSON.stringify(resourceEntries, null, 2));
-        writeFileSync(entryMetaPath, JSON.stringify(trackerMeta, null, 2));
-        return { resolvedKey, updated: true };
+        writeJsonFile({ filePath: paths.resourceEntriesPath, data: resourceEntries });
+        writeJsonFile({ filePath: paths.trackerMetaPath, data: trackerMeta });
+        return { resolvedKey: paths.resolvedKey, updated: true };
     }
 
-    return { resolvedKey, updated: false, message: 'No changes detected' };
-}
-
-function loadFile<T>(filePath: string): T {
-    try {
-        const content = readFileSync(filePath, 'utf8');
-        return JSON.parse(content) as T;
-    } catch {
-        throw new Error(`Failed to read or parse file: ${filePath}`);
-    }
+    return { resolvedKey: paths.resolvedKey, updated: false, message: 'No changes detected' };
 }

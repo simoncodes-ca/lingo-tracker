@@ -1,13 +1,8 @@
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs';
-import { resolve, join } from 'node:path';
-import { ResourceEntries } from './resource-entry';
+import { existsSync, unlinkSync } from 'node:fs';
+import { resolveResourcePaths } from '../lib/resource/resource-file-paths';
+import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
+import { validateKey } from './resource-key';
 import { TrackerMetadata } from './tracker-metadata';
-import {
-  validateKey,
-  resolveResourceKey,
-  splitResolvedKey,
-} from './resource-key';
-import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../constants';
 
 export interface DeleteResourceParams {
   keys: string[];
@@ -54,58 +49,45 @@ function deleteSingleResource(
 ): boolean {
   validateKey(key);
 
-  const resolvedKey = resolveResourceKey(key, undefined);
-  const { folderPath, entryKey } = splitResolvedKey(resolvedKey);
+  const paths = resolveResourcePaths({
+    key,
+    translationsFolder,
+  });
 
-  const fullFolderPath = folderPath.length
-    ? join(translationsFolder, ...folderPath)
-    : translationsFolder;
-
-  if (!existsSync(fullFolderPath)) {
-    throw new Error(`Folder not found: ${fullFolderPath}`);
+  if (!existsSync(paths.folderPath)) {
+    throw new Error(`Folder not found: ${paths.folderPath}`);
   }
 
-  const entryResourcePath = resolve(fullFolderPath, RESOURCE_ENTRIES_FILENAME);
-  const entryMetaPath = resolve(fullFolderPath, TRACKER_META_FILENAME);
-
-  if (!existsSync(entryResourcePath)) {
-    throw new Error(`Resource file not found: ${entryResourcePath}`);
+  if (!existsSync(paths.resourceEntriesPath)) {
+    throw new Error(`Resource file not found: ${paths.resourceEntriesPath}`);
   }
 
-  const resourceEntries: ResourceEntries = loadJsonFile(entryResourcePath);
+  const resourceEntries = readResourceEntries(paths.resourceEntriesPath);
 
-  if (!(entryKey in resourceEntries)) {
+  if (!(paths.entryKey in resourceEntries)) {
     throw new Error(`Resource entry not found: ${key}`);
   }
 
-  delete resourceEntries[entryKey];
+  delete resourceEntries[paths.entryKey];
 
+  // Load and update metadata
   let trackerMeta: TrackerMetadata = {};
-  if (existsSync(entryMetaPath)) {
-    trackerMeta = loadJsonFile(entryMetaPath);
-    delete trackerMeta[entryKey];
+  if (existsSync(paths.trackerMetaPath)) {
+    trackerMeta = readTrackerMetadata(paths.trackerMetaPath);
+    delete trackerMeta[paths.entryKey];
   }
 
   const isEmpty = Object.keys(resourceEntries).length === 0;
 
   if (isEmpty) {
-    unlinkSync(entryResourcePath);
-    if (existsSync(entryMetaPath)) {
-      unlinkSync(entryMetaPath);
+    unlinkSync(paths.resourceEntriesPath);
+    if (existsSync(paths.trackerMetaPath)) {
+      unlinkSync(paths.trackerMetaPath);
     }
   } else {
-    writeFileSync(entryResourcePath, JSON.stringify(resourceEntries, null, 2));
-    writeFileSync(entryMetaPath, JSON.stringify(trackerMeta, null, 2));
+    writeJsonFile({ filePath: paths.resourceEntriesPath, data: resourceEntries });
+    writeJsonFile({ filePath: paths.trackerMetaPath, data: trackerMeta });
   }
 
   return true;
-}
-
-function loadJsonFile<T>(filePath: string): T {
-  try {
-    const content = readFileSync(filePath, 'utf8');
-    return JSON.parse(content) as T;
-  } catch {
-    throw new Error(`Failed to read or parse file: ${filePath}`);
-  }
 }

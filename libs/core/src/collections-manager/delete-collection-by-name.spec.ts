@@ -7,10 +7,13 @@ vi.mock('node:fs');
 describe('deleteCollectionByName', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fs.existsSync).mockReturnValue(true);
   });
 
   it('should delete a collection from the config', () => {
     const config = {
+      baseLocale: 'en',
+      locales: ['en', 'es', 'fr'],
       collections: {
         english: { path: './locales/en' },
         spanish: { path: './locales/es' },
@@ -46,6 +49,8 @@ describe('deleteCollectionByName', () => {
 
   it('should throw an error if collection does not exist', () => {
     const config = {
+      baseLocale: 'en',
+      locales: ['en'],
       collections: {
         english: { path: './locales/en' },
       },
@@ -68,6 +73,8 @@ describe('deleteCollectionByName', () => {
 
   it('should preserve other collections when deleting multiple', () => {
     const initialConfig = {
+      baseLocale: 'en',
+      locales: ['en', 'es', 'fr', 'de'],
       collections: {
         en: { path: './en' },
         es: { path: './es' },
@@ -101,6 +108,8 @@ describe('deleteCollectionByName', () => {
     const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue('/default-cwd');
 
     const config = {
+      baseLocale: 'en',
+      locales: ['en'],
       collections: {
         english: { path: './locales/en' },
       },

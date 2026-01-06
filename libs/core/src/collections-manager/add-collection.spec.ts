@@ -13,11 +13,12 @@ describe('addCollection', () => {
     importFolder: 'dist/lingo-import',
     baseLocale: 'en',
     locales: ['en'],
-    // collections intentionally omitted in some tests to validate initialization
+    collections: {},
   } as SafeAny;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fs.existsSync).mockReturnValue(true);
   });
 
   it('adds a minimal collection (only translationsFolder) and preserves root config', () => {
