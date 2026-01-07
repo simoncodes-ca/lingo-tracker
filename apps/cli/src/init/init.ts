@@ -3,9 +3,10 @@ import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { InitOptions } from '../types/init-options.js';
 import { CONFIG_FILENAME, DEFAULT_CONFIG, LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
+import { getCwd } from '../utils';
 
 export async function initCommand(options: InitOptions): Promise<void> {
-  const cwd = process.env.INIT_CWD || process.cwd();
+  const cwd = getCwd();
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   if (existsSync(configPath)) {

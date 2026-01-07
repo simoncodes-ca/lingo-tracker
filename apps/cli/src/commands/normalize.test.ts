@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { normalizeCommand } from './normalize';
 
-vi.mock('node:fs');
 vi.mock('prompts', () => ({
   default: vi.fn(),
 }));
 
 vi.mock('@simoncodes-ca/core', () => ({
-  CONFIG_FILENAME: '.lingo-tracker.json',
   normalize: vi.fn(),
+}));
+
+vi.mock('../utils', () => ({
+  loadConfiguration: vi.fn(),
+  resolveCollection: vi.fn(),
 }));
 
 describe('normalizeCommand', () => {

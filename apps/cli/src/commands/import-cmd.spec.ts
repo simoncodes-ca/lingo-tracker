@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { importCommand, ImportCommandOptions } from './import-cmd';
-import * as fs from 'fs';
 import * as path from 'path';
 
 vi.mock('fs');
@@ -18,9 +17,15 @@ vi.mock('@simoncodes-ca/core', () => ({
   generateImportSummary: vi.fn(() => '# Import Summary\n\nTest summary'),
 }));
 
+// Mock utilities
+vi.mock('../utils', () => ({
+  loadConfiguration: vi.fn(),
+}));
+
 // Import the mocked functions
 import { importFromJson, importFromXliff, detectImportFormat } from '@simoncodes-ca/core';
 import prompts from 'prompts';
+import { loadConfiguration } from '../utils';
 
 describe('import-cmd', () => {
   beforeEach(() => {
@@ -48,8 +53,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 10,
         resourcesCreated: 0,
@@ -71,15 +79,11 @@ describe('import-cmd', () => {
 
       await importCommand(options);
 
-      expect(fs.readFileSync).toHaveBeenCalledWith('/test/project/.lingo-tracker.json', 'utf8');
+      expect(loadConfiguration).toHaveBeenCalled();
     });
 
     it('should exit with error if config file not found', async () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(console, 'error').mockImplementation(() => undefined);
-      vi.spyOn(process, 'exit').mockImplementation((code) => {
-        throw new Error(`Process exit: ${code}`);
-      });
+      vi.mocked(loadConfiguration).mockReturnValue(null);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -87,19 +91,13 @@ describe('import-cmd', () => {
         format: 'json',
       };
 
-      await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Configuration file .lingo-tracker.json not found')
-      );
+      await importCommand(options);
+
+      expect(loadConfiguration).toHaveBeenCalled();
     });
 
     it('should exit with error if config file is malformed', async () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue('{ invalid json');
-      vi.spyOn(console, 'error').mockImplementation(() => undefined);
-      vi.spyOn(process, 'exit').mockImplementation((code) => {
-        throw new Error(`Process exit: ${code}`);
-      });
+      vi.mocked(loadConfiguration).mockReturnValue(null);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -107,10 +105,9 @@ describe('import-cmd', () => {
         format: 'json',
       };
 
-      await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to parse configuration file')
-      );
+      await importCommand(options);
+
+      expect(loadConfiguration).toHaveBeenCalled();
     });
   });
 
@@ -128,8 +125,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(detectImportFormat).mockReturnValue('xliff');
       vi.mocked(importFromXliff).mockResolvedValue({
         resourcesImported: 5,
@@ -170,8 +170,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(detectImportFormat).mockReturnValue('json');
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 5,
@@ -212,8 +215,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(detectImportFormat).mockImplementation(() => {
         throw new Error('Cannot auto-detect format from .txt extension');
       });
@@ -261,8 +267,11 @@ describe('import-cmd', () => {
         changes: [],
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue(importResult);
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
@@ -310,8 +319,11 @@ describe('import-cmd', () => {
         changes: [],
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromXliff).mockResolvedValue(importResult);
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
@@ -346,8 +358,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockImplementation(() => {
         throw new Error('Source file not found');
       });
@@ -384,8 +399,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 10,
         resourcesCreated: 0,
@@ -433,8 +451,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 10,
         resourcesCreated: 0,
@@ -480,8 +501,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 10,
         resourcesCreated: 0,
@@ -520,8 +544,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 10,
         resourcesCreated: 0,
@@ -561,8 +588,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 10,
         resourcesCreated: 0,
@@ -603,8 +633,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 10,
         resourcesCreated: 0,
@@ -650,8 +683,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 10,
         resourcesCreated: 0,
@@ -694,8 +730,11 @@ describe('import-cmd', () => {
         },
       };
 
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(config));
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/project/.lingo-tracker.json',
+        cwd: '/test/project',
+      });
       vi.mocked(importFromJson).mockReturnValue({
         resourcesImported: 10,
         resourcesCreated: 0,

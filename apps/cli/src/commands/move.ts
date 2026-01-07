@@ -1,8 +1,11 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import prompts from 'prompts';
-import type { LingoTrackerConfig } from '@simoncodes-ca/core';
-import { CONFIG_FILENAME, moveResource } from '@simoncodes-ca/core';
+import { moveResource } from '@simoncodes-ca/core';
+import {
+  loadConfiguration,
+  promptForCollection,
+  resolveCollection,
+  type ResolvedCollection,
+} from '../utils';
 
 export interface MoveResourceOptions {
     collection?: string;
@@ -14,44 +17,36 @@ export interface MoveResourceOptions {
 }
 
 export async function moveResourceCommand(options: MoveResourceOptions): Promise<void> {
-    const cwd = process.env.INIT_CWD || process.cwd();
-    const configPath = resolve(cwd, CONFIG_FILENAME);
+    const loaded = loadConfiguration({ exitOnError: false });
+    if (!loaded) return;
+    const { config, cwd } = loaded;
 
-    let config: LingoTrackerConfig;
-    try {
-        const configContent = readFileSync(configPath, 'utf8');
-        config = JSON.parse(configContent) as LingoTrackerConfig;
-    } catch {
-        console.log('❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.');
-        return;
-    }
+    // Prompt for source collection first
+    const sourceCollectionName = await promptForCollection(config, options.collection);
+    if (!sourceCollectionName) return;
 
-    const answers = await promptForMissing(options, config);
-    const collectionConfig = config.collections?.[answers.collection];
+    // Validate source collection exists
+    const sourceCollection = resolveCollection(sourceCollectionName, config, cwd);
+    if (!sourceCollection) return;
 
-    if (!collectionConfig) {
-        console.log(`❌ Collection "${answers.collection}" not found.`);
-        return;
-    }
+    // Prompt for other fields
+    const answers = await promptForMissing(options);
 
-    let destTranslationsFolder: string | undefined;
+    // Handle optional destination collection
+    let destCollection: ResolvedCollection | undefined;
     if (answers.destCollection) {
-        const destCollectionConfig = config.collections?.[answers.destCollection];
-        if (!destCollectionConfig) {
-            console.log(`❌ Destination collection "${answers.destCollection}" not found.`);
-            return;
-        }
-        destTranslationsFolder = resolve(cwd, destCollectionConfig.translationsFolder);
+        destCollection = resolveCollection(answers.destCollection, config, cwd);
+        if (!destCollection) return;
     }
 
     try {
         const result = moveResource(
-            resolve(cwd, collectionConfig.translationsFolder),
+            sourceCollection.translationsFolderPath,
             {
                 source: answers.source,
                 destination: answers.dest,
                 override: options.override,
-                destinationTranslationsFolder: destTranslationsFolder,
+                destinationTranslationsFolder: destCollection?.translationsFolderPath,
             }
         );
 
@@ -80,40 +75,19 @@ export async function moveResourceCommand(options: MoveResourceOptions): Promise
 }
 
 async function promptForMissing(
-    options: MoveResourceOptions,
-    config: LingoTrackerConfig
+    options: MoveResourceOptions
 ): Promise<{
-    collection: string;
     source: string;
     dest: string;
     destCollection?: string;
 }> {
     const responses: Partial<{
-        collection: string;
         source: string;
         dest: string;
         destCollection: string;
     }> = {};
 
-    const collections = Object.keys(config.collections || {});
-
     const questions: prompts.PromptObject[] = [];
-
-    if (!options.collection) {
-        if (collections.length === 1) {
-            responses.collection = collections[0];
-        } else if (collections.length > 1) {
-            questions.push({
-                type: 'select',
-                name: 'collection',
-                message: 'Select source collection',
-                choices: collections.map(c => ({ title: c, value: c })),
-            });
-        } else {
-            console.log('❌ No collections found. Run `lingo-tracker add-collection` first.');
-            throw new Error('No collections available');
-        }
-    }
 
     if (!options.source) {
         questions.push({
@@ -144,13 +118,11 @@ async function promptForMissing(
         });
         Object.assign(responses, result);
     } else if (questions.length > 0) {
-        if (!options.collection) throw new Error('Missing required option: collection');
         if (!options.source) throw new Error('Missing required option: source');
         if (!options.dest) throw new Error('Missing required option: dest');
     }
 
     return {
-        collection: options.collection ?? (responses.collection as string),
         source: options.source ?? (responses.source as string),
         dest: options.dest ?? (responses.dest as string),
         destCollection: options.destCollection,

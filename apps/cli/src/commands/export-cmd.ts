@@ -2,7 +2,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import prompts from 'prompts';
 import {
-    CONFIG_FILENAME,
     LingoTrackerConfig,
     ExportOptions,
     ExportFormat,
@@ -15,6 +14,7 @@ import {
     generateExportSummary,
     ExportResult
 } from '@simoncodes-ca/core';
+import { loadConfiguration, parseCommaSeparatedList, processMultiselectWithAll, multiselectResultToString } from '../utils';
 
 export interface ExportCommandOptions {
     format?: ExportFormat;
@@ -35,21 +35,9 @@ export interface ExportCommandOptions {
 }
 
 export async function exportCommand(options: ExportCommandOptions): Promise<void> {
-    const cwd = process.cwd();
-    const configPath = path.join(cwd, CONFIG_FILENAME);
-
-    let config: LingoTrackerConfig;
-    try {
-        if (fs.existsSync(configPath)) {
-            config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        } else {
-            console.error(`❌ Configuration file ${CONFIG_FILENAME} not found.`);
-            process.exit(1);
-        }
-    } catch (error) {
-        console.error(`❌ Failed to parse configuration file: ${(error as Error).message}`);
-        process.exit(1);
-    }
+    const loaded = loadConfiguration();
+    if (!loaded) return;
+    const { config, cwd } = loaded;
 
     let answers;
     try {
@@ -95,7 +83,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     }
 
     // Resolve collections
-    const collectionNames = options.collection ? options.collection.split(',').map((c: string) => c.trim()) : undefined;
+    const collectionNames = parseCommaSeparatedList(options.collection);
 
     const allCollections = Object.entries(config.collections || {}).map(([name, col]) => ({
         name,
@@ -112,7 +100,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     }
 
     // Resolve locales
-    const localeNames = options.locale ? options.locale.split(',').map((l: string) => l.trim()) : undefined;
+    const localeNames = parseCommaSeparatedList(options.locale);
     const targetLocales = (config.locales || []).filter((l: string) =>
         l !== config.baseLocale && (!localeNames || localeNames.includes(l))
     );
@@ -123,8 +111,8 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     }
 
     // Resolve status and tags
-    const statusFilter = options.status ? options.status.split(',').map(s => s.trim() as TranslationStatus) : undefined;
-    const tagFilter = options.tags ? options.tags.split(',').map(t => t.trim()) : undefined;
+    const statusFilter = parseCommaSeparatedList(options.status)?.map(s => s as TranslationStatus);
+    const tagFilter = parseCommaSeparatedList(options.tags);
 
     console.log(`\n🔄 Exporting to ${options.format.toUpperCase()}...`);
     console.log(`   Collections: ${collectionsToProcess.map(c => c.name).join(', ')}`);
@@ -505,21 +493,19 @@ async function promptForMissing(
 
         // Handle multiselect "All" options
         if (result.collections) {
-            if (result.collections.includes('__ALL__')) {
-                // Don't set collection - undefined means all
-                responses.collection = undefined;
-            } else {
-                responses.collection = result.collections.join(',');
-            }
+            const selected = processMultiselectWithAll(
+                result.collections,
+                collectionNames
+            );
+            responses.collection = multiselectResultToString(selected);
         }
 
         if (result.locales) {
-            if (result.locales.includes('__ALL__')) {
-                // Don't set locale - undefined means all
-                responses.locale = undefined;
-            } else {
-                responses.locale = result.locales.join(',');
-            }
+            const selected = processMultiselectWithAll(
+                result.locales,
+                targetLocales
+            );
+            responses.locale = multiselectResultToString(selected);
         }
 
         if (result.statusFilter) {

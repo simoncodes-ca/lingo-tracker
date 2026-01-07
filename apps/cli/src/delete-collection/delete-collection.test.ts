@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
 import { deleteCollectionCommand } from './delete-collection';
 import * as core from '@simoncodes-ca/core';
 
-vi.mock('node:fs');
-vi.mock('prompts');
 vi.mock('@simoncodes-ca/core', async () => {
   const actual = await vi.importActual('@simoncodes-ca/core');
   return {
@@ -13,8 +10,12 @@ vi.mock('@simoncodes-ca/core', async () => {
   };
 });
 
-const mockExistsSync = vi.mocked(existsSync);
-const mockReadFileSync = vi.mocked(readFileSync);
+vi.mock('../utils', () => ({
+  loadConfiguration: vi.fn(),
+  promptForCollection: vi.fn(),
+}));
+
+import { loadConfiguration, promptForCollection } from '../utils';
 
 describe('deleteCollectionCommand', () => {
   beforeEach(() => {
@@ -39,8 +40,12 @@ describe('deleteCollectionCommand', () => {
   };
 
   it('should delete specified collection from config', async () => {
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
+    vi.mocked(loadConfiguration).mockReturnValue({
+      config: mockConfig,
+      configPath: '/test/project/.lingo-tracker.json',
+      cwd: '/test/project'
+    });
+    vi.mocked(promptForCollection).mockResolvedValue('Collection1');
     vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "Collection1" deleted successfully' });
 
     const options = {
@@ -62,8 +67,12 @@ describe('deleteCollectionCommand', () => {
       }
     };
 
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue(JSON.stringify(singleCollectionConfig));
+    vi.mocked(loadConfiguration).mockReturnValue({
+      config: singleCollectionConfig,
+      configPath: '/test/project/.lingo-tracker.json',
+      cwd: '/test/project'
+    });
+    vi.mocked(promptForCollection).mockResolvedValue('OnlyCollection');
     vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "OnlyCollection" deleted successfully' });
 
     const options = {
@@ -76,7 +85,7 @@ describe('deleteCollectionCommand', () => {
   });
 
   it('should not write file if config does not exist', async () => {
-    mockExistsSync.mockReturnValue(false);
+    vi.mocked(loadConfiguration).mockReturnValue(null);
 
     const options = {
       collectionName: 'Collection1'
@@ -84,12 +93,11 @@ describe('deleteCollectionCommand', () => {
 
     await deleteCollectionCommand(options);
 
-    expect(readFileSync).not.toHaveBeenCalled();
+    expect(core.deleteCollectionByName).not.toHaveBeenCalled();
   });
 
   it('should not write file if config is invalid JSON', async () => {
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue('invalid json');
+    vi.mocked(loadConfiguration).mockReturnValue(null);
 
     const options = {
       collectionName: 'Collection1'
@@ -106,8 +114,12 @@ describe('deleteCollectionCommand', () => {
       collections: {}
     };
 
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue(JSON.stringify(emptyCollectionsConfig));
+    vi.mocked(loadConfiguration).mockReturnValue({
+      config: emptyCollectionsConfig,
+      configPath: '/test/project/.lingo-tracker.json',
+      cwd: '/test/project'
+    });
+    vi.mocked(promptForCollection).mockResolvedValue(null);
 
     const options = {
       collectionName: 'Collection1'
@@ -126,8 +138,12 @@ describe('deleteCollectionCommand', () => {
       locales: ['en', 'fr']
     };
 
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue(JSON.stringify(noCollectionsConfig));
+    vi.mocked(loadConfiguration).mockReturnValue({
+      config: noCollectionsConfig,
+      configPath: '/test/project/.lingo-tracker.json',
+      cwd: '/test/project'
+    });
+    vi.mocked(promptForCollection).mockResolvedValue(null);
 
     const options = {
       collectionName: 'Collection1'
@@ -139,8 +155,12 @@ describe('deleteCollectionCommand', () => {
   });
 
   it('should not write file if specified collection does not exist', async () => {
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
+    vi.mocked(loadConfiguration).mockReturnValue({
+      config: mockConfig,
+      configPath: '/test/project/.lingo-tracker.json',
+      cwd: '/test/project'
+    });
+    vi.mocked(promptForCollection).mockResolvedValue(null);
 
     const options = {
       collectionName: 'NonExistentCollection'
@@ -161,8 +181,12 @@ describe('deleteCollectionCommand', () => {
       }
     };
 
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue(JSON.stringify(singleCollectionConfig));
+    vi.mocked(loadConfiguration).mockReturnValue({
+      config: singleCollectionConfig,
+      configPath: '/test/project/.lingo-tracker.json',
+      cwd: '/test/project'
+    });
+    vi.mocked(promptForCollection).mockResolvedValue('OnlyCollection');
     vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "OnlyCollection" deleted successfully' });
 
     const options = {};
@@ -179,8 +203,12 @@ describe('deleteCollectionCommand', () => {
       anotherProperty: 42
     };
 
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue(JSON.stringify(configWithExtraProps));
+    vi.mocked(loadConfiguration).mockReturnValue({
+      config: configWithExtraProps,
+      configPath: '/test/project/.lingo-tracker.json',
+      cwd: '/test/project'
+    });
+    vi.mocked(promptForCollection).mockResolvedValue('Collection1');
     vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "Collection1" deleted successfully' });
 
     const options = {

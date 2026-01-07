@@ -1,28 +1,12 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import prompts from 'prompts';
 import { CONFIG_FILENAME, addCollection, DEFAULT_CONFIG } from '@simoncodes-ca/core';
 import type { InitOptions } from '../types/init-options.js';
-
-type LingoTrackerConfig = { collections?: Record<string, unknown> };
+import { loadConfiguration } from '../utils';
 
 export async function addCollectionCommand(options: InitOptions): Promise<void> {
-  const cwd = process.env.INIT_CWD || process.cwd();
-  const configPath = resolve(cwd, CONFIG_FILENAME);
-
-  if (!existsSync(configPath)) {
-    console.log('❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.');
-    return;
-  }
-
-  let existingConfig: LingoTrackerConfig;
-  try {
-    const configContent = readFileSync(configPath, 'utf8');
-    existingConfig = JSON.parse(configContent) as LingoTrackerConfig;
-  } catch {
-    console.log('❌ Invalid configuration file format.');
-    return;
-  }
+  const loaded = loadConfiguration({ exitOnError: false });
+  if (!loaded) return;
+  const { config: existingConfig, cwd } = loaded;
 
   const answers = await promptForMissing(options);
   const collectionName = answers.collectionName;

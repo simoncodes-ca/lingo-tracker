@@ -1,8 +1,13 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
-import { CONFIG_FILENAME, editResource } from '@simoncodes-ca/core';
+import { editResource } from '@simoncodes-ca/core';
+import {
+    loadConfiguration,
+    parseCommaSeparatedList,
+    promptForCollection,
+    resolveCollection
+} from '../utils';
 
 export interface EditResourceOptions {
     collection?: string;
@@ -16,25 +21,17 @@ export interface EditResourceOptions {
 }
 
 export async function editResourceCommand(options: EditResourceOptions): Promise<void> {
-    const cwd = process.env.INIT_CWD || process.cwd();
-    const configPath = resolve(cwd, CONFIG_FILENAME);
+    const loaded = loadConfiguration({ exitOnError: false });
+    if (!loaded) return;
+    const { config, cwd } = loaded;
 
-    let config: LingoTrackerConfig;
-    try {
-        const configContent = readFileSync(configPath, 'utf8');
-        config = JSON.parse(configContent) as LingoTrackerConfig;
-    } catch {
-        console.log('❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.');
-        return;
-    }
+    const collectionName = await promptForCollection(config, options.collection);
+    if (!collectionName) return;
 
-    const answers = await promptForMissing(options, config);
-    const collectionConfig = config.collections?.[answers.collection];
+    const collection = resolveCollection(collectionName, config, cwd);
+    if (!collection) return;
 
-    if (!collectionConfig) {
-        console.log(`❌ Collection "${answers.collection}" not found.`);
-        return;
-    }
+    const answers = await promptForMissing(options, config, collectionName);
 
     // Prepare edit options
     const editOptions: {
@@ -49,7 +46,7 @@ export async function editResourceCommand(options: EditResourceOptions): Promise
     } = {
         key: answers.key,
         cwd: resolve(cwd),
-        baseLocale: collectionConfig.baseLocale || config.baseLocale || 'en',
+        baseLocale: collection.config.baseLocale,
     };
 
     if (options.targetFolder) {
@@ -65,7 +62,7 @@ export async function editResourceCommand(options: EditResourceOptions): Promise
     }
 
     if (options.tags) {
-        editOptions.tags = options.tags.split(',').map(t => t.trim()).filter(Boolean);
+        editOptions.tags = parseCommaSeparatedList(options.tags);
     }
 
     if (options.locale && options.localeValue) {
@@ -78,7 +75,7 @@ export async function editResourceCommand(options: EditResourceOptions): Promise
 
     try {
         const result = editResource(
-            resolve(cwd, collectionConfig.translationsFolder),
+            collection.translationsFolderPath,
             editOptions
         );
 
@@ -95,37 +92,18 @@ export async function editResourceCommand(options: EditResourceOptions): Promise
 
 async function promptForMissing(
     options: EditResourceOptions,
-    config: LingoTrackerConfig
+    _config: LingoTrackerConfig,
+    _collectionName: string
 ): Promise<{
-    collection: string;
     key: string;
     baseValue?: string;
 }> {
     const responses: Partial<{
-        collection: string;
         key: string;
         baseValue: string;
     }> = {};
 
-    const collections = Object.keys(config.collections || {});
-
     const questions: prompts.PromptObject[] = [];
-
-    if (!options.collection) {
-        if (collections.length === 1) {
-            responses.collection = collections[0];
-        } else if (collections.length > 1) {
-            questions.push({
-                type: 'select',
-                name: 'collection',
-                message: 'Select collection',
-                choices: collections.map(c => ({ title: c, value: c })),
-            });
-        } else {
-            console.log('❌ No collections found. Run `lingo-tracker add-collection` first.');
-            throw new Error('No collections available');
-        }
-    }
 
     if (!options.key) {
         questions.push({
@@ -152,12 +130,10 @@ async function promptForMissing(
         });
         Object.assign(responses, result);
     } else if (questions.length > 0) {
-        if (!options.collection) throw new Error('Missing required option: collection');
         if (!options.key) throw new Error('Missing required option: key');
     }
 
     return {
-        collection: options.collection ?? (responses.collection as string),
         key: options.key ?? (responses.key as string),
         baseValue: options.baseValue ?? (responses.baseValue as string),
     };

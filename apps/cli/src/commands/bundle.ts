@@ -1,8 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
-import { CONFIG_FILENAME, generateBundle } from '@simoncodes-ca/core';
+import { generateBundle } from '@simoncodes-ca/core';
+import { loadConfiguration, parseCommaSeparatedList } from '../utils';
 
 export interface BundleOptions {
   name?: string;
@@ -19,17 +18,9 @@ interface BundleGenerationResult {
 }
 
 export async function bundleCommand(options: BundleOptions): Promise<void> {
-  const cwd = process.env.INIT_CWD || process.cwd();
-  const configPath = resolve(cwd, CONFIG_FILENAME);
-
-  let config: LingoTrackerConfig;
-  try {
-    const configContent = readFileSync(configPath, 'utf8');
-    config = JSON.parse(configContent) as LingoTrackerConfig;
-  } catch {
-    console.log('❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.');
-    return;
-  }
+  const loaded = loadConfiguration({ exitOnError: false });
+  if (!loaded) return;
+  const { config } = loaded;
 
   // Check if bundles are configured
   if (!config.bundles || Object.keys(config.bundles).length === 0) {
@@ -192,12 +183,12 @@ async function promptForMissing(
 
   // Parse comma-separated bundle names if provided
   if (options.name) {
-    responses.names = options.name.split(',').map((n) => n.trim());
+    responses.names = parseCommaSeparatedList(options.name);
   }
 
   // Parse comma-separated locales if provided
   if (options.locale) {
-    responses.locales = options.locale.split(',').map((l) => l.trim());
+    responses.locales = parseCommaSeparatedList(options.locale);
   }
 
   // If no bundle names provided, prompt for selection

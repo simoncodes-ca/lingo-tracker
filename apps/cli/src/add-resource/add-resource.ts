@@ -4,11 +4,16 @@ import prompts from 'prompts';
 import type { LingoTrackerConfig, TranslationStatus } from '@simoncodes-ca/core';
 import {
   createDefaultTranslations,
-  CONFIG_FILENAME,
   addResource,
   resolveResourceKey,
   splitResolvedKey
 } from '@simoncodes-ca/core';
+import {
+  loadConfiguration,
+  parseCommaSeparatedList,
+  promptForCollection,
+  resolveCollection
+} from '../utils';
 
 export interface AddResourceOptions {
   collection?: string;
@@ -25,26 +30,17 @@ export interface AddResourceOptions {
 }
 
 export async function addResourceCommand(options: AddResourceOptions): Promise<void> {
-  const cwd = process.env.INIT_CWD || process.cwd();
-  const configPath = resolve(cwd, CONFIG_FILENAME);
+  const loaded = loadConfiguration({ exitOnError: false });
+  if (!loaded) return;
+  const { config, cwd } = loaded;
 
-  let config: LingoTrackerConfig;
-  try {
-    const configContent = readFileSync(configPath, 'utf8');
-    config = JSON.parse(configContent) as LingoTrackerConfig;
-  } catch {
-    console.log('❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.');
-    return;
-  }
+  const collectionName = await promptForCollection(config, options.collection);
+  if (!collectionName) return;
 
-  const answers = await promptForMissing(options, config);
-  const collection = answers.collection;
-  const collectionConfig = config.collections?.[collection];
+  const collection = resolveCollection(collectionName, config, cwd);
+  if (!collection) return;
 
-  if (!collectionConfig) {
-    console.log(`❌ Collection "${collection}" not found.`);
-    return;
-  }
+  const answers = await promptForMissing(options, config, collectionName);
 
   try {
     // Check if resource already exists
@@ -52,8 +48,8 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
     const { folderPath, entryKey } = splitResolvedKey(resolvedKey);
 
     const fullFolderPath = folderPath.length
-      ? join(collectionConfig.translationsFolder, ...folderPath)
-      : collectionConfig.translationsFolder;
+      ? join(collection.config.translationsFolder, ...folderPath)
+      : collection.config.translationsFolder;
 
     const entryResourcePath = resolve(cwd, fullFolderPath, 'resource_entries.json');
     const resourceExists = existsSync(entryResourcePath) && hasEntryKey(entryResourcePath, entryKey);
@@ -75,9 +71,9 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
       }
     }
 
-    const tagsArray = answers.tags ? answers.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
-    const baseLocale = collectionConfig.baseLocale || config.baseLocale;
-    const locales = collectionConfig.locales || config.locales || [];
+    const tagsArray = parseCommaSeparatedList(answers.tags) || [];
+    const baseLocale = collection.config.baseLocale || config.baseLocale;
+    const locales = collection.config.locales || config.locales || [];
 
     // Build translations: use provided translations or create entries for all non-base locales with base value
     const translations = answers.translations && answers.translations.length > 0
@@ -85,7 +81,7 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
       : createDefaultTranslations(locales, baseLocale, answers.value);
 
     const result = addResource(
-      resolve(cwd, collectionConfig.translationsFolder),
+      collection.translationsFolderPath,
       {
         key: answers.key,
         baseValue: answers.value,
@@ -109,9 +105,9 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
 
 async function promptForMissing(
   options: AddResourceOptions,
-  config: LingoTrackerConfig
+  config: LingoTrackerConfig,
+  collectionName: string
 ): Promise<{
-  collection: string;
   key: string;
   value: string;
   comment: string;
@@ -124,7 +120,6 @@ async function promptForMissing(
   }>;
 }> {
   const responses: Partial<{
-    collection: string;
     key: string;
     value: string;
     comment: string;
@@ -137,25 +132,7 @@ async function promptForMissing(
     }>;
   }> = {};
 
-  const collections = Object.keys(config.collections || {});
-
   const questions: prompts.PromptObject[] = [];
-
-  if (!options.collection) {
-    if (collections.length === 1) {
-      responses.collection = collections[0];
-    } else if (collections.length > 1) {
-      questions.push({
-        type: 'select',
-        name: 'collection',
-        message: 'Select collection',
-        choices: collections.map(c => ({ title: c, value: c })),
-      });
-    } else {
-      console.log('❌ No collections found. Run `lingo-tracker add-collection` first.');
-      throw new Error('No collections available');
-    }
-  }
 
   if (!options.key) {
     questions.push({
@@ -207,7 +184,6 @@ async function promptForMissing(
     });
     Object.assign(responses, result);
   } else if (questions.length > 0) {
-    if (!options.collection) throw new Error('Missing required option: collection');
     if (!options.key) throw new Error('Missing required option: key');
     if (!options.value) throw new Error('Missing required option: value');
   }
@@ -215,8 +191,7 @@ async function promptForMissing(
   // Handle translations in interactive mode
   let translations: Array<{ locale: string; value: string; status: TranslationStatus }> | undefined;
   if (!options.translations && process.stdout.isTTY) {
-    const collection = options.collection ?? (responses.collection as string);
-    const collectionConfig = config.collections?.[collection];
+    const collectionConfig = config.collections?.[collectionName];
     const baseLocale = collectionConfig?.baseLocale || config.baseLocale;
     const locales = collectionConfig?.locales || config.locales || [];
 
@@ -265,7 +240,6 @@ async function promptForMissing(
   }
 
   return {
-    collection: options.collection ?? (responses.collection as string),
     key: options.key ?? (responses.key as string),
     value: options.value ?? (responses.value as string),
     comment: options.comment ?? (responses.comment as string) ?? '',

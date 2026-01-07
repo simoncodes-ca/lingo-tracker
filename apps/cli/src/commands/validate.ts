@@ -1,11 +1,6 @@
 import * as path from 'path';
-import * as fs from 'fs';
-import {
-  CONFIG_FILENAME,
-  LingoTrackerConfig,
-  validateResources,
-  generateValidationSummary,
-} from '@simoncodes-ca/core';
+import { validateResources, generateValidationSummary } from '@simoncodes-ca/core';
+import { loadConfiguration } from '../utils';
 
 /**
  * Options for the validate command.
@@ -78,26 +73,13 @@ export interface ValidateCommandOptions {
  * ```
  */
 export async function validateCommand(options: ValidateCommandOptions): Promise<void> {
-  const currentWorkingDirectory = process.cwd();
-  const configurationPath = path.join(currentWorkingDirectory, CONFIG_FILENAME);
+  const loaded = loadConfiguration();
+  if (!loaded) return;
+  const { config, cwd } = loaded;
 
-  let configuration: LingoTrackerConfig;
-  try {
-    if (fs.existsSync(configurationPath)) {
-      configuration = JSON.parse(fs.readFileSync(configurationPath, 'utf8'));
-    } else {
-      console.error(`❌ Configuration file ${CONFIG_FILENAME} not found.`);
-      console.error('Run "lingo-tracker init" to initialize a project.');
-      process.exit(1);
-    }
-  } catch (error) {
-    console.error(`❌ Failed to parse configuration file: ${(error as Error).message}`);
-    process.exit(1);
-  }
-
-  const allCollections = Object.entries(configuration.collections || {}).map(([name, collectionConfig]) => ({
+  const allCollections = Object.entries(config.collections || {}).map(([name, collectionConfig]) => ({
     name,
-    path: path.resolve(currentWorkingDirectory, collectionConfig.translationsFolder),
+    path: path.resolve(cwd, collectionConfig.translationsFolder),
   }));
 
   if (allCollections.length === 0) {
@@ -105,8 +87,8 @@ export async function validateCommand(options: ValidateCommandOptions): Promise<
     process.exit(1);
   }
 
-  const targetLocales = (configuration.locales || []).filter(
-    (locale: string) => locale !== configuration.baseLocale
+  const targetLocales = (config.locales || []).filter(
+    (locale: string) => locale !== config.baseLocale
   );
 
   if (targetLocales.length === 0) {

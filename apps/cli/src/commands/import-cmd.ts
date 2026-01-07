@@ -2,7 +2,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import prompts from 'prompts';
 import {
-    CONFIG_FILENAME,
     LingoTrackerConfig,
     ImportOptions,
     ImportFormat,
@@ -13,6 +12,7 @@ import {
     ImportResult,
     generateImportSummary
 } from '@simoncodes-ca/core';
+import { loadConfiguration } from '../utils';
 
 export const LARGE_FILE_SIZE_THRESHOLD = 5;
 
@@ -32,22 +32,9 @@ export interface ImportCommandOptions {
 }
 
 export async function importCommand(options: ImportCommandOptions): Promise<void> {
-    const cwd = process.cwd();
-    const configPath = path.join(cwd, CONFIG_FILENAME);
-
-    let config: LingoTrackerConfig;
-    try {
-        if (fs.existsSync(configPath)) {
-            config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        } else {
-            console.error(`❌ Configuration file ${CONFIG_FILENAME} not found.`);
-            console.error('Run "lingo-tracker init" to initialize a project.');
-            process.exit(1);
-        }
-    } catch (error) {
-        console.error(`❌ Failed to parse configuration file: ${(error as Error).message}`);
-        process.exit(1);
-    }
+    const loaded = loadConfiguration();
+    if (!loaded) return;
+    const { config, cwd } = loaded;
 
     const isTTY = process.stdin.isTTY && process.stdout.isTTY;
 

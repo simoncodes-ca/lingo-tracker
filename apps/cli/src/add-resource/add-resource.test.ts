@@ -3,6 +3,7 @@ import { addResourceCommand } from './add-resource';
 import * as fs from 'node:fs';
 import prompts from 'prompts';
 import * as core from '@simoncodes-ca/core';
+import * as utils from '../utils';
 
 // Mock prompts to avoid interactive input
 vi.mock('prompts', () => ({
@@ -27,6 +28,21 @@ vi.mock('@simoncodes-ca/core', async () => {
   };
 });
 
+vi.mock('../utils', async () => {
+  const actual = await vi.importActual('../utils');
+  return {
+    ...actual,
+    loadConfiguration: vi.fn(),
+    promptForCollection: vi.fn(),
+    resolveCollection: vi.fn(),
+    parseCommaSeparatedList: vi.fn((input: string | undefined) => {
+      if (!input) return undefined;
+      const result = input.split(',').map((item) => item.trim()).filter(Boolean);
+      return result.length > 0 ? result : undefined;
+    }),
+  };
+});
+
 describe('addResourceCommand', () => {
   beforeEach(() => {
     process.env.INIT_CWD = '/test';
@@ -36,6 +52,11 @@ describe('addResourceCommand', () => {
       throw new Error('File not found');
     });
     vi.mocked(prompts).mockResolvedValue({});
+
+    // Default mock implementations for utils
+    vi.mocked(utils.loadConfiguration).mockReturnValue(null);
+    vi.mocked(utils.promptForCollection).mockResolvedValue(null);
+    vi.mocked(utils.resolveCollection).mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -43,7 +64,8 @@ describe('addResourceCommand', () => {
   });
 
   it('should show error when config file does not exist', async () => {
-    const consoleSpy = vi.spyOn(console, 'log');
+    // loadConfiguration returns null when config not found
+    vi.mocked(utils.loadConfiguration).mockReturnValue(null);
 
     await addResourceCommand({
       collection: 'test-collection',
@@ -51,15 +73,13 @@ describe('addResourceCommand', () => {
       value: 'OK',
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('No Lingo Tracker configuration found')
-    );
-
-    consoleSpy.mockRestore();
+    // Should call loadConfiguration with exitOnError: false
+    expect(utils.loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
   });
 
   it('should validate key format - config check happens first', async () => {
-    const consoleSpy = vi.spyOn(console, 'log');
+    // loadConfiguration returns null when config not found
+    vi.mocked(utils.loadConfiguration).mockReturnValue(null);
 
     // Invalid key, but config doesn't exist so that error comes first
     await addResourceCommand({
@@ -69,15 +89,12 @@ describe('addResourceCommand', () => {
     });
 
     // Config error is checked before key validation
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('No Lingo Tracker configuration found')
-    );
-
-    consoleSpy.mockRestore();
+    expect(utils.loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
   });
 
   it('should handle command with all parameters', async () => {
-    const consoleSpy = vi.spyOn(console, 'log');
+    // loadConfiguration returns null (config doesn't exist)
+    vi.mocked(utils.loadConfiguration).mockReturnValue(null);
 
     await addResourceCommand({
       collection: 'test-collection',
@@ -88,25 +105,29 @@ describe('addResourceCommand', () => {
       targetFolder: 'common',
     });
 
-    // Command should execute (config doesn't exist, but parameters are valid and will be parsed)
-    expect(consoleSpy).toHaveBeenCalled();
-
-    consoleSpy.mockRestore();
+    // Should stop early since config doesn't exist
+    expect(utils.loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
   });
 
   it('should show error when collection does not exist', async () => {
-    const consoleSpy = vi.spyOn(console, 'log');
     const config = {
       collections: {
         ExistingCollection: { translationsFolder: 'translations' },
       },
     };
-    vi.mocked(fs.readFileSync).mockImplementation((path: string) => {
-      if (path.includes('.lingo-tracker.json')) {
-        return JSON.stringify(config);
-      }
-      throw new Error('File not found');
+
+    // Mock successful config loading
+    vi.mocked(utils.loadConfiguration).mockReturnValue({
+      config,
+      configPath: '/test/.lingo-tracker.json',
+      cwd: '/test',
     });
+
+    // Mock promptForCollection to return the collection name
+    vi.mocked(utils.promptForCollection).mockResolvedValue('NonExistentCollection');
+
+    // Mock resolveCollection to return null (collection not found)
+    vi.mocked(utils.resolveCollection).mockReturnValue(null);
 
     await addResourceCommand({
       collection: 'NonExistentCollection',
@@ -114,11 +135,8 @@ describe('addResourceCommand', () => {
       value: 'OK',
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Collection "NonExistentCollection" not found')
-    );
-
-    consoleSpy.mockRestore();
+    // Should call resolveCollection and get null back
+    expect(utils.resolveCollection).toHaveBeenCalledWith('NonExistentCollection', config, '/test');
   });
 
   it('should handle translations array format', async () => {
@@ -134,12 +152,24 @@ describe('addResourceCommand', () => {
       baseLocale: 'en',
       locales: ['en', 'fr-ca', 'es'],
     };
-    vi.mocked(fs.readFileSync).mockImplementation((path: string) => {
-      if (path.includes('.lingo-tracker.json')) {
-        return JSON.stringify(config);
-      }
-      throw new Error('File not found');
+
+    // Mock successful config loading
+    vi.mocked(utils.loadConfiguration).mockReturnValue({
+      config,
+      configPath: '/test/.lingo-tracker.json',
+      cwd: '/test',
     });
+
+    // Mock promptForCollection to return the collection name
+    vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
+
+    // Mock resolveCollection to return collection data
+    vi.mocked(utils.resolveCollection).mockReturnValue({
+      name: 'TestCollection',
+      config: config.collections.TestCollection,
+      translationsFolderPath: '/test/translations',
+    });
+
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
     await addResourceCommand({
@@ -154,7 +184,7 @@ describe('addResourceCommand', () => {
 
     // Should call addResource with translations array
     expect(core.addResource).toHaveBeenCalledWith(
-      expect.any(String),
+      '/test/translations',
       expect.objectContaining({
         translations: expect.arrayContaining([
           expect.objectContaining({ locale: 'fr-ca', value: 'D\'accord', status: 'translated' }),
@@ -178,16 +208,31 @@ describe('addResourceCommand', () => {
       },
       baseLocale: 'en',
     };
+
+    // Mock successful config loading
+    vi.mocked(utils.loadConfiguration).mockReturnValue({
+      config,
+      configPath: '/test/.lingo-tracker.json',
+      cwd: '/test',
+    });
+
+    // Mock promptForCollection to return the collection name
+    vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
+
+    // Mock resolveCollection to return collection data
+    vi.mocked(utils.resolveCollection).mockReturnValue({
+      name: 'TestCollection',
+      config: config.collections.TestCollection,
+      translationsFolderPath: '/test/translations',
+    });
+
     vi.mocked(fs.readFileSync).mockImplementation((path: string) => {
-      if (path.includes('.lingo-tracker.json')) {
-        return JSON.stringify(config);
-      }
       if (path.includes('resource_entries.json')) {
         return JSON.stringify({ ok: { source: 'OK' } });
       }
       throw new Error('File not found');
     });
-    
+
     // Mock resource file exists and contains the entry
     vi.mocked(fs.existsSync).mockImplementation((path: string) => {
       return path.includes('resource_entries.json');
@@ -241,12 +286,24 @@ describe('addResourceCommand', () => {
       baseLocale: 'en',
       locales: ['en', 'fr-ca', 'es', 'de'],
     };
-    vi.mocked(fs.readFileSync).mockImplementation((path: string) => {
-      if (path.includes('.lingo-tracker.json')) {
-        return JSON.stringify(config);
-      }
-      throw new Error('File not found');
+
+    // Mock successful config loading
+    vi.mocked(utils.loadConfiguration).mockReturnValue({
+      config,
+      configPath: '/test/.lingo-tracker.json',
+      cwd: '/test',
     });
+
+    // Mock promptForCollection to return the collection name
+    vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
+
+    // Mock resolveCollection to return collection data
+    vi.mocked(utils.resolveCollection).mockReturnValue({
+      name: 'TestCollection',
+      config: config.collections.TestCollection,
+      translationsFolderPath: '/test/translations',
+    });
+
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
     // Mock non-interactive mode
@@ -264,7 +321,7 @@ describe('addResourceCommand', () => {
 
     // Should call addResource with translations for all non-base locales
     expect(core.addResource).toHaveBeenCalledWith(
-      expect.any(String),
+      '/test/translations',
       expect.objectContaining({
         translations: expect.arrayContaining([
           expect.objectContaining({ locale: 'fr-ca', value: 'OK', status: 'new' }),

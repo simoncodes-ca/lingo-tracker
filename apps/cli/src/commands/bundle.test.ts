@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { bundleCommand } from './bundle';
 import * as fs from 'node:fs';
 import prompts from 'prompts';
+import * as utils from '../utils';
 
 vi.mock('node:fs');
 vi.mock('prompts');
@@ -10,6 +11,19 @@ vi.mock('@simoncodes-ca/core', () => ({
   CONFIG_FILENAME: '.lingo-tracker.json',
   generateBundle: vi.fn(),
 }));
+
+vi.mock('../utils', async () => {
+  const actual = await vi.importActual('../utils');
+  return {
+    ...actual,
+    loadConfiguration: vi.fn(),
+    parseCommaSeparatedList: vi.fn((input: string | undefined) => {
+      if (!input) return undefined;
+      const result = input.split(',').map((item) => item.trim()).filter(Boolean);
+      return result.length > 0 ? result : undefined;
+    }),
+  };
+});
 
 import * as core from '@simoncodes-ca/core';
 const mockGenerateBundle = core.generateBundle as ReturnType<typeof vi.fn>;
@@ -49,6 +63,13 @@ describe('bundleCommand', () => {
 
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockConfig));
 
+    // Mock loadConfiguration to return the mock config
+    vi.mocked(utils.loadConfiguration).mockReturnValue({
+      config: mockConfig,
+      configPath: '/test/.lingo-tracker.json',
+      cwd: '/test',
+    });
+
     mockGenerateBundle.mockReturnValue({
       bundleKey: 'core',
       filesGenerated: 3,
@@ -64,20 +85,20 @@ describe('bundleCommand', () => {
 
   describe('configuration validation', () => {
     it('should error when config file is missing', async () => {
-      vi.mocked(fs.readFileSync).mockImplementation(() => {
-        throw new Error('ENOENT');
-      });
+      vi.mocked(utils.loadConfiguration).mockReturnValue(null);
 
       await bundleCommand({});
 
-      expect(console.log).toHaveBeenCalledWith(
-        '❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.'
-      );
+      expect(utils.loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
     });
 
     it('should error when no bundles are configured', async () => {
       const configWithoutBundles = { ...mockConfig, bundles: {} };
-      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(configWithoutBundles));
+      vi.mocked(utils.loadConfiguration).mockReturnValue({
+        config: configWithoutBundles,
+        configPath: '/test/.lingo-tracker.json',
+        cwd: '/test',
+      });
 
       await bundleCommand({});
 
@@ -87,7 +108,11 @@ describe('bundleCommand', () => {
     it('should error when bundles property is missing', async () => {
       const configWithoutBundles = { ...mockConfig };
       delete (configWithoutBundles as { bundles?: unknown }).bundles;
-      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(configWithoutBundles));
+      vi.mocked(utils.loadConfiguration).mockReturnValue({
+        config: configWithoutBundles,
+        configPath: '/test/.lingo-tracker.json',
+        cwd: '/test',
+      });
 
       await bundleCommand({});
 

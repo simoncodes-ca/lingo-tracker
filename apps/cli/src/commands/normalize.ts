@@ -1,8 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
-import { CONFIG_FILENAME, normalize } from '@simoncodes-ca/core';
+import { normalize } from '@simoncodes-ca/core';
+import { loadConfiguration, resolveCollection } from '../utils';
 
 export interface NormalizeOptions {
   collection?: string;
@@ -33,17 +32,9 @@ interface NormalizeCommandResult {
 }
 
 export async function normalizeCommand(options: NormalizeOptions): Promise<void> {
-  const cwd = process.env.INIT_CWD || process.cwd();
-  const configPath = resolve(cwd, CONFIG_FILENAME);
-
-  let config: LingoTrackerConfig;
-  try {
-    const configContent = readFileSync(configPath, 'utf8');
-    config = JSON.parse(configContent) as LingoTrackerConfig;
-  } catch {
-    console.log('❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.');
-    return;
-  }
+  const loaded = loadConfiguration({ exitOnError: false });
+  if (!loaded) return;
+  const { config, cwd } = loaded;
 
   const answers = await promptForMissing(options, config);
 
@@ -65,16 +56,15 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
   const collectionResults: CollectionNormalizeResult[] = [];
 
   for (const collectionName of collectionsToProcess) {
-    const collectionConfig = config.collections?.[collectionName];
+    const collection = resolveCollection(collectionName, config, cwd);
 
-    if (!collectionConfig) {
-      console.log(`❌ Collection "${collectionName}" not found.`);
+    if (!collection) {
       continue;
     }
 
-    const translationsFolder = resolve(cwd, collectionConfig.translationsFolder);
-    const baseLocale = collectionConfig.baseLocale ?? config.baseLocale;
-    const locales = collectionConfig.locales ?? config.locales;
+    const translationsFolder = collection.translationsFolderPath;
+    const baseLocale = collection.config.baseLocale ?? config.baseLocale;
+    const locales = collection.config.locales ?? config.locales;
 
     if (!options.json) {
       console.log(`\n🔄 Normalizing collection: ${collectionName}`);

@@ -1,8 +1,11 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import prompts from 'prompts';
-import type { LingoTrackerConfig } from '@simoncodes-ca/core';
-import { CONFIG_FILENAME, deleteResource } from '@simoncodes-ca/core';
+import { deleteResource } from '@simoncodes-ca/core';
+import {
+  loadConfiguration,
+  parseCommaSeparatedList,
+  promptForCollection,
+  resolveCollection,
+} from '../utils';
 
 export interface DeleteResourceOptions {
   collection?: string;
@@ -11,31 +14,23 @@ export interface DeleteResourceOptions {
 }
 
 export async function deleteResourceCommand(options: DeleteResourceOptions): Promise<void> {
-  const cwd = process.env.INIT_CWD || process.cwd();
-  const configPath = resolve(cwd, CONFIG_FILENAME);
+  const loaded = loadConfiguration({ exitOnError: false });
+  if (!loaded) return;
+  const { config, cwd } = loaded;
 
-  let config: LingoTrackerConfig;
-  try {
-    const configContent = readFileSync(configPath, 'utf8');
-    config = JSON.parse(configContent) as LingoTrackerConfig;
-  } catch {
-    console.log('❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.');
-    return;
-  }
+  // Prompt for collection first
+  const collectionName = await promptForCollection(config, options.collection);
+  if (!collectionName) return;
 
-  const answers = await promptForMissing(options, config);
-  const collectionConfig = config.collections?.[answers.collection];
+  // Validate collection exists
+  const collection = resolveCollection(collectionName, config, cwd);
+  if (!collection) return;
 
-  if (!collectionConfig) {
-    console.log(`❌ Collection "${answers.collection}" not found.`);
-    return;
-  }
+  // Prompt for other fields
+  const answers = await promptForMissing(options);
 
-  // Parse keys from comma-separated string
-  const keys = answers.key
-    .split(',')
-    .map(k => k.trim())
-    .filter(Boolean);
+  // Parse keys
+  const keys = parseCommaSeparatedList(answers.key) || [];
 
   if (keys.length === 0) {
     console.log('❌ No valid keys provided.');
@@ -53,7 +48,7 @@ export async function deleteResourceCommand(options: DeleteResourceOptions): Pro
 
   try {
     const result = deleteResource(
-      resolve(cwd, collectionConfig.translationsFolder),
+      collection.translationsFolderPath,
       { keys }
     );
 
@@ -75,36 +70,10 @@ export async function deleteResourceCommand(options: DeleteResourceOptions): Pro
 }
 
 async function promptForMissing(
-  options: DeleteResourceOptions,
-  config: LingoTrackerConfig
-): Promise<{
-  collection: string;
-  key: string;
-}> {
-  const responses: Partial<{
-    collection: string;
-    key: string;
-  }> = {};
-
-  const collections = Object.keys(config.collections || {});
-
+  options: DeleteResourceOptions
+): Promise<{ key: string }> {
+  const responses: Partial<{ key: string }> = {};
   const questions: prompts.PromptObject[] = [];
-
-  if (!options.collection) {
-    if (collections.length === 1) {
-      responses.collection = collections[0];
-    } else if (collections.length > 1) {
-      questions.push({
-        type: 'select',
-        name: 'collection',
-        message: 'Select collection',
-        choices: collections.map(c => ({ title: c, value: c })),
-      });
-    } else {
-      console.log('❌ No collections found. Run `lingo-tracker add-collection` first.');
-      throw new Error('No collections available');
-    }
-  }
 
   if (!options.key) {
     questions.push({
@@ -123,12 +92,10 @@ async function promptForMissing(
     });
     Object.assign(responses, result);
   } else if (questions.length > 0) {
-    if (!options.collection) throw new Error('Missing required option: collection');
     if (!options.key) throw new Error('Missing required option: key');
   }
 
   return {
-    collection: options.collection ?? (responses.collection as string),
     key: options.key ?? (responses.key as string),
   };
 }
