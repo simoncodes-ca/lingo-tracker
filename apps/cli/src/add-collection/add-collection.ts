@@ -1,7 +1,7 @@
 import prompts from 'prompts';
 import { CONFIG_FILENAME, addCollection, DEFAULT_CONFIG } from '@simoncodes-ca/core';
 import type { InitOptions } from '../types/init-options.js';
-import { loadConfiguration } from '../utils';
+import { loadConfiguration, ConsoleFormatter, ErrorMessages, executePromptsWithFallback } from '../utils';
 
 export async function addCollectionCommand(options: InitOptions): Promise<void> {
   const loaded = loadConfiguration({ exitOnError: false });
@@ -17,7 +17,7 @@ export async function addCollectionCommand(options: InitOptions): Promise<void> 
   const locales = answers.locales;
 
   if (existingConfig.collections?.[collectionName]) {
-    console.log(`❌ Collection "${collectionName}" already exists.`);
+    ConsoleFormatter.error(ErrorMessages.COLLECTION_EXISTS(collectionName));
     return;
   }
 
@@ -31,9 +31,9 @@ export async function addCollectionCommand(options: InitOptions): Promise<void> 
 
   try {
     const result = addCollection(collectionName, newCollection, { cwd });
-    console.log(`✅ ${result.message} in ${CONFIG_FILENAME}`);
+    ConsoleFormatter.success(`${result.message} in ${CONFIG_FILENAME}`);
   } catch (e: unknown) {
-    console.log(`❌ ${e instanceof Error ? e.message : 'Failed to add collection'}`);
+    ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to add collection');
   }
 }
 
@@ -45,15 +45,6 @@ async function promptForMissing(options: InitOptions): Promise<{
   baseLocale: string;
   locales: string[];
 }> {
-  const responses: Partial<{
-    collectionName: string;
-    translationsFolder: string;
-    exportFolder: string;
-    importFolder: string;
-    baseLocale: string;
-    locales: string[];
-  }> = {};
-
   const questions: prompts.PromptObject[] = [];
 
   if (!options.collectionName) {
@@ -112,28 +103,19 @@ async function promptForMissing(options: InitOptions): Promise<{
     });
   }
 
-  if (questions.length > 0 && process.stdout.isTTY) {
-    const result = await prompts(questions, {
-      onCancel: () => {
-        throw new Error('Add collection cancelled');
-      }
-    });
-    Object.assign(responses, result);
-  } else if (questions.length > 0) {
-    if (!options.collectionName) {
-      throw new Error('Missing required option: collectionName');
-    }
-    if (!options.translationsFolder) {
-      throw new Error('Missing required option: translationsFolder');
-    }
-  }
+  const result = await executePromptsWithFallback({
+    questions,
+    currentValues: options,
+    requiredFields: ['collectionName', 'translationsFolder'],
+    operationName: 'Add collection',
+  });
 
   return {
-    collectionName: options.collectionName ?? (responses.collectionName as string),
-    translationsFolder: options.translationsFolder ?? (responses.translationsFolder as string),
-    exportFolder: options.exportFolder ?? (responses.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
-    importFolder: options.importFolder ?? (responses.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
-    baseLocale: options.baseLocale ?? (responses.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
-    locales: options.locales ?? (responses.locales as string[]) ?? DEFAULT_CONFIG.locales
+    collectionName: result.collectionName as string,
+    translationsFolder: result.translationsFolder as string,
+    exportFolder: (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
+    importFolder: (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
+    baseLocale: (result.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
+    locales: (result.locales as string[]) ?? DEFAULT_CONFIG.locales
   };
 }

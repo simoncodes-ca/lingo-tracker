@@ -4,6 +4,7 @@ import {
   loadConfiguration,
   promptForCollection,
   resolveCollection,
+  executePromptsWithFallback,
   type ResolvedCollection,
 } from '../utils';
 
@@ -81,12 +82,6 @@ async function promptForMissing(
     dest: string;
     destCollection?: string;
 }> {
-    const responses: Partial<{
-        source: string;
-        dest: string;
-        destCollection: string;
-    }> = {};
-
     const questions: prompts.PromptObject[] = [];
 
     if (!options.source) {
@@ -107,24 +102,16 @@ async function promptForMissing(
         });
     }
 
-    // Optional destCollection prompt could be added here, but for now we rely on flags or optional prompt if we want to be fancy.
-    // Let's just return what we have from options if not prompted.
-
-    if (questions.length > 0 && process.stdout.isTTY) {
-        const result = await prompts(questions, {
-            onCancel: () => {
-                throw new Error('Move resource cancelled');
-            },
-        });
-        Object.assign(responses, result);
-    } else if (questions.length > 0) {
-        if (!options.source) throw new Error('Missing required option: source');
-        if (!options.dest) throw new Error('Missing required option: dest');
-    }
+    const result = await executePromptsWithFallback({
+        questions,
+        currentValues: options,
+        requiredFields: ['source', 'dest'],
+        operationName: 'Move resource',
+    });
 
     return {
-        source: options.source ?? (responses.source as string),
-        dest: options.dest ?? (responses.dest as string),
-        destCollection: options.destCollection,
+        source: result.source as string,
+        dest: result.dest as string,
+        destCollection: result.destCollection as string | undefined,
     };
 }

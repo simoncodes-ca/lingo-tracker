@@ -208,14 +208,17 @@ describe('editResourceCommand', () => {
             key: 'apps.common.buttons.ok'
         };
 
-        // Mock isTTY to true to trigger prompts
-        const originalIsTTY = process.stdout.isTTY;
+        // Mock isTTY to true to trigger prompts (both stdin and stdout)
+        const originalStdinIsTTY = process.stdin.isTTY;
+        const originalStdoutIsTTY = process.stdout.isTTY;
+        Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
         Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
 
         try {
             await editResourceCommand(options);
         } finally {
-            Object.defineProperty(process.stdout, 'isTTY', { value: originalIsTTY, configurable: true });
+            Object.defineProperty(process.stdin, 'isTTY', { value: originalStdinIsTTY, configurable: true });
+            Object.defineProperty(process.stdout, 'isTTY', { value: originalStdoutIsTTY, configurable: true });
         }
 
         expect(promptsMock).toHaveBeenCalledWith(

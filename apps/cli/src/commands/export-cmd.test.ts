@@ -133,7 +133,7 @@ describe('exportCommand', () => {
 
     it('should error when format is missing in non-TTY mode', async () => {
       // In non-TTY mode without format, promptForMissing throws an error directly
-      await expect(exportCommand({})).rejects.toThrow('Missing required option: --format (xliff | json)');
+      await expect(exportCommand({})).rejects.toThrow('❌ Missing required option: --format');
     });
 
     it('should handle validateOutputDirectory errors', async () => {
@@ -147,7 +147,7 @@ describe('exportCommand', () => {
 
       await expect(exportCommand({ format: 'json' })).rejects.toThrow('process.exit called with code 1');
 
-      expect(console.error).toHaveBeenCalledWith('❌ Invalid output directory');
+      expect(console.log).toHaveBeenCalledWith('❌ Invalid output directory');
     });
   });
 
@@ -311,7 +311,7 @@ describe('exportCommand', () => {
         collection: 'nonexistent',
       });
 
-      expect(console.warn).toHaveBeenCalledWith('⚠️  No matching collections found.');
+      expect(console.log).toHaveBeenCalledWith('⚠️  No matching collections found.');
     });
 
     it('should warn when no target locales selected', async () => {
@@ -320,7 +320,7 @@ describe('exportCommand', () => {
         locale: 'en', // base locale is filtered out
       });
 
-      expect(console.warn).toHaveBeenCalledWith('⚠️  No target locales selected.');
+      expect(console.log).toHaveBeenCalledWith('⚠️  No target locales selected.');
     });
   });
 
@@ -372,7 +372,7 @@ describe('exportCommand', () => {
 
       await exportCommand({});
 
-      expect(console.log).toHaveBeenCalledWith('❌ Export cancelled.');
+      expect(console.log).toHaveBeenCalledWith('❌ ❌ Export cancelled.');
       expect(process.exit).not.toHaveBeenCalled();
     });
 
@@ -763,7 +763,7 @@ describe('exportCommand', () => {
         format: 'json',
       });
 
-      expect(console.error).toHaveBeenCalledWith(
+      expect(console.log).toHaveBeenCalledWith(
         expect.stringContaining('fr: Export failed - Export failed for fr')
       );
       expect(mockExportToJson).toHaveBeenCalledTimes(2);

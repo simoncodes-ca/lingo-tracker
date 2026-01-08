@@ -5,6 +5,10 @@ import {
   parseCommaSeparatedList,
   promptForCollection,
   resolveCollection,
+  ConsoleFormatter,
+  ErrorMessages,
+  isInteractiveTerminal,
+  executePromptsWithFallback,
 } from '../utils';
 
 export interface DeleteResourceOptions {
@@ -33,15 +37,15 @@ export async function deleteResourceCommand(options: DeleteResourceOptions): Pro
   const keys = parseCommaSeparatedList(answers.key) || [];
 
   if (keys.length === 0) {
-    console.log('❌ No valid keys provided.');
+    ConsoleFormatter.error('No valid keys provided.');
     return;
   }
 
   // Show confirmation unless --yes flag or non-TTY mode
-  if (!options.yes && process.stdout.isTTY) {
+  if (!options.yes && isInteractiveTerminal()) {
     const confirmed = await confirmDeletion(keys);
     if (!confirmed) {
-      console.log('❌ Delete resource cancelled.');
+      ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Delete resource'));
       return;
     }
   }
@@ -53,26 +57,26 @@ export async function deleteResourceCommand(options: DeleteResourceOptions): Pro
     );
 
     if (result.entriesDeleted === 0) {
-      console.log('⚠️  No resources were deleted.');
+      ConsoleFormatter.warning('No resources were deleted.');
     } else {
-      console.log(`✅ Deleted ${result.entriesDeleted} resource(s)`);
+      ConsoleFormatter.success(`Deleted ${result.entriesDeleted} resource(s)`);
     }
 
     if (result.errors && result.errors.length > 0) {
-      console.log('\n⚠️  Some operations failed:');
+      console.log('');
+      ConsoleFormatter.warning('Some operations failed:');
       for (const error of result.errors) {
-        console.log(`   - ${error.key}: ${error.error}`);
+        ConsoleFormatter.indent(`- ${error.key}: ${error.error}`);
       }
     }
   } catch (e: unknown) {
-    console.log(`❌ ${e instanceof Error ? e.message : 'Failed to delete resource'}`);
+    ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to delete resource');
   }
 }
 
 async function promptForMissing(
   options: DeleteResourceOptions
 ): Promise<{ key: string }> {
-  const responses: Partial<{ key: string }> = {};
   const questions: prompts.PromptObject[] = [];
 
   if (!options.key) {
@@ -84,19 +88,15 @@ async function promptForMissing(
     });
   }
 
-  if (questions.length > 0 && process.stdout.isTTY) {
-    const result = await prompts(questions, {
-      onCancel: () => {
-        throw new Error('Delete resource cancelled');
-      },
-    });
-    Object.assign(responses, result);
-  } else if (questions.length > 0) {
-    if (!options.key) throw new Error('Missing required option: key');
-  }
+  const result = await executePromptsWithFallback({
+    questions,
+    currentValues: options,
+    requiredFields: ['key'],
+    operationName: 'Delete resource',
+  });
 
   return {
-    key: options.key ?? (responses.key as string),
+    key: result.key as string,
   };
 }
 

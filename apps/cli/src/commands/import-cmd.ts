@@ -12,7 +12,7 @@ import {
     ImportResult,
     generateImportSummary
 } from '@simoncodes-ca/core';
-import { loadConfiguration } from '../utils';
+import { loadConfiguration, ConsoleFormatter, ErrorMessages, isInteractiveTerminal } from '../utils';
 
 export const LARGE_FILE_SIZE_THRESHOLD = 5;
 
@@ -36,14 +36,14 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
     if (!loaded) return;
     const { config, cwd } = loaded;
 
-    const isTTY = process.stdin.isTTY && process.stdout.isTTY;
+    const isTTY = isInteractiveTerminal();
 
     let answers;
     try {
         answers = await promptForMissing(options, config, isTTY);
     } catch (error) {
         if ((error as Error).message === 'Import cancelled') {
-            console.log('❌ Import cancelled.');
+            ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Import'));
             return;
         }
         throw error;
@@ -51,12 +51,12 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
 
     // Validate required options
     if (!answers.source) {
-        console.error('❌ Source file is required. Use --source or run in interactive mode.');
+        ConsoleFormatter.error('Source file is required. Use --source or run in interactive mode.');
         process.exit(1);
     }
 
     if (!answers.locale) {
-        console.error('❌ Target locale is required. Use --locale or run in interactive mode.');
+        ConsoleFormatter.error('Target locale is required. Use --locale or run in interactive mode.');
         process.exit(1);
     }
 
@@ -68,8 +68,8 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
             const fileSizeMB = stats.size / (1024 * 1024);
 
             if (fileSizeMB > LARGE_FILE_SIZE_THRESHOLD) {
-                console.log(`⚠️  Large import file detected: ${fileSizeMB.toFixed(2)} MB`);
-                console.log(`   Import may take longer than usual.`);
+                ConsoleFormatter.warning(`Large import file detected: ${fileSizeMB.toFixed(2)} MB`);
+                ConsoleFormatter.indent('Import may take longer than usual.');
             }
         }
     } catch (_error) {
@@ -101,7 +101,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
                 console.log(`📋 Detected format: ${finalOptions.format}`);
             }
         } catch (error) {
-            console.error(`❌ ${(error as Error).message}`);
+            ConsoleFormatter.error((error as Error).message);
             process.exit(1);
         }
     }
@@ -118,16 +118,17 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
     const translationsFolderPath = path.resolve(cwd, translationsFolder);
 
     // Display import summary
-    console.log('\n📥 Starting import...');
-    console.log(`  Format: ${finalOptions.format}`);
-    console.log(`  Source: ${finalOptions.source}`);
-    console.log(`  Locale: ${finalOptions.locale}`);
-    console.log(`  Strategy: ${finalOptions.strategy}`);
+    console.log('');
+    ConsoleFormatter.progress('Starting import...');
+    ConsoleFormatter.indent(`Format: ${finalOptions.format}`);
+    ConsoleFormatter.indent(`Source: ${finalOptions.source}`);
+    ConsoleFormatter.indent(`Locale: ${finalOptions.locale}`);
+    ConsoleFormatter.indent(`Strategy: ${finalOptions.strategy}`);
     if (finalOptions.collection) {
-        console.log(`  Collection: ${finalOptions.collection}`);
+        ConsoleFormatter.indent(`Collection: ${finalOptions.collection}`);
     }
     if (finalOptions.dryRun) {
-        console.log(`  Mode: DRY RUN (no changes will be made)`);
+        ConsoleFormatter.indent('Mode: DRY RUN (no changes will be made)');
     }
     console.log('');
 
@@ -145,7 +146,8 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
             result = await importFromXliff(translationsFolderPath, finalOptions);
         }
     } catch (error) {
-        console.error(`\n❌ Import failed: ${(error as Error).message}`);
+        console.log('');
+        ConsoleFormatter.error(`Import failed: ${(error as Error).message}`);
         process.exit(1);
     }
 
@@ -168,15 +170,17 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
             const summary = generateImportSummary(result, finalOptions);
             const summaryPath = path.join(translationsFolderPath, 'import-summary.md');
             fs.writeFileSync(summaryPath, summary, 'utf8');
-            console.log(`\n📄 Import summary written to: ${summaryPath}`);
+            console.log('');
+            console.log(`📄 Import summary written to: ${summaryPath}`);
         } catch (error) {
-            console.error(`⚠️  Failed to write summary file: ${(error as Error).message}`);
+            ConsoleFormatter.warning(`Failed to write summary file: ${(error as Error).message}`);
         }
     } else {
         // For dry-run, still generate summary but don't write to file
         const _summary = generateImportSummary(result, finalOptions);
         const summaryPath = path.join(translationsFolderPath, 'import-summary.md');
-        console.log(`\n📄 Import summary would be written to: ${summaryPath}`);
+        console.log('');
+        console.log(`📄 Import summary would be written to: ${summaryPath}`);
     }
 
     // Exit with appropriate code
@@ -395,77 +399,81 @@ async function promptForMissing(
 }
 
 function displayResults(result: ImportResult, options: ImportOptions): void {
-    console.log('\n📊 Import Results:');
-    console.log('─'.repeat(50));
+    ConsoleFormatter.section('Import Results');
 
     if (options.dryRun) {
-        console.log(`  Mode: DRY RUN (no changes were made)`);
+        ConsoleFormatter.indent('Mode: DRY RUN (no changes were made)');
     }
 
-    console.log(`  Resources Imported: ${result.resourcesImported}`);
-    console.log(`  Resources Created: ${result.resourcesCreated}`);
-    console.log(`  Resources Updated: ${result.resourcesUpdated}`);
+    ConsoleFormatter.keyValue('Resources Imported', result.resourcesImported);
+    ConsoleFormatter.keyValue('Resources Created', result.resourcesCreated);
+    ConsoleFormatter.keyValue('Resources Updated', result.resourcesUpdated);
 
     if (result.resourcesSkipped > 0) {
-        console.log(`  Resources Skipped: ${result.resourcesSkipped}`);
+        ConsoleFormatter.keyValue('Resources Skipped', result.resourcesSkipped);
     }
 
     if (result.resourcesFailed > 0) {
-        console.log(`  Resources Failed: ${result.resourcesFailed}`);
+        ConsoleFormatter.keyValue('Resources Failed', result.resourcesFailed);
     }
 
     // Display status transitions
     if (result.statusTransitions && result.statusTransitions.length > 0) {
-        console.log('\n  Status Transitions:');
+        console.log('');
+        ConsoleFormatter.indent('Status Transitions:');
         for (const transition of result.statusTransitions) {
             const from = transition.from || 'none';
             const to = transition.to;
-            console.log(`    ${from} → ${to}: ${transition.count}`);
+            ConsoleFormatter.indent(`${from} → ${to}: ${transition.count}`, 2);
         }
     }
 
     // Display files modified
     if (!options.dryRun && result.filesModified.length > 0) {
-        console.log(`\n  Files Modified: ${result.filesModified.length}`);
+        console.log('');
+        ConsoleFormatter.keyValue('Files Modified', result.filesModified.length);
         if (options.verbose) {
             result.filesModified.forEach(file => {
-                console.log(`    ${file}`);
+                ConsoleFormatter.indent(file, 2);
             });
         }
     }
 
     // Display warnings
     if (result.warnings.length > 0) {
-        console.log(`\n⚠️  Warnings (${result.warnings.length}):`);
+        console.log('');
+        ConsoleFormatter.warning(`Warnings (${result.warnings.length}):`);
         result.warnings.slice(0, 10).forEach(warning => {
-            console.log(`  ${warning}`);
+            ConsoleFormatter.indent(warning);
         });
         if (result.warnings.length > 10) {
-            console.log(`  ... and ${result.warnings.length - 10} more warnings`);
+            ConsoleFormatter.indent(`... and ${result.warnings.length - 10} more warnings`);
         }
     }
 
     // Display errors
     if (result.errors.length > 0) {
-        console.log(`\n❌ Errors (${result.errors.length}):`);
+        console.log('');
+        ConsoleFormatter.error(`Errors (${result.errors.length}):`);
         result.errors.slice(0, 10).forEach(error => {
-            console.log(`  ${error}`);
+            ConsoleFormatter.indent(error);
         });
         if (result.errors.length > 10) {
-            console.log(`  ... and ${result.errors.length - 10} more errors`);
+            ConsoleFormatter.indent(`... and ${result.errors.length - 10} more errors`);
         }
     }
 
     console.log('─'.repeat(50));
 
     // Summary message
+    console.log('');
     if (options.dryRun) {
-        console.log('\n✅ Dry run complete. No changes were made.');
+        ConsoleFormatter.success('Dry run complete. No changes were made.');
     } else if (result.resourcesFailed > 0 || result.errors.length > 0) {
-        console.log('\n⚠️  Import completed with errors.');
+        ConsoleFormatter.warning('Import completed with errors.');
     } else if (result.warnings.length > 0) {
-        console.log('\n✅ Import completed with warnings.');
+        ConsoleFormatter.success('Import completed with warnings.');
     } else {
-        console.log('\n✅ Import completed successfully!');
+        ConsoleFormatter.success('Import completed successfully!');
     }
 }

@@ -6,7 +6,9 @@ import {
     loadConfiguration,
     parseCommaSeparatedList,
     promptForCollection,
-    resolveCollection
+    resolveCollection,
+    ConsoleFormatter,
+    executePromptsWithFallback,
 } from '../utils';
 
 export interface EditResourceOptions {
@@ -70,7 +72,7 @@ export async function editResourceCommand(options: EditResourceOptions): Promise
             [options.locale]: { value: options.localeValue }
         };
     } else if (options.locale || options.localeValue) {
-        console.log('⚠️  Both --locale and --localeValue must be provided to update a translation.');
+        ConsoleFormatter.warning('Both --locale and --localeValue must be provided to update a translation.');
     }
 
     try {
@@ -80,13 +82,13 @@ export async function editResourceCommand(options: EditResourceOptions): Promise
         );
 
         if (result.updated) {
-            console.log(`✅ Resource "${result.resolvedKey}" updated successfully.`);
+            ConsoleFormatter.success(`Resource "${result.resolvedKey}" updated successfully.`);
         } else {
-            console.log(`ℹ️  ${result.message || 'No changes detected.'}`);
+            ConsoleFormatter.info(result.message || 'No changes detected');
         }
 
     } catch (e: unknown) {
-        console.log(`❌ ${e instanceof Error ? e.message : 'Failed to update resource'}`);
+        ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to update resource');
     }
 }
 
@@ -98,11 +100,6 @@ async function promptForMissing(
     key: string;
     baseValue?: string;
 }> {
-    const responses: Partial<{
-        key: string;
-        baseValue: string;
-    }> = {};
-
     const questions: prompts.PromptObject[] = [];
 
     if (!options.key) {
@@ -122,19 +119,15 @@ async function promptForMissing(
         });
     }
 
-    if (questions.length > 0 && process.stdout.isTTY) {
-        const result = await prompts(questions, {
-            onCancel: () => {
-                throw new Error('Edit resource cancelled');
-            },
-        });
-        Object.assign(responses, result);
-    } else if (questions.length > 0) {
-        if (!options.key) throw new Error('Missing required option: key');
-    }
+    const result = await executePromptsWithFallback({
+        questions,
+        currentValues: options,
+        requiredFields: ['key'],
+        operationName: 'Edit resource',
+    });
 
     return {
-        key: options.key ?? (responses.key as string),
-        baseValue: options.baseValue ?? (responses.baseValue as string),
+        key: result.key as string,
+        baseValue: result.baseValue as string | undefined,
     };
 }

@@ -12,7 +12,9 @@ import {
   loadConfiguration,
   parseCommaSeparatedList,
   promptForCollection,
-  resolveCollection
+  resolveCollection,
+  ConsoleFormatter,
+  ErrorMessages,
 } from '../utils';
 
 export interface AddResourceOptions {
@@ -65,7 +67,7 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
         });
 
         if (!confirm.value) {
-          console.log('❌ Add resource cancelled.');
+          ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Add resource'));
           return;
         }
       }
@@ -94,12 +96,12 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
       { cwd }
     );
 
-    console.log(`✅ Resource added: ${result.resolvedKey}`);
+    ConsoleFormatter.success(`Resource added: ${result.resolvedKey}`);
     if (result.created) {
-      console.log('   (newly created)');
+      ConsoleFormatter.indent('(newly created)');
     }
   } catch (e: unknown) {
-    console.log(`❌ ${e instanceof Error ? e.message : 'Failed to add resource'}`);
+    ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to add resource');
   }
 }
 
@@ -184,8 +186,8 @@ async function promptForMissing(
     });
     Object.assign(responses, result);
   } else if (questions.length > 0) {
-    if (!options.key) throw new Error('Missing required option: key');
-    if (!options.value) throw new Error('Missing required option: value');
+    if (!options.key) throw new Error(ErrorMessages.MISSING_OPTION('key'));
+    if (!options.value) throw new Error(ErrorMessages.MISSING_OPTION('value'));
   }
 
   // Handle translations in interactive mode

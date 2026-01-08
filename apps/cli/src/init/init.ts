@@ -3,14 +3,14 @@ import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { InitOptions } from '../types/init-options.js';
 import { CONFIG_FILENAME, DEFAULT_CONFIG, LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
-import { getCwd } from '../utils';
+import { getCwd, ConsoleFormatter, executePromptsWithFallback } from '../utils';
 
 export async function initCommand(options: InitOptions): Promise<void> {
   const cwd = getCwd();
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   if (existsSync(configPath)) {
-    console.log('ℹ️ - Lingo Tracker is already initialized in this folder. Nothing to do.');
+    ConsoleFormatter.info('Lingo Tracker is already initialized in this folder. Nothing to do.');
     return;
   }
 
@@ -57,15 +57,6 @@ async function promptForMissing(options: InitOptions): Promise<{
   baseLocale: string;
   locales: string[];
 }> {
-  const responses: Partial<{
-    collectionName: string;
-    translationsFolder: string;
-    exportFolder: string;
-    importFolder: string;
-    baseLocale: string;
-    locales: string[];
-  }> = {};
-
   const questions: prompts.PromptObject[] = [];
 
   if (!options.collectionName) {
@@ -125,29 +116,20 @@ async function promptForMissing(options: InitOptions): Promise<{
     });
   }
 
-  if (questions.length > 0 && process.stdout.isTTY) {
-    const result = await prompts(questions, {
-      onCancel: () => {
-        throw new Error('Initialization cancelled');
-      }
-    });
-    Object.assign(responses, result);
-  } else if (questions.length > 0) {
-    if (!options.collectionName) {
-      throw new Error('Missing required option: collectionName');
-    }
-    if (!options.translationsFolder) {
-      throw new Error('Missing required option: translationsFolder');
-    }
-  }
+  const result = await executePromptsWithFallback({
+    questions,
+    currentValues: options,
+    requiredFields: ['collectionName', 'translationsFolder'],
+    operationName: 'Initialization',
+  });
 
   return {
-    collectionName: options.collectionName ?? (responses.collectionName as string) ?? 'default',
-    translationsFolder: options.translationsFolder ?? (responses.translationsFolder as string),
-    exportFolder: options.exportFolder ?? (responses.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
-    importFolder: options.importFolder ?? (responses.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
-    baseLocale: options.baseLocale ?? (responses.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
-    locales: options.locales ?? (responses.locales as string[]) ?? DEFAULT_CONFIG.locales
+    collectionName: (result.collectionName as string) ?? 'default',
+    translationsFolder: result.translationsFolder as string,
+    exportFolder: (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
+    importFolder: (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
+    baseLocale: (result.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
+    locales: (result.locales as string[]) ?? DEFAULT_CONFIG.locales
   };
 }
 

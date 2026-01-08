@@ -1,5 +1,5 @@
 import { deleteCollectionByName } from '@simoncodes-ca/core';
-import { loadConfiguration, promptForCollection } from '../utils';
+import { loadConfiguration, promptForCollection, ConsoleFormatter } from '../utils';
 
 export interface DeleteCollectionOptions {
   collectionName?: string;
@@ -17,6 +17,6 @@ export async function deleteCollectionCommand(options: DeleteCollectionOptions):
     const result = deleteCollectionByName(collectionName, { cwd });
     console.log(result.message);
   } catch (e: unknown) {
-    console.log(`❌ ${e instanceof Error ? e.message : 'Failed to delete collection'}`);
+    ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to delete collection');
   }
 }

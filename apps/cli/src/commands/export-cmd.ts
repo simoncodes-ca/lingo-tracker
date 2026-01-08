@@ -14,7 +14,7 @@ import {
     generateExportSummary,
     ExportResult
 } from '@simoncodes-ca/core';
-import { loadConfiguration, parseCommaSeparatedList, processMultiselectWithAll, multiselectResultToString } from '../utils';
+import { loadConfiguration, parseCommaSeparatedList, processMultiselectWithAll, multiselectResultToString, ConsoleFormatter, ErrorMessages } from '../utils';
 
 export interface ExportCommandOptions {
     format?: ExportFormat;
@@ -44,14 +44,14 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
         answers = await promptForMissing(options, config);
     } catch (error) {
         if ((error as Error).message === 'Export cancelled') {
-            console.log('❌ Export cancelled.');
+            ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Export'));
             return;
         }
         throw error;
     }
 
     if (!answers.format) {
-        console.error('❌ Format is required. Use --format or run in interactive mode.');
+        ConsoleFormatter.error('Format is required. Use --format or run in interactive mode.');
         process.exit(1);
     }
 
@@ -78,7 +78,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     try {
         validateOutputDirectory(outputDir);
     } catch (error) {
-        console.error(`❌ ${(error as Error).message}`);
+        ConsoleFormatter.error((error as Error).message);
         process.exit(1);
     }
 
@@ -95,7 +95,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     );
 
     if (collectionsToProcess.length === 0) {
-        console.warn('⚠️  No matching collections found.');
+        ConsoleFormatter.warning('No matching collections found.');
         return;
     }
 
@@ -106,7 +106,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     );
 
     if (targetLocales.length === 0) {
-        console.warn('⚠️  No target locales selected.');
+        ConsoleFormatter.warning('No target locales selected.');
         return;
     }
 
@@ -114,11 +114,11 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     const statusFilter = parseCommaSeparatedList(options.status)?.map(s => s as TranslationStatus);
     const tagFilter = parseCommaSeparatedList(options.tags);
 
-    console.log(`\n🔄 Exporting to ${options.format.toUpperCase()}...`);
-    console.log(`   Collections: ${collectionsToProcess.map(c => c.name).join(', ')}`);
-    console.log(`   Locales: ${targetLocales.join(', ')}`);
-    console.log(`   Output: ${outputDir}`);
-    if (options.dryRun) console.log('   [DRY RUN]');
+    ConsoleFormatter.progress(`Exporting to ${options.format.toUpperCase()}...`);
+    ConsoleFormatter.indent(`Collections: ${collectionsToProcess.map(c => c.name).join(', ')}`);
+    ConsoleFormatter.indent(`Locales: ${targetLocales.join(', ')}`);
+    ConsoleFormatter.indent(`Output: ${outputDir}`);
+    if (options.dryRun) ConsoleFormatter.indent('[DRY RUN]');
 
     // Load resources
     const allResources = loadResourcesFromCollections(collectionsToProcess.map(c => ({
@@ -174,28 +174,30 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
             allFilesCreated.push(...result.filesCreated);
 
             if (result.filesCreated.length > 0) {
-                console.log(`   ✅ ${locale}: Exported ${result.resourcesExported} resources to ${result.filesCreated.join(', ')}`);
+                ConsoleFormatter.indent(`✅ ${locale}: Exported ${result.resourcesExported} resources to ${result.filesCreated.join(', ')}`);
             } else if (result.errors.length > 0) {
-                console.log(`   ❌ ${locale}: Failed`);
+                ConsoleFormatter.indent(`❌ ${locale}: Failed`);
             }
         } catch (error) {
-            console.error(`   ❌ ${locale}: Export failed - ${(error as Error).message}`);
+            ConsoleFormatter.indent(`❌ ${locale}: Export failed - ${(error as Error).message}`);
             allErrors.push(`Export for locale ${locale} failed: ${(error as Error).message}`);
         }
     }
 
-    console.log('\n📊 Export Summary:');
-    console.log(`   Files Created: ${totalFiles}`);
-    console.log(`   Resources Exported: ${totalResources}`);
+    ConsoleFormatter.section('Export Summary');
+    ConsoleFormatter.keyValue('Files Created', totalFiles);
+    ConsoleFormatter.keyValue('Resources Exported', totalResources);
 
     if (allWarnings.length > 0) {
-        console.log(`\n⚠️  Warnings (${allWarnings.length}):`);
-        allWarnings.forEach(w => console.log(`   - ${w}`));
+        console.log('');
+        ConsoleFormatter.warning(`Warnings (${allWarnings.length}):`);
+        allWarnings.forEach(w => ConsoleFormatter.indent(`- ${w}`));
     }
 
     if (allErrors.length > 0) {
-        console.log(`\n❌ Errors (${allErrors.length}):`);
-        allErrors.forEach(e => console.log(`   - ${e}`));
+        console.log('');
+        ConsoleFormatter.error(`Errors (${allErrors.length}):`);
+        allErrors.forEach(e => ConsoleFormatter.indent(`- ${e}`));
         if (!options.dryRun) process.exitCode = 1;
     }
 
@@ -514,7 +516,7 @@ async function promptForMissing(
     } else if (questions.length > 0 && !process.stdout.isTTY) {
         // Non-TTY mode - require format to be provided
         if (!options.format) {
-            throw new Error('Missing required option: --format (xliff | json)');
+            throw new Error(ErrorMessages.MISSING_OPTION('format'));
         }
     }
 

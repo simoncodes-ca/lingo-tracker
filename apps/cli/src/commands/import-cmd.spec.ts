@@ -20,6 +20,30 @@ vi.mock('@simoncodes-ca/core', () => ({
 // Mock utilities
 vi.mock('../utils', () => ({
   loadConfiguration: vi.fn(),
+  isInteractiveTerminal: vi.fn(() => false),
+  ConsoleFormatter: {
+    error: vi.fn((message: string) => console.log(`❌ ${message}`)),
+    success: vi.fn((message: string) => console.log(`✅ ${message}`)),
+    warning: vi.fn((message: string) => console.log(`⚠️  ${message}`)),
+    info: vi.fn((message: string) => console.log(`ℹ️  ${message}`)),
+    progress: vi.fn((message: string) => console.log(`🔄 ${message}`)),
+    section: vi.fn((title: string) => {
+      console.log(`\n📊 ${title}`);
+      console.log('─'.repeat(50));
+    }),
+    indent: vi.fn((message: string, level = 1) => {
+      const spaces = '  '.repeat(level);
+      console.log(`${spaces}${message}`);
+    }),
+    keyValue: vi.fn((key: string, value: string | number, indent = 1) => {
+      const spaces = '  '.repeat(indent);
+      console.log(`${spaces}${key}: ${value}`);
+    }),
+  },
+  ErrorMessages: {
+    OPERATION_CANCELLED: vi.fn((op: string) => `❌ ${op} cancelled.`),
+    MISSING_OPTION: vi.fn((opt: string) => `❌ Missing required option: --${opt}`),
+  },
 }));
 
 // Import the mocked functions
@@ -223,7 +247,7 @@ describe('import-cmd', () => {
       vi.mocked(detectImportFormat).mockImplementation(() => {
         throw new Error('Cannot auto-detect format from .txt extension');
       });
-      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
       vi.spyOn(process, 'exit').mockImplementation((code) => {
         throw new Error(`Process exit: ${code}`);
       });
@@ -234,7 +258,7 @@ describe('import-cmd', () => {
       };
 
       await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
-      expect(console.error).toHaveBeenCalledWith(
+      expect(console.log).toHaveBeenCalledWith(
         expect.stringContaining('Cannot auto-detect format')
       );
     });
@@ -366,7 +390,6 @@ describe('import-cmd', () => {
       vi.mocked(importFromJson).mockImplementation(() => {
         throw new Error('Source file not found');
       });
-      vi.spyOn(console, 'error').mockImplementation(() => undefined);
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
       vi.spyOn(process, 'exit').mockImplementation((code) => {
         throw new Error(`Process exit: ${code}`);
@@ -379,7 +402,7 @@ describe('import-cmd', () => {
       };
 
       await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
-      expect(console.error).toHaveBeenCalledWith(
+      expect(console.log).toHaveBeenCalledWith(
         expect.stringContaining('Import failed: Source file not found')
       );
     });

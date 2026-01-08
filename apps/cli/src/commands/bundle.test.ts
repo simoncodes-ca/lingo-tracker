@@ -231,9 +231,9 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith('\n🔄 Generating bundle: core');
-      expect(console.log).toHaveBeenCalledWith('   ✅ Files generated: 3');
-      expect(console.log).toHaveBeenCalledWith('   ✅ Locales: en, fr, es');
+      expect(console.log).toHaveBeenCalledWith('🔄 Generating bundle: core');
+      expect(console.log).toHaveBeenCalledWith('  ✅ Files generated: 3');
+      expect(console.log).toHaveBeenCalledWith('  ✅ Locales: en, fr, es');
     });
 
     it('should display warnings count when warnings exist', async () => {
@@ -246,7 +246,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith('   ⚠️  Warnings: 2');
+      expect(console.log).toHaveBeenCalledWith('  ⚠️  Warnings: 2');
     });
 
     it('should display warning details in verbose mode', async () => {
@@ -259,14 +259,14 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core', verbose: true });
 
-      expect(console.log).toHaveBeenCalledWith('      - Warning 1');
-      expect(console.log).toHaveBeenCalledWith('      - Warning 2');
+      expect(console.log).toHaveBeenCalledWith('       - Warning 1');
+      expect(console.log).toHaveBeenCalledWith('       - Warning 2');
     });
 
     it('should display locale filter in verbose mode', async () => {
       await bundleCommand({ name: 'core', locale: 'en,fr', verbose: true });
 
-      expect(console.log).toHaveBeenCalledWith('   Locales: en, fr');
+      expect(console.log).toHaveBeenCalledWith('  Locales: en, fr');
     });
 
     it('should display summary for multiple bundles', async () => {
@@ -286,9 +286,10 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core,admin' });
 
-      expect(console.log).toHaveBeenCalledWith('\n📊 Summary (2 bundles):');
-      expect(console.log).toHaveBeenCalledWith('   Total files generated: 5');
-      expect(console.log).toHaveBeenCalledWith('   Total warnings: 1');
+      expect(console.log).toHaveBeenCalledWith('\n📊 Summary (2 bundles)');
+      expect(console.log).toHaveBeenCalledWith('─'.repeat(50));
+      expect(console.log).toHaveBeenCalledWith('  Total files generated: 5');
+      expect(console.log).toHaveBeenCalledWith('  Total warnings: 1');
     });
 
     it('should display type generation success', async () => {
@@ -308,7 +309,7 @@ describe('bundleCommand', () => {
       await bundleCommand({ name: 'core' });
 
       expect(console.log).toHaveBeenCalledWith(
-        '   └─ Types: src/generated/core-tokens.ts (100 keys)'
+        '  └─ Types: src/generated/core-tokens.ts (100 keys)'
       );
     });
 
@@ -330,7 +331,7 @@ describe('bundleCommand', () => {
       await bundleCommand({ name: 'core' });
 
       expect(console.log).toHaveBeenCalledWith(
-        '   └─ Types: Skipped (empty-bundle)'
+        '  └─ Types: Skipped (empty-bundle)'
       );
     });
 
@@ -346,7 +347,7 @@ describe('bundleCommand', () => {
       await bundleCommand({ name: 'core' });
 
       expect(console.log).toHaveBeenCalledWith(
-        '   └─ Types: Skipped (no typeDist configured)'
+        '  └─ Types: Skipped (no typeDist configured)'
       );
     });
   });
@@ -366,8 +367,8 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core,admin' });
 
-      expect(console.log).toHaveBeenCalledWith('   ❌ Bundle generation failed');
-      expect(console.log).toHaveBeenCalledWith('\n🔄 Generating bundle: admin');
+      expect(console.log).toHaveBeenCalledWith('  ❌ Bundle generation failed');
+      expect(console.log).toHaveBeenCalledWith('🔄 Generating bundle: admin');
       expect(mockGenerateBundle).toHaveBeenCalledTimes(2);
     });
 
@@ -385,7 +386,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core,admin' });
 
-      expect(console.log).toHaveBeenCalledWith('\n⚠️  1 bundle(s) failed to generate');
+      expect(console.log).toHaveBeenCalledWith('⚠️  1 bundle(s) failed to generate');
     });
   });
 

@@ -1,7 +1,7 @@
 import prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
 import { normalize } from '@simoncodes-ca/core';
-import { loadConfiguration, resolveCollection } from '../utils';
+import { loadConfiguration, resolveCollection, ConsoleFormatter, ErrorMessages, aggregateNumericFields } from '../utils';
 
 export interface NormalizeOptions {
   collection?: string;
@@ -44,7 +44,7 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
   if (answers.all) {
     const collections = Object.keys(config.collections || {});
     if (collections.length === 0) {
-      console.log('❌ No collections found.');
+      ConsoleFormatter.error(ErrorMessages.NO_COLLECTIONS);
       return;
     }
     collectionsToProcess.push(...collections);
@@ -67,9 +67,10 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
     const locales = collection.config.locales ?? config.locales;
 
     if (!options.json) {
-      console.log(`\n🔄 Normalizing collection: ${collectionName}`);
+      console.log('');
+      ConsoleFormatter.progress(`Normalizing collection: ${collectionName}`);
       if (options.dryRun) {
-        console.log('   (Dry run - no changes will be made)');
+        ConsoleFormatter.indent('(Dry run - no changes will be made)');
       }
     }
 
@@ -91,39 +92,31 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
       });
 
       if (!options.json) {
-        console.log(`   ✅ Entries processed: ${result.entriesProcessed}`);
-        console.log(`   ✅ Locales added: ${result.localesAdded}`);
-        console.log(`   ✅ Files created: ${result.filesCreated}`);
-        console.log(`   ✅ Files updated: ${result.filesUpdated}`);
-        console.log(`   ✅ Folders removed: ${result.foldersRemoved}`);
+        ConsoleFormatter.indent(`✅ Entries processed: ${result.entriesProcessed}`);
+        ConsoleFormatter.indent(`✅ Locales added: ${result.localesAdded}`);
+        ConsoleFormatter.indent(`✅ Files created: ${result.filesCreated}`);
+        ConsoleFormatter.indent(`✅ Files updated: ${result.filesUpdated}`);
+        ConsoleFormatter.indent(`✅ Folders removed: ${result.foldersRemoved}`);
       }
     } catch (e: unknown) {
       if (!options.json) {
-        console.log(`   ❌ ${e instanceof Error ? e.message : 'Failed to normalize collection'}`);
+        ConsoleFormatter.indent(`❌ ${e instanceof Error ? e.message : 'Failed to normalize collection'}`);
       }
     }
   }
 
   // Output results
   if (options.json) {
-    const totals = collectionResults.reduce(
-      (acc, result) => ({
-        collectionsProcessed: acc.collectionsProcessed + 1,
-        entriesProcessed: acc.entriesProcessed + result.entriesProcessed,
-        localesAdded: acc.localesAdded + result.localesAdded,
-        filesCreated: acc.filesCreated + result.filesCreated,
-        filesUpdated: acc.filesUpdated + result.filesUpdated,
-        foldersRemoved: acc.foldersRemoved + result.foldersRemoved,
-      }),
-      {
-        collectionsProcessed: 0,
-        entriesProcessed: 0,
-        localesAdded: 0,
-        filesCreated: 0,
-        filesUpdated: 0,
-        foldersRemoved: 0,
-      }
-    );
+    const totals = {
+      ...aggregateNumericFields(collectionResults, [
+        'entriesProcessed',
+        'localesAdded',
+        'filesCreated',
+        'filesUpdated',
+        'foldersRemoved',
+      ]),
+      collectionsProcessed: collectionResults.length,
+    };
 
     const output: NormalizeCommandResult = {
       collections: collectionResults,
@@ -133,37 +126,31 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
     console.log(JSON.stringify(output, null, 2));
   } else if (collectionsToProcess.length > 1) {
     // Show summary for multiple collections
-    const totals = collectionResults.reduce(
-      (acc, result) => ({
-        collectionsProcessed: acc.collectionsProcessed + 1,
-        entriesProcessed: acc.entriesProcessed + result.entriesProcessed,
-        localesAdded: acc.localesAdded + result.localesAdded,
-        filesCreated: acc.filesCreated + result.filesCreated,
-        filesUpdated: acc.filesUpdated + result.filesUpdated,
-        foldersRemoved: acc.foldersRemoved + result.foldersRemoved,
-      }),
-      {
-        collectionsProcessed: 0,
-        entriesProcessed: 0,
-        localesAdded: 0,
-        filesCreated: 0,
-        filesUpdated: 0,
-        foldersRemoved: 0,
-      }
-    );
+    const totals = {
+      ...aggregateNumericFields(collectionResults, [
+        'entriesProcessed',
+        'localesAdded',
+        'filesCreated',
+        'filesUpdated',
+        'foldersRemoved',
+      ]),
+      collectionsProcessed: collectionResults.length,
+    };
 
-    console.log(`\n📊 Summary (${totals.collectionsProcessed} collections):`);
-    console.log(`   Total entries processed: ${totals.entriesProcessed}`);
-    console.log(`   Total locales added: ${totals.localesAdded}`);
-    console.log(`   Total files created: ${totals.filesCreated}`);
-    console.log(`   Total files updated: ${totals.filesUpdated}`);
-    console.log(`   Total folders removed: ${totals.foldersRemoved}`);
+    ConsoleFormatter.section(`Summary (${totals.collectionsProcessed} collections)`);
+    ConsoleFormatter.keyValue('Total entries processed', totals.entriesProcessed);
+    ConsoleFormatter.keyValue('Total locales added', totals.localesAdded);
+    ConsoleFormatter.keyValue('Total files created', totals.filesCreated);
+    ConsoleFormatter.keyValue('Total files updated', totals.filesUpdated);
+    ConsoleFormatter.keyValue('Total folders removed', totals.foldersRemoved);
 
     if (options.dryRun) {
-      console.log('\n⚠️  Dry run completed - no changes were made.');
+      console.log('');
+      ConsoleFormatter.warning('Dry run completed - no changes were made.');
     }
   } else if (options.dryRun) {
-    console.log('\n⚠️  Dry run completed - no changes were made.');
+    console.log('');
+    ConsoleFormatter.warning('Dry run completed - no changes were made.');
   }
 }
 
@@ -186,7 +173,7 @@ async function promptForMissing(
   // If neither collection nor all flag provided, prompt for selection
   if (!options.collection && !options.all) {
     if (collections.length === 0) {
-      console.log('❌ No collections found. Run `lingo-tracker add-collection` first.');
+      ConsoleFormatter.error(ErrorMessages.NO_COLLECTIONS);
       throw new Error('No collections available');
     }
 
@@ -215,7 +202,8 @@ async function promptForMissing(
       responses.all = true;
 
       // Show confirmation for --all mode
-      console.log('\n⚠️  This will normalize ALL collections in your project.');
+      console.log('');
+      ConsoleFormatter.warning('This will normalize ALL collections in your project.');
       const confirmed = await prompts({
         type: 'confirm',
         name: 'confirmed',
@@ -224,7 +212,7 @@ async function promptForMissing(
       });
 
       if (!confirmed.confirmed) {
-        console.log('❌ Normalize cancelled.');
+        ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Normalize'));
         process.exit(0);
       }
     } else {
@@ -233,13 +221,14 @@ async function promptForMissing(
   } else if (questions.length > 0) {
     // Non-TTY mode - require explicit flags
     if (!options.collection && !options.all) {
-      throw new Error('Missing required option: --collection or --all');
+      throw new Error(ErrorMessages.MISSING_OPTIONS(['collection', 'all']));
     }
   }
 
   // Handle --all flag with confirmation
   if (options.all && process.stdout.isTTY && !responses.all) {
-    console.log('\n⚠️  This will normalize ALL collections in your project.');
+    console.log('');
+    ConsoleFormatter.warning('This will normalize ALL collections in your project.');
     const confirmed = await prompts({
       type: 'confirm',
       name: 'confirmed',
@@ -248,7 +237,7 @@ async function promptForMissing(
     });
 
     if (!confirmed.confirmed) {
-      console.log('❌ Normalize cancelled.');
+      ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Normalize'));
       process.exit(0);
     }
   }
