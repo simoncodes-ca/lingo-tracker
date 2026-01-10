@@ -10,4 +10,5 @@ export * from './lib/move-resource.dto';
 export * from './lib/move-resource-response.dto';
 export * from './lib/update-resource.dto';
 export * from './lib/update-resource-response.dto';
+export * from './lib/resource-tree.dto';
 

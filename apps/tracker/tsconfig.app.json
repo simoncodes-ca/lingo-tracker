@@ -24,7 +24,7 @@
   ],
   "references": [
     {
-      "path": "../../libs/data-transfer/tsconfig.lib.json"
+      "path": "../../libs/data-transfer"
     }
   ]
 }

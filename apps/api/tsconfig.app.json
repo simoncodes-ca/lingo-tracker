@@ -17,10 +17,10 @@
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
   "references": [
     {
-      "path": "../../libs/data-transfer/tsconfig.lib.json"
+      "path": "../../libs/data-transfer"
     },
     {
-      "path": "../../libs/core/tsconfig.lib.json"
+      "path": "../../libs/core"
     }
   ]
 }
