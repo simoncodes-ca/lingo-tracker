@@ -82,12 +82,17 @@ describe('mapResourceTreeToDto', () => {
     expect(dto.children[0].fullPath).toBe('apps');
     expect(dto.children[0].loaded).toBe(true);
     expect(dto.children[0].tree).toBeDefined();
-    expect(dto.children[0].tree!.path).toBe('apps');
-    expect(dto.children[0].tree!.resources).toHaveLength(1);
-    expect(dto.children[0].tree!.resources[0].translations).toEqual({
-      en: 'Test',
-      es: 'Prueba'
-    });
+
+    const tree = dto.children[0].tree;
+    expect(tree).toBeDefined();
+    if (tree) {
+      expect(tree.path).toBe('apps');
+      expect(tree.resources).toHaveLength(1);
+      expect(tree.resources[0].translations).toEqual({
+        en: 'Test',
+        es: 'Prueba'
+      });
+    }
   });
 
   it('should map unloaded children without tree', () => {

@@ -158,7 +158,7 @@ vi.mock('node:fs', () => ({
   realpathSync: vi.fn((filePath: fs.PathLike) => {
     return filePath.toString();
   }),
-  readdirSync: vi.fn((dirPath: fs.PathLike, options?: any) => {
+  readdirSync: vi.fn((dirPath: fs.PathLike, _options?: any) => {
     const dirPathStr = dirPath.toString();
     const entries: fs.Dirent[] = [];
 
@@ -252,14 +252,20 @@ describe('loadResourceTree', () => {
       expect(result.children[0].tree).toBeDefined();
 
       // Second level (apps.common) should be loaded
-      const appsTree = result.children[0].tree!;
+      const appsTree = result.children[0].tree;
+      expect(appsTree).toBeDefined();
+      if (!appsTree) return;
+
       expect(appsTree.children).toHaveLength(1);
       expect(appsTree.children[0].name).toBe('common');
       expect(appsTree.children[0].loaded).toBe(true);
       expect(appsTree.children[0].tree).toBeDefined();
 
       // Second level resources
-      const commonTree = appsTree.children[0].tree!;
+      const commonTree = appsTree.children[0].tree;
+      expect(commonTree).toBeDefined();
+      if (!commonTree) return;
+
       expect(commonTree.resources).toHaveLength(1);
       expect(commonTree.resources[0].key).toBe('header');
       expect(commonTree.resources[0].tags).toEqual(['ui', 'common']);
@@ -293,7 +299,10 @@ describe('loadResourceTree', () => {
       expect(result.children[0].loaded).toBe(true);
       expect(result.children[0].tree).toBeDefined();
 
-      const buttonsTree = result.children[0].tree!;
+      const buttonsTree = result.children[0].tree;
+      expect(buttonsTree).toBeDefined();
+      if (!buttonsTree) return;
+
       expect(buttonsTree.resources).toHaveLength(2);
       expect(buttonsTree.resources.map(r => r.key)).toContain('ok');
       expect(buttonsTree.resources.map(r => r.key)).toContain('cancel');
