@@ -148,3 +148,6 @@ vitest.config.*.timestamp*
 
 .idea
 /product-plan/
+
+# Git worktrees for isolated feature development
+.worktrees/
