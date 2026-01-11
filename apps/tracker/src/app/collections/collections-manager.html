@@ -1,0 +1,90 @@
+<div class="collections-manager" role="main">
+  <!-- Page Header -->
+  <header class="page-header">
+    <h1>{{ 'collections.title' | transloco }}</h1>
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      (click)="openCreateDialog()"
+      [disabled]="store.isLoading()"
+    >
+      <mat-icon>add</mat-icon>
+      {{ 'collections.actions.add' | transloco }}
+    </button>
+  </header>
+
+  <!-- Loading State -->
+  @if (store.isLoading()) {
+    <div class="loading-container" aria-live="polite" aria-busy="true">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>{{ 'collections.loading' | transloco }}</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (store.error() && !store.isLoading()) {
+    <div class="error-container" role="alert" aria-live="assertive">
+      <mat-icon color="warn">error</mat-icon>
+      <p>{{ store.error() }}</p>
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="store.loadCollections()"
+      >
+        {{ 'collections.actions.retry' | transloco }}
+      </button>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!store.hasCollections() && !store.isLoading() && !store.error()) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">folder_open</mat-icon>
+      <p class="empty-message">{{ 'collections.emptyState.message' | transloco }}</p>
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="openCreateDialog()"
+      >
+        {{ 'collections.emptyState.cta' | transloco }}
+      </button>
+    </div>
+  }
+
+  <!-- Collections Grid -->
+  @if (store.hasCollections() && !store.isLoading()) {
+    <div class="collections-grid">
+      @for (item of store.collectionEntries(); track item.name) {
+        <div class="collection-card" tabindex="0" (click)="navigateToBrowser(item.name)" (keydown.enter)="navigateToBrowser(item.name)" (keydown.space)="navigateToBrowser(item.name)">
+          <div class="card-header">
+            <h3 class="collection-name">{{ item.name }}</h3>
+            <div class="card-actions">
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'collections.actions.edit' | transloco"
+                (click)="$event.stopPropagation(); openEditDialog(item.name)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'collections.actions.delete' | transloco"
+                (click)="$event.stopPropagation(); openDeleteDialog(item.name)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+          <div class="card-content">
+            <p class="folder-path">{{ item.config.translationsFolder }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

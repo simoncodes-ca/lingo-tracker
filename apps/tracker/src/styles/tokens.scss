@@ -1,0 +1,232 @@
+// CSS Custom Properties for Theming
+// These tokens provide a consistent design system across light and dark themes
+
+// Light theme tokens
+[data-theme='light'],
+:root {
+  // Colors - Primary (Blue)
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-active: #1e40af;
+  --color-primary-subtle: #eff6ff;
+
+  // Colors - Secondary (Sky)
+  --color-secondary: #0ea5e9;
+  --color-secondary-hover: #0284c7;
+  --color-secondary-active: #0369a1;
+  --color-secondary-subtle: #f0f9ff;
+
+  // Colors - Neutral (Zinc)
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f4f4f5;
+  --color-neutral-200: #e4e4e7;
+  --color-neutral-300: #d4d4d8;
+  --color-neutral-400: #a1a1aa;
+  --color-neutral-500: #71717a;
+  --color-neutral-600: #52525b;
+  --color-neutral-700: #3f3f46;
+  --color-neutral-800: #27272a;
+  --color-neutral-900: #18181b;
+
+  // Semantic colors
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  // Background colors
+  --color-background: #ffffff;
+  --color-background-subtle: #f9fafb;
+  --color-background-muted: #f3f4f6;
+
+  // Text colors
+  --color-text-primary: #18181b;
+  --color-text-secondary: #52525b;
+  --color-text-tertiary: #a1a1aa;
+  --color-text-inverse: #ffffff;
+
+  // Border colors
+  --color-border: #e4e4e7;
+  --color-border-subtle: #f4f4f5;
+  --color-border-strong: #d4d4d8;
+
+  // Focus ring
+  --focus-ring-color: #2563eb;
+
+  // Shadows
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+// Dark theme tokens
+[data-theme='dark'] {
+  // Colors - Primary (Blue) - slightly adjusted for dark mode
+  --color-primary: #3b82f6;
+  --color-primary-hover: #60a5fa;
+  --color-primary-active: #2563eb;
+  --color-primary-subtle: #1e3a8a;
+
+  // Colors - Secondary (Sky) - slightly adjusted for dark mode
+  --color-secondary: #38bdf8;
+  --color-secondary-hover: #7dd3fc;
+  --color-secondary-active: #0ea5e9;
+  --color-secondary-subtle: #0c4a6e;
+
+  // Colors - Neutral (Zinc) - inverted for dark mode
+  --color-neutral-50: #18181b;
+  --color-neutral-100: #27272a;
+  --color-neutral-200: #3f3f46;
+  --color-neutral-300: #52525b;
+  --color-neutral-400: #71717a;
+  --color-neutral-500: #a1a1aa;
+  --color-neutral-600: #d4d4d8;
+  --color-neutral-700: #e4e4e7;
+  --color-neutral-800: #f4f4f5;
+  --color-neutral-900: #fafafa;
+
+  // Semantic colors - adjusted for dark mode
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  --color-info: #60a5fa;
+
+  // Background colors
+  --color-background: #09090b;
+  --color-background-subtle: #18181b;
+  --color-background-muted: #27272a;
+
+  // Text colors
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #d4d4d8;
+  --color-text-tertiary: #71717a;
+  --color-text-inverse: #18181b;
+
+  // Border colors
+  --color-border: #3f3f46;
+  --color-border-subtle: #27272a;
+  --color-border-strong: #52525b;
+
+  // Focus ring
+  --focus-ring-color: #3b82f6;
+
+  // Shadows - more subtle in dark mode
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+}
+
+// System theme support - follows OS preference
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    // Colors - Primary (Blue) - slightly adjusted for dark mode
+    --color-primary: #3b82f6;
+    --color-primary-hover: #60a5fa;
+    --color-primary-active: #2563eb;
+    --color-primary-subtle: #1e3a8a;
+
+    // Colors - Secondary (Sky) - slightly adjusted for dark mode
+    --color-secondary: #38bdf8;
+    --color-secondary-hover: #7dd3fc;
+    --color-secondary-active: #0ea5e9;
+    --color-secondary-subtle: #0c4a6e;
+
+    // Colors - Neutral (Zinc) - inverted for dark mode
+    --color-neutral-50: #18181b;
+    --color-neutral-100: #27272a;
+    --color-neutral-200: #3f3f46;
+    --color-neutral-300: #52525b;
+    --color-neutral-400: #71717a;
+    --color-neutral-500: #a1a1aa;
+    --color-neutral-600: #d4d4d8;
+    --color-neutral-700: #e4e4e7;
+    --color-neutral-800: #f4f4f5;
+    --color-neutral-900: #fafafa;
+
+    // Semantic colors - adjusted for dark mode
+    --color-success: #34d399;
+    --color-warning: #fbbf24;
+    --color-error: #f87171;
+    --color-info: #60a5fa;
+
+    // Background colors
+    --color-background: #09090b;
+    --color-background-subtle: #18181b;
+    --color-background-muted: #27272a;
+
+    // Text colors
+    --color-text-primary: #fafafa;
+    --color-text-secondary: #d4d4d8;
+    --color-text-tertiary: #71717a;
+    --color-text-inverse: #18181b;
+
+    // Border colors
+    --color-border: #3f3f46;
+    --color-border-subtle: #27272a;
+    --color-border-strong: #52525b;
+
+    // Focus ring
+    --focus-ring-color: #3b82f6;
+
+    // Shadows - more subtle in dark mode
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  }
+}
+
+// Spacing scale
+:root {
+  --spacing-1: 0.25rem;   // 4px
+  --spacing-2: 0.5rem;    // 8px
+  --spacing-3: 0.75rem;   // 12px
+  --spacing-4: 1rem;      // 16px
+  --spacing-5: 1.25rem;   // 20px
+  --spacing-6: 1.5rem;    // 24px
+  --spacing-8: 2rem;      // 32px
+  --spacing-10: 2.5rem;   // 40px
+  --spacing-12: 3rem;     // 48px
+  --spacing-16: 4rem;     // 64px
+  --spacing-20: 5rem;     // 80px
+  --spacing-24: 6rem;     // 96px
+}
+
+// Typography scale
+:root {
+  --font-size-xs: 0.75rem;    // 12px
+  --font-size-sm: 0.875rem;   // 14px
+  --font-size-base: 1rem;     // 16px
+  --font-size-lg: 1.125rem;   // 18px
+  --font-size-xl: 1.25rem;    // 20px
+  --font-size-2xl: 1.5rem;    // 24px
+  --font-size-3xl: 1.875rem;  // 30px
+  --font-size-4xl: 2.25rem;   // 36px
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+}
+
+// Border radius
+:root {
+  --border-radius-sm: 0.25rem;  // 4px
+  --border-radius-md: 0.375rem; // 6px
+  --border-radius-lg: 0.5rem;   // 8px
+  --border-radius-xl: 0.75rem;  // 12px
+  --border-radius-full: 9999px;
+}
+
+// Transitions
+:root {
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}

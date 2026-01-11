@@ -28,6 +28,10 @@
     },
     "Web": {
       "translationsFolder": "apps/web/src/i18n"
+    },
+    "trackerResources": {
+      "translationsFolder": "apps/tracker/src/assets/i18n",
+      "locales": []
     }
   },
   "bundles": {

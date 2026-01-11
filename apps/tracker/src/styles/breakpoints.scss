@@ -1,0 +1,114 @@
+// Responsive breakpoints
+// Mobile-first approach: min-width media queries
+
+:root {
+  // Breakpoint values
+  --breakpoint-sm: 640px;   // Small devices (landscape phones)
+  --breakpoint-md: 768px;   // Medium devices (tablets)
+  --breakpoint-lg: 1024px;  // Large devices (desktops)
+  --breakpoint-xl: 1280px;  // Extra large devices (large desktops)
+  --breakpoint-xxl: 1536px; // 2X Extra large devices
+}
+
+// Breakpoint mixins for use in SCSS
+@mixin sm {
+  @media (min-width: 640px) {
+    @content;
+  }
+}
+
+@mixin md {
+  @media (min-width: 768px) {
+    @content;
+  }
+}
+
+@mixin lg {
+  @media (min-width: 1024px) {
+    @content;
+  }
+}
+
+@mixin xl {
+  @media (min-width: 1280px) {
+    @content;
+  }
+}
+
+@mixin xxl {
+  @media (min-width: 1536px) {
+    @content;
+  }
+}
+
+// Max-width breakpoints (for specific use cases)
+@mixin sm-max {
+  @media (max-width: 639px) {
+    @content;
+  }
+}
+
+@mixin md-max {
+  @media (max-width: 767px) {
+    @content;
+  }
+}
+
+@mixin lg-max {
+  @media (max-width: 1023px) {
+    @content;
+  }
+}
+
+@mixin xl-max {
+  @media (max-width: 1279px) {
+    @content;
+  }
+}
+
+// Utility classes for responsive visibility
+.hide-on-mobile {
+  @include md-max {
+    display: none !important;
+  }
+}
+
+.hide-on-tablet {
+  @include md {
+    @media (max-width: 1023px) {
+      display: none !important;
+    }
+  }
+}
+
+.hide-on-desktop {
+  @include lg {
+    display: none !important;
+  }
+}
+
+.show-on-mobile-only {
+  @include md {
+    display: none !important;
+  }
+}
+
+.show-on-tablet-only {
+  display: none !important;
+
+  @include md {
+    display: block !important;
+  }
+
+  @include lg {
+    display: none !important;
+  }
+}
+
+.show-on-desktop-only {
+  display: none !important;
+
+  @include lg {
+    display: block !important;
+  }
+}

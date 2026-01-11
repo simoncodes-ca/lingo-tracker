@@ -1,0 +1,58 @@
+<div role="dialog" [attr.aria-labelledby]="'dialog-title'">
+  <h2 id="dialog-title" mat-dialog-title>{{ dialogTitle | transloco }}</h2>
+
+  <mat-dialog-content>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'collections.dialog.nameLabel' | transloco }}</mat-label>
+        <input
+          matInput
+          formControlName="name"
+          [placeholder]="'collections.dialog.namePlaceholder' | transloco"
+          required
+        />
+        @if (form.controls.name.hasError('required')) {
+          <mat-error>{{ 'collections.dialog.nameRequired' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'collections.dialog.folderLabel' | transloco }}</mat-label>
+        <input
+          matInput
+          formControlName="translationsFolder"
+          [placeholder]="'collections.dialog.folderPlaceholder' | transloco"
+          required
+        />
+        @if (form.controls.translationsFolder.hasError('required')) {
+          <mat-error>{{ 'collections.dialog.folderRequired' | transloco }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'collections.dialog.localesLabel' | transloco }}</mat-label>
+        <input
+          matInput
+          formControlName="locales"
+          [placeholder]="'collections.dialog.localesPlaceholder' | transloco"
+        />
+        <mat-hint>{{ 'collections.dialog.localesHint' | transloco }}</mat-hint>
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">
+      {{ 'collections.dialog.cancel' | transloco }}
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      (click)="onSubmit()"
+      [disabled]="form.invalid"
+    >
+      {{ (isEditMode ? 'collections.dialog.save' : 'collections.dialog.create') | transloco }}
+    </button>
+  </mat-dialog-actions>
+</div>

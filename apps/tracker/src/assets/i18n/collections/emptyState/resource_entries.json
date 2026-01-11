@@ -1,0 +1,10 @@
+{
+  "message": {
+    "source": "No collections yet",
+    "comment": "Message shown when user has no collections"
+  },
+  "cta": {
+    "source": "Create your first collection",
+    "comment": "Call-to-action button in empty state to create first collection"
+  }
+}

@@ -1,6 +1,6 @@
-import { Controller, Delete, Param, HttpException, HttpStatus, Post, Body } from '@nestjs/common';
-import { addCollection, deleteCollectionByName } from '@simoncodes-ca/core';
-import { CreateCollectionDto } from '@simoncodes-ca/data-transfer';
+import { Controller, Delete, Param, HttpException, HttpStatus, Post, Body, Put } from '@nestjs/common';
+import { addCollection, deleteCollectionByName, updateCollection } from '@simoncodes-ca/core';
+import { CreateCollectionDto, UpdateCollectionDto } from '@simoncodes-ca/data-transfer';
 import { mapDtoToCollection } from '../mappers/collection.mapper';
 
 @Controller('collections')
@@ -25,6 +25,26 @@ export class CollectionsController {
       return { message: result.message };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error creating collection';
+      throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Put(':collectionName')
+  async updateCollectionByName(
+    @Param('collectionName') collectionName: string,
+    @Body() body: UpdateCollectionDto
+  ): Promise<{ message: string }> {
+    try {
+      const decodedCollectionName = decodeURIComponent(collectionName);
+      const { name, collection } = body;
+      const result = updateCollection(
+        decodedCollectionName,
+        name,
+        mapDtoToCollection(collection)
+      );
+      return { message: result.message };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error updating collection';
       throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
     }
   }
