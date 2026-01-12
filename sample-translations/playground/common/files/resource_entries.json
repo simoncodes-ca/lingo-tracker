@@ -10,7 +10,8 @@
     "de": "Datei auswählen",
     "es": "Seleccionar archivo",
     "fr-fr": "Sélectionner un fichier",
-    "ja": "ファイルの選択"
+    "ja": "ファイルの選択",
+    "fr-ca": "Select file"
   },
   "selectFiles": {
     "source": "Select files",
@@ -23,6 +24,7 @@
     "de": "Dateien auswählen",
     "es": "Seleccionar archivos",
     "fr-fr": "Sélectionner plusieurs fichiers",
-    "ja": "ファイルの選択"
+    "ja": "ファイルの選択",
+    "fr-ca": "Select files"
   }
 }

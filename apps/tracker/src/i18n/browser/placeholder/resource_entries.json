@@ -1,0 +1,17 @@
+{
+  "title": {
+    "source": "Translation Browser Coming Soon",
+    "comment": "Placeholder title for browser feature",
+    "es": "Translation Browser Coming Soon"
+  },
+  "message": {
+    "source": "The translation browser feature is currently under development. Soon you'll be able to view, edit, and manage all translations within this collection.",
+    "comment": "Placeholder message explaining feature status",
+    "es": "The translation browser feature is currently under development. Soon you'll be able to view, edit, and manage all translations within this collection."
+  },
+  "collection": {
+    "source": "Collection",
+    "comment": "Label for collection name display",
+    "es": "Collection"
+  }
+}

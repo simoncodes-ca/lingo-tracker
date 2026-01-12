@@ -22,6 +22,11 @@
       "checksum": "977f792993f1f9c1375697ff3a0cd141",
       "baseChecksum": "f378798e35eca740143589ce40eb424d",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "f378798e35eca740143589ce40eb424d",
+      "baseChecksum": "f378798e35eca740143589ce40eb424d",
+      "status": "new"
     }
   },
   "dropYourFileHere": {
@@ -47,6 +52,11 @@
       "checksum": "408243b8aefdf7152950ef7db3529df7",
       "baseChecksum": "d7ae4a308a526b19f7e9ff750daf9be9",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "d7ae4a308a526b19f7e9ff750daf9be9",
+      "baseChecksum": "d7ae4a308a526b19f7e9ff750daf9be9",
+      "status": "new"
     }
   },
   "fileFailedToUpload": {
@@ -72,6 +82,11 @@
       "checksum": "f6bd7437e8323031ebf6f93d7f56908c",
       "baseChecksum": "ccc8cd36932c1df68e3a08fda0f7bcd3",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "ccc8cd36932c1df68e3a08fda0f7bcd3",
+      "baseChecksum": "ccc8cd36932c1df68e3a08fda0f7bcd3",
+      "status": "new"
     }
   },
   "fileTypeNotAllowed": {
@@ -97,6 +112,11 @@
       "checksum": "9ab33c5697501cb0b1e0c8abab351167",
       "baseChecksum": "8d0689f0778fe7360da93d53cd88c37f",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "8d0689f0778fe7360da93d53cd88c37f",
+      "baseChecksum": "8d0689f0778fe7360da93d53cd88c37f",
+      "status": "new"
     }
   },
   "fileSizeExceedsX": {
@@ -122,6 +142,11 @@
       "checksum": "1a4a41165cff0c6ad7f6c279713e4274",
       "baseChecksum": "729a15074a65573b8502ea98965bd3e1",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "729a15074a65573b8502ea98965bd3e1",
+      "baseChecksum": "729a15074a65573b8502ea98965bd3e1",
+      "status": "new"
     }
   },
   "fileWasOverwritten": {
@@ -147,6 +172,11 @@
       "checksum": "8f6929493076bdc956967e4825cc0e43",
       "baseChecksum": "7affae3854e1343255a6971f1b98cb22",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "7affae3854e1343255a6971f1b98cb22",
+      "baseChecksum": "7affae3854e1343255a6971f1b98cb22",
+      "status": "new"
     }
   },
   "dropYourFilesHere": {
@@ -172,6 +202,11 @@
       "checksum": "408243b8aefdf7152950ef7db3529df7",
       "baseChecksum": "7afa34b0f1e91b44d419f126f121ee05",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "7afa34b0f1e91b44d419f126f121ee05",
+      "baseChecksum": "7afa34b0f1e91b44d419f126f121ee05",
+      "status": "new"
     }
   },
   "duplicateFileNotAllowed": {
@@ -197,6 +232,11 @@
       "checksum": "beec8b9ca0709ab58ebd47ee2ab1c926",
       "baseChecksum": "322361151ea5823f52989afe7857ff32",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "322361151ea5823f52989afe7857ff32",
+      "baseChecksum": "322361151ea5823f52989afe7857ff32",
+      "status": "new"
     }
   }
 }

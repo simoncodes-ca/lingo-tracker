@@ -1,0 +1,22 @@
+{
+  "light": {
+    "source": "Light",
+    "comment": "Theme switcher light mode label",
+    "es": "Light"
+  },
+  "dark": {
+    "source": "Dark",
+    "comment": "Theme switcher dark mode label",
+    "es": "Dark"
+  },
+  "system": {
+    "source": "System",
+    "comment": "Theme switcher system mode label",
+    "es": "System"
+  },
+  "settings": {
+    "source": "Theme settings",
+    "comment": "Aria-label for theme settings button",
+    "es": "Theme settings"
+  }
+}

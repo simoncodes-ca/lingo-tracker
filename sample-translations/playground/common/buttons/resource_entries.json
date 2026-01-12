@@ -10,7 +10,8 @@
     "de": "Anwenden",
     "es": "Aplicar",
     "fr-fr": "Appliquer",
-    "ja": "適用"
+    "ja": "適用",
+    "fr-ca": "Apply"
   },
   "cancel": {
     "source": "Cancel",
@@ -23,7 +24,8 @@
     "de": "Abbrechen",
     "es": "Cancelar",
     "fr-fr": "Annuler",
-    "ja": "キャンセル"
+    "ja": "キャンセル",
+    "fr-ca": "Cancel"
   },
   "clear": {
     "source": "Clear",
@@ -36,7 +38,8 @@
     "de": "Löschen",
     "es": "Borrar",
     "fr-fr": "Effacer",
-    "ja": "クリア"
+    "ja": "クリア",
+    "fr-ca": "Clear"
   },
   "close": {
     "source": "Close",
@@ -49,7 +52,8 @@
     "de": "Schließen",
     "es": "Cerrar",
     "fr-fr": "Fermer",
-    "ja": "閉じる"
+    "ja": "閉じる",
+    "fr-ca": "Close"
   },
   "create": {
     "source": "Create",
@@ -62,7 +66,8 @@
     "de": "Erstellen",
     "es": "Crear",
     "fr-fr": "Créer",
-    "ja": "作成"
+    "ja": "作成",
+    "fr-ca": "Create"
   },
   "ok": {
     "source": "OK",
@@ -75,7 +80,8 @@
     "de": "OK",
     "es": "Aceptar",
     "fr-fr": "OK",
-    "ja": "OK"
+    "ja": "OK",
+    "fr-ca": "OK"
   },
   "reset": {
     "source": "Reset",
@@ -88,7 +94,8 @@
     "de": "Zurücksetzen",
     "es": "Restablecer",
     "fr-fr": "Réinitialiser",
-    "ja": "リセット"
+    "ja": "リセット",
+    "fr-ca": "Reset"
   },
   "signOut": {
     "source": "Sign out",
@@ -101,7 +108,8 @@
     "de": "Abmelden",
     "es": "Cerrar sesión",
     "fr-fr": "Se déconnecter",
-    "ja": "サインアウト"
+    "ja": "サインアウト",
+    "fr-ca": "Sign out"
   },
   "add": {
     "source": "Add",
@@ -113,7 +121,8 @@
     "de": "Hinzufügen",
     "es": "Agregar",
     "fr-fr": "Ajouter",
-    "ja": "追加"
+    "ja": "追加",
+    "fr-ca": "Add"
   },
   "back": {
     "source": "Back",
@@ -126,7 +135,8 @@
     "de": "Zurück",
     "es": "Atrás",
     "fr-fr": "Retour",
-    "ja": "戻る"
+    "ja": "戻る",
+    "fr-ca": "Back"
   },
   "toggle": {
     "source": "Toggle",
@@ -139,6 +149,7 @@
     "de": "Umschalter",
     "es": "Alternar",
     "fr-fr": "Basculer",
-    "ja": "切り替え"
+    "ja": "切り替え",
+    "fr-ca": "Toggle"
   }
 }

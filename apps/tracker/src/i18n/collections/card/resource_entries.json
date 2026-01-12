@@ -1,10 +1,12 @@
 {
   "edit": {
     "source": "Edit collection",
-    "comment": "Accessible label for edit icon button on collection card"
+    "comment": "Accessible label for edit icon button on collection card",
+    "es": "Edit Collection"
   },
   "delete": {
     "source": "Delete collection",
-    "comment": "Accessible label for delete icon button on collection card"
+    "comment": "Accessible label for delete icon button on collection card",
+    "es": "Delete collection"
   }
 }

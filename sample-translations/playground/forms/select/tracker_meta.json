@@ -22,6 +22,11 @@
       "checksum": "8a4cbc4342618c9b0670fcfa59539153",
       "baseChecksum": "c49c29bb6656c1f25f2cfac84f83b5ba",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "c49c29bb6656c1f25f2cfac84f83b5ba",
+      "baseChecksum": "c49c29bb6656c1f25f2cfac84f83b5ba",
+      "status": "new"
     }
   },
   "valueNotFound": {
@@ -47,6 +52,11 @@
       "checksum": "be36116a44d9b6c7e02389a59c171168",
       "baseChecksum": "4a068be92dd27681fd09fa147600be85",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "4a068be92dd27681fd09fa147600be85",
+      "baseChecksum": "4a068be92dd27681fd09fa147600be85",
+      "status": "new"
     }
   },
   "valuesNotFound": {
@@ -72,6 +82,11 @@
       "checksum": "6035394d0b3e6ce753656dc6eccd86be",
       "baseChecksum": "19af6f188858a4e3e2b0f43b14d61891",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "19af6f188858a4e3e2b0f43b14d61891",
+      "baseChecksum": "19af6f188858a4e3e2b0f43b14d61891",
+      "status": "new"
     }
   },
   "showingAllResults": {
@@ -97,6 +112,11 @@
       "checksum": "a651484d05e5d2f157b1fa4447f1aa64",
       "baseChecksum": "a4bacad0799d0ffd7e3d18394ce0e9b0",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "a4bacad0799d0ffd7e3d18394ce0e9b0",
+      "baseChecksum": "a4bacad0799d0ffd7e3d18394ce0e9b0",
+      "status": "new"
     }
   },
   "loadingFilteredResults": {
@@ -122,6 +142,11 @@
       "checksum": "19ab73b7e17a227c07800d62c57444aa",
       "baseChecksum": "cfb1922dbb394f40f632338eb87e2298",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "cfb1922dbb394f40f632338eb87e2298",
+      "baseChecksum": "cfb1922dbb394f40f632338eb87e2298",
+      "status": "new"
     }
   }
 }

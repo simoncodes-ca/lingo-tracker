@@ -3,7 +3,7 @@
     <button
       mat-icon-button
       (click)="navigateToCollections()"
-      aria-label="Back to collections"
+      [attr.aria-label]="TOKENS.BROWSER.BACKBUTTON | transloco"
     >
       <mat-icon>arrow_back</mat-icon>
     </button>
@@ -15,10 +15,10 @@
       <mat-card-content>
         <div class="placeholder-content">
           <mat-icon class="placeholder-icon">construction</mat-icon>
-          <h2>{{ 'browser.placeholder.title' | transloco }}</h2>
-          <p>{{ 'browser.placeholder.message' | transloco }}</p>
+          <h2>{{ TOKENS.BROWSER.PLACEHOLDER.TITLE | transloco }}</h2>
+          <p>{{ TOKENS.BROWSER.PLACEHOLDER.MESSAGE | transloco }}</p>
           <p class="collection-info">
-            {{ 'browser.placeholder.collection' | transloco }}:
+            {{ TOKENS.BROWSER.PLACEHOLDER.COLLECTION | transloco }}:
             <strong>{{ collectionName() }}</strong>
           </p>
         </div>

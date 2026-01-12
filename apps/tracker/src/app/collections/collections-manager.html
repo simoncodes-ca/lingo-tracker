@@ -1,7 +1,7 @@
 <div class="collections-manager" role="main">
   <!-- Page Header -->
   <header class="page-header">
-    <h1>{{ 'collections.title' | transloco }}</h1>
+    <h1>{{ TOKENS.COLLECTIONS.TITLE | transloco }}</h1>
     <button
       mat-raised-button
       color="primary"
@@ -10,7 +10,7 @@
       [disabled]="store.isLoading()"
     >
       <mat-icon>add</mat-icon>
-      {{ 'collections.actions.add' | transloco }}
+      {{ TOKENS.COLLECTIONS.ADDBUTTON | transloco }}
     </button>
   </header>
 
@@ -18,7 +18,7 @@
   @if (store.isLoading()) {
     <div class="loading-container" aria-live="polite" aria-busy="true">
       <mat-spinner diameter="48"></mat-spinner>
-      <p>{{ 'collections.loading' | transloco }}</p>
+      <p>{{ TOKENS.DATA.LOADING | transloco }}</p>
     </div>
   }
 
@@ -33,7 +33,7 @@
         type="button"
         (click)="store.loadCollections()"
       >
-        {{ 'collections.actions.retry' | transloco }}
+        {{ TOKENS.COMMON.ACTIONS.RETRY | transloco }}
       </button>
     </div>
   }
@@ -42,14 +42,14 @@
   @if (!store.hasCollections() && !store.isLoading() && !store.error()) {
     <div class="empty-state">
       <mat-icon class="empty-icon">folder_open</mat-icon>
-      <p class="empty-message">{{ 'collections.emptyState.message' | transloco }}</p>
+      <p class="empty-message">{{ TOKENS.COLLECTIONS.EMPTYSTATE.MESSAGE | transloco }}</p>
       <button
         mat-raised-button
         color="primary"
         type="button"
         (click)="openCreateDialog()"
       >
-        {{ 'collections.emptyState.cta' | transloco }}
+        {{ TOKENS.COLLECTIONS.EMPTYSTATE.CTA | transloco }}
       </button>
     </div>
   }
@@ -65,7 +65,7 @@
               <button
                 mat-icon-button
                 type="button"
-                [attr.aria-label]="'collections.actions.edit' | transloco"
+                [attr.aria-label]="TOKENS.COMMON.ACTIONS.EDIT| transloco"
                 (click)="$event.stopPropagation(); openEditDialog(item.name)"
               >
                 <mat-icon>edit</mat-icon>
@@ -73,7 +73,7 @@
               <button
                 mat-icon-button
                 type="button"
-                [attr.aria-label]="'collections.actions.delete' | transloco"
+                [attr.aria-label]="TOKENS.COMMON.ACTIONS.DELETE | transloco"
                 (click)="$event.stopPropagation(); openDeleteDialog(item.name)"
               >
                 <mat-icon>delete</mat-icon>

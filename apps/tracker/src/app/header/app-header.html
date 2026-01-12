@@ -13,7 +13,7 @@
     <button
       mat-icon-button
       [matMenuTriggerFor]="themeMenu"
-      aria-label="Theme settings"
+      [attr.aria-label]="TOKENS.THEME.SETTINGS | transloco"
       class="theme-button"
     >
       <mat-icon>settings</mat-icon>
@@ -26,7 +26,7 @@
         [class.active]="isThemeActive('light')"
       >
         <mat-icon>light_mode</mat-icon>
-        <span>Light</span>
+        <span>{{ TOKENS.THEME.LIGHT | transloco }}</span>
         @if (isThemeActive('light')) {
           <mat-icon class="check-icon">check</mat-icon>
         }
@@ -38,7 +38,7 @@
         [class.active]="isThemeActive('dark')"
       >
         <mat-icon>dark_mode</mat-icon>
-        <span>Dark</span>
+        <span>{{ TOKENS.THEME.DARK | transloco }}</span>
         @if (isThemeActive('dark')) {
           <mat-icon class="check-icon">check</mat-icon>
         }
@@ -50,7 +50,7 @@
         [class.active]="isThemeActive('system')"
       >
         <mat-icon>computer</mat-icon>
-        <span>System</span>
+        <span>{{ TOKENS.THEME.SYSTEM | transloco }}</span>
         @if (isThemeActive('system')) {
           <mat-icon class="check-icon">check</mat-icon>
         }

@@ -1,0 +1,56 @@
+{
+  "nameLabel": {
+    "source": "Collection Name",
+    "comment": "Label for collection name input field",
+    "es": "Collection Name"
+  },
+  "namePlaceholder": {
+    "source": "e.g., my-app-i18n",
+    "comment": "Placeholder text for collection name input",
+    "es": "e.g., my-app-i18n"
+  },
+  "nameRequired": {
+    "source": "Collection name is required",
+    "comment": "Error message when name is required",
+    "es": "Collection name is required"
+  },
+  "folderLabel": {
+    "source": "Translations Folder",
+    "comment": "Label for translations folder input field",
+    "es": "Translations Folder"
+  },
+  "folderPlaceholder": {
+    "source": "e.g., ./src/assets/i18n",
+    "comment": "Placeholder text for folder path input",
+    "es": "e.g., ./src/assets/i18n"
+  },
+  "folderRequired": {
+    "source": "Translations folder is required",
+    "comment": "Error message when folder is required",
+    "es": "Translations folder is required"
+  },
+  "localesLabel": {
+    "source": "Locales (Optional)",
+    "comment": "Label for locales input field",
+    "es": "Locales (Optional)"
+  },
+  "localesHint": {
+    "source": "Comma-separated list of locale codes. Leave empty to use global config.",
+    "comment": "Hint text for locales input",
+    "es": "Comma-separated list of locale codes. Leave empty to use global config."
+  },
+  "createButton": {
+    "source": "Create",
+    "comment": "Create button text in create mode",
+    "es": "Create"
+  },
+  "localesPlaceholder": {
+    "source": "e.g., en, fr, es",
+    "comment": "Placeholder text for locales input",
+    "es": "e.g., en, fr, es"
+  },
+  "createTitle": {
+    "source": "Create Collection",
+    "es": "Create Collection"
+  }
+}

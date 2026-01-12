@@ -22,6 +22,11 @@
       "checksum": "067cf78178ca5a85f28bf5500bc934d4",
       "baseChecksum": "62df404d11f2b8f4da0e42a2ba0df760",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "62df404d11f2b8f4da0e42a2ba0df760",
+      "baseChecksum": "62df404d11f2b8f4da0e42a2ba0df760",
+      "status": "new"
     }
   },
   "valueHasBeenCorrectedToXDecimals": {
@@ -47,6 +52,11 @@
       "checksum": "44eb2263c24ce7d15c91fde2c938abae",
       "baseChecksum": "a5169ced89ff477354e7dee5171b46df",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "a5169ced89ff477354e7dee5171b46df",
+      "baseChecksum": "a5169ced89ff477354e7dee5171b46df",
+      "status": "new"
     }
   }
 }

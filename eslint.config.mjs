@@ -10,6 +10,9 @@ export default [
       "**/tmp",
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
+      '**/.angular/**',
+      '**/.claude/**',
+      '**/.cursor/**',
     ],
   },
   {

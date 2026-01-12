@@ -9,7 +9,8 @@
     "de": "Es sind keine Daten zum Anzeigen vorhanden",
     "es": "No hay datos para mostrar",
     "fr-fr": "Pas de données à afficher",
-    "ja": "表示するデータがありません。"
+    "ja": "表示するデータがありません。",
+    "fr-ca": "No data to display"
   },
   "emptySearchResults": {
     "source": "Your search did not bring up any results",
@@ -21,6 +22,7 @@
     "de": "Ihre Suche hat keine Ergebnisse erbracht",
     "es": "Su búsqueda no arrojó ningún resultado",
     "fr-fr": "Votre recherche n’a donné aucun résultat",
-    "ja": "検索結果が得られませんでした"
+    "ja": "検索結果が得られませんでした",
+    "fr-ca": "Your search did not bring up any results"
   }
 }

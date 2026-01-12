@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { TranslocoModule } from '@jsverse/transloco';
 import { CollectionFormDialogData } from './collection-form-dialog-data';
 import { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
+import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
 
 /**
  * Form value interface for the collection form.
@@ -72,6 +73,8 @@ export class CollectionFormDialog implements OnInit {
   readonly dialogRef = inject(MatDialogRef<CollectionFormDialog>);
   readonly data = inject<CollectionFormDialogData>(MAT_DIALOG_DATA);
 
+  readonly TOKENS = TRACKER_TOKENS;
+
   readonly form = new FormGroup({
     name: new FormControl<string>('', {
       validators: [Validators.required],
@@ -91,7 +94,7 @@ export class CollectionFormDialog implements OnInit {
   }
 
   get dialogTitle(): string {
-    return this.isEditMode ? 'collections.dialog.editTitle' : 'collections.dialog.createTitle';
+    return this.isEditMode ? TRACKER_TOKENS.COLLECTIONS.DIALOG.EDIT.TITLE : TRACKER_TOKENS.COLLECTIONS.DIALOG.CREATE.TITLE;
   }
 
   ngOnInit(): void {

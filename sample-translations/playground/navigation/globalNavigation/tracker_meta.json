@@ -22,6 +22,11 @@
       "checksum": "3eaf708610cff30a289e653a3813a4f8",
       "baseChecksum": "8cf04a9734132302f96da8e113e80ce5",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "8cf04a9734132302f96da8e113e80ce5",
+      "baseChecksum": "8cf04a9734132302f96da8e113e80ce5",
+      "status": "new"
     }
   },
   "more": {
@@ -47,6 +52,11 @@
       "checksum": "7a740eef08c42027a95e8ac31fd4e0ec",
       "baseChecksum": "d3da97e2d9aee5c8fbe03156ad051c99",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "d3da97e2d9aee5c8fbe03156ad051c99",
+      "baseChecksum": "d3da97e2d9aee5c8fbe03156ad051c99",
+      "status": "new"
     }
   },
   "moreInitialMessage": {
@@ -72,6 +82,11 @@
       "checksum": "338c53dd912fc940d5a1e668873f185d",
       "baseChecksum": "61b2ef12af40f6fe68faeb70dc314d9d",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "61b2ef12af40f6fe68faeb70dc314d9d",
+      "baseChecksum": "61b2ef12af40f6fe68faeb70dc314d9d",
+      "status": "new"
     }
   }
 }

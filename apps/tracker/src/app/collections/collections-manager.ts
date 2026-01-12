@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { CollectionsStore } from './store/collections.store';
+import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 
 /**
  * Collections Manager component for viewing and managing translation collections.
@@ -42,6 +43,8 @@ export class CollectionsManager implements OnInit {
   private readonly router = inject(Router);
   private readonly transloco = inject(TranslocoService);
 
+  readonly TOKENS = TRACKER_TOKENS;
+
   ngOnInit(): void {
     this.store.loadCollections();
   }
@@ -63,7 +66,7 @@ export class CollectionsManager implements OnInit {
             collection: result.config,
           });
           this.showSuccessToast(
-            this.transloco.translate('collections.toast.created')
+            this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.CREATED),
           );
         }
       });
@@ -77,7 +80,7 @@ export class CollectionsManager implements OnInit {
     const config = this.store.collections()[name];
     if (!config) {
       this.showErrorToast(
-        this.transloco.translate('collections.toast.error')
+        this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.ERROR)
       );
       return;
     }
@@ -100,7 +103,7 @@ export class CollectionsManager implements OnInit {
             collection: result.config,
           });
           this.showSuccessToast(
-            this.transloco.translate('collections.toast.updated')
+            this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.UPDATED)
           );
         }
       });
@@ -115,16 +118,16 @@ export class CollectionsManager implements OnInit {
       (m) => {
         const dialogRef = this.dialog.open(m.ConfirmationDialog, {
           data: {
-            title: this.transloco.translate('collections.deleteDialog.title'),
+            title: this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.TITLE),
             message: this.transloco.translate(
-              'collections.deleteDialog.message',
+                TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.MESSAGE,
               { name }
             ),
             confirmButtonText: this.transloco.translate(
-              'collections.deleteDialog.confirm'
+              TRACKER_TOKENS.COMMON.ACTIONS.DELETE,
             ),
             cancelButtonText: this.transloco.translate(
-              'collections.deleteDialog.cancel'
+                TRACKER_TOKENS.COMMON.ACTIONS.CANCEL,
             ),
             actionType: 'destructive',
           },
@@ -135,7 +138,7 @@ export class CollectionsManager implements OnInit {
           if (confirmed) {
             this.store.deleteCollection(name);
             this.showSuccessToast(
-              this.transloco.translate('collections.toast.deleted')
+              this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.DELETED),
             );
           }
         });

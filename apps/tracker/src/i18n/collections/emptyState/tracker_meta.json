@@ -2,11 +2,21 @@
   "message": {
     "en": {
       "checksum": "be7253840e621510212e49959ed1c8ad"
+    },
+    "es": {
+      "checksum": "be7253840e621510212e49959ed1c8ad",
+      "baseChecksum": "be7253840e621510212e49959ed1c8ad",
+      "status": "translated"
     }
   },
   "cta": {
     "en": {
       "checksum": "5532bcc75197c54314b36ba14e5a4ce5"
+    },
+    "es": {
+      "checksum": "5532bcc75197c54314b36ba14e5a4ce5",
+      "baseChecksum": "5532bcc75197c54314b36ba14e5a4ce5",
+      "status": "translated"
     }
   }
 }

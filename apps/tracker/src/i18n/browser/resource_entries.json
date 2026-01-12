@@ -1,0 +1,7 @@
+{
+  "backButton": {
+    "source": "Back to collections",
+    "comment": "Aria-label for back button in browser",
+    "es": "Back to collections"
+  }
+}

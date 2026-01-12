@@ -2,21 +2,41 @@
   "name": {
     "en": {
       "checksum": "3368b0851da49f06d4c69758cf85ac92"
+    },
+    "es": {
+      "checksum": "3368b0851da49f06d4c69758cf85ac92",
+      "baseChecksum": "3368b0851da49f06d4c69758cf85ac92",
+      "status": "translated"
     }
   },
   "translationsFolder": {
     "en": {
       "checksum": "da38f56b09a32e7328c23c01f0a0738e"
+    },
+    "es": {
+      "checksum": "da38f56b09a32e7328c23c01f0a0738e",
+      "baseChecksum": "da38f56b09a32e7328c23c01f0a0738e",
+      "status": "translated"
     }
   },
   "locales": {
     "en": {
       "checksum": "52ec7aab68a6cdc237d9db8133bc815f"
+    },
+    "es": {
+      "checksum": "52ec7aab68a6cdc237d9db8133bc815f",
+      "baseChecksum": "52ec7aab68a6cdc237d9db8133bc815f",
+      "status": "translated"
     }
   },
   "localesPlaceholder": {
     "en": {
       "checksum": "43735cf0e646ed6cb9f4863c9120e09d"
+    },
+    "es": {
+      "checksum": "43735cf0e646ed6cb9f4863c9120e09d",
+      "baseChecksum": "43735cf0e646ed6cb9f4863c9120e09d",
+      "status": "translated"
     }
   }
 }

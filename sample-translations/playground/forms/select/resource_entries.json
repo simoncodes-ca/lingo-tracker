@@ -10,7 +10,8 @@
     "de": "Keine Ergebnisse",
     "es": "No hay resultados",
     "fr-fr": "Aucun résultat",
-    "ja": "結果がありません。"
+    "ja": "結果がありません。",
+    "fr-ca": "No results"
   },
   "valueNotFound": {
     "source": "Value not found",
@@ -23,7 +24,8 @@
     "de": "Wert nicht gefunden",
     "es": "Valor no encontrado",
     "fr-fr": "Valeur introuvable",
-    "ja": "値が見つかりません"
+    "ja": "値が見つかりません",
+    "fr-ca": "Value not found"
   },
   "valuesNotFound": {
     "source": "Some values were not found",
@@ -36,7 +38,8 @@
     "de": "Einige Werte wurden nicht gefunden",
     "es": "No se encontraron algunos valores",
     "fr-fr": "Certaines valeurs sont introuvables",
-    "ja": "一部の値が見つかりませんでした"
+    "ja": "一部の値が見つかりませんでした",
+    "fr-ca": "Some values were not found"
   },
   "showingAllResults": {
     "source": "Showing all results, type to filter more",
@@ -49,7 +52,8 @@
     "de": "Es werden alle Ergebnisse angezeigt. Tippen, um nach mehr zu filtern",
     "es": "Se muestran todos los resultados, escriba para aplicar más filtros",
     "fr-fr": "Tous les résultats sont affichés, tapez pour filtrer davantage",
-    "ja": "すべての結果が表示されています。さらにフィルタリングするには入力してください"
+    "ja": "すべての結果が表示されています。さらにフィルタリングするには入力してください",
+    "fr-ca": "Showing all results, type to filter more"
   },
   "loadingFilteredResults": {
     "source": "Loading filtered results...",
@@ -62,6 +66,7 @@
     "de": "Gefilterte Ergebnisse werden geladen ...",
     "es": "Cargando resultados filtrados…",
     "fr-fr": "Chargement des résultats filtrés...",
-    "ja": "フィルタ結果の読み込み中..."
+    "ja": "フィルタ結果の読み込み中...",
+    "fr-ca": "Loading filtered results..."
   }
 }

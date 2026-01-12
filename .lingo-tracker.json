@@ -47,7 +47,12 @@
     "tracker": {
       "bundleName": "{locale}",
       "dist": "./apps/tracker/src/assets/i18n",
-      "collections": "trackerResources",
+      "collections": [
+        {
+          "name": "trackerResources",
+          "entriesSelectionRules": "All"
+        }
+      ],
       "typeDist": "./apps/tracker/src/i18n-types/tracker-resources.ts"
     }
   }

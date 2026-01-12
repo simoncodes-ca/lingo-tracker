@@ -1,0 +1,112 @@
+{
+  "nameLabel": {
+    "en": {
+      "checksum": "8b8fc80765dd43c1c75c61077034b34e"
+    },
+    "es": {
+      "checksum": "8b8fc80765dd43c1c75c61077034b34e",
+      "baseChecksum": "8b8fc80765dd43c1c75c61077034b34e",
+      "status": "new"
+    }
+  },
+  "namePlaceholder": {
+    "en": {
+      "checksum": "e02e22429e66e242217bdbbde92eb081"
+    },
+    "es": {
+      "checksum": "e02e22429e66e242217bdbbde92eb081",
+      "baseChecksum": "e02e22429e66e242217bdbbde92eb081",
+      "status": "new"
+    }
+  },
+  "nameRequired": {
+    "en": {
+      "checksum": "c71ef39ab61feaed8cf0a058b3bd8acd"
+    },
+    "es": {
+      "checksum": "c71ef39ab61feaed8cf0a058b3bd8acd",
+      "baseChecksum": "c71ef39ab61feaed8cf0a058b3bd8acd",
+      "status": "new"
+    }
+  },
+  "folderLabel": {
+    "en": {
+      "checksum": "cec5a0934dba090c47144036ce5101ec"
+    },
+    "es": {
+      "checksum": "cec5a0934dba090c47144036ce5101ec",
+      "baseChecksum": "cec5a0934dba090c47144036ce5101ec",
+      "status": "new"
+    }
+  },
+  "folderPlaceholder": {
+    "en": {
+      "checksum": "f5baaa6df5e234ecbd095532b592a5e3"
+    },
+    "es": {
+      "checksum": "f5baaa6df5e234ecbd095532b592a5e3",
+      "baseChecksum": "f5baaa6df5e234ecbd095532b592a5e3",
+      "status": "new"
+    }
+  },
+  "folderRequired": {
+    "en": {
+      "checksum": "ccdc7033c15a7080fa1e47d82753e5da"
+    },
+    "es": {
+      "checksum": "ccdc7033c15a7080fa1e47d82753e5da",
+      "baseChecksum": "ccdc7033c15a7080fa1e47d82753e5da",
+      "status": "new"
+    }
+  },
+  "localesLabel": {
+    "en": {
+      "checksum": "978ddb4854a96b02f4d811f801f83ae3"
+    },
+    "es": {
+      "checksum": "978ddb4854a96b02f4d811f801f83ae3",
+      "baseChecksum": "978ddb4854a96b02f4d811f801f83ae3",
+      "status": "new"
+    }
+  },
+  "localesHint": {
+    "en": {
+      "checksum": "a2e783531d2fcdcf61099aad5b0e55a8"
+    },
+    "es": {
+      "checksum": "a2e783531d2fcdcf61099aad5b0e55a8",
+      "baseChecksum": "a2e783531d2fcdcf61099aad5b0e55a8",
+      "status": "new"
+    }
+  },
+  "createButton": {
+    "en": {
+      "checksum": "686e697538050e4664636337cc3b834f"
+    },
+    "es": {
+      "checksum": "686e697538050e4664636337cc3b834f",
+      "baseChecksum": "686e697538050e4664636337cc3b834f",
+      "status": "new"
+    }
+  },
+  "localesPlaceholder": {
+    "en": {
+      "checksum": "b418a61851fec5c6ade8e4a34b907285"
+    },
+    "es": {
+      "checksum": "b418a61851fec5c6ade8e4a34b907285",
+      "baseChecksum": "b418a61851fec5c6ade8e4a34b907285",
+      "status": "new"
+    }
+  },
+  "createTitle": {
+    "en": {
+      "checksum": "57c313ed48acfddf01bcbf4b3e4de556"
+    },
+    "es": {
+      "checksum": "57c313ed48acfddf01bcbf4b3e4de556",
+      "baseChecksum": "57c313ed48acfddf01bcbf4b3e4de556",
+      "status": "new"
+    }
+  }
+}

@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { TranslocoModule } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 
 /**
  * Translation Browser component for viewing and managing translations within a collection.
@@ -35,6 +36,8 @@ import { TranslocoModule } from '@jsverse/transloco';
 export class TranslationBrowser implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  readonly TOKENS = TRACKER_TOKENS;
 
   /**
    * The name of the collection being browsed.

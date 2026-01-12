@@ -2,6 +2,11 @@
   "title": {
     "en": {
       "checksum": "bcc40d0f321165f8d57c4185fc0357df"
+    },
+    "es": {
+      "checksum": "bcc40d0f321165f8d57c4185fc0357df",
+      "baseChecksum": "bcc40d0f321165f8d57c4185fc0357df",
+      "status": "translated"
     }
   }
 }

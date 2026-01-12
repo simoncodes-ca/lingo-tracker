@@ -22,6 +22,11 @@
       "checksum": "26c884fa4321a1ba36e95793fdff896e",
       "baseChecksum": "19f823c6453c2b1ffd09cb715214813d",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "19f823c6453c2b1ffd09cb715214813d",
+      "baseChecksum": "19f823c6453c2b1ffd09cb715214813d",
+      "status": "new"
     }
   },
   "selectedValueNotFound": {
@@ -47,6 +52,11 @@
       "checksum": "aca3d7076a181d901927a0a0ede4925f",
       "baseChecksum": "adfdeadc48f064e8d7e9d8caa8c4ef2b",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "adfdeadc48f064e8d7e9d8caa8c4ef2b",
+      "baseChecksum": "adfdeadc48f064e8d7e9d8caa8c4ef2b",
+      "status": "new"
     }
   },
   "hexColor": {
@@ -72,6 +82,11 @@
       "checksum": "105733c5f5e382c3796ebfd4b19ebad5",
       "baseChecksum": "46df277e28728a8859ddcc65b376b25a",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "46df277e28728a8859ddcc65b376b25a",
+      "baseChecksum": "46df277e28728a8859ddcc65b376b25a",
+      "status": "new"
     }
   },
   "date": {
@@ -97,6 +112,11 @@
       "checksum": "83e25dbefae355bd4e5b4430b7012e78",
       "baseChecksum": "6983e1dbaf645233e304a723271973a7",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "6983e1dbaf645233e304a723271973a7",
+      "baseChecksum": "6983e1dbaf645233e304a723271973a7",
+      "status": "new"
     }
   },
   "maxDecimalPlaces": {
@@ -122,6 +142,11 @@
       "checksum": "6ad8043d406e2a19637e8ede25e455a0",
       "baseChecksum": "1ec53872504b32b29ad597a7a0d812ec",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "1ec53872504b32b29ad597a7a0d812ec",
+      "baseChecksum": "1ec53872504b32b29ad597a7a0d812ec",
+      "status": "new"
     }
   },
   "maxCharacters": {
@@ -147,6 +172,11 @@
       "checksum": "997b18bc21d276c2611b5d714dd99078",
       "baseChecksum": "2708edfde429fc9e8a9c6d8940ac075b",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "2708edfde429fc9e8a9c6d8940ac075b",
+      "baseChecksum": "2708edfde429fc9e8a9c6d8940ac075b",
+      "status": "new"
     }
   },
   "minCharacters": {
@@ -172,6 +202,11 @@
       "checksum": "ffdd0655f83b08feef60d28fd608ffbd",
       "baseChecksum": "d226b9e4d502f6e390fb181d082f6c03",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "d226b9e4d502f6e390fb181d082f6c03",
+      "baseChecksum": "d226b9e4d502f6e390fb181d082f6c03",
+      "status": "new"
     }
   },
   "invalidEmail": {
@@ -197,6 +232,11 @@
       "checksum": "94b573d52bac36085d4c9902d2a00c5c",
       "baseChecksum": "59e4904d4366fab35a8282f418e699de",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "59e4904d4366fab35a8282f418e699de",
+      "baseChecksum": "59e4904d4366fab35a8282f418e699de",
+      "status": "new"
     }
   },
   "invalidUrl": {
@@ -222,6 +262,11 @@
       "checksum": "9b157b047ef52cc6743f9c9231aa8229",
       "baseChecksum": "271177b03cb7fac355dfa12aca9be618",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "271177b03cb7fac355dfa12aca9be618",
+      "baseChecksum": "271177b03cb7fac355dfa12aca9be618",
+      "status": "new"
     }
   },
   "number": {
@@ -244,6 +289,11 @@
       "status": "new"
     },
     "ja": {
+      "checksum": "f05fa8d6ca6f8e0681a61f9d09ac5b13",
+      "baseChecksum": "f05fa8d6ca6f8e0681a61f9d09ac5b13",
+      "status": "new"
+    },
+    "fr-ca": {
       "checksum": "f05fa8d6ca6f8e0681a61f9d09ac5b13",
       "baseChecksum": "f05fa8d6ca6f8e0681a61f9d09ac5b13",
       "status": "new"

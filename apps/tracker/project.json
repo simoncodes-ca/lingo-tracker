@@ -19,6 +19,11 @@
           {
             "glob": "**/*",
             "input": "apps/tracker/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/tracker/src/assets",
+            "output": "/assets/"
           }
         ],
         "styles": ["apps/tracker/src/styles.scss"]

@@ -2,6 +2,11 @@
   "required": {
     "en": {
       "checksum": "0511ee0d41117aa7b4abaaf102aa513d"
+    },
+    "es": {
+      "checksum": "0511ee0d41117aa7b4abaaf102aa513d",
+      "baseChecksum": "0511ee0d41117aa7b4abaaf102aa513d",
+      "status": "translated"
     }
   }
 }

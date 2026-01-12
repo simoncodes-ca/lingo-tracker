@@ -1,6 +1,7 @@
 {
   "required": {
     "source": "This field is required",
-    "comment": "Validation error for required fields"
+    "comment": "Validation error for required fields",
+    "es": "This field is required"
   }
 }

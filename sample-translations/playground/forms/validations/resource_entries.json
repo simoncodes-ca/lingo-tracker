@@ -10,7 +10,8 @@
     "de": "Pflichtfeld",
     "es": "Campo obligatorio",
     "fr-fr": "Champ requis",
-    "ja": "必須項目"
+    "ja": "必須項目",
+    "fr-ca": "Required field"
   },
   "selectedValueNotFound": {
     "source": "Selected value not found in the list items",
@@ -23,7 +24,8 @@
     "de": "Der markierte Wert wurde nicht in den Listeneinträgen gefunden",
     "es": "No se encontró el valor seleccionado en los elementos de la lista",
     "fr-fr": "La valeur sélectionnée ne figure pas dans la liste",
-    "ja": "選択された値はリスト項目に見つかりません"
+    "ja": "選択された値はリスト項目に見つかりません",
+    "fr-ca": "Selected value not found in the list items"
   },
   "hexColor": {
     "source": "Invalid hex color",
@@ -36,7 +38,8 @@
     "de": "Ungültige Hexadezimal-Farbe",
     "es": "Color hexadecimal no válido",
     "fr-fr": "Code hexadécimal de couleur non valide",
-    "ja": "無効な 16 進数表記色"
+    "ja": "無効な 16 進数表記色",
+    "fr-ca": "Invalid hex color"
   },
   "date": {
     "source": "Invalid date",
@@ -49,7 +52,8 @@
     "de": "Ungültiges Datum",
     "es": "Fecha no válida",
     "fr-fr": "Date non valide",
-    "ja": "無効な日付"
+    "ja": "無効な日付",
+    "fr-ca": "Invalid date"
   },
   "maxDecimalPlaces": {
     "source": "Value must not have more than {{ validationValue }} decimals",
@@ -62,7 +66,8 @@
     "de": "Der Wert darf nicht mehr als {{ validationValue }} Dezimalstellen haben",
     "es": "El valor no debe tener más de {{ validationValue }} decimales",
     "fr-fr": "La valeur ne doit pas contenir plus de {{ validationValue }} décimales",
-    "ja": "値の小数点以下の桁数は {{ validationValue }} 桁を超えることはできません。"
+    "ja": "値の小数点以下の桁数は {{ validationValue }} 桁を超えることはできません。",
+    "fr-ca": "Value must not have more than {{ validationValue }} decimals"
   },
   "maxCharacters": {
     "source": "Max {{ validationValue }} characters",
@@ -75,7 +80,8 @@
     "de": "Max. {{ validationValue }} Zeichen",
     "es": "Máximo de {{ validationValue }} caracteres",
     "fr-fr": "Le nombre maximum est de {{ validationValue }} caractères",
-    "ja": "最大 {{ validationValue }} 文字"
+    "ja": "最大 {{ validationValue }} 文字",
+    "fr-ca": "Max {{ validationValue }} characters"
   },
   "minCharacters": {
     "source": "Min {{ validationValue }} characters",
@@ -88,7 +94,8 @@
     "de": "Min. {{ validationValue }} Zeichen",
     "es": "Mínimo de {{ validationValue }} caracteres",
     "fr-fr": "Le nombre minimum est de {{ validationValue }} caractères",
-    "ja": "最小 {{ validationValue }} 文字"
+    "ja": "最小 {{ validationValue }} 文字",
+    "fr-ca": "Min {{ validationValue }} characters"
   },
   "invalidEmail": {
     "source": "Invalid email address",
@@ -101,7 +108,8 @@
     "de": "Ungültige E-Mail-Adresse",
     "es": "Dirección de correo electrónico no válida",
     "fr-fr": "Adresse email non valide",
-    "ja": "無効な電子メールアドレスです"
+    "ja": "無効な電子メールアドレスです",
+    "fr-ca": "Invalid email address"
   },
   "invalidUrl": {
     "source": "Invalid URL format",
@@ -114,7 +122,8 @@
     "de": "Ungültiges URL-Format",
     "es": "Formato de URL no válido",
     "fr-fr": "Format d’URL non valide",
-    "ja": "無効な URL 形式"
+    "ja": "無効な URL 形式",
+    "fr-ca": "Invalid URL format"
   },
   "number": {
     "source": "Invalid number",
@@ -127,6 +136,7 @@
     "de": "Invalid number",
     "es": "Invalid number",
     "fr-fr": "Invalid number",
-    "ja": "Invalid number"
+    "ja": "Invalid number",
+    "fr-ca": "Invalid number"
   }
 }

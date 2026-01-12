@@ -4,46 +4,46 @@
   <mat-dialog-content>
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ 'collections.dialog.nameLabel' | transloco }}</mat-label>
+        <mat-label>{{ TOKENS.COLLECTIONS.DIALOG.NAMELABEL | transloco }}</mat-label>
         <input
           matInput
           formControlName="name"
-          [placeholder]="'collections.dialog.namePlaceholder' | transloco"
+          [placeholder]="TOKENS.COLLECTIONS.DIALOG.NAMEPLACEHOLDER | transloco"
           required
         />
         @if (form.controls.name.hasError('required')) {
-          <mat-error>{{ 'collections.dialog.nameRequired' | transloco }}</mat-error>
+          <mat-error>{{ TOKENS.COLLECTIONS.DIALOG.NAMEREQUIRED | transloco }}</mat-error>
         }
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ 'collections.dialog.folderLabel' | transloco }}</mat-label>
+        <mat-label>{{ TOKENS.COLLECTIONS.DIALOG.FOLDERLABEL | transloco }}</mat-label>
         <input
           matInput
           formControlName="translationsFolder"
-          [placeholder]="'collections.dialog.folderPlaceholder' | transloco"
+          [placeholder]="TOKENS.COLLECTIONS.DIALOG.FOLDERPLACEHOLDER | transloco"
           required
         />
         @if (form.controls.translationsFolder.hasError('required')) {
-          <mat-error>{{ 'collections.dialog.folderRequired' | transloco }}</mat-error>
+          <mat-error>{{ TOKENS.COLLECTIONS.DIALOG.FOLDERREQUIRED | transloco }}</mat-error>
         }
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ 'collections.dialog.localesLabel' | transloco }}</mat-label>
+        <mat-label>{{ TOKENS.COLLECTIONS.DIALOG.LOCALESLABEL | transloco }}</mat-label>
         <input
           matInput
           formControlName="locales"
-          [placeholder]="'collections.dialog.localesPlaceholder' | transloco"
+          [placeholder]="TOKENS.COLLECTIONS.DIALOG.LOCALESPLACEHOLDER | transloco"
         />
-        <mat-hint>{{ 'collections.dialog.localesHint' | transloco }}</mat-hint>
+        <mat-hint>{{ TOKENS.COLLECTIONS.DIALOG.LOCALESHINT | transloco }}</mat-hint>
       </mat-form-field>
     </form>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
     <button mat-button type="button" (click)="onCancel()">
-      {{ 'collections.dialog.cancel' | transloco }}
+      {{ TOKENS.COMMON.ACTIONS.CANCEL | transloco }}
     </button>
     <button
       mat-raised-button
@@ -52,7 +52,7 @@
       (click)="onSubmit()"
       [disabled]="form.invalid"
     >
-      {{ (isEditMode ? 'collections.dialog.save' : 'collections.dialog.create') | transloco }}
+      {{ (isEditMode ? TOKENS.COMMON.ACTIONS.SAVE : TOKENS.COLLECTIONS.DIALOG.CREATEBUTTON) | transloco }}
     </button>
   </mat-dialog-actions>
 </div>

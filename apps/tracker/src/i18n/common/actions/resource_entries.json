@@ -1,0 +1,40 @@
+{
+  "edit": {
+    "source": "Edit",
+    "comment": "Text on a button or link that will display edit form for an entity",
+    "tags": [
+      "common"
+    ],
+    "es": "Edit"
+  },
+  "delete": {
+    "source": "Delete",
+    "comment": "Text on a button that will cause an entity to be deleted",
+    "tags": [
+      "common"
+    ],
+    "es": "Delete"
+  },
+  "retry": {
+    "source": "Retry",
+    "comment": "Text on a button to cause an action to retry operation",
+    "tags": [
+      "common"
+    ],
+    "es": "Retry"
+  },
+  "cancel": {
+    "source": "Cancel",
+    "comment": "Text on a button to cancel whatever opration the user was about to do",
+    "es": "Cancel"
+  },
+  "ok": {
+    "source": "OK",
+    "es": "OK"
+  },
+  "save": {
+    "source": "Save",
+    "comment": "Save button text in edit mode",
+    "es": "Save"
+  }
+}

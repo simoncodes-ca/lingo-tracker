@@ -22,6 +22,11 @@
       "checksum": "77dab3cb4452f408059933a37ca2c5f9",
       "baseChecksum": "cda5132955c43b0ac7ae8adfa27cc35e",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "cda5132955c43b0ac7ae8adfa27cc35e",
+      "baseChecksum": "cda5132955c43b0ac7ae8adfa27cc35e",
+      "status": "new"
     }
   },
   "selectFiles": {
@@ -47,6 +52,11 @@
       "checksum": "77dab3cb4452f408059933a37ca2c5f9",
       "baseChecksum": "1afe200fa26ba361f59b603b22ad6392",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "1afe200fa26ba361f59b603b22ad6392",
+      "baseChecksum": "1afe200fa26ba361f59b603b22ad6392",
+      "status": "new"
     }
   }
 }

@@ -1,6 +1,7 @@
 {
   "title": {
     "source": "Edit Collection",
-    "comment": "Dialog title when editing an existing collection"
+    "comment": "Dialog title when editing an existing collection",
+    "es": "Edit Collection"
   }
 }
