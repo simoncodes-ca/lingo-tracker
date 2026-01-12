@@ -1,0 +1,36 @@
+<div role="alertdialog" aria-labelledby="dialog-title" aria-describedby="dialog-message">
+  <h2 id="dialog-title" mat-dialog-title>{{ data.title }}</h2>
+
+  <mat-dialog-content>
+    <p id="dialog-message">{{ data.message }}</p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button
+      mat-button
+      type="button"
+      (click)="onCancel()"
+    >
+      {{ cancelButtonText }}
+    </button>
+    @if (isDestructive) {
+      <button
+        mat-flat-button
+        color="warn"
+        type="button"
+        (click)="onConfirm()"
+      >
+        {{ confirmButtonText }}
+      </button>
+    } @else {
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="onConfirm()"
+      >
+        {{ confirmButtonText }}
+      </button>
+    }
+  </mat-dialog-actions>
+</div>

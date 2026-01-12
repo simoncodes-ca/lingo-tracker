@@ -1,0 +1,22 @@
+{
+  "name": {
+    "en": {
+      "checksum": "3368b0851da49f06d4c69758cf85ac92"
+    }
+  },
+  "translationsFolder": {
+    "en": {
+      "checksum": "da38f56b09a32e7328c23c01f0a0738e"
+    }
+  },
+  "locales": {
+    "en": {
+      "checksum": "52ec7aab68a6cdc237d9db8133bc815f"
+    }
+  },
+  "localesPlaceholder": {
+    "en": {
+      "checksum": "43735cf0e646ed6cb9f4863c9120e09d"
+    }
+  }
+}

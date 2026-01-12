@@ -1,0 +1,51 @@
+{
+  "collections": {
+    "title": "Collections",
+    "loading": "Loading collections...",
+    "emptyState": {
+      "message": "No collections yet. Create your first collection to get started.",
+      "cta": "Create Collection"
+    },
+    "actions": {
+      "add": "Add Collection",
+      "edit": "Edit collection",
+      "delete": "Delete collection",
+      "retry": "Retry"
+    },
+    "toast": {
+      "created": "Collection created successfully",
+      "updated": "Collection updated successfully",
+      "deleted": "Collection deleted successfully",
+      "error": "An error occurred. Please try again."
+    },
+    "dialog": {
+      "createTitle": "Create Collection",
+      "editTitle": "Edit Collection",
+      "nameLabel": "Collection Name",
+      "namePlaceholder": "e.g., my-app-i18n",
+      "nameRequired": "Collection name is required",
+      "folderLabel": "Translations Folder",
+      "folderPlaceholder": "e.g., ./src/assets/i18n",
+      "folderRequired": "Translations folder is required",
+      "localesLabel": "Locales (Optional)",
+      "localesPlaceholder": "e.g., en, fr, es",
+      "localesHint": "Comma-separated list of locale codes. Leave empty to use global config.",
+      "cancel": "Cancel",
+      "create": "Create",
+      "save": "Save"
+    },
+    "deleteDialog": {
+      "title": "Delete Collection",
+      "message": "Are you sure you want to delete the collection \"{{name}}\"? This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+  "browser": {
+    "placeholder": {
+      "title": "Translation Browser Coming Soon",
+      "message": "The translation browser feature is currently under development. Soon you'll be able to view, edit, and manage all translations within this collection.",
+      "collection": "Collection"
+    }
+  }
+}

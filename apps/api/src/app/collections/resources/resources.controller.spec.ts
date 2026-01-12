@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, NotFoundException } from '@nestjs/common';
-import { TranslationStatus } from '@simoncodes-ca/core';
+import { TranslationStatus, LocaleMetadata } from '@simoncodes-ca/core';
 import { ResourcesController } from './resources.controller';
 import { ConfigService } from '../../config/config.service';
 import * as core from '@simoncodes-ca/core';
@@ -15,12 +15,59 @@ jest.mock('@simoncodes-ca/core', () => {
     moveResource: jest.fn(),
     moveResourcesByPattern: jest.fn(),
     editResource: jest.fn(),
+    loadResourceTree: jest.fn(),
   };
 });
 
 // Mock the mapper
 jest.mock('../../mappers/resource.mapper', () => ({
   mapDtoToAddResourceParams: jest.fn((dto) => dto),
+}));
+
+// Mock the resource tree mapper
+jest.mock('../../mappers/resource-tree.mapper', () => ({
+  mapResourceTreeToDto: jest.fn((treeNode) => {
+    // Simple pass-through mapper for tests that mimics the real mapper
+    return {
+      path: treeNode.folderPathSegments.join('.'),
+      resources: treeNode.resources.map((r: any) => {
+        // Find base locale
+        let baseLocale: string | undefined;
+        for (const [locale, meta] of Object.entries<LocaleMetadata>(r.metadata)) {
+          if (meta.status === undefined && meta.baseChecksum === undefined) {
+            baseLocale = locale;
+            break;
+          }
+        }
+
+        // Combine source and translations
+        const translations: Record<string, string> = { ...r.translations };
+        if (baseLocale) {
+          translations[baseLocale] = r.source;
+        }
+
+        // Extract status
+        const status: Record<string, any> = {};
+        for (const [locale, meta] of Object.entries<LocaleMetadata>(r.metadata)) {
+          status[locale] = meta.status;
+        }
+
+        return {
+          key: r.key,
+          translations,
+          status,
+          comment: r.comment,
+          tags: r.tags
+        };
+      }),
+      children: treeNode.children.map((c: any) => ({
+        name: c.name,
+        fullPath: c.fullPathSegments.join('.'),
+        loaded: c.loaded,
+        tree: c.tree ? { path: c.fullPathSegments.join('.'), resources: [], children: [] } : undefined
+      }))
+    };
+  }),
 }));
 
 describe('ResourcesController', () => {
@@ -891,6 +938,150 @@ describe('ResourcesController', () => {
       } catch (error: any) {
         expect(error.status).toBe(400);
       }
+    });
+  });
+
+  describe('getTree', () => {
+    it('should return resource tree for root with default depth', async () => {
+      const loadResourceTree = core.loadResourceTree as jest.Mock;
+      const mockTreeNode = {
+        folderPathSegments: [],
+        resources: [
+          {
+            key: 'title',
+            source: 'Title',
+            translations: { es: 'Título' },
+            metadata: {
+              en: { checksum: 'a' },
+              es: { status: 'new', checksum: '', baseChecksum: 'a' }
+            }
+          }
+        ],
+        children: []
+      };
+
+      loadResourceTree.mockReturnValue(mockTreeNode);
+
+      const result = await resourcesController.getTree('test-collection', '', '2');
+
+      expect(result).toHaveProperty('path', '');
+      expect(result).toHaveProperty('resources');
+      expect(result.resources).toHaveLength(1);
+      expect(result.resources[0].key).toBe('title');
+      expect(result).toHaveProperty('children');
+      expect(loadResourceTree).toHaveBeenCalledWith(
+        expect.objectContaining({
+          translationsFolder: './translations/test',
+          path: '',
+          depth: 2
+        })
+      );
+    });
+
+    it('should accept path query parameter', async () => {
+      const loadResourceTree = core.loadResourceTree as jest.Mock;
+      const mockTreeNode = {
+        folderPathSegments: ['apps'],
+        resources: [
+          {
+            key: 'test',
+            source: 'Test',
+            translations: { es: 'Prueba' },
+            metadata: {
+              en: { checksum: 't' }
+            }
+          }
+        ],
+        children: []
+      };
+
+      loadResourceTree.mockReturnValue(mockTreeNode);
+
+      const result = await resourcesController.getTree('test-collection', 'apps', '2');
+
+      expect(result.path).toBe('apps');
+      expect(result.resources).toHaveLength(1);
+      expect(result.resources[0].key).toBe('test');
+      expect(loadResourceTree).toHaveBeenCalledWith(
+        expect.objectContaining({
+          translationsFolder: './translations/test',
+          path: 'apps',
+          depth: 2
+        })
+      );
+    });
+
+    it('should accept depth query parameter', async () => {
+      const loadResourceTree = core.loadResourceTree as jest.Mock;
+      const mockTreeNode = {
+        folderPathSegments: [],
+        resources: [],
+        children: [
+          {
+            name: 'apps',
+            fullPathSegments: ['apps'],
+            loaded: false
+          }
+        ]
+      };
+
+      loadResourceTree.mockReturnValue(mockTreeNode);
+
+      const result = await resourcesController.getTree('test-collection', '', '0');
+
+      expect(result.children[0].loaded).toBe(false);
+      expect(loadResourceTree).toHaveBeenCalledWith(
+        expect.objectContaining({
+          translationsFolder: './translations/test',
+          path: '',
+          depth: 0
+        })
+      );
+    });
+
+    it('should return 404 for non-existent collection', async () => {
+      const configWithoutCollection = {
+        ...mockConfig,
+        collections: {},
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithoutCollection);
+
+      await expect(
+        resourcesController.getTree('nonexistent', '', '2')
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return 400 for invalid depth', async () => {
+      await expect(
+        resourcesController.getTree('test-collection', '', '-1')
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.getTree('test-collection', '', '-1');
+      } catch (error: any) {
+        expect(error.status).toBe(400);
+      }
+
+      await expect(
+        resourcesController.getTree('test-collection', '', '15')
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.getTree('test-collection', '', '15');
+      } catch (error: any) {
+        expect(error.status).toBe(400);
+      }
+    });
+
+    it('should return 404 for non-existent folder path', async () => {
+      const loadResourceTree = core.loadResourceTree as jest.Mock;
+      loadResourceTree.mockImplementation(() => {
+        throw new Error('Folder not found: nonexistent.path');
+      });
+
+      await expect(
+        resourcesController.getTree('test-collection', 'nonexistent.path', '2')
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

@@ -1,0 +1,94 @@
+.app-toolbar {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border);
+  height: 64px;
+  padding: 0 var(--spacing-6);
+
+  @media (max-width: 768px) {
+    height: 56px;
+    padding: 0 var(--spacing-4);
+  }
+}
+
+.toolbar-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  cursor: pointer;
+  user-select: none;
+
+  .logo-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: var(--color-primary);
+  }
+
+  .app-title {
+    font-family: 'Inter', sans-serif;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+    color: var(--color-text-primary);
+
+    @media (max-width: 768px) {
+      font-size: var(--font-size-lg);
+    }
+  }
+}
+
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.theme-button {
+  color: var(--color-text-secondary);
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+}
+
+// Theme menu styles
+::ng-deep .mat-mdc-menu-panel {
+  min-width: 180px;
+}
+
+::ng-deep .mat-mdc-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-4);
+
+  &.active {
+    background-color: var(--color-primary-subtle);
+    color: var(--color-primary);
+
+    mat-icon {
+      color: var(--color-primary);
+    }
+  }
+
+  mat-icon:first-child {
+    margin-right: 0;
+  }
+
+  span {
+    flex: 1;
+  }
+
+  .check-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--color-primary);
+  }
+}

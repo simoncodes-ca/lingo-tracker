@@ -1,108 +1,42 @@
-@use '@angular/material' as mat;
+// Import custom Material theme
+@use './styles/theme.scss';
 
-html {
-  @include mat.theme((
-    color: mat.$violet-palette,   /* or your generated palette */
-    typography: (
-      plain-family: Roboto,
-      brand-family: Open Sans,
-      bold-weight: 900,
-      medium-weight: 500,
-      regular-weight: 300,
-    ),
-    density: -2
-  ));
-}
+// Import CSS custom properties (tokens)
+@use './styles/tokens.scss';
 
-body.dark-theme {
-  @include mat.theme((
-    color: (
-      primary:mat.$violet-palette,
-      theme-type: dark,
-    ),
-    density: -2,
-    typography: (
-      plain-family: Roboto,
-      brand-family: Open Sans,
-      bold-weight: 900,
-      medium-weight: 500,
-      regular-weight: 300,
-    ),
-  ),
-  $overrides: (
-    "background": #24292e,
-  ));
-}
+// Import typography utilities
+@use './styles/typography.scss';
 
+// Import responsive breakpoints
+@use './styles/breakpoints.scss';
+
+// Global styles
 html,
 body {
   height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.confirmation-dialog-panel .mdc-dialog__surface,
-.confirmation-dialog-root .mdc-dialog__surface {
-  border: 2px solid var(--mat-sys-primary);
-  border-radius: 8px;
+code,
+pre {
+  font-family: 'IBM Plex Mono', monospace;
 }
 
-.info {
-  @include mat.theme((
-    color: mat.$azure-palette,
-  ))
+// Focus visible styles for keyboard navigation
+*:focus-visible {
+  outline: 2px solid var(--focus-ring-color, #2563eb);
+  outline-offset: 2px;
 }
 
-.success {
-  @include mat.theme((
-    color: mat.$green-palette,
-  ))
-}
-
-.warning {
-  @include mat.theme((
-    color: mat.$yellow-palette,
-  ))
-}
-
-.error {
-  @include mat.theme((
-    color: mat.$red-palette,
-  ))
-}
-
-/* Make overlay backdrops ~20% darker (from 0.32 → 0.4 opacity) */
+// Make overlay backdrops slightly darker
 .cdk-overlay-backdrop,
 .cdk-overlay-dark-backdrop {
   background: rgba(0, 0, 0, 0.4) !important;
-}
-
-/* Confirmation dialog title uses secondary colors */
-.confirmation-dialog-panel .mat-mdc-dialog-title,
-.confirmation-dialog-root .mat-mdc-dialog-title {
-  background-color: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-}
-
-/* Confirmation dialog content typography and spacing */
-confirmation-dialog > .mat-mdc-dialog-content.mdc-dialog__content {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-}
-
-/* Make both action buttons equal width */
-.confirmation-dialog .mat-mdc-dialog-actions {
-  display: inline-flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-confirmation-dialog > .mat-mdc-dialog-actions.mdc-dialog__actions > .mdc-button {
-  min-width: 120px;
 }

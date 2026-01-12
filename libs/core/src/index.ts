@@ -17,6 +17,7 @@ export * from './lib/validate';
 // Export new utilities
 export * from './lib/file-io';
 export * from './lib/resource';
+export * from './lib/resource/load-resource-tree';
 export * from './lib/config';
 export * from './lib/errors';
 

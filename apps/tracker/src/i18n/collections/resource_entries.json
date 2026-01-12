@@ -1,0 +1,10 @@
+{
+  "title": {
+    "source": "Collections",
+    "comment": "Page title for collections management dashboard"
+  },
+  "addButton": {
+    "source": "Add Collection",
+    "comment": "Button text to open dialog for creating a new collection"
+  }
+}

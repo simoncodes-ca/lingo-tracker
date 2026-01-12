@@ -1,0 +1,6 @@
+{
+  "required": {
+    "source": "This field is required",
+    "comment": "Validation error for required fields"
+  }
+}

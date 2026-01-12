@@ -28,6 +28,13 @@
     },
     "Web": {
       "translationsFolder": "apps/web/src/i18n"
+    },
+    "trackerResources": {
+      "translationsFolder": "apps/tracker/src/i18n",
+      "locales": [
+        "en",
+        "es"
+      ]
     }
   },
   "bundles": {
@@ -36,6 +43,12 @@
       "dist": "./dist/i18n",
       "collections": "All",
       "typeDist": "./dist/i18n-types/main.ts"
+    },
+    "tracker": {
+      "bundleName": "{locale}",
+      "dist": "./apps/tracker/src/assets/i18n",
+      "collections": "trackerResources",
+      "typeDist": "./apps/tracker/src/i18n-types/tracker-resources.ts"
     }
   }
 }

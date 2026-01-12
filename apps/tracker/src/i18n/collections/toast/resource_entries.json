@@ -1,0 +1,18 @@
+{
+  "created": {
+    "source": "Collection created successfully",
+    "comment": "Success message after creating a collection"
+  },
+  "updated": {
+    "source": "Collection updated successfully",
+    "comment": "Success message after editing a collection"
+  },
+  "deleted": {
+    "source": "Collection deleted successfully",
+    "comment": "Success message after deleting a collection"
+  },
+  "error": {
+    "source": "An error occurred. Please try again.",
+    "comment": "Generic error message for failed operations"
+  }
+}

@@ -3,6 +3,8 @@ import {
   Post,
   Delete,
   Patch,
+  Get,
+  Query,
   Param,
   Body,
   HttpException,
@@ -14,7 +16,8 @@ import {
   createDefaultTranslations,
   deleteResource,
   moveResource,
-  editResource
+  editResource,
+  loadResourceTree
 } from '@simoncodes-ca/core';
 import {
   CreateResourceDto,
@@ -24,10 +27,12 @@ import {
   MoveResourceDto,
   MoveResourceResponseDto,
   UpdateResourceDto,
-  UpdateResourceResponseDto
+  UpdateResourceResponseDto,
+  ResourceTreeDto
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
+import { mapResourceTreeToDto } from '../../mappers/resource-tree.mapper';
 
 @Controller('collections/:collectionName/resources')
 export class ResourcesController {
@@ -274,6 +279,66 @@ export class ResourcesController {
         throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
       }
 
+      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Get('tree')
+  async getTree(
+    @Param('collectionName') collectionName: string,
+    @Query('path') path?: string,
+    @Query('depth') depth?: string
+  ): Promise<ResourceTreeDto> {
+    try {
+      const decodedCollectionName = decodeURIComponent(collectionName);
+      const config = this.configService.getConfig();
+
+      if (!config.collections || !config.collections[decodedCollectionName]) {
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
+      }
+
+      // Validate and parse depth parameter
+      let depthValue = 2; // default
+      if (depth !== undefined) {
+        depthValue = parseInt(depth, 10);
+        if (isNaN(depthValue) || depthValue < 0 || depthValue > 10) {
+          throw new HttpException(
+            'Depth must be a number between 0 and 10',
+            HttpStatus.BAD_REQUEST
+          );
+        }
+      }
+
+      const collection = config.collections[decodedCollectionName];
+      const translationsFolder = collection.translationsFolder;
+
+      // Load resource tree from core library
+      const treeNode = loadResourceTree({
+        translationsFolder,
+        path: path || '',
+        depth: depthValue
+      });
+
+      // Map to DTO
+      return mapResourceTreeToDto(treeNode);
+
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Error loading resource tree';
+
+      // Folder not found errors
+      if (errorMessage.includes('Folder not found')) {
+        throw new NotFoundException(errorMessage);
+      }
+
+      // Other errors
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

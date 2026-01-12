@@ -1,0 +1,28 @@
+<div class="browser-container">
+  <header class="browser-header">
+    <button
+      mat-icon-button
+      (click)="navigateToCollections()"
+      aria-label="Back to collections"
+    >
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="collection-title">{{ collectionName() }}</h1>
+  </header>
+
+  <main class="browser-content">
+    <mat-card class="placeholder-card">
+      <mat-card-content>
+        <div class="placeholder-content">
+          <mat-icon class="placeholder-icon">construction</mat-icon>
+          <h2>{{ 'browser.placeholder.title' | transloco }}</h2>
+          <p>{{ 'browser.placeholder.message' | transloco }}</p>
+          <p class="collection-info">
+            {{ 'browser.placeholder.collection' | transloco }}:
+            <strong>{{ collectionName() }}</strong>
+          </p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </main>
+</div>
