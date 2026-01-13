@@ -84,7 +84,7 @@ describe('TranslocoHttpLoader', () => {
   describe('Error Handling', () => {
     it('should return empty object when HTTP request fails', async () => {
       const lang = 'en';
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(loader.getTranslation(lang));
 
@@ -101,7 +101,7 @@ describe('TranslocoHttpLoader', () => {
 
     it('should return empty object when file is not found (404)', async () => {
       const lang = 'unknown';
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(loader.getTranslation(lang));
 
@@ -118,7 +118,7 @@ describe('TranslocoHttpLoader', () => {
 
     it('should return empty object when server returns 500 error', async () => {
       const lang = 'en';
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(loader.getTranslation(lang));
 
@@ -135,7 +135,7 @@ describe('TranslocoHttpLoader', () => {
 
     it('should log error message with language when loading fails', async () => {
       const lang = 'fr';
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(loader.getTranslation(lang));
 
@@ -175,7 +175,7 @@ describe('TranslocoHttpLoader', () => {
     it('should complete the observable after error', async () => {
       const lang = 'en';
       let completedCallbackCalled = false;
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(
         loader.getTranslation(lang).pipe(
