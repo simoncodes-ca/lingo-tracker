@@ -57,10 +57,13 @@
   <!-- Collections Grid -->
   @if (store.hasCollections() && !store.isLoading()) {
     <div class="collections-grid">
-      @for (item of store.collectionEntries(); track item.name) {
+      @for (item of store.collectionEntriesWithLocales(); track item.name) {
         <div class="collection-card" tabindex="0" (click)="navigateToBrowser(item.name)" (keydown.enter)="navigateToBrowser(item.name)" (keydown.space)="navigateToBrowser(item.name)">
           <div class="card-header">
-            <h3 class="collection-name">{{ item.name }}</h3>
+            <div class="card-title">
+              <mat-icon class="folder-icon">folder</mat-icon>
+              <h3 class="collection-name">{{ item.name }}</h3>
+            </div>
             <div class="card-actions">
               <button
                 mat-icon-button
@@ -82,6 +85,11 @@
           </div>
           <div class="card-content">
             <p class="folder-path">{{ item.config.translationsFolder }}</p>
+            <div class="locale-badges">
+              @for (locale of item.locales; track locale) {
+                <span class="locale-badge">{{ locale }}</span>
+              }
+            </div>
           </div>
         </div>
       }

@@ -12,6 +12,7 @@ import { inject } from '@angular/core';
 import { CollectionsApiService } from '../services/collections-api.service';
 import {
   LingoTrackerCollectionDto,
+  LingoTrackerConfigDto,
   CreateCollectionDto,
   UpdateCollectionDto,
 } from '@simoncodes-ca/data-transfer';
@@ -20,8 +21,8 @@ import {
  * State interface for the Collections store.
  */
 interface CollectionsState {
-  /** Map of collection name to collection configuration */
-  collections: Record<string, LingoTrackerCollectionDto>;
+  /** Full LingoTracker configuration including global settings and collections */
+  config: LingoTrackerConfigDto | null;
 
   /** Loading state for async operations */
   isLoading: boolean;
@@ -34,7 +35,7 @@ interface CollectionsState {
  * Initial state for the Collections store.
  */
 const initialState: CollectionsState = {
-  collections: {},
+  config: null,
   isLoading: false,
   error: null,
 };
@@ -55,20 +56,48 @@ const initialState: CollectionsState = {
 export const CollectionsStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ collections }) => ({
+  withComputed(({ config }) => ({
     /**
      * Converts collections Record to array of [name, config] tuples for iteration.
      */
-    collectionEntries: computed(() =>
-      Object.entries(collections()).map(
-        ([name, config]) => ({ name, config } as const)
-      )
-    ),
+    collectionEntries: computed(() => {
+      const cfg = config();
+      if (!cfg?.collections) return [];
+      return Object.entries(cfg.collections).map(
+        ([name, collection]) => ({ name, config: collection } as const)
+      );
+    }),
+
+    /**
+     * Converts collections to array with resolved locales for each collection.
+     * Collections inherit global locales unless they specify their own.
+     */
+    collectionEntriesWithLocales: computed(() => {
+      const cfg = config();
+      if (!cfg?.collections) return [];
+      return Object.entries(cfg.collections).map(([name, collection]) => {
+        const coll = collection as LingoTrackerCollectionDto;
+        return {
+          name,
+          config: coll,
+          locales: coll.locales || cfg.locales,
+          baseLocale: coll.baseLocale || cfg.baseLocale,
+        };
+      });
+    }),
 
     /**
      * Returns true if there are any collections.
      */
-    hasCollections: computed(() => Object.keys(collections()).length > 0),
+    hasCollections: computed(() => {
+      const cfg = config();
+      return cfg?.collections ? Object.keys(cfg.collections).length > 0 : false;
+    }),
+
+    /**
+     * Returns the collections object for direct access.
+     */
+    collections: computed(() => config()?.collections || {}),
   })),
   withMethods((store) => {
     const api = inject(CollectionsApiService);
@@ -82,9 +111,9 @@ export const CollectionsStore = signalStore(
           tap(() => patchState(store, { isLoading: true, error: null })),
           switchMap(() =>
             api.getConfig().pipe(
-              tap((config) => {
+              tap((configData) => {
                 patchState(store, {
-                  collections: config.collections || {},
+                  config: configData,
                   isLoading: false,
                   error: null,
                 });
@@ -118,9 +147,9 @@ export const CollectionsStore = signalStore(
                 patchState(store, { isLoading: false });
               }),
               switchMap(() => api.getConfig()),
-              tap((config) => {
+              tap((configData) => {
                 patchState(store, {
-                  collections: config.collections || {},
+                  config: configData,
                   error: null,
                 });
               }),
@@ -161,9 +190,9 @@ export const CollectionsStore = signalStore(
                 patchState(store, { isLoading: false });
               }),
               switchMap(() => api.getConfig()),
-              tap((config) => {
+              tap((configData) => {
                 patchState(store, {
-                  collections: config.collections || {},
+                  config: configData,
                   error: null,
                 });
               }),
@@ -196,9 +225,9 @@ export const CollectionsStore = signalStore(
                 patchState(store, { isLoading: false });
               }),
               switchMap(() => api.getConfig()),
-              tap((config) => {
+              tap((configData) => {
                 patchState(store, {
-                  collections: config.collections || {},
+                  config: configData,
                   error: null,
                 });
               }),

@@ -148,18 +148,35 @@
     gap: var(--spacing-3);
     margin-bottom: var(--spacing-4);
 
-    .collection-name {
-      margin: 0;
-      font-size: var(--font-size-xl);
-      font-weight: var(--font-weight-semibold);
-      color: var(--color-text-primary);
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
       flex: 1;
-      word-break: break-word;
+      min-width: 0;
+
+      .folder-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        color: var(--color-primary);
+        flex-shrink: 0;
+      }
+
+      .collection-name {
+        margin: 0;
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-text-primary);
+        flex: 1;
+        word-break: break-word;
+      }
     }
 
     .card-actions {
       display: flex;
       gap: var(--spacing-1);
+      flex-shrink: 0;
 
       button {
         cursor: pointer;
@@ -173,6 +190,9 @@
 
   .card-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
 
     .folder-path {
       margin: 0;
@@ -180,6 +200,24 @@
       color: var(--color-text-secondary);
       font-family: var(--font-mono, monospace);
       word-break: break-all;
+    }
+
+    .locale-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-2);
+      margin-top: var(--spacing-4);
+
+      .locale-badge {
+        display: inline-block;
+        padding: var(--spacing-1) var(--spacing-3);
+        background: var(--color-primary-alpha-10, rgba(63, 81, 181, 0.1));
+        color: var(--color-primary, #3f51b5);
+        border-radius: var(--radius-full, 999px);
+        font-size: var(--font-size-xs, 12px);
+        font-weight: var(--font-weight-medium, 500);
+        font-family: var(--font-mono, monospace);
+      }
     }
   }
 }
