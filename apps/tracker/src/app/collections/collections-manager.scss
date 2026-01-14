@@ -124,7 +124,7 @@
   flex-direction: column;
   padding: var(--spacing-6);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--border-radius-lg);
   background: var(--color-surface);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -213,7 +213,7 @@
         padding: var(--spacing-1) var(--spacing-3);
         background: var(--color-primary-alpha-10, rgba(63, 81, 181, 0.1));
         color: var(--color-primary, #3f51b5);
-        border-radius: var(--radius-full, 999px);
+        border-radius: var(--border-radius-full, 999px);
         font-size: var(--font-size-xs, 12px);
         font-weight: var(--font-weight-medium, 500);
         font-family: var(--font-mono, monospace);
