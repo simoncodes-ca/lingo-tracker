@@ -68,19 +68,23 @@
               <button
                 mat-icon-button
                 type="button"
-                [attr.aria-label]="TOKENS.COMMON.ACTIONS.EDIT| transloco"
-                (click)="$event.stopPropagation(); openEditDialog(item.name)"
+                [matMenuTriggerFor]="menu"
+                [attr.aria-label]="'More actions'"
+                (click)="$event.stopPropagation()"
               >
-                <mat-icon>edit</mat-icon>
+                <mat-icon>more_vert</mat-icon>
               </button>
-              <button
-                mat-icon-button
-                type="button"
-                [attr.aria-label]="TOKENS.COMMON.ACTIONS.DELETE | transloco"
-                (click)="$event.stopPropagation(); openDeleteDialog(item.name)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
+
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="openEditDialog(item.name)">
+                  <mat-icon>edit</mat-icon>
+                  <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
+                </button>
+                <button mat-menu-item (click)="openDeleteDialog(item.name)">
+                  <mat-icon>delete</mat-icon>
+                  <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
+                </button>
+              </mat-menu>
             </div>
           </div>
           <div class="card-content">
