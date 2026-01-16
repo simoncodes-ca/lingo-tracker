@@ -58,5 +58,15 @@
       "baseChecksum": "c9cc8cce247e49bae79f15173ce97354",
       "status": "new"
     }
+  },
+  "back": {
+    "en": {
+      "checksum": "0557fa923dcee4d0f86b1409f5c2167f"
+    },
+    "es": {
+      "checksum": "0557fa923dcee4d0f86b1409f5c2167f",
+      "baseChecksum": "0557fa923dcee4d0f86b1409f5c2167f",
+      "status": "new"
+    }
   }
 }

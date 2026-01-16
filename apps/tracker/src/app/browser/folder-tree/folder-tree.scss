@@ -1,0 +1,148 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.folder-tree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-background-subtle);
+
+  &.disabled {
+    opacity: 0.6;
+  }
+}
+
+.search-container {
+  padding: var(--spacing-4);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+
+  .search-field {
+    width: 100%;
+    margin: 0;
+
+    ::ng-deep {
+      .mat-mdc-form-field-flex {
+        height: 40px;
+        align-items: center;
+      }
+
+      .mat-mdc-text-field-wrapper {
+        padding: 0;
+      }
+
+      .mat-mdc-form-field-infix {
+        padding-top: 0;
+        padding-bottom: 0;
+        min-height: unset;
+        display: flex;
+        align-items: center;
+      }
+
+      input {
+        font-size: var(--font-size-sm);
+        margin-top: 0;
+      }
+
+      .mat-mdc-form-field-icon-prefix {
+        padding: 0;
+        display: flex;
+        align-items: center;
+
+        mat-icon {
+          color: var(--color-text-tertiary);
+        }
+      }
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-8);
+  flex: 1;
+
+  .loading-text {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-6);
+  flex: 1;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: var(--color-error);
+  }
+
+  .error-text {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    text-align: center;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-8);
+  flex: 1;
+
+  .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--color-text-tertiary);
+  }
+
+  .empty-text {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+}
+
+.folder-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-2);
+
+  // Scrollbar styling
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+
+    &:hover {
+      background: var(--color-border-strong);
+    }
+  }
+}

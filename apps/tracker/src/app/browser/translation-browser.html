@@ -1,28 +1,36 @@
-<div class="browser-container">
+<div class="translation-browser">
   <header class="browser-header">
     <button
       mat-icon-button
+      type="button"
       (click)="navigateToCollections()"
-      [attr.aria-label]="TOKENS.BROWSER.BACKBUTTON | transloco"
+      [attr.aria-label]="TOKENS.COMMON.ACTIONS.BACK | transloco"
     >
       <mat-icon>arrow_back</mat-icon>
     </button>
-    <h1 class="collection-title">{{ collectionName() }}</h1>
+    <h1>{{ collectionName() }}</h1>
   </header>
 
-  <main class="browser-content">
-    <mat-card class="placeholder-card">
-      <mat-card-content>
-        <div class="placeholder-content">
-          <mat-icon class="placeholder-icon">construction</mat-icon>
-          <h2>{{ TOKENS.BROWSER.PLACEHOLDER.TITLE | transloco }}</h2>
-          <p>{{ TOKENS.BROWSER.PLACEHOLDER.MESSAGE | transloco }}</p>
-          <p class="collection-info">
-            {{ TOKENS.BROWSER.PLACEHOLDER.COLLECTION | transloco }}:
-            <strong>{{ collectionName() }}</strong>
-          </p>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </main>
+  <div class="browser-content">
+    <!-- Left Sidebar: Folder Tree -->
+    <aside class="folder-sidebar">
+      <app-folder-tree
+        [collectionName]="collectionName()"
+        (folderSelected)="onFolderSelected($event)"
+      />
+    </aside>
+
+    <!-- Main Content: Translation List (placeholder) -->
+    <main class="translation-main">
+      <mat-card>
+        <mat-card-content>
+          <div class="placeholder-content">
+            <mat-icon class="placeholder-icon">construction</mat-icon>
+            <h2>{{ TOKENS.BROWSER.PLACEHOLDER.TITLE | transloco }}</h2>
+            <p>{{ TOKENS.BROWSER.PLACEHOLDER.MESSAGE | transloco }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </main>
+  </div>
 </div>

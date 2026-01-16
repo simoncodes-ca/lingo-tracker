@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
+import { FolderTree } from './folder-tree';
 
 /**
  * Translation Browser component for viewing and managing translations within a collection.
@@ -29,6 +30,7 @@ import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
     MatIconModule,
     MatCardModule,
     TranslocoModule,
+    FolderTree,
   ],
   templateUrl: './translation-browser.html',
   styleUrl: './translation-browser.scss',
@@ -57,5 +59,13 @@ export class TranslationBrowser implements OnInit {
    */
   navigateToCollections(): void {
     this.router.navigate(['/collections']);
+  }
+
+  /**
+   * Handles folder selection from the tree.
+   */
+  onFolderSelected(folderPath: string): void {
+    console.log('Selected folder:', folderPath);
+    // TODO: Load translations for this folder
   }
 }

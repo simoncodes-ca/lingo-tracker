@@ -38,14 +38,16 @@ describe('ConfirmationDialog', () => {
       close: vi.fn(),
     };
 
+    const translateFn = vi.fn((key: string) => {
+      const translations: Record<string, string> = {
+        'common.actions.ok': 'OK',
+        'common.actions.cancel': 'Cancel',
+      };
+      return translations[key] || key;
+    });
+
     mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'common.actions.ok': 'OK',
-          'common.actions.cancel': 'Cancel',
-        };
-        return translations[key] || key;
-      }),
+      translate: translateFn,
     };
 
     await TestBed.configureTestingModule({

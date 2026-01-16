@@ -36,5 +36,9 @@
     "source": "Save",
     "comment": "Save button text in edit mode",
     "es": "Save"
+  },
+  "back": {
+    "source": "Back",
+    "es": "Back"
   }
 }
