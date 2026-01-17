@@ -20,17 +20,22 @@
       />
     </aside>
 
-    <!-- Main Content: Translation List (placeholder) -->
+    <!-- Main Content: Translation List -->
     <main class="translation-main">
-      <mat-card>
-        <mat-card-content>
-          <div class="placeholder-content">
-            <mat-icon class="placeholder-icon">construction</mat-icon>
-            <h2>{{ TOKENS.BROWSER.PLACEHOLDER.TITLE | transloco }}</h2>
-            <p>{{ TOKENS.BROWSER.PLACEHOLDER.MESSAGE | transloco }}</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
+      @if (collectionName() && activeLocales().length > 0) {
+        <app-translation-list
+          [collectionName]="collectionName()"
+          [locales]="activeLocales()"
+          [baseLocale]="baseLocale()"
+          [folderPath]="selectedFolderPath()"
+        />
+      }
+
+      @if (collectionName() && activeLocales().length === 0) {
+        <div class="loading-config">
+          <p>{{ TOKENS.BROWSER.LOADINGCOLLECTIONCONFIGURATION | transloco }}</p>
+        </div>
+      }
     </main>
   </div>
 </div>

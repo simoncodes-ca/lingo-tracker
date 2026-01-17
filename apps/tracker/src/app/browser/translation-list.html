@@ -1,0 +1,52 @@
+<div class="translation-list-container">
+  @if (store.isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>{{ TOKENS.BROWSER.LOADINGTRANSLATIONS | transloco }}</p>
+    </div>
+  }
+
+  @if (store.error() && !store.isLoading()) {
+    <div class="error-container">
+      <p>{{ store.error() }}</p>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="store.loadTranslations({ collectionName: collectionName(), folderPath: folderPath() || undefined })"
+      >
+        Retry
+      </button>
+    </div>
+  }
+
+  @if (!store.isLoading() && !store.error() && store.translations().length === 0) {
+    <div class="empty-state">
+      <mat-card class="info-card">
+        <mat-card-content>
+          <div class="info-content">
+            <mat-icon class="info-icon">info</mat-icon>
+            <p>{{ TOKENS.BROWSER.NOTRANSLATIONSFOUNDINFOLDER | transloco}}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+
+  @if (!store.isLoading() && !store.error() && store.translations().length > 0) {
+    <cdk-virtual-scroll-viewport
+      [itemSize]="itemSize"
+      class="viewport"
+    >
+      <app-translation-item
+        *cdkVirtualFor="let translation of store.translations(); trackBy: trackByKey"
+        [translation]="translation"
+        [locales]="locales()"
+        [baseLocale]="baseLocale()"
+        (copyKey)="handleCopyKey($event)"
+        (editTranslation)="handleEdit($event)"
+        (moveTranslation)="handleMove($event)"
+        (deleteTranslation)="handleDelete($event)"
+      />
+    </cdk-virtual-scroll-viewport>
+  }
+</div>

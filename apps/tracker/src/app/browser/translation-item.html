@@ -1,0 +1,59 @@
+<div class="item-container">
+  <div class="item-header">
+    <button
+      class="key-button"
+      type="button"
+      (click)="copyKey.emit(fullKey())"
+      [matTooltip]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
+    >
+      <span class="key-text">{{ fullKey() }}</span>
+      <mat-icon class="copy-icon">content_copy</mat-icon>
+    </button>
+
+    <button
+      mat-icon-button
+      type="button"
+      [matMenuTriggerFor]="menu"
+      class="context-menu-trigger"
+      [attr.aria-label]="'More actions'"
+    >
+      <mat-icon>more_vert</mat-icon>
+    </button>
+
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="editTranslation.emit(translation())">
+        <mat-icon>edit</mat-icon>
+        <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
+      </button>
+      <button mat-menu-item (click)="moveTranslation.emit(translation())">
+        <mat-icon>drive_file_move</mat-icon>
+        <span>{{ TOKENS.COMMON.ACTIONS.MOVE | transloco }}</span>
+      </button>
+      <button mat-menu-item (click)="deleteTranslation.emit(translation())">
+        <mat-icon>delete</mat-icon>
+        <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
+      </button>
+    </mat-menu>
+  </div>
+
+  <p class="base-value">{{ baseValue() }}</p>
+
+  @if (translation().tags && translation().tags!.length > 0) {
+    <div class="tags-container">
+      @for (tag of translation().tags; track tag) {
+        <mat-chip class="translation-tag">{{ tag }}</mat-chip>
+      }
+    </div>
+  }
+
+  <div class="locale-translations">
+    @for (lt of localeTranslations(); track lt.locale) {
+      <div class="locale-line">
+        <span class="locale-code">{{ lt.locale }}:</span>
+        <span class="locale-value" [attr.data-status]="lt.status">
+          {{ lt.value || '—' }}
+        </span>
+      </div>
+    }
+  </div>
+</div>

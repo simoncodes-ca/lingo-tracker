@@ -18,7 +18,7 @@
     </mat-icon>
     <span class="folder-name">{{ folder().name }}</span>
     @if (!folder().loaded && !disabled()) {
-      <span class="load-hint">click to load</span>
+      <span class="load-hint">{{ TOKENS.BROWSER.CLICKTOLOAD | transloco }}</span>
     }
   </div>
 

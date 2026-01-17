@@ -8,5 +8,85 @@
       "baseChecksum": "b09a15708fbea9ef383087bf01b4f47f",
       "status": "new"
     }
+  },
+  "filterFolders": {
+    "en": {
+      "checksum": "4e0bb967b51a78b8b8ba8c6417045ca3"
+    },
+    "es": {
+      "checksum": "4e0bb967b51a78b8b8ba8c6417045ca3",
+      "baseChecksum": "4e0bb967b51a78b8b8ba8c6417045ca3",
+      "status": "new"
+    }
+  },
+  "loadingFolders": {
+    "en": {
+      "checksum": "eed63f5e6c0eed3660954f4db33c341d"
+    },
+    "es": {
+      "checksum": "eed63f5e6c0eed3660954f4db33c341d",
+      "baseChecksum": "eed63f5e6c0eed3660954f4db33c341d",
+      "status": "new"
+    }
+  },
+  "noFoldersMatchSearch": {
+    "en": {
+      "checksum": "98103e256bcf8b8d056c6c57e182af94"
+    },
+    "es": {
+      "checksum": "98103e256bcf8b8d056c6c57e182af94",
+      "baseChecksum": "98103e256bcf8b8d056c6c57e182af94",
+      "status": "new"
+    }
+  },
+  "noFoldersFound": {
+    "en": {
+      "checksum": "1d4fc1a925ee14980d2465e73cfcbd8b"
+    },
+    "es": {
+      "checksum": "1d4fc1a925ee14980d2465e73cfcbd8b",
+      "baseChecksum": "1d4fc1a925ee14980d2465e73cfcbd8b",
+      "status": "new"
+    }
+  },
+  "clickToLoad": {
+    "en": {
+      "checksum": "73c67a917acc1f58d962462b80209a2d"
+    },
+    "es": {
+      "checksum": "73c67a917acc1f58d962462b80209a2d",
+      "baseChecksum": "73c67a917acc1f58d962462b80209a2d",
+      "status": "new"
+    }
+  },
+  "loadingCollectionConfiguration": {
+    "en": {
+      "checksum": "8f859dd0cadf2db6737aa2340aceac45"
+    },
+    "es": {
+      "checksum": "8f859dd0cadf2db6737aa2340aceac45",
+      "baseChecksum": "8f859dd0cadf2db6737aa2340aceac45",
+      "status": "new"
+    }
+  },
+  "loadingTranslations": {
+    "en": {
+      "checksum": "a20f347327bc7ebdad2e167fdd8fd389"
+    },
+    "es": {
+      "checksum": "a20f347327bc7ebdad2e167fdd8fd389",
+      "baseChecksum": "a20f347327bc7ebdad2e167fdd8fd389",
+      "status": "new"
+    }
+  },
+  "noTranslationsFoundInFolder": {
+    "en": {
+      "checksum": "b0537eb5b23d6c452ec6844ab366473c"
+    },
+    "es": {
+      "checksum": "b0537eb5b23d6c452ec6844ab366473c",
+      "baseChecksum": "b0537eb5b23d6c452ec6844ab366473c",
+      "status": "new"
+    }
   }
 }

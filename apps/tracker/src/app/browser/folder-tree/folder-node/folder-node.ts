@@ -8,6 +8,8 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import {TranslocoModule} from "@jsverse/transloco";
+import {TRACKER_TOKENS} from "../../../../i18n-types/tracker-resources";
 
 /**
  * Recursive component for rendering folder tree nodes.
@@ -22,7 +24,7 @@ import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
   selector: 'app-folder-node',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatIconModule, MatButtonModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule, TranslocoModule],
   templateUrl: './folder-node.html',
   styleUrl: './folder-node.scss',
 })
@@ -41,6 +43,8 @@ export class FolderNode {
 
   /** Emitted when "load" is clicked for an unloaded folder */
   loadFolder = output<string>();
+
+  readonly TOKENS = TRACKER_TOKENS;
 
   /**
    * Handles folder name click.

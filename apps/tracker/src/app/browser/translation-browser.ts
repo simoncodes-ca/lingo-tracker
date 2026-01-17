@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,13 +7,13 @@ import { MatCardModule } from '@angular/material/card';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 import { FolderTree } from './folder-tree';
+import { TranslationList } from './translation-list';
+import { CollectionsStore } from '../collections/store/collections.store';
 
 /**
  * Translation Browser component for viewing and managing translations within a collection.
  *
- * This is currently a placeholder component that will be fully implemented in a future phase.
- *
- * Features (planned):
+ * Features:
  * - Display all translation keys in the collection
  * - Filter and search translations
  * - Edit translation values
@@ -31,6 +31,7 @@ import { FolderTree } from './folder-tree';
     MatCardModule,
     TranslocoModule,
     FolderTree,
+    TranslationList,
   ],
   templateUrl: './translation-browser.html',
   styleUrl: './translation-browser.scss',
@@ -38,6 +39,7 @@ import { FolderTree } from './folder-tree';
 export class TranslationBrowser implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly collectionsStore = inject(CollectionsStore);
 
   readonly TOKENS = TRACKER_TOKENS;
 
@@ -46,7 +48,39 @@ export class TranslationBrowser implements OnInit {
    */
   readonly collectionName = signal<string>('');
 
+  /**
+   * The currently selected folder path.
+   */
+  readonly selectedFolderPath = signal<string>('');
+
+  /**
+   * Computed signal for active locales from collection config.
+   */
+  readonly activeLocales = computed(() => {
+    const name = this.collectionName();
+    if (!name) return [];
+
+    const collections = this.collectionsStore.collectionEntriesWithLocales();
+    const collection = collections.find((c) => c.name === name);
+    return collection?.locales || [];
+  });
+
+  /**
+   * Computed signal for base locale from collection config.
+   */
+  readonly baseLocale = computed(() => {
+    const name = this.collectionName();
+    if (!name) return 'en';
+
+    const collections = this.collectionsStore.collectionEntriesWithLocales();
+    const collection = collections.find((c) => c.name === name);
+    return collection?.baseLocale || 'en';
+  });
+
   ngOnInit(): void {
+    // Load collections to get locale info
+    this.collectionsStore.loadCollections();
+
     // Read collection name from route params
     const name = this.route.snapshot.paramMap.get('collectionName');
     if (name) {
@@ -65,7 +99,6 @@ export class TranslationBrowser implements OnInit {
    * Handles folder selection from the tree.
    */
   onFolderSelected(folderPath: string): void {
-    console.log('Selected folder:', folderPath);
-    // TODO: Load translations for this folder
+    this.selectedFolderPath.set(folderPath);
   }
 }

@@ -68,5 +68,25 @@
       "baseChecksum": "0557fa923dcee4d0f86b1409f5c2167f",
       "status": "new"
     }
+  },
+  "clickToCopy": {
+    "en": {
+      "checksum": "b8ac6182757b167c8f10fd8806b9bc27"
+    },
+    "es": {
+      "checksum": "b8ac6182757b167c8f10fd8806b9bc27",
+      "baseChecksum": "b8ac6182757b167c8f10fd8806b9bc27",
+      "status": "new"
+    }
+  },
+  "move": {
+    "en": {
+      "checksum": "6bc362dbf494c61ea117fe3c71ca48a5"
+    },
+    "es": {
+      "checksum": "6bc362dbf494c61ea117fe3c71ca48a5",
+      "baseChecksum": "6bc362dbf494c61ea117fe3c71ca48a5",
+      "status": "new"
+    }
   }
 }

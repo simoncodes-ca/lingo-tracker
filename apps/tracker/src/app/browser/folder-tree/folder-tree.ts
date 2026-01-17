@@ -19,6 +19,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FolderNode } from './folder-node/folder-node';
 import { FolderTreeStore } from './folder-tree.store';
 import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import {TRACKER_TOKENS} from "../../../i18n-types/tracker-resources";
+import {TranslocoModule} from "@jsverse/transloco";
 
 /**
  * FolderTree component for hierarchical folder navigation.
@@ -42,12 +44,14 @@ import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
     MatFormFieldModule,
     MatProgressSpinnerModule,
     FolderNode,
+      TranslocoModule,
   ],
   templateUrl: './folder-tree.html',
   styleUrl: './folder-tree.scss',
 })
 export class FolderTree implements OnInit {
   readonly store = inject(FolderTreeStore);
+  readonly TOKENS = TRACKER_TOKENS;
 
   /** Name of the collection to browse */
   collectionName = input.required<string>();
@@ -92,12 +96,15 @@ export class FolderTree implements OnInit {
 
   /**
    * Handles load folder requests from child nodes.
+   * Loads the folder's children and immediately selects it to show translations.
    */
   onLoadFolder(folderPath: string): void {
     this.store.loadFolderChildren({
       collectionName: this.collectionName(),
       folderPath,
     });
+    this.store.selectFolder(folderPath);
+    this.folderSelected.emit(folderPath);
   }
 
   /**

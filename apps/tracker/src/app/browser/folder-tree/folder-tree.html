@@ -6,7 +6,7 @@
       <input
         matInput
         type="text"
-        placeholder="Filter folders..."
+        placeholder="{{ TOKENS.BROWSER.FILTERFOLDERS | transloco}}"
         [value]="store.searchFilter()"
         (input)="onSearchChange($any($event.target).value)"
         [disabled]="store.isDisabled()"
@@ -19,7 +19,7 @@
   @if (store.isLoading() && store.rootFolders().length === 0) {
     <div class="loading-container" aria-live="polite" aria-busy="true">
       <mat-spinner diameter="32"></mat-spinner>
-      <p class="loading-text">Loading folders...</p>
+      <p class="loading-text">{{ TOKENS.BROWSER.LOADINGFOLDERS | transloco}}</p>
     </div>
   }
 
@@ -36,7 +36,7 @@
     <div class="empty-state">
       <mat-icon class="empty-icon">folder_off</mat-icon>
       <p class="empty-text">
-        {{ store.searchFilter() ? 'No folders match your search' : 'No folders found' }}
+        {{ (store.searchFilter() ? TOKENS.BROWSER.NOFOLDERSMATCHSEARCH : TOKENS.BROWSER.NOFOLDERSFOUND) | transloco }}
       </p>
     </div>
   }
