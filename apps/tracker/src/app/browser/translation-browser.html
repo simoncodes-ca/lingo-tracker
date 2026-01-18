@@ -16,7 +16,6 @@
     <aside class="folder-sidebar">
       <app-folder-tree
         [collectionName]="collectionName()"
-        (folderSelected)="onFolderSelected($event)"
       />
     </aside>
 
@@ -27,7 +26,6 @@
           [collectionName]="collectionName()"
           [locales]="activeLocales()"
           [baseLocale]="baseLocale()"
-          [folderPath]="selectedFolderPath()"
         />
       }
 

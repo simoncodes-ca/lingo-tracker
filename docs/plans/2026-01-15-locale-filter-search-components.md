@@ -1,10 +1,56 @@
 # Translation Browser: LocaleFilter and Search Components Implementation Plan
 
 **Date:** 2026-01-15
-**Status:** Ready for Implementation
+**Status:** Superseded by Alternative Implementation
 **Component:** `apps/tracker/src/app/browser/`
 **Related Spec:** `dev-tasks/13-ui-scafolding.md`
 **Mockup:** `dev-tasks/translation-browser.png`
+
+## Implementation Status Update (2026-01-17)
+
+**This plan was NOT implemented as specified.** An alternative implementation approach was taken instead:
+
+- **Planned**: Separate `LocaleFilter` and `TranslationSearch` components with a `BrowserStore`
+- **Actual**: Integrated search and filtering directly into `FolderTree` component with `FolderTreeStore`
+
+### What Was Built Instead:
+
+1. **FolderTree Component** (`apps/tracker/src/app/browser/folder-tree/`)
+   - Includes integrated search/filter input for folders
+   - Progressive folder loading with expand/collapse
+   - Folder selection with event emission
+   - Search debouncing (300ms)
+   - Disabled state support
+
+2. **TranslationBrowserStore** (`apps/tracker/src/app/browser/store/translation-browser.store.ts`)
+   - Simplified store focusing on translation loading
+   - Manages translations, current folder path, loading state, and errors
+   - No locale filtering or search mode management
+
+3. **TranslationList Component** (`apps/tracker/src/app/browser/translation-list.ts`)
+   - Displays translations with virtual scrolling
+   - Accepts locales as input (filtering handled at component level)
+   - Copy-to-clipboard functionality
+   - Placeholder edit/move/delete handlers
+
+### Features Not Implemented:
+
+- ❌ Dedicated LocaleFilter component with multi-select dropdown
+- ❌ Dedicated TranslationSearch component for server-side search
+- ❌ BrowserStore with search mode and locale filtering state
+- ❌ Server-side translation search (search endpoint exists but returns placeholder)
+
+### Current Limitation:
+
+The current implementation does NOT support:
+- Multi-locale filtering with UI controls
+- Server-side translation search
+- Search mode that disables folder navigation
+- "All locales" vs "N locales selected" display logic
+
+---
+
+## Original Plan (Not Implemented)
 
 ## Goal
 
@@ -1477,7 +1523,7 @@ git commit -m "chore(tracker): add barrel exports and final polish"
 
 ---
 
-## Success Criteria
+## Success Criteria (Original Plan - Not Met)
 
 - [ ] All unit tests pass
 - [ ] LocaleFilter displays available locales with multi-select
@@ -1490,6 +1536,19 @@ git commit -m "chore(tracker): add barrel exports and final polish"
 - [ ] Code is well-documented with JSDoc comments
 - [ ] Accessibility requirements met (ARIA labels, keyboard navigation)
 - [ ] Manual testing checklist completed
+
+## Actual Implementation Success Criteria (What Was Built)
+
+- [x] FolderTree component with integrated search
+- [x] Search debouncing (300ms) in FolderTree
+- [x] TranslationList component with virtual scrolling
+- [x] TranslationBrowserStore for loading translations
+- [x] Components follow Angular 20 best practices (signals, OnPush, inject)
+- [x] Progressive folder loading with API integration
+- [x] Folder selection and navigation
+- [ ] Multi-locale filtering UI (NOT implemented)
+- [ ] Server-side translation search (NOT implemented)
+- [ ] Locale filter dropdown (NOT implemented)
 
 ## Future Integration Points
 

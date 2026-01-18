@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 import { FolderTree } from './folder-tree';
 import { TranslationList } from './translation-list';
 import { CollectionsStore } from '../collections/store/collections.store';
+import { BrowserStore } from './store/browser.store';
 
 /**
  * Translation Browser component for viewing and managing translations within a collection.
@@ -40,30 +41,19 @@ export class TranslationBrowser implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly collectionsStore = inject(CollectionsStore);
+  readonly store = inject(BrowserStore);
 
   readonly TOKENS = TRACKER_TOKENS;
 
   /**
-   * The name of the collection being browsed.
+   * Computed signal for collection name from the unified store.
    */
-  readonly collectionName = signal<string>('');
+  readonly collectionName = computed(() => this.store.selectedCollection() || '');
 
   /**
-   * The currently selected folder path.
+   * Computed signal for active locales from the unified store.
    */
-  readonly selectedFolderPath = signal<string>('');
-
-  /**
-   * Computed signal for active locales from collection config.
-   */
-  readonly activeLocales = computed(() => {
-    const name = this.collectionName();
-    if (!name) return [];
-
-    const collections = this.collectionsStore.collectionEntriesWithLocales();
-    const collection = collections.find((c) => c.name === name);
-    return collection?.locales || [];
-  });
+  readonly activeLocales = computed(() => this.store.availableLocales());
 
   /**
    * Computed signal for base locale from collection config.
@@ -84,7 +74,18 @@ export class TranslationBrowser implements OnInit {
     // Read collection name from route params
     const name = this.route.snapshot.paramMap.get('collectionName');
     if (name) {
-      this.collectionName.set(decodeURIComponent(name));
+      const decodedName = decodeURIComponent(name);
+
+      // Get collection config to extract locales
+      const config = this.collectionsStore.config();
+      const collection = config?.collections?.[decodedName];
+      const locales = collection?.locales || config?.locales || [];
+
+      // Initialize unified store with collection
+      this.store.setSelectedCollection({
+        collectionName: decodedName,
+        locales,
+      });
     }
   }
 
@@ -93,12 +94,5 @@ export class TranslationBrowser implements OnInit {
    */
   navigateToCollections(): void {
     this.router.navigate(['/collections']);
-  }
-
-  /**
-   * Handles folder selection from the tree.
-   */
-  onFolderSelected(folderPath: string): void {
-    this.selectedFolderPath.set(folderPath);
   }
 }

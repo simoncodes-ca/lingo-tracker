@@ -1,7 +1,6 @@
 import {
   Component,
   ChangeDetectionStrategy,
-  OnInit,
   inject,
   input,
   output,
@@ -17,7 +16,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FolderNode } from './folder-node/folder-node';
-import { FolderTreeStore } from './folder-tree.store';
+import { BrowserStore } from '../store/browser.store';
 import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import {TRACKER_TOKENS} from "../../../i18n-types/tracker-resources";
 import {TranslocoModule} from "@jsverse/transloco";
@@ -35,7 +34,6 @@ import {TranslocoModule} from "@jsverse/transloco";
   selector: 'app-folder-tree',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [FolderTreeStore],
   imports: [
     CommonModule,
     FormsModule,
@@ -49,8 +47,8 @@ import {TranslocoModule} from "@jsverse/transloco";
   templateUrl: './folder-tree.html',
   styleUrl: './folder-tree.scss',
 })
-export class FolderTree implements OnInit {
-  readonly store = inject(FolderTreeStore);
+export class FolderTree {
+  readonly store = inject(BrowserStore);
   readonly TOKENS = TRACKER_TOKENS;
 
   /** Name of the collection to browse */
@@ -78,12 +76,8 @@ export class FolderTree implements OnInit {
         takeUntilDestroyed()
       )
       .subscribe((value) => {
-        this.store.setSearchFilter(value);
+        this.store.setFolderTreeFilter(value);
       });
-  }
-
-  ngOnInit(): void {
-    this.store.loadRootFolders(this.collectionName());
   }
 
   /**
@@ -99,10 +93,7 @@ export class FolderTree implements OnInit {
    * Loads the folder's children and immediately selects it to show translations.
    */
   onLoadFolder(folderPath: string): void {
-    this.store.loadFolderChildren({
-      collectionName: this.collectionName(),
-      folderPath,
-    });
+    this.store.loadFolderChildren(folderPath);
     this.store.selectFolder(folderPath);
     this.folderSelected.emit(folderPath);
   }

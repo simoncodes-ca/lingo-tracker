@@ -97,7 +97,11 @@ describe('TranslationBrowser - Integration', () => {
   });
 
   it('should display collection name in header when set', () => {
-    component.collectionName.set('test-collection');
+    // Set collection through the store since collectionName is a computed signal
+    component.store.setSelectedCollection({
+      collectionName: 'test-collection',
+      locales: ['en', 'es'],
+    });
     fixture.detectChanges();
 
     const header = fixture.nativeElement.querySelector('h1');

@@ -1,10 +1,8 @@
 import {
   Component,
   ChangeDetectionStrategy,
-  OnInit,
   inject,
   input,
-  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
@@ -13,7 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslationBrowserStore } from './store/translation-browser.store';
+import { BrowserStore } from './store/browser.store';
 import { TranslationItem } from './translation-item';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import {TranslocoPipe} from "@jsverse/transloco";
@@ -39,8 +37,8 @@ import {TRACKER_TOKENS} from "../../i18n-types/tracker-resources";
   templateUrl: './translation-list.html',
   styleUrl: './translation-list.scss',
 })
-export class TranslationList implements OnInit {
-  readonly store = inject(TranslationBrowserStore);
+export class TranslationList {
+  readonly store = inject(BrowserStore);
   private readonly snackBar = inject(MatSnackBar);
 
   /** Collection name to load translations from */
@@ -52,32 +50,11 @@ export class TranslationList implements OnInit {
   /** Base locale (source language) */
   baseLocale = input<string>('en');
 
-  /** Folder path to load translations from */
-  folderPath = input<string>('');
-
   /** Item height for virtual scrolling (pixels) */
   readonly itemSize = 120;
 
   readonly TOKENS = TRACKER_TOKENS;
 
-  constructor() {
-    // React to changes in collection name or folder path
-    effect(() => {
-      const name = this.collectionName();
-      const path = this.folderPath();
-
-      if (name) {
-        this.store.loadTranslations({
-          collectionName: name,
-          folderPath: path || undefined
-        });
-      }
-    });
-  }
-
-  ngOnInit(): void {
-    // Initial load is handled by the effect in constructor
-  }
 
   /**
    * Handles copy-to-clipboard request from translation item.

@@ -7,7 +7,7 @@ import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BehaviorSubject } from 'rxjs';
 import { TranslationList } from './translation-list';
-import { TranslationBrowserStore } from './store/translation-browser.store';
+import { BrowserStore } from './store/browser.store';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 
 @Pipe({
@@ -209,9 +209,16 @@ describe('TranslationList - Loading and Error States', () => {
   });
 
   it('should display loading spinner when loading', () => {
-    const store = TestBed.inject(TranslationBrowserStore);
-    // Manually set loading state for testing
-    store.loadTranslations({ collectionName: 'test' });
+    const store = TestBed.inject(BrowserStore);
+
+    // Set up collection first
+    store.setSelectedCollection({
+      collectionName: 'test',
+      locales: ['en'],
+    });
+
+    // Trigger loading state by selecting a folder
+    store.selectFolder('test-folder');
 
     fixture.componentRef.setInput('collectionName', 'test');
     fixture.componentRef.setInput('locales', ['en']);
@@ -225,14 +232,27 @@ describe('TranslationList - Loading and Error States', () => {
   });
 
   it('should display error message when error occurs', async () => {
+    const store = TestBed.inject(BrowserStore);
+    const httpMock = TestBed.inject(HttpTestingController);
+
     fixture.componentRef.setInput('collectionName', 'test');
     fixture.componentRef.setInput('locales', ['en']);
-
-    // This triggers ngOnInit which calls loadTranslations
     fixture.detectChanges();
 
-    const httpMock = TestBed.inject(HttpTestingController);
-    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=&depth=2');
+    // Set up collection and trigger folder selection to cause an error
+    store.setSelectedCollection({
+      collectionName: 'test',
+      locales: ['en'],
+    });
+
+    // First request for root folders (from setSelectedCollection)
+    const rootReq = httpMock.expectOne('/api/collections/test/resources/tree?path=&depth=2');
+    rootReq.flush({ path: '', resources: [], children: [] });
+
+    // Now select a folder and make it fail
+    store.selectFolder('test-folder');
+
+    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=test-folder&depth=2');
     req.error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
 
     fixture.detectChanges();
@@ -279,13 +299,17 @@ describe('TranslationList - Virtual Scrolling', () => {
 
   it('should render translation items with virtual scroll', () => {
     const httpMock = TestBed.inject(HttpTestingController);
-    const store = TestBed.inject(TranslationBrowserStore);
+    const store = TestBed.inject(BrowserStore);
 
     fixture.componentRef.setInput('collectionName', 'test');
     fixture.componentRef.setInput('locales', ['en', 'es']);
-
-    // This triggers ngOnInit which calls loadTranslations
     fixture.detectChanges();
+
+    // Manually trigger store initialization and folder selection
+    store.setSelectedCollection({
+      collectionName: 'test',
+      locales: ['en', 'es'],
+    });
 
     const req = httpMock.expectOne('/api/collections/test/resources/tree?path=&depth=2');
     req.flush({

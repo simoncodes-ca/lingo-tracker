@@ -12,9 +12,9 @@
       <button
         mat-raised-button
         color="primary"
-        (click)="store.loadTranslations({ collectionName: collectionName(), folderPath: folderPath() || undefined })"
+        (click)="store.refreshTranslations()"
       >
-        Retry
+          {{ TOKENS.COMMON.ACTIONS.RETRY | transloco }}
       </button>
     </div>
   }

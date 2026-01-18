@@ -7,7 +7,7 @@
         matInput
         type="text"
         placeholder="{{ TOKENS.BROWSER.FILTERFOLDERS | transloco}}"
-        [value]="store.searchFilter()"
+        [value]="store.folderTreeFilter()"
         (input)="onSearchChange($any($event.target).value)"
         [disabled]="store.isDisabled()"
         [attr.aria-label]="'Filter folders'"
@@ -16,7 +16,7 @@
   </div>
 
   <!-- Loading State -->
-  @if (store.isLoading() && store.rootFolders().length === 0) {
+  @if (store.isFolderTreeLoading() && store.rootFolders().length === 0) {
     <div class="loading-container" aria-live="polite" aria-busy="true">
       <mat-spinner diameter="32"></mat-spinner>
       <p class="loading-text">{{ TOKENS.BROWSER.LOADINGFOLDERS | transloco}}</p>
@@ -24,7 +24,7 @@
   }
 
   <!-- Error State -->
-  @if (store.error() && !store.isLoading()) {
+  @if (store.error() && !store.isFolderTreeLoading()) {
     <div class="error-container" role="alert" aria-live="assertive">
       <mat-icon color="warn">error</mat-icon>
       <p class="error-text">{{ store.error() }}</p>
@@ -32,11 +32,11 @@
   }
 
   <!-- Empty State -->
-  @if (!store.isLoading() && !store.error() && store.filteredFolders().length === 0) {
+  @if (!store.isFolderTreeLoading() && !store.error() && store.filteredFolders().length === 0) {
     <div class="empty-state">
       <mat-icon class="empty-icon">folder_off</mat-icon>
       <p class="empty-text">
-        {{ (store.searchFilter() ? TOKENS.BROWSER.NOFOLDERSMATCHSEARCH : TOKENS.BROWSER.NOFOLDERSFOUND) | transloco }}
+        {{ (store.folderTreeFilter() ? TOKENS.BROWSER.NOFOLDERSMATCHSEARCH : TOKENS.BROWSER.NOFOLDERSFOUND) | transloco }}
       </p>
     </div>
   }
@@ -47,7 +47,7 @@
       @for (folder of store.filteredFolders(); track folder.fullPath) {
         <app-folder-node
           [folder]="folder"
-          [selectedPath]="store.selectedFolderPath()"
+          [selectedPath]="store.currentFolderPath()"
           [disabled]="store.isDisabled()"
           (folderClick)="onFolderClick($event)"
           (loadFolder)="onLoadFolder($event)"

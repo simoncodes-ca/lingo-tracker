@@ -5,7 +5,6 @@ import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BehaviorSubject } from 'rxjs';
 import { FolderTree } from './folder-tree';
-import { ResourceTreeDto } from '@simoncodes-ca/data-transfer';
 
 @Pipe({
   name: 'transloco',
@@ -99,20 +98,18 @@ describe('FolderTree', () => {
     // No HTTP call needed for this test
   });
 
-  it('should load folders on init', () => {
+  it('should not load folders on init (delegated to parent)', () => {
     createComponent();
     fixture.componentRef.setInput('collectionName', 'my-collection');
 
     // detectChanges triggers ngOnInit
     fixture.detectChanges();
 
-    // The ngOnInit method will trigger an HTTP request
-    const req = httpMock.expectOne((request) => {
+    // FolderTree no longer loads on init - parent TranslationBrowser handles store initialization
+    // Verify no HTTP requests are made
+    httpMock.expectNone((request) => {
       return request.url.includes('/api/collections/my-collection/resources/tree');
     });
-    expect(req.request.method).toBe('GET');
-
-    req.flush({ path: '', resources: [], children: [] } as ResourceTreeDto);
   });
 
   it('should render search input', async () => {
@@ -120,12 +117,7 @@ describe('FolderTree', () => {
     fixture.componentRef.setInput('collectionName', 'my-collection');
     fixture.detectChanges();
 
-    // Handle the HTTP request triggered by ngOnInit
-    const req = httpMock.expectOne((request) => {
-      return request.url.includes('/api/collections/my-collection/resources/tree');
-    });
-    req.flush({ path: '', resources: [], children: [] } as ResourceTreeDto);
-
+    // No HTTP request on init anymore
     // Wait for async operations to complete
     await fixture.whenStable();
     fixture.detectChanges();
@@ -143,15 +135,11 @@ describe('FolderTree', () => {
     createComponent();
     fixture.componentRef.setInput('collectionName', 'my-collection');
 
-    const setSpy = vi.spyOn(component.store, 'setSearchFilter');
+    const setSpy = vi.spyOn(component.store, 'setFolderTreeFilter');
 
     fixture.detectChanges();
 
-    // Handle the HTTP request triggered by ngOnInit
-    const req = httpMock.expectOne((request) => {
-      return request.url.includes('/api/collections/my-collection/resources/tree');
-    });
-    req.flush({ path: '', resources: [], children: [] } as ResourceTreeDto);
+    // No HTTP request on init anymore
 
     component.onSearchChange('c');
     await vi.advanceTimersByTimeAsync(100);
