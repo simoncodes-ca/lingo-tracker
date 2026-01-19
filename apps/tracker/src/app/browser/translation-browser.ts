@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,6 +8,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 import { FolderTree } from './folder-tree';
 import { TranslationList } from './translation-list';
+import { LocaleFilter } from './components/locale-filter/locale-filter';
 import { CollectionsStore } from '../collections/store/collections.store';
 import { BrowserStore } from './store/browser.store';
 
@@ -33,6 +34,7 @@ import { BrowserStore } from './store/browser.store';
     TranslocoModule,
     FolderTree,
     TranslationList,
+    LocaleFilter,
   ],
   templateUrl: './translation-browser.html',
   styleUrl: './translation-browser.scss',
@@ -67,26 +69,39 @@ export class TranslationBrowser implements OnInit {
     return collection?.baseLocale || 'en';
   });
 
-  ngOnInit(): void {
-    // Load collections to get locale info
-    this.collectionsStore.loadCollections();
-
-    // Read collection name from route params
-    const name = this.route.snapshot.paramMap.get('collectionName');
-    if (name) {
-      const decodedName = decodeURIComponent(name);
-
-      // Get collection config to extract locales
+  constructor() {
+    // Wait for collections to load before initializing browser store
+    effect(() => {
       const config = this.collectionsStore.config();
-      const collection = config?.collections?.[decodedName];
-      const locales = collection?.locales || config?.locales || [];
+      if (!config) return;
+
+      // Read collection name from route params
+      const name = this.route.snapshot.paramMap.get('collectionName');
+      if (!name) return;
+
+      const decodedName = decodeURIComponent(name);
+      const collection = config.collections?.[decodedName];
+
+      // Only initialize if we haven't already
+      if (this.store.selectedCollection() === decodedName) return;
+
+      const locales = collection?.locales || config.locales || [];
+      const baseLocale = collection?.baseLocale || config.baseLocale || '';
 
       // Initialize unified store with collection
       this.store.setSelectedCollection({
         collectionName: decodedName,
         locales,
       });
-    }
+
+      // Set base locale for filtering
+      this.store.setBaseLocale(baseLocale);
+    });
+  }
+
+  ngOnInit(): void {
+    // Collections are now loaded in App component
+    // Effect in constructor will initialize browser store when config is available
   }
 
   /**

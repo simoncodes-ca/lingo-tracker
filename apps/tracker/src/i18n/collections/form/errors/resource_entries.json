@@ -2,6 +2,7 @@
   "required": {
     "source": "This field is required",
     "comment": "Validation error for required fields",
-    "es": "This field is required"
+    "es": "This field is required",
+    "fr-ca": "This field is required"
   }
 }

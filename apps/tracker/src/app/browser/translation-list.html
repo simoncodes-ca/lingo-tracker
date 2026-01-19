@@ -40,7 +40,7 @@
       <app-translation-item
         *cdkVirtualFor="let translation of store.translations(); trackBy: trackByKey"
         [translation]="translation"
-        [locales]="locales()"
+        [locales]="displayLocales()"
         [baseLocale]="baseLocale()"
         (copyKey)="handleCopyKey($event)"
         (editTranslation)="handleEdit($event)"

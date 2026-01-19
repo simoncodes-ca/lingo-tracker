@@ -78,13 +78,17 @@ describe('TranslationList', () => {
     expect(component.collectionName()).toBe('test-collection');
   });
 
-  it('should accept locales input', () => {
-    const locales = ['en', 'es', 'fr'];
+  it('should compute displayLocales from store', () => {
+    const store = TestBed.inject(BrowserStore);
+    store.setSelectedCollection({
+      collectionName: 'test',
+      locales: ['en', 'es', 'fr']
+    });
+
     fixture.componentRef.setInput('collectionName', 'test');
-    fixture.componentRef.setInput('locales', locales);
     fixture.detectChanges();
 
-    expect(component.locales()).toEqual(locales);
+    expect(component.displayLocales()).toEqual(['en', 'es', 'fr']);
   });
 
   it('should use default baseLocale', () => {
@@ -145,7 +149,6 @@ describe('TranslationList - Copy to Clipboard', () => {
 
   it('should copy key to clipboard and show success toast', async () => {
     fixture.componentRef.setInput('collectionName', 'test');
-    fixture.componentRef.setInput('locales', ['en']);
     fixture.detectChanges();
 
     await component.handleCopyKey('common.buttons.save');
@@ -162,7 +165,6 @@ describe('TranslationList - Copy to Clipboard', () => {
     mockClipboard.writeText = vi.fn(() => Promise.reject(new Error('Clipboard error')));
 
     fixture.componentRef.setInput('collectionName', 'test');
-    fixture.componentRef.setInput('locales', ['en']);
     fixture.detectChanges();
 
     await component.handleCopyKey('test.key');
@@ -221,7 +223,6 @@ describe('TranslationList - Loading and Error States', () => {
     store.selectFolder('test-folder');
 
     fixture.componentRef.setInput('collectionName', 'test');
-    fixture.componentRef.setInput('locales', ['en']);
     fixture.detectChanges();
 
     const spinner = fixture.nativeElement.querySelector('mat-spinner');
@@ -236,7 +237,6 @@ describe('TranslationList - Loading and Error States', () => {
     const httpMock = TestBed.inject(HttpTestingController);
 
     fixture.componentRef.setInput('collectionName', 'test');
-    fixture.componentRef.setInput('locales', ['en']);
     fixture.detectChanges();
 
     // Set up collection and trigger folder selection to cause an error
@@ -302,7 +302,6 @@ describe('TranslationList - Virtual Scrolling', () => {
     const store = TestBed.inject(BrowserStore);
 
     fixture.componentRef.setInput('collectionName', 'test');
-    fixture.componentRef.setInput('locales', ['en', 'es']);
     fixture.detectChanges();
 
     // Manually trigger store initialization and folder selection
@@ -342,5 +341,63 @@ describe('TranslationList - Virtual Scrolling', () => {
 
     const result = component.trackByKey(0, translation);
     expect(result).toBe('test.key');
+  });
+});
+
+describe('TranslationList - Locale Filtering', () => {
+  let component: TranslationList;
+  let fixture: ComponentFixture<TranslationList>;
+  let mockTransloco: Partial<TranslocoService>;
+  let store: InstanceType<typeof BrowserStore>;
+
+  beforeEach(async () => {
+    mockTransloco = {
+      translate: vi.fn((key: string) => {
+        const translations: Record<string, string> = {
+          'browser.loadingTranslations': 'Loading translations...',
+          'browser.noTranslationsFoundInFolder': 'No translations found in this folder.',
+        };
+        return translations[key] || key;
+      }),
+      reRenderOnLangChange: new BehaviorSubject(true),
+    } as Partial<TranslocoService>;
+
+    await TestBed.configureTestingModule({
+      imports: [TranslationList],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: TranslocoService, useValue: mockTransloco },
+      ],
+    })
+    .overrideComponent(TranslationList, {
+      remove: { imports: [TranslocoPipe] },
+      add: { imports: [MockTranslocoPipe] },
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(TranslationList);
+    component = fixture.componentInstance;
+    store = TestBed.inject(BrowserStore);
+
+    store.setSelectedCollection({
+      collectionName: 'test',
+      locales: ['en', 'es', 'fr'],
+    });
+
+    fixture.componentRef.setInput('collectionName', 'test');
+    fixture.componentRef.setInput('baseLocale', 'en');
+    fixture.detectChanges();
+  });
+
+  it('should display all locales when none selected', () => {
+    expect(component.displayLocales()).toEqual(['en', 'es', 'fr']);
+  });
+
+  it('should display only selected locales', () => {
+    store.setSelectedLocales(['en']);
+    fixture.detectChanges();
+
+    expect(component.displayLocales()).toEqual(['en']);
   });
 });

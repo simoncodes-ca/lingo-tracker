@@ -518,4 +518,159 @@ describe('BrowserStore', () => {
       expect(store.currentFolderPath()).toBe('common');
     });
   });
+
+  describe('Locale Filtering', () => {
+    beforeEach(() => {
+      store.setSelectedCollection({
+        collectionName: 'test',
+        locales: ['en', 'es', 'fr', 'de']
+      });
+    });
+
+    it('should initialize with empty selectedLocales', () => {
+      expect(store.selectedLocales()).toEqual([]);
+    });
+
+    it('should initialize with empty baseLocale', () => {
+      expect(store.baseLocale()).toBe('');
+    });
+
+    it('should set base locale', () => {
+      store.setBaseLocale('en');
+      expect(store.baseLocale()).toBe('en');
+    });
+
+    it('should set selected locales', () => {
+      store.setSelectedLocales(['en', 'es']);
+      expect(store.selectedLocales()).toEqual(['en', 'es']);
+    });
+
+    it('should toggle locale on', () => {
+      store.toggleLocale('en');
+      expect(store.selectedLocales()).toContain('en');
+    });
+
+    it('should toggle locale off', () => {
+      store.setSelectedLocales(['en', 'es']);
+      store.toggleLocale('es');
+      expect(store.selectedLocales()).toEqual(['en']);
+    });
+
+    it('should select all locales', () => {
+      store.selectAllLocales();
+      expect(store.selectedLocales()).toEqual(['en', 'es', 'fr', 'de']);
+    });
+
+    it('should clear all locales', () => {
+      store.setSelectedLocales(['en', 'es']);
+      store.clearAllLocales();
+      expect(store.selectedLocales()).toEqual([]);
+    });
+
+    describe('Computed: isShowingAllLocales', () => {
+      it('should return true when none selected', () => {
+        expect(store.isShowingAllLocales()).toBe(true);
+      });
+
+      it('should return true when all selected', () => {
+        store.setSelectedLocales(['en', 'es', 'fr', 'de']);
+        expect(store.isShowingAllLocales()).toBe(true);
+      });
+
+      it('should return false when some selected', () => {
+        store.setSelectedLocales(['en', 'es']);
+        expect(store.isShowingAllLocales()).toBe(false);
+      });
+    });
+
+    describe('Computed: localeFilterText', () => {
+      it('should return "All locales" when none selected', () => {
+        expect(store.localeFilterText()).toBe('All locales');
+      });
+
+      it('should return "All locales" when all selected', () => {
+        store.setSelectedLocales(['en', 'es', 'fr', 'de']);
+        expect(store.localeFilterText()).toBe('All locales');
+      });
+
+      it('should return locale code when one selected', () => {
+        store.setSelectedLocales(['en']);
+        expect(store.localeFilterText()).toBe('en');
+      });
+
+      it('should return count when multiple selected', () => {
+        store.setSelectedLocales(['en', 'es']);
+        expect(store.localeFilterText()).toBe('2 locales');
+      });
+    });
+
+    describe('Computed: filteredLocales', () => {
+      beforeEach(() => {
+        store.setBaseLocale('en');
+      });
+
+      it('should always include base locale when no locales selected', () => {
+        const filtered = store.filteredLocales();
+        expect(filtered[0]).toBe('en');
+        expect(filtered).toEqual(['en', 'es', 'fr', 'de']);
+      });
+
+      it('should always include base locale first when all selected', () => {
+        store.setSelectedLocales(['en', 'es', 'fr', 'de']);
+        const filtered = store.filteredLocales();
+        expect(filtered[0]).toBe('en');
+        expect(filtered).toEqual(['en', 'es', 'fr', 'de']);
+      });
+
+      it('should always include base locale first when other locales selected', () => {
+        store.setSelectedLocales(['es', 'fr']);
+        const filtered = store.filteredLocales();
+        expect(filtered[0]).toBe('en');
+        expect(filtered).toEqual(['en', 'es', 'fr']);
+      });
+
+      it('should show only base locale when only base is selected', () => {
+        store.setSelectedLocales(['en']);
+        const filtered = store.filteredLocales();
+        expect(filtered).toEqual(['en']);
+      });
+
+      it('should handle base locale not in available locales', () => {
+        store.setBaseLocale('ja');
+        const filtered = store.filteredLocales();
+        expect(filtered[0]).toBe('ja');
+        expect(filtered).toContain('ja');
+      });
+
+      it('should handle empty base locale', () => {
+        store.setBaseLocale('');
+        const filtered = store.filteredLocales();
+        expect(filtered).toEqual(['en', 'es', 'fr', 'de']);
+      });
+    });
+
+    describe('Computed: filterableLocales', () => {
+      beforeEach(() => {
+        store.setBaseLocale('en');
+      });
+
+      it('should exclude base locale from filterable locales', () => {
+        const filterable = store.filterableLocales();
+        expect(filterable).toEqual(['es', 'fr', 'de']);
+        expect(filterable).not.toContain('en');
+      });
+
+      it('should return all locales when no base locale set', () => {
+        store.setBaseLocale('');
+        const filterable = store.filterableLocales();
+        expect(filterable).toEqual(['en', 'es', 'fr', 'de']);
+      });
+
+      it('should handle base locale not in available locales', () => {
+        store.setBaseLocale('ja');
+        const filterable = store.filterableLocales();
+        expect(filterable).toEqual(['en', 'es', 'fr', 'de']);
+      });
+    });
+  });
 });

@@ -20,11 +20,18 @@ const RESOURCE_TREE_DEPTH = 2;
 /**
  * Unified state interface for the Browser store.
  * Combines folder tree navigation and translation list display.
+ *
+ * Locale Filtering Behavior:
+ * - When selectedLocales is empty, all availableLocales are displayed
+ * - When selectedLocales contains items, only those locales are displayed
+ * - This allows "show all" to be the default state without explicit selection
  */
 interface BrowserState {
   // Collection context
   selectedCollection: string | null;
   availableLocales: string[];
+  selectedLocales: string[];
+  baseLocale: string;
 
   // Folder tree state
   currentFolderPath: string;
@@ -48,6 +55,8 @@ interface BrowserState {
 const initialState: BrowserState = {
   selectedCollection: null,
   availableLocales: [],
+  selectedLocales: [],
+  baseLocale: '',
   currentFolderPath: '',
   expandedFolders: new Set<string>(),
   rootFolders: [],
@@ -88,7 +97,7 @@ const initialState: BrowserState = {
 export const BrowserStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations }) => ({
+  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale }) => ({
     /**
      * Filters folders based on search term.
      * Recursively filters the tree to show only matching folders and their parents.
@@ -168,6 +177,70 @@ export const BrowserStore = signalStore(
     hasTranslations: computed(() => {
       return translations().length > 0;
     }),
+
+    /**
+     * Returns true if all locales are selected or none are selected (showing all).
+     */
+    isShowingAllLocales: computed(() => {
+      const selected = selectedLocales();
+      const available = availableLocales();
+      return selected.length === 0 || selected.length === available.length;
+    }),
+
+    /**
+     * Returns display text for locale filter button.
+     */
+    localeFilterText: computed(() => {
+      const selected = selectedLocales();
+      const available = availableLocales();
+
+      if (selected.length === 0 || selected.length === available.length) {
+        return 'All locales';
+      }
+      if (selected.length === 1) {
+        return selected[0];
+      }
+      return `${selected.length} locales`;
+    }),
+
+    /**
+     * Returns locales to display (selected, or all if none selected).
+     * Base locale is ALWAYS included first, regardless of selection.
+     * Empty selection means "show all" - returns all available locales.
+     * Non-empty selection returns only the selected subset.
+     */
+    filteredLocales: computed(() => {
+      const selected = selectedLocales();
+      const available = availableLocales();
+      const base = baseLocale();
+
+      // Start with base locale if set
+      const result = base ? [base] : [];
+
+      // Get non-base locales from available
+      const nonBaseAvailable = available.filter(locale => locale !== base);
+      const selectedNonBase = selected.filter(locale => locale !== base);
+
+      if (selected.length === 0) {
+        // No selection = show all non-base locales
+        result.push(...nonBaseAvailable);
+      } else {
+        // Show only selected non-base locales
+        result.push(...selectedNonBase);
+      }
+
+      return result;
+    }),
+
+    /**
+     * Returns locales that can be filtered (excludes base locale).
+     * The base locale should not appear in the filter dropdown.
+     */
+    filterableLocales: computed(() => {
+      const available = availableLocales();
+      const base = baseLocale();
+      return available.filter(locale => locale !== base);
+    }),
   })),
   withMethods((store) => {
     const api = inject(BrowserApiService);
@@ -181,6 +254,8 @@ export const BrowserStore = signalStore(
         patchState(store, {
           selectedCollection: params.collectionName,
           availableLocales: params.locales,
+          selectedLocales: [],
+          baseLocale: '',
           // Reset navigation state
           currentFolderPath: '',
           expandedFolders: new Set<string>(),
@@ -192,6 +267,14 @@ export const BrowserStore = signalStore(
 
         // Auto-load root folders
         this.loadRootFolders();
+      },
+
+      /**
+       * Sets the base locale for the collection.
+       * The base locale is always displayed and cannot be filtered out.
+       */
+      setBaseLocale(locale: string): void {
+        patchState(store, { baseLocale: locale });
       },
 
       /**
@@ -210,15 +293,19 @@ export const BrowserStore = signalStore(
 
       /**
        * Toggles a folder's expanded state.
+       * Creates a new Set to maintain immutability for change detection.
        */
       toggleFolderExpanded(path: string): void {
-        const expanded = new Set(store.expandedFolders());
-        if (expanded.has(path)) {
-          expanded.delete(path);
+        const currentExpanded = store.expandedFolders();
+        const newExpanded = new Set(currentExpanded);
+
+        if (newExpanded.has(path)) {
+          newExpanded.delete(path);
         } else {
-          expanded.add(path);
+          newExpanded.add(path);
         }
-        patchState(store, { expandedFolders: expanded });
+
+        patchState(store, { expandedFolders: newExpanded });
       },
 
       /**
@@ -385,6 +472,39 @@ export const BrowserStore = signalStore(
       refreshTranslations(): void {
         const path = store.currentFolderPath();
         this.selectFolder(path);
+      },
+
+      /**
+       * Sets the selected locales for filtering.
+       */
+      setSelectedLocales(locales: string[]): void {
+        patchState(store, { selectedLocales: locales });
+      },
+
+      /**
+       * Toggles a locale's selection state.
+       */
+      toggleLocale(locale: string): void {
+        const current = store.selectedLocales();
+        if (current.includes(locale)) {
+          patchState(store, { selectedLocales: current.filter(l => l !== locale) });
+        } else {
+          patchState(store, { selectedLocales: [...current, locale] });
+        }
+      },
+
+      /**
+       * Selects all available locales.
+       */
+      selectAllLocales(): void {
+        patchState(store, { selectedLocales: [...store.availableLocales()] });
+      },
+
+      /**
+       * Clears all locale selections (shows all).
+       */
+      clearAllLocales(): void {
+        patchState(store, { selectedLocales: [] });
       },
     };
   })

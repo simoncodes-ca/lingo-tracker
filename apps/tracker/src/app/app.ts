@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AppHeader } from './header/app-header';
+import { CollectionsStore } from './collections/store/collections.store';
 
 @Component({
   standalone: true,
@@ -9,4 +10,10 @@ import { AppHeader } from './header/app-header';
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App {}
+export class App implements OnInit {
+  private readonly collectionsStore = inject(CollectionsStore);
+
+  ngOnInit(): void {
+    this.collectionsStore.loadCollections();
+  }
+}

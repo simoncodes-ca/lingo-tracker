@@ -1,0 +1,55 @@
+<button
+  mat-stroked-button
+  [matMenuTriggerFor]="localeMenu"
+  data-testid="locale-filter-trigger"
+  class="locale-filter-trigger"
+  [attr.aria-label]="'Filter locales. Currently showing: ' + store.localeFilterText()"
+  aria-haspopup="true"
+>
+  <mat-icon class="filter-icon">filter_list</mat-icon>
+  <span class="filter-text">{{ store.localeFilterText() }}</span>
+  <mat-icon class="arrow-icon">arrow_drop_down</mat-icon>
+</button>
+
+<mat-menu #localeMenu="matMenu" class="locale-filter-menu">
+  <div class="menu-header" (click)="$event.stopPropagation()">
+    <button
+      mat-button
+      class="action-button"
+      (click)="selectAll()"
+      data-testid="select-all"
+    >
+      Select All
+    </button>
+    <button
+      mat-button
+      class="action-button"
+      (click)="clearAll()"
+      data-testid="clear-all"
+    >
+      Clear All
+    </button>
+  </div>
+
+  @for (locale of store.filterableLocales(); track locale) {
+    <button
+      mat-menu-item
+      (click)="toggleLocale(locale); $event.stopPropagation()"
+      [attr.data-testid]="'locale-option-' + locale"
+      [attr.aria-label]="locale + (isLocaleSelected(locale) ? ' (selected)' : ' (not selected)')"
+      [attr.aria-checked]="isLocaleSelected(locale)"
+      role="menuitemcheckbox"
+      class="locale-option"
+    >
+      <mat-checkbox
+        [checked]="isLocaleSelected(locale)"
+        (click)="$event.preventDefault()"
+        [attr.aria-hidden]="true"
+        tabindex="-1"
+        class="locale-checkbox"
+      >
+        {{ locale }}
+      </mat-checkbox>
+    </button>
+  }
+</mat-menu>

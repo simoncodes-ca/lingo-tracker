@@ -33,7 +33,8 @@
       "translationsFolder": "apps/tracker/src/i18n",
       "locales": [
         "en",
-        "es"
+        "es",
+        "fr-ca"
       ]
     }
   },

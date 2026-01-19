@@ -7,6 +7,11 @@
       "checksum": "bcc40d0f321165f8d57c4185fc0357df",
       "baseChecksum": "bcc40d0f321165f8d57c4185fc0357df",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "bcc40d0f321165f8d57c4185fc0357df",
+      "baseChecksum": "bcc40d0f321165f8d57c4185fc0357df",
+      "status": "new"
     }
   }
 }

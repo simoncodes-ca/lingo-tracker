@@ -1,0 +1,46 @@
+.locale-filter-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+
+  .filter-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  .filter-text {
+    font-weight: 500;
+  }
+
+  .arrow-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    margin-left: auto;
+  }
+}
+
+:host ::ng-deep .locale-filter-menu {
+  .menu-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--mat-divider-color, rgba(0, 0, 0, 0.12));
+    gap: 8px;
+
+    .action-button {
+      font-size: 12px;
+      padding: 4px 8px;
+      min-width: auto;
+    }
+  }
+
+  .locale-option {
+    .locale-checkbox {
+      width: 100%;
+    }
+  }
+}

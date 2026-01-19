@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   inject,
   input,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
@@ -44,9 +45,6 @@ export class TranslationList {
   /** Collection name to load translations from */
   collectionName = input.required<string>();
 
-  /** Active locales to display */
-  locales = input.required<string[]>();
-
   /** Base locale (source language) */
   baseLocale = input<string>('en');
 
@@ -54,6 +52,12 @@ export class TranslationList {
   readonly itemSize = 120;
 
   readonly TOKENS = TRACKER_TOKENS;
+
+  /**
+   * Computed property for locales to display.
+   * Returns filtered locales from store.
+   */
+  readonly displayLocales = computed(() => this.store.filteredLocales());
 
 
   /**

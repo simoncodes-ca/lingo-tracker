@@ -5,7 +5,8 @@
     "tags": [
       "common"
     ],
-    "es": "Edit"
+    "es": "Edit",
+    "fr-ca": "Edit"
   },
   "delete": {
     "source": "Delete",
@@ -13,7 +14,8 @@
     "tags": [
       "common"
     ],
-    "es": "Delete"
+    "es": "Delete",
+    "fr-ca": "Delete"
   },
   "retry": {
     "source": "Retry",
@@ -21,30 +23,36 @@
     "tags": [
       "common"
     ],
-    "es": "Retry"
+    "es": "Retry",
+    "fr-ca": "Retry"
   },
   "cancel": {
     "source": "Cancel",
     "comment": "Text on a button to cancel whatever opration the user was about to do",
-    "es": "Cancel"
+    "es": "Cancel",
+    "fr-ca": "Cancel"
   },
   "ok": {
     "source": "OK",
-    "es": "OK"
+    "es": "OK",
+    "fr-ca": "OK"
   },
   "save": {
     "source": "Save",
     "comment": "Save button text in edit mode",
-    "es": "Save"
+    "es": "Save",
+    "fr-ca": "Save"
   },
   "back": {
     "source": "Back",
-    "es": "Back"
+    "es": "Back",
+    "fr-ca": "Back"
   },
   "clickToCopy": {
     "source": "click to copy",
     "comment": "Message to user that item can be copied to clipboard",
-    "es": "click to copy"
+    "es": "click to copy",
+    "fr-ca": "click to copy"
   },
   "move": {
     "source": "Move",
@@ -52,6 +60,7 @@
     "tags": [
       "common"
     ],
-    "es": "Move"
+    "es": "Move",
+    "fr-ca": "Move"
   }
 }

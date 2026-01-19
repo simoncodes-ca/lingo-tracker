@@ -2,21 +2,25 @@
   "light": {
     "source": "Light",
     "comment": "Theme switcher light mode label",
-    "es": "Light"
+    "es": "Light",
+    "fr-ca": "Light"
   },
   "dark": {
     "source": "Dark",
     "comment": "Theme switcher dark mode label",
-    "es": "Dark"
+    "es": "Dark",
+    "fr-ca": "Dark"
   },
   "system": {
     "source": "System",
     "comment": "Theme switcher system mode label",
-    "es": "System"
+    "es": "System",
+    "fr-ca": "System"
   },
   "settings": {
     "source": "Theme settings",
     "comment": "Aria-label for theme settings button",
-    "es": "Theme settings"
+    "es": "Theme settings",
+    "fr-ca": "Theme settings"
   }
 }

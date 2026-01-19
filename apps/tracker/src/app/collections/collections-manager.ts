@@ -48,7 +48,7 @@ export class CollectionsManager implements OnInit {
   readonly TOKENS = TRACKER_TOKENS;
 
   ngOnInit(): void {
-    this.store.loadCollections();
+    // Collections are loaded in App component on initialization
   }
 
   /**

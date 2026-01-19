@@ -2,21 +2,25 @@
   "created": {
     "source": "Collection created successfully",
     "comment": "Success message after creating a collection",
-    "es": "Collection created successfully"
+    "es": "Collection created successfully",
+    "fr-ca": "Collection created successfully"
   },
   "updated": {
     "source": "Collection updated successfully",
     "comment": "Success message after editing a collection",
-    "es": "Collection updated successfully"
+    "es": "Collection updated successfully",
+    "fr-ca": "Collection updated successfully"
   },
   "deleted": {
     "source": "Collection deleted successfully",
     "comment": "Success message after deleting a collection",
-    "es": "Collection deleted successfully"
+    "es": "Collection deleted successfully",
+    "fr-ca": "Collection deleted successfully"
   },
   "error": {
     "source": "An error occurred. Please try again.",
     "comment": "Generic error message for failed operations",
-    "es": "An error occurred. Please try again."
+    "es": "An error occurred. Please try again.",
+    "fr-ca": "An error occurred. Please try again."
   }
 }

@@ -2,40 +2,49 @@
   "backButton": {
     "source": "Back to collections",
     "comment": "Aria-label for back button in browser",
-    "es": "Back to collections"
+    "es": "Back to collections",
+    "fr-ca": "Back to collections"
   },
   "filterFolders": {
     "source": "Filter folders...",
     "comment": "Placeholder text in a filter input that filters a list of folders",
-    "es": "Filter folders..."
+    "es": "Filter folders...",
+    "fr-ca": "Filter folders..."
   },
   "loadingFolders": {
     "source": "Loading folders...",
-    "es": "Loading folders..."
+    "es": "Loading folders...",
+    "fr-ca": "Loading folders..."
   },
   "noFoldersMatchSearch": {
     "source": "No folders match your search",
-    "es": "No folders match your search"
+    "es": "No folders match your search",
+    "fr-ca": "No folders match your search"
   },
   "noFoldersFound": {
     "source": "No folders found",
-    "es": "No folders found"
+    "es": "No folders found",
+    "fr-ca": "No folders found"
   },
   "clickToLoad": {
     "source": "click to load",
     "comment": "Message shown to user on a hierarchy item that is not loaded yet from the backend",
-    "es": "click to load"
+    "es": "click to load",
+    "fr-ca": "click to load"
   },
   "loadingCollectionConfiguration": {
     "source": "Loading collection configuration...",
-    "es": "Loading collection configuration..."
+    "es": "Loading collection configuration...",
+    "fr-ca": "Loading collection configuration..."
   },
   "loadingTranslations": {
     "source": "Loading translations...",
-    "es": "Loading translations..."
+    "es": "Loading translations...",
+    "fr-ca": "Loading translations..."
   },
   "noTranslationsFoundInFolder": {
     "source": "No translations found in this folder.",
-    "es": "No translations found in this folder."
+    "es": "No translations found in this folder.",
+    "fr-ca": "No translations found in this folder."
   }
 }

@@ -9,6 +9,9 @@
       <mat-icon>arrow_back</mat-icon>
     </button>
     <h1>{{ collectionName() }}</h1>
+    <div class="header-actions">
+      <app-locale-filter />
+    </div>
   </header>
 
   <div class="browser-content">
@@ -24,7 +27,6 @@
       @if (collectionName() && activeLocales().length > 0) {
         <app-translation-list
           [collectionName]="collectionName()"
-          [locales]="activeLocales()"
           [baseLocale]="baseLocale()"
         />
       }

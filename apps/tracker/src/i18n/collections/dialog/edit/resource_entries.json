@@ -2,6 +2,7 @@
   "title": {
     "source": "Edit Collection",
     "comment": "Dialog title when editing an existing collection",
-    "es": "Edit Collection"
+    "es": "Edit Collection",
+    "fr-ca": "Edit Collection"
   }
 }

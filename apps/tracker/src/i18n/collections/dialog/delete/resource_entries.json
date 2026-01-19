@@ -2,11 +2,13 @@
   "title": {
     "source": "Delete Collection",
     "comment": "Confirmation dialog title when deleting a collection",
-    "es": "Delete Collection"
+    "es": "Delete Collection",
+    "fr-ca": "Delete Collection"
   },
   "message": {
     "source": "Are you sure you want to delete {{name}}?",
     "comment": "Confirmation message with collection name placeholder",
-    "es": "Are you sure you want to delete {{name}}?"
+    "es": "Are you sure you want to delete {{name}}?",
+    "fr-ca": "Are you sure you want to delete {{name}}?"
   }
 }

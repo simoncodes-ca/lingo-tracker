@@ -7,6 +7,11 @@
       "checksum": "9914a0ce04a7b7b6a8e39bec55064b82",
       "baseChecksum": "9914a0ce04a7b7b6a8e39bec55064b82",
       "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "9914a0ce04a7b7b6a8e39bec55064b82",
+      "baseChecksum": "9914a0ce04a7b7b6a8e39bec55064b82",
+      "status": "new"
     }
   },
   "dark": {
@@ -14,6 +19,11 @@
       "checksum": "a18366b217ebf811ad1886e4f4f865b2"
     },
     "es": {
+      "checksum": "a18366b217ebf811ad1886e4f4f865b2",
+      "baseChecksum": "a18366b217ebf811ad1886e4f4f865b2",
+      "status": "new"
+    },
+    "fr-ca": {
       "checksum": "a18366b217ebf811ad1886e4f4f865b2",
       "baseChecksum": "a18366b217ebf811ad1886e4f4f865b2",
       "status": "new"
@@ -27,6 +37,11 @@
       "checksum": "a45da96d0bf6575970f2d27af22be28a",
       "baseChecksum": "a45da96d0bf6575970f2d27af22be28a",
       "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "a45da96d0bf6575970f2d27af22be28a",
+      "baseChecksum": "a45da96d0bf6575970f2d27af22be28a",
+      "status": "new"
     }
   },
   "settings": {
@@ -34,6 +49,11 @@
       "checksum": "55b8deb25fdc0f8b628027f7d1d21cbe"
     },
     "es": {
+      "checksum": "55b8deb25fdc0f8b628027f7d1d21cbe",
+      "baseChecksum": "55b8deb25fdc0f8b628027f7d1d21cbe",
+      "status": "new"
+    },
+    "fr-ca": {
       "checksum": "55b8deb25fdc0f8b628027f7d1d21cbe",
       "baseChecksum": "55b8deb25fdc0f8b628027f7d1d21cbe",
       "status": "new"

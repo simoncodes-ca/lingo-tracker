@@ -2,55 +2,66 @@
   "nameLabel": {
     "source": "Collection Name",
     "comment": "Label for collection name input field",
-    "es": "Collection Name"
+    "es": "Collection Name",
+    "fr-ca": "Collection Name"
   },
   "namePlaceholder": {
     "source": "e.g., my-app-i18n",
     "comment": "Placeholder text for collection name input",
-    "es": "e.g., my-app-i18n"
+    "es": "e.g., my-app-i18n",
+    "fr-ca": "e.g., my-app-i18n"
   },
   "nameRequired": {
     "source": "Collection name is required",
     "comment": "Error message when name is required",
-    "es": "Collection name is required"
+    "es": "Collection name is required",
+    "fr-ca": "Collection name is required"
   },
   "folderLabel": {
     "source": "Translations Folder",
     "comment": "Label for translations folder input field",
-    "es": "Translations Folder"
+    "es": "Translations Folder",
+    "fr-ca": "Translations Folder"
   },
   "folderPlaceholder": {
     "source": "e.g., ./src/assets/i18n",
     "comment": "Placeholder text for folder path input",
-    "es": "e.g., ./src/assets/i18n"
+    "es": "e.g., ./src/assets/i18n",
+    "fr-ca": "e.g., ./src/assets/i18n"
   },
   "folderRequired": {
     "source": "Translations folder is required",
     "comment": "Error message when folder is required",
-    "es": "Translations folder is required"
+    "es": "Translations folder is required",
+    "fr-ca": "Translations folder is required"
   },
   "localesLabel": {
     "source": "Locales (Optional)",
     "comment": "Label for locales input field",
-    "es": "Locales (Optional)"
+    "es": "Locales (Optional)",
+    "fr-ca": "Locales (Optional)"
   },
   "localesHint": {
     "source": "Comma-separated list of locale codes. Leave empty to use global config.",
     "comment": "Hint text for locales input",
-    "es": "Comma-separated list of locale codes. Leave empty to use global config."
+    "es": "Comma-separated list of locale codes. Leave empty to use global config.",
+    "fr-ca": "Comma-separated list of locale codes. Leave empty to use global config."
   },
   "createButton": {
     "source": "Create",
     "comment": "Create button text in create mode",
-    "es": "Create"
+    "es": "Create",
+    "fr-ca": "Create"
   },
   "localesPlaceholder": {
     "source": "e.g., en, fr, es",
     "comment": "Placeholder text for locales input",
-    "es": "e.g., en, fr, es"
+    "es": "e.g., en, fr, es",
+    "fr-ca": "e.g., en, fr, es"
   },
   "createTitle": {
     "source": "Create Collection",
-    "es": "Create Collection"
+    "es": "Create Collection",
+    "fr-ca": "Create Collection"
   }
 }

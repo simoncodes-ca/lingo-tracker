@@ -7,6 +7,11 @@
       "checksum": "bcc40d0f321165f8d57c4185fc0357df",
       "baseChecksum": "2687006ffa30f69f72187cbb690d6cc0",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "2687006ffa30f69f72187cbb690d6cc0",
+      "baseChecksum": "2687006ffa30f69f72187cbb690d6cc0",
+      "status": "new"
     }
   },
   "delete": {
@@ -17,6 +22,11 @@
       "checksum": "611307b7abf62c8f6ffc374701393f29",
       "baseChecksum": "611307b7abf62c8f6ffc374701393f29",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "611307b7abf62c8f6ffc374701393f29",
+      "baseChecksum": "611307b7abf62c8f6ffc374701393f29",
+      "status": "new"
     }
   }
 }
