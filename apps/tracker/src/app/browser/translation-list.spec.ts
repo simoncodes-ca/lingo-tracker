@@ -1,63 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Pipe, PipeTransform } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BehaviorSubject } from 'rxjs';
 import { TranslationList } from './translation-list';
 import { BrowserStore } from './store/browser.store';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
-
-@Pipe({
-  name: 'transloco',
-  standalone: true,
-})
-class MockTranslocoPipe implements PipeTransform {
-  transform(key: string): string {
-    const translations: Record<string, string> = {
-      'browser.loadingTranslations': 'Loading translations...',
-      'browser.noTranslationsFoundInFolder': 'No translations found in this folder.',
-      'common.actions.clickToCopy': 'click to copy',
-      'common.actions.edit': 'Edit',
-      'common.actions.move': 'Move',
-      'common.actions.delete': 'Delete',
-    };
-    return translations[key] || key;
-  }
-}
+import { getTranslocoTestingModule } from '../../testing/transloco-testing.module';
 
 describe('TranslationList', () => {
   let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
-  let mockTransloco: Partial<TranslocoService>;
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'browser.loadingTranslations': 'Loading translations...',
-          'browser.noTranslationsFoundInFolder': 'No translations found in this folder.',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationList],
+      imports: [
+        TranslationList,
+        getTranslocoTestingModule(),
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: TranslocoService, useValue: mockTransloco },
       ],
-    })
-    .overrideComponent(TranslationList, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
     component = fixture.componentInstance;
@@ -101,7 +66,6 @@ describe('TranslationList - Copy to Clipboard', () => {
   let fixture: ComponentFixture<TranslationList>;
   let mockClipboard: { writeText: ReturnType<typeof vi.fn> };
   let snackBarSpy: { open: ReturnType<typeof vi.fn> };
-  let mockTransloco: Partial<TranslocoService>;
 
   beforeEach(async () => {
     mockClipboard = {
@@ -117,31 +81,17 @@ describe('TranslationList - Copy to Clipboard', () => {
       open: vi.fn(),
     };
 
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'browser.loadingTranslations': 'Loading translations...',
-          'browser.noTranslationsFoundInFolder': 'No translations found in this folder.',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationList],
+      imports: [
+        TranslationList,
+        getTranslocoTestingModule(),
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: MatSnackBar, useValue: snackBarSpy },
-        { provide: TranslocoService, useValue: mockTransloco },
       ],
-    })
-    .overrideComponent(TranslationList, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
     component = fixture.componentInstance;
@@ -179,33 +129,18 @@ describe('TranslationList - Copy to Clipboard', () => {
 
 describe('TranslationList - Loading and Error States', () => {
   let fixture: ComponentFixture<TranslationList>;
-  let mockTransloco: Partial<TranslocoService>;
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'browser.loadingTranslations': 'Loading translations...',
-          'browser.noTranslationsFoundInFolder': 'No translations found in this folder.',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationList],
+      imports: [
+        TranslationList,
+        getTranslocoTestingModule(),
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: TranslocoService, useValue: mockTransloco },
       ],
-    })
-    .overrideComponent(TranslationList, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
   });
@@ -265,33 +200,18 @@ describe('TranslationList - Loading and Error States', () => {
 describe('TranslationList - Virtual Scrolling', () => {
   let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
-  let mockTransloco: Partial<TranslocoService>;
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'browser.loadingTranslations': 'Loading translations...',
-          'browser.noTranslationsFoundInFolder': 'No translations found in this folder.',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationList],
+      imports: [
+        TranslationList,
+        getTranslocoTestingModule(),
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: TranslocoService, useValue: mockTransloco },
       ],
-    })
-    .overrideComponent(TranslationList, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
     component = fixture.componentInstance;
@@ -347,34 +267,19 @@ describe('TranslationList - Virtual Scrolling', () => {
 describe('TranslationList - Locale Filtering', () => {
   let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
-  let mockTransloco: Partial<TranslocoService>;
   let store: InstanceType<typeof BrowserStore>;
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'browser.loadingTranslations': 'Loading translations...',
-          'browser.noTranslationsFoundInFolder': 'No translations found in this folder.',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationList],
+      imports: [
+        TranslationList,
+        getTranslocoTestingModule(),
+      ],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: TranslocoService, useValue: mockTransloco },
       ],
-    })
-    .overrideComponent(TranslationList, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
     component = fixture.componentInstance;

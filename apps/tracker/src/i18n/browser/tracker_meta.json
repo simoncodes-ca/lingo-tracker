@@ -133,5 +133,50 @@
       "baseChecksum": "b0537eb5b23d6c452ec6844ab366473c",
       "status": "new"
     }
+  },
+  "searchTranslations": {
+    "en": {
+      "checksum": "921807ebfcd25b8eff090814936335ff"
+    },
+    "es": {
+      "checksum": "921807ebfcd25b8eff090814936335ff",
+      "baseChecksum": "921807ebfcd25b8eff090814936335ff",
+      "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "921807ebfcd25b8eff090814936335ff",
+      "baseChecksum": "921807ebfcd25b8eff090814936335ff",
+      "status": "new"
+    }
+  },
+  "showingSearchResultsForX": {
+    "en": {
+      "checksum": "b3fd01026bf6248815929108d563ac8c"
+    },
+    "es": {
+      "checksum": "b3fd01026bf6248815929108d563ac8c",
+      "baseChecksum": "b3fd01026bf6248815929108d563ac8c",
+      "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "b3fd01026bf6248815929108d563ac8c",
+      "baseChecksum": "b3fd01026bf6248815929108d563ac8c",
+      "status": "new"
+    }
+  },
+  "clearSearch": {
+    "en": {
+      "checksum": "9b39ba5cc7e59ddc8fc7b5c371d0db67"
+    },
+    "es": {
+      "checksum": "9b39ba5cc7e59ddc8fc7b5c371d0db67",
+      "baseChecksum": "9b39ba5cc7e59ddc8fc7b5c371d0db67",
+      "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "9b39ba5cc7e59ddc8fc7b5c371d0db67",
+      "baseChecksum": "9b39ba5cc7e59ddc8fc7b5c371d0db67",
+      "status": "new"
+    }
   }
 }

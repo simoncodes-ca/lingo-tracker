@@ -46,5 +46,20 @@
     "source": "No translations found in this folder.",
     "es": "No translations found in this folder.",
     "fr-ca": "No translations found in this folder."
+  },
+  "searchTranslations": {
+    "source": "Search translations...",
+    "es": "Search translations...",
+    "fr-ca": "Search translations..."
+  },
+  "showingSearchResultsForX": {
+    "source": "Showing search results for \"{{ query }}\"",
+    "es": "Showing search results for \"{{ query }}\"",
+    "fr-ca": "Showing search results for \"{{ query }}\""
+  },
+  "clearSearch": {
+    "source": "Clear Search",
+    "es": "Clear Search",
+    "fr-ca": "Clear Search"
   }
 }

@@ -1,54 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Pipe, PipeTransform } from '@angular/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { BehaviorSubject } from 'rxjs';
 import { FolderTree } from './folder-tree';
-
-@Pipe({
-  name: 'transloco',
-  standalone: true,
-})
-class MockTranslocoPipe implements PipeTransform {
-  transform(key: string): string {
-    const translations: Record<string, string> = {
-      'browser.filterFolders': 'Filter folders...',
-      'browser.loadingFolders': 'Loading folders...',
-    };
-    return translations[key] || key;
-  }
-}
+import { getTranslocoTestingModule } from '../../../testing/transloco-testing.module';
 
 describe('FolderTree', () => {
   let component: FolderTree;
   let fixture: ComponentFixture<FolderTree>;
   let httpMock: HttpTestingController;
-  let mockTransloco: Partial<TranslocoService>;
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'browser.filterFolders': 'Filter folders...',
-          'browser.loadingFolders': 'Loading folders...',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [FolderTree, HttpClientTestingModule],
-      providers: [
-        { provide: TranslocoService, useValue: mockTransloco },
+      imports: [
+        FolderTree,
+        HttpClientTestingModule,
+        getTranslocoTestingModule(),
       ],
-    })
-    .overrideComponent(FolderTree, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);
   });

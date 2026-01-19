@@ -17,7 +17,8 @@ import {
   deleteResource,
   moveResource,
   editResource,
-  loadResourceTree
+  loadResourceTree,
+  searchTranslations
 } from '@simoncodes-ca/core';
 import {
   CreateResourceDto,
@@ -28,7 +29,9 @@ import {
   MoveResourceResponseDto,
   UpdateResourceDto,
   UpdateResourceResponseDto,
-  ResourceTreeDto
+  ResourceTreeDto,
+  SearchTranslationsDto,
+  SearchResultsDto
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
@@ -339,6 +342,66 @@ export class ResourcesController {
       }
 
       // Other errors
+      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Get('search')
+  async search(
+    @Param('collectionName') collectionName: string,
+    @Query() dto: SearchTranslationsDto
+  ): Promise<SearchResultsDto> {
+    try {
+      const decodedCollectionName = decodeURIComponent(collectionName);
+      const config = this.configService.getConfig();
+
+      if (!config.collections || !config.collections[decodedCollectionName]) {
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
+      }
+
+      const collection = config.collections[decodedCollectionName];
+      const translationsFolder = collection.translationsFolder;
+
+      // Validate query
+      if (!dto.query || dto.query.trim().length === 0) {
+        return {
+          query: dto.query || '',
+          results: [],
+          totalFound: 0,
+          limited: false,
+        };
+      }
+
+      // Default maxResults to 100, cap at 500
+      const maxResults = Math.min(dto.maxResults || 100, 500);
+
+      // Execute search
+      const searchResults = searchTranslations({
+        translationsFolder,
+        query: dto.query,
+        maxResults: maxResults + 1, // Request one extra to detect if limited
+      });
+
+      // Check if results were limited
+      const limited = searchResults.length > maxResults;
+      const results = limited ? searchResults.slice(0, maxResults) : searchResults;
+
+      return {
+        query: dto.query,
+        results,
+        totalFound: limited ? maxResults : results.length,
+        limited,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Error searching translations';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

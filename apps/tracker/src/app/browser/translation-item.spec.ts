@@ -1,31 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Pipe, PipeTransform } from '@angular/core';
-import { TranslocoService, TranslocoPipe } from '@jsverse/transloco';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BehaviorSubject } from 'rxjs';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { TranslationItem } from './translation-item';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
-
-@Pipe({
-  name: 'transloco',
-  standalone: true,
-})
-class MockTranslocoPipe implements PipeTransform {
-  transform(key: string): string {
-    const translations: Record<string, string> = {
-      'common.actions.clickToCopy': 'click to copy',
-      'common.actions.edit': 'Edit',
-      'common.actions.move': 'Move',
-      'common.actions.delete': 'Delete',
-    };
-    return translations[key] || key;
-  }
-}
+import { getTranslocoTestingModule } from '../../testing/transloco-testing.module';
 
 describe('TranslationItem', () => {
   let component: TranslationItem;
   let fixture: ComponentFixture<TranslationItem>;
-  let mockTransloco: Partial<TranslocoService>;
 
   const mockTranslation: ResourceSummaryDto = {
     key: 'common.buttons.save',
@@ -41,30 +22,12 @@ describe('TranslationItem', () => {
   };
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'common.actions.clickToCopy': 'click to copy',
-          'common.actions.edit': 'Edit',
-          'common.actions.move': 'Move',
-          'common.actions.delete': 'Delete',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationItem],
-      providers: [
-        { provide: TranslocoService, useValue: mockTransloco },
+      imports: [
+        TranslationItem,
+        getTranslocoTestingModule(),
       ],
-    })
-    .overrideComponent(TranslationItem, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
     component = fixture.componentInstance;
@@ -105,7 +68,6 @@ describe('TranslationItem', () => {
 
 describe('TranslationItem - Copy to Clipboard', () => {
   let fixture: ComponentFixture<TranslationItem>;
-  let mockTransloco: Partial<TranslocoService>;
 
   const mockTranslation: ResourceSummaryDto = {
     key: 'common.buttons.save',
@@ -121,30 +83,12 @@ describe('TranslationItem - Copy to Clipboard', () => {
   };
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'common.actions.clickToCopy': 'click to copy',
-          'common.actions.edit': 'Edit',
-          'common.actions.move': 'Move',
-          'common.actions.delete': 'Delete',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationItem],
-      providers: [
-        { provide: TranslocoService, useValue: mockTransloco },
+      imports: [
+        TranslationItem,
+        getTranslocoTestingModule(),
       ],
-    })
-    .overrideComponent(TranslationItem, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
   });
@@ -180,7 +124,6 @@ describe('TranslationItem - Copy to Clipboard', () => {
 describe('TranslationItem - Context Menu Actions', () => {
   let component: TranslationItem;
   let fixture: ComponentFixture<TranslationItem>;
-  let mockTransloco: Partial<TranslocoService>;
 
   const mockTranslation: ResourceSummaryDto = {
     key: 'common.buttons.save',
@@ -196,30 +139,12 @@ describe('TranslationItem - Context Menu Actions', () => {
   };
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'common.actions.clickToCopy': 'click to copy',
-          'common.actions.edit': 'Edit',
-          'common.actions.move': 'Move',
-          'common.actions.delete': 'Delete',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationItem],
-      providers: [
-        { provide: TranslocoService, useValue: mockTransloco },
+      imports: [
+        TranslationItem,
+        getTranslocoTestingModule(),
       ],
-    })
-    .overrideComponent(TranslationItem, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
     component = fixture.componentInstance;
@@ -264,7 +189,6 @@ describe('TranslationItem - Context Menu Actions', () => {
 
 describe('TranslationItem - Locale Rendering', () => {
   let fixture: ComponentFixture<TranslationItem>;
-  let mockTransloco: Partial<TranslocoService>;
 
   const mockTranslation: ResourceSummaryDto = {
     key: 'common.buttons.save',
@@ -280,30 +204,12 @@ describe('TranslationItem - Locale Rendering', () => {
   };
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'common.actions.clickToCopy': 'click to copy',
-          'common.actions.edit': 'Edit',
-          'common.actions.move': 'Move',
-          'common.actions.delete': 'Delete',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationItem],
-      providers: [
-        { provide: TranslocoService, useValue: mockTransloco },
+      imports: [
+        TranslationItem,
+        getTranslocoTestingModule(),
       ],
-    })
-    .overrideComponent(TranslationItem, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
   });
@@ -367,7 +273,6 @@ describe('TranslationItem - Locale Rendering', () => {
 
 describe('TranslationItem - Tags', () => {
   let fixture: ComponentFixture<TranslationItem>;
-  let mockTransloco: Partial<TranslocoService>;
 
   const mockTranslation: ResourceSummaryDto = {
     key: 'common.buttons.save',
@@ -383,30 +288,12 @@ describe('TranslationItem - Tags', () => {
   };
 
   beforeEach(async () => {
-    mockTransloco = {
-      translate: vi.fn((key: string) => {
-        const translations: Record<string, string> = {
-          'common.actions.clickToCopy': 'click to copy',
-          'common.actions.edit': 'Edit',
-          'common.actions.move': 'Move',
-          'common.actions.delete': 'Delete',
-        };
-        return translations[key] || key;
-      }),
-      reRenderOnLangChange: new BehaviorSubject(true),
-    } as Partial<TranslocoService>;
-
     await TestBed.configureTestingModule({
-      imports: [TranslationItem],
-      providers: [
-        { provide: TranslocoService, useValue: mockTransloco },
+      imports: [
+        TranslationItem,
+        getTranslocoTestingModule(),
       ],
-    })
-    .overrideComponent(TranslationItem, {
-      remove: { imports: [TranslocoPipe] },
-      add: { imports: [MockTranslocoPipe] },
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
   });

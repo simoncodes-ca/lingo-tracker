@@ -12,4 +12,6 @@ export * from './lib/move-resource-response.dto';
 export * from './lib/update-resource.dto';
 export * from './lib/update-resource-response.dto';
 export * from './lib/resource-tree.dto';
+export * from './lib/search-translations.dto';
+export * from './lib/search-result.dto';
 

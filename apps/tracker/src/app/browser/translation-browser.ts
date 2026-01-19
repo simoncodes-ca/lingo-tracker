@@ -8,7 +8,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 import { FolderTree } from './folder-tree';
 import { TranslationList } from './translation-list';
-import { LocaleFilter } from './components/locale-filter/locale-filter';
+import { LocaleFilter, TranslationSearch } from './components';
 import { CollectionsStore } from '../collections/store/collections.store';
 import { BrowserStore } from './store/browser.store';
 
@@ -35,6 +35,7 @@ import { BrowserStore } from './store/browser.store';
     FolderTree,
     TranslationList,
     LocaleFilter,
+    TranslationSearch,
   ],
   templateUrl: './translation-browser.html',
   styleUrl: './translation-browser.scss',

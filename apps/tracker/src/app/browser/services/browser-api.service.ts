@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ResourceTreeDto } from '@simoncodes-ca/data-transfer';
+import { ResourceTreeDto, SearchResultsDto } from '@simoncodes-ca/data-transfer';
 
 /**
  * API service for browser-related operations.
@@ -30,6 +30,30 @@ export class BrowserApiService {
     const encodedPath = encodeURIComponent(path);
     return this.#http.get<ResourceTreeDto>(
       `${this.#baseUrl}/${encodedName}/resources/tree?path=${encodedPath}&depth=${depth}`
+    );
+  }
+
+  /**
+   * Searches translations within a collection.
+   *
+   * @param collectionName - Name of the collection to search
+   * @param query - Search query string
+   * @param maxResults - Maximum results to return (default: 100)
+   * @returns Observable of search results
+   */
+  searchTranslations(
+    collectionName: string,
+    query: string,
+    maxResults = 100
+  ): Observable<SearchResultsDto> {
+    const params = new HttpParams()
+      .set('query', query)
+      .set('maxResults', maxResults.toString());
+
+    const encodedName = encodeURIComponent(collectionName);
+    return this.#http.get<SearchResultsDto>(
+      `${this.#baseUrl}/${encodedName}/resources/search`,
+      { params }
     );
   }
 }

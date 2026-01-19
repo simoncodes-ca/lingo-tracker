@@ -8,7 +8,7 @@ import {
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, tap, switchMap, catchError, of } from 'rxjs';
-import { FolderNodeDto, ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import { FolderNodeDto, ResourceSummaryDto, SearchResultDto, SearchResultsDto } from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../services/browser-api.service';
 
 /**
@@ -44,6 +44,13 @@ interface BrowserState {
   translations: ResourceSummaryDto[];
   isTranslationsLoading: boolean;
 
+  // Search state
+  searchQuery: string;
+  isSearchMode: boolean;
+  searchResults: SearchResultDto[];
+  isSearchLoading: boolean;
+  searchError: string | null;
+
   // Shared state
   isDisabled: boolean;
   error: string | null;
@@ -64,6 +71,11 @@ const initialState: BrowserState = {
   isFolderTreeLoading: false,
   translations: [],
   isTranslationsLoading: false,
+  searchQuery: '',
+  isSearchMode: false,
+  searchResults: [],
+  isSearchLoading: false,
+  searchError: null,
   isDisabled: false,
   error: null,
 };
@@ -97,7 +109,7 @@ const initialState: BrowserState = {
 export const BrowserStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale }) => ({
+  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale, isSearchMode, searchResults }) => ({
     /**
      * Filters folders based on search term.
      * Recursively filters the tree to show only matching folders and their parents.
@@ -240,6 +252,14 @@ export const BrowserStore = signalStore(
       const available = availableLocales();
       const base = baseLocale();
       return available.filter(locale => locale !== base);
+    }),
+
+    /**
+     * Returns translations to display (search results or folder translations).
+     * Automatically switches between search mode and folder browse mode.
+     */
+    displayedTranslations: computed(() => {
+      return isSearchMode() ? searchResults() : translations();
     }),
   })),
   withMethods((store) => {
@@ -506,6 +526,80 @@ export const BrowserStore = signalStore(
       clearAllLocales(): void {
         patchState(store, { selectedLocales: [] });
       },
+
+      /**
+       * Sets the search query and enters search mode.
+       * Disables folder tree navigation during search.
+       */
+      setSearchQuery(query: string): void {
+        patchState(store, {
+          searchQuery: query,
+          isSearchMode: query.length > 0,
+        });
+
+        // Disable folder tree during search
+        if (query.length > 0) {
+          patchState(store, { isDisabled: true });
+        } else {
+          patchState(store, { isDisabled: false });
+        }
+      },
+
+      /**
+       * Clears search and returns to folder browse mode.
+       * Re-enables folder tree navigation.
+       */
+      clearSearch(): void {
+        patchState(store, {
+          searchQuery: '',
+          isSearchMode: false,
+          searchResults: [],
+          searchError: null,
+          isDisabled: false,
+        });
+      },
+
+      /**
+       * Searches translations in the current collection.
+       * Uses rxMethod for reactive execution with loading states.
+       */
+      searchTranslations: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, {
+            isSearchLoading: true,
+            searchError: null,
+          })),
+          switchMap((query) => {
+            const collection = store.selectedCollection();
+            if (!collection || query.trim().length === 0) {
+              patchState(store, { isSearchLoading: false });
+              return of(null);
+            }
+
+            return api.searchTranslations(collection, query).pipe(
+              tap((response: SearchResultsDto) => {
+                patchState(store, {
+                  searchResults: response.results,
+                  isSearchLoading: false,
+                  searchError: null,
+                });
+              }),
+              catchError((error: unknown) => {
+                const errorMessage =
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to search translations';
+                patchState(store, {
+                  isSearchLoading: false,
+                  searchError: errorMessage,
+                  searchResults: [],
+                });
+                return of(null);
+              })
+            );
+          })
+        )
+      ),
     };
   })
 );
