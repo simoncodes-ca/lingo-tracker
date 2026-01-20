@@ -31,7 +31,7 @@ describe('TranslationBrowser - Integration', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should display collection name in header when set', () => {
+  it('should display collection name in sidebar header when set', () => {
     // Set collection through the store since collectionName is a computed signal
     component.store.setSelectedCollection({
       collectionName: 'test-collection',
@@ -39,7 +39,7 @@ describe('TranslationBrowser - Integration', () => {
     });
     fixture.detectChanges();
 
-    const header = fixture.nativeElement.querySelector('h1');
-    expect(header.textContent).toBe('test-collection');
+    const collectionName = fixture.nativeElement.querySelector('.collection-name');
+    expect(collectionName?.textContent).toBe('test-collection');
   });
 });

@@ -1,0 +1,22 @@
+.translation-main-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-background-subtle);
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+
+  app-translation-search {
+    flex: 1;
+    min-width: 0; // Allow flex child to shrink below content size
+  }
+
+  app-locale-filter {
+    flex-shrink: 0;
+  }
+}

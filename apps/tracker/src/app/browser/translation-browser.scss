@@ -11,33 +11,22 @@
   background: var(--color-background);
 }
 
-.browser-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-4);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-background-subtle);
-  flex-shrink: 0;
-
-  button mat-icon {
-    color: var(--color-text-primary);
-  }
-
-  h1 {
-    margin: 0;
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-primary);
-  }
-}
-
+/**
+ * Browser content area
+ * Splits into sidebar and main content sections
+ */
 .browser-content {
   display: flex;
   flex: 1;
   overflow: hidden;
 }
 
+/**
+ * Folder sidebar section
+ * - Left panel with folder tree and header
+ * - Scrollable content area
+ * - Subtle background to differentiate from main content
+ */
 .folder-sidebar {
   width: 25vw;
   min-width: 300px;
@@ -45,12 +34,50 @@
   background: var(--color-background-subtle);
   overflow: hidden;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+
+  /**
+   * Ensure sidebar header stays at top
+   * and folder tree scrolls below it
+   */
+  app-folder-sidebar-header {
+    flex-shrink: 0;
+  }
+
+  app-folder-tree {
+    flex: 1;
+    overflow: hidden;
+  }
 }
 
+/**
+ * Main translation content area
+ * - Right panel with sticky header and translation list
+ * - Sticky header remains visible while scrolling
+ * - Main content scrolls independently
+ */
 .translation-main {
   flex: 1;
   overflow: hidden;
   background: var(--color-background);
+  display: flex;
+  flex-direction: column;
+
+  /**
+   * Sticky header stays at top during scroll
+   */
+  app-translation-main-header {
+    flex-shrink: 0;
+  }
+
+  /**
+   * Translation list scrolls while header remains visible
+   */
+  app-translation-list {
+    flex: 1;
+    overflow: hidden;
+  }
 }
 
 .loading-config {

@@ -12,11 +12,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { BrowserStore } from './store/browser.store';
+import { BrowserStore } from '../../store/browser.store';
 import { TranslationItem } from './translation-item';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import {TranslocoPipe} from "@jsverse/transloco";
-import {TRACKER_TOKENS} from "../../i18n-types/tracker-resources";
+import {TRACKER_TOKENS} from "../../../../i18n-types/tracker-resources";
 
 /**
  * List component for displaying translations with virtual scrolling.

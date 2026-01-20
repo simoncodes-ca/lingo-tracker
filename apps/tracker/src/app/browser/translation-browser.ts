@@ -6,11 +6,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
-import { FolderTree } from './folder-tree';
-import { TranslationList } from './translation-list';
-import { LocaleFilter, TranslationSearch } from './components';
+import { FolderSidebarHeader, FolderTree } from './hierarchy';
+import { TranslationMainHeader } from './translations/header/translation-main-header';
 import { CollectionsStore } from '../collections/store/collections.store';
 import { BrowserStore } from './store/browser.store';
+import {TranslationList} from "./translations/list/translation-list";
 
 /**
  * Translation Browser component for viewing and managing translations within a collection.
@@ -34,8 +34,8 @@ import { BrowserStore } from './store/browser.store';
     TranslocoModule,
     FolderTree,
     TranslationList,
-    LocaleFilter,
-    TranslationSearch,
+    FolderSidebarHeader,
+    TranslationMainHeader,
   ],
   templateUrl: './translation-browser.html',
   styleUrl: './translation-browser.scss',
@@ -68,6 +68,18 @@ export class TranslationBrowser implements OnInit {
     const collections = this.collectionsStore.collectionEntriesWithLocales();
     const collection = collections.find((c) => c.name === name);
     return collection?.baseLocale || 'en';
+  });
+
+  /**
+   * Computed signal for translations folder path from collection config.
+   */
+  readonly translationsFolder = computed(() => {
+    const name = this.collectionName();
+    if (!name) return '';
+
+    const collections = this.collectionsStore.collectionEntriesWithLocales();
+    const collection = collections.find((c) => c.name === name);
+    return collection?.config.translationsFolder || '';
   });
 
   constructor() {

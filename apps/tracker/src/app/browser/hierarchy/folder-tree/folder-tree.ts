@@ -7,19 +7,17 @@ import {
   effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FolderNode } from './folder-node/folder-node';
-import { BrowserStore } from '../store/browser.store';
+import { BrowserStore } from '../../store/browser.store';
 import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
-import {TRACKER_TOKENS} from "../../../i18n-types/tracker-resources";
+import {TRACKER_TOKENS} from "../../../../i18n-types/tracker-resources";
 import {TranslocoModule} from "@jsverse/transloco";
+import { SearchInput } from '../../../shared/components/search-input';
+import { MatIconModule } from '@angular/material/icon';
 
 /**
  * FolderTree component for hierarchical folder navigation.
@@ -36,13 +34,11 @@ import {TranslocoModule} from "@jsverse/transloco";
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    FormsModule,
     MatIconModule,
-    MatInputModule,
-    MatFormFieldModule,
     MatProgressSpinnerModule,
     FolderNode,
-      TranslocoModule,
+    TranslocoModule,
+    SearchInput,
   ],
   templateUrl: './folder-tree.html',
   styleUrl: './folder-tree.scss',

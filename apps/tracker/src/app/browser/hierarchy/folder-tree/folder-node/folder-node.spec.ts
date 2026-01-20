@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FolderNode } from './folder-node';
 import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
-import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
+import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
 
 describe('FolderNode', () => {
   let component: FolderNode;

@@ -11,8 +11,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
-import { TagList } from '../shared/tag-list/tag-list.component';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { TagList } from '../../../shared/tag-list/tag-list.component';
 import {MatIconButton} from "@angular/material/button";
 
 /**

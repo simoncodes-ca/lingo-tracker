@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { FolderTree } from './folder-tree';
-import { getTranslocoTestingModule } from '../../../testing/transloco-testing.module';
+import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
 
 describe('FolderTree', () => {
   let component: FolderTree;

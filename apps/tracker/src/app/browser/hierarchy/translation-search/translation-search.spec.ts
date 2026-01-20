@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { TranslationSearch } from './translation-search';
 import { BrowserStore } from '../../store/browser.store';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
+import { SearchInput } from '../../../shared/components/search-input';
 
 describe('TranslationSearch', () => {
   let component: TranslationSearch;
@@ -46,53 +48,44 @@ describe('TranslationSearch', () => {
       expect(component.store).toBe(mockStore);
     });
 
-    it('should initialize search control with empty value', () => {
-      expect(component.searchControl.value).toBe('');
+    it('should initialize searchValue signal with empty value', () => {
+      expect(component.searchValue()).toBe('');
     });
   });
 
   describe('Template Rendering', () => {
-    it('should render search input field', () => {
-      const input = fixture.nativeElement.querySelector('input[type="text"]');
-      expect(input).toBeTruthy();
+    it('should render SearchInput component', () => {
+      const searchInput = fixture.nativeElement.querySelector('app-search-input');
+      expect(searchInput).toBeTruthy();
     });
 
-    it('should have correct placeholder', () => {
-      const input = fixture.nativeElement.querySelector('input');
-      // Transloco resolves the translation key to the actual value
-      expect(input?.placeholder).toBe('Search translations...');
+    it('should pass correct placeholder to SearchInput', () => {
+      const searchInputDebug = fixture.debugElement.query(By.directive(SearchInput));
+      const searchInputComponent = searchInputDebug.componentInstance as SearchInput;
+      // The placeholder should be resolved by transloco
+      expect(searchInputComponent.placeholder()).toBe('Search translations...');
     });
 
-    it('should show search icon', () => {
-      const icon = fixture.nativeElement.querySelector('.search-icon');
-      expect(icon?.textContent?.trim()).toBe('search');
-    });
-
-    it('should not show clear button when search is empty', () => {
-      const clearBtn = fixture.nativeElement.querySelector('[data-testid="clear-search"]');
-      expect(clearBtn).toBeFalsy();
-    });
-
-    it('should show clear button when search has value', () => {
-      component.searchControl.setValue('test');
-      fixture.detectChanges();
-
-      const clearBtn = fixture.nativeElement.querySelector('[data-testid="clear-search"]');
-      expect(clearBtn).toBeTruthy();
-    });
-
-    it('should show loading spinner when searching', () => {
+    it('should pass isLoading state to SearchInput', () => {
       mockStore.isSearchLoading.set(true);
       fixture.detectChanges();
 
-      const spinner = fixture.nativeElement.querySelector('mat-spinner');
-      expect(spinner).toBeTruthy();
+      const searchInputDebug = fixture.debugElement.query(By.directive(SearchInput));
+      const searchInputComponent = searchInputDebug.componentInstance as SearchInput;
+      expect(searchInputComponent.isLoading()).toBe(true);
+    });
+
+    it('should pass current search value to SearchInput', () => {
+      component.searchValue.set('test query');
+      fixture.detectChanges();
+
+      expect(component.searchValue()).toBe('test query');
     });
   });
 
   describe('Search Debouncing', () => {
     it('should update store search query after typing', async () => {
-      component.searchControl.setValue('test');
+      component.onSearchChange('test');
 
       // Wait for debounce
       await new Promise(resolve => setTimeout(resolve, 350));
@@ -101,7 +94,7 @@ describe('TranslationSearch', () => {
     });
 
     it('should trigger search after debounce', async () => {
-      component.searchControl.setValue('button');
+      component.onSearchChange('button');
 
       await new Promise(resolve => setTimeout(resolve, 350));
 
@@ -109,13 +102,13 @@ describe('TranslationSearch', () => {
     });
 
     it('should not search for empty query', async () => {
-      component.searchControl.setValue('test');
+      component.onSearchChange('test');
       await new Promise(resolve => setTimeout(resolve, 350));
 
       mockStore.setSearchQuery.mockClear();
       mockStore.searchTranslations.mockClear();
 
-      component.searchControl.setValue('');
+      component.onSearchChange('');
       await new Promise(resolve => setTimeout(resolve, 350));
 
       expect(mockStore.setSearchQuery).toHaveBeenCalledWith('');
@@ -124,12 +117,12 @@ describe('TranslationSearch', () => {
   });
 
   describe('Clear Search', () => {
-    it('should clear search control', () => {
-      component.searchControl.setValue('test query');
+    it('should clear searchValue signal', () => {
+      component.searchValue.set('test query');
 
       component.onClearSearch();
 
-      expect(component.searchControl.value).toBe('');
+      expect(component.searchValue()).toBe('');
     });
 
     it('should call store clearSearch method', () => {

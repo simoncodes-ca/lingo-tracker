@@ -2,21 +2,15 @@ import {
   Component,
   ChangeDetectionStrategy,
   inject,
-  OnInit,
   OnDestroy,
+  signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { BrowserStore } from '../../store/browser.store';
-import {TranslocoPipe} from "@jsverse/transloco";
-import {TRACKER_TOKENS} from "../../../../i18n-types/tracker-resources";
+import { TranslocoPipe } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from "../../../../i18n-types/tracker-resources";
+import { SearchInput } from '../../../shared/components/search-input';
 
 /**
  * TranslationSearch component provides a search input with debouncing
@@ -37,30 +31,25 @@ import {TRACKER_TOKENS} from "../../../../i18n-types/tracker-resources";
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-      TranslocoPipe,
+    SearchInput,
+    TranslocoPipe,
   ],
   templateUrl: './translation-search.html',
   styleUrl: './translation-search.scss',
 })
-export class TranslationSearch implements OnInit, OnDestroy {
+export class TranslationSearch implements OnDestroy {
   readonly store = inject(BrowserStore);
   readonly TOKENS = TRACKER_TOKENS;
 
-  readonly searchControl = new FormControl<string>('', { nonNullable: true });
+  searchValue = signal('');
 
+  #searchSubject = new Subject<string>();
   #subscription = new Subscription();
 
-  ngOnInit(): void {
-    // Subscribe to search control changes with debouncing
+  constructor() {
+    // Set up debounced search subscription
     this.#subscription.add(
-      this.searchControl.valueChanges
+      this.#searchSubject
         .pipe(
           debounceTime(300), // Wait 300ms after user stops typing
           distinctUntilChanged() // Only emit if value actually changed
@@ -82,10 +71,19 @@ export class TranslationSearch implements OnInit, OnDestroy {
   }
 
   /**
+   * Handles search value changes from the input component.
+   * Emits to subject for debounced processing.
+   */
+  onSearchChange(searchQueryValue: string): void {
+    this.searchValue.set(searchQueryValue);
+    this.#searchSubject.next(searchQueryValue);
+  }
+
+  /**
    * Clears the search input and returns to browse mode.
    */
   onClearSearch(): void {
-    this.searchControl.setValue('');
+    this.searchValue.set('');
     this.store.clearSearch();
   }
 }

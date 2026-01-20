@@ -1,18 +1,13 @@
 <div class="folder-tree" [class.disabled]="store.isDisabled()">
   <!-- Search Input -->
   <div class="search-container">
-    <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
-      <mat-icon matPrefix>search</mat-icon>
-      <input
-        matInput
-        type="text"
-        placeholder="{{ TOKENS.BROWSER.FILTERFOLDERS | transloco}}"
-        [value]="store.folderTreeFilter()"
-        (input)="onSearchChange($any($event.target).value)"
-        [disabled]="store.isDisabled()"
-        [attr.aria-label]="'Filter folders'"
-      />
-    </mat-form-field>
+    <app-search-input
+      [placeholder]="(TOKENS.BROWSER.FILTERFOLDERS | transloco)"
+      [value]="store.folderTreeFilter()"
+      [disabled]="store.isDisabled()"
+      [ariaLabel]="'Filter folders'"
+      (valueChange)="onSearchChange($event)"
+    />
   </div>
 
   <!-- Loading State -->

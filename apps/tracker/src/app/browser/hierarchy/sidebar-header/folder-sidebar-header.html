@@ -1,0 +1,17 @@
+<div class="folder-sidebar-header">
+  <div class="header-content">
+    <button
+      mat-icon-button
+      type="button"
+      (click)="onBackButtonClick()"
+      [attr.aria-label]="TOKENS.COMMON.ACTIONS.BACK | transloco"
+      class="back-button"
+    >
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-text">
+      <h2 class="collection-name">{{ collectionName() }}</h2>
+      <p class="translations-folder">{{ translationsFolder() }}</p>
+    </div>
+  </div>
+</div>

@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import {TranslocoModule} from "@jsverse/transloco";
-import {TRACKER_TOKENS} from "../../../../i18n-types/tracker-resources";
+import {TRACKER_TOKENS} from "../../../../../i18n-types/tracker-resources";
 
 /**
  * Recursive component for rendering folder tree nodes.

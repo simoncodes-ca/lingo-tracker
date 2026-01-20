@@ -1,25 +1,12 @@
 <div class="translation-browser">
-  <header class="browser-header">
-    <button
-      mat-icon-button
-      type="button"
-      (click)="navigateToCollections()"
-      [attr.aria-label]="TOKENS.COMMON.ACTIONS.BACK | transloco"
-    >
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <h1>{{ collectionName() }}</h1>
-    <div class="header-search">
-      <app-translation-search />
-    </div>
-    <div class="header-actions">
-      <app-locale-filter />
-    </div>
-  </header>
-
   <div class="browser-content">
     <!-- Left Sidebar: Folder Tree -->
     <aside class="folder-sidebar">
+      <app-sidebar-header
+        [collectionName]="collectionName()"
+        [translationsFolder]="translationsFolder()"
+        (backClick)="navigateToCollections()"
+      />
       <app-folder-tree
         [collectionName]="collectionName()"
       />
@@ -27,6 +14,8 @@
 
     <!-- Main Content: Translation List -->
     <main class="translation-main">
+      <app-translation-header />
+
       @if (collectionName() && activeLocales().length > 0) {
         <app-translation-list
           [collectionName]="collectionName()"
