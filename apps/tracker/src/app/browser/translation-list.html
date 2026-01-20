@@ -50,6 +50,7 @@
         [translation]="translation"
         [locales]="displayLocales()"
         [baseLocale]="baseLocale()"
+        [folderPath]="store.isSearchMode() ? '' : store.currentFolderPath()"
         (copyKey)="handleCopyKey($event)"
         (editTranslation)="handleEdit($event)"
         (moveTranslation)="handleMove($event)"

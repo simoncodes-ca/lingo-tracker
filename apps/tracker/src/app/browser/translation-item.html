@@ -10,15 +10,16 @@
       <mat-icon class="copy-icon">content_copy</mat-icon>
     </button>
 
-    <button
-      mat-icon-button
-      type="button"
-      [matMenuTriggerFor]="menu"
-      class="context-menu-trigger"
-      [attr.aria-label]="'More actions'"
-    >
-      <mat-icon>more_vert</mat-icon>
-    </button>
+    <div class="card-actions">
+      <button
+              mat-icon-button
+              type="button"
+              [matMenuTriggerFor]="menu"
+              [attr.aria-label]="'More actions'"
+      >
+          <mat-icon>more_vert</mat-icon>
+      </button>
+
 
     <mat-menu #menu="matMenu">
       <button mat-menu-item (click)="editTranslation.emit(translation())">
@@ -34,16 +35,13 @@
         <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
       </button>
     </mat-menu>
+        </div>
   </div>
 
   <p class="base-value">{{ baseValue() }}</p>
 
-  @if (translation().tags && translation().tags!.length > 0) {
-    <div class="tags-container">
-      @for (tag of translation().tags; track tag) {
-        <mat-chip class="translation-tag">{{ tag }}</mat-chip>
-      }
-    </div>
+  @if (translation().tags?.length) {
+    <app-tag-list [tags]="translation().tags ?? []" />
   }
 
   <div class="locale-translations">

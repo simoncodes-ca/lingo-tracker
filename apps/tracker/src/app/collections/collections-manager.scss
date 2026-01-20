@@ -204,22 +204,8 @@
       word-break: break-all;
     }
 
-    .locale-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--spacing-2);
+    app-tag-list {
       margin-top: var(--spacing-4);
-
-      .locale-badge {
-        display: inline-block;
-        padding: var(--spacing-1) var(--spacing-3);
-        background: var(--color-primary-alpha-10, rgba(63, 81, 181, 0.1));
-        color: var(--color-primary, #3f51b5);
-        border-radius: var(--border-radius-full, 999px);
-        font-size: var(--font-size-xs, 12px);
-        font-weight: var(--font-weight-medium, 500);
-        font-family: var(--font-mono, monospace);
-      }
     }
   }
 }

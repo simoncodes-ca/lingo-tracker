@@ -8,11 +8,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
-import {TranslocoPipe} from "@jsverse/transloco";
-import {TRACKER_TOKENS} from "../../i18n-types/tracker-resources";
+import { TranslocoPipe } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
+import { TagList } from '../shared/tag-list/tag-list.component';
+import {MatIconButton} from "@angular/material/button";
 
 /**
  * Displays a single translation entry with key, base value, locale translations,
@@ -22,14 +23,15 @@ import {TRACKER_TOKENS} from "../../i18n-types/tracker-resources";
   selector: 'app-translation-item',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    MatIconModule,
-    MatMenuModule,
-    MatChipsModule,
-    MatTooltipModule,
-      TranslocoPipe,
-  ],
+    imports: [
+        CommonModule,
+        MatIconModule,
+        MatMenuModule,
+        MatTooltipModule,
+        TranslocoPipe,
+        TagList,
+        MatIconButton,
+    ],
   templateUrl: './translation-item.html',
   styleUrl: './translation-item.scss',
   host: {
@@ -46,6 +48,9 @@ export class TranslationItem {
   /** Base locale (source language) */
   baseLocale = input<string>('en');
 
+  /** Current folder path for constructing full key (empty for search results) */
+  folderPath = input<string>('');
+
   /** Emitted when user requests to copy key to clipboard */
   copyKey = output<string>();
 
@@ -61,10 +66,14 @@ export class TranslationItem {
   readonly TOKENS = TRACKER_TOKENS;
 
   /**
-   * Full translation key (combines folder path with entry key if needed)
+   * Full translation key (combines folder path with entry key if needed).
+   * For search results, the key already contains the full path.
+   * For folder browsing, we prepend the current folder path.
    */
   readonly fullKey = computed(() => {
-    return this.translation().key;
+    const path = this.folderPath();
+    const key = this.translation().key;
+    return path ? `${path}.${key}` : key;
   });
 
   /**

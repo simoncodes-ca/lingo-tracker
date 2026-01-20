@@ -308,10 +308,10 @@ describe('TranslationItem - Tags', () => {
     fixture.componentRef.setInput('locales', ['en']);
     fixture.detectChanges();
 
-    const tagsContainer = fixture.nativeElement.querySelector('.tags-container');
+    const tagsContainer = fixture.nativeElement.querySelector('.tag-list-container');
     expect(tagsContainer).toBeTruthy();
 
-    const chips = fixture.nativeElement.querySelectorAll('.translation-tag');
+    const chips = fixture.nativeElement.querySelectorAll('.tag-badge');
     expect(chips.length).toBe(2);
     expect(chips[0].textContent.trim()).toBe('Primary action button');
     expect(chips[1].textContent.trim()).toBe('Destructive action - requires confirmation');

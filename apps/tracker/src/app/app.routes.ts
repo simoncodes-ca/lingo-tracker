@@ -16,9 +16,4 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./browser/translation-browser').then(m => m.TranslationBrowser),
     title: 'Translation Browser'
   },
-  {
-    path: 'home',
-    loadComponent: () => import('./home/home.component').then(m => m.HomeComponent),
-    title: 'Home'
-  }
 ];

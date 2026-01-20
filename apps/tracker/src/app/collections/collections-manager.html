@@ -89,11 +89,7 @@
           </div>
           <div class="card-content">
             <p class="folder-path">{{ item.config.translationsFolder }}</p>
-            <div class="locale-badges">
-              @for (locale of item.locales; track locale) {
-                <span class="locale-badge">{{ locale }}</span>
-              }
-            </div>
+            <app-tag-list [tags]="item.locales" />
           </div>
         </div>
       }
