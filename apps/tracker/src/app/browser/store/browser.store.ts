@@ -326,16 +326,17 @@ export const BrowserStore = signalStore(
       },
 
       /**
-       * Toggles whether to show nested resources in the translation list.
-       * Triggers a reload of the current folder.
+       * Sets whether to show nested resources in the translation list.
+       * Triggers a reload of the current folder if the value changes.
        */
-      toggleNestedResources(): void {
-        const newValue = !store.showNestedResources();
-        patchState(store, { showNestedResources: newValue });
+      setNestedResources(value: boolean): void {
+        if (value !== store.showNestedResources()) {
+          patchState(store, { showNestedResources: value });
 
-        // Reload current folder with new setting
-        const path = store.currentFolderPath();
-        this.selectFolder(path);
+          // Reload current folder with new setting
+          const path = store.currentFolderPath();
+          this.selectFolder(path);
+        }
       },
 
       /**

@@ -8,6 +8,28 @@
       [ariaLabel]="'Filter folders'"
       (valueChange)="onSearchChange($event)"
     />
+    <mat-button-toggle-group
+      [value]="showNestedResources() ? 'nested' : 'current'"
+      (change)="setNestedResources($event.value === 'nested')"
+      [disabled]="store.isDisabled()"
+      class="nested-toggle-group"
+      aria-label="Resource display mode"
+    >
+      <mat-button-toggle
+        value="current"
+        matTooltip="Show only current folder"
+        aria-label="Show only current folder"
+      >
+        <mat-icon>folder</mat-icon>
+      </mat-button-toggle>
+      <mat-button-toggle
+        value="nested"
+        matTooltip="Show all nested resources"
+        aria-label="Show all nested resources"
+      >
+        <mat-icon>account_tree</mat-icon>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
   </div>
 
   <!-- Loading State -->

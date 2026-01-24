@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -26,6 +28,7 @@ import { MatIconModule } from '@angular/material/icon';
  * - Search/filter folders
  * - Progressive loading (click to load)
  * - Folder selection
+ * - Toggle between current folder and nested resources view
  * - Disabled state during search
  */
 @Component({
@@ -36,6 +39,8 @@ import { MatIconModule } from '@angular/material/icon';
     CommonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatButtonToggleModule,
+    MatTooltipModule,
     FolderNode,
     TranslocoModule,
     SearchInput,
@@ -55,6 +60,9 @@ export class FolderTree {
 
   /** Emitted when a folder is selected */
   folderSelected = output<string>();
+
+  /** Signal exposing nested resources visibility from store */
+  readonly showNestedResources = this.store.showNestedResources;
 
   readonly #searchSubject = new Subject<string>();
 
@@ -99,5 +107,13 @@ export class FolderTree {
    */
   onSearchChange(value: string): void {
     this.#searchSubject.next(value);
+  }
+
+  /**
+   * Sets the nested resources visibility state.
+   * Calls the store method to update the value and reload the current folder.
+   */
+  setNestedResources(value: boolean): void {
+    this.store.setNestedResources(value);
   }
 }

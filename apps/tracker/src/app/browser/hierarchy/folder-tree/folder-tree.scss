@@ -15,9 +15,21 @@
 }
 
 .search-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
   padding: var(--spacing-3);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
+
+  app-search-input {
+    width: 100%;
+  }
+}
+
+.nested-toggle-group {
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .loading-container {
