@@ -64,7 +64,7 @@ describe('FolderNode', () => {
     const emitSpy = vi.fn();
     component.loadFolder.subscribe(emitSpy);
 
-    component.onLoadClick();
+    component.onFolderClick();
 
     expect(emitSpy).toHaveBeenCalledWith('common');
   });
@@ -85,7 +85,7 @@ describe('FolderNode', () => {
     expect(folderNameElement?.textContent?.trim()).toBe('common');
   });
 
-  it('should show "click to load" for unloaded folders', () => {
+  it('should show closed folder icon for unloaded folders', () => {
     const folder: FolderNodeDto = {
       name: 'common',
       fullPath: 'common',
@@ -96,11 +96,12 @@ describe('FolderNode', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement;
-    expect(compiled.querySelector('.load-hint')).toBeTruthy();
-    expect(compiled.querySelector('.load-hint')?.textContent?.trim()).toBe('click to load');
+    const folderIcon = compiled.querySelector('.folder-icon');
+    expect(folderIcon).toBeTruthy();
+    expect(folderIcon?.textContent?.trim()).toBe('folder');
   });
 
-  it('should not show "click to load" for loaded folders', () => {
+  it('should show open folder icon for loaded folders', () => {
     const folder: FolderNodeDto = {
       name: 'common',
       fullPath: 'common',
@@ -112,7 +113,9 @@ describe('FolderNode', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement;
-    expect(compiled.querySelector('.load-hint')).toBeFalsy();
+    const folderIcon = compiled.querySelector('.folder-icon');
+    expect(folderIcon).toBeTruthy();
+    expect(folderIcon?.textContent?.trim()).toBe('folder_open');
   });
 
   it('should apply selected class when folder is selected', () => {

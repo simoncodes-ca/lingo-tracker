@@ -4,22 +4,19 @@
     class="folder-header"
     [class.selected]="isSelected()"
     [class.unloaded]="!folder().loaded"
-    (click)="folder().loaded ? onFolderClick() : onLoadClick()"
+    (click)="onFolderClick()"
     [attr.role]="disabled() ? 'presentation' : 'treeitem'"
     [attr.tabindex]="disabled() ? -1 : 0"
     [attr.aria-label]="'Folder ' + folder().name"
     [attr.aria-expanded]="folder().loaded ? 'true' : 'false'"
     [attr.aria-selected]="isSelected()"
-    (keydown.enter)="folder().loaded ? onFolderClick() : onLoadClick()"
-    (keydown.space)="folder().loaded ? onFolderClick() : onLoadClick()"
+    (keydown.enter)="onFolderClick()"
+    (keydown.space)="onFolderClick()"
   >
     <mat-icon class="folder-icon">
-      {{ folder().loaded ? 'folder' : 'folder_open' }}
+      {{ folder().loaded ? 'folder_open' : 'folder' }}
     </mat-icon>
     <span class="folder-name">{{ folder().name }}</span>
-    @if (!folder().loaded && !disabled()) {
-      <span class="load-hint">{{ TOKENS.BROWSER.CLICKTOLOAD | transloco }}</span>
-    }
   </div>
 
   <!-- Loaded Children -->

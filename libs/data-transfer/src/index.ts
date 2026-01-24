@@ -14,4 +14,5 @@ export * from './lib/update-resource-response.dto';
 export * from './lib/resource-tree.dto';
 export * from './lib/search-translations.dto';
 export * from './lib/search-result.dto';
-
+export * from './lib/cache-status.dto';
+export * from './lib/tree-status-response.dto';

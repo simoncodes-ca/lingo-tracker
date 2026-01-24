@@ -1,6 +1,16 @@
 <div class="translation-main-header">
   <div class="header-content">
     <app-translation-search />
+
+    <button
+      mat-icon-button
+      type="button"
+      [matTooltip]="showNestedResources() ? 'Show only current folder' : 'Show all nested resources'"
+      (click)="toggleNested()"
+    >
+      <mat-icon>{{ showNestedResources() ? 'account_tree' : 'list' }}</mat-icon>
+    </button>
+
     <app-locale-filter />
   </div>
 </div>

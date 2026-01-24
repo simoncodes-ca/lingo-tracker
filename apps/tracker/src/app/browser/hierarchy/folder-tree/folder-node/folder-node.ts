@@ -47,20 +47,20 @@ export class FolderNode {
   readonly TOKENS = TRACKER_TOKENS;
 
   /**
-   * Handles folder name click.
+   * Handles folder click.
+   * Single click both selects the folder AND loads it (if not already loaded).
    */
   onFolderClick(): void {
     if (!this.disabled()) {
-      this.folderClick.emit(this.folder());
-    }
-  }
+      const currentFolder = this.folder();
 
-  /**
-   * Handles "click to load" click.
-   */
-  onLoadClick(): void {
-    if (!this.disabled()) {
-      this.loadFolder.emit(this.folder().fullPath);
+      // Always emit folderClick to select the folder
+      this.folderClick.emit(currentFolder);
+
+      // If folder is not loaded, also emit loadFolder to trigger loading
+      if (!currentFolder.loaded) {
+        this.loadFolder.emit(currentFolder.fullPath);
+      }
     }
   }
 

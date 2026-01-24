@@ -9,6 +9,10 @@
     align-items: center;
     gap: var(--spacing-3);
     padding: var(--spacing-3) var(--spacing-4);
+
+    mat-icon {
+      color: var(--color-text-primary);
+    }
   }
 
   app-translation-search {
@@ -16,7 +20,8 @@
     min-width: 0; // Allow flex child to shrink below content size
   }
 
-  app-locale-filter {
+  app-locale-filter,
+  button[mat-icon-button] {
     flex-shrink: 0;
   }
 }

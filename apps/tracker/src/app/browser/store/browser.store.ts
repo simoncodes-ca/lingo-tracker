@@ -7,15 +7,15 @@ import {
   patchState,
 } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, tap, switchMap, catchError, of } from 'rxjs';
-import { FolderNodeDto, ResourceSummaryDto, SearchResultDto, SearchResultsDto } from '@simoncodes-ca/data-transfer';
+import { pipe, tap, switchMap, catchError, of, interval, takeWhile, startWith } from 'rxjs';
+import {
+  FolderNodeDto,
+  ResourceSummaryDto,
+  SearchResultDto,
+  SearchResultsDto,
+  CacheStatusType,
+} from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../services/browser-api.service';
-
-/**
- * Default depth for resource tree queries.
- * Specifies how many levels of folders to load in a single request.
- */
-const RESOURCE_TREE_DEPTH = 2;
 
 /**
  * Unified state interface for the Browser store.
@@ -33,6 +33,10 @@ interface BrowserState {
   selectedLocales: string[];
   baseLocale: string;
 
+  // Cache status
+  cacheStatus: CacheStatusType | null;
+  cacheError: string | null;
+
   // Folder tree state
   currentFolderPath: string;
   expandedFolders: Set<string>;
@@ -43,6 +47,7 @@ interface BrowserState {
   // Translation list state
   translations: ResourceSummaryDto[];
   isTranslationsLoading: boolean;
+  showNestedResources: boolean;
 
   // Search state
   searchQuery: string;
@@ -64,6 +69,8 @@ const initialState: BrowserState = {
   availableLocales: [],
   selectedLocales: [],
   baseLocale: '',
+  cacheStatus: null,
+  cacheError: null,
   currentFolderPath: '',
   expandedFolders: new Set<string>(),
   rootFolders: [],
@@ -71,6 +78,7 @@ const initialState: BrowserState = {
   isFolderTreeLoading: false,
   translations: [],
   isTranslationsLoading: false,
+  showNestedResources: false,
   searchQuery: '',
   isSearchMode: false,
   searchResults: [],
@@ -109,7 +117,7 @@ const initialState: BrowserState = {
 export const BrowserStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale, isSearchMode, searchResults }) => ({
+  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale, isSearchMode, searchResults, cacheStatus }) => ({
     /**
      * Filters folders based on search term.
      * Recursively filters the tree to show only matching folders and their parents.
@@ -261,34 +269,23 @@ export const BrowserStore = signalStore(
     displayedTranslations: computed(() => {
       return isSearchMode() ? searchResults() : translations();
     }),
+
+    /**
+     * Returns true if cache is ready to serve requests.
+     */
+    isCacheReady: computed(() => cacheStatus() === 'ready'),
+
+    /**
+     * Returns true if cache is currently being indexed.
+     */
+    isCacheIndexing: computed(() => {
+      const status = cacheStatus();
+      return status === 'indexing' || status === 'not-started';
+    }),
   })),
   withMethods((store) => {
     const api = inject(BrowserApiService);
-
     return {
-      /**
-       * Sets the selected collection and initializes state.
-       * Resets folder tree and translations, then loads root folders.
-       */
-      setSelectedCollection(params: { collectionName: string; locales: string[] }): void {
-        patchState(store, {
-          selectedCollection: params.collectionName,
-          availableLocales: params.locales,
-          selectedLocales: [],
-          baseLocale: '',
-          // Reset navigation state
-          currentFolderPath: '',
-          expandedFolders: new Set<string>(),
-          rootFolders: [],
-          folderTreeFilter: '',
-          translations: [],
-          error: null,
-        });
-
-        // Auto-load root folders
-        this.loadRootFolders();
-      },
-
       /**
        * Sets the base locale for the collection.
        * The base locale is always displayed and cannot be filtered out.
@@ -329,6 +326,19 @@ export const BrowserStore = signalStore(
       },
 
       /**
+       * Toggles whether to show nested resources in the translation list.
+       * Triggers a reload of the current folder.
+       */
+      toggleNestedResources(): void {
+        const newValue = !store.showNestedResources();
+        patchState(store, { showNestedResources: newValue });
+
+        // Reload current folder with new setting
+        const path = store.currentFolderPath();
+        this.selectFolder(path);
+      },
+
+      /**
        * Clears the error message.
        */
       clearError(): void {
@@ -346,6 +356,7 @@ export const BrowserStore = signalStore(
        * Selects a folder and loads its translations.
        * This is the primary coordination method that updates both
        * folder navigation state and translation display.
+       * Loads the full tree for the selected folder in a single API call.
        */
       selectFolder: rxMethod<string>(
         pipe(
@@ -356,12 +367,13 @@ export const BrowserStore = signalStore(
           })),
           switchMap((path) => {
             const collection = store.selectedCollection();
+            const includeNested = store.showNestedResources();
             if (!collection) {
               patchState(store, { isTranslationsLoading: false });
               return of(null);
             }
 
-            return api.getResourceTree(collection, path, RESOURCE_TREE_DEPTH).pipe(
+            return api.getResourceTree(collection, path, includeNested).pipe(
               tap((tree) => {
                 patchState(store, {
                   translations: tree.resources,
@@ -387,19 +399,21 @@ export const BrowserStore = signalStore(
 
       /**
        * Loads root-level folders for the current collection.
-       * Automatically called when a collection is selected.
+       * Automatically called when cache is ready.
+       * Loads the full tree in a single API call.
        */
       loadRootFolders: rxMethod<void>(
         pipe(
           tap(() => patchState(store, { isFolderTreeLoading: true, error: null })),
           switchMap(() => {
             const collection = store.selectedCollection();
+            const includeNested = store.showNestedResources();
             if (!collection) {
               patchState(store, { isFolderTreeLoading: false });
               return of(null);
             }
 
-            return api.getResourceTree(collection, '', RESOURCE_TREE_DEPTH).pipe(
+            return api.getResourceTree(collection, '', includeNested).pipe(
               tap((treeData) => {
                 patchState(store, {
                   rootFolders: treeData.children,
@@ -427,19 +441,21 @@ export const BrowserStore = signalStore(
 
       /**
        * Loads children for a specific folder.
-       * Updates the folder node in the tree to mark it as loaded.
+       * Since the API now returns the full tree, this method simply updates
+       * the folder node with the complete tree data returned by the API.
        */
       loadFolderChildren: rxMethod<string>(
         pipe(
           tap(() => patchState(store, { isFolderTreeLoading: true, error: null })),
           switchMap((folderPath) => {
             const collection = store.selectedCollection();
+            const includeNested = store.showNestedResources();
             if (!collection) {
               patchState(store, { isFolderTreeLoading: false });
               return of(null);
             }
 
-            return api.getResourceTree(collection, folderPath, RESOURCE_TREE_DEPTH).pipe(
+            return api.getResourceTree(collection, folderPath, includeNested).pipe(
               tap((treeData) => {
                 // Find and update the folder node in the tree
                 const updateFolder = (folders: FolderNodeDto[]): FolderNodeDto[] => {
@@ -485,14 +501,6 @@ export const BrowserStore = signalStore(
           })
         )
       ),
-
-      /**
-       * Refreshes translations for the current folder.
-       */
-      refreshTranslations(): void {
-        const path = store.currentFolderPath();
-        this.selectFolder(path);
-      },
 
       /**
        * Sets the selected locales for filtering.
@@ -600,6 +608,90 @@ export const BrowserStore = signalStore(
           })
         )
       ),
+    };
+  }),
+  withMethods((store) => {
+    const api = inject(BrowserApiService);
+    return {
+      /**
+       * Checks cache status for the current collection.
+       * If status is INDEXING or NOT_STARTED, sets up polling until cache is READY or ERROR.
+       * Automatically loads root folders when cache becomes ready.
+       */
+      checkCacheStatus: rxMethod<void>(
+        pipe(
+          switchMap(() => {
+            const collection = store.selectedCollection();
+            if (!collection) {
+              return of(null);
+            }
+
+            return interval(2000).pipe(
+              startWith(0),
+              switchMap(() => api.getCacheStatus(collection)),
+              tap((statusDto) => {
+                patchState(store, {
+                  cacheStatus: statusDto.status,
+                  cacheError: statusDto.error || null,
+                });
+
+                // Load folders when cache becomes ready
+                if (statusDto.status === 'ready' && store.rootFolders().length === 0) {
+                  store.loadRootFolders();
+                }
+              }),
+              takeWhile((statusDto) => {
+                // Stop polling if we get null (error case)
+                if (statusDto === null) return false;
+
+                // Continue polling while indexing or not-started
+                return statusDto.status === 'indexing' || statusDto.status === 'not-started';
+              }, true), // true = include the final emission
+              catchError((error: unknown) => {
+                const errorMessage =
+                  error instanceof Error
+                    ? error.message
+                    : 'Failed to check cache status';
+                patchState(store, {
+                  cacheStatus: 'error',
+                  cacheError: errorMessage,
+                });
+                return of(null);
+              })
+            );
+          })
+        )
+      ),
+    };
+  }),
+  withMethods((store) => {
+    return {
+      /**
+       * Sets the selected collection and initializes state.
+       * Resets folder tree and translations, checks cache status, then loads root folders when ready.
+       */
+      setSelectedCollection(params: { collectionName: string; locales: string[] }): void {
+        patchState(store, {
+          selectedCollection: params.collectionName,
+          availableLocales: params.locales,
+          selectedLocales: [],
+          baseLocale: '',
+          // Reset cache state
+          cacheStatus: null,
+          cacheError: null,
+          // Reset navigation state
+          currentFolderPath: '',
+          expandedFolders: new Set<string>(),
+          showNestedResources: false,
+          rootFolders: [],
+          folderTreeFilter: '',
+          translations: [],
+          error: null,
+        });
+
+        // Check cache status first, then load root folders when ready
+        store.checkCacheStatus();
+      },
     };
   })
 );

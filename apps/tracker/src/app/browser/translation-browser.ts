@@ -11,6 +11,7 @@ import { TranslationMainHeader } from './translations/header/translation-main-he
 import { CollectionsStore } from '../collections/store/collections.store';
 import { BrowserStore } from './store/browser.store';
 import {TranslationList} from "./translations/list/translation-list";
+import { IndexingOverlay } from './components/indexing-overlay';
 
 /**
  * Translation Browser component for viewing and managing translations within a collection.
@@ -36,6 +37,7 @@ import {TranslationList} from "./translations/list/translation-list";
     TranslationList,
     FolderSidebarHeader,
     TranslationMainHeader,
+    IndexingOverlay,
   ],
   templateUrl: './translation-browser.html',
   styleUrl: './translation-browser.scss',

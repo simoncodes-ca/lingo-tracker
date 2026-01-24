@@ -24,10 +24,10 @@ describe('BrowserApiService', () => {
   });
 
   describe('getResourceTree', () => {
-    it('should fetch resource tree for collection', async () => {
+    it('should fetch resource tree for collection with includeNested', async () => {
       const collectionName = 'my-collection';
       const folderPath = 'common.buttons';
-      const depth = 1;
+      const includeNested = true;
 
       const mockResponse: ResourceTreeDto = {
         path: folderPath,
@@ -35,11 +35,11 @@ describe('BrowserApiService', () => {
         children: [],
       };
 
-      const result$ = service.getResourceTree(collectionName, folderPath, depth);
+      const result$ = service.getResourceTree(collectionName, folderPath, includeNested);
       const resultPromise = firstValueFrom(result$);
 
       const req = httpMock.expectOne(
-        `/api/collections/${encodeURIComponent(collectionName)}/resources/tree?path=${encodeURIComponent(folderPath)}&depth=${depth}`
+        `/api/collections/${encodeURIComponent(collectionName)}/resources/tree?path=${encodeURIComponent(folderPath)}&includeNested=${includeNested}`
       );
       expect(req.request.method).toBe('GET');
       req.flush(mockResponse);
@@ -48,7 +48,7 @@ describe('BrowserApiService', () => {
       expect(data).toEqual(mockResponse);
     });
 
-    it('should use empty path for root', async () => {
+    it('should use empty path and false includeNested for root', async () => {
       const collectionName = 'my-collection';
 
       const mockResponse: ResourceTreeDto = {
@@ -62,7 +62,7 @@ describe('BrowserApiService', () => {
       // Trigger the HTTP call asynchronously
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/${encodeURIComponent(collectionName)}/resources/tree?path=&depth=1`
+          `/api/collections/${encodeURIComponent(collectionName)}/resources/tree?path=&includeNested=false`
         );
         req.flush(mockResponse);
       });

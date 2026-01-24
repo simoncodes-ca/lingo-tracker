@@ -1,7 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ResourceTreeDto, SearchResultsDto } from '@simoncodes-ca/data-transfer';
+import {
+  ResourceTreeDto,
+  SearchResultsDto,
+  CacheStatusDto,
+} from '@simoncodes-ca/data-transfer';
 
 /**
  * API service for browser-related operations.
@@ -14,22 +18,41 @@ export class BrowserApiService {
   readonly #baseUrl = '/api/collections';
 
   /**
+   * Gets the cache status for a collection.
+   *
+   * @param collectionName - Name of the collection
+   * @returns Observable of CacheStatusDto
+   */
+  getCacheStatus(collectionName: string): Observable<CacheStatusDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    return this.#http.get<CacheStatusDto>(
+      `${this.#baseUrl}/${encodedName}/resources/cache/status`
+    );
+  }
+
+  /**
    * Gets the resource tree for a collection.
+   * The API now returns the full tree or subtree without depth limits.
    *
    * @param collectionName - Name of the collection
    * @param path - Folder path (empty string for root)
-   * @param depth - How many levels deep to load (default: 1)
+   * @param includeNested - Whether to include nested resources in the resources array
    * @returns Observable of ResourceTreeDto
    */
   getResourceTree(
     collectionName: string,
     path = '',
-    depth = 1
+    includeNested = false
   ): Observable<ResourceTreeDto> {
     const encodedName = encodeURIComponent(collectionName);
     const encodedPath = encodeURIComponent(path);
+    const params = new HttpParams()
+      .set('path', path)
+      .set('includeNested', includeNested.toString());
+
     return this.#http.get<ResourceTreeDto>(
-      `${this.#baseUrl}/${encodedName}/resources/tree?path=${encodedPath}&depth=${depth}`
+      `${this.#baseUrl}/${encodedName}/resources/tree`,
+      { params }
     );
   }
 

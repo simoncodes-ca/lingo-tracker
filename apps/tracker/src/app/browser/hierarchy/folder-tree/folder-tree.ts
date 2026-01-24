@@ -78,6 +78,7 @@ export class FolderTree {
 
   /**
    * Handles folder click events from child nodes.
+   * Single click selects the folder and shows its translations.
    */
   onFolderClick(folder: FolderNodeDto): void {
     this.store.selectFolder(folder.fullPath);
@@ -86,12 +87,11 @@ export class FolderTree {
 
   /**
    * Handles load folder requests from child nodes.
-   * Loads the folder's children and immediately selects it to show translations.
+   * Loads the folder's children for expansion.
+   * Note: Selection is handled separately by onFolderClick.
    */
   onLoadFolder(folderPath: string): void {
     this.store.loadFolderChildren(folderPath);
-    this.store.selectFolder(folderPath);
-    this.folderSelected.emit(folderPath);
   }
 
   /**
