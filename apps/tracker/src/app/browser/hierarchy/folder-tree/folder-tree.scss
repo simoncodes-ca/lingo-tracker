@@ -28,6 +28,8 @@
 }
 
 .nested-toggle-group {
+  --mat-button-toggle-height: 40px;
+
   flex-shrink: 0;
   margin-left: auto;
 }

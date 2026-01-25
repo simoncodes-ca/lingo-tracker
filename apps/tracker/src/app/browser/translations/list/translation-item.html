@@ -1,57 +1,121 @@
-<div class="item-container">
-  <div class="item-header">
-    <button
-      class="key-button"
-      type="button"
-      (click)="copyKey.emit(fullKey())"
-      [matTooltip]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
-    >
-      <span class="key-text">{{ fullKey() }}</span>
-      <mat-icon class="copy-icon">content_copy</mat-icon>
-    </button>
+<div
+  class="item-container"
+  role="listitem"
+  [attr.data-density]="currentDensityMode()"
+  [class.expanded]="currentDensityMode() === 'full' && isExpanded()"
+  [class.touch-pressed]="isTouchPressed()"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd($event)"
+  (keydown)="onKeyDown($event)"
+  tabindex="0"
+>
+  <span
+    id="{{ statusId() }}"
+    class="sr-only"
+    style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;"
+  >
+    {{ statusBreakdown() }}
+  </span>
 
-    <div class="card-actions">
-      <button
-              mat-icon-button
-              type="button"
-              [matMenuTriggerFor]="menu"
-              [attr.aria-label]="'More actions'"
-      >
-          <mat-icon>more_vert</mat-icon>
-      </button>
-
-
-    <mat-menu #menu="matMenu">
-      <button mat-menu-item (click)="editTranslation.emit(translation())">
-        <mat-icon>edit</mat-icon>
-        <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
-      </button>
-      <button mat-menu-item (click)="moveTranslation.emit(translation())">
-        <mat-icon>drive_file_move</mat-icon>
-        <span>{{ TOKENS.COMMON.ACTIONS.MOVE | transloco }}</span>
-      </button>
-      <button mat-menu-item (click)="deleteTranslation.emit(translation())">
-        <mat-icon>delete</mat-icon>
-        <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
-      </button>
-    </mat-menu>
+  @if (currentDensityMode() === 'compact') {
+    <div class="compact-row">
+      <div class="compact-left">
+        <div class="compact-value" [title]="primaryLocaleValue()">
+          {{ primaryLocaleValue() || '—' }}
         </div>
-  </div>
-
-  <p class="base-value">{{ baseValue() }}</p>
-
-  @if (translation().tags?.length) {
-    <app-tag-list [tags]="translation().tags ?? []" />
-  }
-
-  <div class="locale-translations">
-    @for (lt of localeTranslations(); track lt.locale) {
-      <div class="locale-line">
-        <span class="locale-code">{{ lt.locale }}:</span>
-        <span class="locale-value" [attr.data-status]="lt.status">
-          {{ lt.value || '—' }}
-        </span>
+        <app-translation-item-header
+          [fullKey]="fullKey()"
+          [isCompactMode]="true"
+          (copyKey)="copyKey.emit($event)"
+          (editAction)="editTranslation.emit(translation())"
+          (moveAction)="moveTranslation.emit(translation())"
+          (deleteAction)="deleteTranslation.emit(translation())"
+        />
       </div>
+
+      <app-translation-item-compact-controls
+        [primaryLocale]="primaryLocale()"
+        [primaryLocaleStatus]="translation().status[primaryLocale()]"
+        [rollupStatus]="rollupStatus()"
+        [statusId]="statusId()"
+        [hasComment]="!!translation().comment"
+        [hasTags]="!!translation().tags?.length"
+        [tagCount]="translation().tags?.length ?? 0"
+        (editAction)="editTranslation.emit(translation())"
+        (moveAction)="moveTranslation.emit(translation())"
+        (deleteAction)="deleteTranslation.emit(translation())"
+      />
+    </div>
+  } @else if (currentDensityMode() === 'medium' || currentDensityMode() === undefined) {
+    <!-- Medium (default) density layout -->
+    <app-translation-item-header
+      [fullKey]="fullKey()"
+      [rollupStatus]="rollupStatus()"
+      [statusBreakdown]="statusBreakdown()"
+      [statusId]="statusId()"
+      (copyKey)="copyKey.emit($event)"
+      (editAction)="editTranslation.emit(translation())"
+      (moveAction)="moveTranslation.emit(translation())"
+      (deleteAction)="deleteTranslation.emit(translation())"
+    />
+
+    <p class="base-value">{{ baseValue() }}</p>
+
+    @if (hasMetadata()) {
+      <app-translation-item-metadata
+        [tags]="translation().tags ?? []"
+        [comment]="translation().comment"
+        [previewTags]="previewTags()"
+        [densityMode]="'medium'"
+      />
     }
-  </div>
+
+    <app-translation-item-locales
+      [localeTranslations]="localeTranslations()"
+      [densityMode]="'medium'"
+    />
+  } @else if (currentDensityMode() === 'full') {
+    <!-- Full density: expanded details with overflow handling -->
+    <app-translation-item-header
+      [fullKey]="fullKey()"
+      [rollupStatus]="rollupStatus()"
+      [statusBreakdown]="statusBreakdown()"
+      [statusId]="statusId()"
+      (copyKey)="copyKey.emit($event)"
+      (editAction)="editTranslation.emit(translation())"
+      (moveAction)="moveTranslation.emit(translation())"
+      (deleteAction)="deleteTranslation.emit(translation())"
+    />
+
+    <div class="base-value full" [class.expanded]="isExpanded()">
+      {{ baseValue() }}
+    </div>
+
+    <app-translation-item-locales
+      [localeTranslations]="localeTranslations()"
+      [densityMode]="'full'"
+      [isExpanded]="isExpanded()"
+    />
+
+    @if (hasMetadata()) {
+      <app-translation-item-metadata
+        [tags]="translation().tags ?? []"
+        [comment]="translation().comment"
+        [densityMode]="'full'"
+      />
+    }
+
+    @if (needsExpansion()) {
+      <button
+        class="expand-button"
+        type="button"
+        (click)="toggleExpansion()"
+        [attr.aria-expanded]="isExpanded() ? 'true' : 'false'"
+        aria-label="Toggle expansion"
+      >
+        <mat-icon [class.rotated]="isExpanded()">expand_more</mat-icon>
+      </button>
+    }
+  }
 </div>
+

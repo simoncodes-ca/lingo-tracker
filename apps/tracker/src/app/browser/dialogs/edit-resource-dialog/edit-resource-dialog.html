@@ -1,0 +1,12 @@
+<h2 class="mat-dialog-title" id="dialog-title">Edit Resource</h2>
+<button mat-icon-button class="close-button" aria-label="Close dialog" (click)="close()">
+  <mat-icon>close</mat-icon>
+</button>
+<div class="mat-dialog-content placeholder" role="document" aria-describedby="dialog-message">
+  <p id="dialog-message">Edit functionality coming soon</p>
+  <p class="meta">Key: {{ data.resource.key }}</p>
+  <p class="meta">Collection: {{ data.collectionName }}</p>
+</div>
+<div class="mat-dialog-actions">
+  <button mat-button (click)="close()">Cancel</button>
+</div>

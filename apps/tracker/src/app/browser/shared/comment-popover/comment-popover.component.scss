@@ -1,0 +1,15 @@
+.comment-popover {
+  max-width: 400px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  background-color: var(--bg, var(--mat-background));
+  color: var(--fg, var(--mat-on-surface));
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.comment-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

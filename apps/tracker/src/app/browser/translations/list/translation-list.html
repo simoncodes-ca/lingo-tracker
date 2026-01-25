@@ -42,20 +42,25 @@
 
   @if (!store.isLoading() && !store.error() && store.displayedTranslations().length > 0) {
     <cdk-virtual-scroll-viewport
-      [itemSize]="itemSize"
+      [itemSize]="currentItemSize()"
       class="viewport"
+      role="list"
+      aria-label="Translation list"
     >
-      <app-translation-item
-        *cdkVirtualFor="let translation of store.displayedTranslations(); trackBy: trackByKey"
-        [translation]="translation"
-        [locales]="displayLocales()"
-        [baseLocale]="baseLocale()"
-        [folderPath]="store.isSearchMode() ? '' : store.currentFolderPath()"
-        (copyKey)="handleCopyKey($event)"
-        (editTranslation)="handleEdit($event)"
-        (moveTranslation)="handleMove($event)"
-        (deleteTranslation)="handleDelete($event)"
-      />
+      <div role="presentation">
+        <app-translation-item
+          *cdkVirtualFor="let translation of store.displayedTranslations(); trackBy: trackByKey"
+          [translation]="translation"
+          [locales]="displayLocales()"
+          [baseLocale]="baseLocale()"
+          [folderPath]="store.isSearchMode() ? '' : store.currentFolderPath()"
+          (copyKey)="handleCopyKey($event)"
+          (editTranslation)="handleEdit($event)"
+          (moveTranslation)="handleMove($event)"
+          (deleteTranslation)="handleDelete($event)"
+          (expansionChanged)="handleItemExpansion($event)"
+        />
+      </div>
     </cdk-virtual-scroll-viewport>
   }
 </div>

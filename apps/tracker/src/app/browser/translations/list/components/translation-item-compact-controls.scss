@@ -1,0 +1,39 @@
+.translation-item-compact-controls {
+  display: block;
+}
+
+.compact-controls {
+  align-items: center;
+  display: flex;
+  gap: var(--spacing-1);
+  justify-content: flex-end;
+  width: 180px;
+}
+
+.status-chip {
+  border-radius: 999px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  padding: 2px 8px;
+  text-transform: uppercase;
+}
+
+.rollup {
+  align-items: center;
+  color: var(--color-text-secondary);
+  display: flex;
+  gap: 4px;
+}
+
+.rollup-count {
+  font-size: var(--font-size-xs);
+}
+
+.icon-button {
+  position: relative;
+}
+
+.tag-count {
+  font-size: var(--font-size-xs);
+  margin-left: 4px;
+}

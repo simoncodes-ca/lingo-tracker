@@ -20,6 +20,7 @@ describe('LocaleFilter', () => {
       toggleLocale: vi.fn(),
       selectAllLocales: vi.fn(),
       clearAllLocales: vi.fn(),
+      setSelectedLocales: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -121,6 +122,33 @@ describe('LocaleFilter', () => {
       // filterableLocales excludes base locale
       expect(mockStore.filterableLocales()).toEqual(['es', 'fr', 'de']);
       expect(mockStore.filterableLocales()).not.toContain('en');
+    });
+  });
+
+  describe('Multi-select mode control', () => {
+    it('should allow multiple selections when multiSelect is true', () => {
+      component.multiSelect = true;
+      component.ngOnChanges();
+
+      // Should not trigger any reduction
+      expect(mockStore.setSelectedLocales).not.toHaveBeenCalled();
+    });
+
+    it('should reduce to single selection when multiSelect is disabled', () => {
+      mockStore.selectedLocales.set(['en', 'es', 'fr']);
+      component.multiSelect = false;
+      component.ngOnChanges();
+
+      expect(mockStore.setSelectedLocales).toHaveBeenCalledWith(['en']);
+    });
+
+    it('should not reduce when only one locale selected and multiSelect is disabled', () => {
+      mockStore.selectedLocales.set(['en']);
+      component.multiSelect = false;
+      component.ngOnChanges();
+
+      // Should not be called since there's only one selection
+      expect(mockStore.setSelectedLocales).not.toHaveBeenCalled();
     });
   });
 });

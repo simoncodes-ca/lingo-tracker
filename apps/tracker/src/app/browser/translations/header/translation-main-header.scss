@@ -13,6 +13,42 @@
     mat-icon {
       color: var(--color-text-primary);
     }
+
+    .density-toggle {
+      --mat-button-toggle-height: 40px;
+
+      margin-left: auto; // push to right
+      display: inline-flex;
+      align-items: center;
+      background: transparent;
+
+      mat-button-toggle {
+        border-radius: var(--radius-2);
+        padding: 0 var(--spacing-2);
+        color: var(--color-text-secondary);
+
+        mat-icon {
+          font-size: 20px;
+        }
+
+        &:hover,
+        &:focus {
+          background: var(--color-background-elevated);
+          color: var(--color-text-primary);
+        }
+
+        &.mat-button-toggle-checked {
+          background: var(--color-primary-container);
+          color: var(--color-on-primary-container);
+        }
+      }
+    }
+  }
+
+  .locale-helper {
+    padding: 0 var(--spacing-4) var(--spacing-2) var(--spacing-4);
+    font-size: 12px;
+    color: var(--color-text-tertiary);
   }
 
   app-translation-search {

@@ -117,8 +117,8 @@ User preferences will be stored in localStorage using:
    - Roll-up status indicator always shows status across **ALL locales** (regardless of filter)
 
 2. **Virtual Scroll Heights**:
-   - Compact: ~60px per item
-   - Medium: ~120px per item (current default)
+   - Compact: ~44px per item (desktop), ~48px (touch)
+   - Medium: ~88px per item
    - Full: ~160px per item (with expand button for overflow)
 
 3. **Accessibility Requirements**:
@@ -217,18 +217,20 @@ User preferences will be stored in localStorage using:
   - [ ] Returns translation value for primary locale
   - [ ] Returns `baseValue()` if primary locale is base locale
 - [ ] Create Compact mode template in `translation-item.html`:
-  - [ ] Horizontal layout: `[status-indicator] [key] [primary-locale-value] [actions]`
-  - [ ] Status indicator: circular badge with color based on rollup status
-  - [ ] Key: truncated with ellipsis, clickable to copy
-  - [ ] Value: truncated with ellipsis, styled by status
-  - [ ] Actions: inline icon buttons (Edit, Move, Delete)
+  - [ ] Horizontal layout with value as primary element:
+    - [ ] Left: Value (truncated, 1 line) + Key below (small/muted, copyable)
+    - [ ] Right fixed controls: Status chip (selected locale) + Roll-up indicator + Comment icon (if exists) + Tag icon with count (if exists) + Action menu
+  - [ ] Value: prominent, truncated with ellipsis, primary visual element
+  - [ ] Key: small font, muted color, clickable to copy
+  - [ ] Status chip: shows selected locale's status (e.g., "ES Verified" in blue)
+  - [ ] Roll-up indicator: small stacked bar showing status distribution across ALL locales
 - [ ] Style Compact mode in `translation-item.scss`:
-  - [ ] Container height: ~60px
-  - [ ] Horizontal flexbox layout with gap
-  - [ ] Status indicator: 12px circle with status color
-  - [ ] Key: flex-basis 30%, ellipsis overflow
-  - [ ] Value: flex-basis 50%, ellipsis overflow
-  - [ ] Actions: flex-shrink 0, icon buttons only
+  - [ ] Container height: 44px (desktop), 48px (touch via media query)
+  - [ ] CSS Grid layout: `grid-template-columns: 1fr auto`
+  - [ ] Left column: Value + Key stacked (value prominent, key small/muted)
+  - [ ] Right column: Fixed-width controls area (~180px) to prevent layout shift
+  - [ ] Value: truncate with ellipsis, font-weight 500
+  - [ ] Key: font-size 12px, color --color-text-tertiary
   - [ ] Use design tokens for all colors and spacing
 - [ ] Update `translation-list.ts`:
   - [ ] Add computed property `currentItemSize` that returns height based on `store.densityMode()`
@@ -271,12 +273,16 @@ User preferences will be stored in localStorage using:
 - [ ] Add computed property `hasMetadata` to translation-item.ts:
   - [ ] Returns true if tags exist or comment exists
 - [ ] Style Medium mode in `translation-item.scss`:
-  - [ ] Container height: ~120px
+  - [ ] Container min-height: 88px
   - [ ] Grid layout for locale translations (2 columns)
   - [ ] Tag chips: inline with max 3 visible + "+X more" indicator
   - [ ] Comment icon: info icon with subtle color
   - [ ] Maintain existing card hover effects
   - [ ] Use design tokens consistently
+- [ ] Add locale chip overflow handling:
+  - [ ] Show max 3-4 locale chips based on available width
+  - [ ] If more locales selected, show "+N" overflow chip
+  - [ ] Overflow chip clickable to show remaining locales in popover
 - [ ] Add roll-up status badge to header:
   - [ ] Position near key button (right side of key)
   - [ ] Tooltip showing detailed status breakdown: "2 stale, 3 verified, 1 new"
@@ -774,7 +780,7 @@ These features are acknowledged but deferred to future work:
 
 1. **Virtual Scroll with Expanded Items**:
    - When an item in Full mode is expanded, virtual scroll may not perfectly reposition
-   - Mitigation: Expansion is relatively rare, and users can scroll to reposition
+   - Mitigation: Expansion is relatively rare, and users can scroll to reposition. Consider using fixed height based on number of locales selected with truncated content where needed.
    - Future: Consider using CDK's dynamic size virtual scroll
 
 2. **Touch Long-Press Conflicts**:
@@ -814,17 +820,6 @@ These features are acknowledged but deferred to future work:
 
 All functionality can be implemented with existing libraries and components.
 
----
-
-## Rollout Plan
-
-1. **Development**: Implement phases 1-10 sequentially
-2. **Internal Testing**: Full manual test pass + accessibility audit
-3. **User Acceptance Testing**: Share with 2-3 pilot users for feedback
-4. **Documentation**: Update user guide with density mode usage
-5. **Release**: Deploy to production with announcement
-6. **Monitoring**: Track localStorage usage, performance metrics, user feedback
-7. **Iteration**: Address feedback in follow-up release
 
 ---
 

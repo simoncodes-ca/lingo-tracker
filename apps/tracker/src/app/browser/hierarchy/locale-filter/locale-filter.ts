@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, Input, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -33,8 +33,19 @@ import { BrowserStore } from '../../store/browser.store';
   templateUrl: './locale-filter.html',
   styleUrl: './locale-filter.scss',
 })
-export class LocaleFilter {
+export class LocaleFilter implements OnChanges {
+  @Input() multiSelect = true;
   readonly store = inject(BrowserStore);
+
+  // Selection guard: when multiSelect is disabled ensure only the first locale remains selected
+  ngOnChanges(): void {
+    if (!this.multiSelect) {
+      const selected = this.store.selectedLocales();
+      if (selected.length > 1) {
+        this.store.setSelectedLocales([selected[0]]);
+      }
+    }
+  }
 
   /**
    * Checks if a locale is currently selected.

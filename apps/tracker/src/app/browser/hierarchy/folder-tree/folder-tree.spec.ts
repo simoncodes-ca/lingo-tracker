@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { FolderTree } from './folder-tree';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
@@ -13,8 +14,11 @@ describe('FolderTree', () => {
     await TestBed.configureTestingModule({
       imports: [
         FolderTree,
-        HttpClientTestingModule,
         getTranslocoTestingModule(),
+      ],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     }).compileComponents();
 

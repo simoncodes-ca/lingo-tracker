@@ -1,0 +1,49 @@
+<div class="compact-controls">
+  <div class="status-chip" [attr.data-status]="primaryLocaleStatus()">
+    {{ primaryLocale() }}
+  </div>
+
+  @if (rollupStatus()) {
+    <div class="rollup" [attr.aria-describedby]="statusId()">
+      <mat-icon>layers</mat-icon>
+      <span class="rollup-count">{{ rollupStatus()![1] }}</span>
+    </div>
+  }
+
+  @if (hasComment()) {
+    <button class="icon-button" mat-icon-button aria-label="View comment">
+      <mat-icon>comment</mat-icon>
+    </button>
+  }
+
+  @if (hasTags()) {
+    <button class="icon-button" mat-icon-button aria-label="View tags">
+      <mat-icon>label</mat-icon>
+      <span class="tag-count">{{ tagCount() }}</span>
+    </button>
+  }
+
+  <button
+    mat-icon-button
+    type="button"
+    [matMenuTriggerFor]="menu"
+    aria-label="More actions"
+  >
+    <mat-icon>more_vert</mat-icon>
+  </button>
+
+  <mat-menu #menu="matMenu">
+    <button mat-menu-item (click)="onEdit()" aria-label="Edit translation">
+      <mat-icon>edit</mat-icon>
+      <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
+    </button>
+    <button mat-menu-item (click)="onMove()" aria-label="Move translation">
+      <mat-icon>drive_file_move</mat-icon>
+      <span>{{ TOKENS.COMMON.ACTIONS.MOVE | transloco }}</span>
+    </button>
+    <button mat-menu-item (click)="onDelete()" aria-label="Delete translation">
+      <mat-icon>delete</mat-icon>
+      <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
+    </button>
+  </mat-menu>
+</div>

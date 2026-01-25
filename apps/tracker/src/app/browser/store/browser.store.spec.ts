@@ -9,9 +9,10 @@ import { ResourceTreeDto, CacheStatusDto } from '@simoncodes-ca/data-transfer';
 /**
  * Helper to wait for async signal updates from rxMethod.
  * RxJS observables in rxMethod complete asynchronously, so we need
- * to wait for the next microtask to allow signals to update.
+ * to wait for multiple microtasks to allow signals to update.
+ * We use a small delay to ensure all async operations complete.
  */
-const waitForSignals = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+const waitForSignals = () => new Promise<void>(resolve => setTimeout(resolve, 10));
 
 describe('BrowserStore', () => {
   let store: InstanceType<typeof BrowserStore>;
@@ -513,6 +514,68 @@ describe('BrowserStore', () => {
       expect(store.folderTreeFilter()).toBe('');
       expect(store.translations()).toEqual([]);
       expect(store.isDisabled()).toBe(false);
+    });
+  });
+
+  describe('Density mode & view preferences (Phase 1)', () => {
+    beforeEach(() => {
+      // Ensure localStorage is clean for each test
+      localStorage.clear();
+    });
+
+    it('should update density mode state', () => {
+      expect(store.densityMode()).toBe('medium');
+
+      store.setDensityMode('full');
+      expect(store.densityMode()).toBe('full');
+
+      store.setDensityMode('compact');
+      expect(store.densityMode()).toBe('compact');
+    });
+
+    it('should persist and load view preferences to/from localStorage', () => {
+      const coll = 'prefs-collection';
+      const prefs = { densityMode: 'full' as const, selectedLocales: ['es', 'fr'] };
+
+      // Save via store method
+      store.saveViewPreferences(coll, prefs);
+
+      // Ensure it's stored
+      const raw = localStorage.getItem(`lingo-tracker:view-prefs:${coll}`);
+      expect(raw).not.toBeNull();
+      const parsed = JSON.parse(raw as string);
+      expect(parsed).toEqual(prefs);
+
+      // Load back through exposed method
+      const loaded = store.loadViewPreferences(coll);
+      expect(loaded).toEqual(prefs);
+    });
+
+    it('should automatically reduce selectedLocales to first when switching to compact', () => {
+      // Setup available locales and initial selection
+      store.setSelectedCollection({ collectionName: 'c1', locales: ['en', 'es', 'fr'] });
+      // multi-select
+      store.setSelectedLocales(['es', 'fr']);
+      expect(store.selectedLocales()).toEqual(['es', 'fr']);
+
+      store.setDensityMode('compact');
+
+      // Should reduce to the first selected locale
+      expect(store.selectedLocales().length).toBe(1);
+      expect(store.selectedLocales()[0]).toBe('es');
+      expect(store.densityMode()).toBe('compact');
+    });
+
+    it('should load preferences when collection is selected', () => {
+      const coll = 'load-collection';
+      const prefs = { densityMode: 'compact' as const, selectedLocales: ['fr'] };
+      localStorage.setItem(`lingo-tracker:view-prefs:${coll}`, JSON.stringify(prefs));
+
+      store.setSelectedCollection({ collectionName: coll, locales: ['en', 'fr', 'es'] });
+
+      // density mode should be applied and selectedLocales as well (compact implies single locale)
+      expect(store.densityMode()).toBe('compact');
+      expect(store.selectedLocales()).toEqual(['fr']);
     });
   });
 

@@ -13,6 +13,9 @@
 
 <mat-menu #localeMenu="matMenu" class="locale-filter-menu">
   <div class="menu-header" (click)="$event.stopPropagation()">
+    <div class="helper-row" *ngIf="!multiSelect">
+      <small class="helper-text">Compact mode supports single locale only</small>
+    </div>
     <button
       mat-button
       class="action-button"

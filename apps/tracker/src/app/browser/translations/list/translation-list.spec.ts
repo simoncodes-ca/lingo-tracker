@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TranslationList } from './translation-list';
 import { BrowserStore } from '../../store/browser.store';
@@ -21,6 +22,8 @@ describe('TranslationList', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
 
@@ -90,6 +93,7 @@ describe('TranslationList - Copy to Clipboard', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: MatSnackBar, useValue: snackBarSpy },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
 
@@ -101,7 +105,8 @@ describe('TranslationList - Copy to Clipboard', () => {
     fixture.componentRef.setInput('collectionName', 'test');
     fixture.detectChanges();
 
-    await component.handleCopyKey('common.buttons.save');
+    component.handleCopyKey('common.buttons.save');
+    await Promise.resolve(); // Wait for clipboard promise to resolve
 
     expect(mockClipboard.writeText).toHaveBeenCalledWith('common.buttons.save');
     expect(snackBarSpy.open).toHaveBeenCalledWith(
@@ -117,7 +122,8 @@ describe('TranslationList - Copy to Clipboard', () => {
     fixture.componentRef.setInput('collectionName', 'test');
     fixture.detectChanges();
 
-    await component.handleCopyKey('test.key');
+    component.handleCopyKey('test.key');
+    await Promise.resolve(); // Wait for clipboard promise to reject
 
     expect(snackBarSpy.open).toHaveBeenCalledWith(
       'Failed to copy',
@@ -139,6 +145,8 @@ describe('TranslationList - Loading and Error States', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
 
@@ -214,6 +222,8 @@ describe('TranslationList - Virtual Scrolling', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
 
@@ -287,6 +297,8 @@ describe('TranslationList - Locale Filtering', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
 

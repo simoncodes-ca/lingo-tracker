@@ -1,0 +1,18 @@
+<div
+  class="locale-translations"
+  [class.full]="densityMode() === 'full'"
+>
+  @for (lt of localeTranslations(); track lt.locale) {
+    <div class="locale-line" [class.full]="densityMode() === 'full'">
+      <span class="locale-code">{{ lt.locale }}:</span>
+      <div
+        class="locale-value"
+        [class.full]="densityMode() === 'full'"
+        [class.expanded]="isExpanded()"
+        [attr.data-status]="lt.status"
+      >
+        {{ lt.value || '—' }}
+      </div>
+    </div>
+  }
+</div>

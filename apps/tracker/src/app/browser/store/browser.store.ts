@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, effect } from '@angular/core';
 import {
   signalStore,
   withState,
@@ -17,53 +17,43 @@ import {
 } from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../services/browser-api.service';
 
-/**
- * Unified state interface for the Browser store.
- * Combines folder tree navigation and translation list display.
- *
- * Locale Filtering Behavior:
- * - When selectedLocales is empty, all availableLocales are displayed
- * - When selectedLocales contains items, only those locales are displayed
- * - This allows "show all" to be the default state without explicit selection
- */
+interface ViewPreferences {
+  densityMode: 'compact' | 'medium' | 'full';
+  selectedLocales: string[];
+}
+
 interface BrowserState {
-  // Collection context
   selectedCollection: string | null;
   availableLocales: string[];
   selectedLocales: string[];
   baseLocale: string;
 
-  // Cache status
   cacheStatus: CacheStatusType | null;
   cacheError: string | null;
 
-  // Folder tree state
   currentFolderPath: string;
   expandedFolders: Set<string>;
   rootFolders: FolderNodeDto[];
   folderTreeFilter: string;
   isFolderTreeLoading: boolean;
 
-  // Translation list state
   translations: ResourceSummaryDto[];
   isTranslationsLoading: boolean;
   showNestedResources: boolean;
 
-  // Search state
   searchQuery: string;
   isSearchMode: boolean;
   searchResults: SearchResultDto[];
   isSearchLoading: boolean;
   searchError: string | null;
 
-  // Shared state
+  densityMode: 'compact' | 'medium' | 'full';
+  viewPreferences: Map<string, ViewPreferences>;
+
   isDisabled: boolean;
   error: string | null;
 }
 
-/**
- * Initial state for the Browser store.
- */
 const initialState: BrowserState = {
   selectedCollection: null,
   availableLocales: [],
@@ -84,288 +74,162 @@ const initialState: BrowserState = {
   searchResults: [],
   isSearchLoading: false,
   searchError: null,
+  densityMode: 'medium',
+  viewPreferences: new Map<string, ViewPreferences>(),
   isDisabled: false,
   error: null,
 };
 
-/**
- * Unified signal store for managing browser state.
- *
- * Consolidates folder tree navigation and translation list display
- * into a single source of truth. Coordinates API calls and state
- * updates between folder selection and translation loading.
- *
- * Features:
- * - Progressive folder loading
- * - Folder search/filter
- * - Translation list management
- * - Coordinated folder selection and translation display
- * - Error handling and loading states
- *
- * @example
- * export class TranslationBrowser {
- *   readonly store = inject(BrowserStore);
- *
- *   ngOnInit() {
- *     this.store.setSelectedCollection({
- *       collectionName: 'my-collection',
- *       locales: ['en', 'es', 'de']
- *     });
- *   }
- * }
- */
+function arraysEqual(a: string[], b: string[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 export const BrowserStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale, isSearchMode, searchResults, cacheStatus }) => ({
-    /**
-     * Filters folders based on search term.
-     * Recursively filters the tree to show only matching folders and their parents.
-     */
+  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale, isSearchMode, searchResults, cacheStatus, densityMode }) => ({
     filteredFolders: computed(() => {
       const filter = folderTreeFilter().toLowerCase().trim();
-      if (!filter) {
-        return rootFolders();
-      }
+      if (!filter) return rootFolders();
 
-      const matchesFilter = (folder: FolderNodeDto): boolean => {
-        return folder.name.toLowerCase().includes(filter) ||
-               folder.fullPath.toLowerCase().includes(filter);
-      };
+      const matchesFilter = (folder: FolderNodeDto): boolean =>
+        folder.name.toLowerCase().includes(filter) || folder.fullPath.toLowerCase().includes(filter);
 
-      const filterTree = (folders: FolderNodeDto[]): FolderNodeDto[] => {
-        return folders.reduce<FolderNodeDto[]>((acc, folder) => {
+      const filterTree = (folders: FolderNodeDto[]): FolderNodeDto[] =>
+        folders.reduce<FolderNodeDto[]>((acc, folder) => {
           const folderMatches = matchesFilter(folder);
-          let childrenMatch: FolderNodeDto[] = [];
+          const childrenMatch = folder.tree?.children ? filterTree(folder.tree.children) : [];
 
-          if (folder.tree?.children) {
-            childrenMatch = filterTree(folder.tree.children);
-          }
-
-          // Include folder if it matches or has matching children
           if (folderMatches || childrenMatch.length > 0) {
             acc.push({
               ...folder,
-              tree: folder.tree ? {
-                ...folder.tree,
-                children: childrenMatch,
-              } : undefined,
+              tree: folder.tree ? { ...folder.tree, children: childrenMatch } : undefined,
             });
           }
 
           return acc;
         }, []);
-      };
 
       return filterTree(rootFolders());
     }),
 
-    /**
-     * Generates breadcrumb path segments from current folder.
-     * Splits dot-delimited path into individual segments.
-     */
     breadcrumbs: computed(() => {
       const path = currentFolderPath();
       if (!path) return [];
       return path.split('.');
     }),
 
-    /**
-     * Returns true if any loading operation is in progress.
-     */
-    isLoading: computed(() => {
-      return isFolderTreeLoading() || isTranslationsLoading();
-    }),
+    isLoading: computed(() => isFolderTreeLoading() || isTranslationsLoading()),
 
-    /**
-     * Returns true if current folder has no translations.
-     */
-    isEmpty: computed(() => {
-      return translations().length === 0;
-    }),
+    isEmpty: computed(() => translations().length === 0),
 
-    /**
-     * Returns count of translations in current view.
-     */
-    translationCount: computed(() => {
-      return translations().length;
-    }),
+    translationCount: computed(() => translations().length),
 
-    /**
-     * Returns true if translations are available.
-     */
-    hasTranslations: computed(() => {
-      return translations().length > 0;
-    }),
+    hasTranslations: computed(() => translations().length > 0),
 
-    /**
-     * Returns true if all locales are selected or none are selected (showing all).
-     */
     isShowingAllLocales: computed(() => {
       const selected = selectedLocales();
       const available = availableLocales();
       return selected.length === 0 || selected.length === available.length;
     }),
 
-    /**
-     * Returns display text for locale filter button.
-     */
     localeFilterText: computed(() => {
       const selected = selectedLocales();
       const available = availableLocales();
 
-      if (selected.length === 0 || selected.length === available.length) {
-        return 'All locales';
-      }
-      if (selected.length === 1) {
-        return selected[0];
-      }
+      if (selected.length === 0 || selected.length === available.length) return 'All locales';
+      if (selected.length === 1) return selected[0];
       return `${selected.length} locales`;
     }),
 
-    /**
-     * Returns locales to display (selected, or all if none selected).
-     * Base locale is ALWAYS included first, regardless of selection.
-     * Empty selection means "show all" - returns all available locales.
-     * Non-empty selection returns only the selected subset.
-     */
     filteredLocales: computed(() => {
       const selected = selectedLocales();
       const available = availableLocales();
       const base = baseLocale();
 
-      // Start with base locale if set
-      const result = base ? [base] : [];
-
-      // Get non-base locales from available
+      const result: string[] = base ? [base] : [];
       const nonBaseAvailable = available.filter(locale => locale !== base);
       const selectedNonBase = selected.filter(locale => locale !== base);
 
-      if (selected.length === 0) {
-        // No selection = show all non-base locales
-        result.push(...nonBaseAvailable);
-      } else {
-        // Show only selected non-base locales
-        result.push(...selectedNonBase);
-      }
+      if (selected.length === 0) result.push(...nonBaseAvailable);
+      else result.push(...selectedNonBase);
 
       return result;
     }),
 
-    /**
-     * Returns locales that can be filtered (excludes base locale).
-     * The base locale should not appear in the filter dropdown.
-     */
     filterableLocales: computed(() => {
       const available = availableLocales();
       const base = baseLocale();
       return available.filter(locale => locale !== base);
     }),
 
-    /**
-     * Returns translations to display (search results or folder translations).
-     * Automatically switches between search mode and folder browse mode.
-     */
-    displayedTranslations: computed(() => {
-      return isSearchMode() ? searchResults() : translations();
-    }),
+    displayedTranslations: computed(() => (isSearchMode() ? searchResults() : translations())),
 
-    /**
-     * Returns true if cache is ready to serve requests.
-     */
     isCacheReady: computed(() => cacheStatus() === 'ready'),
 
-    /**
-     * Returns true if cache is currently being indexed.
-     */
     isCacheIndexing: computed(() => {
       const status = cacheStatus();
       return status === 'indexing' || status === 'not-started';
     }),
+
+    canShowMultipleLocales: computed(() => densityMode() !== 'compact'),
   })),
+
   withMethods((store) => {
     const api = inject(BrowserApiService);
+
     return {
-      /**
-       * Sets the base locale for the collection.
-       * The base locale is always displayed and cannot be filtered out.
-       */
       setBaseLocale(locale: string): void {
         patchState(store, { baseLocale: locale });
       },
 
-      /**
-       * Sets the folder tree filter text.
-       */
       setFolderTreeFilter(filter: string): void {
         patchState(store, { folderTreeFilter: filter });
       },
 
-      /**
-       * Sets the disabled state (e.g., during translation search).
-       */
       setDisabled(disabled: boolean): void {
         patchState(store, { isDisabled: disabled });
       },
 
-      /**
-       * Toggles a folder's expanded state.
-       * Creates a new Set to maintain immutability for change detection.
-       */
       toggleFolderExpanded(path: string): void {
         const currentExpanded = store.expandedFolders();
         const newExpanded = new Set(currentExpanded);
 
-        if (newExpanded.has(path)) {
-          newExpanded.delete(path);
-        } else {
-          newExpanded.add(path);
-        }
+        if (newExpanded.has(path)) newExpanded.delete(path);
+        else newExpanded.add(path);
 
         patchState(store, { expandedFolders: newExpanded });
       },
 
-      /**
-       * Sets whether to show nested resources in the translation list.
-       * Triggers a reload of the current folder if the value changes.
-       */
       setNestedResources(value: boolean): void {
-        if (value !== store.showNestedResources()) {
-          patchState(store, { showNestedResources: value });
-
-          // Reload current folder with new setting
-          const path = store.currentFolderPath();
-          this.selectFolder(path);
-        }
+        if (value === store.showNestedResources()) return;
+        patchState(store, { showNestedResources: value });
+        const path = store.currentFolderPath();
+        this.selectFolder(path);
       },
 
-      /**
-       * Clears the error message.
-       */
       clearError(): void {
         patchState(store, { error: null });
       },
 
-      /**
-       * Resets store to initial state.
-       */
       reset(): void {
         patchState(store, initialState);
       },
 
-      /**
-       * Selects a folder and loads its translations.
-       * This is the primary coordination method that updates both
-       * folder navigation state and translation display.
-       * Loads the full tree for the selected folder in a single API call.
-       */
       selectFolder: rxMethod<string>(
         pipe(
-          tap((path) => patchState(store, {
-            currentFolderPath: path,
-            isTranslationsLoading: true,
-            error: null,
-          })),
+          tap((path) =>
+            patchState(store, {
+              currentFolderPath: path,
+              isTranslationsLoading: true,
+              error: null,
+            })
+          ),
           switchMap((path) => {
             const collection = store.selectedCollection();
             const includeNested = store.showNestedResources();
@@ -375,22 +239,16 @@ export const BrowserStore = signalStore(
             }
 
             return api.getResourceTree(collection, path, includeNested).pipe(
-              tap((tree) => {
+              tap((tree) =>
                 patchState(store, {
                   translations: tree.resources,
                   isTranslationsLoading: false,
                   error: null,
-                });
-              }),
+                })
+              ),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to load translations';
-                patchState(store, {
-                  isTranslationsLoading: false,
-                  error: errorMessage,
-                });
+                const errorMessage = error instanceof Error ? error.message : 'Failed to load translations';
+                patchState(store, { isTranslationsLoading: false, error: errorMessage });
                 return of(null);
               })
             );
@@ -398,11 +256,6 @@ export const BrowserStore = signalStore(
         )
       ),
 
-      /**
-       * Loads root-level folders for the current collection.
-       * Automatically called when cache is ready.
-       * Loads the full tree in a single API call.
-       */
       loadRootFolders: rxMethod<void>(
         pipe(
           tap(() => patchState(store, { isFolderTreeLoading: true, error: null })),
@@ -415,24 +268,18 @@ export const BrowserStore = signalStore(
             }
 
             return api.getResourceTree(collection, '', includeNested).pipe(
-              tap((treeData) => {
+              tap((treeData) =>
                 patchState(store, {
                   rootFolders: treeData.children,
                   translations: treeData.resources,
                   currentFolderPath: '',
                   isFolderTreeLoading: false,
                   error: null,
-                });
-              }),
+                })
+              ),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to load folders';
-                patchState(store, {
-                  isFolderTreeLoading: false,
-                  error: errorMessage,
-                });
+                const errorMessage = error instanceof Error ? error.message : 'Failed to load folders';
+                patchState(store, { isFolderTreeLoading: false, error: errorMessage });
                 return of(null);
               })
             );
@@ -440,11 +287,6 @@ export const BrowserStore = signalStore(
         )
       ),
 
-      /**
-       * Loads children for a specific folder.
-       * Since the API now returns the full tree, this method simply updates
-       * the folder node with the complete tree data returned by the API.
-       */
       loadFolderChildren: rxMethod<string>(
         pipe(
           tap(() => patchState(store, { isFolderTreeLoading: true, error: null })),
@@ -458,44 +300,22 @@ export const BrowserStore = signalStore(
 
             return api.getResourceTree(collection, folderPath, includeNested).pipe(
               tap((treeData) => {
-                // Find and update the folder node in the tree
-                const updateFolder = (folders: FolderNodeDto[]): FolderNodeDto[] => {
-                  return folders.map((folder) => {
+                const updateFolder = (folders: FolderNodeDto[]): FolderNodeDto[] =>
+                  folders.map((folder) => {
                     if (folder.fullPath === folderPath) {
-                      return {
-                        ...folder,
-                        loaded: true,
-                        tree: treeData,
-                      };
+                      return { ...folder, loaded: true, tree: treeData };
                     }
                     if (folder.tree) {
-                      return {
-                        ...folder,
-                        tree: {
-                          ...folder.tree,
-                          children: updateFolder(folder.tree.children),
-                        },
-                      };
+                      return { ...folder, tree: { ...folder.tree, children: updateFolder(folder.tree.children) } };
                     }
                     return folder;
                   });
-                };
 
-                patchState(store, {
-                  rootFolders: updateFolder(store.rootFolders()),
-                  isFolderTreeLoading: false,
-                  error: null,
-                });
+                patchState(store, { rootFolders: updateFolder(store.rootFolders()), isFolderTreeLoading: false, error: null });
               }),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to load folder contents';
-                patchState(store, {
-                  isFolderTreeLoading: false,
-                  error: errorMessage,
-                });
+                const errorMessage = error instanceof Error ? error.message : 'Failed to load folder contents';
+                patchState(store, { isFolderTreeLoading: false, error: errorMessage });
                 return of(null);
               })
             );
@@ -503,81 +323,36 @@ export const BrowserStore = signalStore(
         )
       ),
 
-      /**
-       * Sets the selected locales for filtering.
-       */
       setSelectedLocales(locales: string[]): void {
         patchState(store, { selectedLocales: locales });
       },
 
-      /**
-       * Toggles a locale's selection state.
-       */
       toggleLocale(locale: string): void {
         const current = store.selectedLocales();
-        if (current.includes(locale)) {
-          patchState(store, { selectedLocales: current.filter(l => l !== locale) });
-        } else {
-          patchState(store, { selectedLocales: [...current, locale] });
-        }
+        if (current.includes(locale)) patchState(store, { selectedLocales: current.filter(l => l !== locale) });
+        else patchState(store, { selectedLocales: [...current, locale] });
       },
 
-      /**
-       * Selects all available locales.
-       */
       selectAllLocales(): void {
         patchState(store, { selectedLocales: [...store.availableLocales()] });
       },
 
-      /**
-       * Clears all locale selections (shows all).
-       */
       clearAllLocales(): void {
         patchState(store, { selectedLocales: [] });
       },
 
-      /**
-       * Sets the search query and enters search mode.
-       * Disables folder tree navigation during search.
-       */
       setSearchQuery(query: string): void {
-        patchState(store, {
-          searchQuery: query,
-          isSearchMode: query.length > 0,
-        });
-
-        // Disable folder tree during search
-        if (query.length > 0) {
-          patchState(store, { isDisabled: true });
-        } else {
-          patchState(store, { isDisabled: false });
-        }
+        const isSearch = query.length > 0;
+        patchState(store, { searchQuery: query, isSearchMode: isSearch, isDisabled: isSearch });
       },
 
-      /**
-       * Clears search and returns to folder browse mode.
-       * Re-enables folder tree navigation.
-       */
       clearSearch(): void {
-        patchState(store, {
-          searchQuery: '',
-          isSearchMode: false,
-          searchResults: [],
-          searchError: null,
-          isDisabled: false,
-        });
+        patchState(store, { searchQuery: '', isSearchMode: false, searchResults: [], searchError: null, isDisabled: false });
       },
 
-      /**
-       * Searches translations in the current collection.
-       * Uses rxMethod for reactive execution with loading states.
-       */
       searchTranslations: rxMethod<string>(
         pipe(
-          tap(() => patchState(store, {
-            isSearchLoading: true,
-            searchError: null,
-          })),
+          tap(() => patchState(store, { isSearchLoading: true, searchError: null })),
           switchMap((query) => {
             const collection = store.selectedCollection();
             if (!collection || query.trim().length === 0) {
@@ -586,23 +361,10 @@ export const BrowserStore = signalStore(
             }
 
             return api.searchTranslations(collection, query).pipe(
-              tap((response: SearchResultsDto) => {
-                patchState(store, {
-                  searchResults: response.results,
-                  isSearchLoading: false,
-                  searchError: null,
-                });
-              }),
+              tap((response: SearchResultsDto) => patchState(store, { searchResults: response.results, isSearchLoading: false, searchError: null })),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to search translations';
-                patchState(store, {
-                  isSearchLoading: false,
-                  searchError: errorMessage,
-                  searchResults: [],
-                });
+                const errorMessage = error instanceof Error ? error.message : 'Failed to search translations';
+                patchState(store, { isSearchLoading: false, searchError: errorMessage, searchResults: [] });
                 return of(null);
               })
             );
@@ -611,21 +373,16 @@ export const BrowserStore = signalStore(
       ),
     };
   }),
+
   withMethods((store) => {
     const api = inject(BrowserApiService);
+
     return {
-      /**
-       * Checks cache status for the current collection.
-       * If status is INDEXING or NOT_STARTED, sets up polling until cache is READY or ERROR.
-       * Automatically loads root folders when cache becomes ready.
-       */
       checkCacheStatus: rxMethod<void>(
         pipe(
           switchMap(() => {
             const collection = store.selectedCollection();
-            if (!collection) {
-              return of(null);
-            }
+            if (!collection) return of(null);
 
             return interval(2000).pipe(
               startWith(0),
@@ -636,23 +393,16 @@ export const BrowserStore = signalStore(
                   cacheError: statusDto.error || null,
                 });
 
-                // Load folders when cache becomes ready
                 if (statusDto.status === 'ready' && store.rootFolders().length === 0) {
                   store.loadRootFolders();
                 }
               }),
               takeWhile((statusDto) => {
-                // Stop polling if we get null (error case)
                 if (statusDto === null) return false;
-
-                // Continue polling while indexing or not-started
                 return statusDto.status === 'indexing' || statusDto.status === 'not-started';
-              }, true), // true = include the final emission
+              }, true),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to check cache status';
+                const errorMessage = error instanceof Error ? error.message : 'Failed to check cache status';
                 patchState(store, {
                   cacheStatus: 'error',
                   cacheError: errorMessage,
@@ -665,22 +415,60 @@ export const BrowserStore = signalStore(
       ),
     };
   }),
+
   withMethods((store) => {
+    const storageKey = (collectionName: string) => `lingo-tracker:view-prefs:${collectionName}`;
+
+    function loadViewPreferences(collectionName: string): ViewPreferences | null {
+      try {
+        const raw = localStorage.getItem(storageKey(collectionName));
+        if (!raw) return null;
+        return JSON.parse(raw) as ViewPreferences;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveViewPreferences(collectionName: string, prefs: ViewPreferences): void {
+      try {
+        localStorage.setItem(storageKey(collectionName), JSON.stringify(prefs));
+      } catch {
+        // ignore localStorage failures
+      }
+    }
+
+    // Auto-save effect: persist density mode and selected locales per collection
+    effect(() => {
+      const collection = store.selectedCollection();
+      if (!collection) return;
+
+      const prefs: ViewPreferences = { densityMode: store.densityMode(), selectedLocales: store.selectedLocales() };
+
+      // Persist to localStorage
+      saveViewPreferences(collection, prefs);
+
+      // Update in-memory map only when changed to avoid unnecessary patches
+      const existing = store.viewPreferences().get(collection);
+      if (existing && existing.densityMode === prefs.densityMode && arraysEqual(existing.selectedLocales, prefs.selectedLocales)) {
+        return;
+      }
+
+      const map = new Map(store.viewPreferences());
+      map.set(collection, prefs);
+      patchState(store, { viewPreferences: map });
+    });
+
     return {
-      /**
-       * Sets the selected collection and initializes state.
-       * Resets folder tree and translations, checks cache status, then loads root folders when ready.
-       */
       setSelectedCollection(params: { collectionName: string; locales: string[] }): void {
+        const loaded = loadViewPreferences(params.collectionName);
+
         patchState(store, {
           selectedCollection: params.collectionName,
           availableLocales: params.locales,
-          selectedLocales: [],
+          selectedLocales: loaded?.selectedLocales || [],
           baseLocale: '',
-          // Reset cache state
           cacheStatus: null,
           cacheError: null,
-          // Reset navigation state
           currentFolderPath: '',
           expandedFolders: new Set<string>(),
           showNestedResources: false,
@@ -690,8 +478,36 @@ export const BrowserStore = signalStore(
           error: null,
         });
 
-        // Check cache status first, then load root folders when ready
-        store.checkCacheStatus();
+        if (loaded && loaded.densityMode) {
+          (this as any).setDensityMode(loaded.densityMode);
+        }
+
+        (this as any).checkCacheStatus();
+      },
+
+      setDensityMode(mode: 'compact' | 'medium' | 'full'): void {
+        const currentSelected = store.selectedLocales();
+        let newSelected = currentSelected;
+
+        if (mode === 'compact') {
+          if (currentSelected.length === 0) {
+            const available = store.availableLocales();
+            if (available.length > 0) newSelected = [available[0]];
+          } else if (currentSelected.length > 1) {
+            newSelected = [currentSelected[0]];
+          }
+        }
+
+        patchState(store, { densityMode: mode, selectedLocales: newSelected });
+      },
+
+      // Expose persistence helpers for tests
+      loadViewPreferences(collectionName: string): ViewPreferences | null {
+        return loadViewPreferences(collectionName);
+      },
+
+      saveViewPreferences(collectionName: string, prefs: ViewPreferences): void {
+        saveViewPreferences(collectionName, prefs);
       },
     };
   })

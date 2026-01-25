@@ -1,0 +1,66 @@
+@if (isCompactMode()) {
+  <!-- Compact mode: just the key button without menu -->
+  <button
+    class="key-button compact-key"
+    type="button"
+    (click)="onCopyKey()"
+    (keydown.enter)="onCopyKey()"
+    [matTooltip]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
+    [attr.aria-label]="'Copy key'"
+  >
+    <span class="key-text">{{ fullKey() }}</span>
+    <mat-icon class="copy-icon">content_copy</mat-icon>
+  </button>
+} @else {
+  <!-- Medium/Full mode: full header with actions -->
+  <div class="item-header">
+    <button
+      class="key-button"
+      type="button"
+      (click)="onCopyKey()"
+      (keydown.enter)="onCopyKey()"
+      [matTooltip]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
+      [attr.aria-label]="'Copy key'"
+    >
+      <span class="key-text">{{ fullKey() }}</span>
+      <mat-icon class="copy-icon">content_copy</mat-icon>
+    </button>
+
+    <div class="header-actions">
+      @if (rollupStatus()) {
+        <div
+          class="rollup-badge"
+          [matTooltip]="statusBreakdown() ?? ''"
+          [attr.aria-describedby]="statusId()"
+        >
+          <mat-icon>layers</mat-icon>
+          <span class="rollup-count">{{ rollupStatus()![1] }}</span>
+        </div>
+      }
+
+      <button
+        mat-icon-button
+        type="button"
+        [matMenuTriggerFor]="menu"
+        [attr.aria-label]="'More actions'"
+      >
+        <mat-icon>more_vert</mat-icon>
+      </button>
+
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="onEdit()" aria-label="Edit translation">
+          <mat-icon>edit</mat-icon>
+          <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
+        </button>
+        <button mat-menu-item (click)="onMove()" aria-label="Move translation">
+          <mat-icon>drive_file_move</mat-icon>
+          <span>{{ TOKENS.COMMON.ACTIONS.MOVE | transloco }}</span>
+        </button>
+        <button mat-menu-item (click)="onDelete()" aria-label="Delete translation">
+          <mat-icon>delete</mat-icon>
+          <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+}

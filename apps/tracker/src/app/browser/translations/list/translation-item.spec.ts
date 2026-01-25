@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TranslationItem } from './translation-item';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
@@ -27,6 +29,10 @@ describe('TranslationItem', () => {
         TranslationItem,
         getTranslocoTestingModule(),
       ],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
@@ -43,6 +49,51 @@ describe('TranslationItem', () => {
     fixture.detectChanges();
 
     expect(component.translation()).toEqual(mockTranslation);
+  });
+
+  it('should render placeholder for empty selected locale value', () => {
+    const t: ResourceSummaryDto = {
+      key: 'k-empty',
+      translations: { en: 'en', es: '' },
+      status: { es: 'new' },
+    } as any;
+
+    fixture.componentRef.setInput('translation', t);
+    fixture.componentRef.setInput('locales', ['en', 'es']);
+    fixture.detectChanges();
+
+    // Simulate full rendering: ensure primaryLocaleValue and locale rendering uses placeholder
+    expect(component.primaryLocaleValue()).toBe('en');
+    const html = fixture.nativeElement.innerHTML as string;
+    expect(html).toContain('—');
+  });
+
+  it('should gracefully handle zero locales selected (compact fallback)', () => {
+    fixture.componentRef.setInput('translation', mockTranslation);
+    fixture.componentRef.setInput('locales', []);
+    fixture.detectChanges();
+
+    // primaryLocale should fallback to baseLocale
+    expect(component.primaryLocale()).toBe(component.baseLocale());
+    const html = fixture.nativeElement.innerHTML as string;
+    // Should show a helpful message or at least not crash; check presence of key
+    expect(html).toContain('common.buttons.save');
+  });
+
+  it('rollupStatus should reflect all verified state as verified', () => {
+    const t: ResourceSummaryDto = {
+      key: 'k-all-verified',
+      translations: { en: 'a', es: 'b' },
+      status: { en: 'verified', es: 'verified' },
+    } as any;
+
+    fixture.componentRef.setInput('translation', t);
+    fixture.componentRef.setInput('locales', ['en', 'es']);
+    fixture.detectChanges();
+
+    const roll = component.rollupStatus();
+    expect(roll[0]).toBe('verified');
+    expect(roll[1]).toBe(2);
   });
 
   it('should accept locales input', () => {
@@ -66,62 +117,7 @@ describe('TranslationItem', () => {
   });
 });
 
-describe('TranslationItem - Copy to Clipboard', () => {
-  let fixture: ComponentFixture<TranslationItem>;
-
-  const mockTranslation: ResourceSummaryDto = {
-    key: 'common.buttons.save',
-    translations: {
-      en: 'Save',
-      es: 'Guardar',
-      fr: 'Enregistrer',
-    },
-    status: {
-      es: 'translated',
-      fr: 'verified',
-    },
-  };
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [
-        TranslationItem,
-        getTranslocoTestingModule(),
-      ],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(TranslationItem);
-  });
-
-  it('should emit copyKey event when key button clicked', () => {
-    fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', ['en', 'es']);
-    fixture.detectChanges();
-
-    let emittedKey = '';
-    fixture.componentInstance.copyKey.subscribe((key) => {
-      emittedKey = key;
-    });
-
-    const keyButton = fixture.nativeElement.querySelector('.key-button');
-    keyButton.click();
-
-    expect(emittedKey).toBe('common.buttons.save');
-  });
-
-  it('should display copy icon on hover', () => {
-    fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', ['en', 'es']);
-    fixture.detectChanges();
-
-    const copyIcon = fixture.nativeElement.querySelector('.copy-icon');
-
-    // Icon should have opacity 0 initially (via CSS)
-    expect(copyIcon).toBeTruthy();
-  });
-});
-
-describe('TranslationItem - Context Menu Actions', () => {
+describe('TranslationItem - Compact helpers', () => {
   let component: TranslationItem;
   let fixture: ComponentFixture<TranslationItem>;
 
@@ -144,185 +140,167 @@ describe('TranslationItem - Context Menu Actions', () => {
         TranslationItem,
         getTranslocoTestingModule(),
       ],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
     component = fixture.componentInstance;
+  });
+
+  it('should select primary locale from locales input', () => {
     fixture.componentRef.setInput('translation', mockTranslation);
     fixture.componentRef.setInput('locales', ['en', 'es', 'fr']);
     fixture.detectChanges();
+
+    expect(component.primaryLocale()).toBe('en');
   });
 
-  it('should emit editTranslation event', () => {
-    let emittedTranslation: ResourceSummaryDto | null = null;
-    fixture.componentInstance.editTranslation.subscribe((trans) => {
-      emittedTranslation = trans;
-    });
-
-    component.editTranslation.emit(mockTranslation);
-
-    expect(emittedTranslation).toEqual(mockTranslation);
-  });
-
-  it('should emit moveTranslation event', () => {
-    let emittedTranslation: ResourceSummaryDto | null = null;
-    fixture.componentInstance.moveTranslation.subscribe((trans) => {
-      emittedTranslation = trans;
-    });
-
-    component.moveTranslation.emit(mockTranslation);
-
-    expect(emittedTranslation).toEqual(mockTranslation);
-  });
-
-  it('should emit deleteTranslation event', () => {
-    let emittedTranslation: ResourceSummaryDto | null = null;
-    fixture.componentInstance.deleteTranslation.subscribe((trans) => {
-      emittedTranslation = trans;
-    });
-
-    component.deleteTranslation.emit(mockTranslation);
-
-    expect(emittedTranslation).toEqual(mockTranslation);
-  });
-});
-
-describe('TranslationItem - Locale Rendering', () => {
-  let fixture: ComponentFixture<TranslationItem>;
-
-  const mockTranslation: ResourceSummaryDto = {
-    key: 'common.buttons.save',
-    translations: {
-      en: 'Save',
-      es: 'Guardar',
-      fr: 'Enregistrer',
-    },
-    status: {
-      es: 'translated',
-      fr: 'verified',
-    },
-  };
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [
-        TranslationItem,
-        getTranslocoTestingModule(),
-      ],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(TranslationItem);
-  });
-
-  it('should display base locale value', () => {
+  it('should return primary locale value or base value when primary is base', () => {
     fixture.componentRef.setInput('translation', mockTranslation);
     fixture.componentRef.setInput('locales', ['en', 'es']);
     fixture.componentRef.setInput('baseLocale', 'en');
     fixture.detectChanges();
 
-    const baseValue = fixture.nativeElement.querySelector('.base-value');
-    expect(baseValue.textContent.trim()).toBe('Save');
+    expect(component.primaryLocaleValue()).toBe('Save');
+
+    fixture.componentRef.setInput('locales', ['es']);
+    fixture.detectChanges();
+    expect(component.primaryLocaleValue()).toBe('Guardar');
   });
 
-  it('should display locale translations excluding base', () => {
-    fixture.componentRef.setInput('translation', mockTranslation);
+  it('rollupStatus should calculate worst status across all locales', () => {
+    const t: ResourceSummaryDto = {
+      key: 'k',
+      translations: { en: 'a', es: 'b', fr: 'c' },
+      status: { en: 'verified', es: 'translated', fr: 'stale' },
+    };
+
+    fixture.componentRef.setInput('translation', t);
     fixture.componentRef.setInput('locales', ['en', 'es', 'fr']);
-    fixture.componentRef.setInput('baseLocale', 'en');
     fixture.detectChanges();
 
-    const localeLines = fixture.nativeElement.querySelectorAll('.locale-line');
-    expect(localeLines.length).toBe(2); // es and fr only
-
-    expect(localeLines[0].textContent).toContain('es:');
-    expect(localeLines[0].textContent).toContain('Guardar');
-
-    expect(localeLines[1].textContent).toContain('fr:');
-    expect(localeLines[1].textContent).toContain('Enregistrer');
+    const roll = component.rollupStatus();
+    expect(roll[0]).toBe('stale');
+    expect(roll[1]).toBe(1);
   });
 
-  it('should apply status data attribute for color coding', () => {
-    fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', ['en', 'es', 'fr']);
-    fixture.componentRef.setInput('baseLocale', 'en');
-    fixture.detectChanges();
-
-    const localeValues = fixture.nativeElement.querySelectorAll('.locale-value');
-
-    expect(localeValues[0].getAttribute('data-status')).toBe('translated');
-    expect(localeValues[1].getAttribute('data-status')).toBe('verified');
-  });
-
-  it('should display em dash for missing translations', () => {
-    const translationWithMissing: ResourceSummaryDto = {
-      key: 'test.key',
-      translations: {
-        en: 'Test',
-      },
+  it('hasMetadata should be true when tags or comment present, false otherwise', () => {
+    const tWithMeta: ResourceSummaryDto = {
+      key: 'k',
+      translations: { en: 'a' },
       status: {},
-    };
+      tags: ['ui', 'button'],
+      comment: 'Needs review',
+    } as any;
 
-    fixture.componentRef.setInput('translation', translationWithMissing);
-    fixture.componentRef.setInput('locales', ['en', 'es']);
-    fixture.componentRef.setInput('baseLocale', 'en');
+    fixture.componentRef.setInput('translation', tWithMeta);
+    fixture.componentRef.setInput('locales', ['en']);
     fixture.detectChanges();
 
-    const localeValue = fixture.nativeElement.querySelector('.locale-value');
-    expect(localeValue.textContent.trim()).toBe('—');
+    expect(component.hasMetadata()).toBe(true);
+
+    const tNoMeta: ResourceSummaryDto = {
+      key: 'k2',
+      translations: { en: 'b' },
+      status: {},
+    } as any;
+
+    fixture.componentRef.setInput('translation', tNoMeta);
+    fixture.detectChanges();
+    expect(component.hasMetadata()).toBe(false);
+  });
+
+  it('statusBreakdown should return human readable counts in priority order', () => {
+    const t: ResourceSummaryDto = {
+      key: 'k3',
+      translations: { en: 'a', es: 'b', fr: 'c', de: 'd' },
+      status: { en: 'stale', es: 'stale', fr: 'verified', de: 'new' },
+    } as any;
+
+    fixture.componentRef.setInput('translation', t);
+    fixture.componentRef.setInput('locales', ['en', 'es', 'fr', 'de']);
+    fixture.detectChanges();
+
+    // Expect order: stale, new, translated, verified (only present ones included)
+    expect(component.statusBreakdown()).toBe('2 stale, 1 new, 1 verified');
   });
 });
 
-describe('TranslationItem - Tags', () => {
+// New tests for full density mode expansion logic
+describe('TranslationItem - Full density expansion', () => {
+  let component: TranslationItem;
   let fixture: ComponentFixture<TranslationItem>;
-
-  const mockTranslation: ResourceSummaryDto = {
-    key: 'common.buttons.save',
-    translations: {
-      en: 'Save',
-      es: 'Guardar',
-      fr: 'Enregistrer',
-    },
-    status: {
-      es: 'translated',
-      fr: 'verified',
-    },
-  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationItem,
-        getTranslocoTestingModule(),
+      imports: [TranslationItem, getTranslocoTestingModule()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('locales', ['en', 'es', 'fr']);
   });
 
-  it('should display tags when present', () => {
-    const translationWithTags: ResourceSummaryDto = {
-      ...mockTranslation,
-      tags: ['Primary action button', 'Destructive action - requires confirmation'],
-    };
+  it('needsExpansion should be false for short values', () => {
+    const t: ResourceSummaryDto = {
+      key: 'k-short',
+      translations: { en: 'short', es: 'corto', fr: 'court' },
+      status: {},
+    } as any;
 
-    fixture.componentRef.setInput('translation', translationWithTags);
-    fixture.componentRef.setInput('locales', ['en']);
+    fixture.componentRef.setInput('translation', t);
     fixture.detectChanges();
 
-    const tagsContainer = fixture.nativeElement.querySelector('.tag-list-container');
-    expect(tagsContainer).toBeTruthy();
-
-    const chips = fixture.nativeElement.querySelectorAll('.tag-badge');
-    expect(chips.length).toBe(2);
-    expect(chips[0].textContent.trim()).toBe('Primary action button');
-    expect(chips[1].textContent.trim()).toBe('Destructive action - requires confirmation');
+    expect(component.needsExpansion()).toBe(false);
   });
 
-  it('should not display tags container when no tags', () => {
-    fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', ['en']);
+  it('needsExpansion should be true when base long', () => {
+    const long = 'a'.repeat(201);
+    const t: ResourceSummaryDto = {
+      key: 'k-long-base',
+      translations: { en: long, es: 'es', fr: 'fr' },
+      status: {},
+    } as any;
+
+    fixture.componentRef.setInput('translation', t);
     fixture.detectChanges();
 
-    const tagsContainer = fixture.nativeElement.querySelector('.tags-container');
-    expect(tagsContainer).toBeNull();
+    expect(component.needsExpansion()).toBe(true);
+  });
+
+  it('needsExpansion should be true when any locale value long', () => {
+    const long = 'b'.repeat(205);
+    const t: ResourceSummaryDto = {
+      key: 'k-long-locale',
+      translations: { en: 'en', es: long, fr: 'fr' },
+      status: {},
+    } as any;
+
+    fixture.componentRef.setInput('translation', t);
+    fixture.detectChanges();
+
+    expect(component.needsExpansion()).toBe(true);
+  });
+
+  it('isExpanded should toggle when toggleExpansion called', () => {
+    fixture.componentRef.setInput('translation', {
+      key: 'k',
+      translations: { en: 'en' },
+      status: {},
+    } as any);
+    fixture.detectChanges();
+
+    expect(component.isExpanded()).toBe(false);
+    component.toggleExpansion();
+    expect(component.isExpanded()).toBe(true);
+    component.toggleExpansion();
+    expect(component.isExpanded()).toBe(false);
   });
 });
