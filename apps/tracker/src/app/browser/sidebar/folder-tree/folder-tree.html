@@ -65,6 +65,7 @@
         <app-folder-node
           [folder]="folder"
           [selectedPath]="store.currentFolderPath()"
+          [showNestedResources]="showNestedResources()"
           [disabled]="store.isDisabled()"
           (folderClick)="onFolderClick($event)"
           (loadFolder)="onLoadFolder($event)"

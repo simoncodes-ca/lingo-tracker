@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   input,
   output,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -35,6 +36,9 @@ export class FolderNode {
   /** Currently selected folder path */
   selectedPath = input<string | null>(null);
 
+  /** Whether nested resources mode is active */
+  showNestedResources = input<boolean>(false);
+
   /** Whether the tree is disabled */
   disabled = input<boolean>(false);
 
@@ -45,6 +49,23 @@ export class FolderNode {
   loadFolder = output<string>();
 
   readonly TOKENS = TRACKER_TOKENS;
+
+  /** Checks if this folder is a descendant of the selected folder */
+  readonly isDescendantOfSelected = computed(() => {
+    const selected = this.selectedPath();
+    const myPath = this.folder().fullPath;
+    if (!selected || !myPath) return false;
+    return myPath.startsWith(selected + '.');
+  });
+
+  /** Determines which icon to display for the folder */
+  readonly folderIcon = computed(() => {
+    if (this.isSelected()) return 'folder_check';
+    if (this.showNestedResources() && this.isDescendantOfSelected()) {
+      return 'folder_check';
+    }
+    return this.folder().loaded ? 'folder_open' : 'folder';
+  });
 
   /**
    * Handles folder click.

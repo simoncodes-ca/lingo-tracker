@@ -8,8 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconButton } from '@angular/material/button';
 import { TagList } from '../../../../shared/tag-list/tag-list.component';
-import { CommentPopover } from '../../../shared/comment-popover/comment-popover.component';
-import { TagListPopover } from '../../../shared/tag-list-popover/tag-list-popover.component';
+import { CommentPopover } from '../../../ui/comment-popover/comment-popover.component';
+import { TagListPopover } from '../../../ui/tag-list-popover/tag-list-popover.component';
 
 type DensityMode = 'compact' | 'medium' | 'full';
 
@@ -32,8 +32,8 @@ type DensityMode = 'compact' | 'medium' | 'full';
     CommentPopover,
     TagListPopover,
   ],
-  templateUrl: './translation-item-metadata.html',
-  styleUrl: './translation-item-metadata.scss',
+  templateUrl: './item-metadata.html',
+  styleUrl: './item-metadata.scss',
   host: {
     class: 'translation-item-metadata',
   },

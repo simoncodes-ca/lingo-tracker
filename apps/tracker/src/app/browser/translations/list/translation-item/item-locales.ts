@@ -22,8 +22,8 @@ type DensityMode = 'compact' | 'medium' | 'full';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule],
-  templateUrl: './translation-item-locales.html',
-  styleUrl: './translation-item-locales.scss',
+  templateUrl: './item-locales.html',
+  styleUrl: './item-locales.scss',
   host: {
     class: 'translation-item-locales',
   },

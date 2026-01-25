@@ -193,13 +193,13 @@ describe('TranslationList - Loading and Error States', () => {
     cacheReq.flush({ status: 'ready', error: null });
 
     // Second request for root folders (triggered when cache is ready)
-    const rootReq = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=false');
+    const rootReq = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
     rootReq.flush({ path: '', resources: [], children: [] });
 
     // Now select a folder and make it fail
     store.selectFolder('test-folder');
 
-    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=test-folder&includeNested=false');
+    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=test-folder&includeNested=true');
     req.error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
 
     fixture.detectChanges();
@@ -249,7 +249,7 @@ describe('TranslationList - Virtual Scrolling', () => {
     cacheReq.flush({ status: 'ready', error: null });
 
     // Second request for root folders
-    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=false');
+    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
     req.flush({
       path: '',
       resources: [

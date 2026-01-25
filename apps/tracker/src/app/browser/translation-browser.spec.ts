@@ -45,7 +45,7 @@ describe('TranslationBrowser - Integration', () => {
     cacheReq.flush({ status: 'ready', error: null });
 
     // Flush the root folders request
-    const treeReq = httpMock.expectOne('/api/collections/test-collection/resources/tree?path=&includeNested=false');
+    const treeReq = httpMock.expectOne('/api/collections/test-collection/resources/tree?path=&includeNested=true');
     treeReq.flush({ path: '', resources: [], children: [] });
 
     fixture.detectChanges();

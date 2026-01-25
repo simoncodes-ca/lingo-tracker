@@ -73,6 +73,7 @@
     height: 20px;
     color: var(--color-text-primary);
     flex-shrink: 0;
+    transition: opacity 0.15s ease;
   }
 
   .folder-name {

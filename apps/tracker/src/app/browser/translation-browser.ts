@@ -6,12 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
-import { FolderSidebarHeader, FolderTree } from './hierarchy';
+import { FolderSidebarHeader, FolderTree } from './sidebar';
 import { TranslationMainHeader } from './translations/header/translation-main-header';
 import { CollectionsStore } from '../collections/store/collections.store';
 import { BrowserStore } from './store/browser.store';
 import {TranslationList} from "./translations/list/translation-list";
-import { IndexingOverlay } from './components/indexing-overlay';
+import { IndexingOverlay } from './ui/indexing-overlay';
 
 /**
  * Translation Browser component for viewing and managing translations within a collection.

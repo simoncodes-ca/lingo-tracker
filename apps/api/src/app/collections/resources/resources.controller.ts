@@ -337,7 +337,13 @@ export class ResourcesController {
       let responseObj: Response | undefined = response;
       let isIncludeNested = includeNested === 'true';
 
-      if (includeNested && typeof (includeNested as any)?.status === 'function' && typeof (includeNested as any)?.json === 'function') {
+      if (
+        includeNested !== undefined &&
+        typeof includeNested === 'object' &&
+        includeNested !== null &&
+        typeof (includeNested as Record<string, unknown>).status === 'function' &&
+        typeof (includeNested as Record<string, unknown>).json === 'function'
+      ) {
         responseObj = includeNested as unknown as Response;
         isIncludeNested = false;
       }

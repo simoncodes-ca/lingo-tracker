@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatButtonToggleModule, MatButtonToggleChange } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { LocaleFilter, TranslationSearch } from '../../hierarchy';
+import { LocaleFilter, TranslationSearch } from '../../sidebar';
 import { BrowserStore } from '../../store/browser.store';
 
 type DensityMode = 'compact' | 'medium' | 'full';

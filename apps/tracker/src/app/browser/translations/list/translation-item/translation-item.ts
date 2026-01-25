@@ -12,11 +12,11 @@ import {
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
-import { BrowserStore } from '../../store/browser.store';
-import { TranslationItemHeader } from './components/translation-item-header';
-import { TranslationItemLocales, LocaleTranslation } from './components/translation-item-locales';
-import { TranslationItemMetadata } from './components/translation-item-metadata';
-import { TranslationItemCompactControls } from './components/translation-item-compact-controls';
+import { BrowserStore } from '../../../store/browser.store';
+import { TranslationItemHeader } from './item-header';
+import { TranslationItemLocales } from './item-locales';
+import { TranslationItemMetadata } from './item-metadata';
+import { TranslationItemCompactControls } from './item-compact-controls';
 
 const EXPAND_THRESHOLD = 200;
 const LONG_PRESS_THRESHOLD = 500;
@@ -147,7 +147,7 @@ export class TranslationItem implements OnDestroy {
     // Emit the new state for parent to react (virtual-scroll viewport adjustments)
     try {
       this.expansionChanged.emit({ key: this.translation().key, expanded: this.isExpanded() });
-    } catch (e) {
+    } catch (_e) {
       // Defensive: emitting can fail during teardown; swallow errors to avoid runtime exceptions
       // This ensures graceful degradation if parent isn't listening.
     }

@@ -13,9 +13,7 @@
     (keydown.enter)="onFolderClick()"
     (keydown.space)="onFolderClick()"
   >
-    <mat-icon class="folder-icon">
-      {{ folder().loaded ? 'folder_open' : 'folder' }}
-    </mat-icon>
+    <mat-icon class="folder-icon">{{ folderIcon() }}</mat-icon>
     <span class="folder-name">{{ folder().name }}</span>
   </div>
 
@@ -26,6 +24,7 @@
         <app-folder-node
           [folder]="child"
           [selectedPath]="selectedPath()"
+          [showNestedResources]="showNestedResources()"
           [disabled]="disabled()"
           (folderClick)="folderClick.emit($event)"
           (loadFolder)="loadFolder.emit($event)"

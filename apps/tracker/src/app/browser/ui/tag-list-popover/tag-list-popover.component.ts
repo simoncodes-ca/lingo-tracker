@@ -12,5 +12,5 @@ import { TagList } from '../../../shared/tag-list/tag-list.component';
   host: { class: 'tag-list-popover-host' },
 })
 export class TagListPopover {
-  tags = input<string[]>();
+  tags = input<string[]>([]);
 }

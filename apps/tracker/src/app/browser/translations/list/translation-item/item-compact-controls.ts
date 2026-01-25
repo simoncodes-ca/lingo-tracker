@@ -6,50 +6,51 @@ import {
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconButton } from '@angular/material/button';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 
 /**
- * Header component for translation items displaying the key with copy button
- * and actions menu (edit, move, delete).
+ * Controls displayed on the right side of compact density mode items.
+ * Shows status chip, rollup badge, metadata indicators, and actions menu.
  */
 @Component({
-  selector: 'app-translation-item-header',
+  selector: 'app-translation-item-compact-controls',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatIconModule,
     MatMenuModule,
-    MatTooltipModule,
     MatIconButton,
     TranslocoPipe,
   ],
-  templateUrl: './translation-item-header.html',
-  styleUrl: './translation-item-header.scss',
+  templateUrl: './item-compact-controls.html',
+  styleUrl: './item-compact-controls.scss',
   host: {
-    class: 'translation-item-header',
+    class: 'translation-item-compact-controls',
   },
 })
-export class TranslationItemHeader {
-  /** Full translation key to display */
-  fullKey = input.required<string>();
+export class TranslationItemCompactControls {
+  /** Primary locale for status chip */
+  primaryLocale = input.required<string>();
 
-  /** Rollup status badge data: [status, count] */
+  /** Status for the primary locale */
+  primaryLocaleStatus = input<string>();
+
+  /** Rollup status tuple: [status, count] */
   rollupStatus = input<readonly [string, number]>();
-
-  /** Tooltip text for status breakdown */
-  statusBreakdown = input<string>();
 
   /** ID for ARIA describedby */
   statusId = input<string>();
 
-  /** Compact mode flag */
-  isCompactMode = input<boolean>(false);
+  /** Whether translation has a comment */
+  hasComment = input<boolean>(false);
 
-  /** Emitted when user clicks copy key button */
-  copyKey = output<string>();
+  /** Whether translation has tags */
+  hasTags = input<boolean>(false);
+
+  /** Number of tags */
+  tagCount = input<number>(0);
 
   /** Emitted when user selects Edit from menu */
   editAction = output<void>();
@@ -61,10 +62,6 @@ export class TranslationItemHeader {
   deleteAction = output<void>();
 
   readonly TOKENS = TRACKER_TOKENS;
-
-  onCopyKey(): void {
-    this.copyKey.emit(this.fullKey());
-  }
 
   onEdit(): void {
     this.editAction.emit();

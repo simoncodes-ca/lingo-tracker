@@ -20,6 +20,7 @@ import { BrowserApiService } from '../services/browser-api.service';
 interface ViewPreferences {
   densityMode: 'compact' | 'medium' | 'full';
   selectedLocales: string[];
+  showNestedResources: boolean;
 }
 
 interface BrowserState {
@@ -68,7 +69,7 @@ const initialState: BrowserState = {
   isFolderTreeLoading: false,
   translations: [],
   isTranslationsLoading: false,
-  showNestedResources: false,
+  showNestedResources: true,
   searchQuery: '',
   isSearchMode: false,
   searchResults: [],
@@ -437,19 +438,28 @@ export const BrowserStore = signalStore(
       }
     }
 
-    // Auto-save effect: persist density mode and selected locales per collection
+    // Auto-save effect: persist density mode, selected locales, and nested resources per collection
     effect(() => {
       const collection = store.selectedCollection();
       if (!collection) return;
 
-      const prefs: ViewPreferences = { densityMode: store.densityMode(), selectedLocales: store.selectedLocales() };
+      const prefs: ViewPreferences = {
+        densityMode: store.densityMode(),
+        selectedLocales: store.selectedLocales(),
+        showNestedResources: store.showNestedResources(),
+      };
 
       // Persist to localStorage
       saveViewPreferences(collection, prefs);
 
       // Update in-memory map only when changed to avoid unnecessary patches
       const existing = store.viewPreferences().get(collection);
-      if (existing && existing.densityMode === prefs.densityMode && arraysEqual(existing.selectedLocales, prefs.selectedLocales)) {
+      if (
+        existing &&
+        existing.densityMode === prefs.densityMode &&
+        arraysEqual(existing.selectedLocales, prefs.selectedLocales) &&
+        existing.showNestedResources === prefs.showNestedResources
+      ) {
         return;
       }
 
@@ -471,7 +481,7 @@ export const BrowserStore = signalStore(
           cacheError: null,
           currentFolderPath: '',
           expandedFolders: new Set<string>(),
-          showNestedResources: false,
+          showNestedResources: loaded?.showNestedResources ?? true,
           rootFolders: [],
           folderTreeFilter: '',
           translations: [],
@@ -479,10 +489,26 @@ export const BrowserStore = signalStore(
         });
 
         if (loaded && loaded.densityMode) {
-          (this as any).setDensityMode(loaded.densityMode);
+          const mode = loaded.densityMode;
+          const currentSelected = store.selectedLocales();
+          let newSelected = currentSelected;
+
+          if (mode === 'compact') {
+            if (currentSelected.length === 0) {
+              const available = store.availableLocales();
+              if (available.length > 0) newSelected = [available[0]];
+            } else if (currentSelected.length > 1) {
+              newSelected = [currentSelected[0]];
+            }
+          }
+
+          patchState(store, { densityMode: mode, selectedLocales: newSelected });
         }
 
-        (this as any).checkCacheStatus();
+        const storeWithMethods = store as unknown as {
+          checkCacheStatus(): void;
+        };
+        storeWithMethods.checkCacheStatus();
       },
 
       setDensityMode(mode: 'compact' | 'medium' | 'full'): void {

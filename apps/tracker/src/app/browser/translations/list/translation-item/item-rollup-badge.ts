@@ -4,7 +4,6 @@ import {
   input,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { MatIconButton } from '@angular/material/button';
 
 /**
  * Compact rollup badge showing status count with icon.

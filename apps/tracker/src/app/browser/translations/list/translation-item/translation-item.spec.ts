@@ -4,7 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TranslationItem } from './translation-item';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
-import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
+import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
 
 describe('TranslationItem', () => {
   let component: TranslationItem;

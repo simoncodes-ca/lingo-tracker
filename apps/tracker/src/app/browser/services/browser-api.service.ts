@@ -47,7 +47,7 @@ export class BrowserApiService {
     const encodedName = encodeURIComponent(collectionName);
     const encodedPath = encodeURIComponent(path);
     const params = new HttpParams()
-      .set('path', path)
+      .set('path', encodedPath)
       .set('includeNested', includeNested.toString());
 
     return this.#http.get<ResourceTreeDto>(

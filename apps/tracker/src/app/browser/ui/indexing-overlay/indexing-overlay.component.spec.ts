@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { IndexingOverlay } from './indexing-overlay.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
