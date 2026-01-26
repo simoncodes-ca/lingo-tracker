@@ -12,47 +12,68 @@
 </button>
 
 <mat-menu #localeMenu="matMenu" class="locale-filter-menu">
-  <div class="menu-header" (click)="$event.stopPropagation()">
-    <div class="helper-row" *ngIf="!multiSelect">
-      <small class="helper-text">Compact mode supports single locale only</small>
-    </div>
-    <button
-      mat-button
-      class="action-button"
-      (click)="selectAll()"
-      data-testid="select-all"
-    >
-      Select All
-    </button>
-    <button
-      mat-button
-      class="action-button"
-      (click)="clearAll()"
-      data-testid="clear-all"
-    >
-      Clear All
-    </button>
-  </div>
-
-  @for (locale of store.filterableLocales(); track locale) {
-    <button
-      mat-menu-item
-      (click)="toggleLocale(locale); $event.stopPropagation()"
-      [attr.data-testid]="'locale-option-' + locale"
-      [attr.aria-label]="locale + (isLocaleSelected(locale) ? ' (selected)' : ' (not selected)')"
-      [attr.aria-checked]="isLocaleSelected(locale)"
-      role="menuitemcheckbox"
-      class="locale-option"
-    >
-      <mat-checkbox
-        [checked]="isLocaleSelected(locale)"
-        (click)="$event.preventDefault()"
-        [attr.aria-hidden]="true"
-        tabindex="-1"
-        class="locale-checkbox"
+  @if (multiSelect()) {
+    <div class="menu-header" (click)="$event.stopPropagation()">
+      <button
+        mat-button
+        class="action-button"
+        (click)="selectAll()"
+        data-testid="select-all"
       >
-        {{ locale }}
-      </mat-checkbox>
-    </button>
+        Select All
+      </button>
+      <button
+        mat-button
+        class="action-button"
+        (click)="clearAll()"
+        data-testid="clear-all"
+      >
+        Clear All
+      </button>
+    </div>
+
+    @for (locale of displayedLocales(); track locale) {
+      <button
+        mat-menu-item
+        (click)="toggleLocale(locale); $event.stopPropagation()"
+        [attr.data-testid]="'locale-option-' + locale"
+        [attr.aria-label]="locale + (isLocaleSelected(locale) ? ' (selected)' : ' (not selected)')"
+        [attr.aria-checked]="isLocaleSelected(locale)"
+        role="menuitemcheckbox"
+        class="locale-option"
+      >
+        <mat-checkbox
+          [checked]="isLocaleSelected(locale)"
+          (click)="$event.preventDefault()"
+          [attr.aria-hidden]="true"
+          tabindex="-1"
+          class="locale-checkbox"
+        >
+          {{ locale }}
+        </mat-checkbox>
+      </button>
+    }
+  } @else {
+    @for (locale of displayedLocales(); track locale) {
+      <button
+        mat-menu-item
+        (click)="selectLocale(locale)"
+        [attr.data-testid]="'locale-option-' + locale"
+        [attr.aria-label]="locale + (isLocaleSelected(locale) ? ' (selected)' : ' (not selected)')"
+        [attr.aria-checked]="isLocaleSelected(locale)"
+        role="menuitemradio"
+        class="locale-option"
+      >
+        <mat-radio-button
+          [checked]="isLocaleSelected(locale)"
+          (click)="$event.preventDefault()"
+          [attr.aria-hidden]="true"
+          tabindex="-1"
+          class="locale-radio"
+        >
+          {{ locale }}
+        </mat-radio-button>
+      </button>
+    }
   }
 </mat-menu>

@@ -469,14 +469,15 @@ export const BrowserStore = signalStore(
     });
 
     return {
-      setSelectedCollection(params: { collectionName: string; locales: string[] }): void {
+      setSelectedCollection(params: { collectionName: string; locales: string[]; baseLocale?: string }): void {
         const loaded = loadViewPreferences(params.collectionName);
+        const baseLocale = params.baseLocale || '';
 
         patchState(store, {
           selectedCollection: params.collectionName,
           availableLocales: params.locales,
           selectedLocales: loaded?.selectedLocales || [],
-          baseLocale: '',
+          baseLocale,
           cacheStatus: null,
           cacheError: null,
           currentFolderPath: '',
@@ -495,8 +496,12 @@ export const BrowserStore = signalStore(
 
           if (mode === 'compact') {
             if (currentSelected.length === 0) {
-              const available = store.availableLocales();
-              if (available.length > 0) newSelected = [available[0]];
+              if (baseLocale && params.locales.includes(baseLocale)) {
+                newSelected = [baseLocale];
+              } else {
+                const available = store.availableLocales();
+                if (available.length > 0) newSelected = [available[0]];
+              }
             } else if (currentSelected.length > 1) {
               newSelected = [currentSelected[0]];
             }
@@ -517,8 +522,13 @@ export const BrowserStore = signalStore(
 
         if (mode === 'compact') {
           if (currentSelected.length === 0) {
+            const baseLocale = store.baseLocale();
             const available = store.availableLocales();
-            if (available.length > 0) newSelected = [available[0]];
+            if (baseLocale && available.includes(baseLocale)) {
+              newSelected = [baseLocale];
+            } else if (available.length > 0) {
+              newSelected = [available[0]];
+            }
           } else if (currentSelected.length > 1) {
             newSelected = [currentSelected[0]];
           }

@@ -127,8 +127,8 @@ describe('LocaleFilter', () => {
 
   describe('Multi-select mode control', () => {
     it('should allow multiple selections when multiSelect is true', () => {
-      component.multiSelect = true;
-      component.ngOnChanges();
+      fixture.componentRef.setInput('multiSelect', true);
+      fixture.detectChanges();
 
       // Should not trigger any reduction
       expect(mockStore.setSelectedLocales).not.toHaveBeenCalled();
@@ -136,19 +136,36 @@ describe('LocaleFilter', () => {
 
     it('should reduce to single selection when multiSelect is disabled', () => {
       mockStore.selectedLocales.set(['en', 'es', 'fr']);
-      component.multiSelect = false;
-      component.ngOnChanges();
+      fixture.componentRef.setInput('multiSelect', false);
+      fixture.detectChanges();
 
       expect(mockStore.setSelectedLocales).toHaveBeenCalledWith(['en']);
     });
 
     it('should not reduce when only one locale selected and multiSelect is disabled', () => {
       mockStore.selectedLocales.set(['en']);
-      component.multiSelect = false;
-      component.ngOnChanges();
+      mockStore.setSelectedLocales.mockClear(); // Clear any previous calls
+      fixture.componentRef.setInput('multiSelect', false);
+      fixture.detectChanges();
 
       // Should not be called since there's only one selection
       expect(mockStore.setSelectedLocales).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('displayedLocales computed', () => {
+    it('should return filterableLocales when multiSelect is true', () => {
+      fixture.componentRef.setInput('multiSelect', true);
+      fixture.detectChanges();
+
+      expect(component.displayedLocales()).toEqual(['es', 'fr', 'de']);
+    });
+
+    it('should return availableLocales (including base) when multiSelect is false', () => {
+      fixture.componentRef.setInput('multiSelect', false);
+      fixture.detectChanges();
+
+      expect(component.displayedLocales()).toEqual(['en', 'es', 'fr', 'de']);
     });
   });
 });

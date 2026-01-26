@@ -60,10 +60,12 @@ describe('TranslationItem', () => {
 
     fixture.componentRef.setInput('translation', t);
     fixture.componentRef.setInput('locales', ['en', 'es']);
+    fixture.componentRef.setInput('baseLocale', 'en');
     fixture.detectChanges();
 
-    // Simulate full rendering: ensure primaryLocaleValue and locale rendering uses placeholder
-    expect(component.primaryLocaleValue()).toBe('en');
+    // In compact mode with non-base locale selected, show that locale's (empty) value
+    // The primaryLocaleValue shows the non-base locale's value ('es' which is empty)
+    expect(component.primaryLocaleValue()).toBe('');
     const html = fixture.nativeElement.innerHTML as string;
     expect(html).toContain('—');
   });
@@ -158,17 +160,24 @@ describe('TranslationItem - Compact helpers', () => {
     expect(component.primaryLocale()).toBe('en');
   });
 
-  it('should return primary locale value or base value when primary is base', () => {
+  it('should return selected non-base locale value, or base value when only base is selected', () => {
     fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', ['en', 'es']);
     fixture.componentRef.setInput('baseLocale', 'en');
+    fixture.componentRef.setInput('locales', ['en', 'es']);
     fixture.detectChanges();
 
-    expect(component.primaryLocaleValue()).toBe('Save');
+    // When a non-base locale is in the list alongside base, show non-base value
+    expect(component.primaryLocaleValue()).toBe('Guardar');
 
+    // When only a non-base locale is selected, show its value
     fixture.componentRef.setInput('locales', ['es']);
     fixture.detectChanges();
     expect(component.primaryLocaleValue()).toBe('Guardar');
+
+    // When only base locale is selected (or no non-base locales), show base value
+    fixture.componentRef.setInput('locales', ['en']);
+    fixture.detectChanges();
+    expect(component.primaryLocaleValue()).toBe('Save');
   });
 
   it('rollupStatus should calculate worst status across all locales', () => {

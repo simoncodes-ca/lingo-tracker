@@ -2,64 +2,64 @@
   "backButton": {
     "source": "Back to collections",
     "comment": "Aria-label for back button in browser",
-    "es": "Back to collections",
-    "fr-ca": "Back to collections"
+    "es": "Volver a las colecciones",
+    "fr-ca": "Retour aux collections"
   },
   "filterFolders": {
     "source": "Filter folders...",
     "comment": "Placeholder text in a filter input that filters a list of folders",
-    "es": "Filter folders...",
-    "fr-ca": "Filter folders..."
+    "es": "Filtrar carpetas...",
+    "fr-ca": "Filtrer les dossiers..."
   },
   "loadingFolders": {
     "source": "Loading folders...",
-    "es": "Loading folders...",
-    "fr-ca": "Loading folders..."
+    "es": "Cargando carpetas...",
+    "fr-ca": "Chargement des dossiers..."
   },
   "noFoldersMatchSearch": {
     "source": "No folders match your search",
-    "es": "No folders match your search",
-    "fr-ca": "No folders match your search"
+    "es": "Ninguna carpeta coincide con tu búsqueda",
+    "fr-ca": "Aucun dossier ne correspond à votre recherche"
   },
   "noFoldersFound": {
     "source": "No folders found",
-    "es": "No folders found",
-    "fr-ca": "No folders found"
+    "es": "No se encontraron carpetas",
+    "fr-ca": "Aucun dossier trouvé"
   },
   "clickToLoad": {
     "source": "click to load",
     "comment": "Message shown to user on a hierarchy item that is not loaded yet from the backend",
-    "es": "click to load",
-    "fr-ca": "click to load"
+    "es": "clic para cargar",
+    "fr-ca": "cliquer pour charger"
   },
   "loadingCollectionConfiguration": {
     "source": "Loading collection configuration...",
-    "es": "Loading collection configuration...",
-    "fr-ca": "Loading collection configuration..."
+    "es": "Cargando configuración de la colección...",
+    "fr-ca": "Chargement de la configuration de la collection..."
   },
   "loadingTranslations": {
     "source": "Loading translations...",
-    "es": "Loading translations...",
-    "fr-ca": "Loading translations..."
+    "es": "Cargando traducciones...",
+    "fr-ca": "Chargement des traductions..."
   },
   "noTranslationsFoundInFolder": {
     "source": "No translations found in this folder.",
-    "es": "No translations found in this folder.",
-    "fr-ca": "No translations found in this folder."
+    "es": "No se encontraron traducciones en esta carpeta.",
+    "fr-ca": "Aucune traduction trouvée dans ce dossier."
   },
   "searchTranslations": {
     "source": "Search translations...",
-    "es": "Search translations...",
-    "fr-ca": "Search translations..."
+    "es": "Buscar traducciones...",
+    "fr-ca": "Rechercher des traductions..."
   },
   "showingSearchResultsForX": {
     "source": "Showing search results for \"{{ query }}\"",
-    "es": "Showing search results for \"{{ query }}\"",
-    "fr-ca": "Showing search results for \"{{ query }}\""
+    "es": "Mostrando resultados de búsqueda para \"{{ query }}\"",
+    "fr-ca": "Affichage des résultats de recherche pour « {{ query }} »"
   },
   "clearSearch": {
     "source": "Clear Search",
-    "es": "Clear Search",
-    "fr-ca": "Clear Search"
+    "es": "Limpiar Búsqueda",
+    "fr-ca": "Effacer la Recherche"
   }
 }

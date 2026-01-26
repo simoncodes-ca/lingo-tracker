@@ -107,10 +107,8 @@ export class TranslationBrowser implements OnInit {
       this.store.setSelectedCollection({
         collectionName: decodedName,
         locales,
+        baseLocale,
       });
-
-      // Set base locale for filtering
-      this.store.setBaseLocale(baseLocale);
     });
   }
 

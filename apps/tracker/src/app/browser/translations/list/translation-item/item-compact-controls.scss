@@ -8,6 +8,10 @@
   gap: var(--spacing-1);
   justify-content: flex-end;
   width: 180px;
+
+  mat-icon {
+    color: var(--color-text-secondary);
+  }
 }
 
 .status-chip {
@@ -36,4 +40,22 @@
 .tag-count {
   font-size: var(--font-size-xs);
   margin-left: 4px;
+}
+
+.comment-button {
+  &:disabled {
+    cursor: default;
+    opacity: 0.4;
+
+    mat-icon {
+      color: var(--color-text-tertiary);
+    }
+  }
+}
+
+::ng-deep .comment-tooltip {
+  max-width: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

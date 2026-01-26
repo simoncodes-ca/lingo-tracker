@@ -577,6 +577,54 @@ describe('BrowserStore', () => {
       expect(store.densityMode()).toBe('compact');
       expect(store.selectedLocales()).toEqual(['fr']);
     });
+
+    it('should default to base locale when switching to compact mode with no selection', () => {
+      store.setSelectedCollection({
+        collectionName: 'c1',
+        locales: ['en', 'es', 'fr'],
+        baseLocale: 'en'
+      });
+
+      // No locales selected initially
+      expect(store.selectedLocales()).toEqual([]);
+
+      store.setDensityMode('compact');
+
+      // Should select base locale
+      expect(store.selectedLocales()).toEqual(['en']);
+      expect(store.densityMode()).toBe('compact');
+    });
+
+    it('should default to base locale when loading compact mode from localStorage with no selection', () => {
+      const coll = 'compact-no-selection';
+      const prefs = { densityMode: 'compact' as const, selectedLocales: [], showNestedResources: true };
+      localStorage.setItem(`lingo-tracker:view-prefs:${coll}`, JSON.stringify(prefs));
+
+      store.setSelectedCollection({
+        collectionName: coll,
+        locales: ['en', 'es', 'fr'],
+        baseLocale: 'en'
+      });
+
+      // Should have applied compact mode and defaulted to base locale
+      expect(store.densityMode()).toBe('compact');
+      expect(store.selectedLocales()).toEqual(['en']);
+    });
+
+    it('should fallback to first available locale if base locale is not in available locales', () => {
+      store.setSelectedCollection({
+        collectionName: 'c1',
+        locales: ['es', 'fr', 'de'],
+        baseLocale: 'en' // not in available locales
+      });
+
+      expect(store.selectedLocales()).toEqual([]);
+
+      store.setDensityMode('compact');
+
+      // Should fallback to first available locale
+      expect(store.selectedLocales()).toEqual(['es']);
+    });
   });
 
   describe('Refresh Translations', () => {

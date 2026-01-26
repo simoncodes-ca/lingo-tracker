@@ -145,6 +145,81 @@ describe('searchTranslations', () => {
         fr: 'Bonjour',
       });
     });
+
+    it('should include base locale value from source field when baseLocale is provided', () => {
+      createTestResource('common', {
+        greeting: { source: 'Hello World', en: 'Hello World', es: 'Hola Mundo' }
+      }, {
+        greeting: {
+          en: { checksum: 'abc', status: 'verified' },
+          es: { checksum: 'def', status: 'verified' }
+        }
+      });
+
+      const params: SearchParams = {
+        translationsFolder: testDir,
+        query: 'greeting',
+        baseLocale: 'en',
+      };
+
+      const results = searchTranslations(params);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].translations).toEqual({
+        en: 'Hello World',
+        es: 'Hola Mundo',
+      });
+      // Verify the base locale value comes from source
+      expect(results[0].translations.en).toBe('Hello World');
+    });
+
+    it('should not duplicate base locale value if it already exists in translations', () => {
+      createTestResource('common', {
+        message: { source: 'Original', en: 'Modified', es: 'Modificado' }
+      }, {
+        message: {
+          en: { checksum: 'abc', status: 'verified' },
+          es: { checksum: 'def', status: 'verified' }
+        }
+      });
+
+      const params: SearchParams = {
+        translationsFolder: testDir,
+        query: 'message',
+        baseLocale: 'en',
+      };
+
+      const results = searchTranslations(params);
+
+      expect(results).toHaveLength(1);
+      // The source value should override the en value in the entry
+      expect(results[0].translations.en).toBe('Original');
+      expect(results[0].translations.es).toBe('Modificado');
+    });
+
+    it('should search source field when baseLocale is provided', () => {
+      createTestResource('common', {
+        sourceOnly: { source: 'SourceValue', es: 'Valor de origen' }
+      }, {
+        sourceOnly: {
+          es: { checksum: 'def', status: 'verified' }
+        }
+      });
+
+      const params: SearchParams = {
+        translationsFolder: testDir,
+        query: 'SourceValue',
+        baseLocale: 'en',
+      };
+
+      const results = searchTranslations(params);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].translations).toEqual({
+        en: 'SourceValue',
+        es: 'Valor de origen',
+      });
+    });
   });
 
   describe('Result Ranking', () => {

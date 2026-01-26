@@ -110,18 +110,51 @@ export class TranslationItem implements OnDestroy {
   /** Current density mode (reads from BrowserStore) */
   readonly currentDensityMode = computed(() => this.store.densityMode());
 
-  /** Primary locale for compact mode: the first locale from the locales() input */
+  /** Selected locale for compact mode: the first locale from the locales() input */
   readonly primaryLocale = computed(() => {
     const ls = this.locales();
     return (ls && ls.length > 0 && ls[0]) || this.baseLocale();
   });
 
-  /** Value for primary locale. If primary locale is the base locale, return baseValue(). */
+  /**
+   * Locale to display in the status chip (compact mode).
+   * Logic:
+   * - If a specific locale is selected (other than base locale) → show that locale
+   * - If nothing is selected or only base locale is selected → show the primary locale
+   */
+  readonly statusChipLocale = computed(() => {
+    const activeLocales = this.locales();
+    const base = this.baseLocale();
+
+    // Filter out base locale from active locales
+    const nonBaseLocales = activeLocales.filter((locale) => locale !== base);
+
+    // If exactly one non-base locale is selected, use it
+    if (nonBaseLocales.length === 1) {
+      return nonBaseLocales[0];
+    }
+
+    // Otherwise, fall back to primary locale (first in the list)
+    return this.primaryLocale();
+  });
+
+  /**
+   * Value for the selected primary locale in compact mode.
+   * In compact mode, shows the translation value for the selected non-base locale.
+   * Falls back to base locale value if no non-base locale is selected.
+   */
   readonly primaryLocaleValue = computed(() => {
-    const primary = this.primaryLocale();
-    if (!primary) return '';
-    if (primary === this.baseLocale()) return this.baseValue();
-    return this.translation().translations[primary] || '';
+    const activeLocales = this.locales();
+    const base = this.baseLocale();
+    const translations = this.translation().translations;
+
+    // Filter out base locale to find selected non-base locales
+    const nonBaseLocales = activeLocales.filter((locale) => locale !== base);
+
+    // If a non-base locale is selected, use the first one
+    const localeToDisplay = nonBaseLocales.length > 0 ? nonBaseLocales[0] : base;
+
+    return translations[localeToDisplay] || '';
   });
 
   /** Signal controlling whether the full-mode content is expanded */

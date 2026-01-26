@@ -20,8 +20,12 @@
   @if (currentDensityMode() === 'compact') {
     <div class="compact-row">
       <div class="compact-left">
-        <div class="compact-value" [title]="primaryLocaleValue()">
-          {{ primaryLocaleValue() || '—' }}
+        <div
+          class="compact-value"
+          [class.compact-value--empty]="!primaryLocaleValue().trim()"
+          [title]="primaryLocaleValue().trim() || 'No translation'"
+        >
+          {{ primaryLocaleValue().trim() || 'No translation' }}
         </div>
         <app-translation-item-header
           [fullKey]="fullKey()"
@@ -34,11 +38,11 @@
       </div>
 
       <app-translation-item-compact-controls
-        [primaryLocale]="primaryLocale()"
-        [primaryLocaleStatus]="translation().status[primaryLocale()]"
+        [primaryLocale]="statusChipLocale()"
+        [primaryLocaleStatus]="translation().status[statusChipLocale()]"
         [rollupStatus]="rollupStatus()"
         [statusId]="statusId()"
-        [hasComment]="!!translation().comment"
+        [comment]="translation().comment"
         [hasTags]="!!translation().tags?.length"
         [tagCount]="translation().tags?.length ?? 0"
         (editAction)="editTranslation.emit(translation())"

@@ -47,6 +47,9 @@ export interface SearchParams {
 
   /** Maximum number of results to return (default: 100) */
   maxResults?: number;
+
+  /** Base locale to include in translations (optional) */
+  baseLocale?: string;
 }
 
 /**
@@ -71,7 +74,7 @@ export interface SearchParams {
  * });
  */
 export function searchTranslations(params: SearchParams): SearchResult[] {
-  const { translationsFolder, query, maxResults = 100 } = params;
+  const { translationsFolder, query, maxResults = 100, baseLocale } = params;
 
   // Empty query returns no results
   if (!query || query.trim().length === 0) {
@@ -121,6 +124,19 @@ export function searchTranslations(params: SearchParams): SearchResult[] {
 
           // Check value matches if no key match
           if (!matchType) {
+            // Search source field if baseLocale is provided
+            if (baseLocale && entry.source && typeof entry.source === 'string') {
+              const normalizedValue = entry.source.toLowerCase();
+              if (normalizedValue === normalizedQuery) {
+                matchType = 'exact-value';
+                matchedLocales.push(baseLocale);
+              } else if (normalizedValue.includes(normalizedQuery)) {
+                matchType = 'partial-value';
+                matchedLocales.push(baseLocale);
+              }
+            }
+
+            // Search all other locale translations
             for (const [locale, value] of Object.entries(entry)) {
               // Skip non-string properties (comment, tags, source)
               if (locale === 'comment' || locale === 'tags' || locale === 'source') {
@@ -159,6 +175,11 @@ export function searchTranslations(params: SearchParams): SearchResult[] {
                 translations[locale] = value;
                 status[locale] = meta[locale]?.status;
               }
+            }
+
+            // Include base locale value from source field
+            if (baseLocale && entry.source) {
+              translations[baseLocale] = entry.source;
             }
 
             results.push({

@@ -10,11 +10,21 @@
     </div>
   }
 
-  @if (hasComment()) {
-    <button class="icon-button" mat-icon-button aria-label="View comment">
-      <mat-icon>comment</mat-icon>
-    </button>
-  }
+  <button
+    #commentTooltip="matTooltip"
+    class="icon-button comment-button"
+    mat-icon-button
+    [disabled]="commentDisabled()"
+    [matTooltip]="comment() || ''"
+    [matTooltipDisabled]="commentDisabled()"
+    [matTooltipShowDelay]="500"
+    [matTooltipClass]="'comment-tooltip'"
+    matTooltipPosition="below"
+    (click)="onCommentClick($event)"
+    aria-label="View comment"
+  >
+    <mat-icon>comment</mat-icon>
+  </button>
 
   @if (hasTags()) {
     <button class="icon-button" mat-icon-button aria-label="View tags">

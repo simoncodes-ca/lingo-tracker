@@ -2,13 +2,13 @@
   "edit": {
     "source": "Edit collection",
     "comment": "Accessible label for edit icon button on collection card",
-    "es": "Edit Collection",
-    "fr-ca": "Edit collection"
+    "es": "Editar colección",
+    "fr-ca": "Modifier la collection"
   },
   "delete": {
     "source": "Delete collection",
     "comment": "Accessible label for delete icon button on collection card",
-    "es": "Delete collection",
-    "fr-ca": "Delete collection"
+    "es": "Eliminar colección",
+    "fr-ca": "Supprimer la collection"
   }
 }

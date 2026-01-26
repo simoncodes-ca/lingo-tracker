@@ -2,66 +2,66 @@
   "nameLabel": {
     "source": "Collection Name",
     "comment": "Label for collection name input field",
-    "es": "Collection Name",
-    "fr-ca": "Collection Name"
+    "es": "Nombre de la Colección",
+    "fr-ca": "Nom de la Collection"
   },
   "namePlaceholder": {
     "source": "e.g., my-app-i18n",
     "comment": "Placeholder text for collection name input",
-    "es": "e.g., my-app-i18n",
-    "fr-ca": "e.g., my-app-i18n"
+    "es": "ej., mi-app-i18n",
+    "fr-ca": "p. ex., mon-app-i18n"
   },
   "nameRequired": {
     "source": "Collection name is required",
     "comment": "Error message when name is required",
-    "es": "Collection name is required",
-    "fr-ca": "Collection name is required"
+    "es": "El nombre de la colección es obligatorio",
+    "fr-ca": "Le nom de la collection est requis"
   },
   "folderLabel": {
     "source": "Translations Folder",
     "comment": "Label for translations folder input field",
-    "es": "Translations Folder",
-    "fr-ca": "Translations Folder"
+    "es": "Carpeta de Traducciones",
+    "fr-ca": "Dossier de Traductions"
   },
   "folderPlaceholder": {
     "source": "e.g., ./src/assets/i18n",
     "comment": "Placeholder text for folder path input",
-    "es": "e.g., ./src/assets/i18n",
-    "fr-ca": "e.g., ./src/assets/i18n"
+    "es": "ej., ./src/assets/i18n",
+    "fr-ca": "p. ex., ./src/assets/i18n"
   },
   "folderRequired": {
     "source": "Translations folder is required",
     "comment": "Error message when folder is required",
-    "es": "Translations folder is required",
-    "fr-ca": "Translations folder is required"
+    "es": "La carpeta de traducciones es obligatoria",
+    "fr-ca": "Le dossier de traductions est requis"
   },
   "localesLabel": {
     "source": "Locales (Optional)",
     "comment": "Label for locales input field",
-    "es": "Locales (Optional)",
-    "fr-ca": "Locales (Optional)"
+    "es": "Idiomas (Opcional)",
+    "fr-ca": "Langues (Optionnel)"
   },
   "localesHint": {
     "source": "Comma-separated list of locale codes. Leave empty to use global config.",
     "comment": "Hint text for locales input",
-    "es": "Comma-separated list of locale codes. Leave empty to use global config.",
-    "fr-ca": "Comma-separated list of locale codes. Leave empty to use global config."
+    "es": "Lista de códigos de idioma separados por comas. Dejar vacío para usar la configuración global.",
+    "fr-ca": "Liste de codes de langue séparés par des virgules. Laisser vide pour utiliser la configuration globale."
   },
   "createButton": {
     "source": "Create",
     "comment": "Create button text in create mode",
-    "es": "Create",
-    "fr-ca": "Create"
+    "es": "Crear",
+    "fr-ca": "Créer"
   },
   "localesPlaceholder": {
     "source": "e.g., en, fr, es",
     "comment": "Placeholder text for locales input",
-    "es": "e.g., en, fr, es",
-    "fr-ca": "e.g., en, fr, es"
+    "es": "ej., en, fr, es",
+    "fr-ca": "p. ex., en, fr, es"
   },
   "createTitle": {
     "source": "Create Collection",
-    "es": "Create Collection",
-    "fr-ca": "Create Collection"
+    "es": "Crear Colección",
+    "fr-ca": "Créer une Collection"
   }
 }

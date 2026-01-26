@@ -549,6 +549,7 @@ export class ResourcesController {
 
       const collection = config.collections[decodedCollectionName];
       const translationsFolder = collection.translationsFolder;
+      const baseLocale = collection.baseLocale || config.baseLocale || 'en';
 
       // Validate query
       if (!dto.query || dto.query.trim().length === 0) {
@@ -568,6 +569,7 @@ export class ResourcesController {
         translationsFolder,
         query: dto.query,
         maxResults: maxResults + 1, // Request one extra to detect if limited
+        baseLocale,
       });
 
       // Check if results were limited
