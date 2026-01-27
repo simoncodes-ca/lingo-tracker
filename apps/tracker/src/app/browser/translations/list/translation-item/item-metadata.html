@@ -15,27 +15,9 @@
       }
     }
 
-    @if (comment()) {
-      <button
-        class="icon-button"
-        mat-icon-button
-        type="button"
-        [matMenuTriggerFor]="commentMenu"
-        aria-label="View comment"
-      >
-        <mat-icon>comment</mat-icon>
-      </button>
-    }
-
     <mat-menu #tagMenu="matMenu">
       <button mat-menu-item disableRipple>
         <app-tag-list-popover [tags]="tags()" />
-      </button>
-    </mat-menu>
-
-    <mat-menu #commentMenu="matMenu">
-      <button mat-menu-item disableRipple>
-        <app-comment-popover [comment]="comment()" />
       </button>
     </mat-menu>
   </div>

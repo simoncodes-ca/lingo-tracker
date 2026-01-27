@@ -29,7 +29,6 @@ type DensityMode = 'compact' | 'medium' | 'full';
     MatMenuModule,
     MatIconButton,
     TagList,
-    CommentPopover,
     TagListPopover,
   ],
   templateUrl: './item-metadata.html',

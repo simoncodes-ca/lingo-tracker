@@ -18,16 +18,22 @@
   <!-- Medium/Full mode: full header with actions -->
   <div class="item-header">
     <button
-      class="key-button"
+      class="key-chip"
       type="button"
       (click)="onCopyKey()"
       (keydown.enter)="onCopyKey()"
       [matTooltip]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
       [attr.aria-label]="'Copy key'"
     >
-      <span class="key-text">{{ fullKey() }}</span>
+      <span class="key-text">{{ fullKey() | truncateKey }}</span>
       <mat-icon class="copy-icon">content_copy</mat-icon>
     </button>
+
+    @if (tags().length) {
+      <div class="header-tags">
+        <app-tag-list [tags]="tags()" />
+      </div>
+    }
 
     <div class="header-actions">
       @if (rollupStatus()) {
@@ -39,6 +45,20 @@
           <mat-icon>layers</mat-icon>
           <span class="rollup-count">{{ rollupStatus()![1] }}</span>
         </div>
+      }
+
+      @if (!hideCommentButton()) {
+        <button
+          class="comment-button"
+          [class.comment-button--active]="showComment()"
+          mat-icon-button
+          type="button"
+          [disabled]="!comment()"
+          (click)="onCommentClick($event)"
+          [attr.aria-label]="showComment() ? 'Hide comment' : 'Show comment'"
+        >
+          <mat-icon>{{ commentIcon() }}</mat-icon>
+        </button>
       }
 
       <button

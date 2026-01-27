@@ -14,14 +14,6 @@
   }
 }
 
-.status-chip {
-  border-radius: 999px;
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-xs);
-  padding: 2px 8px;
-  text-transform: uppercase;
-}
-
 .rollup {
   align-items: center;
   color: var(--color-text-secondary);
@@ -35,14 +27,7 @@
 
 .icon-button {
   position: relative;
-}
 
-.tag-count {
-  font-size: var(--font-size-xs);
-  margin-left: 4px;
-}
-
-.comment-button {
   &:disabled {
     cursor: default;
     opacity: 0.4;
@@ -53,9 +38,10 @@
   }
 }
 
-::ng-deep .comment-tooltip {
-  max-width: 300px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
+.comment-button {
+  &--active {
+    mat-icon {
+      color: var(--color-info);
+    }
+  }
 }

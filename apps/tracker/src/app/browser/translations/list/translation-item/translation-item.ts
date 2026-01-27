@@ -33,7 +33,6 @@ const LONG_PRESS_THRESHOLD = 500;
     MatIconModule,
     TranslationItemHeader,
     TranslationItemLocales,
-    TranslationItemMetadata,
     TranslationItemCompactControls,
   ],
   templateUrl: './translation-item.html',
@@ -160,6 +159,9 @@ export class TranslationItem implements OnDestroy {
   /** Signal controlling whether the full-mode content is expanded */
   readonly isExpanded = signal(false);
 
+  /** Signal controlling whether the comment is shown instead of translation values */
+  readonly showComment = signal(false);
+
   /**
    * Returns true when the base value or any active locale value exceeds the
    * visual threshold and therefore can be expanded.
@@ -184,6 +186,11 @@ export class TranslationItem implements OnDestroy {
       // Defensive: emitting can fail during teardown; swallow errors to avoid runtime exceptions
       // This ensures graceful degradation if parent isn't listening.
     }
+  }
+
+  /** Toggles the comment display for compact and medium density modes */
+  toggleComment(): void {
+    this.showComment.update((v) => !v);
   }
 
   // Touch handlers ---------------------------------------------------------

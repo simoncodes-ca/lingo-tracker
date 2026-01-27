@@ -4,6 +4,7 @@ import {
   input,
   output,
   signal,
+  computed,
   inject,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,6 +14,8 @@ import { MatIconButton } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
+import { TruncateKeyPipe } from '../../../../shared/pipes/truncate-key.pipe';
+import { TagList } from '../../../../shared/tag-list/tag-list.component';
 
 /**
  * Header component for translation items displaying the key with copy button
@@ -28,6 +31,8 @@ import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
     MatTooltipModule,
     MatIconButton,
     TranslocoPipe,
+    TruncateKeyPipe,
+    TagList,
   ],
   templateUrl: './item-header.html',
   styleUrl: './item-header.scss',
@@ -51,8 +56,23 @@ export class TranslationItemHeader {
   /** Compact mode flag */
   isCompactMode = input<boolean>(false);
 
+  /** Comment text for tooltip display */
+  comment = input<string>();
+
+  /** Whether comment is currently shown */
+  showComment = input<boolean>(false);
+
+  /** Tags to display in header (medium/full mode only) */
+  tags = input<string[]>([]);
+
+  /** Hide the comment toggle button (used in full mode where comment is shown inline) */
+  hideCommentButton = input<boolean>(false);
+
   /** Emitted when user clicks copy key button */
   copyKey = output<string>();
+
+  /** Emitted when user toggles comment display */
+  commentToggle = output<void>();
 
   /** Emitted when user selects Edit from menu */
   editAction = output<void>();
@@ -69,6 +89,11 @@ export class TranslationItemHeader {
 
   /** Tracks whether copy feedback is currently showing (check icon) */
   readonly showCopySuccess = signal(false);
+
+  /** Computed signal for the comment icon name based on toggle state */
+  readonly commentIcon = computed(() => {
+    return this.showComment() ? 'chat_bubble' : 'comment';
+  });
 
   private copySuccessTimeoutId: number | undefined;
 
@@ -134,5 +159,10 @@ export class TranslationItemHeader {
 
   onDelete(): void {
     this.deleteAction.emit();
+  }
+
+  onCommentClick(event: MouseEvent): void {
+    event.stopPropagation();
+    this.commentToggle.emit();
   }
 }

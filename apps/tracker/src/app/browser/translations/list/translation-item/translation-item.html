@@ -23,9 +23,14 @@
         <div
           class="compact-value"
           [class.compact-value--empty]="!primaryLocaleValue().trim()"
-          [title]="primaryLocaleValue().trim() || 'No translation'"
+          [class.compact-value--comment]="showComment()"
+          [title]="showComment() ? '' : (primaryLocaleValue().trim() || 'No translation')"
         >
-          {{ primaryLocaleValue().trim() || 'No translation' }}
+          @if (showComment()) {
+            <span class="comment-text">Comment: {{ translation().comment }}</span>
+          } @else {
+            {{ primaryLocaleValue().trim() || 'No translation' }}
+          }
         </div>
         <app-translation-item-header
           [fullKey]="fullKey()"
@@ -38,13 +43,12 @@
       </div>
 
       <app-translation-item-compact-controls
-        [primaryLocale]="statusChipLocale()"
-        [primaryLocaleStatus]="translation().status[statusChipLocale()]"
         [rollupStatus]="rollupStatus()"
         [statusId]="statusId()"
         [comment]="translation().comment"
-        [hasTags]="!!translation().tags?.length"
-        [tagCount]="translation().tags?.length ?? 0"
+        [showComment]="showComment()"
+        [tags]="translation().tags ?? []"
+        (commentToggle)="toggleComment()"
         (editAction)="editTranslation.emit(translation())"
         (moveAction)="moveTranslation.emit(translation())"
         (deleteAction)="deleteTranslation.emit(translation())"
@@ -57,21 +61,20 @@
       [rollupStatus]="rollupStatus()"
       [statusBreakdown]="statusBreakdown()"
       [statusId]="statusId()"
+      [comment]="translation().comment"
+      [showComment]="showComment()"
+      [tags]="translation().tags ?? []"
+      (commentToggle)="toggleComment()"
       (copyKey)="copyKey.emit($event)"
       (editAction)="editTranslation.emit(translation())"
       (moveAction)="moveTranslation.emit(translation())"
       (deleteAction)="deleteTranslation.emit(translation())"
     />
 
-    <p class="base-value">{{ baseValue() }}</p>
-
-    @if (hasMetadata()) {
-      <app-translation-item-metadata
-        [tags]="translation().tags ?? []"
-        [comment]="translation().comment"
-        [previewTags]="previewTags()"
-        [densityMode]="'medium'"
-      />
+    @if (showComment()) {
+      <p class="comment-text">Comment: {{ translation().comment }}</p>
+    } @else {
+      <p class="base-value">{{ baseValue() }}</p>
     }
 
     <app-translation-item-locales
@@ -85,6 +88,8 @@
       [rollupStatus]="rollupStatus()"
       [statusBreakdown]="statusBreakdown()"
       [statusId]="statusId()"
+      [tags]="translation().tags ?? []"
+      [hideCommentButton]="true"
       (copyKey)="copyKey.emit($event)"
       (editAction)="editTranslation.emit(translation())"
       (moveAction)="moveTranslation.emit(translation())"
@@ -95,19 +100,13 @@
       {{ baseValue() }}
     </div>
 
+    <p class="comment-text full">Comment: {{ translation().comment || '-' }}</p>
+
     <app-translation-item-locales
       [localeTranslations]="localeTranslations()"
       [densityMode]="'full'"
       [isExpanded]="isExpanded()"
     />
-
-    @if (hasMetadata()) {
-      <app-translation-item-metadata
-        [tags]="translation().tags ?? []"
-        [comment]="translation().comment"
-        [densityMode]="'full'"
-      />
-    }
 
     @if (needsExpansion()) {
       <button

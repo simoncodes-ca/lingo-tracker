@@ -6,9 +6,9 @@ import {
   computed,
   signal,
   effect,
-  ElementRef,
   inject,
   viewChild,
+  ElementRef,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -39,12 +39,6 @@ import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
   },
 })
 export class TranslationItemCompactControls {
-  /** Selected locale to display in status chip */
-  primaryLocale = input.required<string>();
-
-  /** Translation status for the selected locale */
-  primaryLocaleStatus = input<string>();
-
   /** Rollup status tuple: [status, count] */
   rollupStatus = input<readonly [string, number]>();
 
@@ -54,11 +48,14 @@ export class TranslationItemCompactControls {
   /** Comment text content */
   comment = input<string | undefined>();
 
-  /** Whether translation has tags */
-  hasTags = input<boolean>(false);
+  /** Whether comment is currently shown */
+  showComment = input<boolean>(false);
 
-  /** Number of tags */
-  tagCount = input<number>(0);
+  /** Tags array */
+  tags = input<string[]>([]);
+
+  /** Emitted when user toggles comment display */
+  commentToggle = output<void>();
 
   /** Emitted when user selects Edit from menu */
   editAction = output<void>();
@@ -73,28 +70,22 @@ export class TranslationItemCompactControls {
 
   private readonly elementRef = inject(ElementRef);
 
-  /** Reference to the comment tooltip for manual show/hide control */
-  readonly commentTooltip = viewChild<MatTooltip>('commentTooltip');
+  /** Reference to the tags tooltip for manual show/hide control */
+  readonly tagsTooltip = viewChild<MatTooltip>('tagsTooltip');
 
-  /** Controls whether the comment tooltip is manually shown (via click) */
-  readonly isCommentTooltipPinned = signal(false);
-
-  /** Computed signal that determines if comment button should be disabled */
-  readonly commentDisabled = computed(() => {
-    const commentValue = this.comment();
-    return !commentValue || commentValue.trim().length === 0;
-  });
+  /** Controls whether the tags tooltip is manually shown (via click) */
+  readonly isTagsTooltipPinned = signal(false);
 
   constructor() {
     // Listen for clicks outside the component to close pinned tooltip
     effect(() => {
-      if (!this.isCommentTooltipPinned()) return;
+      if (!this.isTagsTooltipPinned()) return;
 
       const clickListener = (event: MouseEvent) => {
         const nativeElement = this.elementRef.nativeElement as HTMLElement;
         if (!nativeElement.contains(event.target as Node)) {
-          this.isCommentTooltipPinned.set(false);
-          this.commentTooltip()?.hide();
+          this.isTagsTooltipPinned.set(false);
+          this.tagsTooltip()?.hide();
         }
       };
 
@@ -106,19 +97,48 @@ export class TranslationItemCompactControls {
     });
   }
 
-  onCommentClick(event: MouseEvent): void {
+  /** Computed signal that determines if comment button should be disabled */
+  readonly commentDisabled = computed(() => {
+    const commentValue = this.comment();
+    return !commentValue || commentValue.trim().length === 0;
+  });
+
+  /** Computed signal for the comment icon name based on toggle state */
+  readonly commentIcon = computed(() => {
+    return this.showComment() ? 'chat_bubble' : 'comment';
+  });
+
+  /** Computed signal that determines if tags button should be disabled */
+  readonly tagsDisabled = computed(() => {
+    const tagsValue = this.tags();
+    return !tagsValue || tagsValue.length === 0;
+  });
+
+  /** Computed signal for tags tooltip content with brackets around each tag */
+  readonly tagsTooltipText = computed(() => {
+    const tagsValue = this.tags();
+    if (!tagsValue || tagsValue.length === 0) return '';
+    return tagsValue.map((tag) => `[${tag}]`).join(', ');
+  });
+
+  onTagsClick(event: MouseEvent): void {
     event.stopPropagation();
 
-    const tooltip = this.commentTooltip();
+    const tooltip = this.tagsTooltip();
     if (!tooltip) return;
 
-    if (this.isCommentTooltipPinned()) {
-      this.isCommentTooltipPinned.set(false);
+    if (this.isTagsTooltipPinned()) {
+      this.isTagsTooltipPinned.set(false);
       tooltip.hide();
     } else {
-      this.isCommentTooltipPinned.set(true);
+      this.isTagsTooltipPinned.set(true);
       tooltip.show();
     }
+  }
+
+  onCommentClick(event: MouseEvent): void {
+    event.stopPropagation();
+    this.commentToggle.emit();
   }
 
   onEdit(): void {

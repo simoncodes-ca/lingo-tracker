@@ -1,8 +1,4 @@
 <div class="compact-controls">
-  <div class="status-chip" [attr.data-status]="primaryLocaleStatus()">
-    {{ primaryLocale() }}
-  </div>
-
   @if (rollupStatus()) {
     <div class="rollup" [attr.aria-describedby]="statusId()">
       <mat-icon>layers</mat-icon>
@@ -11,27 +7,29 @@
   }
 
   <button
-    #commentTooltip="matTooltip"
     class="icon-button comment-button"
+    [class.comment-button--active]="showComment()"
     mat-icon-button
     [disabled]="commentDisabled()"
-    [matTooltip]="comment() || ''"
-    [matTooltipDisabled]="commentDisabled()"
-    [matTooltipShowDelay]="500"
-    [matTooltipClass]="'comment-tooltip'"
-    matTooltipPosition="below"
     (click)="onCommentClick($event)"
-    aria-label="View comment"
+    [attr.aria-label]="showComment() ? 'Hide comment' : 'Show comment'"
   >
-    <mat-icon>comment</mat-icon>
+    <mat-icon>{{ commentIcon() }}</mat-icon>
   </button>
 
-  @if (hasTags()) {
-    <button class="icon-button" mat-icon-button aria-label="View tags">
-      <mat-icon>label</mat-icon>
-      <span class="tag-count">{{ tagCount() }}</span>
-    </button>
-  }
+  <button
+    #tagsTooltip="matTooltip"
+    class="icon-button tags-button"
+    mat-icon-button
+    [disabled]="tagsDisabled()"
+    [matTooltip]="tagsTooltipText()"
+    [matTooltipDisabled]="tagsDisabled()"
+    matTooltipPosition="below"
+    (click)="onTagsClick($event)"
+    aria-label="View tags"
+  >
+    <mat-icon>label</mat-icon>
+  </button>
 
   <button
     mat-icon-button
