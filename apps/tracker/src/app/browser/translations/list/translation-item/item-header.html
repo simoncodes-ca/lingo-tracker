@@ -36,15 +36,11 @@
     }
 
     <div class="header-actions">
-      @if (rollupStatus()) {
-        <div
-          class="rollup-badge"
-          [matTooltip]="statusBreakdown() ?? ''"
-          [attr.aria-describedby]="statusId()"
-        >
-          <mat-icon>layers</mat-icon>
-          <span class="rollup-count">{{ rollupStatus()![1] }}</span>
-        </div>
+      @if (localeStates().length) {
+        <app-translation-rollup
+          [locales]="localeStates()"
+          [baseLocale]="baseLocale()"
+        />
       }
 
       @if (!hideCommentButton()) {

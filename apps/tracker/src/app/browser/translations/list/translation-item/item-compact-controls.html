@@ -1,9 +1,9 @@
 <div class="compact-controls">
-  @if (rollupStatus()) {
-    <div class="rollup" [attr.aria-describedby]="statusId()">
-      <mat-icon>layers</mat-icon>
-      <span class="rollup-count">{{ rollupStatus()![1] }}</span>
-    </div>
+  @if (localeStates().length) {
+    <app-translation-rollup
+      [locales]="localeStates()"
+      [baseLocale]="baseLocale()"
+    />
   }
 
   <button

@@ -1,5 +1,11 @@
-.translation-item-header {
+:host {
   display: block;
+  flex-grow: 1;
+
+  &.compact {
+    flex-grow: 0;
+    margin-left: auto;
+  }
 }
 
 .item-header {
@@ -47,7 +53,6 @@
   gap: var(--spacing-1);
   height: auto;
   padding: 6px 14px;
-  padding-left: var(--spacing-6);
   text-align: left;
   transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
 

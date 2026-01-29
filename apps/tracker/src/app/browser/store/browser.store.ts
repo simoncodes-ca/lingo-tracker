@@ -14,13 +14,20 @@ import {
   SearchResultDto,
   SearchResultsDto,
   CacheStatusType,
+  TranslationStatus,
 } from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../services/browser-api.service';
+import { sortTranslations } from '../translations/utils/sort-translations';
 
 interface ViewPreferences {
   densityMode: 'compact' | 'medium' | 'full';
   selectedLocales: string[];
   showNestedResources: boolean;
+  compactLocale: string | null;
+  compactLocaleManuallyChanged: boolean;
+  sortField: 'key' | 'status';
+  sortDirection: 'asc' | 'desc';
+  selectedStatuses: TranslationStatus[];
 }
 
 interface BrowserState {
@@ -31,6 +38,7 @@ interface BrowserState {
 
   cacheStatus: CacheStatusType | null;
   cacheError: string | null;
+  collectionStats: { totalKeys: number; localeCount: number } | null;
 
   currentFolderPath: string;
   expandedFolders: Set<string>;
@@ -50,6 +58,12 @@ interface BrowserState {
 
   densityMode: 'compact' | 'medium' | 'full';
   viewPreferences: Map<string, ViewPreferences>;
+  compactLocale: string | null;
+  compactLocaleManuallyChanged: boolean;
+  nonCompactSelectedLocales: string[];
+  sortField: 'key' | 'status';
+  sortDirection: 'asc' | 'desc';
+  selectedStatuses: TranslationStatus[];
 
   isDisabled: boolean;
   error: string | null;
@@ -62,6 +76,7 @@ const initialState: BrowserState = {
   baseLocale: '',
   cacheStatus: null,
   cacheError: null,
+  collectionStats: null,
   currentFolderPath: '',
   expandedFolders: new Set<string>(),
   rootFolders: [],
@@ -77,6 +92,12 @@ const initialState: BrowserState = {
   searchError: null,
   densityMode: 'medium',
   viewPreferences: new Map<string, ViewPreferences>(),
+  compactLocale: null,
+  compactLocaleManuallyChanged: false,
+  nonCompactSelectedLocales: [],
+  sortField: 'key',
+  sortDirection: 'asc',
+  selectedStatuses: [],
   isDisabled: false,
   error: null,
 };
@@ -93,7 +114,7 @@ function arraysEqual(a: string[], b: string[]): boolean {
 export const BrowserStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale, isSearchMode, searchResults, cacheStatus, densityMode }) => ({
+  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale, isSearchMode, searchResults, cacheStatus, densityMode, sortField, sortDirection, selectedStatuses, collectionStats }) => ({
     filteredFolders: computed(() => {
       const filter = folderTreeFilter().toLowerCase().trim();
       if (!filter) return rootFolders();
@@ -169,7 +190,46 @@ export const BrowserStore = signalStore(
       return available.filter(locale => locale !== base);
     }),
 
+    statusFilterText: computed(() => {
+      const selected = selectedStatuses();
+      if (selected.length === 0) return 'All statuses';
+      if (selected.length === 1) {
+        const labels: Record<TranslationStatus, string> = {
+          new: 'New',
+          stale: 'Stale',
+          translated: 'Translated',
+          verified: 'Verified',
+        };
+        return labels[selected[0]];
+      }
+      return `${selected.length} statuses`;
+    }),
+
+    isShowingAllStatuses: computed(() => selectedStatuses().length === 0),
+
     displayedTranslations: computed(() => (isSearchMode() ? searchResults() : translations())),
+
+    sortedTranslations: computed(() => {
+      const items = isSearchMode() ? searchResults() : translations();
+      const statuses = selectedStatuses();
+
+      // Filter by status first
+      let filteredItems = items;
+      if (statuses.length > 0) {
+        const localesForFiltering = selectedLocales().length > 0
+          ? selectedLocales()
+          : availableLocales();
+
+        filteredItems = items.filter(item => {
+          return localesForFiltering.some(locale => {
+            const localeStatus = item.status?.[locale];
+            return localeStatus && statuses.includes(localeStatus);
+          });
+        });
+      }
+
+      return sortTranslations(filteredItems, sortField(), sortDirection(), selectedLocales());
+    }),
 
     isCacheReady: computed(() => cacheStatus() === 'ready'),
 
@@ -179,6 +239,12 @@ export const BrowserStore = signalStore(
     }),
 
     canShowMultipleLocales: computed(() => densityMode() !== 'compact'),
+
+    collectionTotalKeys: computed(() => collectionStats()?.totalKeys ?? null),
+
+    collectionLocaleCount: computed(() => collectionStats()?.localeCount ?? null),
+
+    hasCollectionStats: computed(() => collectionStats() !== null),
   })),
 
   withMethods((store) => {
@@ -325,13 +391,24 @@ export const BrowserStore = signalStore(
       ),
 
       setSelectedLocales(locales: string[]): void {
-        patchState(store, { selectedLocales: locales });
+        const isCompactMode = store.densityMode() === 'compact';
+        patchState(store, {
+          selectedLocales: locales,
+          compactLocaleManuallyChanged: isCompactMode ? true : store.compactLocaleManuallyChanged(),
+        });
       },
 
       toggleLocale(locale: string): void {
         const current = store.selectedLocales();
-        if (current.includes(locale)) patchState(store, { selectedLocales: current.filter(l => l !== locale) });
-        else patchState(store, { selectedLocales: [...current, locale] });
+        const isCompactMode = store.densityMode() === 'compact';
+        const newLocales = current.includes(locale)
+          ? current.filter(l => l !== locale)
+          : [...current, locale];
+
+        patchState(store, {
+          selectedLocales: newLocales,
+          compactLocaleManuallyChanged: isCompactMode ? true : store.compactLocaleManuallyChanged(),
+        });
       },
 
       selectAllLocales(): void {
@@ -340,6 +417,38 @@ export const BrowserStore = signalStore(
 
       clearAllLocales(): void {
         patchState(store, { selectedLocales: [] });
+      },
+
+      setSortField(field: 'key' | 'status'): void {
+        patchState(store, { sortField: field });
+      },
+
+      setSortDirection(direction: 'asc' | 'desc'): void {
+        patchState(store, { sortDirection: direction });
+      },
+
+      toggleSortDirection(): void {
+        patchState(store, { sortDirection: store.sortDirection() === 'asc' ? 'desc' : 'asc' });
+      },
+
+      setSelectedStatuses(statuses: TranslationStatus[]): void {
+        patchState(store, { selectedStatuses: statuses });
+      },
+
+      toggleStatus(status: TranslationStatus): void {
+        const current = store.selectedStatuses();
+        const newStatuses = current.includes(status)
+          ? current.filter(s => s !== status)
+          : [...current, status];
+        patchState(store, { selectedStatuses: newStatuses });
+      },
+
+      selectNeedsWorkStatuses(): void {
+        patchState(store, { selectedStatuses: ['new', 'stale'] });
+      },
+
+      clearAllStatuses(): void {
+        patchState(store, { selectedStatuses: [] });
       },
 
       setSearchQuery(query: string): void {
@@ -392,6 +501,10 @@ export const BrowserStore = signalStore(
                 patchState(store, {
                   cacheStatus: statusDto.status,
                   cacheError: statusDto.error || null,
+                  collectionStats: statusDto.stats ? {
+                    totalKeys: statusDto.stats.totalKeys,
+                    localeCount: statusDto.stats.localeCount,
+                  } : null,
                 });
 
                 if (statusDto.status === 'ready' && store.rootFolders().length === 0) {
@@ -407,6 +520,7 @@ export const BrowserStore = signalStore(
                 patchState(store, {
                   cacheStatus: 'error',
                   cacheError: errorMessage,
+                  collectionStats: null,
                 });
                 return of(null);
               })
@@ -447,6 +561,11 @@ export const BrowserStore = signalStore(
         densityMode: store.densityMode(),
         selectedLocales: store.selectedLocales(),
         showNestedResources: store.showNestedResources(),
+        compactLocale: store.compactLocale(),
+        compactLocaleManuallyChanged: store.compactLocaleManuallyChanged(),
+        sortField: store.sortField(),
+        sortDirection: store.sortDirection(),
+        selectedStatuses: store.selectedStatuses(),
       };
 
       // Persist to localStorage
@@ -458,7 +577,12 @@ export const BrowserStore = signalStore(
         existing &&
         existing.densityMode === prefs.densityMode &&
         arraysEqual(existing.selectedLocales, prefs.selectedLocales) &&
-        existing.showNestedResources === prefs.showNestedResources
+        existing.showNestedResources === prefs.showNestedResources &&
+        existing.compactLocale === prefs.compactLocale &&
+        existing.compactLocaleManuallyChanged === prefs.compactLocaleManuallyChanged &&
+        existing.sortField === prefs.sortField &&
+        existing.sortDirection === prefs.sortDirection &&
+        arraysEqual(existing.selectedStatuses, prefs.selectedStatuses)
       ) {
         return;
       }
@@ -480,9 +604,15 @@ export const BrowserStore = signalStore(
           baseLocale,
           cacheStatus: null,
           cacheError: null,
+          collectionStats: null,
           currentFolderPath: '',
           expandedFolders: new Set<string>(),
           showNestedResources: loaded?.showNestedResources ?? true,
+          compactLocale: loaded?.compactLocale ?? null,
+          compactLocaleManuallyChanged: loaded?.compactLocaleManuallyChanged ?? false,
+          sortField: loaded?.sortField ?? 'key',
+          sortDirection: loaded?.sortDirection ?? 'asc',
+          selectedStatuses: loaded?.selectedStatuses ?? [],
           rootFolders: [],
           folderTreeFilter: '',
           translations: [],
@@ -495,7 +625,10 @@ export const BrowserStore = signalStore(
           let newSelected = currentSelected;
 
           if (mode === 'compact') {
-            if (currentSelected.length === 0) {
+            const savedCompactLocale = store.compactLocale();
+            if (savedCompactLocale && params.locales.includes(savedCompactLocale)) {
+              newSelected = [savedCompactLocale];
+            } else if (currentSelected.length === 0) {
               if (baseLocale && params.locales.includes(baseLocale)) {
                 newSelected = [baseLocale];
               } else {
@@ -517,24 +650,66 @@ export const BrowserStore = signalStore(
       },
 
       setDensityMode(mode: 'compact' | 'medium' | 'full'): void {
+        const currentDensityMode = store.densityMode();
         const currentSelected = store.selectedLocales();
-        let newSelected = currentSelected;
+        const wasCompactMode = currentDensityMode === 'compact';
+        const isEnteringCompactMode = mode === 'compact';
+        const isLeavingCompactMode = wasCompactMode && !isEnteringCompactMode;
 
-        if (mode === 'compact') {
-          if (currentSelected.length === 0) {
+        let newSelectedLocales = currentSelected;
+        let newCompactLocale = store.compactLocale();
+        let newCompactLocaleManuallyChanged = store.compactLocaleManuallyChanged();
+        let newNonCompactSelectedLocales = store.nonCompactSelectedLocales();
+
+        if (isEnteringCompactMode) {
+          // Switching TO compact mode - save current multi-selection first
+          newNonCompactSelectedLocales = currentSelected;
+          newCompactLocaleManuallyChanged = false;
+
+          if (newCompactLocale && store.availableLocales().includes(newCompactLocale)) {
+            // Use previously saved compact locale
+            newSelectedLocales = [newCompactLocale];
+          } else if (currentSelected.length > 0) {
+            // Use first from current selection
+            newSelectedLocales = [currentSelected[0]];
+            newCompactLocale = currentSelected[0];
+          } else {
+            // Fallback to base locale or first available
             const baseLocale = store.baseLocale();
             const available = store.availableLocales();
             if (baseLocale && available.includes(baseLocale)) {
-              newSelected = [baseLocale];
+              newSelectedLocales = [baseLocale];
+              newCompactLocale = baseLocale;
             } else if (available.length > 0) {
-              newSelected = [available[0]];
+              newSelectedLocales = [available[0]];
+              newCompactLocale = available[0];
             }
-          } else if (currentSelected.length > 1) {
-            newSelected = [currentSelected[0]];
+          }
+        } else if (isLeavingCompactMode) {
+          // Switching FROM compact mode to medium/full
+          if (newCompactLocaleManuallyChanged) {
+            // User manually changed locale in compact mode - use that as only selection
+            newSelectedLocales = currentSelected;
+          } else {
+            // User did not manually change locale - restore saved multi-selection
+            if (newNonCompactSelectedLocales.length > 0) {
+              newSelectedLocales = newNonCompactSelectedLocales;
+            }
+          }
+
+          // Save the compact locale for next time we enter compact mode
+          if (currentSelected.length > 0) {
+            newCompactLocale = currentSelected[0];
           }
         }
 
-        patchState(store, { densityMode: mode, selectedLocales: newSelected });
+        patchState(store, {
+          densityMode: mode,
+          selectedLocales: newSelectedLocales,
+          compactLocale: newCompactLocale,
+          compactLocaleManuallyChanged: newCompactLocaleManuallyChanged,
+          nonCompactSelectedLocales: newNonCompactSelectedLocales,
+        });
       },
 
       // Expose persistence helpers for tests

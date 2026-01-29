@@ -55,12 +55,13 @@ export class TranslationSearch implements OnDestroy {
           distinctUntilChanged() // Only emit if value actually changed
         )
         .subscribe((query) => {
-          // Update store state
-          this.store.setSearchQuery(query);
-
-          // Trigger search if query is not empty
-          if (query.trim().length > 0) {
+          // Only trigger search if query has at least 3 characters
+          if (query.trim().length >= 3) {
+            this.store.setSearchQuery(query);
             this.store.searchTranslations(query);
+          } else if (query.trim().length === 0) {
+            // Clear search when input is empty
+            this.store.clearSearch();
           }
         })
     );

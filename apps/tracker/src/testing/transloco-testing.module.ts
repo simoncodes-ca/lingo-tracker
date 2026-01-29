@@ -13,7 +13,7 @@ export function getTranslocoTestingModule(options: TranslocoTestingOptions = {})
   return TranslocoTestingModule.forRoot({
     langs: {
       en: {
-        'browser.searchTranslations': 'Search translations...',
+        'browser.searchTranslations': 'Search (min 3 characters)...',
         'browser.clearSearch': 'Clear search',
         'browser.noResults': 'No results found',
         'browser.clickToLoad': 'click to load',

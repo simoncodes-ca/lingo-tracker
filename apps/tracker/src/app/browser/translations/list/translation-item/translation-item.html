@@ -43,8 +43,8 @@
       </div>
 
       <app-translation-item-compact-controls
-        [rollupStatus]="rollupStatus()"
-        [statusId]="statusId()"
+        [localeStates]="localeStates()"
+        [baseLocale]="baseLocale()"
         [comment]="translation().comment"
         [showComment]="showComment()"
         [tags]="translation().tags ?? []"
@@ -58,9 +58,8 @@
     <!-- Medium (default) density layout -->
     <app-translation-item-header
       [fullKey]="fullKey()"
-      [rollupStatus]="rollupStatus()"
-      [statusBreakdown]="statusBreakdown()"
-      [statusId]="statusId()"
+      [localeStates]="localeStates()"
+      [baseLocale]="baseLocale()"
       [comment]="translation().comment"
       [showComment]="showComment()"
       [tags]="translation().tags ?? []"
@@ -85,9 +84,8 @@
     <!-- Full density: expanded details with overflow handling -->
     <app-translation-item-header
       [fullKey]="fullKey()"
-      [rollupStatus]="rollupStatus()"
-      [statusBreakdown]="statusBreakdown()"
-      [statusId]="statusId()"
+      [localeStates]="localeStates()"
+      [baseLocale]="baseLocale()"
       [tags]="translation().tags ?? []"
       [hideCommentButton]="true"
       (copyKey)="copyKey.emit($event)"

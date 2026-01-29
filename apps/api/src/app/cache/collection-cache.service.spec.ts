@@ -3,7 +3,11 @@ import { CollectionCacheService, CacheStatus } from './collection-cache.service'
 import * as core from '@simoncodes-ca/core';
 import { ResourceTreeNode } from '@simoncodes-ca/core';
 
-jest.mock('@simoncodes-ca/core');
+jest.mock('@simoncodes-ca/core', () => ({
+  ...jest.requireActual('@simoncodes-ca/core'),
+  loadResourceTree: jest.fn(),
+  extractResourcesRecursively: jest.fn(),
+}));
 
 const mockCore = core as jest.Mocked<typeof core>;
 
@@ -50,7 +54,9 @@ describe('CollectionCacheService', () => {
     });
 
     it('should return NOT_STARTED when different collection is cached', () => {
-      service.setCacheStatus('Main', CacheStatus.READY, createMockTree());
+      const mockTree = createMockTree();
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
       const status = service.getCacheStatus('Admin');
       expect(status).toBe(CacheStatus.NOT_STARTED);
     });
@@ -62,7 +68,9 @@ describe('CollectionCacheService', () => {
     });
 
     it('should return READY status for successfully indexed collection', () => {
-      service.setCacheStatus('Main', CacheStatus.READY, createMockTree());
+      const mockTree = createMockTree();
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
       const status = service.getCacheStatus('Main');
       expect(status).toBe(CacheStatus.READY);
     });
@@ -81,7 +89,9 @@ describe('CollectionCacheService', () => {
     });
 
     it('should return null when different collection is cached', () => {
-      service.setCacheStatus('Main', CacheStatus.READY, createMockTree());
+      const mockTree = createMockTree();
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
       const cache = service.getCache('Admin');
       expect(cache).toBeNull();
     });
@@ -100,7 +110,8 @@ describe('CollectionCacheService', () => {
 
     it('should return tree data when collection is READY', () => {
       const mockTree = createMockTree();
-      service.setCacheStatus('Main', CacheStatus.READY, mockTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
       const cache = service.getCache('Main');
       expect(cache).toEqual(mockTree);
     });
@@ -125,7 +136,8 @@ describe('CollectionCacheService', () => {
 
     it('should set READY status with tree data', () => {
       const mockTree = createMockTree();
-      service.setCacheStatus('Main', CacheStatus.READY, mockTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
       expect(service.getCache('Main')).toEqual(mockTree);
     });
@@ -137,7 +149,8 @@ describe('CollectionCacheService', () => {
 
     it('should clear previous collection cache when setting new collection', () => {
       const mainTree = createMockTree(['main']);
-      service.setCacheStatus('Main', CacheStatus.READY, mainTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mainTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mainTree, undefined, 3);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
 
       service.setCacheStatus('Admin', CacheStatus.INDEXING);
@@ -150,30 +163,91 @@ describe('CollectionCacheService', () => {
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.INDEXING);
 
       const mockTree = createMockTree();
-      service.setCacheStatus('Main', CacheStatus.READY, mockTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
       expect(service.getCache('Main')).toEqual(mockTree);
     });
 
     it('should preserve tree data when updating to ERROR status', () => {
       const mockTree = createMockTree();
-      service.setCacheStatus('Main', CacheStatus.READY, mockTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
       service.setCacheStatus('Main', CacheStatus.ERROR, undefined, 'Something went wrong');
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.ERROR);
     });
 
     it('should set indexedAt when transitioning to READY status', () => {
+      const mockTree = createMockTree();
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
       service.setCacheStatus('Main', CacheStatus.INDEXING);
-      service.setCacheStatus('Main', CacheStatus.READY, createMockTree());
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
 
       const status = service.getCacheStatus('Main');
       expect(status).toBe(CacheStatus.READY);
     });
   });
 
+  describe('getCacheStats', () => {
+    it('should return null when no collection is cached', () => {
+      const stats = service.getCacheStats('Main');
+      expect(stats).toBeNull();
+    });
+
+    it('should return null when different collection is cached', () => {
+      const mockTree = createMockTree();
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
+      const stats = service.getCacheStats('Admin');
+      expect(stats).toBeNull();
+    });
+
+    it('should return null when collection is not READY', () => {
+      service.setCacheStatus('Main', CacheStatus.INDEXING);
+      const stats = service.getCacheStats('Main');
+      expect(stats).toBeNull();
+    });
+
+    it('should return stats when collection is READY', () => {
+      const mockTree = createMockTree();
+      const mockResources = [mockTree.resources[0]];
+      mockCore.extractResourcesRecursively.mockReturnValue(mockResources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
+      const stats = service.getCacheStats('Main');
+      expect(stats).toEqual({
+        totalKeys: 1,
+        localeCount: 3,
+      });
+    });
+
+    it('should return correct totalKeys count from extractResourcesRecursively', () => {
+      const mockTree = createMockTree();
+      const mockResources = [
+        mockTree.resources[0],
+        { ...mockTree.resources[0], key: 'test.key2' },
+        { ...mockTree.resources[0], key: 'test.key3' },
+      ];
+
+      // Mock must be set before calling setCacheStatus because it's called during that method
+      mockCore.extractResourcesRecursively.mockReturnValue(mockResources);
+
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 5);
+      const stats = service.getCacheStats('Main');
+      expect(stats).toEqual({
+        totalKeys: 3,
+        localeCount: 5,
+      });
+
+      // Verify extractResourcesRecursively was called with the tree
+      expect(mockCore.extractResourcesRecursively).toHaveBeenCalledWith(mockTree);
+    });
+  });
+
   describe('clearCache', () => {
     it('should clear cached collection', () => {
-      service.setCacheStatus('Main', CacheStatus.READY, createMockTree());
+      const mockTree = createMockTree();
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
 
       service.clearCache();
@@ -187,7 +261,9 @@ describe('CollectionCacheService', () => {
     });
 
     it('should allow new collection to be cached after clearing', () => {
-      service.setCacheStatus('Main', CacheStatus.READY, createMockTree());
+      const mockTree = createMockTree();
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
       service.clearCache();
       service.setCacheStatus('Admin', CacheStatus.INDEXING);
       expect(service.getCacheStatus('Admin')).toBe(CacheStatus.INDEXING);
@@ -198,13 +274,20 @@ describe('CollectionCacheService', () => {
     it('should transition from NOT_STARTED to INDEXING to READY on success', async () => {
       const mockTree = createMockTree();
       mockCore.loadResourceTree.mockReturnValue(mockTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
 
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.NOT_STARTED);
 
-      await service.indexCollection('Main', 'src/i18n');
+      await service.indexCollection('Main', 'src/i18n', 3);
 
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
       expect(service.getCache('Main')).toEqual(mockTree);
+
+      const stats = service.getCacheStats('Main');
+      expect(stats).toEqual({
+        totalKeys: 1,
+        localeCount: 3,
+      });
     });
 
     it('should transition from NOT_STARTED to INDEXING to ERROR on failure', async () => {
@@ -230,8 +313,9 @@ describe('CollectionCacheService', () => {
     it('should call loadResourceTree with correct parameters', async () => {
       const mockTree = createMockTree();
       mockCore.loadResourceTree.mockReturnValue(mockTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
 
-      await service.indexCollection('Main', 'src/i18n');
+      await service.indexCollection('Main', 'src/i18n', 3);
 
       expect(mockCore.loadResourceTree).toHaveBeenCalledWith({
         translationsFolder: 'src/i18n',
@@ -244,14 +328,15 @@ describe('CollectionCacheService', () => {
     it('should prevent concurrent indexing of same collection', async () => {
       const mockTree = createMockTree();
       mockCore.loadResourceTree.mockReturnValue(mockTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
 
       // First index completes synchronously
-      await service.indexCollection('Main', 'src/i18n');
+      await service.indexCollection('Main', 'src/i18n', 3);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
 
       // Second call should detect READY status and skip if we set to INDEXING
       service.setCacheStatus('Main', CacheStatus.INDEXING);
-      await service.indexCollection('Main', 'src/i18n');
+      await service.indexCollection('Main', 'src/i18n', 3);
 
       // Should only be called once for the first indexing request
       expect(mockCore.loadResourceTree).toHaveBeenCalledTimes(1);
@@ -265,14 +350,17 @@ describe('CollectionCacheService', () => {
       mockCore.loadResourceTree
         .mockReturnValueOnce(mainTree)
         .mockReturnValueOnce(adminTree);
+      mockCore.extractResourcesRecursively
+        .mockReturnValueOnce(mainTree.resources)
+        .mockReturnValueOnce(adminTree.resources);
 
       // Index Main first
-      await service.indexCollection('Main', 'src/i18n');
+      await service.indexCollection('Main', 'src/i18n', 3);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
       expect(service.getCache('Main')).toEqual(mainTree);
 
       // Index Admin (this should clear Main's cache)
-      await service.indexCollection('Admin', 'src/admin/i18n');
+      await service.indexCollection('Admin', 'src/admin/i18n', 2);
 
       expect(service.getCacheStatus('Admin')).toBe(CacheStatus.READY);
       expect(service.getCache('Admin')).toEqual(adminTree);
@@ -318,12 +406,15 @@ describe('CollectionCacheService', () => {
       mockCore.loadResourceTree
         .mockReturnValueOnce(mainTree)
         .mockReturnValueOnce(adminTree);
+      mockCore.extractResourcesRecursively
+        .mockReturnValueOnce(mainTree.resources)
+        .mockReturnValueOnce(adminTree.resources);
 
-      await service.indexCollection('Main', 'src/i18n');
+      await service.indexCollection('Main', 'src/i18n', 3);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
       expect(service.getCache('Main')).toEqual(mainTree);
 
-      await service.indexCollection('Admin', 'src/admin/i18n');
+      await service.indexCollection('Admin', 'src/admin/i18n', 2);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.NOT_STARTED);
       expect(service.getCacheStatus('Admin')).toBe(CacheStatus.READY);
       expect(service.getCache('Admin')).toEqual(adminTree);
@@ -336,14 +427,17 @@ describe('CollectionCacheService', () => {
       mockCore.loadResourceTree
         .mockReturnValueOnce(mainTree)
         .mockReturnValueOnce(adminTree);
+      mockCore.extractResourcesRecursively
+        .mockReturnValueOnce(mainTree.resources)
+        .mockReturnValueOnce(adminTree.resources);
 
       // Index Main first
-      await service.indexCollection('Main', 'src/i18n');
+      await service.indexCollection('Main', 'src/i18n', 3);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
       expect(service.getCache('Main')).toEqual(mainTree);
 
       // Index Admin - should clear Main
-      await service.indexCollection('Admin', 'src/admin/i18n');
+      await service.indexCollection('Admin', 'src/admin/i18n', 2);
 
       expect(service.getCacheStatus('Admin')).toBe(CacheStatus.READY);
       expect(service.getCache('Admin')).toEqual(adminTree);
@@ -360,10 +454,11 @@ describe('CollectionCacheService', () => {
           throw mainError;
         })
         .mockReturnValueOnce(adminTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(adminTree.resources);
 
       // Try to index Main - should fail and set ERROR status
       try {
-        await service.indexCollection('Main', 'src/i18n');
+        await service.indexCollection('Main', 'src/i18n', 3);
         fail('Should have thrown error');
       } catch (error) {
         expect(error).toBe(mainError);
@@ -371,7 +466,7 @@ describe('CollectionCacheService', () => {
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.ERROR);
 
       // Index Admin - should clear Main's error state and succeed
-      await service.indexCollection('Admin', 'src/admin/i18n');
+      await service.indexCollection('Admin', 'src/admin/i18n', 2);
       expect(service.getCacheStatus('Admin')).toBe(CacheStatus.READY);
       expect(service.getCache('Admin')).toEqual(adminTree);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.NOT_STARTED);

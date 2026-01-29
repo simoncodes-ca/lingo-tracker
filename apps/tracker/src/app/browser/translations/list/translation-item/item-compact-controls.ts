@@ -16,6 +16,7 @@ import { MatIconButton } from '@angular/material/button';
 import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
+import { TranslationRollup, LocaleState } from './translation-rollup';
 
 /**
  * Controls displayed on the right side of compact density mode items.
@@ -31,6 +32,7 @@ import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
     MatIconButton,
     MatTooltipModule,
     TranslocoPipe,
+    TranslationRollup,
   ],
   templateUrl: './item-compact-controls.html',
   styleUrl: './item-compact-controls.scss',
@@ -39,11 +41,11 @@ import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
   },
 })
 export class TranslationItemCompactControls {
-  /** Rollup status tuple: [status, count] */
-  rollupStatus = input<readonly [string, number]>();
+  /** Locale states for the rollup component */
+  localeStates = input<LocaleState[]>([]);
 
-  /** ID for ARIA describedby */
-  statusId = input<string>();
+  /** Base locale code */
+  baseLocale = input<string>('en');
 
   /** Comment text content */
   comment = input<string | undefined>();

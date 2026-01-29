@@ -97,6 +97,7 @@ describe('ResourcesController', () => {
     getCacheStatus: jest.fn(),
     getCache: jest.fn(),
     getCacheMetadata: jest.fn(),
+    getCacheStats: jest.fn(),
     indexCollection: jest.fn(),
     clearCache: jest.fn(),
   };
@@ -1040,7 +1041,7 @@ describe('ResourcesController', () => {
 
       await resourcesController.getTree('test-collection', '', mockResponse as any);
 
-      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test');
+      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test', 3);
       expect(mockResponse.status).toHaveBeenCalledWith(202);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1085,7 +1086,7 @@ describe('ResourcesController', () => {
 
       await resourcesController.getTree('test-collection', '', mockResponse as any);
 
-      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test');
+      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test', 3);
       expect(mockResponse.status).toHaveBeenCalledWith(202);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1138,10 +1139,12 @@ describe('ResourcesController', () => {
     it('should return cache status READY with indexedAt', async () => {
       const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
       const getCacheMetadata = cacheService.getCacheMetadata as jest.Mock;
+      const getCacheStats = cacheService.getCacheStats as jest.Mock;
 
       const indexedAt = new Date('2026-01-21T12:00:00Z');
       getCacheStatus.mockReturnValue(CacheStatus.READY);
       getCacheMetadata.mockReturnValue({ indexedAt, error: undefined });
+      getCacheStats.mockReturnValue({ totalKeys: 42, localeCount: 3 });
 
       const result = await resourcesController.getCacheStatus('test-collection');
 
@@ -1149,9 +1152,14 @@ describe('ResourcesController', () => {
         status: 'ready',
         collectionName: 'test-collection',
         indexedAt: indexedAt.toISOString(),
+        stats: {
+          totalKeys: 42,
+          localeCount: 3,
+        },
       });
       expect(getCacheStatus).toHaveBeenCalledWith('test-collection');
       expect(getCacheMetadata).toHaveBeenCalledWith('test-collection');
+      expect(getCacheStats).toHaveBeenCalledWith('test-collection');
     });
 
     it('should return cache status INDEXING', async () => {
@@ -1200,7 +1208,7 @@ describe('ResourcesController', () => {
         status: 'not-started',
         collectionName: 'test-collection',
       });
-      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test');
+      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test', 3);
     });
 
     it('should return 404 for non-existent collection', async () => {
@@ -1218,6 +1226,7 @@ describe('ResourcesController', () => {
     it('should URI decode collection names with special characters', async () => {
       const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
       const getCacheMetadata = cacheService.getCacheMetadata as jest.Mock;
+      const getCacheStats = cacheService.getCacheStats as jest.Mock;
 
       const configWithEncodedName = {
         ...mockConfig,
@@ -1231,6 +1240,7 @@ describe('ResourcesController', () => {
 
       getCacheStatus.mockReturnValue(CacheStatus.READY);
       getCacheMetadata.mockReturnValue({ indexedAt: new Date(), error: undefined });
+      getCacheStats.mockReturnValue({ totalKeys: 10, localeCount: 2 });
 
       const result = await resourcesController.getCacheStatus('My%20Collection');
 

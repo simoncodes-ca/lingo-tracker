@@ -1,0 +1,68 @@
+<button
+  mat-stroked-button
+  [matMenuTriggerFor]="statusMenu"
+  data-testid="status-filter-trigger"
+  class="status-filter-trigger"
+  [attr.aria-label]="'Filter by status. Currently showing: ' + store.statusFilterText()"
+  aria-haspopup="true"
+>
+  <mat-icon class="filter-icon">filter_list</mat-icon>
+  <span class="status-icons">
+    @for (status of statuses; track status) {
+      <mat-icon
+        class="status-indicator"
+        [class.status-indicator--active]="isStatusSelected(status)"
+        [class.status-indicator--inactive]="!isStatusSelected(status) && !store.isShowingAllStatuses()"
+        [style.color]="statusConfig[status].color"
+        [attr.aria-label]="statusConfig[status].label + (isStatusSelected(status) ? ' selected' : '')"
+      >{{ statusConfig[status].icon }}</mat-icon>
+    }
+  </span>
+  <mat-icon class="arrow-icon">arrow_drop_down</mat-icon>
+</button>
+
+<mat-menu #statusMenu="matMenu" class="status-filter-menu">
+  <div class="menu-header" (click)="$event.stopPropagation()">
+    <button
+      mat-button
+      class="action-button"
+      (click)="selectNeedsWork()"
+      data-testid="select-needs-work"
+    >
+      Needs Work
+    </button>
+    <button
+      mat-button
+      class="action-button"
+      (click)="clearAll()"
+      data-testid="clear-all"
+    >
+      Clear All
+    </button>
+  </div>
+
+  @for (status of statuses; track status) {
+    <button
+      mat-menu-item
+      (click)="toggleStatus(status); $event.stopPropagation()"
+      [attr.data-testid]="'status-option-' + status"
+      [attr.aria-label]="statusConfig[status].label + (isStatusSelected(status) ? ' (selected)' : ' (not selected)')"
+      [attr.aria-checked]="isStatusSelected(status)"
+      role="menuitemcheckbox"
+      class="status-option"
+    >
+      <mat-checkbox
+        [checked]="isStatusSelected(status)"
+        (click)="$event.preventDefault()"
+        [attr.aria-hidden]="true"
+        tabindex="-1"
+        class="status-checkbox"
+      ></mat-checkbox>
+      <mat-icon
+        class="status-icon"
+        [style.color]="statusConfig[status].color"
+      >{{ statusConfig[status].icon }}</mat-icon>
+      <span class="status-label">{{ statusConfig[status].label }}</span>
+    </button>
+  }
+</mat-menu>

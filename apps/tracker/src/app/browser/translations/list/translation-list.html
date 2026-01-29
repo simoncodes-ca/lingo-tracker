@@ -27,7 +27,7 @@
     </div>
   }
 
-  @if (!store.isLoading() && !store.error() && store.displayedTranslations().length === 0) {
+  @if (!store.isLoading() && !store.error() && store.sortedTranslations().length === 0) {
     <div class="empty-state">
       <mat-card class="info-card">
         <mat-card-content>
@@ -40,7 +40,7 @@
     </div>
   }
 
-  @if (!store.isLoading() && !store.error() && store.displayedTranslations().length > 0) {
+  @if (!store.isLoading() && !store.error() && store.sortedTranslations().length > 0) {
     <cdk-virtual-scroll-viewport
       [itemSize]="currentItemSize()"
       class="viewport"
@@ -49,7 +49,7 @@
     >
       <div role="presentation">
         <app-translation-item
-          *cdkVirtualFor="let translation of store.displayedTranslations(); trackBy: trackByKey"
+          *cdkVirtualFor="let translation of store.sortedTranslations(); trackBy: trackByKey"
           [translation]="translation"
           [locales]="displayLocales()"
           [baseLocale]="baseLocale()"

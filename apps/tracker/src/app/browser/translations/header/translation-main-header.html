@@ -4,6 +4,18 @@
 
     <app-locale-filter [multiSelect]="store.canShowMultipleLocales()" />
 
+    <app-status-filter />
+
+    <button
+      type="button"
+      class="sort-direction-toggle"
+      (click)="handleSortDirectionToggle()"
+      [attr.aria-label]="store.sortDirection() === 'asc' ? 'Sort ascending' : 'Sort descending'"
+      [matTooltip]="store.sortDirection() === 'asc' ? 'Sort ascending (A→Z)' : 'Sort descending (Z→A)'"
+    >
+      <mat-icon>{{ store.sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+    </button>
+
     <mat-button-toggle-group
       class="density-toggle"
       name="density"

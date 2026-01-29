@@ -1,0 +1,74 @@
+.status-filter-trigger {
+  align-items: center;
+  display: flex;
+  font-size: 14px;
+  gap: 4px;
+  padding: 8px 12px;
+
+  .filter-icon {
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+  }
+
+  .status-icons {
+    align-items: center;
+    display: flex;
+    gap: 2px;
+  }
+
+  .status-indicator {
+    font-size: 16px;
+    height: 16px;
+    transition: opacity var(--transition-fast);
+    width: 16px;
+
+    &--inactive {
+      opacity: 0.25;
+    }
+  }
+
+  .arrow-icon {
+    font-size: 20px;
+    height: 20px;
+    margin-left: 4px;
+    width: 20px;
+  }
+}
+
+:host ::ng-deep .status-filter-menu {
+  .menu-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--mat-divider-color, rgba(0, 0, 0, 0.12));
+    gap: 8px;
+
+    .action-button {
+      font-size: 12px;
+      padding: 4px 8px;
+      min-width: auto;
+    }
+  }
+
+  .status-option {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+
+    .status-checkbox {
+      flex-shrink: 0;
+    }
+
+    .status-icon {
+      flex-shrink: 0;
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+    }
+
+    .status-label {
+      flex: 1;
+    }
+  }
+}

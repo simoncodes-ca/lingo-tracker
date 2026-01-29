@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { searchTranslations, SearchParams } from './search';
+import { searchTranslations, searchResourceTree, SearchParams } from './search';
+import type { ResourceTreeNode } from './load-resource-tree';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -333,6 +334,205 @@ describe('searchTranslations', () => {
 
       const results = searchTranslations({
         translationsFolder: testDir,
+        query: 'test',
+      });
+
+      expect(results).toEqual([]);
+    });
+  });
+});
+
+describe('searchResourceTree', () => {
+  const createMockTree = (): ResourceTreeNode => ({
+    folderPathSegments: [],
+    resources: [],
+    children: [
+      {
+        name: 'buttons',
+        fullPathSegments: ['buttons'],
+        loaded: true,
+        tree: {
+          folderPathSegments: ['buttons'],
+          resources: [
+            {
+              key: 'ok',
+              source: 'OK',
+              translations: { es: 'Aceptar', fr: 'D\'accord' },
+              metadata: {
+                es: { checksum: 'abc', status: 'verified' },
+                fr: { checksum: 'def', status: 'translated' },
+              },
+            },
+            {
+              key: 'cancel',
+              source: 'Cancel',
+              translations: { es: 'Cancelar', fr: 'Annuler' },
+              comment: 'Used in dialogs',
+              tags: ['dialog'],
+              metadata: {
+                es: { checksum: 'ghi', status: 'verified' },
+                fr: { checksum: 'jkl', status: 'verified' },
+              },
+            },
+          ],
+          children: [],
+        },
+      },
+      {
+        name: 'messages',
+        fullPathSegments: ['messages'],
+        loaded: true,
+        tree: {
+          folderPathSegments: ['messages'],
+          resources: [
+            {
+              key: 'welcome',
+              source: 'Welcome to the app',
+              translations: { es: 'Bienvenido a la aplicación' },
+              metadata: {
+                es: { checksum: 'mno', status: 'translated' },
+              },
+            },
+          ],
+          children: [],
+        },
+      },
+    ],
+  });
+
+  describe('Search by Key', () => {
+    it('should find exact key match', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: 'buttons.ok',
+      });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].key).toBe('buttons.ok');
+      expect(results[0].matchType).toBe('exact-key');
+    });
+
+    it('should find partial key match', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: 'cancel',
+      });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].key).toBe('buttons.cancel');
+      expect(results[0].matchType).toBe('partial-key');
+    });
+  });
+
+  describe('Search by Value', () => {
+    it('should find exact value match in source', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: 'Welcome to the app',
+        baseLocale: 'en',
+      });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].key).toBe('messages.welcome');
+      expect(results[0].matchType).toBe('exact-value');
+      expect(results[0].matchedLocales).toContain('en');
+    });
+
+    it('should find partial value match in translations', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: 'Bienvenido',
+      });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].key).toBe('messages.welcome');
+      expect(results[0].matchType).toBe('partial-value');
+      expect(results[0].matchedLocales).toContain('es');
+    });
+  });
+
+  describe('Result Metadata', () => {
+    it('should include comment and tags in results', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: 'cancel',
+      });
+
+      expect(results[0].comment).toBe('Used in dialogs');
+      expect(results[0].tags).toEqual(['dialog']);
+    });
+
+    it('should include status from metadata', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: 'buttons.ok',
+      });
+
+      expect(results[0].status.es).toBe('verified');
+      expect(results[0].status.fr).toBe('translated');
+    });
+
+    it('should include base locale in translations when provided', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: 'buttons.ok',
+        baseLocale: 'en',
+      });
+
+      expect(results[0].translations.en).toBe('OK');
+    });
+  });
+
+  describe('Result Limiting', () => {
+    it('should respect maxResults parameter', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: 'buttons',
+        maxResults: 1,
+      });
+
+      expect(results).toHaveLength(1);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should return empty array for empty query', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: '',
+      });
+
+      expect(results).toEqual([]);
+    });
+
+    it('should return empty array for no matches', () => {
+      const tree = createMockTree();
+      const results = searchResourceTree({
+        tree,
+        query: 'nonexistent',
+      });
+
+      expect(results).toEqual([]);
+    });
+
+    it('should handle empty tree', () => {
+      const emptyTree: ResourceTreeNode = {
+        folderPathSegments: [],
+        resources: [],
+        children: [],
+      };
+
+      const results = searchResourceTree({
+        tree: emptyTree,
         query: 'test',
       });
 

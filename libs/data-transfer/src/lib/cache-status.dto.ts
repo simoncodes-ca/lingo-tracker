@@ -4,6 +4,17 @@
 export type CacheStatusType = 'not-started' | 'indexing' | 'ready' | 'error';
 
 /**
+ * Collection statistics.
+ */
+export interface CollectionStats {
+  /** Total number of translation keys in the collection */
+  totalKeys: number;
+
+  /** Number of locales configured for this collection */
+  localeCount: number;
+}
+
+/**
  * DTO for collection cache status.
  */
 export interface CacheStatusDto {
@@ -18,4 +29,7 @@ export interface CacheStatusDto {
 
   /** Collection name for which this status applies */
   collectionName?: string;
+
+  /** Collection statistics (only present when status is 'ready') */
+  stats?: CollectionStats;
 }

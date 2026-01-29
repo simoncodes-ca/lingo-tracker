@@ -8,6 +8,7 @@
     [(ngModel)]="value"
     [disabled]="disabled()"
     [attr.aria-label]="ariaLabel()"
+    (keydown.escape)="onClear()"
     data-testid="search-input"
   />
 

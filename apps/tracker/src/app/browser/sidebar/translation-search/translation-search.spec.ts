@@ -63,7 +63,7 @@ describe('TranslationSearch', () => {
       const searchInputDebug = fixture.debugElement.query(By.directive(SearchInput));
       const searchInputComponent = searchInputDebug.componentInstance as SearchInput;
       // The placeholder should be resolved by transloco
-      expect(searchInputComponent.placeholder()).toBe('Search translations...');
+      expect(searchInputComponent.placeholder()).toBe('Search (min 3 characters)...');
     });
 
     it('should pass isLoading state to SearchInput', () => {
@@ -84,7 +84,7 @@ describe('TranslationSearch', () => {
   });
 
   describe('Search Debouncing', () => {
-    it('should update store search query after typing', async () => {
+    it('should update store search query after typing at least 3 characters', async () => {
       component.onSearchChange('test');
 
       // Wait for debounce
@@ -93,7 +93,7 @@ describe('TranslationSearch', () => {
       expect(mockStore.setSearchQuery).toHaveBeenCalledWith('test');
     });
 
-    it('should trigger search after debounce', async () => {
+    it('should trigger search after debounce with 3+ characters', async () => {
       component.onSearchChange('button');
 
       await new Promise(resolve => setTimeout(resolve, 350));
@@ -101,17 +101,27 @@ describe('TranslationSearch', () => {
       expect(mockStore.searchTranslations).toHaveBeenCalledWith('button');
     });
 
-    it('should not search for empty query', async () => {
+    it('should not search for query with fewer than 3 characters', async () => {
+      component.onSearchChange('ab');
+
+      await new Promise(resolve => setTimeout(resolve, 350));
+
+      expect(mockStore.setSearchQuery).not.toHaveBeenCalled();
+      expect(mockStore.searchTranslations).not.toHaveBeenCalled();
+    });
+
+    it('should clear search when query becomes empty', async () => {
       component.onSearchChange('test');
       await new Promise(resolve => setTimeout(resolve, 350));
 
       mockStore.setSearchQuery.mockClear();
       mockStore.searchTranslations.mockClear();
+      mockStore.clearSearch.mockClear();
 
       component.onSearchChange('');
       await new Promise(resolve => setTimeout(resolve, 350));
 
-      expect(mockStore.setSearchQuery).toHaveBeenCalledWith('');
+      expect(mockStore.clearSearch).toHaveBeenCalled();
       expect(mockStore.searchTranslations).not.toHaveBeenCalled();
     });
   });

@@ -11,12 +11,12 @@ import {
     EffectRef,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
 import { BrowserStore } from '../../../store/browser.store';
 import { TranslationItemHeader } from './item-header';
 import { TranslationItemLocales } from './item-locales';
-import { TranslationItemMetadata } from './item-metadata';
 import { TranslationItemCompactControls } from './item-compact-controls';
+import { LocaleState } from './translation-rollup';
 
 const EXPAND_THRESHOLD = 200;
 const LONG_PRESS_THRESHOLD = 500;
@@ -268,6 +268,22 @@ export class TranslationItem implements OnDestroy {
     }, 0);
 
     return { counts, total } as const;
+  });
+
+  /**
+   * Locale states for the rollup component.
+   * Transforms status map into LocaleState[] format.
+   */
+  readonly localeStates = computed<LocaleState[]>(() => {
+    const statusMap = this.translation().status || {};
+    const base = this.baseLocale();
+
+    return Object.entries(statusMap)
+      .filter(([locale, status]) => locale !== base && status)
+      .map(([locale, status]) => ({
+        code: locale,
+        status: status as TranslationStatus,
+      }));
   });
 
   // Cleanup callback for effects created in this component (if any).

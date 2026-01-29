@@ -48,9 +48,9 @@
     "fr-ca": "Aucune traduction trouvée dans ce dossier."
   },
   "searchTranslations": {
-    "source": "Search translations...",
-    "es": "Buscar traducciones...",
-    "fr-ca": "Rechercher des traductions..."
+    "source": "Search (min 3 characters)...",
+    "es": "Buscar (mín 3 caracteres)...",
+    "fr-ca": "Rechercher (min 3 caractères)..."
   },
   "showingSearchResultsForX": {
     "source": "Showing search results for \"{{ query }}\"",

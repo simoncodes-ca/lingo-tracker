@@ -16,6 +16,9 @@
         <app-sidebar-header
           [collectionName]="collectionName()"
           [translationsFolder]="translationsFolder()"
+          [totalKeys]="store.collectionTotalKeys()"
+          [localeCount]="store.collectionLocaleCount()"
+          [statsLoading]="store.isCacheIndexing()"
           (backClick)="navigateToCollections()"
         />
         <app-folder-tree

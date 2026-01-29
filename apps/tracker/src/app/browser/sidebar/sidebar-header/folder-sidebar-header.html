@@ -10,7 +10,20 @@
       <mat-icon>arrow_back</mat-icon>
     </button>
     <div class="header-text">
-      <h2 class="collection-name">{{ collectionName() }}</h2>
+      <div class="header-row">
+        <h2 class="collection-name">{{ collectionName() }}</h2>
+        @if (statsLoading()) {
+          <div class="header-stats">
+            <div class="skeleton-chip"></div>
+            <div class="skeleton-chip"></div>
+          </div>
+        } @else if (shouldDisplayStats()) {
+          <div class="header-stats">
+            <span class="stat-chip">{{ keysText() }}</span>
+            <span class="stat-chip">{{ localesText() }}</span>
+          </div>
+        }
+      </div>
       <p class="translations-folder">{{ translationsFolder() }}</p>
     </div>
   </div>

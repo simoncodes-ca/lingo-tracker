@@ -21,6 +21,7 @@ import {
   moveResource,
   editResource,
   searchTranslations,
+  searchResourceTree,
   extractSubtree,
   extractResourcesRecursively,
 } from '@simoncodes-ca/core';
@@ -363,7 +364,8 @@ export class ResourcesController {
       // Handle cache states
       if (cacheStatus === CacheStatus.NOT_STARTED || cacheStatus === CacheStatus.ERROR) {
         // Trigger indexing asynchronously (don't await)
-        this.cacheService.indexCollection(decodedCollectionName, translationsFolder).catch((error) => {
+        const locales = collection.locales || config.locales || [];
+        this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
           this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);
         });
 
@@ -490,11 +492,12 @@ export class ResourcesController {
       const cacheStatus = this.cacheService.getCacheStatus(decodedCollectionName);
 
       // If cache is not started, trigger indexing asynchronously
+      const collection = config.collections[decodedCollectionName];
       if (cacheStatus === CacheStatus.NOT_STARTED) {
-        const collection = config.collections[decodedCollectionName];
         const translationsFolder = collection.translationsFolder;
+        const locales = collection.locales || config.locales || [];
 
-        this.cacheService.indexCollection(decodedCollectionName, translationsFolder).catch((error) => {
+        this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
           this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);
         });
       }
@@ -516,6 +519,14 @@ export class ResourcesController {
 
       if (metadata?.error) {
         statusDto.error = metadata.error;
+      }
+
+      // Include stats when cache is ready
+      if (cacheStatus === CacheStatus.READY) {
+        const stats = this.cacheService.getCacheStats(decodedCollectionName);
+        if (stats) {
+          statusDto.stats = stats;
+        }
       }
 
       return statusDto;
@@ -564,13 +575,27 @@ export class ResourcesController {
       // Default maxResults to 100, cap at 500
       const maxResults = Math.min(dto.maxResults || 100, 500);
 
-      // Execute search
-      const searchResults = searchTranslations({
-        translationsFolder,
-        query: dto.query,
-        maxResults: maxResults + 1, // Request one extra to detect if limited
-        baseLocale,
-      });
+      // Try to use cached tree for faster search
+      const cachedTree = this.cacheService.getCache(decodedCollectionName);
+      let searchResults;
+
+      if (cachedTree) {
+        // Use in-memory search on cached tree
+        searchResults = searchResourceTree({
+          tree: cachedTree,
+          query: dto.query,
+          maxResults: maxResults + 1, // Request one extra to detect if limited
+          baseLocale,
+        });
+      } else {
+        // Fall back to disk-based search
+        searchResults = searchTranslations({
+          translationsFolder,
+          query: dto.query,
+          maxResults: maxResults + 1, // Request one extra to detect if limited
+          baseLocale,
+        });
+      }
 
       // Check if results were limited
       const limited = searchResults.length > maxResults;

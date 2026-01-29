@@ -40,3 +40,19 @@ pre {
 .cdk-overlay-dark-backdrop {
   background: rgba(0, 0, 0, 0.4) !important;
 }
+
+// Translation rollup overlay animation
+.translation-rollup-overlay {
+  animation: rollup-fade-in 150ms ease-out;
+}
+
+@keyframes rollup-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

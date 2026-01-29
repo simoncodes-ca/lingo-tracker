@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { ResourceEntry } from '../../resource/resource-entry';
 import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
 import type { TranslationStatus } from '../../resource/translation-status';
+import type { ResourceTreeNode } from './load-resource-tree';
 
 /**
  * Match type for search results.
@@ -227,6 +228,179 @@ export function searchTranslations(params: SearchParams): SearchResult[] {
 
   // Start search from root
   searchFolder(translationsFolder, '');
+
+  // Sort results by match type priority
+  const priority: Record<MatchType, number> = {
+    'exact-key': 1,
+    'exact-value': 2,
+    'partial-key': 3,
+    'partial-value': 4,
+  };
+
+  results.sort((a, b) => {
+    const priorityDiff = priority[a.matchType] - priority[b.matchType];
+    if (priorityDiff !== 0) return priorityDiff;
+
+    // Secondary sort by key alphabetically
+    return a.key.localeCompare(b.key);
+  });
+
+  return results;
+}
+
+/**
+ * Parameters for searching the in-memory resource tree.
+ */
+export interface SearchTreeParams {
+  /** The cached resource tree to search */
+  tree: ResourceTreeNode;
+
+  /** Search query (case-insensitive) */
+  query: string;
+
+  /** Maximum number of results to return (default: 100) */
+  maxResults?: number;
+
+  /** Base locale code for including source values */
+  baseLocale?: string;
+}
+
+/**
+ * Searches translations in an in-memory resource tree.
+ *
+ * This function provides the same search functionality as searchTranslations
+ * but operates on a pre-loaded ResourceTreeNode instead of reading from disk.
+ * Use this when you have a cached tree to avoid repeated disk I/O.
+ *
+ * Search Algorithm:
+ * 1. Exact key match (highest priority)
+ * 2. Partial key match
+ * 3. Exact value match in any locale
+ * 4. Partial value match in any locale
+ *
+ * @param params - Search parameters including the tree to search
+ * @returns Array of search results sorted by relevance
+ *
+ * @example
+ * const tree = loadResourceTree({ translationsFolder: './translations', depth: Infinity });
+ * const results = searchResourceTree({
+ *   tree,
+ *   query: 'button',
+ *   maxResults: 50,
+ *   baseLocale: 'en'
+ * });
+ */
+export function searchResourceTree(params: SearchTreeParams): SearchResult[] {
+  const { tree, query, maxResults = 100, baseLocale } = params;
+
+  // Empty query returns no results
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+
+  const normalizedQuery = query.toLowerCase().trim();
+  const results: SearchResult[] = [];
+
+  /**
+   * Recursively searches through the tree structure.
+   */
+  function searchNode(node: ResourceTreeNode): boolean {
+    // Build key prefix from folder path segments
+    const keyPrefix = node.folderPathSegments.join('.');
+
+    // Search resources in current node
+    for (const entry of node.resources) {
+      const fullKey = keyPrefix ? `${keyPrefix}.${entry.key}` : entry.key;
+      const normalizedKey = fullKey.toLowerCase();
+
+      // Check key matches
+      let matchType: MatchType | null = null;
+      const matchedLocales: string[] = [];
+
+      if (normalizedKey === normalizedQuery) {
+        matchType = 'exact-key';
+      } else if (normalizedKey.includes(normalizedQuery)) {
+        matchType = 'partial-key';
+      }
+
+      // Check value matches if no key match
+      if (!matchType) {
+        // Search source field if baseLocale is provided
+        if (baseLocale && entry.source) {
+          const normalizedValue = entry.source.toLowerCase();
+          if (normalizedValue === normalizedQuery) {
+            matchType = 'exact-value';
+            matchedLocales.push(baseLocale);
+          } else if (normalizedValue.includes(normalizedQuery)) {
+            matchType = 'partial-value';
+            matchedLocales.push(baseLocale);
+          }
+        }
+
+        // Search all locale translations
+        for (const [locale, value] of Object.entries(entry.translations)) {
+          if (typeof value === 'string') {
+            const normalizedValue = value.toLowerCase();
+            if (normalizedValue === normalizedQuery) {
+              matchType = 'exact-value';
+              matchedLocales.push(locale);
+            } else if (normalizedValue.includes(normalizedQuery)) {
+              if (matchType !== 'exact-value') {
+                matchType = 'partial-value';
+              }
+              matchedLocales.push(locale);
+            }
+          }
+        }
+      }
+
+      // Add to results if match found
+      if (matchType) {
+        const status: Record<string, TranslationStatus | undefined> = {};
+        const translations: Record<string, string> = { ...entry.translations };
+
+        // Extract status from metadata
+        for (const locale in entry.metadata) {
+          status[locale] = entry.metadata[locale]?.status;
+        }
+
+        // Include base locale value from source field
+        if (baseLocale && entry.source) {
+          translations[baseLocale] = entry.source;
+        }
+
+        results.push({
+          key: fullKey,
+          translations,
+          status,
+          matchType,
+          matchedLocales: matchedLocales.length > 0 ? matchedLocales : undefined,
+          comment: entry.comment,
+          tags: entry.tags,
+        });
+
+        // Stop if we've reached max results
+        if (results.length >= maxResults) {
+          return true; // Signal to stop searching
+        }
+      }
+    }
+
+    // Recurse into children
+    for (const child of node.children) {
+      if (child.loaded && child.tree) {
+        const shouldStop = searchNode(child.tree);
+        if (shouldStop) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Start search from root
+  searchNode(tree);
 
   // Sort results by match type priority
   const priority: Record<MatchType, number> = {

@@ -26,6 +26,7 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
+  min-width: 44px;
 }
 
 .locale-separator {
@@ -63,6 +64,7 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   padding: 2px 8px;
+  min-width: 80px;
 }
 
 .locale-value {
@@ -71,11 +73,6 @@
   flex: 1;
   font-family: var(--font-mono, 'Roboto Mono', monospace);
   font-size: var(--font-size-sm);
-
-  &[data-status='new'] {
-    color: var(--color-text-tertiary);
-    font-style: italic;
-  }
 
   &.full {
     -webkit-box-orient: vertical;

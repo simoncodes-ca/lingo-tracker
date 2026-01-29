@@ -16,6 +16,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { TruncateKeyPipe } from '../../../../shared/pipes/truncate-key.pipe';
 import { TagList } from '../../../../shared/tag-list/tag-list.component';
+import { TranslationRollup, LocaleState } from './translation-rollup';
 
 /**
  * Header component for translation items displaying the key with copy button
@@ -33,25 +34,24 @@ import { TagList } from '../../../../shared/tag-list/tag-list.component';
     TranslocoPipe,
     TruncateKeyPipe,
     TagList,
+    TranslationRollup,
   ],
   templateUrl: './item-header.html',
   styleUrl: './item-header.scss',
   host: {
     class: 'translation-item-header',
+    '[class.compact]': 'isCompactMode()',
   },
 })
 export class TranslationItemHeader {
   /** Full translation key to display */
   fullKey = input.required<string>();
 
-  /** Rollup status badge data: [status, count] */
-  rollupStatus = input<readonly [string, number]>();
+  /** Locale states for the rollup component */
+  localeStates = input<LocaleState[]>([]);
 
-  /** Tooltip text for status breakdown */
-  statusBreakdown = input<string>();
-
-  /** ID for ARIA describedby */
-  statusId = input<string>();
+  /** Base locale code */
+  baseLocale = input<string>('en');
 
   /** Compact mode flag */
   isCompactMode = input<boolean>(false);

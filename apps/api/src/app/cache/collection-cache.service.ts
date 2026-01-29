@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as core from '@simoncodes-ca/core';
+import { extractResourcesRecursively } from '@simoncodes-ca/core';
 import type { ResourceTreeNode } from '@simoncodes-ca/core';
 
 export enum CacheStatus {
@@ -15,6 +16,8 @@ export interface CachedCollection {
   tree: ResourceTreeNode | null;
   indexedAt: Date | null;
   error?: string;
+  totalKeys: number;
+  localeCount: number;
 }
 
 @Injectable()
@@ -53,11 +56,27 @@ export class CollectionCacheService {
     };
   }
 
+  getCacheStats(collectionName: string): { totalKeys: number; localeCount: number } | null {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
+      return null;
+    }
+
+    if (this.#cachedCollection.status !== CacheStatus.READY) {
+      return null;
+    }
+
+    return {
+      totalKeys: this.#cachedCollection.totalKeys,
+      localeCount: this.#cachedCollection.localeCount,
+    };
+  }
+
   setCacheStatus(
     collectionName: string,
     status: CacheStatus,
     tree?: ResourceTreeNode,
-    error?: string
+    error?: string,
+    localeCount?: number
   ): void {
     if (this.#cachedCollection && this.#cachedCollection.collectionName !== collectionName) {
       this.#logger.log(`Clearing cache for previous collection: ${this.#cachedCollection.collectionName}`);
@@ -69,8 +88,10 @@ export class CollectionCacheService {
         collectionName,
         status,
         tree: tree ?? null,
-        indexedAt: null,
+        indexedAt: status === CacheStatus.READY ? new Date() : null,
         error,
+        totalKeys: status === CacheStatus.READY && tree ? extractResourcesRecursively(tree).length : 0,
+        localeCount: status === CacheStatus.READY ? (localeCount ?? 0) : 0,
       };
     } else {
       this.#cachedCollection.status = status;
@@ -79,6 +100,11 @@ export class CollectionCacheService {
 
       if (status === CacheStatus.READY) {
         this.#cachedCollection.indexedAt = new Date();
+
+        if (tree) {
+          this.#cachedCollection.totalKeys = extractResourcesRecursively(tree).length;
+          this.#cachedCollection.localeCount = localeCount ?? 0;
+        }
       }
     }
 
@@ -92,7 +118,11 @@ export class CollectionCacheService {
     }
   }
 
-  async indexCollection(collectionName: string, translationsFolder: string): Promise<void> {
+  async indexCollection(
+    collectionName: string,
+    translationsFolder: string,
+    localeCount?: number
+  ): Promise<void> {
     const currentStatus = this.getCacheStatus(collectionName);
 
     if (currentStatus === CacheStatus.INDEXING) {
@@ -124,7 +154,7 @@ export class CollectionCacheService {
         return;
       }
 
-      this.setCacheStatus(indexingCollectionName, CacheStatus.READY, tree);
+      this.setCacheStatus(indexingCollectionName, CacheStatus.READY, tree, undefined, localeCount);
     } catch (error) {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
