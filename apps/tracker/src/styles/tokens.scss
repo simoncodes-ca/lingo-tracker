@@ -54,6 +54,10 @@
   // Focus ring
   --focus-ring-color: #2563eb;
 
+  // Highlight colors for search term highlighting
+  --color-highlight: #fef08a;        // Yellow-200 background
+  --color-highlight-text: #18181b;   // Primary text for contrast
+
   // Shadows
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -112,6 +116,10 @@
 
   // Focus ring
   --focus-ring-color: #3b82f6;
+
+  // Highlight colors for search term highlighting
+  --color-highlight: #78350f;        // Amber-900 background for dark theme
+  --color-highlight-text: #fef3c7;   // Amber-100 text for contrast
 
   // Shadows - more subtle in dark mode
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -172,6 +180,10 @@
 
     // Focus ring
     --focus-ring-color: #3b82f6;
+
+    // Highlight colors for search term highlighting
+    --color-highlight: #78350f;        // Amber-900 background for dark theme
+    --color-highlight-text: #fef3c7;   // Amber-100 text for contrast
 
     // Shadows - more subtle in dark mode
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);

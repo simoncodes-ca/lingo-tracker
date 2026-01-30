@@ -25,7 +25,7 @@
       [matTooltip]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
       [attr.aria-label]="'Copy key'"
     >
-      <span class="key-text">{{ fullKey() | truncateKey }}</span>
+      <span class="key-text" [innerHTML]="(fullKey() | truncateKey) | highlight : searchQuery()"></span>
       <mat-icon class="copy-icon">content_copy</mat-icon>
     </button>
 
@@ -47,6 +47,7 @@
         <button
           class="comment-button"
           [class.comment-button--active]="showComment()"
+          [class.comment-button--match]="commentHasMatch()"
           mat-icon-button
           type="button"
           [disabled]="!comment()"
@@ -54,6 +55,9 @@
           [attr.aria-label]="showComment() ? 'Hide comment' : 'Show comment'"
         >
           <mat-icon>{{ commentIcon() }}</mat-icon>
+          @if (commentHasMatch()) {
+            <span class="match-badge"></span>
+          }
         </button>
       }
 

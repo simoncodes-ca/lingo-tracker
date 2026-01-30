@@ -5,6 +5,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 
 export type LocaleTranslation = {
   locale: string;
@@ -22,7 +23,7 @@ type DensityMode = 'compact' | 'medium' | 'full';
   selector: 'app-translation-item-locales',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, HighlightPipe],
   templateUrl: './item-locales.html',
   styleUrl: './item-locales.scss',
   host: {
@@ -38,6 +39,9 @@ export class TranslationItemLocales {
 
   /** Expansion state for full mode */
   isExpanded = input<boolean>(false);
+
+  /** Search query for highlighting */
+  searchQuery = input<string>('');
 
   getStatusIcon(status: string | undefined): string {
     switch (status) {

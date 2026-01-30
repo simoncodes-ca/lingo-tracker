@@ -17,6 +17,7 @@ import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { TruncateKeyPipe } from '../../../../shared/pipes/truncate-key.pipe';
 import { TagList } from '../../../../shared/tag-list/tag-list.component';
 import { TranslationRollup, LocaleState } from './translation-rollup';
+import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 
 /**
  * Header component for translation items displaying the key with copy button
@@ -35,6 +36,7 @@ import { TranslationRollup, LocaleState } from './translation-rollup';
     TruncateKeyPipe,
     TagList,
     TranslationRollup,
+    HighlightPipe,
   ],
   templateUrl: './item-header.html',
   styleUrl: './item-header.scss',
@@ -61,6 +63,9 @@ export class TranslationItemHeader {
 
   /** Whether comment is currently shown */
   showComment = input<boolean>(false);
+
+  /** Search query to check for matches in comment */
+  searchQuery = input<string>('');
 
   /** Tags to display in header (medium/full mode only) */
   tags = input<string[]>([]);
@@ -93,6 +98,18 @@ export class TranslationItemHeader {
   /** Computed signal for the comment icon name based on toggle state */
   readonly commentIcon = computed(() => {
     return this.showComment() ? 'chat_bubble' : 'comment';
+  });
+
+  /** Computed signal indicating if search query matches content in comment */
+  readonly commentHasMatch = computed(() => {
+    const query = this.searchQuery();
+    const commentText = this.comment();
+
+    if (!query || !commentText || query.length < 3) {
+      return false;
+    }
+
+    return commentText.toLowerCase().includes(query.toLowerCase());
   });
 
   private copySuccessTimeoutId: number | undefined;

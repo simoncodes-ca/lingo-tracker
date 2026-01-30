@@ -149,6 +149,8 @@
 }
 
 .comment-button {
+  position: relative;
+
   &:disabled {
     cursor: default;
     opacity: 0.4;
@@ -163,4 +165,22 @@
       color: var(--color-info);
     }
   }
+
+  &--match {
+    mat-icon {
+      color: var(--color-highlight-text);
+    }
+  }
+}
+
+.match-badge {
+  background-color: var(--color-highlight);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  height: 6px;
+  pointer-events: none;
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 6px;
 }

@@ -17,6 +17,7 @@ import { TranslationItemHeader } from './item-header';
 import { TranslationItemLocales } from './item-locales';
 import { TranslationItemCompactControls } from './item-compact-controls';
 import { LocaleState } from './translation-rollup';
+import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 
 const EXPAND_THRESHOLD = 200;
 const LONG_PRESS_THRESHOLD = 500;
@@ -34,6 +35,7 @@ const LONG_PRESS_THRESHOLD = 500;
     TranslationItemHeader,
     TranslationItemLocales,
     TranslationItemCompactControls,
+    HighlightPipe,
   ],
   templateUrl: './translation-item.html',
   styleUrl: './translation-item.scss',
@@ -67,6 +69,9 @@ export class TranslationItem implements OnDestroy {
   deleteTranslation = output<ResourceSummaryDto>();
 
   private readonly store = inject(BrowserStore);
+
+  /** Current search query from the store */
+  readonly searchQuery = computed(() => this.store.searchQuery());
 
   // Timestamp when touch started (ms since epoch)
   private touchStartTs = 0;
