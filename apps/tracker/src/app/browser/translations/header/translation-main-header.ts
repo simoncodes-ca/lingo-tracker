@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonToggleModule, MatButtonToggleChange } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,6 +22,24 @@ type DensityMode = 'compact' | 'medium' | 'full';
 })
 export class TranslationMainHeader {
   readonly store = inject(BrowserStore);
+
+  readonly formattedFolderPath = computed(() => {
+    const folderPath = this.store.currentFolderPath();
+
+    if (!folderPath) {
+      return null;
+    }
+
+    const segments = folderPath.split('.');
+    const maxVisibleSegments = 3;
+
+    if (segments.length <= maxVisibleSegments) {
+      return segments.join(' / ');
+    }
+
+    const visibleSegments = segments.slice(-maxVisibleSegments);
+    return '... / ' + visibleSegments.join(' / ');
+  });
 
   handleDensityChange(event: MatButtonToggleChange): void {
     const densityMode = event.value as DensityMode;

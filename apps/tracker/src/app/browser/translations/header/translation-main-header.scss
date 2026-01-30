@@ -4,6 +4,31 @@
   z-index: 10;
   background: var(--color-background-subtle);
 
+  .breadcrumb-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: var(--spacing-4) var(--spacing-4) var(--spacing-1);
+    font-size: 13px;
+    color: var(--color-text-tertiary);
+
+    .breadcrumb-icon {
+      font-size: 16px;
+      height: 16px;
+      width: 16px;
+      color: var(--color-text-tertiary);
+    }
+
+    .breadcrumb-path {
+      color: var(--color-text-secondary);
+    }
+
+    .breadcrumb-empty {
+      font-style: italic;
+      color: var(--color-text-tertiary);
+    }
+  }
+
   .header-content {
     display: flex;
     align-items: center;

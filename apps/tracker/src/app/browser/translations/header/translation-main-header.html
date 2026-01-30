@@ -1,4 +1,13 @@
 <div class="translation-main-header">
+  <div class="breadcrumb-row">
+    @if (formattedFolderPath(); as path) {
+      <mat-icon class="breadcrumb-icon">folder</mat-icon>
+      <span class="breadcrumb-path">{{ path }}</span>
+    } @else {
+      <span class="breadcrumb-empty">No resource folder selected</span>
+    }
+  </div>
+
   <div class="header-content">
     <app-translation-search />
 
