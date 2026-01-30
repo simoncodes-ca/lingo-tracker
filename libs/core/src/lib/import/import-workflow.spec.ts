@@ -90,7 +90,7 @@ describe('import-workflow', () => {
       expect(config.mergedOptions.createMissing).toBe(false);
     });
 
-    it('should throw error when importing into base locale', () => {
+    it('should throw error when importing into base locale with non-migration strategy', () => {
       const options: ImportOptions = {
         source: 'test.json',
         locale: 'en', // Base locale
@@ -98,8 +98,39 @@ describe('import-workflow', () => {
       };
 
       expect(() => setupImportWorkflow(options)).toThrow(
-        'Cannot import into base locale "en"'
+        'Cannot import into base locale "en" with strategy "translation-service"'
       );
+    });
+
+    it('should allow importing into base locale with migration strategy', () => {
+      const options: ImportOptions = {
+        source: 'test.json',
+        locale: 'en', // Base locale
+        strategy: 'migration',
+      };
+
+      const config = setupImportWorkflow(options);
+
+      expect(config.locale).toBe('en');
+      expect(config.baseLocale).toBe('en');
+      expect(config.isBaseLocaleImport).toBe(true);
+      expect(config.mergedOptions.createMissing).toBe(true);
+      expect(config.mergedOptions.updateComments).toBe(true);
+      expect(config.mergedOptions.updateTags).toBe(true);
+    });
+
+    it('should set isBaseLocaleImport to false for non-base locale imports', () => {
+      const options: ImportOptions = {
+        source: 'test.json',
+        locale: 'es',
+        strategy: 'migration',
+      };
+
+      const config = setupImportWorkflow(options);
+
+      expect(config.locale).toBe('es');
+      expect(config.baseLocale).toBe('en');
+      expect(config.isBaseLocaleImport).toBe(false);
     });
 
     it('should return current working directory', () => {

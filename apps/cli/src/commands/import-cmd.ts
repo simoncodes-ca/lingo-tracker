@@ -257,7 +257,13 @@ async function promptForMissing(
     // Get configured locales
     const configuredLocales = config.locales || [];
     const baseLocale = config.baseLocale || 'en';
-    const targetLocales = configuredLocales.filter(loc => loc !== baseLocale);
+
+    // For migration strategy, include base locale in the available choices
+    const strategy = answers.strategy || 'translation-service';
+    const allowBaseLocale = strategy === 'migration';
+    const targetLocales = allowBaseLocale
+        ? configuredLocales
+        : configuredLocales.filter(loc => loc !== baseLocale);
 
     // Prompt for target locale
     if (!answers.locale) {
@@ -266,15 +272,15 @@ async function promptForMissing(
             name: 'locale',
             message: 'Select target locale for import:',
             choices: targetLocales.length > 0 ? targetLocales.map(loc => ({
-                title: loc,
+                title: loc === baseLocale ? `${loc} (base locale)` : loc,
                 value: loc
             })) : undefined,
             validate: targetLocales.length === 0 ? (value: string) => {
                 if (!value || value.trim() === '') {
                     return 'Locale is required';
                 }
-                if (value === baseLocale) {
-                    return `Cannot import into base locale "${baseLocale}"`;
+                if (value === baseLocale && !allowBaseLocale) {
+                    return `Cannot import into base locale "${baseLocale}" with strategy "${strategy}"`;
                 }
                 return true;
             } : undefined
@@ -343,9 +349,6 @@ async function promptForMissing(
 
         answers.strategy = strategyAnswer.strategy;
     }
-
-    // Conditional prompts based on strategy
-    const strategy = answers.strategy || 'translation-service';
 
     // For migration strategy, ask about flags if not already set
     if (strategy === 'migration') {

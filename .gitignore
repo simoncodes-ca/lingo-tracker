@@ -156,3 +156,4 @@ vitest.config.*.timestamp*
 # Git worktrees for isolated feature development
 .worktrees/
 /apps/tracker/src/i18n-types/tracker-resources.ts
+/sample-translations/mock-design-system/

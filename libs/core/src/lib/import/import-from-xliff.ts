@@ -256,7 +256,7 @@ export async function importFromXliff(
   } = options;
 
   // Setup and validate workflow configuration
-  const { cwd, baseLocale, locale, mergedOptions } = setupImportWorkflow(options);
+  const { cwd, baseLocale, locale, mergedOptions, isBaseLocaleImport } = setupImportWorkflow(options);
 
   // Read and parse XLIFF file
   const sourceFilePath = resolve(cwd, source);
@@ -333,6 +333,7 @@ export async function importFromXliff(
       baseLocale,
       mergedOptions,
       dryRun,
+      isBaseLocaleImport,
       filesModified,
       warnings
     );

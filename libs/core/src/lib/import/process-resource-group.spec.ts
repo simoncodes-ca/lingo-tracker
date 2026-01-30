@@ -51,6 +51,7 @@ describe('process-resource-group', () => {
         'en',
         { source: 'test.json', locale: 'es', createMissing: true },
         false,
+        false,
         filesModified,
         warnings
       );
@@ -93,6 +94,7 @@ describe('process-resource-group', () => {
         'en',
         { source: 'test.json', locale: 'es', createMissing: false },
         false,
+        false,
         filesModified,
         warnings
       );
@@ -128,6 +130,7 @@ describe('process-resource-group', () => {
         'es',
         'en',
         { source: 'test.json', locale: 'es', createMissing: true },
+        false,
         false,
         filesModified,
         warnings
@@ -190,6 +193,7 @@ describe('process-resource-group', () => {
         'en',
         { source: 'test.json', locale: 'es', strategy: 'translation-service' },
         false,
+        false,
         filesModified,
         warnings
       );
@@ -230,6 +234,7 @@ describe('process-resource-group', () => {
         'en',
         { source: 'test.json', locale: 'es', strategy: 'translation-service' },
         false,
+        false,
         filesModified,
         warnings
       );
@@ -264,6 +269,7 @@ describe('process-resource-group', () => {
         'es',
         'en',
         { source: 'test.json', locale: 'es', strategy: 'verification' },
+        false,
         false,
         filesModified,
         warnings
@@ -303,6 +309,7 @@ describe('process-resource-group', () => {
         'en',
         { source: 'test.json', locale: 'es', validateBase: true },
         false,
+        false,
         filesModified,
         warnings
       );
@@ -340,6 +347,7 @@ describe('process-resource-group', () => {
         'en',
         { source: 'test.json', locale: 'es', createMissing: true },
         true, // Dry run
+        false,
         filesModified,
         warnings
       );
@@ -400,6 +408,7 @@ describe('process-resource-group', () => {
         'en',
         { source: 'test.json', locale: 'es', updateComments: true },
         false,
+        false,
         filesModified,
         warnings
       );
@@ -433,6 +442,7 @@ describe('process-resource-group', () => {
         'es',
         'en',
         { source: 'test.json', locale: 'es', updateComments: false },
+        false,
         false,
         filesModified,
         warnings
@@ -468,12 +478,185 @@ describe('process-resource-group', () => {
         'en',
         { source: 'test.json', locale: 'es', updateTags: true },
         false,
+        false,
         filesModified,
         warnings
       );
 
       const entries = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
       expect(entries.ok.tags).toEqual(['new-tag', 'another-tag']);
+    });
+  });
+
+  describe('base locale imports', () => {
+    it('should create new resource in base locale when isBaseLocaleImport is true', () => {
+      const group: ResourceGroup = {
+        folderPath,
+        entryResourcePath,
+        entryMetaPath,
+        resources: [
+          {
+            resource: {
+              key: 'common.buttons.submit',
+              value: 'Submit',
+              comment: 'Form submit button',
+              tags: ['forms', 'buttons'],
+            },
+            entryKey: 'submit',
+          },
+        ],
+      };
+
+      const filesModified = new Set<string>();
+      const warnings: string[] = [];
+
+      const changes = processResourceGroup(
+        group,
+        'en',
+        'en',
+        { source: 'test.json', locale: 'en', strategy: 'migration', createMissing: true, updateComments: true, updateTags: true },
+        false,
+        true, // isBaseLocaleImport
+        filesModified,
+        warnings
+      );
+
+      expect(changes).toHaveLength(1);
+      expect(changes[0].type).toBe('created');
+      expect(changes[0].key).toBe('common.buttons.submit');
+      expect(changes[0].newValue).toBe('Submit');
+      expect(changes[0].newStatus).toBeUndefined();
+
+      // Verify resource entry created with source field
+      const entries = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
+      expect(entries.submit.source).toBe('Submit');
+      expect(entries.submit.comment).toBe('Form submit button');
+      expect(entries.submit.tags).toEqual(['forms', 'buttons']);
+
+      // Verify metadata only has checksum for base locale
+      const meta = JSON.parse(readFileSync(entryMetaPath, 'utf8'));
+      expect(meta.submit.en.checksum).toBeDefined();
+      expect(meta.submit.en.status).toBeUndefined();
+      expect(meta.submit.en.baseChecksum).toBeUndefined();
+    });
+
+    it('should update existing resource source value when isBaseLocaleImport is true', () => {
+      // Create existing resource
+      mkdirSync(folderPath, { recursive: true });
+      writeFileSync(
+        entryResourcePath,
+        JSON.stringify({
+          ok: { source: 'OK', es: 'Bien' },
+        })
+      );
+      writeFileSync(
+        entryMetaPath,
+        JSON.stringify({
+          ok: {
+            en: { checksum: 'old-checksum' },
+            es: { checksum: 'es-checksum', baseChecksum: 'old-checksum', status: 'translated' },
+          },
+        })
+      );
+
+      const group: ResourceGroup = {
+        folderPath,
+        entryResourcePath,
+        entryMetaPath,
+        resources: [
+          {
+            resource: {
+              key: 'common.buttons.ok',
+              value: 'Okay',
+            },
+            entryKey: 'ok',
+          },
+        ],
+      };
+
+      const filesModified = new Set<string>();
+      const warnings: string[] = [];
+
+      const changes = processResourceGroup(
+        group,
+        'en',
+        'en',
+        { source: 'test.json', locale: 'en', strategy: 'migration' },
+        false,
+        true, // isBaseLocaleImport
+        filesModified,
+        warnings
+      );
+
+      expect(changes).toHaveLength(1);
+      expect(changes[0].type).toBe('value-changed');
+      expect(changes[0].oldValue).toBe('OK');
+      expect(changes[0].newValue).toBe('Okay');
+      expect(changes[0].oldStatus).toBeUndefined();
+      expect(changes[0].newStatus).toBeUndefined();
+
+      // Verify source field was updated
+      const entries = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
+      expect(entries.ok.source).toBe('Okay');
+
+      // Verify base locale checksum was updated
+      const meta = JSON.parse(readFileSync(entryMetaPath, 'utf8'));
+      expect(meta.ok.en.checksum).not.toBe('old-checksum');
+      expect(meta.ok.en.status).toBeUndefined();
+    });
+
+    it('should update comment and tags for base locale when flags are set', () => {
+      // Create existing resource
+      mkdirSync(folderPath, { recursive: true });
+      writeFileSync(
+        entryResourcePath,
+        JSON.stringify({
+          ok: { source: 'OK', comment: 'Old comment', tags: ['old'] },
+        })
+      );
+      writeFileSync(
+        entryMetaPath,
+        JSON.stringify({
+          ok: {
+            en: { checksum: 'checksum' },
+          },
+        })
+      );
+
+      const group: ResourceGroup = {
+        folderPath,
+        entryResourcePath,
+        entryMetaPath,
+        resources: [
+          {
+            resource: {
+              key: 'common.buttons.ok',
+              value: 'OK',
+              comment: 'New comment',
+              tags: ['new', 'tags'],
+            },
+            entryKey: 'ok',
+          },
+        ],
+      };
+
+      const filesModified = new Set<string>();
+      const warnings: string[] = [];
+
+      processResourceGroup(
+        group,
+        'en',
+        'en',
+        { source: 'test.json', locale: 'en', strategy: 'migration', updateComments: true, updateTags: true },
+        false,
+        true, // isBaseLocaleImport
+        filesModified,
+        warnings
+      );
+
+      const entries = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
+      expect(entries.ok.comment).toBe('New comment');
+      expect(entries.ok.tags).toEqual(['new', 'tags']);
     });
   });
 });

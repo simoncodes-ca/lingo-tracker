@@ -20,21 +20,29 @@
         "ja"
       ]
     },
-    "TestDataDesignSystem": {
-      "translationsFolder": "sample-translations/design-system"
-    },
-    "TestDataCore": {
-      "translationsFolder": "sample-translations/core"
-    },
-    "Web": {
-      "translationsFolder": "apps/web/src/i18n"
-    },
     "trackerResources": {
       "translationsFolder": "apps/tracker/src/i18n",
       "locales": [
         "en",
         "es",
         "fr-ca"
+      ]
+    },
+    "mockDesignSystem": {
+      "translationsFolder": "sample-translations/mock-design-system",
+      "importFolder": "dist/ds-translations",
+      "locales": [
+        "ar",
+        "de",
+        "es",
+        "fr-ca",
+        "fr-fr",
+        "is",
+        "ja",
+        "ko",
+        "nl",
+        "pt-br",
+        "sv"
       ]
     }
   },

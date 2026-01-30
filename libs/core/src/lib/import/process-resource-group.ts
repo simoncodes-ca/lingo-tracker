@@ -17,7 +17,7 @@ import { ResourceGroup } from './resource-grouping';
  *
  * The function performs these operations for each resource in the group:
  * 1. **Resource Creation**: Creates new resources when `createMissing` is enabled and resource
- *    doesn't exist. Requires baseValue to be present.
+ *    doesn't exist. Requires baseValue to be present (or value for base locale imports).
  * 2. **Base Value Validation**: Compares imported baseValue against existing source values
  *    and warns on mismatches (when validateBase is enabled).
  * 3. **Value Change Detection**: Determines if translation value has changed.
@@ -33,12 +33,18 @@ import { ResourceGroup } from './resource-grouping';
  * The function maintains referential integrity by ensuring base locale metadata exists
  * and properly linking target locale metadata to the base checksum.
  *
+ * Special handling for base locale imports (migration strategy only):
+ * - Updates the `source` field instead of locale-specific translations
+ * - Creates/updates base locale metadata with checksum only (no status or baseChecksum)
+ * - Enables bulk resource creation from JSON files
+ *
  * @param group - The resource group containing all resources in the same folder with their
  *                file paths and entry keys
- * @param locale - Target locale code (e.g., 'es', 'fr', 'de')
+ * @param locale - Target locale code (e.g., 'es', 'fr', 'de') or base locale for migration imports
  * @param baseLocale - Source locale code (typically 'en')
  * @param options - Import configuration including strategy, flags, and validation settings
  * @param dryRun - When true, performs all operations except file writes
+ * @param isBaseLocaleImport - Whether this is a base locale import (migration strategy only)
  * @param filesModified - Set that accumulates paths of all modified files (for summary reporting)
  * @param warnings - Array that accumulates non-fatal warnings (e.g., base value mismatches)
  * @returns Array of ImportChange objects describing all changes made to resources in this group
@@ -64,6 +70,7 @@ import { ResourceGroup } from './resource-grouping';
  *   'en',
  *   { strategy: 'translation-service', createMissing: false },
  *   false,
+ *   false,
  *   filesModified,
  *   warnings
  * );
@@ -78,6 +85,7 @@ export function processResourceGroup(
   baseLocale: string,
   options: ImportOptions,
   dryRun: boolean,
+  isBaseLocaleImport: boolean,
   filesModified: Set<string>,
   warnings: string[]
 ): ImportChange[] {
@@ -125,7 +133,48 @@ export function processResourceGroup(
       }
 
       // Create missing resource
-      // Validate that we have a base value
+      if (isBaseLocaleImport) {
+        // Base locale import: create resource with source field
+        const newEntry: ResourceEntry = {
+          source: resource.value,
+        };
+
+        // Add comment if provided
+        if (resource.comment) {
+          newEntry.comment = resource.comment;
+        }
+
+        // Add tags if provided
+        if (resource.tags && resource.tags.length > 0) {
+          newEntry.tags = resource.tags;
+        }
+
+        resourceEntries[entryKey] = newEntry;
+
+        // Create base locale metadata (checksum only, no status or baseChecksum)
+        const sourceChecksum = calculateChecksum(resource.value);
+
+        if (!trackerMeta[entryKey]) {
+          trackerMeta[entryKey] = {};
+        }
+
+        trackerMeta[entryKey][baseLocale] = {
+          checksum: sourceChecksum,
+        };
+
+        changes.push({
+          key: resource.key,
+          type: 'created',
+          oldValue: '',
+          newValue: resource.value,
+          oldStatus: undefined,
+          newStatus: undefined,
+        });
+
+        continue;
+      }
+
+      // Standard locale import: validate that we have a base value
       if (!resource.baseValue) {
         changes.push({
           key: resource.key,
@@ -187,6 +236,60 @@ export function processResourceGroup(
 
     const entry = resourceEntries[entryKey];
     const entryMeta = trackerMeta[entryKey];
+
+    // Special handling for base locale imports
+    if (isBaseLocaleImport) {
+      // Get old source value
+      const oldValue = entry.source || '';
+
+      // Check if source value changed
+      const valueChanged = oldValue !== resource.value;
+
+      // Update the source value if changed
+      if (valueChanged) {
+        entry.source = resource.value;
+      }
+
+      // Update comment if flag is set and comment is provided
+      if (options.updateComments && resource.comment !== undefined) {
+        if (resource.comment) {
+          entry.comment = resource.comment;
+        } else {
+          delete entry.comment;
+        }
+      }
+
+      // Update tags if flag is set and tags are provided
+      if (options.updateTags && resource.tags !== undefined) {
+        if (resource.tags.length > 0) {
+          entry.tags = resource.tags;
+        } else {
+          delete entry.tags;
+        }
+      }
+
+      // Update base locale metadata with new checksum
+      const newChecksum = calculateChecksum(resource.value);
+
+      if (!trackerMeta[entryKey]) {
+        trackerMeta[entryKey] = {};
+      }
+
+      trackerMeta[entryKey][baseLocale] = {
+        checksum: newChecksum,
+      };
+
+      changes.push({
+        key: resource.key,
+        type: valueChanged ? 'value-changed' : 'updated',
+        oldValue,
+        newValue: resource.value,
+        oldStatus: undefined,
+        newStatus: undefined,
+      });
+
+      continue;
+    }
 
     // Validate baseValue if present
     if (resource.baseValue && options.validateBase !== false) {
