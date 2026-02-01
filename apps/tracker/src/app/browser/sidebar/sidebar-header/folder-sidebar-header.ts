@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, input, output, computed } from '@an
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 
@@ -26,7 +27,7 @@ import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
   selector: 'app-sidebar-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatButtonModule, MatIconModule, TranslocoModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatTooltipModule, TranslocoModule],
   templateUrl: './folder-sidebar-header.html',
   styleUrl: './folder-sidebar-header.scss',
 })
@@ -51,6 +52,9 @@ export class FolderSidebarHeader {
   /** Emitted when the back button is clicked */
   backClick = output<void>();
 
+  /** Emitted when the add folder button is clicked */
+  addFolderClick = output<void>();
+
   /** Whether to display stats (both must be non-null and not loading) */
   readonly shouldDisplayStats = computed(() => {
     return !this.statsLoading() && this.totalKeys() !== null && this.localeCount() !== null;
@@ -72,5 +76,9 @@ export class FolderSidebarHeader {
 
   onBackButtonClick(): void {
     this.backClick.emit();
+  }
+
+  onAddFolderButtonClick(): void {
+    this.addFolderClick.emit();
   }
 }

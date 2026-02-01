@@ -26,5 +26,15 @@
       </div>
       <p class="translations-folder">{{ translationsFolder() }}</p>
     </div>
+    <button
+      mat-icon-button
+      type="button"
+      (click)="onAddFolderButtonClick()"
+      aria-label="Add folder"
+      matTooltip="Add folder (Ctrl+Shift+N)"
+      class="add-folder-button"
+    >
+      <mat-icon>create_new_folder</mat-icon>
+    </button>
   </div>
 </div>

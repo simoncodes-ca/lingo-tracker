@@ -20,6 +20,7 @@
           [localeCount]="store.collectionLocaleCount()"
           [statsLoading]="store.isCacheIndexing()"
           (backClick)="navigateToCollections()"
+          (addFolderClick)="onAddFolderClick()"
         />
         <app-folder-tree
           [collectionName]="collectionName()"

@@ -46,4 +46,85 @@ describe('TranslationBrowser - Integration', () => {
     const collectionName = fixture.nativeElement.querySelector('.collection-name');
     expect(collectionName?.textContent).toBe('test-collection');
   });
+
+  it('should trigger add folder when Ctrl+Shift+N is pressed', () => {
+    // Setup the component with collection
+    component.store.setSelectedCollection({
+      collectionName: 'test-collection',
+      locales: ['en', 'es'],
+    });
+
+    // Initially not adding folder
+    expect(component.store.isAddingFolder()).toBe(false);
+
+    // Create and dispatch keyboard event
+    const event = new KeyboardEvent('keydown', {
+      key: 'n',
+      ctrlKey: true,
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    window.dispatchEvent(event);
+
+    // Should now be in adding folder state
+    expect(component.store.isAddingFolder()).toBe(true);
+    expect(component.store.addFolderParentPath()).toBe(null);
+  });
+
+  it('should not trigger add folder when keyboard shortcut is pressed while focused on input', () => {
+    // Setup the component
+    component.store.setSelectedCollection({
+      collectionName: 'test-collection',
+      locales: ['en', 'es'],
+    });
+
+    // Create a mock input element and focus it
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    input.focus();
+
+    // Initially not adding folder
+    expect(component.store.isAddingFolder()).toBe(false);
+
+    // Create and dispatch keyboard event
+    const event = new KeyboardEvent('keydown', {
+      key: 'n',
+      ctrlKey: true,
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+
+    window.dispatchEvent(event);
+
+    // Should still not be adding folder
+    expect(component.store.isAddingFolder()).toBe(false);
+
+    // Cleanup
+    document.body.removeChild(input);
+  });
+
+  it('should call store.startAddingFolder when onAddFolderClick is invoked', () => {
+    // Setup the component
+    component.store.setSelectedCollection({
+      collectionName: 'test-collection',
+      locales: ['en', 'es'],
+    });
+
+    // Select a folder path
+    component.store.selectFolder('folder.path');
+    fixture.detectChanges();
+
+    // Initially not adding folder
+    expect(component.store.isAddingFolder()).toBe(false);
+
+    // Call the method
+    component.onAddFolderClick();
+
+    // Should be adding folder with current path as parent
+    expect(component.store.isAddingFolder()).toBe(true);
+    expect(component.store.addFolderParentPath()).toBe('folder.path');
+  });
 });

@@ -61,6 +61,13 @@
   <!-- Folder Tree -->
   @if (store.filteredFolders().length > 0) {
     <div class="folder-list" role="tree">
+      @if (isAddingFolder() && addFolderParentPath() === null) {
+        <app-inline-folder-input
+          [parentPath]="null"
+          (confirm)="onFolderConfirm($event)"
+          (cancel)="onFolderCancel()"
+        />
+      }
       @for (folder of store.filteredFolders(); track folder.fullPath) {
         <app-folder-node
           [folder]="folder"

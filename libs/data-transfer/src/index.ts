@@ -4,6 +4,7 @@ export * from './lib/create-collection.dto';
 export * from './lib/update-collection.dto';
 export * from './lib/create-resource.dto';
 export * from './lib/create-resource-response.dto';
+export * from './lib/create-folder.dto';
 export * from './lib/delete-resource.dto';
 export * from './lib/delete-resource-response.dto';
 export * from './lib/translation-status';

@@ -20,6 +20,13 @@
   <!-- Loaded Children -->
   @if (folder().loaded && folder().tree) {
     <div class="folder-children">
+      @if (shouldShowInlineInput()) {
+        <app-inline-folder-input
+          [parentPath]="folder().fullPath"
+          (confirm)="onFolderConfirm($event)"
+          (cancel)="onFolderCancel()"
+        />
+      }
       @for (child of folder().tree!.children; track child.fullPath) {
         <app-folder-node
           [folder]="child"

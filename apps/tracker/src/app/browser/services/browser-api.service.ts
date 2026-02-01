@@ -11,6 +11,8 @@ import type {
   UpdateResourceResponseDto,
   DeleteResourceDto,
   DeleteResourceResponseDto,
+  CreateFolderDto,
+  CreateFolderResponseDto,
 } from '@simoncodes-ca/data-transfer';
 
 /**
@@ -103,5 +105,29 @@ export class BrowserApiService {
     return this.#http.request<DeleteResourceResponseDto>('DELETE', `${this.#baseUrl}/${encodedName}/resources`, {
       body: dto,
     });
+  }
+
+  /**
+   * Creates a new folder in a collection.
+   *
+   * @param collectionName - Name of the collection
+   * @param folderName - Name of the folder to create
+   * @param parentPath - Optional parent path where folder should be created
+   * @returns Observable of folder creation response
+   */
+  createFolder(
+    collectionName: string,
+    folderName: string,
+    parentPath?: string
+  ): Observable<CreateFolderResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: CreateFolderDto = {
+      folderName,
+      ...(parentPath !== undefined && { parentPath }),
+    };
+    return this.#http.post<CreateFolderResponseDto>(
+      `${this.#baseUrl}/${encodedName}/folders`,
+      dto
+    );
   }
 }

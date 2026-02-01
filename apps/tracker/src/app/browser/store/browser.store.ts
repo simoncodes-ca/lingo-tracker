@@ -9,6 +9,7 @@ import type {
   SearchResultsDto,
   CacheStatusType,
   TranslationStatus,
+  CreateFolderResponseDto,
 } from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../services/browser-api.service';
 import { sortTranslations } from '../translations/utils/sort-translations';
@@ -39,6 +40,8 @@ interface BrowserState {
   rootFolders: FolderNodeDto[];
   folderTreeFilter: string;
   isFolderTreeLoading: boolean;
+  isAddingFolder: boolean;
+  addFolderParentPath: string | null;
 
   translations: ResourceSummaryDto[];
   isTranslationsLoading: boolean;
@@ -76,6 +79,8 @@ const initialState: BrowserState = {
   rootFolders: [],
   folderTreeFilter: '',
   isFolderTreeLoading: false,
+  isAddingFolder: false,
+  addFolderParentPath: null,
   translations: [],
   isTranslationsLoading: false,
   showNestedResources: true,
@@ -298,6 +303,20 @@ export const BrowserStore = signalStore(
 
       reset(): void {
         patchState(store, initialState);
+      },
+
+      startAddingFolder(parentPath: string | null): void {
+        patchState(store, {
+          isAddingFolder: true,
+          addFolderParentPath: parentPath,
+        });
+      },
+
+      cancelAddingFolder(): void {
+        patchState(store, {
+          isAddingFolder: false,
+          addFolderParentPath: null,
+        });
       },
 
       selectFolder: rxMethod<string>(
@@ -542,6 +561,44 @@ export const BrowserStore = signalStore(
           patchState(store, { searchResults: updatedSearchResults });
         }
       },
+
+      createFolder: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { error: null })),
+          switchMap((folderName) => {
+            const collection = store.selectedCollection();
+            const parentPath = store.addFolderParentPath();
+
+            if (!collection) {
+              patchState(store, {
+                isAddingFolder: false,
+                addFolderParentPath: null,
+              });
+              return of(null);
+            }
+
+            return api.createFolder(collection, folderName, parentPath || undefined).pipe(
+              tap(() => {
+                patchState(store, {
+                  isAddingFolder: false,
+                  addFolderParentPath: null,
+                  error: null,
+                });
+                this.loadRootFolders();
+              }),
+              catchError((error: unknown) => {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to create folder';
+                patchState(store, {
+                  isAddingFolder: false,
+                  addFolderParentPath: null,
+                  error: errorMessage,
+                });
+                return of(null);
+              })
+            );
+          })
+        )
+      ),
     };
   }),
 

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, type OnInit, inject, computed, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, type OnInit, HostListener, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -122,5 +122,33 @@ export class TranslationBrowser implements OnInit {
    */
   navigateToCollections(): void {
     this.router.navigate(['/collections']);
+  }
+
+  /**
+   * Handles the add folder button click from the sidebar header.
+   * Triggers folder creation in the currently selected folder.
+   */
+  onAddFolderClick(): void {
+    const currentFolderPath = this.store.currentFolderPath();
+    this.store.startAddingFolder(currentFolderPath || null);
+  }
+
+  /**
+   * Handles Ctrl+Shift+N keyboard shortcut to create a new folder.
+   * Creates a folder in the currently selected folder path.
+   * Prevents action when an input element is focused.
+   */
+  @HostListener('window:keydown.control.shift.n', ['$event'])
+  @HostListener('window:keydown.meta.shift.n', ['$event'])
+  onCreateFolderShortcut(event: KeyboardEvent): void {
+    // Don't trigger if user is typing in an input field
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    event.preventDefault();
+    this.onAddFolderClick();
   }
 }

@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FolderNode } from './folder-node/folder-node';
+import { InlineFolderInput } from './inline-folder-input/inline-folder-input';
 import { BrowserStore } from '../../store/browser.store';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
@@ -35,6 +36,7 @@ import { MatIconModule } from '@angular/material/icon';
     MatButtonToggleModule,
     MatTooltipModule,
     FolderNode,
+    InlineFolderInput,
     TranslocoModule,
     SearchInput,
   ],
@@ -56,6 +58,12 @@ export class FolderTree {
 
   /** Signal exposing nested resources visibility from store */
   readonly showNestedResources = this.store.showNestedResources;
+
+  /** Signal exposing whether a folder is being added */
+  readonly isAddingFolder = this.store.isAddingFolder;
+
+  /** Signal exposing the parent path for the folder being added */
+  readonly addFolderParentPath = this.store.addFolderParentPath;
 
   readonly #searchSubject = new Subject<string>();
 
@@ -102,5 +110,21 @@ export class FolderTree {
    */
   setNestedResources(value: boolean): void {
     this.store.setNestedResources(value);
+  }
+
+  /**
+   * Handles confirmation of folder name from inline input.
+   * Calls the store to create the folder.
+   */
+  onFolderConfirm(folderName: string): void {
+    this.store.createFolder(folderName);
+  }
+
+  /**
+   * Handles cancellation of folder creation from inline input.
+   * Calls the store to reset the adding state.
+   */
+  onFolderCancel(): void {
+    this.store.cancelAddingFolder();
   }
 }
