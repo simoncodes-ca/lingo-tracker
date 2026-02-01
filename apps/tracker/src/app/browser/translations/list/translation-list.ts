@@ -8,14 +8,19 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { EditResourceDialog } from '../../dialogs/edit-resource';
 import { MoveResourceDialog } from '../../dialogs/move-resource';
 import { DeleteResourceDialog, DeleteResourceDialogResult } from '../../dialogs/delete-resource';
+import {
+  TranslationEditorDialog,
+  TranslationEditorDialogData,
+  TranslationEditorResult,
+} from '../../dialogs/translation-editor';
 import { BrowserStore } from '../../store/browser.store';
 import { TranslationItem } from './translation-item/translation-item';
-import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import { ResourceSummaryDto, UpdateResourceDto } from '@simoncodes-ca/data-transfer';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { TranslationApiService } from '../../services/translation-api.service';
 
 @Component({
   selector: 'app-translation-list',
@@ -39,6 +44,7 @@ export class TranslationList {
   readonly store = inject(BrowserStore);
   private readonly snackBar: MatSnackBar = inject(MatSnackBar);
   private readonly dialog: MatDialog = inject(MatDialog);
+  private readonly translationApi = inject(TranslationApiService);
 
   /** Collection name to load translations from */
   collectionName = input.required<string>();
@@ -161,7 +167,71 @@ export class TranslationList {
 
   /** Handles edit request from translation item. */
   handleEdit(translation: ResourceSummaryDto): void {
-    this.openResourceDialog(EditResourceDialog, translation);
+    const folderPath = this.store.currentFolderPath();
+    const fullKey = folderPath ? `${folderPath}.${translation.key}` : translation.key;
+
+    const dialogData: TranslationEditorDialogData = {
+      mode: 'edit',
+      resource: translation,
+      collectionName: this.collectionName(),
+      folderPath: folderPath,
+      availableLocales: this.store.availableLocales(),
+      baseLocale: this.baseLocale(),
+    };
+
+    const dialogRef = this.dialog.open(TranslationEditorDialog, {
+      width: '700px',
+      maxHeight: '90vh',
+      data: dialogData,
+      autoFocus: true,
+      restoreFocus: false,
+    });
+
+    dialogRef.afterClosed().subscribe((result: TranslationEditorResult | undefined) => {
+      if (result && !result.success) {
+        // Result returned but not marked as success - user made changes but didn't use create flow
+        this.#handleEditUpdate(fullKey, result);
+      }
+    });
+  }
+
+  #handleEditUpdate(originalKey: string, result: TranslationEditorResult): void {
+    const updateDto: UpdateResourceDto = {
+      key: originalKey,
+      baseValue: result.baseValue,
+      comment: result.comment,
+    };
+
+    // Add locale translations if provided
+    if (result.translations && result.translations.length > 0) {
+      updateDto.locales = {};
+      result.translations.forEach((translation) => {
+        if (updateDto.locales) {
+          updateDto.locales[translation.locale] = {
+            value: translation.value,
+          };
+        }
+      });
+    }
+
+    this.translationApi.updateResource(this.collectionName(), updateDto).subscribe({
+      next: () => {
+        this.store.selectFolder(this.store.currentFolderPath());
+        this.snackBar.open('Translation updated successfully', '', {
+          duration: 2000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom',
+        });
+      },
+      error: (error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Failed to update translation';
+        this.snackBar.open(message, '', {
+          duration: 4000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom',
+        });
+      },
+    });
   }
 
   /** Handles move request from translation item. */

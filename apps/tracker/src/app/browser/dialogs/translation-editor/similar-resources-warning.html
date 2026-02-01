@@ -1,0 +1,74 @@
+@if (isLoading()) {
+  <div class="loading-container">
+    <div class="spinner"></div>
+    <span>Searching for similar translations...</span>
+  </div>
+}
+
+@if (!isLoading() && hasResults()) {
+  <div class="warning-container">
+    <div class="warning-header" (click)="toggleExpanded()">
+      <div class="warning-icon-container">
+        <mat-icon class="warning-icon">warning</mat-icon>
+        <span class="warning-title">
+          @if (isExpanded()) {
+            Possible Duplicates
+          } @else {
+            Found {{ totalCount() }} similar translation{{ totalCount() === 1 ? '' : 's' }}
+          }
+        </span>
+      </div>
+      <button
+        mat-icon-button
+        class="expand-button"
+        [attr.aria-label]="isExpanded() ? 'Collapse' : 'Expand'"
+        type="button"
+      >
+        <mat-icon>{{ isExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+      </button>
+    </div>
+
+    @if (isExpanded()) {
+      <div class="warning-content">
+        <p class="warning-description">
+          Found {{ totalCount() }} similar translation{{ totalCount() === 1 ? '' : 's' }}.
+          This is informational only and won't prevent saving.
+        </p>
+
+        <div class="results-list">
+          @for (result of displayedResults(); track result.key) {
+            <div class="result-item" (click)="onResourceClick(result)">
+              <div class="result-main">
+                <div class="result-key">{{ result.key }}</div>
+                <div class="result-value">{{ result.translations[Object.keys(result.translations)[0]] }}</div>
+              </div>
+              <div class="result-meta">
+                @if (extractFolderPath(result.key)) {
+                  <span class="result-folder">{{ extractFolderPath(result.key) }}</span>
+                }
+                @if (result.tags && result.tags.length > 0) {
+                  <div class="result-tags">
+                    @for (tag of result.tags; track tag) {
+                      <span class="result-tag">{{ tag }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (hasMoreResults()) {
+          <button
+            mat-button
+            class="show-more-button"
+            type="button"
+            (click)="loadMore()"
+          >
+            {{ showMoreButtonLabel() }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+}

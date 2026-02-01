@@ -25,6 +25,18 @@
       <mat-icon>{{ store.sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
     </button>
 
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="handleAddTranslation()"
+      [disabled]="store.isDisabled() || !store.currentFolderPath()"
+      [matTooltip]="!store.currentFolderPath() ? 'Select a folder first' : 'Add a new translation'"
+      aria-label="Add translation"
+    >
+      <mat-icon>add</mat-icon>
+      <span>Add Translation</span>
+    </button>
+
     <mat-button-toggle-group
       class="density-toggle"
       name="density"

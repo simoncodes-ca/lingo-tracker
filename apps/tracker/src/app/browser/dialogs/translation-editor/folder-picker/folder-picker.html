@@ -1,0 +1,81 @@
+<div class="folder-picker">
+  <!-- Folder Display Header (Clickable) -->
+  <div
+    class="folder-header"
+    (click)="toggleExpanded()"
+    [attr.aria-expanded]="isExpanded()"
+    [attr.aria-label]="'Folder selector, currently: ' + displayPath()"
+    role="button"
+    tabindex="0"
+    (keydown.enter)="toggleExpanded()"
+    (keydown.space)="toggleExpanded()"
+  >
+    <mat-icon class="folder-icon">folder</mat-icon>
+    <span class="folder-label">Folder:</span>
+    <span class="folder-path">{{ displayPath() }}</span>
+
+    @if (!folderExists()) {
+      <mat-chip class="new-folder-chip">
+        <mat-icon class="chip-icon">fiber_new</mat-icon>
+        New Folder
+      </mat-chip>
+    }
+
+    <mat-icon class="chevron-icon">{{ chevronIcon() }}</mat-icon>
+  </div>
+
+  <!-- Expandable Folder Picker Section -->
+  @if (isExpanded()) {
+    <div class="folder-picker-content" [@expandCollapse]>
+      <!-- Root Folder Option -->
+      <div class="root-folder-option">
+        <button
+          mat-button
+          class="root-folder-button"
+          (click)="selectRoot()"
+          type="button"
+        >
+          <mat-icon>home</mat-icon>
+          <span>Root Folder</span>
+        </button>
+      </div>
+
+      <!-- Folder Tree -->
+      <div class="folder-tree-container">
+        @if (rootFolders().length > 0) {
+          @for (folder of rootFolders(); track folder.fullPath) {
+            <app-folder-node
+              [folder]="folder"
+              [selectedPath]="selectedPath()"
+              [showNestedResources]="false"
+              [disabled]="false"
+              (folderClick)="onFolderClick($event)"
+              (loadFolder)="onLoadFolder($event)"
+            />
+          }
+        } @else {
+          <div class="empty-tree-message">
+            <mat-icon>folder_open</mat-icon>
+            <p>No folders available</p>
+          </div>
+        }
+      </div>
+
+      <!-- Custom Folder Input -->
+      <div class="custom-folder-section">
+        <mat-form-field appearance="outline" class="custom-folder-input">
+          <mat-label>Or type a custom folder path</mat-label>
+          <input
+            matInput
+            placeholder="e.g., common.buttons"
+            [value]="customInput()"
+            (input)="onCustomInputChange($event)"
+            (keydown)="onCustomInputKeyDown($event)"
+            autocomplete="off"
+          />
+          <mat-hint>Use dot notation (e.g., common.buttons)</mat-hint>
+        </mat-form-field>
+      </div>
+    </div>
+  }
+</div>
