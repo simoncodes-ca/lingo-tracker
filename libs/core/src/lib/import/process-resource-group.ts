@@ -1,12 +1,12 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
-import { ImportOptions, ImportChange } from './types';
-import { ResourceEntries, ResourceEntry } from '../../resource/resource-entry';
-import { TrackerMetadata } from '../../resource/tracker-metadata';
+import type { ImportOptions, ImportChange } from './types';
+import type { ResourceEntries, ResourceEntry } from '../../resource/resource-entry';
+import type { TrackerMetadata } from '../../resource/tracker-metadata';
 import { calculateChecksum } from '../../resource/checksum';
-import { LocaleMetadata } from '../../resource/locale-metadata';
-import { TranslationStatus } from '../../resource/translation-status';
-import { ResourceGroup } from './resource-grouping';
+import type { LocaleMetadata } from '../../resource/locale-metadata';
+import type { TranslationStatus } from '../../resource/translation-status';
+import type { ResourceGroup } from './resource-grouping';
 
 /**
  * Processes a group of resources that belong to the same folder.
@@ -87,7 +87,7 @@ export function processResourceGroup(
   dryRun: boolean,
   isBaseLocaleImport: boolean,
   filesModified: Set<string>,
-  warnings: string[]
+  warnings: string[],
 ): ImportChange[] {
   const changes: ImportChange[] = [];
 
@@ -297,7 +297,7 @@ export function processResourceGroup(
       if (existingBase !== resource.baseValue) {
         warnings.push(
           `Base value mismatch for "${resource.key}": import has "${resource.baseValue}", ` +
-          `LingoTracker has "${existingBase}" - preserving LingoTracker value`
+            `LingoTracker has "${existingBase}" - preserving LingoTracker value`,
         );
       }
     }
@@ -411,8 +411,6 @@ export function processResourceGroup(
           // Update strategy: preserve existing status
           newStatus = oldStatus || 'translated';
           break;
-        case 'translation-service':
-        case 'migration':
         default:
           // Translation-service and migration: set to translated
           newStatus = 'translated';
@@ -444,9 +442,7 @@ export function processResourceGroup(
   }
 
   // Write files once for the entire group
-  const hasChanges = changes.some(
-    c => c.type === 'updated' || c.type === 'value-changed' || c.type === 'created'
-  );
+  const hasChanges = changes.some((c) => c.type === 'updated' || c.type === 'value-changed' || c.type === 'created');
 
   if (!dryRun && hasChanges) {
     // Ensure folder exists (important for created resources)

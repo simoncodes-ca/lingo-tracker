@@ -5,5 +5,3 @@ export interface LingoTrackerCollectionDto {
   baseLocale?: string;
   locales?: string[];
 }
-
-

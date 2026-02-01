@@ -2,13 +2,9 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { addResource } from './add-resource';
 import { deleteResource } from './delete-resource';
-import {
-  resolveResourceKey,
-  splitResolvedKey,
-  validateKey,
-} from './resource-key';
-import { ResourceEntries } from './resource-entry';
-import { TranslationStatus } from './translation-status';
+import { resolveResourceKey, splitResolvedKey, validateKey } from './resource-key';
+import type { ResourceEntries } from './resource-entry';
+import type { TranslationStatus } from './translation-status';
 import { RESOURCE_ENTRIES_FILENAME } from '../constants';
 
 export interface MoveResourceParams {
@@ -28,10 +24,7 @@ export interface MoveResourceResult {
  * Moves resources from source to destination.
  * Supports single key move and wildcard pattern move (ending with *).
  */
-export function moveResource(
-  translationsFolder: string,
-  params: MoveResourceParams
-): MoveResourceResult {
+export function moveResource(translationsFolder: string, params: MoveResourceParams): MoveResourceResult {
   const { source, destination, override = false, destinationTranslationsFolder } = params;
   const targetFolder = destinationTranslationsFolder || translationsFolder;
 
@@ -47,9 +40,13 @@ function moveSingleResource(
   sourceKey: string,
   destinationKey: string,
   override: boolean,
-  destinationTranslationsFolder: string
+  destinationTranslationsFolder: string,
 ): MoveResourceResult {
-  const result: MoveResourceResult = { movedCount: 0, warnings: [], errors: [] };
+  const result: MoveResourceResult = {
+    movedCount: 0,
+    warnings: [],
+    errors: [],
+  };
 
   try {
     validateKey(sourceKey);
@@ -62,9 +59,7 @@ function moveSingleResource(
   // 1. Check if source exists
   const sourceResolved = resolveResourceKey(sourceKey);
   const { folderPath: srcFolder, entryKey: srcEntryKey } = splitResolvedKey(sourceResolved);
-  const srcFullPath = srcFolder.length
-    ? join(sourceTranslationsFolder, ...srcFolder)
-    : sourceTranslationsFolder;
+  const srcFullPath = srcFolder.length ? join(sourceTranslationsFolder, ...srcFolder) : sourceTranslationsFolder;
   const srcResourcePath = resolve(srcFullPath, RESOURCE_ENTRIES_FILENAME);
 
   if (!existsSync(srcResourcePath)) {
@@ -108,7 +103,11 @@ function moveSingleResource(
   }
 
   // 3. Perform Move
-  const translations: Array<{ locale: string; value: string; status: TranslationStatus }> = [];
+  const translations: Array<{
+    locale: string;
+    value: string;
+    status: TranslationStatus;
+  }> = [];
 
   Object.keys(sourceData).forEach((key) => {
     if (key !== 'source' && key !== 'comment' && key !== 'tags') {
@@ -137,7 +136,9 @@ function moveSingleResource(
   try {
     deleteResource(sourceTranslationsFolder, { keys: [sourceKey] });
   } catch (error) {
-    result.warnings.push(`Resource moved to ${destinationKey} but failed to delete source ${sourceKey}: ${(error as Error).message}`);
+    result.warnings.push(
+      `Resource moved to ${destinationKey} but failed to delete source ${sourceKey}: ${(error as Error).message}`,
+    );
     // Even if delete failed, we count it as moved (or partially moved)
     result.movedCount++;
     return result;
@@ -152,9 +153,13 @@ function moveResourcesByPattern(
   pattern: string,
   destinationKey: string,
   override: boolean,
-  destinationTranslationsFolder: string
+  destinationTranslationsFolder: string,
 ): MoveResourceResult {
-  const result: MoveResourceResult = { movedCount: 0, warnings: [], errors: [] };
+  const result: MoveResourceResult = {
+    movedCount: 0,
+    warnings: [],
+    errors: [],
+  };
 
   const prefix = pattern.slice(0, -1); // remove '*'
   const cleanPrefix = prefix.endsWith('.') ? prefix.slice(0, -1) : prefix;
@@ -170,7 +175,7 @@ function moveResourcesByPattern(
     if (existsSync(resourcePath)) {
       try {
         const entries: ResourceEntries = JSON.parse(readFileSync(resourcePath, 'utf8'));
-        Object.keys(entries).forEach(key => {
+        Object.keys(entries).forEach((key) => {
           keysToMove.push(`${currentKeyPrefix}.${key}`);
         });
       } catch (_e) {
@@ -212,7 +217,13 @@ function moveResourcesByPattern(
     const suffix = sourceKey.slice(cleanPrefix.length + 1); // +1 for dot
     const newKey = `${destinationKey}.${suffix}`;
 
-    const singleResult = moveSingleResource(sourceTranslationsFolder, sourceKey, newKey, override, destinationTranslationsFolder);
+    const singleResult = moveSingleResource(
+      sourceTranslationsFolder,
+      sourceKey,
+      newKey,
+      override,
+      destinationTranslationsFolder,
+    );
 
     result.movedCount += singleResult.movedCount;
     result.warnings.push(...singleResult.warnings);

@@ -7,7 +7,7 @@ export type EffectiveTheme = 'light' | 'dark';
 const THEME_STORAGE_KEY = 'lingo-tracker-theme';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ThemeService {
   private platformId = inject(PLATFORM_ID);

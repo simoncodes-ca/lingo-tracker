@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { BrowserStore } from './browser.store';
 import { BrowserApiService } from '../services/browser-api.service';
-import { ResourceTreeDto, CacheStatusDto } from '@simoncodes-ca/data-transfer';
+import type { ResourceTreeDto, CacheStatusDto } from '@simoncodes-ca/data-transfer';
 
 /**
  * Helper to wait for async signal updates from rxMethod.
@@ -12,7 +12,7 @@ import { ResourceTreeDto, CacheStatusDto } from '@simoncodes-ca/data-transfer';
  * to wait for multiple microtasks to allow signals to update.
  * We use a small delay to ensure all async operations complete.
  */
-const waitForSignals = () => new Promise<void>(resolve => setTimeout(resolve, 10));
+const waitForSignals = () => new Promise<void>((resolve) => setTimeout(resolve, 10));
 
 describe('BrowserStore', () => {
   let store: InstanceType<typeof BrowserStore>;
@@ -42,9 +42,7 @@ describe('BrowserStore', () => {
         status: { es: 'translated' as const },
       },
     ],
-    children: [
-      { name: 'buttons', fullPath: 'common.buttons', loaded: false },
-    ],
+    children: [{ name: 'buttons', fullPath: 'common.buttons', loaded: false }],
   };
 
   const mockCacheReady: CacheStatusDto = {
@@ -568,7 +566,10 @@ describe('BrowserStore', () => {
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       // Setup available locales and initial selection
-      store.setSelectedCollection({ collectionName: 'c1', locales: ['en', 'es', 'fr'] });
+      store.setSelectedCollection({
+        collectionName: 'c1',
+        locales: ['en', 'es', 'fr'],
+      });
 
       await waitForSignals();
 
@@ -600,7 +601,10 @@ describe('BrowserStore', () => {
 
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
-      store.setSelectedCollection({ collectionName: coll, locales: ['en', 'fr', 'es'] });
+      store.setSelectedCollection({
+        collectionName: coll,
+        locales: ['en', 'fr', 'es'],
+      });
 
       await waitForSignals();
 
@@ -615,7 +619,7 @@ describe('BrowserStore', () => {
       store.setSelectedCollection({
         collectionName: 'c1',
         locales: ['en', 'es', 'fr'],
-        baseLocale: 'en'
+        baseLocale: 'en',
       });
 
       await waitForSignals();
@@ -649,7 +653,7 @@ describe('BrowserStore', () => {
       store.setSelectedCollection({
         collectionName: coll,
         locales: ['en', 'es', 'fr'],
-        baseLocale: 'en'
+        baseLocale: 'en',
       });
 
       await waitForSignals();
@@ -665,7 +669,7 @@ describe('BrowserStore', () => {
       store.setSelectedCollection({
         collectionName: 'c1',
         locales: ['es', 'fr', 'de'],
-        baseLocale: 'en' // not in available locales
+        baseLocale: 'en', // not in available locales
       });
 
       await waitForSignals();
@@ -713,7 +717,7 @@ describe('BrowserStore', () => {
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
       store.setSelectedCollection({
         collectionName: 'test',
-        locales: ['en', 'es', 'fr', 'de']
+        locales: ['en', 'es', 'fr', 'de'],
       });
       await waitForSignals();
     });
@@ -871,7 +875,7 @@ describe('BrowserStore', () => {
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
       store.setSelectedCollection({
         collectionName: 'test',
-        locales: ['en', 'es']
+        locales: ['en', 'es'],
       });
       await waitForSignals();
     });
@@ -940,7 +944,7 @@ describe('BrowserStore', () => {
             results: mockSearchResults,
             totalFound: 1,
             limited: false,
-          })
+          }),
         );
 
         // Trigger search
@@ -970,7 +974,7 @@ describe('BrowserStore', () => {
             results: mockSearchResults,
             totalFound: 1,
             limited: false,
-          })
+          }),
         );
 
         store.searchTranslations('save');
@@ -1013,7 +1017,7 @@ describe('BrowserStore', () => {
             results: [],
             totalFound: 0,
             limited: false,
-          })
+          }),
         );
 
         store.searchTranslations('test');
@@ -1077,7 +1081,7 @@ describe('BrowserStore', () => {
           results: mockSearchResults,
           totalFound: 2,
           limited: false,
-        })
+        }),
       );
 
       store.setSearchQuery('common');

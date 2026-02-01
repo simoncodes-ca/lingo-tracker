@@ -1,10 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-  computed,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,12 +26,7 @@ import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
   selector: 'app-sidebar-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    MatButtonModule,
-    MatIconModule,
-    TranslocoModule,
-  ],
+  imports: [CommonModule, MatButtonModule, MatIconModule, TranslocoModule],
   templateUrl: './folder-sidebar-header.html',
   styleUrl: './folder-sidebar-header.scss',
 })
@@ -64,9 +53,7 @@ export class FolderSidebarHeader {
 
   /** Whether to display stats (both must be non-null and not loading) */
   readonly shouldDisplayStats = computed(() => {
-    return !this.statsLoading() &&
-           this.totalKeys() !== null &&
-           this.localeCount() !== null;
+    return !this.statsLoading() && this.totalKeys() !== null && this.localeCount() !== null;
   });
 
   /** Formatted keys chip text */

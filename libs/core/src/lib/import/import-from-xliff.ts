@@ -1,14 +1,14 @@
 import { readFileSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 import * as xliff from 'xliff';
-import { ImportOptions, ImportedResource, ImportResult, ICUAutoFix, ICUAutoFixError } from './types';
+import type { ImportOptions, ImportedResource, ImportResult, ICUAutoFix, ICUAutoFixError } from './types';
 import { groupResourcesByFolder } from './resource-grouping';
 import { processResourceGroup } from './process-resource-group';
 import { calculateImportStatistics, calculateStatusTransitions } from './import-statistics';
 import { validateImportResources } from './import-validation';
 import { setupImportWorkflow, buildImportResult } from './import-workflow';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
-import { ResourceEntries } from '../../resource/resource-entry';
+import type { ResourceEntries } from '../../resource/resource-entry';
 import { splitResolvedKey } from '../../resource/resource-key';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
 
@@ -56,14 +56,14 @@ import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
  * // }]
  * ```
  */
-export async function extractFromXliff(
-  xliffContent: string
-): Promise<ImportedResource[]> {
+export async function extractFromXliff(xliffContent: string): Promise<ImportedResource[]> {
   const resources: ImportedResource[] = [];
 
   try {
     // Parse XLIFF content using callback-based API
-    type ParsedXliff = { resources: Record<string, Record<string, { source: string; target?: string; note?: string }>> };
+    type ParsedXliff = {
+      resources: Record<string, Record<string, { source: string; target?: string; note?: string }>>;
+    };
     const parsed = await new Promise<ParsedXliff>((resolve, reject) => {
       xliff.xliff12ToJs(xliffContent, (err: Error | null, res: unknown) => {
         if (err) reject(err);
@@ -120,7 +120,7 @@ export async function extractFromXliff(
 function loadBaseLocaleValues(
   resources: ImportedResource[],
   translationsFolder: string,
-  cwd: string
+  cwd: string,
 ): Map<string, string> {
   const baseValues = new Map<string, string>();
 
@@ -130,9 +130,7 @@ function loadBaseLocaleValues(
   for (const resource of resources) {
     const { folderPath: pathSegments, entryKey } = splitResolvedKey(resource.key);
 
-    const fullFolderPath = pathSegments.length
-      ? join(translationsFolder, ...pathSegments)
-      : translationsFolder;
+    const fullFolderPath = pathSegments.length ? join(translationsFolder, ...pathSegments) : translationsFolder;
 
     if (!folderToKeys.has(fullFolderPath)) {
       folderToKeys.set(fullFolderPath, []);
@@ -158,13 +156,12 @@ function loadBaseLocaleValues(
 
       for (const { key, entryKey } of keys) {
         const entry = resourceEntries[entryKey];
-        if (entry && entry.source) {
+        if (entry?.source) {
           baseValues.set(key, entry.source);
         }
       }
     } catch {
-      // Skip files that can't be read
-      continue;
+      // ignore errors if files don't exist or can't be parsed
     }
   }
 
@@ -244,16 +241,8 @@ function loadBaseLocaleValues(
  * }
  * ```
  */
-export async function importFromXliff(
-  translationsFolder: string,
-  options: ImportOptions
-): Promise<ImportResult> {
-  const {
-    source,
-    dryRun = false,
-    verbose = false,
-    onProgress,
-  } = options;
+export async function importFromXliff(translationsFolder: string, options: ImportOptions): Promise<ImportResult> {
+  const { source, dryRun = false, verbose = false, onProgress } = options;
 
   // Setup and validate workflow configuration
   const { cwd, baseLocale, locale, mergedOptions, isBaseLocaleImport } = setupImportWorkflow(options);
@@ -306,7 +295,7 @@ export async function importFromXliff(
 
   // Validate resources
   const validationResult = validateImportResources(resources, {
-    skipEmptyValues: false,  // XLIFF already filters empty values during extraction
+    skipEmptyValues: false, // XLIFF already filters empty values during extraction
     warnOnLongKeys: true,
   });
 
@@ -335,7 +324,7 @@ export async function importFromXliff(
       dryRun,
       isBaseLocaleImport,
       filesModified,
-      warnings
+      warnings,
     );
 
     changes.push(...groupChanges);
@@ -345,9 +334,10 @@ export async function importFromXliff(
   const statistics = calculateImportStatistics(changes);
   const statusTransitions = calculateStatusTransitions(changes);
 
-  onProgress?.(dryRun
-    ? `Dry run complete: would import ${statistics.resourcesUpdated} resources`
-    : `Import complete: ${statistics.resourcesUpdated} resources imported`
+  onProgress?.(
+    dryRun
+      ? `Dry run complete: would import ${statistics.resourcesUpdated} resources`
+      : `Import complete: ${statistics.resourcesUpdated} resources imported`,
   );
 
   return buildImportResult({

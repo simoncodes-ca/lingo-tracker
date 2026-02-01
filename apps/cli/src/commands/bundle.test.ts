@@ -19,7 +19,10 @@ vi.mock('../utils', async () => {
     loadConfiguration: vi.fn(),
     parseCommaSeparatedList: vi.fn((input: string | undefined) => {
       if (!input) return undefined;
-      const result = input.split(',').map((item) => item.trim()).filter(Boolean);
+      const result = input
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
       return result.length > 0 ? result : undefined;
     }),
   };
@@ -89,7 +92,9 @@ describe('bundleCommand', () => {
 
       await bundleCommand({});
 
-      expect(utils.loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
+      expect(utils.loadConfiguration).toHaveBeenCalledWith({
+        exitOnError: false,
+      });
     });
 
     it('should error when no bundles are configured', async () => {
@@ -128,12 +133,12 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'core',
-        })
+        }),
       );
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'admin',
-        })
+        }),
       );
     });
 
@@ -144,7 +149,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'core',
-        })
+        }),
       );
     });
 
@@ -155,12 +160,12 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'core',
-        })
+        }),
       );
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'admin',
-        })
+        }),
       );
     });
 
@@ -185,7 +190,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           locales: ['en'],
-        })
+        }),
       );
     });
 
@@ -195,7 +200,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           locales: ['en', 'fr'],
-        })
+        }),
       );
     });
 
@@ -205,7 +210,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           locales: ['en', 'fr', 'es'],
-        })
+        }),
       );
     });
 
@@ -215,7 +220,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           locales: undefined,
-        })
+        }),
       );
     });
   });
@@ -308,9 +313,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith(
-        '  └─ Types: src/generated/core-tokens.ts (100 keys)'
-      );
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: src/generated/core-tokens.ts (100 keys)');
     });
 
     it('should display type generation skipped (empty)', async () => {
@@ -330,9 +333,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith(
-        '  └─ Types: Skipped (empty-bundle)'
-      );
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (empty-bundle)');
     });
 
     it('should display type generation skipped (no config)', async () => {
@@ -346,9 +347,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith(
-        '  └─ Types: Skipped (no typeDist configured)'
-      );
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (no typeDist configured)');
     });
   });
 
@@ -409,7 +408,7 @@ describe('bundleCommand', () => {
             message: 'Select bundle to generate',
           }),
         ]),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -434,7 +433,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'core',
-        })
+        }),
       );
     });
 

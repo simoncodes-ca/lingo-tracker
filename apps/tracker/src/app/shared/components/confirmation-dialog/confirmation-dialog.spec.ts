@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@jsverse/transloco';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ConfirmationDialog } from './confirmation-dialog';
-import { ConfirmationDialogData } from './confirmation-dialog-data';
+import type { ConfirmationDialogData } from './confirmation-dialog-data';
 
 describe('ConfirmationDialog', () => {
   let component: ConfirmationDialog;
@@ -16,9 +16,7 @@ describe('ConfirmationDialog', () => {
     message: 'Test Message',
   };
 
-  const reconfigureTestBedWithData = async (
-    data: ConfirmationDialogData
-  ): Promise<void> => {
+  const reconfigureTestBedWithData = async (data: ConfirmationDialogData): Promise<void> => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [ConfirmationDialog],

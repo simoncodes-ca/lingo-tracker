@@ -3,7 +3,7 @@ import { noop } from 'lodash';
 import { addCollection } from './add-collection';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { SafeAny } from '../constants';
+import type { SafeAny } from '../constants';
 
 vi.mock('node:fs');
 
@@ -26,11 +26,7 @@ describe('addCollection', () => {
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
     vi.mocked(fs.writeFileSync).mockImplementation(noop);
 
-    const result = addCollection(
-      'myCollection',
-      { translationsFolder: '  ./src/i18n  ' },
-      { cwd: '/test' }
-    );
+    const result = addCollection('myCollection', { translationsFolder: '  ./src/i18n  ' }, { cwd: '/test' });
 
     expect(result.message).toBe('Collection "myCollection" added successfully');
 
@@ -69,7 +65,7 @@ describe('addCollection', () => {
         baseLocale: 'fr', // different -> include
         locales: ['en'], // same -> should be omitted
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
@@ -93,18 +89,18 @@ describe('addCollection', () => {
 
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
 
-    expect(() =>
-      addCollection('existing', { translationsFolder: './new' }, { cwd: '/test' })
-    ).toThrow('Collection "existing" already exists');
+    expect(() => addCollection('existing', { translationsFolder: './new' }, { cwd: '/test' })).toThrow(
+      'Collection "existing" already exists',
+    );
   });
 
   it('throws when translationsFolder is missing or blank', () => {
     const config = { ...baseConfig };
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
 
-    expect(() =>
-      addCollection('blank', { translationsFolder: '   ' }, { cwd: '/test' })
-    ).toThrow('translationsFolder is required');
+    expect(() => addCollection('blank', { translationsFolder: '   ' }, { cwd: '/test' })).toThrow(
+      'translationsFolder is required',
+    );
   });
 
   it('throws on invalid config file (read/parse failure)', () => {
@@ -113,7 +109,7 @@ describe('addCollection', () => {
     });
 
     expect(() => addCollection('x', { translationsFolder: './t' }, { cwd: '/bad' })).toThrow(
-      'Failed to read or parse configuration file'
+      'Failed to read or parse configuration file',
     );
   });
 
@@ -142,7 +138,7 @@ describe('addCollection', () => {
     });
 
     expect(() => addCollection('x', { translationsFolder: './t' }, { cwd: '/test' })).toThrow(
-      'Failed to write configuration file'
+      'Failed to write configuration file',
     );
   });
 
@@ -167,5 +163,3 @@ describe('addCollection', () => {
     });
   });
 });
-
-

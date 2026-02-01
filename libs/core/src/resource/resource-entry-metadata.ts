@@ -1,4 +1,4 @@
-import { LocaleMetadata } from './locale-metadata';
+import type { LocaleMetadata } from './locale-metadata';
 
 /**
  * Tracker metadata for a single resource entry.

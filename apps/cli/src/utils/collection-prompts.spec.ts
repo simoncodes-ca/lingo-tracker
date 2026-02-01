@@ -43,9 +43,7 @@ describe('collection-prompts', () => {
       const result = await promptForCollection(emptyConfig);
 
       expect(result).toBeNull();
-      expect(console.log).toHaveBeenCalledWith(
-        '❌ No collections found. Run `lingo-tracker add-collection` first.'
-      );
+      expect(console.log).toHaveBeenCalledWith('❌ No collections found. Run `lingo-tracker add-collection` first.');
       expect(prompts).not.toHaveBeenCalled();
     });
 
@@ -60,9 +58,7 @@ describe('collection-prompts', () => {
       const result = await promptForCollection(configWithoutCollections);
 
       expect(result).toBeNull();
-      expect(console.log).toHaveBeenCalledWith(
-        '❌ No collections found. Run `lingo-tracker add-collection` first.'
-      );
+      expect(console.log).toHaveBeenCalledWith('❌ No collections found. Run `lingo-tracker add-collection` first.');
     });
   });
 
@@ -215,9 +211,7 @@ describe('collection-prompts', () => {
     });
 
     it('should throw error when multiple collections exist without provided value', async () => {
-      await expect(promptForCollection(mockConfig)).rejects.toThrow(
-        'Missing required option: --collection'
-      );
+      await expect(promptForCollection(mockConfig)).rejects.toThrow('Missing required option: --collection');
 
       expect(prompts).not.toHaveBeenCalled();
     });

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 
 export interface MoveResourceDialogData {
   resource: ResourceSummaryDto;

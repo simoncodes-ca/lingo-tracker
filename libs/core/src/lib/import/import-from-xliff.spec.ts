@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { extractFromXliff, importFromXliff } from './import-from-xliff';
-import { ImportOptions } from './types';
+import type { ImportOptions } from './types';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -12,12 +12,8 @@ describe('import-from-xliff', () => {
     vi.clearAllMocks();
 
     // Mock path functions
-    vi.spyOn(path, 'resolve').mockImplementation((...segments) =>
-      segments.join('/')
-    );
-    vi.spyOn(path, 'join').mockImplementation((...segments) =>
-      segments.join('/')
-    );
+    vi.spyOn(path, 'resolve').mockImplementation((...segments) => segments.join('/'));
+    vi.spyOn(path, 'join').mockImplementation((...segments) => segments.join('/'));
     vi.spyOn(path, 'dirname').mockImplementation((p) => {
       const parts = String(p).split('/');
       parts.pop();
@@ -166,8 +162,8 @@ describe('import-from-xliff', () => {
 
       // Verify file was written
       expect(writeFileSyncSpy).toHaveBeenCalled();
-      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('resource_entries.json')
+      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
       );
       if (resourceEntriesCall) {
         const updatedEntries = JSON.parse(String(resourceEntriesCall[1]));
@@ -206,7 +202,7 @@ describe('import-from-xliff', () => {
       });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const _writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',
@@ -216,7 +212,7 @@ describe('import-from-xliff', () => {
       const result = await importFromXliff('/translations/common', options);
 
       expect(result.warnings.length).toBeGreaterThan(0);
-      const mismatchWarning = result.warnings.find(w => w.includes('Base value mismatch'));
+      const mismatchWarning = result.warnings.find((w) => w.includes('Base value mismatch'));
       expect(mismatchWarning).toBeDefined();
       expect(mismatchWarning).toContain('common.title');
       expect(mismatchWarning).toContain('preserving LingoTracker value');
@@ -263,8 +259,8 @@ describe('import-from-xliff', () => {
       expect(result.resourcesUpdated).toBe(0);
 
       // Verify new resource was created
-      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('resource_entries.json')
+      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
       );
       if (resourceEntriesCall) {
         const newEntries = JSON.parse(String(resourceEntriesCall[1]));
@@ -315,8 +311,8 @@ describe('import-from-xliff', () => {
 
       const _result = await importFromXliff('/translations/common', options);
 
-      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('resource_entries.json')
+      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
       );
       if (resourceEntriesCall) {
         const updatedEntries = JSON.parse(String(resourceEntriesCall[1]));
@@ -344,7 +340,11 @@ describe('import-from-xliff', () => {
       const existingMeta = {
         title: {
           en: { checksum: 'checksum-en' },
-          es: { checksum: 'checksum-old', baseChecksum: 'checksum-en', status: 'translated' },
+          es: {
+            checksum: 'checksum-old',
+            baseChecksum: 'checksum-en',
+            status: 'translated',
+          },
         },
       };
 
@@ -368,9 +368,7 @@ describe('import-from-xliff', () => {
       const _result = await importFromXliff('/translations/common', options);
 
       // Verify status changed to verified
-      const metaCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('tracker_meta.json')
-      );
+      const metaCall = writeFileSyncSpy.mock.calls.find((call) => String(call[0]).includes('tracker_meta.json'));
       if (metaCall) {
         const updatedMeta = JSON.parse(String(metaCall[1]));
         expect(updatedMeta.title.es.status).toBe('verified');

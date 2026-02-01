@@ -1,11 +1,6 @@
-import { loadResourcesFromCollections, LoadedResource } from '../export/export-common';
-import { TranslationStatus } from '../../resource/translation-status';
-import {
-  ValidationOptions,
-  ResourceValidationResult,
-  ResourceValidationDetail,
-  StatusCounts,
-} from './types';
+import { loadResourcesFromCollections, type LoadedResource } from '../export/export-common';
+import type { TranslationStatus } from '../../resource/translation-status';
+import type { ValidationOptions, ResourceValidationResult, ResourceValidationDetail, StatusCounts } from './types';
 
 /**
  * Validates translation resources across all collections and locales.
@@ -62,7 +57,7 @@ import {
 export function validateResources(
   collections: Array<{ name: string; path: string }>,
   targetLocales: readonly string[],
-  options: ValidationOptions
+  options: ValidationOptions,
 ): ResourceValidationResult {
   // Load all resources from all collections
   const loadedResources = loadResourcesFromCollections(collections);
@@ -86,22 +81,13 @@ export function validateResources(
     for (const locale of targetLocales) {
       totalResourcesValidated++;
 
-      const validationDetail = validateSingleResourceInLocale(
-        resource,
-        locale,
-      );
+      const validationDetail = validateSingleResourceInLocale(resource, locale);
 
       // Update status counts
       statusCounts[validationDetail.status]++;
 
       // Categorize based on status and options
-      categorizeValidationDetail(
-        validationDetail,
-        options,
-        failures,
-        warnings,
-        successes
-      );
+      categorizeValidationDetail(validationDetail, options, failures, warnings, successes);
     }
   }
 
@@ -130,10 +116,7 @@ export function validateResources(
  * @param locale - The target locale to check
  * @returns Validation detail with key, locale, collection, and status
  */
-function validateSingleResourceInLocale(
-  resource: LoadedResource,
-  locale: string,
-): ResourceValidationDetail {
+function validateSingleResourceInLocale(resource: LoadedResource, locale: string): ResourceValidationDetail {
   // Get status for this locale, defaulting to 'new' if not found
   const status: TranslationStatus = resource.status[locale] ?? 'new';
 
@@ -165,7 +148,7 @@ function categorizeValidationDetail(
   options: ValidationOptions,
   failures: ResourceValidationDetail[],
   warnings: ResourceValidationDetail[],
-  successes: ResourceValidationDetail[]
+  successes: ResourceValidationDetail[],
 ): void {
   switch (detail.status) {
     case 'new':

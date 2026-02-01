@@ -1,9 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
@@ -21,12 +16,7 @@ import { MatButtonModule } from '@angular/material/button';
   selector: 'app-indexing-overlay',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    MatProgressSpinnerModule,
-    MatCardModule,
-    MatButtonModule,
-  ],
+  imports: [CommonModule, MatProgressSpinnerModule, MatCardModule, MatButtonModule],
   templateUrl: './indexing-overlay.component.html',
   styleUrl: './indexing-overlay.component.scss',
 })

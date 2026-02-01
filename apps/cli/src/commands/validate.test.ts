@@ -59,12 +59,8 @@ describe('validateCommand', () => {
 
       await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
 
-      expect(console.error).toHaveBeenCalledWith(
-        '❌ Configuration file .lingo-tracker.json not found.'
-      );
-      expect(console.error).toHaveBeenCalledWith(
-        'Run "lingo-tracker init" to initialize a project.'
-      );
+      expect(console.error).toHaveBeenCalledWith('❌ Configuration file .lingo-tracker.json not found.');
+      expect(console.error).toHaveBeenCalledWith('Run "lingo-tracker init" to initialize a project.');
     });
 
     it('should error when config file is malformed', async () => {
@@ -75,9 +71,7 @@ describe('validateCommand', () => {
 
       await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
 
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('❌ Failed to parse configuration file')
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('❌ Failed to parse configuration file'));
     });
 
     it('should error when no collections are configured', async () => {
@@ -108,9 +102,7 @@ describe('validateCommand', () => {
       await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
 
       expect(console.error).toHaveBeenCalledWith('❌ No target locales found in configuration.');
-      expect(console.error).toHaveBeenCalledWith(
-        'Target locales are all configured locales except the base locale.'
-      );
+      expect(console.error).toHaveBeenCalledWith('Target locales are all configured locales except the base locale.');
     });
   });
 
@@ -130,12 +122,42 @@ describe('validateCommand', () => {
         failures: [],
         warnings: [],
         successes: [
-          { key: 'common.hello', locale: 'fr', collection: 'common', status: 'verified' as const },
-          { key: 'common.hello', locale: 'es', collection: 'common', status: 'verified' as const },
-          { key: 'common.hello', locale: 'de', collection: 'common', status: 'verified' as const },
-          { key: 'admin.title', locale: 'fr', collection: 'admin', status: 'verified' as const },
-          { key: 'admin.title', locale: 'es', collection: 'admin', status: 'verified' as const },
-          { key: 'admin.title', locale: 'de', collection: 'admin', status: 'verified' as const },
+          {
+            key: 'common.hello',
+            locale: 'fr',
+            collection: 'common',
+            status: 'verified' as const,
+          },
+          {
+            key: 'common.hello',
+            locale: 'es',
+            collection: 'common',
+            status: 'verified' as const,
+          },
+          {
+            key: 'common.hello',
+            locale: 'de',
+            collection: 'common',
+            status: 'verified' as const,
+          },
+          {
+            key: 'admin.title',
+            locale: 'fr',
+            collection: 'admin',
+            status: 'verified' as const,
+          },
+          {
+            key: 'admin.title',
+            locale: 'es',
+            collection: 'admin',
+            status: 'verified' as const,
+          },
+          {
+            key: 'admin.title',
+            locale: 'de',
+            collection: 'admin',
+            status: 'verified' as const,
+          },
         ],
         passed: true,
       };
@@ -146,17 +168,20 @@ describe('validateCommand', () => {
 
       expect(mockValidateResources).toHaveBeenCalledWith(
         [
-          { name: 'common', path: expect.stringContaining('translations/common') },
-          { name: 'admin', path: expect.stringContaining('translations/admin') },
+          {
+            name: 'common',
+            path: expect.stringContaining('translations/common'),
+          },
+          {
+            name: 'admin',
+            path: expect.stringContaining('translations/admin'),
+          },
         ],
         ['fr', 'es', 'de'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        successResult,
-        { allowTranslated: false }
-      );
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(successResult, { allowTranslated: false });
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
       expect(process.exit).not.toHaveBeenCalled();
@@ -226,9 +251,24 @@ describe('validateCommand', () => {
           verified: 3,
         },
         failures: [
-          { key: 'common.goodbye', locale: 'fr', collection: 'common', status: 'new' as const },
-          { key: 'common.goodbye', locale: 'es', collection: 'common', status: 'new' as const },
-          { key: 'common.goodbye', locale: 'de', collection: 'common', status: 'new' as const },
+          {
+            key: 'common.goodbye',
+            locale: 'fr',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'common.goodbye',
+            locale: 'es',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'common.goodbye',
+            locale: 'de',
+            collection: 'common',
+            status: 'new' as const,
+          },
         ],
         warnings: [],
         successes: [],
@@ -243,10 +283,7 @@ describe('validateCommand', () => {
       await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        failureResult,
-        { allowTranslated: false }
-      );
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, { allowTranslated: false });
     });
 
     it('should fail validation with stale resources', async () => {
@@ -262,9 +299,24 @@ describe('validateCommand', () => {
           verified: 3,
         },
         failures: [
-          { key: 'admin.subtitle', locale: 'fr', collection: 'admin', status: 'stale' as const },
-          { key: 'admin.subtitle', locale: 'es', collection: 'admin', status: 'stale' as const },
-          { key: 'admin.subtitle', locale: 'de', collection: 'admin', status: 'stale' as const },
+          {
+            key: 'admin.subtitle',
+            locale: 'fr',
+            collection: 'admin',
+            status: 'stale' as const,
+          },
+          {
+            key: 'admin.subtitle',
+            locale: 'es',
+            collection: 'admin',
+            status: 'stale' as const,
+          },
+          {
+            key: 'admin.subtitle',
+            locale: 'de',
+            collection: 'admin',
+            status: 'stale' as const,
+          },
         ],
         warnings: [],
         successes: [],
@@ -279,10 +331,7 @@ describe('validateCommand', () => {
       await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        failureResult,
-        { allowTranslated: false }
-      );
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, { allowTranslated: false });
     });
 
     it('should fail validation with translated resources by default', async () => {
@@ -298,9 +347,24 @@ describe('validateCommand', () => {
           verified: 3,
         },
         failures: [
-          { key: 'common.welcome', locale: 'fr', collection: 'common', status: 'translated' as const },
-          { key: 'common.welcome', locale: 'es', collection: 'common', status: 'translated' as const },
-          { key: 'common.welcome', locale: 'de', collection: 'common', status: 'translated' as const },
+          {
+            key: 'common.welcome',
+            locale: 'fr',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'common.welcome',
+            locale: 'es',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'common.welcome',
+            locale: 'de',
+            collection: 'common',
+            status: 'translated' as const,
+          },
         ],
         warnings: [],
         successes: [],
@@ -314,11 +378,9 @@ describe('validateCommand', () => {
 
       await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
 
-      expect(mockValidateResources).toHaveBeenCalledWith(
-        expect.any(Array),
-        expect.any(Array),
-        { allowTranslated: false }
-      );
+      expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
+        allowTranslated: false,
+      });
     });
 
     it('should collect and report all failures from multiple locales', async () => {
@@ -334,15 +396,60 @@ describe('validateCommand', () => {
           verified: 0,
         },
         failures: [
-          { key: 'common.hello', locale: 'fr', collection: 'common', status: 'new' as const },
-          { key: 'common.hello', locale: 'es', collection: 'common', status: 'new' as const },
-          { key: 'common.hello', locale: 'de', collection: 'common', status: 'new' as const },
-          { key: 'admin.title', locale: 'fr', collection: 'admin', status: 'new' as const },
-          { key: 'admin.title', locale: 'es', collection: 'admin', status: 'new' as const },
-          { key: 'admin.title', locale: 'de', collection: 'admin', status: 'new' as const },
-          { key: 'admin.subtitle', locale: 'fr', collection: 'admin', status: 'stale' as const },
-          { key: 'admin.subtitle', locale: 'es', collection: 'admin', status: 'stale' as const },
-          { key: 'admin.subtitle', locale: 'de', collection: 'admin', status: 'stale' as const },
+          {
+            key: 'common.hello',
+            locale: 'fr',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'common.hello',
+            locale: 'es',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'common.hello',
+            locale: 'de',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'admin.title',
+            locale: 'fr',
+            collection: 'admin',
+            status: 'new' as const,
+          },
+          {
+            key: 'admin.title',
+            locale: 'es',
+            collection: 'admin',
+            status: 'new' as const,
+          },
+          {
+            key: 'admin.title',
+            locale: 'de',
+            collection: 'admin',
+            status: 'new' as const,
+          },
+          {
+            key: 'admin.subtitle',
+            locale: 'fr',
+            collection: 'admin',
+            status: 'stale' as const,
+          },
+          {
+            key: 'admin.subtitle',
+            locale: 'es',
+            collection: 'admin',
+            status: 'stale' as const,
+          },
+          {
+            key: 'admin.subtitle',
+            locale: 'de',
+            collection: 'admin',
+            status: 'stale' as const,
+          },
         ],
         warnings: [],
         successes: [],
@@ -360,18 +467,54 @@ describe('validateCommand', () => {
       expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
         expect.objectContaining({
           failures: expect.arrayContaining([
-            expect.objectContaining({ key: 'common.hello', locale: 'fr', status: 'new' }),
-            expect.objectContaining({ key: 'common.hello', locale: 'es', status: 'new' }),
-            expect.objectContaining({ key: 'common.hello', locale: 'de', status: 'new' }),
-            expect.objectContaining({ key: 'admin.title', locale: 'fr', status: 'new' }),
-            expect.objectContaining({ key: 'admin.title', locale: 'es', status: 'new' }),
-            expect.objectContaining({ key: 'admin.title', locale: 'de', status: 'new' }),
-            expect.objectContaining({ key: 'admin.subtitle', locale: 'fr', status: 'stale' }),
-            expect.objectContaining({ key: 'admin.subtitle', locale: 'es', status: 'stale' }),
-            expect.objectContaining({ key: 'admin.subtitle', locale: 'de', status: 'stale' }),
+            expect.objectContaining({
+              key: 'common.hello',
+              locale: 'fr',
+              status: 'new',
+            }),
+            expect.objectContaining({
+              key: 'common.hello',
+              locale: 'es',
+              status: 'new',
+            }),
+            expect.objectContaining({
+              key: 'common.hello',
+              locale: 'de',
+              status: 'new',
+            }),
+            expect.objectContaining({
+              key: 'admin.title',
+              locale: 'fr',
+              status: 'new',
+            }),
+            expect.objectContaining({
+              key: 'admin.title',
+              locale: 'es',
+              status: 'new',
+            }),
+            expect.objectContaining({
+              key: 'admin.title',
+              locale: 'de',
+              status: 'new',
+            }),
+            expect.objectContaining({
+              key: 'admin.subtitle',
+              locale: 'fr',
+              status: 'stale',
+            }),
+            expect.objectContaining({
+              key: 'admin.subtitle',
+              locale: 'es',
+              status: 'stale',
+            }),
+            expect.objectContaining({
+              key: 'admin.subtitle',
+              locale: 'de',
+              status: 'stale',
+            }),
           ]),
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -388,12 +531,42 @@ describe('validateCommand', () => {
           verified: 0,
         },
         failures: [
-          { key: 'common.button', locale: 'fr', collection: 'common', status: 'new' as const },
-          { key: 'common.button', locale: 'es', collection: 'common', status: 'new' as const },
-          { key: 'common.button', locale: 'de', collection: 'common', status: 'new' as const },
-          { key: 'admin.panel', locale: 'fr', collection: 'admin', status: 'new' as const },
-          { key: 'admin.panel', locale: 'es', collection: 'admin', status: 'new' as const },
-          { key: 'admin.panel', locale: 'de', collection: 'admin', status: 'new' as const },
+          {
+            key: 'common.button',
+            locale: 'fr',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'common.button',
+            locale: 'es',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'common.button',
+            locale: 'de',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'admin.panel',
+            locale: 'fr',
+            collection: 'admin',
+            status: 'new' as const,
+          },
+          {
+            key: 'admin.panel',
+            locale: 'es',
+            collection: 'admin',
+            status: 'new' as const,
+          },
+          {
+            key: 'admin.panel',
+            locale: 'de',
+            collection: 'admin',
+            status: 'new' as const,
+          },
         ],
         warnings: [],
         successes: [],
@@ -415,7 +588,7 @@ describe('validateCommand', () => {
             expect.objectContaining({ collection: 'admin' }),
           ]),
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -435,9 +608,24 @@ describe('validateCommand', () => {
         },
         failures: [],
         warnings: [
-          { key: 'common.welcome', locale: 'fr', collection: 'common', status: 'translated' as const },
-          { key: 'common.welcome', locale: 'es', collection: 'common', status: 'translated' as const },
-          { key: 'common.welcome', locale: 'de', collection: 'common', status: 'translated' as const },
+          {
+            key: 'common.welcome',
+            locale: 'fr',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'common.welcome',
+            locale: 'es',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'common.welcome',
+            locale: 'de',
+            collection: 'common',
+            status: 'translated' as const,
+          },
         ],
         successes: [],
         passed: true,
@@ -447,16 +635,11 @@ describe('validateCommand', () => {
 
       await validateCommand({ allowTranslated: true });
 
-      expect(mockValidateResources).toHaveBeenCalledWith(
-        expect.any(Array),
-        expect.any(Array),
-        { allowTranslated: true }
-      );
+      expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
+        allowTranslated: true,
+      });
 
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        warningResult,
-        { allowTranslated: true }
-      );
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(warningResult, { allowTranslated: true });
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
       expect(process.exit).not.toHaveBeenCalled();
@@ -476,12 +659,42 @@ describe('validateCommand', () => {
         },
         failures: [],
         warnings: [
-          { key: 'common.hello', locale: 'fr', collection: 'common', status: 'translated' as const },
-          { key: 'common.hello', locale: 'es', collection: 'common', status: 'translated' as const },
-          { key: 'common.hello', locale: 'de', collection: 'common', status: 'translated' as const },
-          { key: 'admin.title', locale: 'fr', collection: 'admin', status: 'translated' as const },
-          { key: 'admin.title', locale: 'es', collection: 'admin', status: 'translated' as const },
-          { key: 'admin.title', locale: 'de', collection: 'admin', status: 'translated' as const },
+          {
+            key: 'common.hello',
+            locale: 'fr',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'common.hello',
+            locale: 'es',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'common.hello',
+            locale: 'de',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'admin.title',
+            locale: 'fr',
+            collection: 'admin',
+            status: 'translated' as const,
+          },
+          {
+            key: 'admin.title',
+            locale: 'es',
+            collection: 'admin',
+            status: 'translated' as const,
+          },
+          {
+            key: 'admin.title',
+            locale: 'de',
+            collection: 'admin',
+            status: 'translated' as const,
+          },
         ],
         successes: [],
         passed: true,
@@ -512,11 +725,9 @@ describe('validateCommand', () => {
 
       await validateCommand({});
 
-      expect(mockValidateResources).toHaveBeenCalledWith(
-        expect.any(Array),
-        expect.any(Array),
-        { allowTranslated: false }
-      );
+      expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
+        allowTranslated: false,
+      });
     });
   });
 
@@ -534,9 +745,24 @@ describe('validateCommand', () => {
           verified: 0,
         },
         failures: [
-          { key: 'test.key', locale: 'fr', collection: 'common', status: 'new' as const },
-          { key: 'test.key', locale: 'es', collection: 'common', status: 'new' as const },
-          { key: 'test.key', locale: 'de', collection: 'common', status: 'new' as const },
+          {
+            key: 'test.key',
+            locale: 'fr',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'test.key',
+            locale: 'es',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'test.key',
+            locale: 'de',
+            collection: 'common',
+            status: 'new' as const,
+          },
         ],
         warnings: [],
         successes: [],
@@ -593,7 +819,7 @@ describe('validateCommand', () => {
             expect.objectContaining({ key: 'resource.99' }),
           ]),
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(mockGenerateValidationSummary.mock.calls[0][0].failures).toHaveLength(100);
     });
@@ -611,21 +837,81 @@ describe('validateCommand', () => {
           verified: 3,
         },
         failures: [
-          { key: 'res1', locale: 'fr', collection: 'common', status: 'new' as const },
-          { key: 'res1', locale: 'es', collection: 'common', status: 'new' as const },
-          { key: 'res1', locale: 'de', collection: 'common', status: 'new' as const },
-          { key: 'res2', locale: 'fr', collection: 'admin', status: 'stale' as const },
-          { key: 'res2', locale: 'es', collection: 'admin', status: 'stale' as const },
-          { key: 'res2', locale: 'de', collection: 'admin', status: 'stale' as const },
-          { key: 'res3', locale: 'fr', collection: 'common', status: 'translated' as const },
-          { key: 'res3', locale: 'es', collection: 'common', status: 'translated' as const },
-          { key: 'res3', locale: 'de', collection: 'common', status: 'translated' as const },
+          {
+            key: 'res1',
+            locale: 'fr',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'res1',
+            locale: 'es',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'res1',
+            locale: 'de',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'res2',
+            locale: 'fr',
+            collection: 'admin',
+            status: 'stale' as const,
+          },
+          {
+            key: 'res2',
+            locale: 'es',
+            collection: 'admin',
+            status: 'stale' as const,
+          },
+          {
+            key: 'res2',
+            locale: 'de',
+            collection: 'admin',
+            status: 'stale' as const,
+          },
+          {
+            key: 'res3',
+            locale: 'fr',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'res3',
+            locale: 'es',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'res3',
+            locale: 'de',
+            collection: 'common',
+            status: 'translated' as const,
+          },
         ],
         warnings: [],
         successes: [
-          { key: 'res4', locale: 'fr', collection: 'admin', status: 'verified' as const },
-          { key: 'res4', locale: 'es', collection: 'admin', status: 'verified' as const },
-          { key: 'res4', locale: 'de', collection: 'admin', status: 'verified' as const },
+          {
+            key: 'res4',
+            locale: 'fr',
+            collection: 'admin',
+            status: 'verified' as const,
+          },
+          {
+            key: 'res4',
+            locale: 'es',
+            collection: 'admin',
+            status: 'verified' as const,
+          },
+          {
+            key: 'res4',
+            locale: 'de',
+            collection: 'admin',
+            status: 'verified' as const,
+          },
         ],
         passed: false,
       };
@@ -645,11 +931,9 @@ describe('validateCommand', () => {
             expect.objectContaining({ status: 'stale' }),
             expect.objectContaining({ status: 'translated' }),
           ]),
-          successes: expect.arrayContaining([
-            expect.objectContaining({ status: 'verified' }),
-          ]),
+          successes: expect.arrayContaining([expect.objectContaining({ status: 'verified' })]),
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -663,9 +947,24 @@ describe('validateCommand', () => {
         collectionsValidated: 1,
         statusCounts: { new: 3, translated: 0, stale: 0, verified: 0 },
         failures: [
-          { key: 'test.key', locale: 'fr', collection: 'common', status: 'new' as const },
-          { key: 'test.key', locale: 'es', collection: 'common', status: 'new' as const },
-          { key: 'test.key', locale: 'de', collection: 'common', status: 'new' as const },
+          {
+            key: 'test.key',
+            locale: 'fr',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'test.key',
+            locale: 'es',
+            collection: 'common',
+            status: 'new' as const,
+          },
+          {
+            key: 'test.key',
+            locale: 'de',
+            collection: 'common',
+            status: 'new' as const,
+          },
         ],
         warnings: [],
         successes: [],
@@ -711,9 +1010,24 @@ describe('validateCommand', () => {
         statusCounts: { new: 0, translated: 3, stale: 0, verified: 3 },
         failures: [],
         warnings: [
-          { key: 'test.key', locale: 'fr', collection: 'common', status: 'translated' as const },
-          { key: 'test.key', locale: 'es', collection: 'common', status: 'translated' as const },
-          { key: 'test.key', locale: 'de', collection: 'common', status: 'translated' as const },
+          {
+            key: 'test.key',
+            locale: 'fr',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'test.key',
+            locale: 'es',
+            collection: 'common',
+            status: 'translated' as const,
+          },
+          {
+            key: 'test.key',
+            locale: 'de',
+            collection: 'common',
+            status: 'translated' as const,
+          },
         ],
         successes: [],
         passed: true,

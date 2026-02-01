@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
+import type {
   ImportFormat,
   ImportStrategy,
   ImportOptions,
@@ -25,12 +25,7 @@ describe('import types', () => {
 
   describe('ImportStrategy', () => {
     it('should allow all strategy types', () => {
-      const strategies: ImportStrategy[] = [
-        'translation-service',
-        'verification',
-        'migration',
-        'update',
-      ];
+      const strategies: ImportStrategy[] = ['translation-service', 'verification', 'migration', 'update'];
       expect(strategies).toHaveLength(4);
     });
   });
@@ -93,13 +88,7 @@ describe('import types', () => {
 
   describe('ImportChangeType', () => {
     it('should allow all change types', () => {
-      const types: ImportChangeType[] = [
-        'created',
-        'updated',
-        'value-changed',
-        'skipped',
-        'failed',
-      ];
+      const types: ImportChangeType[] = ['created', 'updated', 'value-changed', 'skipped', 'failed'];
       expect(types).toHaveLength(5);
     });
   });

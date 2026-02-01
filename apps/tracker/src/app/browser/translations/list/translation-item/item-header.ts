@@ -1,12 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-  signal,
-  computed,
-  inject,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, signal, computed, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -16,7 +8,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { TruncateKeyPipe } from '../../../../shared/pipes/truncate-key.pipe';
 import { TagList } from '../../../../shared/tag-list/tag-list.component';
-import { TranslationRollup, LocaleState } from './translation-rollup';
+import { TranslationRollup, type LocaleState } from './translation-rollup';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 
 /**

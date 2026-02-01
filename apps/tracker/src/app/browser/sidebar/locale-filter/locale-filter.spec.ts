@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { LocaleFilter } from './locale-filter';
@@ -25,9 +25,7 @@ describe('LocaleFilter', () => {
 
     await TestBed.configureTestingModule({
       imports: [LocaleFilter, NoopAnimationsModule],
-      providers: [
-        { provide: BrowserStore, useValue: mockStore },
-      ],
+      providers: [{ provide: BrowserStore, useValue: mockStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(LocaleFilter);

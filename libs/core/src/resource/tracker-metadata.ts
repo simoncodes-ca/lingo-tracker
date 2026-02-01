@@ -1,4 +1,4 @@
-import { ResourceEntryMetadata } from './resource-entry-metadata';
+import type { ResourceEntryMetadata } from './resource-entry-metadata';
 
 /**
  * All tracker metadata at a given folder level.

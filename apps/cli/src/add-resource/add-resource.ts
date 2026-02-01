@@ -2,12 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import prompts from 'prompts';
 import type { LingoTrackerConfig, TranslationStatus } from '@simoncodes-ca/core';
-import {
-  createDefaultTranslations,
-  addResource,
-  resolveResourceKey,
-  splitResolvedKey
-} from '@simoncodes-ca/core';
+import { createDefaultTranslations, addResource, resolveResourceKey, splitResolvedKey } from '@simoncodes-ca/core';
 import {
   loadConfiguration,
   parseCommaSeparatedList,
@@ -78,9 +73,10 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
     const locales = collection.config.locales || config.locales || [];
 
     // Build translations: use provided translations or create entries for all non-base locales with base value
-    const translations = answers.translations && answers.translations.length > 0
-      ? answers.translations
-      : createDefaultTranslations(locales, baseLocale, answers.value);
+    const translations =
+      answers.translations && answers.translations.length > 0
+        ? answers.translations
+        : createDefaultTranslations(locales, baseLocale, answers.value);
 
     const result = addResource(
       collection.translationsFolderPath,
@@ -93,7 +89,7 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
         baseLocale,
         translations: translations && translations.length > 0 ? translations : undefined,
       },
-      { cwd }
+      { cwd },
     );
 
     ConsoleFormatter.success(`Resource added: ${result.resolvedKey}`);
@@ -108,7 +104,7 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
 async function promptForMissing(
   options: AddResourceOptions,
   config: LingoTrackerConfig,
-  collectionName: string
+  collectionName: string,
 ): Promise<{
   key: string;
   value: string;
@@ -197,7 +193,7 @@ async function promptForMissing(
     const baseLocale = collectionConfig?.baseLocale || config.baseLocale;
     const locales = collectionConfig?.locales || config.locales || [];
 
-    const nonBaseLocales = locales.filter(locale => locale !== baseLocale);
+    const nonBaseLocales = locales.filter((locale) => locale !== baseLocale);
 
     if (nonBaseLocales.length > 0) {
       const shouldAddTranslations = await prompts({
@@ -267,4 +263,3 @@ function hasEntryKey(filePath: string, entryKey: string): boolean {
     return false;
   }
 }
-

@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { normalizeEntry } from './normalize-entry';
 import { cleanupEmptyFolders } from './cleanup-empty-folders';
-import { ResourceEntries } from '../../resource/resource-entry';
-import { TrackerMetadata } from '../../resource/tracker-metadata';
+import type { ResourceEntries } from '../../resource/resource-entry';
+import type { TrackerMetadata } from '../../resource/tracker-metadata';
 
 export interface NormalizeParams {
   readonly translationsFolder: string;
@@ -151,11 +151,7 @@ function normalizeAllEntriesInFolder(params: NormalizeAllEntriesParams): Normali
     entriesProcessedCount++;
     localesAddedCount += result.changes.localesAdded;
 
-    if (
-      result.changes.localesAdded > 0 ||
-      result.changes.checksumsUpdated > 0 ||
-      result.changes.statusesChanged > 0
-    ) {
+    if (result.changes.localesAdded > 0 || result.changes.checksumsUpdated > 0 || result.changes.statusesChanged > 0) {
       folderHadChanges = true;
     }
   }
@@ -297,7 +293,13 @@ async function traverseAndNormalizeFolder(params: TraverseFolderParams): Promise
     }
   }
 
-  await normalizeFolderResources({ folderPath, baseLocale, locales, dryRun, counters });
+  await normalizeFolderResources({
+    folderPath,
+    baseLocale,
+    locales,
+    dryRun,
+    counters,
+  });
 }
 
 /**

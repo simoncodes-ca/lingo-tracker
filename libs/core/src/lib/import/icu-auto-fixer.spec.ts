@@ -97,23 +97,17 @@ describe('icu-auto-fixer', () => {
 
     describe('plural placeholders', () => {
       it('should extract plural placeholder', () => {
-        const result = extractICUPlaceholders(
-          '{count, plural, one {# item} other {# items}}'
-        );
+        const result = extractICUPlaceholders('{count, plural, one {# item} other {# items}}');
 
         expect(result.success).toBe(true);
         expect(result.placeholders).toHaveLength(1);
         expect(result.placeholders[0].name).toBe('count');
         expect(result.placeholders[0].type).toBe('plural');
-        expect(result.placeholders[0].fullText).toBe(
-          '{count, plural, one {# item} other {# items}}'
-        );
+        expect(result.placeholders[0].fullText).toBe('{count, plural, one {# item} other {# items}}');
       });
 
       it('should extract plural with surrounding text', () => {
-        const result = extractICUPlaceholders(
-          'You have {count, plural, one {# item} other {# items}} in cart'
-        );
+        const result = extractICUPlaceholders('You have {count, plural, one {# item} other {# items}} in cart');
 
         expect(result.success).toBe(true);
         expect(result.placeholders).toHaveLength(1);
@@ -121,9 +115,7 @@ describe('icu-auto-fixer', () => {
       });
 
       it('should extract complex plural with zero case', () => {
-        const result = extractICUPlaceholders(
-          '{count, plural, =0 {no items} one {# item} other {# items}}'
-        );
+        const result = extractICUPlaceholders('{count, plural, =0 {no items} one {# item} other {# items}}');
 
         expect(result.success).toBe(true);
         expect(result.placeholders[0].type).toBe('plural');
@@ -132,9 +124,7 @@ describe('icu-auto-fixer', () => {
 
     describe('select placeholders', () => {
       it('should extract select placeholder', () => {
-        const result = extractICUPlaceholders(
-          '{gender, select, male {he} female {she} other {they}}'
-        );
+        const result = extractICUPlaceholders('{gender, select, male {he} female {she} other {they}}');
 
         expect(result.success).toBe(true);
         expect(result.placeholders).toHaveLength(1);
@@ -144,7 +134,7 @@ describe('icu-auto-fixer', () => {
 
       it('should extract select with surrounding text', () => {
         const result = extractICUPlaceholders(
-          'The user said {gender, select, male {he is} female {she is} other {they are}} happy'
+          'The user said {gender, select, male {he is} female {she is} other {they are}} happy',
         );
 
         expect(result.success).toBe(true);
@@ -197,7 +187,7 @@ describe('icu-auto-fixer', () => {
     describe('nested patterns', () => {
       it('should handle nested plural with placeholders inside', () => {
         const result = extractICUPlaceholders(
-          '{count, plural, one {You have {count} item} other {You have {count} items}}'
+          '{count, plural, one {You have {count} item} other {You have {count} items}}',
         );
 
         expect(result.success).toBe(true);
@@ -279,7 +269,7 @@ describe('icu-auto-fixer', () => {
       it('should return unchanged if plural placeholders match', () => {
         const result = autoFixICUPlaceholders(
           '{count, plural, one {# item} other {# items}}',
-          '{count, plural, one {# elemento} other {# elementos}}'
+          '{count, plural, one {# elemento} other {# elementos}}',
         );
 
         expect(result.wasFixed).toBe(false);
@@ -299,10 +289,7 @@ describe('icu-auto-fixer', () => {
       });
 
       it('should fix multiple renamed placeholders', () => {
-        const result = autoFixICUPlaceholders(
-          'Hello {firstName} {lastName}',
-          'Hola {nombre} {apellido}'
-        );
+        const result = autoFixICUPlaceholders('Hello {firstName} {lastName}', 'Hola {nombre} {apellido}');
 
         expect(result.wasFixed).toBe(true);
         expect(result.value).toBe('Hola {firstName} {lastName}');
@@ -311,20 +298,14 @@ describe('icu-auto-fixer', () => {
       });
 
       it('should preserve translated text while fixing placeholders', () => {
-        const result = autoFixICUPlaceholders(
-          'You have {count} items',
-          'Tienes {numero} elementos'
-        );
+        const result = autoFixICUPlaceholders('You have {count} items', 'Tienes {numero} elementos');
 
         expect(result.wasFixed).toBe(true);
         expect(result.value).toBe('Tienes {count} elementos');
       });
 
       it('should fix placeholder with different position in translation', () => {
-        const result = autoFixICUPlaceholders(
-          '{count} items in cart',
-          'Hay {cantidad} elementos en el carrito'
-        );
+        const result = autoFixICUPlaceholders('{count} items in cart', 'Hay {cantidad} elementos en el carrito');
 
         expect(result.wasFixed).toBe(true);
         expect(result.value).toBe('Hay {count} elementos en el carrito');
@@ -335,7 +316,7 @@ describe('icu-auto-fixer', () => {
       it('should fix renamed plural placeholder', () => {
         const result = autoFixICUPlaceholders(
           '{count, plural, one {# item} other {# items}}',
-          '{numero, plural, one {# elemento} other {# elementos}}'
+          '{numero, plural, one {# elemento} other {# elementos}}',
         );
 
         expect(result.wasFixed).toBe(true);
@@ -346,7 +327,7 @@ describe('icu-auto-fixer', () => {
       it('should fix renamed select placeholder', () => {
         const result = autoFixICUPlaceholders(
           '{gender, select, male {he} female {she} other {they}}',
-          '{genero, select, male {él} female {ella} other {ellos}}'
+          '{genero, select, male {él} female {ella} other {ellos}}',
         );
 
         expect(result.wasFixed).toBe(true);
@@ -356,7 +337,7 @@ describe('icu-auto-fixer', () => {
       it('should fix plural with surrounding text', () => {
         const result = autoFixICUPlaceholders(
           'You have {count, plural, one {# item} other {# items}} in cart',
-          'Tienes {numero, plural, one {# elemento} other {# elementos}} en carrito'
+          'Tienes {numero, plural, one {# elemento} other {# elementos}} en carrito',
         );
 
         expect(result.wasFixed).toBe(true);
@@ -366,10 +347,7 @@ describe('icu-auto-fixer', () => {
 
     describe('missing placeholders', () => {
       it('should insert single missing placeholder at end', () => {
-        const result = autoFixICUPlaceholders(
-          'You have {count} items',
-          'Tienes items'
-        );
+        const result = autoFixICUPlaceholders('You have {count} items', 'Tienes items');
 
         expect(result.wasFixed).toBe(true);
         expect(result.value).toContain('{count}');
@@ -377,10 +355,7 @@ describe('icu-auto-fixer', () => {
       });
 
       it('should error on multiple missing placeholders', () => {
-        const result = autoFixICUPlaceholders(
-          'Hello {firstName} {lastName}',
-          'Hola'
-        );
+        const result = autoFixICUPlaceholders('Hello {firstName} {lastName}', 'Hola');
 
         expect(result.wasFixed).toBe(false);
         expect(result.error).toContain('missing 2 placeholders');
@@ -389,10 +364,7 @@ describe('icu-auto-fixer', () => {
 
     describe('extra placeholders', () => {
       it('should error on extra placeholders', () => {
-        const result = autoFixICUPlaceholders(
-          'Hello {name}',
-          'Hola {name} {extra}'
-        );
+        const result = autoFixICUPlaceholders('Hello {name}', 'Hola {name} {extra}');
 
         expect(result.wasFixed).toBe(false);
         expect(result.error).toContain('extra placeholders');
@@ -401,20 +373,14 @@ describe('icu-auto-fixer', () => {
 
     describe('malformed ICU syntax', () => {
       it('should error on malformed base value', () => {
-        const result = autoFixICUPlaceholders(
-          'Hello {name',
-          'Hola {nombre}'
-        );
+        const result = autoFixICUPlaceholders('Hello {name', 'Hola {nombre}');
 
         expect(result.wasFixed).toBe(false);
         expect(result.error).toContain('Failed to parse base value');
       });
 
       it('should error on malformed translation value', () => {
-        const result = autoFixICUPlaceholders(
-          'Hello {name}',
-          'Hola {nombre'
-        );
+        const result = autoFixICUPlaceholders('Hello {name}', 'Hola {nombre');
 
         expect(result.wasFixed).toBe(false);
         expect(result.error).toContain('Failed to parse translation value');
@@ -423,20 +389,14 @@ describe('icu-auto-fixer', () => {
 
     describe('number/date/time formatters', () => {
       it('should fix renamed number formatter placeholder', () => {
-        const result = autoFixICUPlaceholders(
-          'Price: {price, number, currency}',
-          'Precio: {precio, number, currency}'
-        );
+        const result = autoFixICUPlaceholders('Price: {price, number, currency}', 'Precio: {precio, number, currency}');
 
         expect(result.wasFixed).toBe(true);
         expect(result.value).toBe('Precio: {price, number, currency}');
       });
 
       it('should fix date formatter placeholder', () => {
-        const result = autoFixICUPlaceholders(
-          'Date: {today, date, short}',
-          'Fecha: {hoy, date, short}'
-        );
+        const result = autoFixICUPlaceholders('Date: {today, date, short}', 'Fecha: {hoy, date, short}');
 
         expect(result.wasFixed).toBe(true);
         expect(result.value).toBe('Fecha: {today, date, short}');
@@ -452,20 +412,14 @@ describe('icu-auto-fixer', () => {
       });
 
       it('should handle consecutive placeholders', () => {
-        const result = autoFixICUPlaceholders(
-          '{firstName}{lastName}',
-          '{nombre}{apellido}'
-        );
+        const result = autoFixICUPlaceholders('{firstName}{lastName}', '{nombre}{apellido}');
 
         expect(result.wasFixed).toBe(true);
         expect(result.value).toBe('{firstName}{lastName}');
       });
 
       it('should preserve whitespace in text segments', () => {
-        const result = autoFixICUPlaceholders(
-          'Hello    {name}    world',
-          'Hola    {nombre}    mundo'
-        );
+        const result = autoFixICUPlaceholders('Hello    {name}    world', 'Hola    {nombre}    mundo');
 
         expect(result.wasFixed).toBe(true);
         expect(result.value).toBe('Hola    {name}    mundo');

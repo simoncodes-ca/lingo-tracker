@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeEntry, NormalizeEntryParams } from './normalize-entry';
-import { ResourceEntry } from '../../resource/resource-entry';
-import { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
+import { normalizeEntry, type NormalizeEntryParams } from './normalize-entry';
+import type { ResourceEntry } from '../../resource/resource-entry';
+import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
 import { calculateChecksum } from '../../resource/checksum';
 
 describe('Normalize Entry', () => {

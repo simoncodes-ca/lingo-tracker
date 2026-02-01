@@ -6,7 +6,7 @@ import {
   validateICUSyntax,
 } from './icu-auto-fixer';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
-import { ImportedResource } from './types';
+import type { ImportedResource } from './types';
 
 describe('ICU Auto-Fix Integration', () => {
   describe('Real-world Translation Scenarios', () => {
@@ -44,7 +44,8 @@ describe('ICU Auto-Fix Integration', () => {
 
     it('should handle complex message with multiple placeholder types', () => {
       const baseValue = 'Hello {name}, you have {count, plural, one {# message} other {# messages}} from {sender}';
-      const translatedValue = 'Hola {nombre}, tienes {cantidad, plural, one {# mensaje} other {# mensajes}} de {remitente}';
+      const translatedValue =
+        'Hola {nombre}, tienes {cantidad, plural, one {# mensaje} other {# mensajes}} de {remitente}';
 
       const result = autoFixICUPlaceholders(baseValue, translatedValue);
 
@@ -91,16 +92,22 @@ describe('ICU Auto-Fix Integration', () => {
       // Simulating XLIFF import from translation service
       const resources: ImportedResource[] = [
         { key: 'greeting', value: 'Hola {nombre}' },
-        { key: 'item_count', value: '{numero, plural, one {# elemento} other {# elementos}}' },
-        { key: 'welcome', value: 'Bienvenido {usuario}, tienes {cantidad} notificaciones' },
+        {
+          key: 'item_count',
+          value: '{numero, plural, one {# elemento} other {# elementos}}',
+        },
+        {
+          key: 'welcome',
+          value: 'Bienvenido {usuario}, tienes {cantidad} notificaciones',
+        },
         { key: 'no_placeholders', value: 'Sin marcadores de posición' },
       ];
 
       const baseValues: Record<string, string> = {
-        'greeting': 'Hello {name}',
-        'item_count': '{count, plural, one {# item} other {# items}}',
-        'welcome': 'Welcome {user}, you have {count} notifications',
-        'no_placeholders': 'No placeholders',
+        greeting: 'Hello {name}',
+        item_count: '{count, plural, one {# item} other {# items}}',
+        welcome: 'Welcome {user}, you have {count} notifications',
+        no_placeholders: 'No placeholders',
       };
 
       const result = applyICUAutoFixToResources({
@@ -125,9 +132,9 @@ describe('ICU Auto-Fix Integration', () => {
       ];
 
       const baseValues: Record<string, string> = {
-        'good': 'Good {name}',
-        'extra': 'Extra {name}',
-        'malformed': 'Malformed {name}',
+        good: 'Good {name}',
+        extra: 'Extra {name}',
+        malformed: 'Malformed {name}',
       };
 
       const result = applyICUAutoFixToResources({
@@ -138,10 +145,10 @@ describe('ICU Auto-Fix Integration', () => {
       expect(result.autoFixes).toHaveLength(0);
       expect(result.autoFixErrors).toHaveLength(2);
 
-      const extraError = result.autoFixErrors.find(e => e.key === 'extra');
+      const extraError = result.autoFixErrors.find((e) => e.key === 'extra');
       expect(extraError?.error).toContain('extra placeholders');
 
-      const malformedError = result.autoFixErrors.find(e => e.key === 'malformed');
+      const malformedError = result.autoFixErrors.find((e) => e.key === 'malformed');
       expect(malformedError?.error).toContain('Failed to parse');
     });
   });
@@ -232,9 +239,7 @@ describe('ICU Auto-Fix Integration', () => {
     });
 
     it('extractICUPlaceholders should extract all placeholder types', () => {
-      const result = extractICUPlaceholders(
-        'Hello {name}, you have {count, plural, one {# item} other {# items}}'
-      );
+      const result = extractICUPlaceholders('Hello {name}, you have {count, plural, one {# item} other {# items}}');
 
       expect(result.success).toBe(true);
       expect(result.placeholders).toHaveLength(2);

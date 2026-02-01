@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -24,14 +24,8 @@ describe('TranslationSearch', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationSearch,
-        NoopAnimationsModule,
-        getTranslocoTestingModule(),
-      ],
-      providers: [
-        { provide: BrowserStore, useValue: mockStore },
-      ],
+      imports: [TranslationSearch, NoopAnimationsModule, getTranslocoTestingModule()],
+      providers: [{ provide: BrowserStore, useValue: mockStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationSearch);
@@ -88,7 +82,7 @@ describe('TranslationSearch', () => {
       component.onSearchChange('test');
 
       // Wait for debounce
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       expect(mockStore.setSearchQuery).toHaveBeenCalledWith('test');
     });
@@ -96,7 +90,7 @@ describe('TranslationSearch', () => {
     it('should trigger search after debounce with 3+ characters', async () => {
       component.onSearchChange('button');
 
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       expect(mockStore.searchTranslations).toHaveBeenCalledWith('button');
     });
@@ -104,7 +98,7 @@ describe('TranslationSearch', () => {
     it('should not search for query with fewer than 3 characters', async () => {
       component.onSearchChange('ab');
 
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       expect(mockStore.setSearchQuery).not.toHaveBeenCalled();
       expect(mockStore.searchTranslations).not.toHaveBeenCalled();
@@ -112,14 +106,14 @@ describe('TranslationSearch', () => {
 
     it('should clear search when query becomes empty', async () => {
       component.onSearchChange('test');
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       mockStore.setSearchQuery.mockClear();
       mockStore.searchTranslations.mockClear();
       mockStore.clearSearch.mockClear();
 
       component.onSearchChange('');
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       expect(mockStore.clearSearch).toHaveBeenCalled();
       expect(mockStore.searchTranslations).not.toHaveBeenCalled();

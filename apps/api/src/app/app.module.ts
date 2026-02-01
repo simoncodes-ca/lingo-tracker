@@ -20,6 +20,6 @@ import { CollectionCacheService } from './cache/collection-cache.service';
 })
 export class AppModule {
   constructor() {
-    Logger.log('Lingo Tracker app is running in: ' + __dirname);
+    Logger.log(`Lingo Tracker app is running in: ${__dirname}`);
   }
 }

@@ -1,17 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import {
-  hasReferences,
-  extractReferences,
-  resolveReferences,
-  resolveAllReferences,
-} from './reference-resolver';
-import { ImportedResource } from './types';
+import { hasReferences, extractReferences, resolveReferences, resolveAllReferences } from './reference-resolver';
+import type { ImportedResource } from './types';
 
 describe('reference-resolver', () => {
   describe('hasReferences', () => {
     it('should detect {{t()}} pattern', () => {
       expect(hasReferences("Hello {{t('world')}}")).toBe(true);
-      expect(hasReferences('Hello {{t("world")}}' )).toBe(true);
+      expect(hasReferences('Hello {{t("world")}}')).toBe(true);
     });
 
     it('should detect {{key}} pattern', () => {
@@ -99,9 +94,7 @@ describe('reference-resolver', () => {
     });
 
     it('should resolve {{t()}} pattern', () => {
-      const resourceMap = new Map([
-        ['greeting', 'Hello'],
-      ]);
+      const resourceMap = new Map([['greeting', 'Hello']]);
 
       const result = resolveReferences("{{t('greeting')}} World", resourceMap);
       expect(result).toBe('Hello World');
@@ -129,9 +122,7 @@ describe('reference-resolver', () => {
     });
 
     it('should preserve literal for missing reference', () => {
-      const resourceMap = new Map([
-        ['greeting', 'Hello'],
-      ]);
+      const resourceMap = new Map([['greeting', 'Hello']]);
       const warnings: string[] = [];
 
       const result = resolveReferences('{{greeting}} {{missing}}', resourceMap, new Set(), warnings);
@@ -153,9 +144,7 @@ describe('reference-resolver', () => {
     });
 
     it('should detect self-reference', () => {
-      const resourceMap = new Map([
-        ['greeting', 'Hello {{greeting}}'],
-      ]);
+      const resourceMap = new Map([['greeting', 'Hello {{greeting}}']]);
       const warnings: string[] = [];
 
       const result = resolveReferences('{{greeting}}', resourceMap, new Set(), warnings);
@@ -181,9 +170,7 @@ describe('reference-resolver', () => {
     });
 
     it('should handle references with spaces', () => {
-      const resourceMap = new Map([
-        ['common.greeting', 'Hello World'],
-      ]);
+      const resourceMap = new Map([['common.greeting', 'Hello World']]);
 
       const result = resolveReferences('{{ common.greeting }}', resourceMap);
       expect(result).toBe('Hello World');
@@ -247,13 +234,11 @@ describe('reference-resolver', () => {
       expect(result[0].value).toBe('{{b}}');
       expect(result[1].value).toBe('{{a}}');
       expect(warnings.length).toBeGreaterThan(0);
-      expect(warnings.some(w => w.includes('Circular reference'))).toBe(true);
+      expect(warnings.some((w) => w.includes('Circular reference'))).toBe(true);
     });
 
     it('should warn on missing references', () => {
-      const resources: ImportedResource[] = [
-        { key: 'greeting', value: 'Hello {{missing}}' },
-      ];
+      const resources: ImportedResource[] = [{ key: 'greeting', value: 'Hello {{missing}}' }];
 
       const warnings: string[] = [];
       const result = resolveAllReferences(resources, true, warnings);
@@ -290,7 +275,12 @@ describe('reference-resolver', () => {
 
     it('should preserve other resource properties', () => {
       const resources: ImportedResource[] = [
-        { key: 'greeting', value: 'Hello', comment: 'A greeting', tags: ['common'] },
+        {
+          key: 'greeting',
+          value: 'Hello',
+          comment: 'A greeting',
+          tags: ['common'],
+        },
         { key: 'message', value: '{{greeting}} World', baseValue: 'Hi World' },
       ];
 

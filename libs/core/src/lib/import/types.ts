@@ -1,4 +1,4 @@
-import { TranslationStatus } from '../../resource/translation-status';
+import type { TranslationStatus } from '../../resource/translation-status';
 
 /**
  * Supported import formats
@@ -8,11 +8,7 @@ export type ImportFormat = 'xliff' | 'json';
 /**
  * Import strategies determine how imported data is processed and merged
  */
-export type ImportStrategy =
-  | 'translation-service'
-  | 'verification'
-  | 'migration'
-  | 'update';
+export type ImportStrategy = 'translation-service' | 'verification' | 'migration' | 'update';
 
 /**
  * Options for importing translations
@@ -70,12 +66,7 @@ export interface ImportedResource {
 /**
  * Types of changes that can occur during import
  */
-export type ImportChangeType =
-  | 'created'
-  | 'updated'
-  | 'value-changed'
-  | 'skipped'
-  | 'failed';
+export type ImportChangeType = 'created' | 'updated' | 'value-changed' | 'skipped' | 'failed';
 
 /**
  * Represents a single change made during import

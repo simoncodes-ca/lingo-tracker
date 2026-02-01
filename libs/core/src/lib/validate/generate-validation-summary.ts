@@ -1,4 +1,4 @@
-import { ResourceValidationResult, ValidationOptions, ResourceValidationDetail } from './types';
+import type { ResourceValidationResult, ValidationOptions, ResourceValidationDetail } from './types';
 
 /**
  * Maximum number of resources to display in each failure/warning category
@@ -33,10 +33,7 @@ const MAX_RESOURCES_TO_DISPLAY = 100;
  * console.log(summary);
  * ```
  */
-export function generateValidationSummary(
-  result: ResourceValidationResult,
-  options: ValidationOptions
-): string {
+export function generateValidationSummary(result: ResourceValidationResult, options: ValidationOptions): string {
   const sections: string[] = [];
 
   sections.push(buildHeaderSection(result));
@@ -122,10 +119,7 @@ function buildStatusBreakdownSection(result: ResourceValidationResult): string {
  * @internal
  */
 function buildFailuresSection(failures: readonly ResourceValidationDetail[]): string {
-  const lines = [
-    `❌ Failures (${failures.length}):`,
-    '─'.repeat(50),
-  ];
+  const lines = [`❌ Failures (${failures.length}):`, '─'.repeat(50)];
 
   const failuresByLocale = groupByLocale(failures);
 
@@ -164,14 +158,8 @@ function buildFailuresSection(failures: readonly ResourceValidationDetail[]): st
  * @returns Formatted warnings section string
  * @internal
  */
-function buildWarningsSection(
-  warnings: readonly ResourceValidationDetail[],
-  options: ValidationOptions
-): string {
-  const lines = [
-    `⚠️  Warnings (${warnings.length}):`,
-    '─'.repeat(50),
-  ];
+function buildWarningsSection(warnings: readonly ResourceValidationDetail[], options: ValidationOptions): string {
+  const lines = [`⚠️  Warnings (${warnings.length}):`, '─'.repeat(50)];
 
   if (options.allowTranslated) {
     lines.push('  Resources with "translated" status (not yet verified):');
@@ -210,10 +198,7 @@ function buildWarningsSection(
  * @internal
  */
 function buildFooterSection(result: ResourceValidationResult, options: ValidationOptions): string {
-  const lines = [
-    '─'.repeat(50),
-    '📋 Summary:',
-  ];
+  const lines = ['─'.repeat(50), '📋 Summary:'];
 
   // Count breakdown
   lines.push(`  Total Failures: ${result.failures.length}`);
@@ -244,9 +229,7 @@ function buildFooterSection(result: ResourceValidationResult, options: Validatio
  * @returns Object mapping locale to array of resources
  * @internal
  */
-function groupByLocale(
-  resources: readonly ResourceValidationDetail[]
-): Record<string, ResourceValidationDetail[]> {
+function groupByLocale(resources: readonly ResourceValidationDetail[]): Record<string, ResourceValidationDetail[]> {
   const grouped: Record<string, ResourceValidationDetail[]> = {};
 
   for (const resource of resources) {

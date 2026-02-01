@@ -2,27 +2,21 @@
   "edit": {
     "source": "Edit",
     "comment": "Text on a button or link that will display edit form for an entity",
-    "tags": [
-      "common"
-    ],
+    "tags": ["common"],
     "es": "Editar",
     "fr-ca": "Modifier"
   },
   "delete": {
     "source": "Delete",
     "comment": "Text on a button that will cause an entity to be deleted",
-    "tags": [
-      "common"
-    ],
+    "tags": ["common"],
     "es": "Eliminar",
     "fr-ca": "Supprimer"
   },
   "retry": {
     "source": "Retry",
     "comment": "Text on a button to cause an action to retry operation",
-    "tags": [
-      "common"
-    ],
+    "tags": ["common"],
     "es": "Reintentar",
     "fr-ca": "Réessayer"
   },
@@ -57,9 +51,7 @@
   "move": {
     "source": "Move",
     "comment": "Action label to move an item to a different location",
-    "tags": [
-      "common"
-    ],
+    "tags": ["common"],
     "es": "Mover",
     "fr-ca": "Déplacer"
   }

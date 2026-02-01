@@ -1,16 +1,10 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-  computed,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
-import {TranslocoModule} from "@jsverse/transloco";
-import {TRACKER_TOKENS} from "../../../../../i18n-types/tracker-resources";
+import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import { TranslocoModule } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 
 /**
  * Recursive component for rendering folder tree nodes.
@@ -55,7 +49,7 @@ export class FolderNode {
     const selected = this.selectedPath();
     const myPath = this.folder().fullPath;
     if (!selected || !myPath) return false;
-    return myPath.startsWith(selected + '.');
+    return myPath.startsWith(`${selected}.`);
   });
 
   /** Determines which icon to display for the folder */

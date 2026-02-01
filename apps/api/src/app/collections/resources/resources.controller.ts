@@ -13,7 +13,7 @@ import {
   Res,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import {
   addResource,
   createDefaultTranslations,
@@ -24,8 +24,9 @@ import {
   searchResourceTree,
   extractSubtree,
   extractResourcesRecursively,
+  type SearchResult,
 } from '@simoncodes-ca/core';
-import {
+import type {
   CreateResourceDto,
   CreateResourceResponseDto,
   DeleteResourceDto,
@@ -89,9 +90,10 @@ export class ResourcesController {
           const resourceBaseLocale = resource.baseLocale || baseLocale;
 
           // If no translations provided, create entries for all non-base locales with base value
-          const translations = resource.translations && resource.translations.length > 0
-            ? resource.translations
-            : createDefaultTranslations(locales, resourceBaseLocale, resource.baseValue);
+          const translations =
+            resource.translations && resource.translations.length > 0
+              ? resource.translations
+              : createDefaultTranslations(locales, resourceBaseLocale, resource.baseValue);
 
           const params = mapDtoToAddResourceParams({
             ...resource,
@@ -109,10 +111,7 @@ export class ResourcesController {
           // Validation errors (invalid key, etc.) should return 400
           const errorMessage = error instanceof Error ? error.message : '';
           if (errorMessage.includes('Invalid') || errorMessage.includes('cannot be empty')) {
-            throw new HttpException(
-              `Validation error for resource: ${errorMessage}`,
-              HttpStatus.BAD_REQUEST,
-            );
+            throw new HttpException(`Validation error for resource: ${errorMessage}`, HttpStatus.BAD_REQUEST);
           }
           // Re-throw other errors to be caught by outer catch
           throw error;
@@ -146,7 +145,7 @@ export class ResourcesController {
   @Delete()
   async delete(
     @Param('collectionName') collectionName: string,
-    @Body() dto: DeleteResourceDto
+    @Body() dto: DeleteResourceDto,
   ): Promise<DeleteResourceResponseDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
@@ -191,11 +190,10 @@ export class ResourcesController {
     }
   }
 
-
   @Post('move')
   async move(
     @Param('collectionName') collectionName: string,
-    @Body() dto: MoveResourceDto
+    @Body() dto: MoveResourceDto,
   ): Promise<MoveResourceResponseDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
@@ -211,7 +209,7 @@ export class ResourcesController {
       const result: MoveResourceResponseDto = {
         movedCount: 0,
         warnings: [],
-        errors: []
+        errors: [],
       };
 
       if (!dto.moves || !Array.isArray(dto.moves) || dto.moves.length === 0) {
@@ -240,7 +238,7 @@ export class ResourcesController {
           source: moveOp.source,
           destination: moveOp.destination,
           override: moveOp.override,
-          destinationTranslationsFolder: destinationTranslationsFolder
+          destinationTranslationsFolder: destinationTranslationsFolder,
         });
 
         result.movedCount += moveResult.movedCount;
@@ -258,7 +256,6 @@ export class ResourcesController {
       }
 
       return result;
-
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof HttpException) {
         throw error;
@@ -272,7 +269,7 @@ export class ResourcesController {
   @Patch()
   async update(
     @Param('collectionName') collectionName: string,
-    @Body() dto: UpdateResourceDto
+    @Body() dto: UpdateResourceDto,
   ): Promise<UpdateResourceResponseDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
@@ -288,7 +285,7 @@ export class ResourcesController {
 
       const result = editResource(translationsFolder, {
         ...dto,
-        baseLocale
+        baseLocale,
       });
 
       // Clear cache after successful resource update
@@ -299,9 +296,8 @@ export class ResourcesController {
       return {
         resolvedKey: result.resolvedKey,
         updated: result.updated,
-        message: result.message
+        message: result.message,
       };
-
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof HttpException) {
         throw error;
@@ -371,9 +367,10 @@ export class ResourcesController {
 
         const statusResponse: TreeStatusResponseDto = {
           status: 'not-ready',
-          message: cacheStatus === CacheStatus.ERROR
-            ? 'Cache indexing failed, re-indexing collection. Please try again shortly.'
-            : 'Collection indexing started. Please try again shortly.',
+          message:
+            cacheStatus === CacheStatus.ERROR
+              ? 'Cache indexing failed, re-indexing collection. Please try again shortly.'
+              : 'Collection indexing started. Please try again shortly.',
         };
 
         if (responseObj) {
@@ -400,10 +397,7 @@ export class ResourcesController {
       const cachedTree = this.cacheService.getCache(decodedCollectionName);
 
       if (!cachedTree) {
-        throw new HttpException(
-          'Cache is marked as ready but tree is not available',
-          HttpStatus.INTERNAL_SERVER_ERROR
-        );
+        throw new HttpException('Cache is marked as ready but tree is not available', HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
       // If no path specified, return full tree
@@ -462,7 +456,6 @@ export class ResourcesController {
         return treeDto;
       }
       return treeDto;
-
     } catch (error: unknown) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -478,9 +471,7 @@ export class ResourcesController {
   }
 
   @Get('cache/status')
-  async getCacheStatus(
-    @Param('collectionName') collectionName: string
-  ): Promise<CacheStatusDto> {
+  async getCacheStatus(@Param('collectionName') collectionName: string): Promise<CacheStatusDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
       const config = this.configService.getConfig();
@@ -530,7 +521,6 @@ export class ResourcesController {
       }
 
       return statusDto;
-
     } catch (error: unknown) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -548,7 +538,7 @@ export class ResourcesController {
   @Get('search')
   async search(
     @Param('collectionName') collectionName: string,
-    @Query() dto: SearchTranslationsDto
+    @Query() dto: SearchTranslationsDto,
   ): Promise<SearchResultsDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
@@ -577,7 +567,7 @@ export class ResourcesController {
 
       // Try to use cached tree for faster search
       const cachedTree = this.cacheService.getCache(decodedCollectionName);
-      let searchResults;
+      let searchResults: SearchResult[];
 
       if (cachedTree) {
         // Use in-memory search on cached tree
@@ -622,4 +612,3 @@ export class ResourcesController {
     }
   }
 }
-

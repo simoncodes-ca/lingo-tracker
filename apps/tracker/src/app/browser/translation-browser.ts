@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, inject, computed, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, type OnInit, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +10,7 @@ import { FolderSidebarHeader, FolderTree } from './sidebar';
 import { TranslationMainHeader } from './translations/header/translation-main-header';
 import { CollectionsStore } from '../collections/store/collections.store';
 import { BrowserStore } from './store/browser.store';
-import {TranslationList} from "./translations/list/translation-list";
+import { TranslationList } from './translations/list/translation-list';
 import { IndexingOverlay } from './ui/indexing-overlay';
 
 /**

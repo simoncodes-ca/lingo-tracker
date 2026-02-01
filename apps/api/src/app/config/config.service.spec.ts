@@ -1,8 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from './config.service';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -57,10 +54,7 @@ describe('ConfigService', () => {
 
       const result = service.getConfig();
 
-      expect(mockFs.readFileSync).toHaveBeenCalledWith(
-        '/mock/path/.lingo-tracker.json',
-        'utf8',
-      );
+      expect(mockFs.readFileSync).toHaveBeenCalledWith('/mock/path/.lingo-tracker.json', 'utf8');
       expect(result).toEqual(mockConfig);
     });
 

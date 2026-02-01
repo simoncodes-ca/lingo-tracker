@@ -5,7 +5,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
-import { ResourceEntries } from '../../resource/resource-entry';
+import type { ResourceEntries } from '../../resource/resource-entry';
 
 export interface FlatResource {
   readonly key: string;
@@ -25,7 +25,7 @@ export interface FlatResource {
 export function loadCollectionResources(
   translationsFolder: string,
   locale: string,
-  baseLocale: string
+  baseLocale: string,
 ): FlatResource[] {
   const resources: FlatResource[] = [];
 
@@ -52,7 +52,7 @@ function loadFolderResources(
   keyPrefix: string,
   locale: string,
   baseLocale: string,
-  resources: FlatResource[]
+  resources: FlatResource[],
 ): void {
   const resourceEntriesPath = path.join(folderPath, RESOURCE_ENTRIES_FILENAME);
 

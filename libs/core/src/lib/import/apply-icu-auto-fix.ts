@@ -1,4 +1,4 @@
-import { ImportedResource, ICUAutoFix, ICUAutoFixError } from './types';
+import type { ImportedResource, ICUAutoFix, ICUAutoFixError } from './types';
 import { autoFixICUPlaceholders, hasICUPlaceholders } from './icu-auto-fixer';
 
 /**
@@ -52,9 +52,7 @@ interface ApplyICUAutoFixResult {
  * }
  * ```
  */
-export function applyICUAutoFixToResource(
-  config: ApplyICUAutoFixConfig
-): ApplyICUAutoFixResult {
+export function applyICUAutoFixToResource(config: ApplyICUAutoFixConfig): ApplyICUAutoFixResult {
   const { resource, baseValue, verbose, onProgress } = config;
 
   if (!baseValue || !hasICUPlaceholders(baseValue)) {

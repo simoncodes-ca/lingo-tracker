@@ -1,5 +1,11 @@
-import { ImportedResource, ImportChange } from './types';
-import { validateImportKey, isKeyTooLong, isEmptyValue, detectHierarchicalConflicts, detectDuplicateKeys } from './import-common';
+import type { ImportedResource, ImportChange } from './types';
+import {
+  validateImportKey,
+  isKeyTooLong,
+  isEmptyValue,
+  detectHierarchicalConflicts,
+  detectDuplicateKeys,
+} from './import-common';
 
 /**
  * Configuration for import validation process.
@@ -78,17 +84,14 @@ export interface ValidationResult {
  * console.log(`Failed: ${result.failedChanges.length}`);
  * ```
  */
-export function validateImportResources(
-  resources: ImportedResource[],
-  config: ValidationConfig
-): ValidationResult {
+export function validateImportResources(resources: ImportedResource[], config: ValidationConfig): ValidationResult {
   const warnings: string[] = [];
   const errors: string[] = [];
   const failedChanges: ImportChange[] = [];
   const validResources: ImportedResource[] = [];
 
   // Detect duplicates
-  const keys = resources.map(r => r.key);
+  const keys = resources.map((r) => r.key);
   const duplicates = detectDuplicateKeys(keys);
   if (duplicates.size > 0) {
     for (const [key, count] of duplicates) {

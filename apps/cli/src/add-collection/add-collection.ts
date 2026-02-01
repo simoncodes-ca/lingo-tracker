@@ -1,4 +1,4 @@
-import prompts from 'prompts';
+import type prompts from 'prompts';
 import { CONFIG_FILENAME, addCollection, DEFAULT_CONFIG } from '@simoncodes-ca/core';
 import type { InitOptions } from '../types/init-options.js';
 import { loadConfiguration, ConsoleFormatter, ErrorMessages, executePromptsWithFallback } from '../utils';
@@ -52,7 +52,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'collectionName',
       message: 'Collection name',
-      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required')
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -61,7 +61,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'translationsFolder',
       message: 'Path to translations folder',
-      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required')
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -70,7 +70,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'exportFolder',
       message: 'Export folder',
-      initial: DEFAULT_CONFIG.exportFolder
+      initial: DEFAULT_CONFIG.exportFolder,
     });
   }
 
@@ -79,7 +79,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'importFolder',
       message: 'Import folder',
-      initial: DEFAULT_CONFIG.importFolder
+      initial: DEFAULT_CONFIG.importFolder,
     });
   }
 
@@ -89,7 +89,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       name: 'baseLocale',
       message: 'Base locale',
       initial: DEFAULT_CONFIG.baseLocale,
-      validate: (val) => (val && val.trim().length > 0 ? true : 'Required')
+      validate: (val) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -99,7 +99,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       name: 'locales',
       message: 'Supported locales (comma-separated)',
       initial: 'en,fr-ca,es,de',
-      separator: ','
+      separator: ',',
     });
   }
 
@@ -116,6 +116,6 @@ async function promptForMissing(options: InitOptions): Promise<{
     exportFolder: (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
     importFolder: (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
     baseLocale: (result.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
-    locales: (result.locales as string[]) ?? DEFAULT_CONFIG.locales
+    locales: (result.locales as string[]) ?? DEFAULT_CONFIG.locales,
   };
 }

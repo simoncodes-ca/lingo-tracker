@@ -43,9 +43,7 @@ export function getAllFoldersBottomUp(rootPath: string): string[] {
   collectFoldersRecursively(rootPath, 0);
 
   // Sort by depth descending (deepest folders first) for bottom-up processing
-  return foldersWithDepth
-    .sort((a, b) => b.depth - a.depth)
-    .map(folder => folder.path);
+  return foldersWithDepth.sort((a, b) => b.depth - a.depth).map((folder) => folder.path);
 }
 
 /**

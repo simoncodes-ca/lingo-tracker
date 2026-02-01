@@ -6,7 +6,7 @@ vi.mock('@simoncodes-ca/core', async () => {
   const actual = await vi.importActual('@simoncodes-ca/core');
   return {
     ...actual,
-    deleteCollectionByName: vi.fn()
+    deleteCollectionByName: vi.fn(),
   };
 });
 
@@ -29,66 +29,74 @@ describe('deleteCollectionCommand', () => {
     baseLocale: 'en',
     locales: ['en', 'fr'],
     collections: {
-      'Collection1': {
-        translationsFolder: 'src/i18n/collection1'
+      Collection1: {
+        translationsFolder: 'src/i18n/collection1',
       },
-      'Collection2': {
+      Collection2: {
         translationsFolder: 'src/i18n/collection2',
-        baseLocale: 'fr'
-      }
-    }
+        baseLocale: 'fr',
+      },
+    },
   };
 
   it('should delete specified collection from config', async () => {
     vi.mocked(loadConfiguration).mockReturnValue({
       config: mockConfig,
       configPath: '/test/project/.lingo-tracker.json',
-      cwd: '/test/project'
+      cwd: '/test/project',
     });
     vi.mocked(promptForCollection).mockResolvedValue('Collection1');
-    vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "Collection1" deleted successfully' });
+    vi.mocked(core.deleteCollectionByName).mockReturnValue({
+      message: 'Collection "Collection1" deleted successfully',
+    });
 
     const options = {
-      collectionName: 'Collection1'
+      collectionName: 'Collection1',
     };
 
     await deleteCollectionCommand(options);
 
-    expect(core.deleteCollectionByName).toHaveBeenCalledWith('Collection1', { cwd: '/test/project' });
+    expect(core.deleteCollectionByName).toHaveBeenCalledWith('Collection1', {
+      cwd: '/test/project',
+    });
   });
 
   it('should handle deletion of last remaining collection', async () => {
     const singleCollectionConfig = {
       ...mockConfig,
       collections: {
-        'OnlyCollection': {
-          translationsFolder: 'src/i18n'
-        }
-      }
+        OnlyCollection: {
+          translationsFolder: 'src/i18n',
+        },
+      },
     };
 
     vi.mocked(loadConfiguration).mockReturnValue({
       config: singleCollectionConfig,
       configPath: '/test/project/.lingo-tracker.json',
-      cwd: '/test/project'
+      cwd: '/test/project',
     });
     vi.mocked(promptForCollection).mockResolvedValue('OnlyCollection');
-    vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "OnlyCollection" deleted successfully' });
+    vi.mocked(core.deleteCollectionByName).mockReturnValue({
+      message: 'Collection "OnlyCollection" deleted successfully',
+    });
 
     const options = {
-      collectionName: 'OnlyCollection'
+      collectionName: 'OnlyCollection',
     };
 
     await deleteCollectionCommand(options);
 
-    expect(core.deleteCollectionByName).toHaveBeenCalledWith('OnlyCollection', { cwd: '/test/project' });
+    expect(core.deleteCollectionByName).toHaveBeenCalledWith('OnlyCollection', {
+      cwd: '/test/project',
+    });
   });
 
   it('should not write file if config does not exist', async () => {
     vi.mocked(loadConfiguration).mockReturnValue(null);
 
     const options = {
-      collectionName: 'Collection1'
+      collectionName: 'Collection1',
     };
 
     await deleteCollectionCommand(options);
@@ -100,7 +108,7 @@ describe('deleteCollectionCommand', () => {
     vi.mocked(loadConfiguration).mockReturnValue(null);
 
     const options = {
-      collectionName: 'Collection1'
+      collectionName: 'Collection1',
     };
 
     await deleteCollectionCommand(options);
@@ -111,18 +119,18 @@ describe('deleteCollectionCommand', () => {
   it('should not write file if no collections exist', async () => {
     const emptyCollectionsConfig = {
       ...mockConfig,
-      collections: {}
+      collections: {},
     };
 
     vi.mocked(loadConfiguration).mockReturnValue({
       config: emptyCollectionsConfig,
       configPath: '/test/project/.lingo-tracker.json',
-      cwd: '/test/project'
+      cwd: '/test/project',
     });
     vi.mocked(promptForCollection).mockResolvedValue(null);
 
     const options = {
-      collectionName: 'Collection1'
+      collectionName: 'Collection1',
     };
 
     await deleteCollectionCommand(options);
@@ -135,18 +143,18 @@ describe('deleteCollectionCommand', () => {
       exportFolder: 'dist/lingo-export',
       importFolder: 'dist/lingo-import',
       baseLocale: 'en',
-      locales: ['en', 'fr']
+      locales: ['en', 'fr'],
     };
 
     vi.mocked(loadConfiguration).mockReturnValue({
       config: noCollectionsConfig,
       configPath: '/test/project/.lingo-tracker.json',
-      cwd: '/test/project'
+      cwd: '/test/project',
     });
     vi.mocked(promptForCollection).mockResolvedValue(null);
 
     const options = {
-      collectionName: 'Collection1'
+      collectionName: 'Collection1',
     };
 
     await deleteCollectionCommand(options);
@@ -158,12 +166,12 @@ describe('deleteCollectionCommand', () => {
     vi.mocked(loadConfiguration).mockReturnValue({
       config: mockConfig,
       configPath: '/test/project/.lingo-tracker.json',
-      cwd: '/test/project'
+      cwd: '/test/project',
     });
     vi.mocked(promptForCollection).mockResolvedValue(null);
 
     const options = {
-      collectionName: 'NonExistentCollection'
+      collectionName: 'NonExistentCollection',
     };
 
     await deleteCollectionCommand(options);
@@ -175,48 +183,56 @@ describe('deleteCollectionCommand', () => {
     const singleCollectionConfig = {
       ...mockConfig,
       collections: {
-        'OnlyCollection': {
-          translationsFolder: 'src/i18n'
-        }
-      }
+        OnlyCollection: {
+          translationsFolder: 'src/i18n',
+        },
+      },
     };
 
     vi.mocked(loadConfiguration).mockReturnValue({
       config: singleCollectionConfig,
       configPath: '/test/project/.lingo-tracker.json',
-      cwd: '/test/project'
+      cwd: '/test/project',
     });
     vi.mocked(promptForCollection).mockResolvedValue('OnlyCollection');
-    vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "OnlyCollection" deleted successfully' });
+    vi.mocked(core.deleteCollectionByName).mockReturnValue({
+      message: 'Collection "OnlyCollection" deleted successfully',
+    });
 
     const options = {};
 
     await deleteCollectionCommand(options);
 
-    expect(core.deleteCollectionByName).toHaveBeenCalledWith('OnlyCollection', { cwd: '/test/project' });
+    expect(core.deleteCollectionByName).toHaveBeenCalledWith('OnlyCollection', {
+      cwd: '/test/project',
+    });
   });
 
   it('should preserve other config properties when deleting collection', async () => {
     const configWithExtraProps = {
       ...mockConfig,
       customProperty: 'customValue',
-      anotherProperty: 42
+      anotherProperty: 42,
     };
 
     vi.mocked(loadConfiguration).mockReturnValue({
       config: configWithExtraProps,
       configPath: '/test/project/.lingo-tracker.json',
-      cwd: '/test/project'
+      cwd: '/test/project',
     });
     vi.mocked(promptForCollection).mockResolvedValue('Collection1');
-    vi.mocked(core.deleteCollectionByName).mockReturnValue({ message: 'Collection "Collection1" deleted successfully' });
+    vi.mocked(core.deleteCollectionByName).mockReturnValue({
+      message: 'Collection "Collection1" deleted successfully',
+    });
 
     const options = {
-      collectionName: 'Collection1'
+      collectionName: 'Collection1',
     };
 
     await deleteCollectionCommand(options);
 
-    expect(core.deleteCollectionByName).toHaveBeenCalledWith('Collection1', { cwd: '/test/project' });
+    expect(core.deleteCollectionByName).toHaveBeenCalledWith('Collection1', {
+      cwd: '/test/project',
+    });
   });
 });

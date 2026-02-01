@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, type OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -6,8 +6,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { TranslocoModule } from '@jsverse/transloco';
-import { CollectionFormDialogData } from './collection-form-dialog-data';
-import { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
+import type { CollectionFormDialogData } from './collection-form-dialog-data';
+import type { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
 
 /**
@@ -94,15 +94,15 @@ export class CollectionFormDialog implements OnInit {
   }
 
   get dialogTitle(): string {
-    return this.isEditMode ? TRACKER_TOKENS.COLLECTIONS.DIALOG.EDIT.TITLE : TRACKER_TOKENS.COLLECTIONS.DIALOG.CREATE.TITLE;
+    return this.isEditMode
+      ? TRACKER_TOKENS.COLLECTIONS.DIALOG.EDIT.TITLE
+      : TRACKER_TOKENS.COLLECTIONS.DIALOG.CREATE.TITLE;
   }
 
   ngOnInit(): void {
     if (this.isEditMode && this.data.config) {
       // Pre-populate form for edit mode
-      const localesString = this.data.config.locales
-        ? this.data.config.locales.join(', ')
-        : '';
+      const localesString = this.data.config.locales ? this.data.config.locales.join(', ') : '';
 
       this.form.patchValue({
         name: this.data.name || '',

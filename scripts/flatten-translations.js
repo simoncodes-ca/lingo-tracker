@@ -31,11 +31,7 @@ function flattenTranslations(obj, currentPath = '') {
  * Determine if an object is a leaf node (has translation data).
  */
 function isLeafNode(value) {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'value' in value
-  );
+  return typeof value === 'object' && value !== null && 'value' in value;
 }
 
 /**
@@ -70,7 +66,7 @@ async function processFile(inputPath) {
     const flattened = flattenTranslations(parsedJson);
     const outputJson = JSON.stringify(flattened, null, 2);
 
-    await writeFile(outputPath, outputJson + '\n', 'utf-8');
+    await writeFile(outputPath, `${outputJson}\n`, 'utf-8');
     console.log(`Processing: ${inputPath} → ${outputPath}`);
   } catch (error) {
     if (error instanceof SyntaxError) {

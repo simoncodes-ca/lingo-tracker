@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import {
+import type { Observable } from 'rxjs';
+import type {
   ResourceTreeDto,
   SearchResultsDto,
   CacheStatusDto,
@@ -31,9 +31,7 @@ export class BrowserApiService {
    */
   getCacheStatus(collectionName: string): Observable<CacheStatusDto> {
     const encodedName = encodeURIComponent(collectionName);
-    return this.#http.get<CacheStatusDto>(
-      `${this.#baseUrl}/${encodedName}/resources/cache/status`
-    );
+    return this.#http.get<CacheStatusDto>(`${this.#baseUrl}/${encodedName}/resources/cache/status`);
   }
 
   /**
@@ -45,21 +43,12 @@ export class BrowserApiService {
    * @param includeNested - Whether to include nested resources in the resources array
    * @returns Observable of ResourceTreeDto
    */
-  getResourceTree(
-    collectionName: string,
-    path = '',
-    includeNested = false
-  ): Observable<ResourceTreeDto> {
+  getResourceTree(collectionName: string, path = '', includeNested = false): Observable<ResourceTreeDto> {
     const encodedName = encodeURIComponent(collectionName);
     const encodedPath = encodeURIComponent(path);
-    const params = new HttpParams()
-      .set('path', encodedPath)
-      .set('includeNested', includeNested.toString());
+    const params = new HttpParams().set('path', encodedPath).set('includeNested', includeNested.toString());
 
-    return this.#http.get<ResourceTreeDto>(
-      `${this.#baseUrl}/${encodedName}/resources/tree`,
-      { params }
-    );
+    return this.#http.get<ResourceTreeDto>(`${this.#baseUrl}/${encodedName}/resources/tree`, { params });
   }
 
   /**
@@ -70,20 +59,11 @@ export class BrowserApiService {
    * @param maxResults - Maximum results to return (default: 100)
    * @returns Observable of search results
    */
-  searchTranslations(
-    collectionName: string,
-    query: string,
-    maxResults = 100
-  ): Observable<SearchResultsDto> {
-    const params = new HttpParams()
-      .set('query', query)
-      .set('maxResults', maxResults.toString());
+  searchTranslations(collectionName: string, query: string, maxResults = 100): Observable<SearchResultsDto> {
+    const params = new HttpParams().set('query', query).set('maxResults', maxResults.toString());
 
     const encodedName = encodeURIComponent(collectionName);
-    return this.#http.get<SearchResultsDto>(
-      `${this.#baseUrl}/${encodedName}/resources/search`,
-      { params }
-    );
+    return this.#http.get<SearchResultsDto>(`${this.#baseUrl}/${encodedName}/resources/search`, { params });
   }
 
   /**
@@ -93,15 +73,9 @@ export class BrowserApiService {
    * @param dto - Resource creation data
    * @returns Observable of creation response
    */
-  createResource(
-    collectionName: string,
-    dto: CreateResourceDto
-  ): Observable<CreateResourceResponseDto> {
+  createResource(collectionName: string, dto: CreateResourceDto): Observable<CreateResourceResponseDto> {
     const encodedName = encodeURIComponent(collectionName);
-    return this.#http.post<CreateResourceResponseDto>(
-      `${this.#baseUrl}/${encodedName}/resources`,
-      dto
-    );
+    return this.#http.post<CreateResourceResponseDto>(`${this.#baseUrl}/${encodedName}/resources`, dto);
   }
 
   /**
@@ -111,15 +85,9 @@ export class BrowserApiService {
    * @param dto - Resource update data
    * @returns Observable of update response
    */
-  updateResource(
-    collectionName: string,
-    dto: UpdateResourceDto
-  ): Observable<UpdateResourceResponseDto> {
+  updateResource(collectionName: string, dto: UpdateResourceDto): Observable<UpdateResourceResponseDto> {
     const encodedName = encodeURIComponent(collectionName);
-    return this.#http.patch<UpdateResourceResponseDto>(
-      `${this.#baseUrl}/${encodedName}/resources`,
-      dto
-    );
+    return this.#http.patch<UpdateResourceResponseDto>(`${this.#baseUrl}/${encodedName}/resources`, dto);
   }
 
   /**
@@ -129,16 +97,11 @@ export class BrowserApiService {
    * @param resourceKeys - Array of resource keys to delete
    * @returns Observable of deletion response
    */
-  deleteResource(
-    collectionName: string,
-    resourceKeys: string[]
-  ): Observable<DeleteResourceResponseDto> {
+  deleteResource(collectionName: string, resourceKeys: string[]): Observable<DeleteResourceResponseDto> {
     const encodedName = encodeURIComponent(collectionName);
     const dto: DeleteResourceDto = { keys: resourceKeys };
-    return this.#http.request<DeleteResourceResponseDto>(
-      'DELETE',
-      `${this.#baseUrl}/${encodedName}/resources`,
-      { body: dto }
-    );
+    return this.#http.request<DeleteResourceResponseDto>('DELETE', `${this.#baseUrl}/${encodedName}/resources`, {
+      body: dto,
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TranslationList } from './translation-list';
 import { BrowserStore } from '../../store/browser.store';
-import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
 
 describe('TranslationList', () => {
@@ -15,10 +15,7 @@ describe('TranslationList', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationList,
-        getTranslocoTestingModule(),
-      ],
+      imports: [TranslationList, getTranslocoTestingModule()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -50,7 +47,7 @@ describe('TranslationList', () => {
     const store = TestBed.inject(BrowserStore);
     store.setSelectedCollection({
       collectionName: 'test',
-      locales: ['en', 'es', 'fr']
+      locales: ['en', 'es', 'fr'],
     });
 
     fixture.componentRef.setInput('collectionName', 'test');
@@ -85,10 +82,7 @@ describe('TranslationList - Copy to Clipboard', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationList,
-        getTranslocoTestingModule(),
-      ],
+      imports: [TranslationList, getTranslocoTestingModule()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -112,7 +106,7 @@ describe('TranslationList - Copy to Clipboard', () => {
     expect(snackBarSpy.open).toHaveBeenCalledWith(
       'Copied to clipboard',
       '',
-      expect.objectContaining({ duration: 2000 })
+      expect.objectContaining({ duration: 2000 }),
     );
   });
 
@@ -125,11 +119,7 @@ describe('TranslationList - Copy to Clipboard', () => {
     component.handleCopyKey('test.key');
     await Promise.resolve(); // Wait for clipboard promise to reject
 
-    expect(snackBarSpy.open).toHaveBeenCalledWith(
-      'Failed to copy',
-      '',
-      expect.objectContaining({ duration: 2000 })
-    );
+    expect(snackBarSpy.open).toHaveBeenCalledWith('Failed to copy', '', expect.objectContaining({ duration: 2000 }));
   });
 });
 
@@ -138,10 +128,7 @@ describe('TranslationList - Loading and Error States', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationList,
-        getTranslocoTestingModule(),
-      ],
+      imports: [TranslationList, getTranslocoTestingModule()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -200,7 +187,10 @@ describe('TranslationList - Loading and Error States', () => {
     store.selectFolder('test-folder');
 
     const req = httpMock.expectOne('/api/collections/test/resources/tree?path=test-folder&includeNested=true');
-    req.error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
+    req.error(new ProgressEvent('error'), {
+      status: 500,
+      statusText: 'Server Error',
+    });
 
     fixture.detectChanges();
 
@@ -215,10 +205,7 @@ describe('TranslationList - Virtual Scrolling', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationList,
-        getTranslocoTestingModule(),
-      ],
+      imports: [TranslationList, getTranslocoTestingModule()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -290,10 +277,7 @@ describe('TranslationList - Locale Filtering', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationList,
-        getTranslocoTestingModule(),
-      ],
+      imports: [TranslationList, getTranslocoTestingModule()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),

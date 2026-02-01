@@ -1,11 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import {
-  LingoTrackerConfigDto,
-  CreateCollectionDto,
-  UpdateCollectionDto,
-} from '@simoncodes-ca/data-transfer';
+import type { Observable } from 'rxjs';
+import type { LingoTrackerConfigDto, CreateCollectionDto, UpdateCollectionDto } from '@simoncodes-ca/data-transfer';
 
 /**
  * Service for making API calls related to collections management.
@@ -27,13 +23,8 @@ export class CollectionsApiService {
   /**
    * Creates a new collection.
    */
-  createCollection(
-    data: CreateCollectionDto
-  ): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(
-      `${this.apiBase}/collections`,
-      data
-    );
+  createCollection(data: CreateCollectionDto): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiBase}/collections`, data);
   }
 
   /**
@@ -41,14 +32,8 @@ export class CollectionsApiService {
    * @param name Current collection name (URI encoded by HttpClient)
    * @param data Update payload with optional new name and collection config
    */
-  updateCollection(
-    name: string,
-    data: UpdateCollectionDto
-  ): Observable<{ message: string }> {
-    return this.http.put<{ message: string }>(
-      `${this.apiBase}/collections/${encodeURIComponent(name)}`,
-      data
-    );
+  updateCollection(name: string, data: UpdateCollectionDto): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${this.apiBase}/collections/${encodeURIComponent(name)}`, data);
   }
 
   /**
@@ -56,8 +41,6 @@ export class CollectionsApiService {
    * @param name Collection name to delete (URI encoded by HttpClient)
    */
   deleteCollection(name: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string}>(
-      `${this.apiBase}/collections/${encodeURIComponent(name)}`
-    );
+    return this.http.delete<{ message: string }>(`${this.apiBase}/collections/${encodeURIComponent(name)}`);
   }
 }

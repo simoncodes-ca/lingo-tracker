@@ -1,4 +1,4 @@
-import { ImportedResource } from './types';
+import type { ImportedResource } from './types';
 
 /**
  * Detects whether a string contains Transloco-style reference patterns.
@@ -67,8 +67,9 @@ export function extractReferences(value: string): Array<{ pattern: string; key: 
 
   // Pattern 1: {{t('key')}} or {{t("key")}}
   const functionPattern = /\{\{t\(['"]([^'"]+)['"]\)\}\}/g;
-  let match;
+  let match: RegExpExecArray | null;
 
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec while loop pattern
   while ((match = functionPattern.exec(value)) !== null) {
     results.push({
       pattern: match[0],
@@ -82,6 +83,7 @@ export function extractReferences(value: string): Array<{ pattern: string; key: 
   // Pattern 2: {{key}}
   const directPattern = /\{\{([^}]+)\}\}/g;
 
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec while loop pattern
   while ((match = directPattern.exec(value)) !== null) {
     const content = match[1];
     // Skip if it's a t() function call (already handled)
@@ -103,7 +105,7 @@ function resolveKey(
   key: string,
   resourceMap: Map<string, string>,
   visited: Set<string>,
-  warnings: string[]
+  warnings: string[],
 ): string | null {
   // Check for circular reference
   if (visited.has(key)) {
@@ -193,7 +195,7 @@ export function resolveReferences(
   value: string,
   resourceMap: Map<string, string>,
   visited: Set<string> = new Set(),
-  warnings: string[] = []
+  warnings: string[] = [],
 ): string {
   if (!hasReferences(value)) {
     return value;
@@ -274,7 +276,7 @@ export function resolveReferences(
 export function resolveAllReferences(
   resources: ImportedResource[],
   applyResolution: boolean,
-  warnings: string[]
+  warnings: string[],
 ): ImportedResource[] {
   if (!applyResolution) {
     return resources;

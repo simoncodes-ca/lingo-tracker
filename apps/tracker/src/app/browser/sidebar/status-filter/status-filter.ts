@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { BrowserStore } from '../../store/browser.store';
-import { TranslationStatus } from '@simoncodes-ca/data-transfer';
+import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
 
 /**
  * StatusFilter component provides a dropdown for filtering
@@ -25,13 +25,7 @@ import { TranslationStatus } from '@simoncodes-ca/data-transfer';
   selector: 'app-status-filter',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    MatButtonModule,
-    MatIconModule,
-    MatMenuModule,
-    MatCheckboxModule,
-  ],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatMenuModule, MatCheckboxModule],
   templateUrl: './status-filter.html',
   styleUrl: './status-filter.scss',
 })
@@ -41,8 +35,16 @@ export class StatusFilter {
   readonly statusConfig: Record<TranslationStatus, { label: string; icon: string; color: string }> = {
     new: { label: 'New', icon: 'add_circle', color: '#f97316' },
     stale: { label: 'Stale', icon: 'warning', color: 'var(--color-warning)' },
-    translated: { label: 'Translated', icon: 'language', color: 'var(--color-info)' },
-    verified: { label: 'Verified', icon: 'check_circle', color: 'var(--color-success)' },
+    translated: {
+      label: 'Translated',
+      icon: 'language',
+      color: 'var(--color-info)',
+    },
+    verified: {
+      label: 'Verified',
+      icon: 'check_circle',
+      color: 'var(--color-success)',
+    },
   };
 
   readonly statuses: TranslationStatus[] = ['new', 'stale', 'translated', 'verified'];

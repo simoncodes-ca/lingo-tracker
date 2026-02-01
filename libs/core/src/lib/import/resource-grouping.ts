@@ -1,5 +1,5 @@
 import { resolve, join } from 'path';
-import { ImportedResource } from './types';
+import type { ImportedResource } from './types';
 import { splitResolvedKey } from '../../resource/resource-key';
 import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
 
@@ -92,16 +92,14 @@ export interface ResourceGroup {
 export function groupResourcesByFolder(
   resources: ImportedResource[],
   translationsFolder: string,
-  cwd: string
+  cwd: string,
 ): Map<string, ResourceGroup> {
   const groups = new Map<string, ResourceGroup>();
 
   for (const resource of resources) {
     const { folderPath: pathSegments, entryKey } = splitResolvedKey(resource.key);
 
-    const fullFolderPath = pathSegments.length
-      ? join(translationsFolder, ...pathSegments)
-      : translationsFolder;
+    const fullFolderPath = pathSegments.length ? join(translationsFolder, ...pathSegments) : translationsFolder;
 
     const entryResourcePath = resolve(cwd, fullFolderPath, RESOURCE_ENTRIES_FILENAME);
     const entryMetaPath = resolve(cwd, fullFolderPath, TRACKER_META_FILENAME);

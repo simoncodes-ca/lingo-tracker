@@ -12,7 +12,7 @@ export async function deleteCollectionCommand(options: DeleteCollectionOptions):
 
   const collectionName = await promptForCollection(config, options.collectionName);
   if (!collectionName) return;
-  
+
   try {
     const result = deleteCollectionByName(collectionName, { cwd });
     console.log(result.message);

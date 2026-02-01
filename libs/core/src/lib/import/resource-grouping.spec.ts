@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { groupResourcesByFolder } from './resource-grouping';
-import { ImportedResource } from './types';
+import type { ImportedResource } from './types';
 
 describe('groupResourcesByFolder', () => {
   it('should group resources by their folder path', () => {
@@ -67,9 +67,7 @@ describe('groupResourcesByFolder', () => {
   });
 
   it('should create correct file paths', () => {
-    const resources: ImportedResource[] = [
-      { key: 'common.ok', value: 'OK' },
-    ];
+    const resources: ImportedResource[] = [{ key: 'common.ok', value: 'OK' }];
 
     const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
 
@@ -103,7 +101,7 @@ describe('groupResourcesByFolder', () => {
         baseValue: 'OK',
         comment: 'Button text',
         tags: ['buttons'],
-        status: 'translated'
+        status: 'translated',
       },
     ];
 

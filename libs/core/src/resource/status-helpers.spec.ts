@@ -6,7 +6,7 @@ import {
   createTranslatedMetadata,
   updateMetadataForBaseChange,
 } from './status-helpers';
-import { SafeAny } from '../constants';
+import type { SafeAny } from '../constants';
 
 describe('Status Helpers', () => {
   describe('getInitialStatus', () => {
@@ -57,10 +57,7 @@ describe('Status Helpers', () => {
 
   describe('createTranslatedMetadata', () => {
     it('should create metadata with checksum, baseChecksum, and status', () => {
-      const metadata = createTranslatedMetadata(
-        'trans-checksum',
-        'base-checksum'
-      );
+      const metadata = createTranslatedMetadata('trans-checksum', 'base-checksum');
       expect(metadata).toEqual({
         checksum: 'trans-checksum',
         baseChecksum: 'base-checksum',
@@ -136,10 +133,7 @@ describe('Status Helpers', () => {
       expect(translatedMetadata.status).toBe('translated');
 
       // Step 3: Base value changes
-      const staleMetadata = updateMetadataForBaseChange(
-        translatedMetadata,
-        'base-v2'
-      );
+      const staleMetadata = updateMetadataForBaseChange(translatedMetadata, 'base-v2');
       expect(staleMetadata.status).toBe('stale');
       expect(staleMetadata.baseChecksum).toBe('base-v2');
     });

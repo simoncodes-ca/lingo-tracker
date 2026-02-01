@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateValidationSummary } from './generate-validation-summary';
-import { ResourceValidationResult, ValidationOptions, ResourceValidationDetail } from './types';
+import type { ResourceValidationResult, ValidationOptions, ResourceValidationDetail } from './types';
 
 describe('generateValidationSummary', () => {
   const defaultOptions: ValidationOptions = {
@@ -323,8 +323,12 @@ describe('generateValidationSummary', () => {
 
       const summary = generateValidationSummary(result, defaultOptions);
 
-      expect(summary).toContain('app.features.authentication.passwordReset.confirmationMessages.success.withEmailSentNotification');
-      expect(summary).toContain('app.features.authentication.passwordReset.confirmationMessages.failure.withRetryInstructions');
+      expect(summary).toContain(
+        'app.features.authentication.passwordReset.confirmationMessages.success.withEmailSentNotification',
+      );
+      expect(summary).toContain(
+        'app.features.authentication.passwordReset.confirmationMessages.failure.withRetryInstructions',
+      );
       expect(summary).toContain('❌ Failures (2)');
     });
   });
@@ -413,9 +417,24 @@ describe('generateValidationSummary', () => {
   describe('multi-collection scenarios', () => {
     it('should show collection names in failure details', () => {
       const failures = [
-        { key: 'resource-1', locale: 'es', collection: 'main', status: 'new' as const },
-        { key: 'resource-2', locale: 'es', collection: 'admin', status: 'stale' as const },
-        { key: 'resource-3', locale: 'es', collection: 'auth', status: 'new' as const },
+        {
+          key: 'resource-1',
+          locale: 'es',
+          collection: 'main',
+          status: 'new' as const,
+        },
+        {
+          key: 'resource-2',
+          locale: 'es',
+          collection: 'admin',
+          status: 'stale' as const,
+        },
+        {
+          key: 'resource-3',
+          locale: 'es',
+          collection: 'auth',
+          status: 'new' as const,
+        },
       ];
 
       const result: ResourceValidationResult = {
@@ -445,8 +464,18 @@ describe('generateValidationSummary', () => {
 
     it('should show collection names in warning details', () => {
       const warnings = [
-        { key: 'resource-1', locale: 'es', collection: 'main', status: 'translated' as const },
-        { key: 'resource-2', locale: 'es', collection: 'feature-x', status: 'translated' as const },
+        {
+          key: 'resource-1',
+          locale: 'es',
+          collection: 'main',
+          status: 'translated' as const,
+        },
+        {
+          key: 'resource-2',
+          locale: 'es',
+          collection: 'feature-x',
+          status: 'translated' as const,
+        },
       ];
 
       const result: ResourceValidationResult = {
@@ -624,8 +653,18 @@ describe('generateValidationSummary', () => {
 
     it('should use appropriate emojis for visual indicators', () => {
       const failures = [
-        { key: 'new-resource', locale: 'es', collection: 'main', status: 'new' as const },
-        { key: 'stale-resource', locale: 'es', collection: 'main', status: 'stale' as const },
+        {
+          key: 'new-resource',
+          locale: 'es',
+          collection: 'main',
+          status: 'new' as const,
+        },
+        {
+          key: 'stale-resource',
+          locale: 'es',
+          collection: 'main',
+          status: 'stale' as const,
+        },
       ];
 
       const result: ResourceValidationResult = {
@@ -711,7 +750,12 @@ describe('generateValidationSummary', () => {
 
     it('should handle single resource scenarios', () => {
       const failures: ResourceValidationDetail[] = [
-        { key: 'single.resource', locale: 'es', collection: 'main', status: 'new' },
+        {
+          key: 'single.resource',
+          locale: 'es',
+          collection: 'main',
+          status: 'new',
+        },
       ];
 
       const result: ResourceValidationResult = {
@@ -740,8 +784,18 @@ describe('generateValidationSummary', () => {
 
     it('should handle resources with special characters in keys', () => {
       const failures: ResourceValidationDetail[] = [
-        { key: 'resource.with-dashes_and_underscores.and.dots', locale: 'es', collection: 'main', status: 'new' },
-        { key: 'resource.with.numbers.123.in.key', locale: 'es', collection: 'main', status: 'stale' },
+        {
+          key: 'resource.with-dashes_and_underscores.and.dots',
+          locale: 'es',
+          collection: 'main',
+          status: 'new',
+        },
+        {
+          key: 'resource.with.numbers.123.in.key',
+          locale: 'es',
+          collection: 'main',
+          status: 'stale',
+        },
       ];
 
       const result: ResourceValidationResult = {
@@ -783,7 +837,7 @@ function createResourceDetails(
   status: 'new' | 'translated' | 'stale' | 'verified',
   count: number,
   locale: string,
-  collection: string
+  collection: string,
 ): ResourceValidationDetail[] {
   return Array.from({ length: count }, (_, i) => ({
     key: `resource-${i}`,

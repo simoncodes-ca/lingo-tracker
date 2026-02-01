@@ -10,7 +10,10 @@ describe('deleteResource', () => {
   });
 
   it('should delete existing resource successfully', () => {
-    const resourceEntries = { ok: { source: 'OK' }, cancel: { source: 'Cancel' } };
+    const resourceEntries = {
+      ok: { source: 'OK' },
+      cancel: { source: 'Cancel' },
+    };
     const trackerMeta = {
       ok: { en: { checksum: 'abc123' } },
       cancel: { en: { checksum: 'def456' } },
@@ -100,7 +103,10 @@ describe('deleteResource', () => {
   });
 
   it('should preserve JSON files when other entries remain', () => {
-    const resourceEntries = { ok: { source: 'OK' }, cancel: { source: 'Cancel' } };
+    const resourceEntries = {
+      ok: { source: 'OK' },
+      cancel: { source: 'Cancel' },
+    };
     const trackerMeta = {
       ok: { en: { checksum: 'abc123' } },
       cancel: { en: { checksum: 'def456' } },
@@ -137,7 +143,9 @@ describe('deleteResource', () => {
     });
     vi.mocked(fs.unlinkSync).mockImplementation(() => undefined);
 
-    const result = deleteResource('translations', { keys: ['apps.common.buttons.ok'] });
+    const result = deleteResource('translations', {
+      keys: ['apps.common.buttons.ok'],
+    });
 
     expect(result.entriesDeleted).toBe(1);
     expect(result.errors).toBeUndefined();
@@ -170,7 +178,7 @@ describe('deleteResource', () => {
       const resourceEntries = {
         ok: { source: 'OK' },
         cancel: { source: 'Cancel' },
-        save: { source: 'Save' }
+        save: { source: 'Save' },
       };
       const trackerMeta = {
         ok: { en: { checksum: 'abc123' } },
@@ -188,7 +196,7 @@ describe('deleteResource', () => {
       vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
 
       const result = deleteResource('translations', {
-        keys: ['app.button.ok', 'app.button.cancel']
+        keys: ['app.button.ok', 'app.button.cancel'],
       });
 
       expect(result.entriesDeleted).toBe(2);
@@ -197,7 +205,10 @@ describe('deleteResource', () => {
     });
 
     it('should handle partial failures (some valid, some invalid keys)', () => {
-      const resourceEntries = { ok: { source: 'OK' }, cancel: { source: 'Cancel' } };
+      const resourceEntries = {
+        ok: { source: 'OK' },
+        cancel: { source: 'Cancel' },
+      };
       const trackerMeta = {
         ok: { en: { checksum: 'abc123' } },
         cancel: { en: { checksum: 'def456' } },
@@ -213,7 +224,7 @@ describe('deleteResource', () => {
       vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
 
       const result = deleteResource('translations', {
-        keys: ['app.button.ok', 'invalid key!', 'app.button.cancel']
+        keys: ['app.button.ok', 'invalid key!', 'app.button.cancel'],
       });
 
       expect(result.entriesDeleted).toBe(2);
@@ -232,7 +243,7 @@ describe('deleteResource', () => {
 
     it('should handle all keys invalid scenario', () => {
       const result = deleteResource('translations', {
-        keys: ['invalid key!', 'another bad@key', 'bad#key']
+        keys: ['invalid key!', 'another bad@key', 'bad#key'],
       });
 
       expect(result.entriesDeleted).toBe(0);
@@ -257,7 +268,7 @@ describe('deleteResource', () => {
       vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
 
       const result = deleteResource('translations', {
-        keys: ['app.button.ok', 'app.button.notfound', 'app.button.missing']
+        keys: ['app.button.ok', 'app.button.notfound', 'app.button.missing'],
       });
 
       expect(result.entriesDeleted).toBe(1);
@@ -274,10 +285,13 @@ describe('deleteResource', () => {
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockImplementation((path) => {
         callCount.readCount++;
-        const resourceEntries = { ok: { source: 'OK' }, cancel: { source: 'Cancel' } };
+        const resourceEntries = {
+          ok: { source: 'OK' },
+          cancel: { source: 'Cancel' },
+        };
         const trackerMeta = {
           ok: { en: { checksum: 'abc123' } },
-          cancel: { en: { checksum: 'def456' } }
+          cancel: { en: { checksum: 'def456' } },
         };
 
         if (path.toString().includes('resource_entries.json')) {
@@ -290,7 +304,7 @@ describe('deleteResource', () => {
       });
 
       const result = deleteResource('translations', {
-        keys: ['app.button.ok', 'common.label.cancel']
+        keys: ['app.button.ok', 'common.label.cancel'],
       });
 
       expect(result.entriesDeleted).toBe(2);
@@ -301,7 +315,7 @@ describe('deleteResource', () => {
   describe('Security', () => {
     it('should reject invalid keys with path traversal characters', () => {
       const result = deleteResource('translations', {
-        keys: ['../secret.key']
+        keys: ['../secret.key'],
       });
 
       expect(result.entriesDeleted).toBe(0);
@@ -312,7 +326,7 @@ describe('deleteResource', () => {
 
     it('should NOT attempt to delete files for invalid paths', () => {
       deleteResource('translations', {
-        keys: ['../secret.key']
+        keys: ['../secret.key'],
       });
 
       expect(vi.mocked(fs.unlinkSync)).not.toHaveBeenCalled();

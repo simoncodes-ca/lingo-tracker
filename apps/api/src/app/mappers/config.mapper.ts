@@ -1,11 +1,11 @@
-import { LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
-import { LingoTrackerConfigDto, LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
+import type { LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
+import type { LingoTrackerConfigDto, LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 import { mapCollectionToDto } from './collection.mapper';
 
-function mapConfigCollections(collections: Record<string, LingoTrackerCollection>): Record<string, LingoTrackerCollectionDto> {
-  return Object.fromEntries(
-    Object.entries(collections).map(([name, col]) => [name, mapCollectionToDto(col)])
-  );
+function mapConfigCollections(
+  collections: Record<string, LingoTrackerCollection>,
+): Record<string, LingoTrackerCollectionDto> {
+  return Object.fromEntries(Object.entries(collections).map(([name, col]) => [name, mapCollectionToDto(col)]));
 }
 
 export function mapConfigToDto(config: LingoTrackerConfig): LingoTrackerConfigDto {
@@ -17,5 +17,3 @@ export function mapConfigToDto(config: LingoTrackerConfig): LingoTrackerConfigDt
     collections: mapConfigCollections(config.collections),
   };
 }
-
-

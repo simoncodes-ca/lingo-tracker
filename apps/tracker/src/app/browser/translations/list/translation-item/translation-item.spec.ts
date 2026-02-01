@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TranslationItem } from './translation-item';
-import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
 
 describe('TranslationItem', () => {
@@ -25,14 +25,8 @@ describe('TranslationItem', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationItem,
-        getTranslocoTestingModule(),
-      ],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      imports: [TranslationItem, getTranslocoTestingModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
@@ -138,14 +132,8 @@ describe('TranslationItem - Compact helpers', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationItem,
-        getTranslocoTestingModule(),
-      ],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      imports: [TranslationItem, getTranslocoTestingModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
@@ -246,10 +234,7 @@ describe('TranslationItem - Full density expansion', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TranslationItem, getTranslocoTestingModule()],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);

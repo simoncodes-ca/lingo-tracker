@@ -19,10 +19,7 @@ import type { LingoTrackerConfig } from '@simoncodes-ca/core';
  * const collection = await promptForCollection(config, options.collection);
  * if (!collection) return;
  */
-export async function promptForCollection(
-  config: LingoTrackerConfig,
-  currentValue?: string
-): Promise<string | null> {
+export async function promptForCollection(config: LingoTrackerConfig, currentValue?: string): Promise<string | null> {
   const collections = Object.keys(config.collections || {});
 
   // No collections available
@@ -51,7 +48,7 @@ export async function promptForCollection(
     type: 'select',
     name: 'collection',
     message: 'Select collection',
-    choices: collections.map(name => ({ title: name, value: name })),
+    choices: collections.map((name) => ({ title: name, value: name })),
   });
 
   return result.collection;

@@ -27,11 +27,8 @@ declare module 'xliff' {
   export function jsToXliff12(
     data: XliffData,
     options: XliffOptions,
-    callback: (err: Error | null, result: string) => void
+    callback: (err: Error | null, result: string) => void,
   ): void;
 
-  export function xliff12ToJs(
-    xliff: string,
-    callback: (err: Error | null, result: XliffData) => void
-  ): void;
+  export function xliff12ToJs(xliff: string, callback: (err: Error | null, result: XliffData) => void): void;
 }

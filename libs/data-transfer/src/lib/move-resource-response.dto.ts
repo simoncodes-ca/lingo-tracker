@@ -1,5 +1,5 @@
 export interface MoveResourceResponseDto {
-    movedCount: number;
-    warnings?: string[];
-    errors?: string[];
+  movedCount: number;
+  warnings?: string[];
+  errors?: string[];
 }

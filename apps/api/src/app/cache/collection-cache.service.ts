@@ -76,7 +76,7 @@ export class CollectionCacheService {
     status: CacheStatus,
     tree?: ResourceTreeNode,
     error?: string,
-    localeCount?: number
+    localeCount?: number,
   ): void {
     if (this.#cachedCollection && this.#cachedCollection.collectionName !== collectionName) {
       this.#logger.log(`Clearing cache for previous collection: ${this.#cachedCollection.collectionName}`);
@@ -118,11 +118,7 @@ export class CollectionCacheService {
     }
   }
 
-  async indexCollection(
-    collectionName: string,
-    translationsFolder: string,
-    localeCount?: number
-  ): Promise<void> {
+  async indexCollection(collectionName: string, translationsFolder: string, localeCount?: number): Promise<void> {
     const currentStatus = this.getCacheStatus(collectionName);
 
     if (currentStatus === CacheStatus.INDEXING) {
@@ -149,7 +145,9 @@ export class CollectionCacheService {
 
       if (this.#cachedCollection?.collectionName !== indexingCollectionName) {
         this.#logger.log(
-          `Discarding indexing results for ${indexingCollectionName} - collection changed to ${this.#cachedCollection?.collectionName ?? 'none'}`
+          `Discarding indexing results for ${indexingCollectionName} - collection changed to ${
+            this.#cachedCollection?.collectionName ?? 'none'
+          }`,
         );
         return;
       }
@@ -161,12 +159,14 @@ export class CollectionCacheService {
 
       this.#logger.error(
         `Failed to index collection ${indexingCollectionName} after ${duration}ms: ${errorMessage}`,
-        error instanceof Error ? error.stack : undefined
+        error instanceof Error ? error.stack : undefined,
       );
 
       if (this.#cachedCollection?.collectionName !== indexingCollectionName) {
         this.#logger.log(
-          `Discarding error state for ${indexingCollectionName} - collection changed to ${this.#cachedCollection?.collectionName ?? 'none'}`
+          `Discarding error state for ${indexingCollectionName} - collection changed to ${
+            this.#cachedCollection?.collectionName ?? 'none'
+          }`,
         );
         return;
       }

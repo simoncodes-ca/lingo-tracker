@@ -27,7 +27,7 @@ export const ALL_ITEMS_SENTINEL = '__ALL__';
  */
 export function processMultiselectWithAll(
   selectedValues: string[] | undefined,
-  _allAvailableItems: string[]
+  _allAvailableItems: string[],
 ): string[] | undefined {
   if (!selectedValues || selectedValues.length === 0) {
     return undefined;
@@ -51,9 +51,7 @@ export function processMultiselectWithAll(
  * multiselectResultToString(["en", "fr"]) → "en,fr"
  * multiselectResultToString([]) → undefined
  */
-export function multiselectResultToString(
-  items: string[] | undefined
-): string | undefined {
+export function multiselectResultToString(items: string[] | undefined): string | undefined {
   if (!items || items.length === 0) {
     return undefined;
   }
@@ -109,9 +107,7 @@ export interface PromptExecutionOptions {
  *   operationName: 'Add resource'
  * });
  */
-export async function executePromptsWithFallback(
-  params: PromptExecutionOptions
-): Promise<Record<string, unknown>> {
+export async function executePromptsWithFallback(params: PromptExecutionOptions): Promise<Record<string, unknown>> {
   const { questions, currentValues, requiredFields, operationName } = params;
 
   // No questions needed - return current values
@@ -125,7 +121,7 @@ export async function executePromptsWithFallback(
       onCancel: () => {
         const opName = operationName || 'Operation';
         throw new Error(`${opName} cancelled`);
-      }
+      },
     });
 
     return { ...currentValues, ...result };
@@ -134,12 +130,10 @@ export async function executePromptsWithFallback(
   // Non-interactive mode - validate required fields
   if (requiredFields) {
     const missing = requiredFields.filter(
-      field => currentValues[field] === undefined || currentValues[field] === null
+      (field) => currentValues[field] === undefined || currentValues[field] === null,
     );
     if (missing.length > 0) {
-      throw new Error(
-        `Missing required options in non-interactive mode: ${missing.map(f => `--${f}`).join(', ')}`
-      );
+      throw new Error(`Missing required options in non-interactive mode: ${missing.map((f) => `--${f}`).join(', ')}`);
     }
   }
 

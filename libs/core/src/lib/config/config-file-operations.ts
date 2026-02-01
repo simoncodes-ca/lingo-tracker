@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { LingoTrackerConfig } from '../../config/lingo-tracker-config';
+import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { CONFIG_FILENAME } from '../../constants';
 import { readLingoConfig, writeJsonFile } from '../file-io/json-file-operations';
 
@@ -23,9 +23,7 @@ export interface ConfigFileParams {
  * Creates a configuration file operations object.
  * Provides a clean interface for reading and writing config files.
  */
-export function createConfigFileOperations(
-  params: ConfigFileParams = {}
-): ConfigFileOperations {
+export function createConfigFileOperations(params: ConfigFileParams = {}): ConfigFileOperations {
   const cwd = params.cwd ?? process.cwd();
   const validate = params.validate ?? true;
   const configPath = resolve(cwd, CONFIG_FILENAME);
@@ -95,7 +93,7 @@ function validateConfig(config: LingoTrackerConfig): void {
  */
 export function updateConfig(
   updater: (config: LingoTrackerConfig) => LingoTrackerConfig,
-  cwd?: string
+  cwd?: string,
 ): LingoTrackerConfig {
   return createConfigFileOperations({ cwd }).update(updater);
 }

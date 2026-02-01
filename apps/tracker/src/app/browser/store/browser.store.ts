@@ -1,14 +1,8 @@
 import { computed, inject, effect } from '@angular/core';
-import {
-  signalStore,
-  withState,
-  withComputed,
-  withMethods,
-  patchState,
-} from '@ngrx/signals';
+import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, tap, switchMap, catchError, of, interval, takeWhile, startWith } from 'rxjs';
-import {
+import type {
   FolderNodeDto,
   ResourceSummaryDto,
   SearchResultDto,
@@ -114,138 +108,156 @@ function arraysEqual(a: string[], b: string[]): boolean {
 export const BrowserStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ rootFolders, folderTreeFilter, currentFolderPath, isFolderTreeLoading, isTranslationsLoading, translations, availableLocales, selectedLocales, baseLocale, isSearchMode, searchResults, cacheStatus, densityMode, sortField, sortDirection, selectedStatuses, collectionStats }) => ({
-    filteredFolders: computed(() => {
-      const filter = folderTreeFilter().toLowerCase().trim();
-      if (!filter) return rootFolders();
+  withComputed(
+    ({
+      rootFolders,
+      folderTreeFilter,
+      currentFolderPath,
+      isFolderTreeLoading,
+      isTranslationsLoading,
+      translations,
+      availableLocales,
+      selectedLocales,
+      baseLocale,
+      isSearchMode,
+      searchResults,
+      cacheStatus,
+      densityMode,
+      sortField,
+      sortDirection,
+      selectedStatuses,
+      collectionStats,
+    }) => ({
+      filteredFolders: computed(() => {
+        const filter = folderTreeFilter().toLowerCase().trim();
+        if (!filter) return rootFolders();
 
-      const matchesFilter = (folder: FolderNodeDto): boolean =>
-        folder.name.toLowerCase().includes(filter) || folder.fullPath.toLowerCase().includes(filter);
+        const matchesFilter = (folder: FolderNodeDto): boolean =>
+          folder.name.toLowerCase().includes(filter) || folder.fullPath.toLowerCase().includes(filter);
 
-      const filterTree = (folders: FolderNodeDto[]): FolderNodeDto[] =>
-        folders.reduce<FolderNodeDto[]>((acc, folder) => {
-          const folderMatches = matchesFilter(folder);
-          const childrenMatch = folder.tree?.children ? filterTree(folder.tree.children) : [];
+        const filterTree = (folders: FolderNodeDto[]): FolderNodeDto[] =>
+          folders.reduce<FolderNodeDto[]>((acc, folder) => {
+            const folderMatches = matchesFilter(folder);
+            const childrenMatch = folder.tree?.children ? filterTree(folder.tree.children) : [];
 
-          if (folderMatches || childrenMatch.length > 0) {
-            acc.push({
-              ...folder,
-              tree: folder.tree ? { ...folder.tree, children: childrenMatch } : undefined,
+            if (folderMatches || childrenMatch.length > 0) {
+              acc.push({
+                ...folder,
+                tree: folder.tree ? { ...folder.tree, children: childrenMatch } : undefined,
+              });
+            }
+
+            return acc;
+          }, []);
+
+        return filterTree(rootFolders());
+      }),
+
+      breadcrumbs: computed(() => {
+        const path = currentFolderPath();
+        if (!path) return [];
+        return path.split('.');
+      }),
+
+      isLoading: computed(() => isFolderTreeLoading() || isTranslationsLoading()),
+
+      isEmpty: computed(() => translations().length === 0),
+
+      translationCount: computed(() => translations().length),
+
+      hasTranslations: computed(() => translations().length > 0),
+
+      isShowingAllLocales: computed(() => {
+        const selected = selectedLocales();
+        const available = availableLocales();
+        return selected.length === 0 || selected.length === available.length;
+      }),
+
+      localeFilterText: computed(() => {
+        const selected = selectedLocales();
+        const available = availableLocales();
+
+        if (selected.length === 0 || selected.length === available.length) return 'All locales';
+        if (selected.length === 1) return selected[0];
+        return `${selected.length} locales`;
+      }),
+
+      filteredLocales: computed(() => {
+        const selected = selectedLocales();
+        const available = availableLocales();
+        const base = baseLocale();
+
+        const result: string[] = base ? [base] : [];
+        const nonBaseAvailable = available.filter((locale) => locale !== base);
+        const selectedNonBase = selected.filter((locale) => locale !== base);
+
+        if (selected.length === 0) result.push(...nonBaseAvailable);
+        else result.push(...selectedNonBase);
+
+        return result;
+      }),
+
+      filterableLocales: computed(() => {
+        const available = availableLocales();
+        const base = baseLocale();
+        return available.filter((locale) => locale !== base);
+      }),
+
+      statusFilterText: computed(() => {
+        const selected = selectedStatuses();
+        if (selected.length === 0) return 'All statuses';
+        if (selected.length === 1) {
+          const labels: Record<TranslationStatus, string> = {
+            new: 'New',
+            stale: 'Stale',
+            translated: 'Translated',
+            verified: 'Verified',
+          };
+          return labels[selected[0]];
+        }
+        return `${selected.length} statuses`;
+      }),
+
+      isShowingAllStatuses: computed(() => selectedStatuses().length === 0),
+
+      displayedTranslations: computed(() => (isSearchMode() ? searchResults() : translations())),
+
+      sortedTranslations: computed(() => {
+        const items = isSearchMode() ? searchResults() : translations();
+        const statuses = selectedStatuses();
+
+        // Filter by status first
+        let filteredItems = items;
+        if (statuses.length > 0) {
+          const localesForFiltering = selectedLocales().length > 0 ? selectedLocales() : availableLocales();
+
+          filteredItems = items.filter((item) => {
+            return localesForFiltering.some((locale) => {
+              const localeStatus = item.status?.[locale];
+              return localeStatus && statuses.includes(localeStatus);
             });
-          }
-
-          return acc;
-        }, []);
-
-      return filterTree(rootFolders());
-    }),
-
-    breadcrumbs: computed(() => {
-      const path = currentFolderPath();
-      if (!path) return [];
-      return path.split('.');
-    }),
-
-    isLoading: computed(() => isFolderTreeLoading() || isTranslationsLoading()),
-
-    isEmpty: computed(() => translations().length === 0),
-
-    translationCount: computed(() => translations().length),
-
-    hasTranslations: computed(() => translations().length > 0),
-
-    isShowingAllLocales: computed(() => {
-      const selected = selectedLocales();
-      const available = availableLocales();
-      return selected.length === 0 || selected.length === available.length;
-    }),
-
-    localeFilterText: computed(() => {
-      const selected = selectedLocales();
-      const available = availableLocales();
-
-      if (selected.length === 0 || selected.length === available.length) return 'All locales';
-      if (selected.length === 1) return selected[0];
-      return `${selected.length} locales`;
-    }),
-
-    filteredLocales: computed(() => {
-      const selected = selectedLocales();
-      const available = availableLocales();
-      const base = baseLocale();
-
-      const result: string[] = base ? [base] : [];
-      const nonBaseAvailable = available.filter(locale => locale !== base);
-      const selectedNonBase = selected.filter(locale => locale !== base);
-
-      if (selected.length === 0) result.push(...nonBaseAvailable);
-      else result.push(...selectedNonBase);
-
-      return result;
-    }),
-
-    filterableLocales: computed(() => {
-      const available = availableLocales();
-      const base = baseLocale();
-      return available.filter(locale => locale !== base);
-    }),
-
-    statusFilterText: computed(() => {
-      const selected = selectedStatuses();
-      if (selected.length === 0) return 'All statuses';
-      if (selected.length === 1) {
-        const labels: Record<TranslationStatus, string> = {
-          new: 'New',
-          stale: 'Stale',
-          translated: 'Translated',
-          verified: 'Verified',
-        };
-        return labels[selected[0]];
-      }
-      return `${selected.length} statuses`;
-    }),
-
-    isShowingAllStatuses: computed(() => selectedStatuses().length === 0),
-
-    displayedTranslations: computed(() => (isSearchMode() ? searchResults() : translations())),
-
-    sortedTranslations: computed(() => {
-      const items = isSearchMode() ? searchResults() : translations();
-      const statuses = selectedStatuses();
-
-      // Filter by status first
-      let filteredItems = items;
-      if (statuses.length > 0) {
-        const localesForFiltering = selectedLocales().length > 0
-          ? selectedLocales()
-          : availableLocales();
-
-        filteredItems = items.filter(item => {
-          return localesForFiltering.some(locale => {
-            const localeStatus = item.status?.[locale];
-            return localeStatus && statuses.includes(localeStatus);
           });
-        });
-      }
+        }
 
-      return sortTranslations(filteredItems, sortField(), sortDirection(), selectedLocales());
+        return sortTranslations(filteredItems, sortField(), sortDirection(), selectedLocales());
+      }),
+
+      isCacheReady: computed(() => cacheStatus() === 'ready'),
+
+      isCacheIndexing: computed(() => {
+        const status = cacheStatus();
+        return status === 'indexing' || status === 'not-started';
+      }),
+
+      canShowMultipleLocales: computed(() => densityMode() !== 'compact'),
+
+      collectionTotalKeys: computed(() => collectionStats()?.totalKeys ?? null),
+
+      collectionLocaleCount: computed(() => collectionStats()?.localeCount ?? null),
+
+      hasCollectionStats: computed(() => collectionStats() !== null),
     }),
-
-    isCacheReady: computed(() => cacheStatus() === 'ready'),
-
-    isCacheIndexing: computed(() => {
-      const status = cacheStatus();
-      return status === 'indexing' || status === 'not-started';
-    }),
-
-    canShowMultipleLocales: computed(() => densityMode() !== 'compact'),
-
-    collectionTotalKeys: computed(() => collectionStats()?.totalKeys ?? null),
-
-    collectionLocaleCount: computed(() => collectionStats()?.localeCount ?? null),
-
-    hasCollectionStats: computed(() => collectionStats() !== null),
-  })),
+  ),
 
   withMethods((store) => {
     const api = inject(BrowserApiService);
@@ -295,7 +307,7 @@ export const BrowserStore = signalStore(
               currentFolderPath: path,
               isTranslationsLoading: true,
               error: null,
-            })
+            }),
           ),
           switchMap((path) => {
             const collection = store.selectedCollection();
@@ -311,16 +323,19 @@ export const BrowserStore = signalStore(
                   translations: tree.resources,
                   isTranslationsLoading: false,
                   error: null,
-                })
+                }),
               ),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to load translations';
-                patchState(store, { isTranslationsLoading: false, error: errorMessage });
+                patchState(store, {
+                  isTranslationsLoading: false,
+                  error: errorMessage,
+                });
                 return of(null);
-              })
+              }),
             );
-          })
-        )
+          }),
+        ),
       ),
 
       loadRootFolders: rxMethod<void>(
@@ -342,16 +357,19 @@ export const BrowserStore = signalStore(
                   currentFolderPath: '',
                   isFolderTreeLoading: false,
                   error: null,
-                })
+                }),
               ),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to load folders';
-                patchState(store, { isFolderTreeLoading: false, error: errorMessage });
+                patchState(store, {
+                  isFolderTreeLoading: false,
+                  error: errorMessage,
+                });
                 return of(null);
-              })
+              }),
             );
-          })
-        )
+          }),
+        ),
       ),
 
       loadFolderChildren: rxMethod<string>(
@@ -373,21 +391,34 @@ export const BrowserStore = signalStore(
                       return { ...folder, loaded: true, tree: treeData };
                     }
                     if (folder.tree) {
-                      return { ...folder, tree: { ...folder.tree, children: updateFolder(folder.tree.children) } };
+                      return {
+                        ...folder,
+                        tree: {
+                          ...folder.tree,
+                          children: updateFolder(folder.tree.children),
+                        },
+                      };
                     }
                     return folder;
                   });
 
-                patchState(store, { rootFolders: updateFolder(store.rootFolders()), isFolderTreeLoading: false, error: null });
+                patchState(store, {
+                  rootFolders: updateFolder(store.rootFolders()),
+                  isFolderTreeLoading: false,
+                  error: null,
+                });
               }),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to load folder contents';
-                patchState(store, { isFolderTreeLoading: false, error: errorMessage });
+                patchState(store, {
+                  isFolderTreeLoading: false,
+                  error: errorMessage,
+                });
                 return of(null);
-              })
+              }),
             );
-          })
-        )
+          }),
+        ),
       ),
 
       setSelectedLocales(locales: string[]): void {
@@ -401,9 +432,7 @@ export const BrowserStore = signalStore(
       toggleLocale(locale: string): void {
         const current = store.selectedLocales();
         const isCompactMode = store.densityMode() === 'compact';
-        const newLocales = current.includes(locale)
-          ? current.filter(l => l !== locale)
-          : [...current, locale];
+        const newLocales = current.includes(locale) ? current.filter((l) => l !== locale) : [...current, locale];
 
         patchState(store, {
           selectedLocales: newLocales,
@@ -428,7 +457,9 @@ export const BrowserStore = signalStore(
       },
 
       toggleSortDirection(): void {
-        patchState(store, { sortDirection: store.sortDirection() === 'asc' ? 'desc' : 'asc' });
+        patchState(store, {
+          sortDirection: store.sortDirection() === 'asc' ? 'desc' : 'asc',
+        });
       },
 
       setSelectedStatuses(statuses: TranslationStatus[]): void {
@@ -437,9 +468,7 @@ export const BrowserStore = signalStore(
 
       toggleStatus(status: TranslationStatus): void {
         const current = store.selectedStatuses();
-        const newStatuses = current.includes(status)
-          ? current.filter(s => s !== status)
-          : [...current, status];
+        const newStatuses = current.includes(status) ? current.filter((s) => s !== status) : [...current, status];
         patchState(store, { selectedStatuses: newStatuses });
       },
 
@@ -453,11 +482,21 @@ export const BrowserStore = signalStore(
 
       setSearchQuery(query: string): void {
         const isSearch = query.length > 0;
-        patchState(store, { searchQuery: query, isSearchMode: isSearch, isDisabled: isSearch });
+        patchState(store, {
+          searchQuery: query,
+          isSearchMode: isSearch,
+          isDisabled: isSearch,
+        });
       },
 
       clearSearch(): void {
-        patchState(store, { searchQuery: '', isSearchMode: false, searchResults: [], searchError: null, isDisabled: false });
+        patchState(store, {
+          searchQuery: '',
+          isSearchMode: false,
+          searchResults: [],
+          searchError: null,
+          isDisabled: false,
+        });
       },
 
       searchTranslations: rxMethod<string>(
@@ -471,29 +510,35 @@ export const BrowserStore = signalStore(
             }
 
             return api.searchTranslations(collection, query).pipe(
-              tap((response: SearchResultsDto) => patchState(store, { searchResults: response.results, isSearchLoading: false, searchError: null })),
+              tap((response: SearchResultsDto) =>
+                patchState(store, {
+                  searchResults: response.results,
+                  isSearchLoading: false,
+                  searchError: null,
+                }),
+              ),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to search translations';
-                patchState(store, { isSearchLoading: false, searchError: errorMessage, searchResults: [] });
+                patchState(store, {
+                  isSearchLoading: false,
+                  searchError: errorMessage,
+                  searchResults: [],
+                });
                 return of(null);
-              })
+              }),
             );
-          })
-        )
+          }),
+        ),
       ),
 
       removeResourceFromCache(resourceKey: string): void {
         const currentTranslations = store.translations();
-        const updatedTranslations = currentTranslations.filter(
-          (resource) => resource.key !== resourceKey
-        );
+        const updatedTranslations = currentTranslations.filter((resource) => resource.key !== resourceKey);
         patchState(store, { translations: updatedTranslations });
 
         if (store.isSearchMode()) {
           const currentSearchResults = store.searchResults();
-          const updatedSearchResults = currentSearchResults.filter(
-            (resource) => resource.key !== resourceKey
-          );
+          const updatedSearchResults = currentSearchResults.filter((resource) => resource.key !== resourceKey);
           patchState(store, { searchResults: updatedSearchResults });
         }
       },
@@ -517,10 +562,12 @@ export const BrowserStore = signalStore(
                 patchState(store, {
                   cacheStatus: statusDto.status,
                   cacheError: statusDto.error || null,
-                  collectionStats: statusDto.stats ? {
-                    totalKeys: statusDto.stats.totalKeys,
-                    localeCount: statusDto.stats.localeCount,
-                  } : null,
+                  collectionStats: statusDto.stats
+                    ? {
+                        totalKeys: statusDto.stats.totalKeys,
+                        localeCount: statusDto.stats.localeCount,
+                      }
+                    : null,
                 });
 
                 if (statusDto.status === 'ready' && store.rootFolders().length === 0) {
@@ -539,10 +586,10 @@ export const BrowserStore = signalStore(
                   collectionStats: null,
                 });
                 return of(null);
-              })
+              }),
             );
-          })
-        )
+          }),
+        ),
       ),
     };
   }),
@@ -635,7 +682,7 @@ export const BrowserStore = signalStore(
           error: null,
         });
 
-        if (loaded && loaded.densityMode) {
+        if (loaded?.densityMode) {
           const mode = loaded.densityMode;
           const currentSelected = store.selectedLocales();
           let newSelected = currentSelected;
@@ -656,7 +703,10 @@ export const BrowserStore = signalStore(
             }
           }
 
-          patchState(store, { densityMode: mode, selectedLocales: newSelected });
+          patchState(store, {
+            densityMode: mode,
+            selectedLocales: newSelected,
+          });
         }
 
         const storeWithMethods = store as unknown as {
@@ -737,5 +787,5 @@ export const BrowserStore = signalStore(
         saveViewPreferences(collectionName, prefs);
       },
     };
-  })
+  }),
 );

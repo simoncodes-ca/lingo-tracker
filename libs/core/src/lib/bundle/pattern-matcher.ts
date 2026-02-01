@@ -27,7 +27,7 @@ export function matchesPattern(key: string, pattern: string): boolean {
   // Handle prefix pattern (e.g., "apps.*")
   if (pattern.endsWith('.*')) {
     const prefix = pattern.slice(0, -2); // Remove ".*"
-    return key === prefix || key.startsWith(prefix + '.');
+    return key === prefix || key.startsWith(`${prefix}.`);
   }
 
   return false;

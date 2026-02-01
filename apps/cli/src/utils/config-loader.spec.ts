@@ -120,9 +120,7 @@ describe('config-loader', () => {
       });
 
       expect(() => loadConfiguration()).toThrow('Process exit: 1');
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringMatching(/^❌ Failed to parse configuration file:/)
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/^❌ Failed to parse configuration file:/));
       expect(process.exit).toHaveBeenCalledWith(1);
     });
 
@@ -137,9 +135,7 @@ describe('config-loader', () => {
       const result = loadConfiguration({ exitOnError: false });
 
       expect(result).toBeNull();
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringMatching(/^❌ Failed to parse configuration file:/)
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/^❌ Failed to parse configuration file:/));
       expect(process.exit).not.toHaveBeenCalled();
     });
 
@@ -151,13 +147,9 @@ describe('config-loader', () => {
       const result = loadConfiguration({ exitOnError: false });
 
       expect(result).toBeNull();
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to parse configuration file:')
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Failed to parse configuration file:'));
       // Verify the error message contains some parsing error detail
-      const errorCall = vi.mocked(console.error).mock.calls.find((call) =>
-        String(call[0]).includes('Failed to parse')
-      );
+      const errorCall = vi.mocked(console.error).mock.calls.find((call) => String(call[0]).includes('Failed to parse'));
       expect(errorCall?.[0]).toMatch(/Expected|Unexpected|position|JSON/i);
     });
   });

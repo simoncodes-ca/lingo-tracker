@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MoveResourceDialog, MoveResourceDialogData } from './move-resource-dialog';
-import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import { MoveResourceDialog, type MoveResourceDialogData } from './move-resource-dialog';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 
 describe('MoveResourceDialog', () => {
   let component: MoveResourceDialog;
@@ -23,7 +23,13 @@ describe('MoveResourceDialog', () => {
     await TestBed.configureTestingModule({
       imports: [MoveResourceDialog],
       providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { resource: sampleResource, collectionName: 'test' } as MoveResourceDialogData },
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            resource: sampleResource,
+            collectionName: 'test',
+          } as MoveResourceDialogData,
+        },
         { provide: MatDialogRef, useValue: mockDialogRef },
       ],
     }).compileComponents();
@@ -44,6 +50,6 @@ describe('MoveResourceDialog', () => {
 
   it('should close when cancel clicked', () => {
     component.close();
-    expect((mockDialogRef.close as any)).toHaveBeenCalled();
+    expect(mockDialogRef.close as any).toHaveBeenCalled();
   });
 });

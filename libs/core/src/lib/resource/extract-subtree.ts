@@ -1,4 +1,4 @@
-import { ResourceTreeNode, ResourceTreeEntry } from './load-resource-tree';
+import type { ResourceTreeNode, ResourceTreeEntry } from './load-resource-tree';
 
 /**
  * Extracts a subtree from a resource tree at the specified path.
@@ -8,10 +8,7 @@ import { ResourceTreeNode, ResourceTreeEntry } from './load-resource-tree';
  *               Empty string or empty path returns the full tree
  * @returns The subtree at the target path, or null if the path is not found
  */
-export function extractSubtree(
-  tree: ResourceTreeNode,
-  path: string
-): ResourceTreeNode | null {
+export function extractSubtree(tree: ResourceTreeNode, path: string): ResourceTreeNode | null {
   // Handle empty path - return full tree
   if (!path || path.trim() === '') {
     return tree;
@@ -31,9 +28,7 @@ export function extractSubtree(
 
   for (const segment of pathSegments) {
     // Find child matching this segment
-    const matchingChild = currentNode.children.find(
-      (child) => child.name === segment
-    );
+    const matchingChild = currentNode.children.find((child) => child.name === segment);
 
     if (!matchingChild) {
       // Path not found
@@ -58,15 +53,13 @@ export function extractSubtree(
  * @param node - The starting node to extract resources from
  * @returns Array of all resource entries found in the subtree
  */
-export function extractResourcesRecursively(
-  node: ResourceTreeNode
-): ResourceTreeEntry[] {
+export function extractResourcesRecursively(node: ResourceTreeNode): ResourceTreeEntry[] {
   const allResources: ResourceTreeEntry[] = [...node.resources];
   const stack = [...node.children];
 
   while (stack.length > 0) {
     const child = stack.pop();
-    if (child && child.loaded && child.tree) {
+    if (child?.loaded && child.tree) {
       allResources.push(...child.tree.resources);
       stack.push(...child.tree.children);
     }

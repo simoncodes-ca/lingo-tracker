@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
-import { generateBundle, GenerateBundleParams } from './generate-bundle';
-import { LingoTrackerConfig } from '../../config/lingo-tracker-config';
-import { BundleDefinition } from '../../config/bundle-definition';
+import { generateBundle, type GenerateBundleParams } from './generate-bundle';
+import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
+import type { BundleDefinition } from '../../config/bundle-definition';
 import * as resourceLoader from './resource-loader';
 
 // Mock fs and resourceLoader modules
@@ -75,9 +75,7 @@ describe('generate-bundle', () => {
         collections: 'All',
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'welcome', value: 'Welcome' },
-      ]);
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'welcome', value: 'Welcome' }]);
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -122,7 +120,8 @@ describe('generate-bundle', () => {
         collections: 'All',
       };
 
-      const loadSpy = vi.spyOn(resourceLoader, 'loadCollectionResources')
+      const loadSpy = vi
+        .spyOn(resourceLoader, 'loadCollectionResources')
         .mockReturnValue([{ key: 'test', value: 'Test' }]);
 
       const params: GenerateBundleParams = {
@@ -145,9 +144,7 @@ describe('generate-bundle', () => {
         collections: [
           {
             name: 'default',
-            entriesSelectionRules: [
-              { matchingPattern: 'apps.*' },
-            ],
+            entriesSelectionRules: [{ matchingPattern: 'apps.*' }],
           },
         ],
       };
@@ -210,9 +207,7 @@ describe('generate-bundle', () => {
         ],
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'buttons.ok', value: 'OK' },
-      ]);
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -249,16 +244,15 @@ describe('generate-bundle', () => {
         ],
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources')
-        .mockImplementation((folder) => {
-          if (folder === '/translations/default') {
-            return [{ key: 'shared.title', value: 'Default Title' }];
-          }
-          if (folder === '/translations/admin') {
-            return [{ key: 'shared.title', value: 'Admin Title' }];
-          }
-          return [];
-        });
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockImplementation((folder) => {
+        if (folder === '/translations/default') {
+          return [{ key: 'shared.title', value: 'Default Title' }];
+        }
+        if (folder === '/translations/admin') {
+          return [{ key: 'shared.title', value: 'Admin Title' }];
+        }
+        return [];
+      });
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -292,16 +286,15 @@ describe('generate-bundle', () => {
         ],
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources')
-        .mockImplementation((folder) => {
-          if (folder === '/translations/default') {
-            return [{ key: 'shared.title', value: 'Default Title' }];
-          }
-          if (folder === '/translations/admin') {
-            return [{ key: 'shared.title', value: 'Admin Title' }];
-          }
-          return [];
-        });
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockImplementation((folder) => {
+        if (folder === '/translations/default') {
+          return [{ key: 'shared.title', value: 'Default Title' }];
+        }
+        if (folder === '/translations/admin') {
+          return [{ key: 'shared.title', value: 'Admin Title' }];
+        }
+        return [];
+      });
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -407,9 +400,7 @@ describe('generate-bundle', () => {
         collections: 'All',
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'test', value: 'Test' },
-      ]);
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -420,11 +411,7 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/dist/bundles/main.en.json',
-        expect.any(String),
-        'utf8'
-      );
+      expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/bundles/main.en.json', expect.any(String), 'utf8');
     });
 
     it('should handle bundle naming with {locale} placeholder in subdirectory', async () => {
@@ -434,9 +421,7 @@ describe('generate-bundle', () => {
         collections: 'All',
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'test', value: 'Test' },
-      ]);
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -447,11 +432,7 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        '/dist/bundles/fr/main.json',
-        expect.any(String),
-        'utf8'
-      );
+      expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/bundles/fr/main.json', expect.any(String), 'utf8');
     });
 
     it('should create output directory if it does not exist', async () => {
@@ -462,9 +443,7 @@ describe('generate-bundle', () => {
       };
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'test', value: 'Test' },
-      ]);
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -475,10 +454,9 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(fs.mkdirSync).toHaveBeenCalledWith(
-        '/dist/bundles',
-        { recursive: true }
-      );
+      expect(fs.mkdirSync).toHaveBeenCalledWith('/dist/bundles', {
+        recursive: true,
+      });
     });
 
     it('should write properly formatted JSON', async () => {
@@ -488,9 +466,7 @@ describe('generate-bundle', () => {
         collections: 'All',
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'apps.welcome', value: 'Welcome' },
-      ]);
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'apps.welcome', value: 'Welcome' }]);
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -517,9 +493,7 @@ describe('generate-bundle', () => {
         typeDist: 'src/generated/types.ts',
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'test', value: 'Test' },
-      ]);
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
       (generateBundleTypes as any).mockResolvedValue({
         fileGenerated: true,
       });
@@ -543,9 +517,7 @@ describe('generate-bundle', () => {
         collections: 'All',
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'test', value: 'Test' },
-      ]);
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
       (generateBundleTypes as any).mockClear();
 
       const params: GenerateBundleParams = {
@@ -568,12 +540,8 @@ describe('generate-bundle', () => {
         typeDist: 'src/generated/types.ts',
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'test', value: 'Test' },
-      ]);
-      (generateBundleTypes as any).mockRejectedValue(
-        new Error('Type gen failed')
-      );
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
+      (generateBundleTypes as any).mockRejectedValue(new Error('Type gen failed'));
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -584,9 +552,7 @@ describe('generate-bundle', () => {
 
       const result = await generateBundle(params);
 
-      expect(result.warnings).toContain(
-        "Type generation failed for 'main': Type gen failed"
-      );
+      expect(result.warnings).toContain("Type generation failed for 'main': Type gen failed");
     });
   });
 });

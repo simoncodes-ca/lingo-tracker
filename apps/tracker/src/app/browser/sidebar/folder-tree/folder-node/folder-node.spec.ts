@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FolderNode } from './folder-node';
-import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
 
 describe('FolderNode', () => {
@@ -10,10 +10,7 @@ describe('FolderNode', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        FolderNode,
-        getTranslocoTestingModule(),
-      ],
+      imports: [FolderNode, getTranslocoTestingModule()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FolderNode);

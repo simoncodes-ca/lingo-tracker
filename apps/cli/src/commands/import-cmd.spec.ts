@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { importCommand, ImportCommandOptions } from './import-cmd';
+import { importCommand, type ImportCommandOptions } from './import-cmd';
 import * as path from 'path';
 
 vi.mock('fs');
@@ -258,9 +258,7 @@ describe('import-cmd', () => {
       };
 
       await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Cannot auto-detect format')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Cannot auto-detect format'));
     });
   });
 
@@ -313,7 +311,7 @@ describe('import-cmd', () => {
           source: '/test/import.json',
           locale: 'es',
           format: 'json',
-        })
+        }),
       );
     });
 
@@ -365,7 +363,7 @@ describe('import-cmd', () => {
           source: '/test/import.xliff',
           locale: 'es',
           format: 'xliff',
-        })
+        }),
       );
     });
 
@@ -402,9 +400,7 @@ describe('import-cmd', () => {
       };
 
       await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Import failed: Source file not found')
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Import failed: Source file not found'));
     });
   });
 
@@ -445,8 +441,14 @@ describe('import-cmd', () => {
       vi.mocked(prompts).mockResolvedValue({ strategy: 'translation-service' });
 
       // Mock TTY
-      Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
-      Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+      Object.defineProperty(process.stdin, 'isTTY', {
+        value: true,
+        configurable: true,
+      });
+      Object.defineProperty(process.stdout, 'isTTY', {
+        value: true,
+        configurable: true,
+      });
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -494,8 +496,14 @@ describe('import-cmd', () => {
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       // Mock non-TTY
-      Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
-      Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+      Object.defineProperty(process.stdin, 'isTTY', {
+        value: false,
+        configurable: true,
+      });
+      Object.defineProperty(process.stdout, 'isTTY', {
+        value: true,
+        configurable: true,
+      });
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -734,10 +742,7 @@ describe('import-cmd', () => {
 
       await importCommand(options);
 
-      expect(importFromJson).toHaveBeenCalledWith(
-        '/test/project/src/admin-translations',
-        expect.any(Object)
-      );
+      expect(importFromJson).toHaveBeenCalledWith('/test/project/src/admin-translations', expect.any(Object));
     });
 
     it('should fall back to global translations folder if collection not configured', async () => {
@@ -780,10 +785,7 @@ describe('import-cmd', () => {
 
       await importCommand(options);
 
-      expect(importFromJson).toHaveBeenCalledWith(
-        '/test/project/src/translations',
-        expect.any(Object)
-      );
+      expect(importFromJson).toHaveBeenCalledWith('/test/project/src/translations', expect.any(Object));
     });
   });
 });

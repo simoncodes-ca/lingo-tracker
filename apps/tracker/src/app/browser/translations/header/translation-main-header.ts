@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatButtonToggleModule, MatButtonToggleChange } from '@angular/material/button-toggle';
+import { MatButtonToggleModule, type MatButtonToggleChange } from '@angular/material/button-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -10,8 +10,8 @@ import { LocaleFilter, StatusFilter, TranslationSearch } from '../../sidebar';
 import { BrowserStore } from '../../store/browser.store';
 import {
   TranslationEditorDialog,
-  TranslationEditorDialogData,
-  TranslationEditorResult,
+  type TranslationEditorDialogData,
+  type TranslationEditorResult,
 } from '../../dialogs/translation-editor';
 
 type DensityMode = 'compact' | 'medium' | 'full';
@@ -24,7 +24,16 @@ type DensityMode = 'compact' | 'medium' | 'full';
   selector: 'app-translation-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslationSearch, LocaleFilter, StatusFilter, MatButtonToggleModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [
+    CommonModule,
+    TranslationSearch,
+    LocaleFilter,
+    StatusFilter,
+    MatButtonToggleModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+  ],
   templateUrl: './translation-main-header.html',
   styleUrl: './translation-main-header.scss',
 })
@@ -48,7 +57,7 @@ export class TranslationMainHeader {
     }
 
     const visibleSegments = segments.slice(-maxVisibleSegments);
-    return '... / ' + visibleSegments.join(' / ');
+    return `... / ${visibleSegments.join(' / ')}`;
   });
 
   handleDensityChange(event: MatButtonToggleChange): void {

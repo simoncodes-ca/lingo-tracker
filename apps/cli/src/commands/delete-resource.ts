@@ -51,10 +51,7 @@ export async function deleteResourceCommand(options: DeleteResourceOptions): Pro
   }
 
   try {
-    const result = deleteResource(
-      collection.translationsFolderPath,
-      { keys }
-    );
+    const result = deleteResource(collection.translationsFolderPath, { keys });
 
     if (result.entriesDeleted === 0) {
       ConsoleFormatter.warning('No resources were deleted.');
@@ -74,9 +71,7 @@ export async function deleteResourceCommand(options: DeleteResourceOptions): Pro
   }
 }
 
-async function promptForMissing(
-  options: DeleteResourceOptions
-): Promise<{ key: string }> {
+async function promptForMissing(options: DeleteResourceOptions): Promise<{ key: string }> {
   const questions: prompts.PromptObject[] = [];
 
   if (!options.key) {

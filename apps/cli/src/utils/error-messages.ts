@@ -23,8 +23,7 @@ export const ErrorMessages = {
   /**
    * Error when .lingo-tracker.json file is not found
    */
-  CONFIG_NOT_FOUND:
-    '❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.',
+  CONFIG_NOT_FOUND: '❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.',
 
   /**
    * Error when configuration file has invalid format
@@ -71,8 +70,7 @@ export const ErrorMessages = {
    * Error when multiple required options are missing
    * @param options - Array of missing option names (without -- prefix)
    */
-  MISSING_OPTIONS: (options: string[]) =>
-    `❌ Missing required options: ${options.map((o) => `--${o}`).join(', ')}`,
+  MISSING_OPTIONS: (options: string[]) => `❌ Missing required options: ${options.map((o) => `--${o}`).join(', ')}`,
 
   /**
    * Error when required option is missing in non-interactive mode
@@ -145,9 +143,7 @@ export const ErrorMessages = {
    * @param reason - Optional reason for failure
    */
   FILE_READ_FAILED: (filePath: string, reason?: string) =>
-    reason
-      ? `❌ Failed to read file ${filePath}: ${reason}`
-      : `❌ Failed to read file: ${filePath}`,
+    reason ? `❌ Failed to read file ${filePath}: ${reason}` : `❌ Failed to read file: ${filePath}`,
 
   /**
    * Error when file write operation fails
@@ -155,7 +151,5 @@ export const ErrorMessages = {
    * @param reason - Optional reason for failure
    */
   FILE_WRITE_FAILED: (filePath: string, reason?: string) =>
-    reason
-      ? `❌ Failed to write file ${filePath}: ${reason}`
-      : `❌ Failed to write file: ${filePath}`,
+    reason ? `❌ Failed to write file ${filePath}: ${reason}` : `❌ Failed to write file: ${filePath}`,
 } as const;

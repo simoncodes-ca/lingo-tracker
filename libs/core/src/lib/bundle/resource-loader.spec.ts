@@ -27,7 +27,7 @@ describe('resource-loader', () => {
 
     it('should load resources from single folder', () => {
       const mockResourceEntries = {
-        ok: { source: 'OK', en: 'OK', fr: 'D\'accord' },
+        ok: { source: 'OK', en: 'OK', fr: "D'accord" },
         cancel: { source: 'Cancel', en: 'Cancel', fr: 'Annuler' },
       };
 
@@ -38,7 +38,7 @@ describe('resource-loader', () => {
       const result = loadCollectionResources('/translations', 'fr', 'en');
 
       expect(result).toEqual([
-        { key: 'ok', value: 'D\'accord', tags: undefined },
+        { key: 'ok', value: "D'accord", tags: undefined },
         { key: 'cancel', value: 'Annuler', tags: undefined },
       ]);
     });
@@ -54,14 +54,12 @@ describe('resource-loader', () => {
 
       const result = loadCollectionResources('/translations', 'en', 'en');
 
-      expect(result).toEqual([
-        { key: 'ok', value: 'OK', tags: ['ui', 'buttons'] },
-      ]);
+      expect(result).toEqual([{ key: 'ok', value: 'OK', tags: ['ui', 'buttons'] }]);
     });
 
     it('should skip entries missing translation for target locale', () => {
       const mockResourceEntries = {
-        ok: { source: 'OK', en: 'OK', fr: 'D\'accord' },
+        ok: { source: 'OK', en: 'OK', fr: "D'accord" },
         untranslated: { source: 'Untranslated', en: 'Untranslated' },
       };
 
@@ -71,9 +69,7 @@ describe('resource-loader', () => {
 
       const result = loadCollectionResources('/translations', 'fr', 'en');
 
-      expect(result).toEqual([
-        { key: 'ok', value: 'D\'accord', tags: undefined },
-      ]);
+      expect(result).toEqual([{ key: 'ok', value: "D'accord", tags: undefined }]);
     });
 
     it('should recursively load from nested folders', () => {
@@ -90,10 +86,12 @@ describe('resource-loader', () => {
       };
 
       vi.spyOn(fs, 'existsSync').mockImplementation((filepath) => {
-        return filepath === translationsFolder ||
-               filepath === path.join(translationsFolder, RESOURCE_ENTRIES_FILENAME) ||
-               filepath === buttonsFolder ||
-               filepath === path.join(buttonsFolder, RESOURCE_ENTRIES_FILENAME);
+        return (
+          filepath === translationsFolder ||
+          filepath === path.join(translationsFolder, RESOURCE_ENTRIES_FILENAME) ||
+          filepath === buttonsFolder ||
+          filepath === path.join(buttonsFolder, RESOURCE_ENTRIES_FILENAME)
+        );
       });
 
       vi.spyOn(fs, 'readFileSync').mockImplementation((filepath) => {
@@ -115,9 +113,21 @@ describe('resource-loader', () => {
 
       const result = loadCollectionResources(translationsFolder, 'en', 'en');
 
-      expect(result).toContainEqual({ key: 'welcome', value: 'Welcome', tags: undefined });
-      expect(result).toContainEqual({ key: 'buttons.ok', value: 'OK', tags: undefined });
-      expect(result).toContainEqual({ key: 'buttons.cancel', value: 'Cancel', tags: undefined });
+      expect(result).toContainEqual({
+        key: 'welcome',
+        value: 'Welcome',
+        tags: undefined,
+      });
+      expect(result).toContainEqual({
+        key: 'buttons.ok',
+        value: 'OK',
+        tags: undefined,
+      });
+      expect(result).toContainEqual({
+        key: 'buttons.cancel',
+        value: 'Cancel',
+        tags: undefined,
+      });
       expect(result).toHaveLength(3);
     });
 
@@ -158,9 +168,7 @@ describe('resource-loader', () => {
 
       const result = loadCollectionResources(translationsFolder, 'en', 'en');
 
-      expect(result).toEqual([
-        { key: 'apps.common.buttons.ok', value: 'OK', tags: undefined },
-      ]);
+      expect(result).toEqual([{ key: 'apps.common.buttons.ok', value: 'OK', tags: undefined }]);
     });
 
     it('should skip invalid JSON files and log warning', () => {
@@ -175,9 +183,7 @@ describe('resource-loader', () => {
       const result = loadCollectionResources('/translations', 'en', 'en');
 
       expect(result).toEqual([]);
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Skipping invalid JSON')
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Skipping invalid JSON'));
     });
 
     it('should ignore non-directory entries when scanning folders', () => {
@@ -194,9 +200,7 @@ describe('resource-loader', () => {
 
       const result = loadCollectionResources('/translations', 'en', 'en');
 
-      expect(result).toEqual([
-        { key: 'ok', value: 'OK', tags: undefined },
-      ]);
+      expect(result).toEqual([{ key: 'ok', value: 'OK', tags: undefined }]);
     });
   });
 });

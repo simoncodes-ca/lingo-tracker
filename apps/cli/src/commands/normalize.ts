@@ -1,7 +1,13 @@
 import prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
 import { normalize } from '@simoncodes-ca/core';
-import { loadConfiguration, resolveCollection, ConsoleFormatter, ErrorMessages, aggregateNumericFields } from '../utils';
+import {
+  loadConfiguration,
+  resolveCollection,
+  ConsoleFormatter,
+  ErrorMessages,
+  aggregateNumericFields,
+} from '../utils';
 
 export interface NormalizeOptions {
   collection?: string;
@@ -156,7 +162,7 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
 
 async function promptForMissing(
   options: NormalizeOptions,
-  config: LingoTrackerConfig
+  config: LingoTrackerConfig,
 ): Promise<{
   collection?: string;
   all: boolean;
@@ -179,7 +185,7 @@ async function promptForMissing(
 
     // Create choices array with individual collections and "All collections" option
     const choices = [
-      ...collections.map(c => ({ title: c, value: c })),
+      ...collections.map((c) => ({ title: c, value: c })),
       { title: 'All collections', value: '__ALL__' },
     ];
 

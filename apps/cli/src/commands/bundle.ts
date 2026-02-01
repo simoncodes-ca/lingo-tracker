@@ -41,9 +41,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
   }
 
   // Parse locale filter if provided
-  const localeFilter = answers.locales && answers.locales.length > 0
-    ? answers.locales
-    : undefined;
+  const localeFilter = answers.locales && answers.locales.length > 0 ? answers.locales : undefined;
 
   // Process each bundle
   const bundleResults: BundleGenerationResult[] = [];
@@ -90,12 +88,10 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
       if (result.typeGenerationResult) {
         if (result.typeGenerationResult.fileGenerated) {
           ConsoleFormatter.indent(
-            `└─ Types: ${result.typeGenerationResult.typeDist} (${result.typeGenerationResult.keysCount} keys)`
+            `└─ Types: ${result.typeGenerationResult.typeDist} (${result.typeGenerationResult.keysCount} keys)`,
           );
         } else if (result.typeGenerationResult.skippedReason) {
-          ConsoleFormatter.indent(
-            `└─ Types: Skipped (${result.typeGenerationResult.skippedReason})`
-          );
+          ConsoleFormatter.indent(`└─ Types: Skipped (${result.typeGenerationResult.skippedReason})`);
         }
       } else if (bundleDefinition.typeDist) {
         // Should have result if configured, but just in case
@@ -139,7 +135,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
         bundlesProcessed: 0,
         filesGenerated: 0,
         warningsCount: 0,
-      }
+      },
     );
 
     ConsoleFormatter.section(`Summary (${totals.bundlesProcessed} bundles)`);
@@ -162,7 +158,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
 
 async function promptForMissing(
   options: BundleOptions,
-  config: LingoTrackerConfig
+  config: LingoTrackerConfig,
 ): Promise<{
   names?: string[];
   locales?: string[];

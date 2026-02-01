@@ -190,11 +190,7 @@ export function extractICUPlaceholders(value: string): PlaceholderExtractionResu
  * @returns Parsed placeholder or null if invalid
  * @internal
  */
-function parsePlaceholder(
-  fullText: string,
-  startPosition: number,
-  endPosition: number
-): ICUPlaceholder | null {
+function parsePlaceholder(fullText: string, startPosition: number, endPosition: number): ICUPlaceholder | null {
   // Remove outer braces
   const innerText = fullText.substring(1, fullText.length - 1).trim();
 
@@ -348,10 +344,7 @@ export function hasICUPlaceholders(value: string): boolean {
  * // Returns: { wasFixed: true, value: "{count, plural, one {# elemento} other {# elementos}}", ... }
  * ```
  */
-export function autoFixICUPlaceholders(
-  baseValue: string,
-  translationValue: string
-): ICUAutoFixResult {
+export function autoFixICUPlaceholders(baseValue: string, translationValue: string): ICUAutoFixResult {
   // Skip if base has no placeholders
   if (!hasICUPlaceholders(baseValue)) {
     return {
@@ -405,10 +398,7 @@ export function autoFixICUPlaceholders(
  * @returns true if placeholders match in count, names, and types
  * @internal
  */
-function placeholdersMatch(
-  basePlaceholders: ICUPlaceholder[],
-  translationPlaceholders: ICUPlaceholder[]
-): boolean {
+function placeholdersMatch(basePlaceholders: ICUPlaceholder[], translationPlaceholders: ICUPlaceholder[]): boolean {
   if (basePlaceholders.length !== translationPlaceholders.length) {
     return false;
   }
@@ -437,7 +427,7 @@ function placeholdersMatch(
  */
 function handleMissingPlaceholders(
   baseExtraction: PlaceholderExtractionResult,
-  translationValue: string
+  translationValue: string,
 ): ICUAutoFixResult {
   const basePlaceholders = baseExtraction.placeholders;
 
@@ -474,10 +464,7 @@ function handleMissingPlaceholders(
  * @returns Reconstructed placeholder text
  * @internal
  */
-function reconstructPlaceholder(
-  basePlaceholder: ICUPlaceholder,
-  translationPlaceholder: ICUPlaceholder
-): string {
+function reconstructPlaceholder(basePlaceholder: ICUPlaceholder, translationPlaceholder: ICUPlaceholder): string {
   // If it's a simple placeholder, just use the base name
   if (basePlaceholder.type === 'simple') {
     return `{${basePlaceholder.name}}`;
@@ -541,7 +528,7 @@ function reconstructPlaceholder(
 function replaceTranslationPlaceholders(
   baseExtraction: PlaceholderExtractionResult,
   translationExtraction: PlaceholderExtractionResult,
-  originalTranslationValue: string
+  originalTranslationValue: string,
 ): ICUAutoFixResult {
   const basePlaceholders = baseExtraction.placeholders;
   const translationPlaceholders = translationExtraction.placeholders;
@@ -578,10 +565,7 @@ function replaceTranslationPlaceholders(
     }
 
     // Reconstruct placeholder with base name/type but translation's format
-    const reconstructedPlaceholder = reconstructPlaceholder(
-      basePlaceholders[i],
-      translationPlaceholders[i]
-    );
+    const reconstructedPlaceholder = reconstructPlaceholder(basePlaceholders[i], translationPlaceholders[i]);
     fixedValue += reconstructedPlaceholder;
 
     // Track what changed
@@ -599,9 +583,7 @@ function replaceTranslationPlaceholders(
   // Generate description of changes
   let description = '';
   if (originalPlaceholderNames.length > 0) {
-    const changes = originalPlaceholderNames.map((orig, idx) =>
-      `${orig} → ${fixedPlaceholderNames[idx]}`
-    ).join(', ');
+    const changes = originalPlaceholderNames.map((orig, idx) => `${orig} → ${fixedPlaceholderNames[idx]}`).join(', ');
     description = `Replaced placeholders: ${changes}`;
   } else {
     description = 'Placeholders already match (no changes needed)';

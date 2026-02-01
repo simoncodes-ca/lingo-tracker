@@ -1,5 +1,5 @@
-import { LingoTrackerCollection } from '@simoncodes-ca/core';
-import { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
+import type { LingoTrackerCollection } from '@simoncodes-ca/core';
+import type { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 
 export function mapCollectionToDto(collection: LingoTrackerCollection): LingoTrackerCollectionDto {
   return {
@@ -20,5 +20,3 @@ export function mapDtoToCollection(dto: LingoTrackerCollectionDto): LingoTracker
     locales: dto.locales ? [...dto.locales] : undefined,
   };
 }
-
-

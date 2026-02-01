@@ -1,4 +1,4 @@
-import { TranslocoTestingModule, TranslocoTestingOptions } from '@jsverse/transloco';
+import { TranslocoTestingModule, type TranslocoTestingOptions } from '@jsverse/transloco';
 
 /**
  * Creates a configured TranslocoTestingModule for unit tests.
@@ -19,7 +19,7 @@ export function getTranslocoTestingModule(options: TranslocoTestingOptions = {})
         'browser.clickToLoad': 'click to load',
         'browser.filterFolders': 'Filter folders...',
         'browser.loadingTranslations': 'Loading translations...',
-      }
+      },
     },
     translocoConfig: {
       availableLangs: ['en'],

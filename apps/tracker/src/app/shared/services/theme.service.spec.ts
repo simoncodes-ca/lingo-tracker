@@ -16,10 +16,7 @@ describe('ThemeService', () => {
   const recreateService = (): void => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [
-        ThemeService,
-        { provide: PLATFORM_ID, useValue: 'browser' },
-      ],
+      providers: [ThemeService, { provide: PLATFORM_ID, useValue: 'browser' }],
     });
     service = TestBed.inject(ThemeService);
   };
@@ -80,10 +77,7 @@ describe('ThemeService', () => {
     });
 
     TestBed.configureTestingModule({
-      providers: [
-        ThemeService,
-        { provide: PLATFORM_ID, useValue: 'browser' },
-      ],
+      providers: [ThemeService, { provide: PLATFORM_ID, useValue: 'browser' }],
     });
 
     service = TestBed.inject(ThemeService);
@@ -191,7 +185,9 @@ describe('ThemeService', () => {
 
       // Simulate system theme change to dark
       const changeEvent = createMediaQueryListEvent(true);
-      mediaQueryListeners.forEach(listener => listener(changeEvent));
+      mediaQueryListeners.forEach((listener) => {
+        listener(changeEvent);
+      });
 
       expect(service.effectiveTheme()).toBe('dark');
     });
@@ -204,7 +200,9 @@ describe('ThemeService', () => {
 
       // Simulate system theme change to light
       const changeEvent = createMediaQueryListEvent(false);
-      mediaQueryListeners.forEach(listener => listener(changeEvent));
+      mediaQueryListeners.forEach((listener) => {
+        listener(changeEvent);
+      });
 
       expect(service.effectiveTheme()).toBe('light');
     });
@@ -215,7 +213,9 @@ describe('ThemeService', () => {
 
       // Simulate system theme change
       const changeEvent = createMediaQueryListEvent(true);
-      mediaQueryListeners.forEach(listener => listener(changeEvent));
+      mediaQueryListeners.forEach((listener) => {
+        listener(changeEvent);
+      });
 
       // Should still be dark, not affected by system change
       expect(service.effectiveTheme()).toBe('dark');
@@ -256,7 +256,7 @@ describe('ThemeService', () => {
 
   describe('LocalStorage Error Handling', () => {
     it('should handle localStorage getItem errors gracefully', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       window.localStorage.getItem = vi.fn(() => {
         throw new Error('Storage error');
       });
@@ -269,7 +269,7 @@ describe('ThemeService', () => {
     });
 
     it('should handle localStorage setItem errors gracefully', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       window.localStorage.setItem = vi.fn(() => {
         throw new Error('Storage error');
       });

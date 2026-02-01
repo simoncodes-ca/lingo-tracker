@@ -1,13 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { CollectionCacheService, CacheStatus } from './collection-cache.service';
 import * as core from '@simoncodes-ca/core';
-import { ResourceTreeNode } from '@simoncodes-ca/core';
+import type { ResourceTreeNode } from '@simoncodes-ca/core';
 
-jest.mock('@simoncodes-ca/core', () => ({
-  ...jest.requireActual('@simoncodes-ca/core'),
-  loadResourceTree: jest.fn(),
-  extractResourcesRecursively: jest.fn(),
-}));
+jest.mock('@simoncodes-ca/core', () => {
+  const actual = jest.requireActual('@simoncodes-ca/core');
+  return {
+    ...actual,
+    loadResourceTree: jest.fn(),
+    extractResourcesRecursively: jest.fn(),
+  };
+});
 
 const mockCore = core as jest.Mocked<typeof core>;
 
@@ -37,6 +40,8 @@ describe('CollectionCacheService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [CollectionCacheService],
     }).compile();
+
+    module.useLogger(false);
 
     service = module.get<CollectionCacheService>(CollectionCacheService);
 
@@ -298,13 +303,8 @@ describe('CollectionCacheService', () => {
 
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.NOT_STARTED);
 
-      try {
-        await service.indexCollection('Main', 'src/i18n');
-        fail('Should have thrown error');
-      } catch (error) {
-        expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toBe(errorMessage);
-      }
+      const promise = service.indexCollection('Main', 'src/i18n');
+      await expect(promise).rejects.toThrow(errorMessage);
 
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.ERROR);
       expect(service.getCache('Main')).toBeNull();
@@ -347,9 +347,7 @@ describe('CollectionCacheService', () => {
       const mainTree = createMockTree(['main']);
       const adminTree = createMockTree(['admin']);
 
-      mockCore.loadResourceTree
-        .mockReturnValueOnce(mainTree)
-        .mockReturnValueOnce(adminTree);
+      mockCore.loadResourceTree.mockReturnValueOnce(mainTree).mockReturnValueOnce(adminTree);
       mockCore.extractResourcesRecursively
         .mockReturnValueOnce(mainTree.resources)
         .mockReturnValueOnce(adminTree.resources);
@@ -375,11 +373,8 @@ describe('CollectionCacheService', () => {
         throw new Error(errorMessage);
       });
 
-      try {
-        await service.indexCollection('Main', 'invalid/path');
-      } catch {
-        // Expected
-      }
+      const promise = service.indexCollection('Main', 'invalid/path');
+      await expect(promise).rejects.toThrow(errorMessage);
 
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.ERROR);
     });
@@ -389,12 +384,8 @@ describe('CollectionCacheService', () => {
         throw 'String error';
       });
 
-      try {
-        await service.indexCollection('Main', 'src/i18n');
-        fail('Should have thrown error');
-      } catch (error) {
-        expect(error).toBe('String error');
-      }
+      const promise = service.indexCollection('Main', 'src/i18n');
+      await expect(promise).rejects.toBe('String error');
 
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.ERROR);
     });
@@ -403,9 +394,7 @@ describe('CollectionCacheService', () => {
       const mainTree = createMockTree(['main']);
       const adminTree = createMockTree(['admin']);
 
-      mockCore.loadResourceTree
-        .mockReturnValueOnce(mainTree)
-        .mockReturnValueOnce(adminTree);
+      mockCore.loadResourceTree.mockReturnValueOnce(mainTree).mockReturnValueOnce(adminTree);
       mockCore.extractResourcesRecursively
         .mockReturnValueOnce(mainTree.resources)
         .mockReturnValueOnce(adminTree.resources);
@@ -424,9 +413,7 @@ describe('CollectionCacheService', () => {
       const mainTree = createMockTree(['main']);
       const adminTree = createMockTree(['admin']);
 
-      mockCore.loadResourceTree
-        .mockReturnValueOnce(mainTree)
-        .mockReturnValueOnce(adminTree);
+      mockCore.loadResourceTree.mockReturnValueOnce(mainTree).mockReturnValueOnce(adminTree);
       mockCore.extractResourcesRecursively
         .mockReturnValueOnce(mainTree.resources)
         .mockReturnValueOnce(adminTree.resources);

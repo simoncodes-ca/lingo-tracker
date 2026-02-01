@@ -13,7 +13,7 @@
 export function matchesTags(
   entryTags: string[] | undefined,
   matchingTags: string[] | undefined,
-  matchingTagOperator: 'All' | 'Any' = 'Any'
+  matchingTagOperator: 'All' | 'Any' = 'Any',
 ): boolean {
   // No tag filter specified - matches everything
   if (!matchingTags || matchingTags.length === 0) {

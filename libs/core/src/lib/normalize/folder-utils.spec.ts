@@ -106,7 +106,9 @@ describe('Folder Utilities', () => {
       const testDir = '/test-root';
 
       vi.mocked(fs.existsSync).mockReturnValue(true);
-      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => true } as fs.Stats);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isDirectory: () => true,
+      } as fs.Stats);
       vi.mocked(fs.readdirSync).mockReturnValue([] as unknown as fs.Dirent[]);
 
       const folders = getAllFoldersBottomUp(testDir);
@@ -127,7 +129,9 @@ describe('Folder Utilities', () => {
         return allPaths.includes(filepath as string);
       });
 
-      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => true } as fs.Stats);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isDirectory: () => true,
+      } as fs.Stats);
 
       vi.mocked(fs.readdirSync).mockImplementation((filepath) => {
         if (filepath === testDir) return ['folder1', 'folder2'] as unknown as fs.Dirent[];
@@ -186,7 +190,9 @@ describe('Folder Utilities', () => {
 
       vi.mocked(fs.readdirSync).mockReturnValue(['resource_entries.json'] as unknown as fs.Dirent[]);
 
-      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as fs.Stats);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isDirectory: () => false,
+      } as fs.Stats);
 
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({}));
 
@@ -203,7 +209,9 @@ describe('Folder Utilities', () => {
 
       vi.mocked(fs.readdirSync).mockReturnValue(['resource_entries.json'] as unknown as fs.Dirent[]);
 
-      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as fs.Stats);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isDirectory: () => false,
+      } as fs.Stats);
 
       const entries = {
         cancel: {
@@ -226,7 +234,9 @@ describe('Folder Utilities', () => {
 
       vi.mocked(fs.readdirSync).mockReturnValue([childFolder] as unknown as fs.Dirent[]);
 
-      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => true } as fs.Stats);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isDirectory: () => true,
+      } as fs.Stats);
 
       expect(isFolderEmpty(parentFolder)).toBe(false);
     });
@@ -242,7 +252,9 @@ describe('Folder Utilities', () => {
 
       vi.mocked(fs.readdirSync).mockReturnValue(['tracker_meta.json'] as unknown as fs.Dirent[]);
 
-      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as fs.Stats);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isDirectory: () => false,
+      } as fs.Stats);
 
       expect(isFolderEmpty(folder)).toBe(true);
     });
@@ -258,7 +270,9 @@ describe('Folder Utilities', () => {
 
       vi.mocked(fs.readdirSync).mockReturnValue(['.gitkeep'] as unknown as fs.Dirent[]);
 
-      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as fs.Stats);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isDirectory: () => false,
+      } as fs.Stats);
 
       expect(isFolderEmpty(folder)).toBe(true);
     });
@@ -274,7 +288,9 @@ describe('Folder Utilities', () => {
 
       vi.mocked(fs.readdirSync).mockReturnValue(['.DS_Store'] as unknown as fs.Dirent[]);
 
-      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as fs.Stats);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isDirectory: () => false,
+      } as fs.Stats);
 
       expect(isFolderEmpty(folder)).toBe(true);
     });
@@ -297,7 +313,9 @@ describe('Folder Utilities', () => {
 
       vi.mocked(fs.readdirSync).mockReturnValue(['resource_entries.json'] as unknown as fs.Dirent[]);
 
-      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as fs.Stats);
+      vi.mocked(fs.statSync).mockReturnValue({
+        isDirectory: () => false,
+      } as fs.Stats);
 
       vi.mocked(fs.readFileSync).mockReturnValue('invalid json{');
 

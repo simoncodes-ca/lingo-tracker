@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateImportSummary } from './import-summary';
-import { ImportResult, ImportOptions } from './types';
+import type { ImportResult, ImportOptions } from './types';
 
 describe('import-summary', () => {
   describe('generateImportSummary', () => {
@@ -105,10 +105,7 @@ describe('import-summary', () => {
         changes: [],
         statusTransitions: [],
         filesModified: [],
-        warnings: [
-          'Base value mismatch for key: common.title',
-          'Duplicate key in import file: common.subtitle',
-        ],
+        warnings: ['Base value mismatch for key: common.title', 'Duplicate key in import file: common.subtitle'],
         errors: [],
         dryRun: false,
       };
@@ -142,10 +139,7 @@ describe('import-summary', () => {
         statusTransitions: [],
         filesModified: [],
         warnings: [],
-        errors: [
-          'Invalid key format: common..invalid',
-          'Hierarchical conflict: common',
-        ],
+        errors: ['Invalid key format: common..invalid', 'Hierarchical conflict: common'],
         dryRun: false,
       };
 
@@ -489,9 +483,7 @@ describe('import-summary', () => {
         resourcesSkipped: 0,
         resourcesFailed: 0,
         changes: [],
-        statusTransitions: [
-          { from: 'translated', to: 'translated', count: 10 },
-        ],
+        statusTransitions: [{ from: 'translated', to: 'translated', count: 10 }],
         filesModified: [],
         warnings: [],
         errors: [],
@@ -522,9 +514,7 @@ describe('import-summary', () => {
         resourcesSkipped: 0,
         resourcesFailed: 0,
         changes: [],
-        statusTransitions: [
-          { to: 'translated', count: 5 },
-        ],
+        statusTransitions: [{ to: 'translated', count: 5 }],
         filesModified: [],
         warnings: [],
         errors: [],

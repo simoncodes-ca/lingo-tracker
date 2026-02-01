@@ -6,70 +6,108 @@ const mockFs = vi.hoisted(() => {
   return new Map<string, string | 'directory'>([
     // Root directory and files
     ['/test/translations', 'directory'],
-    ['/test/translations/resource_entries.json', JSON.stringify({
-      title: {
-        source: 'App Title',
-        es: 'Título de la Aplicación',
-        fr: "Titre de l'Application"
-      }
-    })],
-    ['/test/translations/tracker_meta.json', JSON.stringify({
-      title: {
-        en: { checksum: 'abc123' },
-        es: { status: 'translated', checksum: 'def456', baseChecksum: 'abc123' },
-        fr: { status: 'stale', checksum: 'ghi789', baseChecksum: 'abc123' }
-      }
-    })],
+    [
+      '/test/translations/resource_entries.json',
+      JSON.stringify({
+        title: {
+          source: 'App Title',
+          es: 'Título de la Aplicación',
+          fr: "Titre de l'Application",
+        },
+      }),
+    ],
+    [
+      '/test/translations/tracker_meta.json',
+      JSON.stringify({
+        title: {
+          en: { checksum: 'abc123' },
+          es: {
+            status: 'translated',
+            checksum: 'def456',
+            baseChecksum: 'abc123',
+          },
+          fr: { status: 'stale', checksum: 'ghi789', baseChecksum: 'abc123' },
+        },
+      }),
+    ],
 
     // apps directory
     ['/test/translations/apps', 'directory'],
 
     // apps/common directory and files
     ['/test/translations/apps/common', 'directory'],
-    ['/test/translations/apps/common/resource_entries.json', JSON.stringify({
-      header: {
-        source: 'Common Header',
-        es: 'Encabezado Común',
-        fr: 'En-tête Commun',
-        tags: ['ui', 'common'],
-        comment: 'Main header text'
-      }
-    })],
-    ['/test/translations/apps/common/tracker_meta.json', JSON.stringify({
-      header: {
-        en: { checksum: 'aaa111' },
-        es: { status: 'verified', checksum: 'bbb222', baseChecksum: 'aaa111' },
-        fr: { status: 'translated', checksum: 'ccc333', baseChecksum: 'aaa111' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/resource_entries.json',
+      JSON.stringify({
+        header: {
+          source: 'Common Header',
+          es: 'Encabezado Común',
+          fr: 'En-tête Commun',
+          tags: ['ui', 'common'],
+          comment: 'Main header text',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/tracker_meta.json',
+      JSON.stringify({
+        header: {
+          en: { checksum: 'aaa111' },
+          es: {
+            status: 'verified',
+            checksum: 'bbb222',
+            baseChecksum: 'aaa111',
+          },
+          fr: {
+            status: 'translated',
+            checksum: 'ccc333',
+            baseChecksum: 'aaa111',
+          },
+        },
+      }),
+    ],
 
     // apps/common/buttons directory and files
     ['/test/translations/apps/common/buttons', 'directory'],
-    ['/test/translations/apps/common/buttons/resource_entries.json', JSON.stringify({
-      ok: {
-        source: 'OK',
-        es: 'Aceptar',
-        fr: "D'accord"
-      },
-      cancel: {
-        source: 'Cancel',
-        es: 'Cancelar',
-        fr: 'Annuler',
-        tags: ['button']
-      }
-    })],
-    ['/test/translations/apps/common/buttons/tracker_meta.json', JSON.stringify({
-      ok: {
-        en: { checksum: 'ok111' },
-        es: { status: 'verified', checksum: 'ok222', baseChecksum: 'ok111' },
-        fr: { status: 'translated', checksum: 'ok333', baseChecksum: 'ok111' }
-      },
-      cancel: {
-        en: { checksum: 'can111' },
-        es: { status: 'translated', checksum: 'can222', baseChecksum: 'can111' },
-        fr: { status: 'new', checksum: '', baseChecksum: 'can111' }
-      }
-    })]
+    [
+      '/test/translations/apps/common/buttons/resource_entries.json',
+      JSON.stringify({
+        ok: {
+          source: 'OK',
+          es: 'Aceptar',
+          fr: "D'accord",
+        },
+        cancel: {
+          source: 'Cancel',
+          es: 'Cancelar',
+          fr: 'Annuler',
+          tags: ['button'],
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/tracker_meta.json',
+      JSON.stringify({
+        ok: {
+          en: { checksum: 'ok111' },
+          es: { status: 'verified', checksum: 'ok222', baseChecksum: 'ok111' },
+          fr: {
+            status: 'translated',
+            checksum: 'ok333',
+            baseChecksum: 'ok111',
+          },
+        },
+        cancel: {
+          en: { checksum: 'can111' },
+          es: {
+            status: 'translated',
+            checksum: 'can222',
+            baseChecksum: 'can111',
+          },
+          fr: { status: 'new', checksum: '', baseChecksum: 'can111' },
+        },
+      }),
+    ],
   ]);
 });
 
@@ -77,70 +115,108 @@ const createMockFileSystem = () => {
   return new Map<string, string | 'directory'>([
     // Root directory and files
     ['/test/translations', 'directory'],
-    ['/test/translations/resource_entries.json', JSON.stringify({
-      title: {
-        source: 'App Title',
-        es: 'Título de la Aplicación',
-        fr: "Titre de l'Application"
-      }
-    })],
-    ['/test/translations/tracker_meta.json', JSON.stringify({
-      title: {
-        en: { checksum: 'abc123' },
-        es: { status: 'translated', checksum: 'def456', baseChecksum: 'abc123' },
-        fr: { status: 'stale', checksum: 'ghi789', baseChecksum: 'abc123' }
-      }
-    })],
+    [
+      '/test/translations/resource_entries.json',
+      JSON.stringify({
+        title: {
+          source: 'App Title',
+          es: 'Título de la Aplicación',
+          fr: "Titre de l'Application",
+        },
+      }),
+    ],
+    [
+      '/test/translations/tracker_meta.json',
+      JSON.stringify({
+        title: {
+          en: { checksum: 'abc123' },
+          es: {
+            status: 'translated',
+            checksum: 'def456',
+            baseChecksum: 'abc123',
+          },
+          fr: { status: 'stale', checksum: 'ghi789', baseChecksum: 'abc123' },
+        },
+      }),
+    ],
 
     // apps directory
     ['/test/translations/apps', 'directory'],
 
     // apps/common directory and files
     ['/test/translations/apps/common', 'directory'],
-    ['/test/translations/apps/common/resource_entries.json', JSON.stringify({
-      header: {
-        source: 'Common Header',
-        es: 'Encabezado Común',
-        fr: 'En-tête Commun',
-        tags: ['ui', 'common'],
-        comment: 'Main header text'
-      }
-    })],
-    ['/test/translations/apps/common/tracker_meta.json', JSON.stringify({
-      header: {
-        en: { checksum: 'aaa111' },
-        es: { status: 'verified', checksum: 'bbb222', baseChecksum: 'aaa111' },
-        fr: { status: 'translated', checksum: 'ccc333', baseChecksum: 'aaa111' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/resource_entries.json',
+      JSON.stringify({
+        header: {
+          source: 'Common Header',
+          es: 'Encabezado Común',
+          fr: 'En-tête Commun',
+          tags: ['ui', 'common'],
+          comment: 'Main header text',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/tracker_meta.json',
+      JSON.stringify({
+        header: {
+          en: { checksum: 'aaa111' },
+          es: {
+            status: 'verified',
+            checksum: 'bbb222',
+            baseChecksum: 'aaa111',
+          },
+          fr: {
+            status: 'translated',
+            checksum: 'ccc333',
+            baseChecksum: 'aaa111',
+          },
+        },
+      }),
+    ],
 
     // apps/common/buttons directory and files
     ['/test/translations/apps/common/buttons', 'directory'],
-    ['/test/translations/apps/common/buttons/resource_entries.json', JSON.stringify({
-      ok: {
-        source: 'OK',
-        es: 'Aceptar',
-        fr: "D'accord"
-      },
-      cancel: {
-        source: 'Cancel',
-        es: 'Cancelar',
-        fr: 'Annuler',
-        tags: ['button']
-      }
-    })],
-    ['/test/translations/apps/common/buttons/tracker_meta.json', JSON.stringify({
-      ok: {
-        en: { checksum: 'ok111' },
-        es: { status: 'verified', checksum: 'ok222', baseChecksum: 'ok111' },
-        fr: { status: 'translated', checksum: 'ok333', baseChecksum: 'ok111' }
-      },
-      cancel: {
-        en: { checksum: 'can111' },
-        es: { status: 'translated', checksum: 'can222', baseChecksum: 'can111' },
-        fr: { status: 'new', checksum: '', baseChecksum: 'can111' }
-      }
-    })]
+    [
+      '/test/translations/apps/common/buttons/resource_entries.json',
+      JSON.stringify({
+        ok: {
+          source: 'OK',
+          es: 'Aceptar',
+          fr: "D'accord",
+        },
+        cancel: {
+          source: 'Cancel',
+          es: 'Cancelar',
+          fr: 'Annuler',
+          tags: ['button'],
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/tracker_meta.json',
+      JSON.stringify({
+        ok: {
+          en: { checksum: 'ok111' },
+          es: { status: 'verified', checksum: 'ok222', baseChecksum: 'ok111' },
+          fr: {
+            status: 'translated',
+            checksum: 'ok333',
+            baseChecksum: 'ok111',
+          },
+        },
+        cancel: {
+          en: { checksum: 'can111' },
+          es: {
+            status: 'translated',
+            checksum: 'can222',
+            baseChecksum: 'can111',
+          },
+          fr: { status: 'new', checksum: '', baseChecksum: 'can111' },
+        },
+      }),
+    ],
   ]);
 };
 
@@ -167,8 +243,7 @@ vi.mock('node:fs', () => ({
       const dirParts = dirPathStr.split('/').filter(Boolean);
 
       // Check if this is a direct child of dirPath
-      if (pathParts.length === dirParts.length + 1 &&
-          fsPath.startsWith(dirPathStr + '/')) {
+      if (pathParts.length === dirParts.length + 1 && fsPath.startsWith(`${dirPathStr}/`)) {
         const name = pathParts[pathParts.length - 1];
         const isDirectory = type === 'directory';
 
@@ -182,13 +257,13 @@ vi.mock('node:fs', () => ({
           isFIFO: () => false,
           isSocket: () => false,
           parentPath: dirPathStr,
-          path: dirPathStr
+          path: dirPathStr,
         } as fs.Dirent);
       }
     }
 
     return entries;
-  })
+  }),
 }));
 
 describe('loadResourceTree', () => {
@@ -209,7 +284,7 @@ describe('loadResourceTree', () => {
         translationsFolder,
         path: '',
         depth: 0,
-        cwd: '/'
+        cwd: '/',
       });
 
       // Should have root resources
@@ -219,7 +294,7 @@ describe('loadResourceTree', () => {
       expect(result.resources[0].source).toBe('App Title');
       expect(result.resources[0].translations).toEqual({
         es: 'Título de la Aplicación',
-        fr: 'Titre de l\'Application'
+        fr: "Titre de l'Application",
       });
 
       // Should list children but not load them
@@ -237,7 +312,7 @@ describe('loadResourceTree', () => {
         translationsFolder,
         path: '',
         depth: 2,
-        cwd: '/'
+        cwd: '/',
       });
 
       // Root level
@@ -285,7 +360,7 @@ describe('loadResourceTree', () => {
         translationsFolder,
         path: 'apps.common',
         depth: 1,
-        cwd: '/'
+        cwd: '/',
       });
 
       // Should load apps/common as root
@@ -304,19 +379,21 @@ describe('loadResourceTree', () => {
       if (!buttonsTree) return;
 
       expect(buttonsTree.resources).toHaveLength(2);
-      expect(buttonsTree.resources.map(r => r.key)).toContain('ok');
-      expect(buttonsTree.resources.map(r => r.key)).toContain('cancel');
+      expect(buttonsTree.resources.map((r) => r.key)).toContain('ok');
+      expect(buttonsTree.resources.map((r) => r.key)).toContain('cancel');
     });
   });
 
   describe('error handling', () => {
     it('should throw error for non-existent folder', () => {
-      expect(() => loadResourceTree({
-        translationsFolder,
-        path: 'nonexistent.folder',
-        depth: 1,
-        cwd: '/'
-      })).toThrow('Folder not found');
+      expect(() =>
+        loadResourceTree({
+          translationsFolder,
+          path: 'nonexistent.folder',
+          depth: 1,
+          cwd: '/',
+        }),
+      ).toThrow('Folder not found');
     });
 
     it('should handle folders with no resource files', () => {
@@ -325,7 +402,7 @@ describe('loadResourceTree', () => {
         translationsFolder,
         path: 'apps',
         depth: 0,
-        cwd: '/'
+        cwd: '/',
       });
 
       expect(result.resources).toHaveLength(0);
@@ -339,7 +416,7 @@ describe('loadResourceTree', () => {
         translationsFolder,
         path: '',
         depth: 0,
-        cwd: '/'
+        cwd: '/',
       });
 
       const titleResource = result.resources[0];

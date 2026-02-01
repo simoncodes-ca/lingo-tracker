@@ -1,5 +1,5 @@
-import { ImportChange, StatusTransition } from './types';
-import { TranslationStatus } from '../../resource/translation-status';
+import type { ImportChange, StatusTransition } from './types';
+import type { TranslationStatus } from '../../resource/translation-status';
 
 /**
  * Calculates summary statistics from an array of import changes.
@@ -41,10 +41,10 @@ export function calculateImportStatistics(changes: ImportChange[]): {
   resourcesSkipped: number;
   resourcesFailed: number;
 } {
-  const resourcesCreated = changes.filter(c => c.type === 'created').length;
-  const resourcesUpdated = changes.filter(c => c.type === 'updated' || c.type === 'value-changed').length;
-  const resourcesSkipped = changes.filter(c => c.type === 'skipped').length;
-  const resourcesFailed = changes.filter(c => c.type === 'failed').length;
+  const resourcesCreated = changes.filter((c) => c.type === 'created').length;
+  const resourcesUpdated = changes.filter((c) => c.type === 'updated' || c.type === 'value-changed').length;
+  const resourcesSkipped = changes.filter((c) => c.type === 'skipped').length;
+  const resourcesFailed = changes.filter((c) => c.type === 'failed').length;
 
   return {
     resourcesCreated,

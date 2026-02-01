@@ -26,7 +26,7 @@ export interface ResolvedCollection {
 export function resolveCollection(
   collectionName: string,
   config: LingoTrackerConfig,
-  baseDirectory: string
+  baseDirectory: string,
 ): ResolvedCollection | null {
   const collectionConfig = config.collections?.[collectionName];
 

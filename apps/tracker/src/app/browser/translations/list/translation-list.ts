@@ -1,27 +1,27 @@
 import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { ComponentType } from '@angular/cdk/portal';
+import type { ComponentType } from '@angular/cdk/portal';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, type MatDialogRef } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MoveResourceDialog } from '../../dialogs/move-resource';
 import {
   TranslationEditorDialog,
-  TranslationEditorDialogData,
-  TranslationEditorResult,
+  type TranslationEditorDialogData,
+  type TranslationEditorResult,
 } from '../../dialogs/translation-editor';
 import { BrowserStore } from '../../store/browser.store';
 import { TranslationItem } from './translation-item/translation-item';
-import { ResourceSummaryDto, UpdateResourceDto } from '@simoncodes-ca/data-transfer';
+import type { ResourceSummaryDto, UpdateResourceDto } from '@simoncodes-ca/data-transfer';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
-import { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
+import type { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
 
 @Component({
   selector: 'app-translation-list',

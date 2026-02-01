@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noExplicitAny: Expected
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SafeAny = any;
 

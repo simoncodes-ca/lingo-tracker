@@ -54,7 +54,10 @@ program
   .option('--comment <comment>', 'Optional context for translators')
   .option('--tags <tags>', 'Optional tags (comma-separated)')
   .option('--targetFolder <folder>', 'Optional target folder (dot-delimited)')
-  .option('--translations <json>', 'Optional translations as JSON array, e.g., \'[{"locale":"es","value":"Aplicar","status":"translated"}]\'')
+  .option(
+    '--translations <json>',
+    'Optional translations as JSON array, e.g., \'[{"locale":"es","value":"Aplicar","status":"translated"}]\'',
+  )
   .action(async (options) => {
     const { addResourceCommand } = await import('./add-resource/add-resource');
     const processedOptions = {
@@ -157,15 +160,21 @@ program
   .option('-s, --source <path>', 'Path to import file (required)')
   .option('-l, --locale <locale>', 'Target locale for import (e.g., es, fr-ca)')
   .option('-c, --collection <name>', 'Target collection to import into')
-  .option('--strategy <strategy>', 'Import strategy (translation-service | verification | migration | update)', 'translation-service')
+  .option(
+    '--strategy <strategy>',
+    'Import strategy (translation-service | verification | migration | update)',
+    'translation-service',
+  )
   .option('--update-comments', 'Update resource comments from import data', false)
   .option('--update-tags', 'Update resource tags from rich JSON', false)
   .option('--preserve-status', 'Allow rich JSON to specify status (advanced)', false)
-  .option('--create-missing', 'Create new resources if they don\'t exist')
+  .option('--create-missing', "Create new resources if they don't exist")
   .option('--validate-base', 'Warn if source base value differs from existing', true)
   .option('--dry-run', 'Show what would be imported without modifying files', false)
   .option('--verbose', 'Show detailed import progress', false)
-  .addHelpText('after', `
+  .addHelpText(
+    'after',
+    `
 Examples:
   # Import XLIFF from translation service (most common workflow)
   $ lingo-tracker import --source translations-es.xlf --locale es
@@ -217,7 +226,8 @@ Notes:
   - Use --dry-run to preview changes before committing
   - Summary report saved to {translationsFolder}/import-summary.md
   - Large files (>5MB) will show a warning
-`)
+`,
+  )
   .action(async (options) => {
     const { importCommand } = await import('./commands/import-cmd');
     await importCommand(options);
@@ -227,7 +237,9 @@ program
   .command('validate')
   .description('Verify translation completeness and readiness for production release')
   .option('--allow-translated', 'Treat translated status as warning instead of error', false)
-  .addHelpText('after', `
+  .addHelpText(
+    'after',
+    `
 Examples:
   # Basic validation (strict mode - requires all translations verified)
   $ lingo-tracker validate
@@ -348,11 +360,11 @@ Notes:
   - Perfect for pre-release quality gates in CI/CD pipelines
   - Use --allow-translated for staging environments
   - Strict mode (default) recommended for production releases
-`)
+`,
+  )
   .action(async (options) => {
     const { validateCommand } = await import('./commands/validate');
     await validateCommand({ allowTranslated: options.allowTranslated });
   });
 
 program.parse();
-

@@ -48,12 +48,10 @@
  */
 export function aggregateNumericFields<T extends Record<string, unknown>>(
   results: T[],
-  numericFields: (keyof T)[]
+  numericFields: (keyof T)[],
 ): Record<keyof T, number> {
   // Initialize accumulator with all fields set to 0
-  const initial = Object.fromEntries(
-    numericFields.map((field) => [field, 0])
-  ) as Record<keyof T, number>;
+  const initial = Object.fromEntries(numericFields.map((field) => [field, 0])) as Record<keyof T, number>;
 
   // Sum each numeric field across all results
   return results.reduce((accumulator, current) => {

@@ -1,4 +1,4 @@
-import { ResourceSummaryDto } from './resource-tree.dto';
+import type { ResourceSummaryDto } from './resource-tree.dto';
 
 /**
  * Match type for search results.

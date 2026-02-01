@@ -1,18 +1,11 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-  signal,
-  computed,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
-import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { FolderNode } from '../../../sidebar/folder-tree/folder-node/folder-node';
 
 /**
@@ -70,7 +63,7 @@ export class FolderPicker {
   });
 
   toggleExpanded(): void {
-    this.isExpanded.update(expanded => !expanded);
+    this.isExpanded.update((expanded) => !expanded);
   }
 
   onFolderClick(folder: FolderNodeDto): void {

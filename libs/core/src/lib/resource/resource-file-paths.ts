@@ -1,10 +1,5 @@
 import { resolve, join } from 'node:path';
-import {
-  validateKey,
-  validateTargetFolder,
-  resolveResourceKey,
-  splitResolvedKey,
-} from '../../resource/resource-key';
+import { validateKey, validateTargetFolder, resolveResourceKey, splitResolvedKey } from '../../resource/resource-key';
 import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
 
 export interface ResolvedResourcePaths {
@@ -62,9 +57,7 @@ export interface ResourcePathResolutionParams {
  * // trackerMetaPath: "/app/translations/apps/common/buttons/tracker_meta.json"
  * ```
  */
-export function resolveResourcePaths(
-  params: ResourcePathResolutionParams
-): ResolvedResourcePaths {
+export function resolveResourcePaths(params: ResourcePathResolutionParams): ResolvedResourcePaths {
   const { key, translationsFolder, targetFolder, cwd = process.cwd() } = params;
 
   const resolvedKey = resolveResourceKey(key, targetFolder);
@@ -92,9 +85,7 @@ export function resolveResourcePaths(
  * Validates a key and resolves all paths in one operation.
  * Throws if key or targetFolder are invalid.
  */
-export function validateAndResolvePaths(
-  params: ResourcePathResolutionParams
-): ResolvedResourcePaths {
+export function validateAndResolvePaths(params: ResourcePathResolutionParams): ResolvedResourcePaths {
   validateKey(params.key);
 
   if (params.targetFolder) {

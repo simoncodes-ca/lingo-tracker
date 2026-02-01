@@ -1,5 +1,5 @@
 import { validateKey } from '../../resource/resource-key';
-import { ImportFormat, ImportStrategy } from './types';
+import type { ImportFormat, ImportStrategy } from './types';
 
 /**
  * Validates that a resource key is properly formatted.
@@ -40,9 +40,7 @@ export function detectImportFormat(filePath: string): ImportFormat {
     case 'json':
       return 'json';
     default:
-      throw new Error(
-        `Cannot auto-detect format from extension ".${extension}". Please specify --format explicitly.`
-      );
+      throw new Error(`Cannot auto-detect format from extension ".${extension}". Please specify --format explicitly.`);
   }
 }
 
@@ -100,9 +98,7 @@ export function validateLocale(locale: string): void {
   // Basic validation: should be lowercase alphanumeric with optional hyphen
   const localePattern = /^[a-z]{2,3}(-[a-z]{2,4})?$/i;
   if (!localePattern.test(locale)) {
-    throw new Error(
-      `Invalid locale format: "${locale}". Expected format: "en", "es", "fr-ca", etc.`
-    );
+    throw new Error(`Invalid locale format: "${locale}". Expected format: "en", "es", "fr-ca", etc.`);
   }
 }
 
@@ -129,9 +125,7 @@ export function detectHierarchicalConflicts(keys: string[]): string[] {
 
   for (const key of keys) {
     // Check if any other key starts with this key followed by a dot
-    const hasChildren = keys.some(
-      (otherKey) => otherKey !== key && otherKey.startsWith(`${key}.`)
-    );
+    const hasChildren = keys.some((otherKey) => otherKey !== key && otherKey.startsWith(`${key}.`));
 
     if (hasChildren) {
       conflicts.push(key);
@@ -165,4 +159,3 @@ export function detectDuplicateKeys(keys: string[]): Map<string, number> {
 
   return duplicates;
 }
-

@@ -1,4 +1,4 @@
-import { loadResourceTree, ResourceTreeNode } from './load-resource-tree';
+import { loadResourceTree, type ResourceTreeNode } from './load-resource-tree';
 
 export interface LoadFullResourceTreeOptions {
   /** Root translations folder path */
@@ -29,6 +29,6 @@ export function loadFullResourceTree(options: LoadFullResourceTreeOptions): Reso
     translationsFolder,
     path: '',
     depth: Infinity,
-    cwd
+    cwd,
   });
 }

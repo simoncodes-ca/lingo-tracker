@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { normalize, NormalizeParams } from './normalize';
-import { ResourceEntries } from '../../resource/resource-entry';
-import { TrackerMetadata } from '../../resource/tracker-metadata';
+import { normalize, type NormalizeParams } from './normalize';
+import type { ResourceEntries } from '../../resource/resource-entry';
+import type { TrackerMetadata } from '../../resource/tracker-metadata';
 import { calculateChecksum } from '../../resource/checksum';
 import * as cleanupModule from './cleanup-empty-folders';
 
@@ -97,7 +97,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -154,7 +157,7 @@ describe('Normalize', () => {
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         path.join(testDir, 'tracker_meta.json'),
         expect.any(String),
-        'utf8'
+        'utf8',
       );
     });
 
@@ -190,7 +193,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -241,7 +247,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -292,7 +301,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -313,9 +325,7 @@ describe('Normalize', () => {
       await normalize(params);
 
       // Verify metadata was written with stale status
-      const metaWriteCalls = vi
-        .mocked(fs.writeFileSync)
-        .mock.calls.filter((call) => call[0] === metaPath);
+      const metaWriteCalls = vi.mocked(fs.writeFileSync).mock.calls.filter((call) => call[0] === metaPath);
       expect(metaWriteCalls.length).toBeGreaterThan(0);
     });
 
@@ -390,7 +400,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -440,7 +453,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -494,7 +510,10 @@ describe('Normalize', () => {
         [testDir]: { type: 'directory', children: ['apps'] },
         [level1]: { type: 'directory', children: ['common'] },
         [level2]: { type: 'directory', children: ['buttons'] },
-        [level3]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [level3]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -549,7 +568,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -616,8 +638,14 @@ describe('Normalize', () => {
 
       const mockFs: MockFileSystem = {
         [testDir]: { type: 'directory', children: ['apps', 'shared'] },
-        [path.join(testDir, 'apps')]: { type: 'directory', children: ['buttons'] },
-        [path.join(testDir, 'shared')]: { type: 'directory', children: ['validation'] },
+        [path.join(testDir, 'apps')]: {
+          type: 'directory',
+          children: ['buttons'],
+        },
+        [path.join(testDir, 'shared')]: {
+          type: 'directory',
+          children: ['validation'],
+        },
         [appsButtons]: {
           type: 'directory',
           children: ['resource_entries.json', 'tracker_meta.json'],
@@ -669,7 +697,10 @@ describe('Normalize', () => {
       const metaPath = path.join(testDir, 'tracker_meta.json');
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: 'invalid json{' },
         [metaPath]: { type: 'file', content: 'invalid json{' },
       };
@@ -698,7 +729,7 @@ describe('Normalize', () => {
       // Should log an error message
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('⚠️  Skipping folder due to invalid JSON'),
-        testDir
+        testDir,
       );
 
       // Should NOT write any files (folder is skipped)

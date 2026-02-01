@@ -4,17 +4,13 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  BundleDefinition,
-  CollectionBundleDefinition,
-  EntrySelectionRule,
-} from '../../config/bundle-definition';
-import { LingoTrackerConfig } from '../../config/lingo-tracker-config';
-import { loadCollectionResources, FlatResource } from './resource-loader';
+import type { BundleDefinition, CollectionBundleDefinition, EntrySelectionRule } from '../../config/bundle-definition';
+import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
+import { loadCollectionResources, type FlatResource } from './resource-loader';
 import { matchesPattern } from './pattern-matcher';
 import { matchesTags } from './tag-filter';
 import { buildHierarchy } from './hierarchy-builder';
-import { generateBundleTypes, GenerateTypesResult } from './type-generation/generate-types';
+import { generateBundleTypes, type GenerateTypesResult } from './type-generation/generate-types';
 
 export interface GenerateBundleParams {
   readonly bundleKey: string;
@@ -37,9 +33,7 @@ export interface GenerateBundleResult {
  * @param params - Bundle generation parameters
  * @returns Result with count of files generated and any warnings
  */
-export async function generateBundle(
-  params: GenerateBundleParams
-): Promise<GenerateBundleResult> {
+export async function generateBundle(params: GenerateBundleParams): Promise<GenerateBundleResult> {
   const { bundleKey, bundleDefinition, config, locales } = params;
   const warnings: string[] = [];
   const localesProcessed: string[] = [];
@@ -57,10 +51,7 @@ export async function generateBundle(
 
     const hierarchicalData = buildHierarchy(bundleData);
 
-    const outputPath = getBundleOutputPath(
-      bundleDefinition,
-      locale
-    );
+    const outputPath = getBundleOutputPath(bundleDefinition, locale);
     writeBundleFile(outputPath, hierarchicalData);
 
     filesGenerated++;
@@ -79,7 +70,9 @@ export async function generateBundle(
         warnings.push(`Type generation skipped for '${bundleKey}': Bundle is empty`);
       }
     } catch (error) {
-      warnings.push(`Type generation failed for '${bundleKey}': ${error instanceof Error ? error.message : String(error)}`);
+      warnings.push(
+        `Type generation failed for '${bundleKey}': ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -99,46 +92,30 @@ function collectBundleData(
   bundleDefinition: BundleDefinition,
   config: LingoTrackerConfig,
   locale: string,
-  warnings: string[]
+  warnings: string[],
 ): Record<string, string> {
   const bundleData: Record<string, string> = {};
 
   const baseLocale = config.baseLocale;
 
   if (bundleDefinition.collections === 'All') {
-    for (const [collectionName, collectionConfig] of Object.entries(
-      config.collections
-    )) {
+    for (const [collectionName, collectionConfig] of Object.entries(config.collections)) {
       const collectionBundleDef: CollectionBundleDefinition = {
         name: collectionName,
         entriesSelectionRules: 'All',
       };
-      processCollection(
-        collectionBundleDef,
-        collectionConfig.translationsFolder,
-        locale,
-        baseLocale,
-        bundleData
-      );
+      processCollection(collectionBundleDef, collectionConfig.translationsFolder, locale, baseLocale, bundleData);
     }
   } else {
     for (const collectionBundleDef of bundleDefinition.collections) {
       const collectionConfig = config.collections[collectionBundleDef.name];
 
       if (!collectionConfig) {
-        warnings.push(
-          `Collection '${collectionBundleDef.name}' not found in config`
-        );
+        warnings.push(`Collection '${collectionBundleDef.name}' not found in config`);
         continue;
       }
 
-      processCollection(
-        collectionBundleDef,
-        collectionConfig.translationsFolder,
-        locale,
-        baseLocale,
-        bundleData
-      );
+      processCollection(collectionBundleDef, collectionConfig.translationsFolder, locale, baseLocale, bundleData);
     }
   }
 
@@ -153,7 +130,7 @@ function processCollection(
   translationsFolder: string,
   locale: string,
   baseLocale: string,
-  bundleData: Record<string, string>
+  bundleData: Record<string, string>,
 ): void {
   const resources = loadCollectionResources(translationsFolder, locale, baseLocale);
   const filteredResources = filterResources(resources, collectionDef);
@@ -180,10 +157,7 @@ function processCollection(
 /**
  * Filters resources based on entry selection rules
  */
-function filterResources(
-  resources: FlatResource[],
-  collectionDef: CollectionBundleDefinition
-): FlatResource[] {
+function filterResources(resources: FlatResource[], collectionDef: CollectionBundleDefinition): FlatResource[] {
   if (collectionDef.entriesSelectionRules === 'All') {
     return resources;
   }
@@ -196,17 +170,10 @@ function filterResources(
 /**
  * Checks if resource matches any of the selection rules
  */
-function matchesAnyRule(
-  resource: FlatResource,
-  rules: EntrySelectionRule[]
-): boolean {
+function matchesAnyRule(resource: FlatResource, rules: EntrySelectionRule[]): boolean {
   return rules.some((rule) => {
     const patternMatch = matchesPattern(resource.key, rule.matchingPattern);
-    const tagMatch = matchesTags(
-      resource.tags,
-      rule.matchingTags,
-      rule.matchingTagOperator
-    );
+    const tagMatch = matchesTags(resource.tags, rule.matchingTags, rule.matchingTagOperator);
     return patternMatch && tagMatch;
   });
 }
@@ -214,28 +181,22 @@ function matchesAnyRule(
 /**
  * Determines output file path for bundle
  */
-function getBundleOutputPath(
-  bundleDefinition: BundleDefinition,
-  locale: string
-): string {
+function getBundleOutputPath(bundleDefinition: BundleDefinition, locale: string): string {
   const fileName = bundleDefinition.bundleName.replace('{locale}', locale);
 
   // Handle subdirectory pattern (e.g., "{locale}/main")
   if (fileName.includes('/')) {
-    return path.join(bundleDefinition.dist, fileName + '.json');
+    return path.join(bundleDefinition.dist, `${fileName}.json`);
   }
 
   // Standard file pattern
-  return path.join(bundleDefinition.dist, fileName + '.json');
+  return path.join(bundleDefinition.dist, `${fileName}.json`);
 }
 
 /**
  * Writes bundle data to file
  */
-function writeBundleFile(
-  outputPath: string,
-  data: Record<string, unknown>
-): void {
+function writeBundleFile(outputPath: string, data: Record<string, unknown>): void {
   const outputDir = path.dirname(outputPath);
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -12,14 +12,8 @@ describe('FolderTree', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        FolderTree,
-        getTranslocoTestingModule(),
-      ],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      imports: [FolderTree, getTranslocoTestingModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     httpMock = TestBed.inject(HttpTestingController);

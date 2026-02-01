@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { IndexingOverlay } from './indexing-overlay.component';
@@ -12,12 +12,7 @@ describe('IndexingOverlay', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        IndexingOverlay,
-        MatProgressSpinnerModule,
-        MatCardModule,
-        MatButtonModule,
-      ],
+      imports: [IndexingOverlay, MatProgressSpinnerModule, MatCardModule, MatButtonModule],
     }).compileComponents();
 
     fixture = TestBed.createComponent(IndexingOverlay);
@@ -84,9 +79,7 @@ describe('IndexingOverlay', () => {
 
       const errorMessage = fixture.debugElement.query(By.css('.error-message'));
       expect(errorMessage).toBeTruthy();
-      expect(errorMessage.nativeElement.textContent).toContain(
-        'An error occurred while indexing the collection.'
-      );
+      expect(errorMessage.nativeElement.textContent).toContain('An error occurred while indexing the collection.');
     });
 
     it('should display retry button when status is "error"', () => {

@@ -1,15 +1,9 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  OnDestroy,
-  signal,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, type OnDestroy, signal } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { BrowserStore } from '../../store/browser.store';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { TRACKER_TOKENS } from "../../../../i18n-types/tracker-resources";
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { SearchInput } from '../../../shared/components/search-input';
 
 /**
@@ -30,10 +24,7 @@ import { SearchInput } from '../../../shared/components/search-input';
   selector: 'app-translation-search',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    SearchInput,
-    TranslocoPipe,
-  ],
+  imports: [SearchInput, TranslocoPipe],
   templateUrl: './translation-search.html',
   styleUrl: './translation-search.scss',
 })
@@ -52,7 +43,7 @@ export class TranslationSearch implements OnDestroy {
       this.#searchSubject
         .pipe(
           debounceTime(300), // Wait 300ms after user stops typing
-          distinctUntilChanged() // Only emit if value actually changed
+          distinctUntilChanged(), // Only emit if value actually changed
         )
         .subscribe((query) => {
           // Only trigger search if query has at least 3 characters
@@ -63,7 +54,7 @@ export class TranslationSearch implements OnDestroy {
             // Clear search when input is empty
             this.store.clearSearch();
           }
-        })
+        }),
     );
   }
 

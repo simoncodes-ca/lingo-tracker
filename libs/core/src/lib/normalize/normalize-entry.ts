@@ -1,8 +1,8 @@
 import { calculateChecksum } from '../../resource/checksum';
-import { ResourceEntry } from '../../resource/resource-entry';
-import { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
-import { TranslationStatus } from '../../resource/translation-status';
-import { LocaleMetadata } from '../../resource/locale-metadata';
+import type { ResourceEntry } from '../../resource/resource-entry';
+import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
+import type { TranslationStatus } from '../../resource/translation-status';
+import type { LocaleMetadata } from '../../resource/locale-metadata';
 
 export interface NormalizeEntryParams {
   readonly entryKey: string;
@@ -152,8 +152,16 @@ function processLocale(params: ProcessLocaleParams): ProcessLocaleResult {
     previousStatus: previousLocaleMetadata?.status,
   });
 
-  const localeMetadata = createLocaleMetadata({ currentLocaleChecksum, currentBaseChecksum, translationStatus });
-  const changes = trackLocaleChanges({ previousLocaleMetadata, currentLocaleChecksum, newStatus: translationStatus });
+  const localeMetadata = createLocaleMetadata({
+    currentLocaleChecksum,
+    currentBaseChecksum,
+    translationStatus,
+  });
+  const changes = trackLocaleChanges({
+    previousLocaleMetadata,
+    currentLocaleChecksum,
+    newStatus: translationStatus,
+  });
 
   return {
     localeMetadata,
@@ -164,7 +172,16 @@ function processLocale(params: ProcessLocaleParams): ProcessLocaleResult {
 }
 
 function processAllLocales(params: ProcessAllLocalesParams): ProcessAllLocalesResult {
-  const { locales, baseLocale, baseValue, currentBaseChecksum, baseValueChanged, metadata, normalizedEntry, normalizedMetadata } = params;
+  const {
+    locales,
+    baseLocale,
+    baseValue,
+    currentBaseChecksum,
+    baseValueChanged,
+    metadata,
+    normalizedEntry,
+    normalizedMetadata,
+  } = params;
 
   let localesAdded = 0;
   let checksumsUpdated = 0;

@@ -1,4 +1,4 @@
-import { LingoTrackerCollectionDto } from './lingo-tracker-collection.dto';
+import type { LingoTrackerCollectionDto } from './lingo-tracker-collection.dto';
 
 export interface UpdateCollectionDto {
   /** Optional new collection name for renaming */

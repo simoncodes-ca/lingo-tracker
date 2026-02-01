@@ -1,5 +1,5 @@
 import {
-  ApplicationConfig,
+  type ApplicationConfig,
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
   isDevMode,
@@ -14,10 +14,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(
-      appRoutes,
-      withPreloading(PreloadAllModules)
-    ),
+    provideRouter(appRoutes, withPreloading(PreloadAllModules)),
     provideHttpClient(),
     provideTransloco({
       config: {

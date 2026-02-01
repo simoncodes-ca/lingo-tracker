@@ -1,5 +1,5 @@
-import { Pipe, PipeTransform, inject } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Pipe, type PipeTransform, inject } from '@angular/core';
+import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 
 @Pipe({
   name: 'highlight',
@@ -10,18 +10,12 @@ export class HighlightPipe implements PipeTransform {
   readonly #sanitizer = inject(DomSanitizer);
   readonly #minimumSearchLength = 3;
 
-  transform(
-    text: string | null | undefined,
-    searchTerm: string | null | undefined
-  ): SafeHtml {
+  transform(text: string | null | undefined, searchTerm: string | null | undefined): SafeHtml {
     if (!text) {
       return '';
     }
 
-    if (
-      !searchTerm ||
-      searchTerm.length < this.#minimumSearchLength
-    ) {
+    if (!searchTerm || searchTerm.length < this.#minimumSearchLength) {
       return this.#sanitizer.bypassSecurityTrustHtml(this.#escapeHtml(text));
     }
 

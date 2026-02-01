@@ -87,9 +87,7 @@ export async function validateCommand(options: ValidateCommandOptions): Promise<
     process.exit(1);
   }
 
-  const targetLocales = (config.locales || []).filter(
-    (locale: string) => locale !== config.baseLocale
-  );
+  const targetLocales = (config.locales || []).filter((locale: string) => locale !== config.baseLocale);
 
   if (targetLocales.length === 0) {
     console.error('❌ No target locales found in configuration.');
@@ -97,16 +95,13 @@ export async function validateCommand(options: ValidateCommandOptions): Promise<
     process.exit(1);
   }
 
-  const validationResult = validateResources(
-    allCollections,
-    targetLocales,
-    { allowTranslated: options.allowTranslated ?? false }
-  );
+  const validationResult = validateResources(allCollections, targetLocales, {
+    allowTranslated: options.allowTranslated ?? false,
+  });
 
-  const summary = generateValidationSummary(
-    validationResult,
-    { allowTranslated: options.allowTranslated ?? false }
-  );
+  const summary = generateValidationSummary(validationResult, {
+    allowTranslated: options.allowTranslated ?? false,
+  });
 
   console.log(summary);
 

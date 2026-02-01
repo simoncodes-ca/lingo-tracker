@@ -1,11 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  input,
-  output,
-  effect,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, input, output, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -15,9 +8,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FolderNode } from './folder-node/folder-node';
 import { BrowserStore } from '../../store/browser.store';
-import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
-import {TRACKER_TOKENS} from "../../../../i18n-types/tracker-resources";
-import {TranslocoModule} from "@jsverse/transloco";
+import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { TranslocoModule } from '@jsverse/transloco';
 import { SearchInput } from '../../../shared/components/search-input';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -73,15 +66,9 @@ export class FolderTree {
     });
 
     // Debounce search input
-    this.#searchSubject
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        takeUntilDestroyed()
-      )
-      .subscribe((value) => {
-        this.store.setFolderTreeFilter(value);
-      });
+    this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed()).subscribe((value) => {
+      this.store.setFolderTreeFilter(value);
+    });
   }
 
   /**

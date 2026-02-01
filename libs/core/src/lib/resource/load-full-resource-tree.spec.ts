@@ -6,108 +6,174 @@ const mockFs = vi.hoisted(() => {
   return new Map<string, string | 'directory'>([
     // Root directory and files
     ['/test/translations', 'directory'],
-    ['/test/translations/resource_entries.json', JSON.stringify({
-      rootKey: {
-        source: 'Root Value',
-        es: 'Valor Raíz'
-      }
-    })],
-    ['/test/translations/tracker_meta.json', JSON.stringify({
-      rootKey: {
-        en: { checksum: 'root123' },
-        es: { status: 'translated', checksum: 'root456', baseChecksum: 'root123' }
-      }
-    })],
+    [
+      '/test/translations/resource_entries.json',
+      JSON.stringify({
+        rootKey: {
+          source: 'Root Value',
+          es: 'Valor Raíz',
+        },
+      }),
+    ],
+    [
+      '/test/translations/tracker_meta.json',
+      JSON.stringify({
+        rootKey: {
+          en: { checksum: 'root123' },
+          es: {
+            status: 'translated',
+            checksum: 'root456',
+            baseChecksum: 'root123',
+          },
+        },
+      }),
+    ],
 
     // Level 1: apps directory
     ['/test/translations/apps', 'directory'],
-    ['/test/translations/apps/resource_entries.json', JSON.stringify({
-      appsKey: {
-        source: 'Apps Value',
-        es: 'Valor Apps'
-      }
-    })],
-    ['/test/translations/apps/tracker_meta.json', JSON.stringify({
-      appsKey: {
-        en: { checksum: 'apps123' },
-        es: { status: 'verified', checksum: 'apps456', baseChecksum: 'apps123' }
-      }
-    })],
+    [
+      '/test/translations/apps/resource_entries.json',
+      JSON.stringify({
+        appsKey: {
+          source: 'Apps Value',
+          es: 'Valor Apps',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/tracker_meta.json',
+      JSON.stringify({
+        appsKey: {
+          en: { checksum: 'apps123' },
+          es: {
+            status: 'verified',
+            checksum: 'apps456',
+            baseChecksum: 'apps123',
+          },
+        },
+      }),
+    ],
 
     // Level 2: apps/common directory
     ['/test/translations/apps/common', 'directory'],
-    ['/test/translations/apps/common/resource_entries.json', JSON.stringify({
-      commonKey: {
-        source: 'Common Value',
-        es: 'Valor Común'
-      }
-    })],
-    ['/test/translations/apps/common/tracker_meta.json', JSON.stringify({
-      commonKey: {
-        en: { checksum: 'common123' },
-        es: { status: 'translated', checksum: 'common456', baseChecksum: 'common123' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/resource_entries.json',
+      JSON.stringify({
+        commonKey: {
+          source: 'Common Value',
+          es: 'Valor Común',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/tracker_meta.json',
+      JSON.stringify({
+        commonKey: {
+          en: { checksum: 'common123' },
+          es: {
+            status: 'translated',
+            checksum: 'common456',
+            baseChecksum: 'common123',
+          },
+        },
+      }),
+    ],
 
     // Level 3: apps/common/buttons directory
     ['/test/translations/apps/common/buttons', 'directory'],
-    ['/test/translations/apps/common/buttons/resource_entries.json', JSON.stringify({
-      ok: {
-        source: 'OK',
-        es: 'Aceptar'
-      }
-    })],
-    ['/test/translations/apps/common/buttons/tracker_meta.json', JSON.stringify({
-      ok: {
-        en: { checksum: 'ok123' },
-        es: { status: 'verified', checksum: 'ok456', baseChecksum: 'ok123' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/buttons/resource_entries.json',
+      JSON.stringify({
+        ok: {
+          source: 'OK',
+          es: 'Aceptar',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/tracker_meta.json',
+      JSON.stringify({
+        ok: {
+          en: { checksum: 'ok123' },
+          es: { status: 'verified', checksum: 'ok456', baseChecksum: 'ok123' },
+        },
+      }),
+    ],
 
     // Level 4: apps/common/buttons/actions directory
     ['/test/translations/apps/common/buttons/actions', 'directory'],
-    ['/test/translations/apps/common/buttons/actions/resource_entries.json', JSON.stringify({
-      submit: {
-        source: 'Submit',
-        es: 'Enviar'
-      }
-    })],
-    ['/test/translations/apps/common/buttons/actions/tracker_meta.json', JSON.stringify({
-      submit: {
-        en: { checksum: 'submit123' },
-        es: { status: 'translated', checksum: 'submit456', baseChecksum: 'submit123' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/buttons/actions/resource_entries.json',
+      JSON.stringify({
+        submit: {
+          source: 'Submit',
+          es: 'Enviar',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/actions/tracker_meta.json',
+      JSON.stringify({
+        submit: {
+          en: { checksum: 'submit123' },
+          es: {
+            status: 'translated',
+            checksum: 'submit456',
+            baseChecksum: 'submit123',
+          },
+        },
+      }),
+    ],
 
     // Level 5: apps/common/buttons/actions/primary directory
     ['/test/translations/apps/common/buttons/actions/primary', 'directory'],
-    ['/test/translations/apps/common/buttons/actions/primary/resource_entries.json', JSON.stringify({
-      save: {
-        source: 'Save',
-        es: 'Guardar'
-      }
-    })],
-    ['/test/translations/apps/common/buttons/actions/primary/tracker_meta.json', JSON.stringify({
-      save: {
-        en: { checksum: 'save123' },
-        es: { status: 'verified', checksum: 'save456', baseChecksum: 'save123' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/buttons/actions/primary/resource_entries.json',
+      JSON.stringify({
+        save: {
+          source: 'Save',
+          es: 'Guardar',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/actions/primary/tracker_meta.json',
+      JSON.stringify({
+        save: {
+          en: { checksum: 'save123' },
+          es: {
+            status: 'verified',
+            checksum: 'save456',
+            baseChecksum: 'save123',
+          },
+        },
+      }),
+    ],
 
     // Level 6: apps/common/buttons/actions/primary/forms directory
     ['/test/translations/apps/common/buttons/actions/primary/forms', 'directory'],
-    ['/test/translations/apps/common/buttons/actions/primary/forms/resource_entries.json', JSON.stringify({
-      create: {
-        source: 'Create',
-        es: 'Crear'
-      }
-    })],
-    ['/test/translations/apps/common/buttons/actions/primary/forms/tracker_meta.json', JSON.stringify({
-      create: {
-        en: { checksum: 'create123' },
-        es: { status: 'translated', checksum: 'create456', baseChecksum: 'create123' }
-      }
-    })]
+    [
+      '/test/translations/apps/common/buttons/actions/primary/forms/resource_entries.json',
+      JSON.stringify({
+        create: {
+          source: 'Create',
+          es: 'Crear',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/actions/primary/forms/tracker_meta.json',
+      JSON.stringify({
+        create: {
+          en: { checksum: 'create123' },
+          es: {
+            status: 'translated',
+            checksum: 'create456',
+            baseChecksum: 'create123',
+          },
+        },
+      }),
+    ],
   ]);
 });
 
@@ -115,108 +181,174 @@ const createMockFileSystem = () => {
   return new Map<string, string | 'directory'>([
     // Root directory and files
     ['/test/translations', 'directory'],
-    ['/test/translations/resource_entries.json', JSON.stringify({
-      rootKey: {
-        source: 'Root Value',
-        es: 'Valor Raíz'
-      }
-    })],
-    ['/test/translations/tracker_meta.json', JSON.stringify({
-      rootKey: {
-        en: { checksum: 'root123' },
-        es: { status: 'translated', checksum: 'root456', baseChecksum: 'root123' }
-      }
-    })],
+    [
+      '/test/translations/resource_entries.json',
+      JSON.stringify({
+        rootKey: {
+          source: 'Root Value',
+          es: 'Valor Raíz',
+        },
+      }),
+    ],
+    [
+      '/test/translations/tracker_meta.json',
+      JSON.stringify({
+        rootKey: {
+          en: { checksum: 'root123' },
+          es: {
+            status: 'translated',
+            checksum: 'root456',
+            baseChecksum: 'root123',
+          },
+        },
+      }),
+    ],
 
     // Level 1
     ['/test/translations/apps', 'directory'],
-    ['/test/translations/apps/resource_entries.json', JSON.stringify({
-      appsKey: {
-        source: 'Apps Value',
-        es: 'Valor Apps'
-      }
-    })],
-    ['/test/translations/apps/tracker_meta.json', JSON.stringify({
-      appsKey: {
-        en: { checksum: 'apps123' },
-        es: { status: 'verified', checksum: 'apps456', baseChecksum: 'apps123' }
-      }
-    })],
+    [
+      '/test/translations/apps/resource_entries.json',
+      JSON.stringify({
+        appsKey: {
+          source: 'Apps Value',
+          es: 'Valor Apps',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/tracker_meta.json',
+      JSON.stringify({
+        appsKey: {
+          en: { checksum: 'apps123' },
+          es: {
+            status: 'verified',
+            checksum: 'apps456',
+            baseChecksum: 'apps123',
+          },
+        },
+      }),
+    ],
 
     // Level 2
     ['/test/translations/apps/common', 'directory'],
-    ['/test/translations/apps/common/resource_entries.json', JSON.stringify({
-      commonKey: {
-        source: 'Common Value',
-        es: 'Valor Común'
-      }
-    })],
-    ['/test/translations/apps/common/tracker_meta.json', JSON.stringify({
-      commonKey: {
-        en: { checksum: 'common123' },
-        es: { status: 'translated', checksum: 'common456', baseChecksum: 'common123' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/resource_entries.json',
+      JSON.stringify({
+        commonKey: {
+          source: 'Common Value',
+          es: 'Valor Común',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/tracker_meta.json',
+      JSON.stringify({
+        commonKey: {
+          en: { checksum: 'common123' },
+          es: {
+            status: 'translated',
+            checksum: 'common456',
+            baseChecksum: 'common123',
+          },
+        },
+      }),
+    ],
 
     // Level 3
     ['/test/translations/apps/common/buttons', 'directory'],
-    ['/test/translations/apps/common/buttons/resource_entries.json', JSON.stringify({
-      ok: {
-        source: 'OK',
-        es: 'Aceptar'
-      }
-    })],
-    ['/test/translations/apps/common/buttons/tracker_meta.json', JSON.stringify({
-      ok: {
-        en: { checksum: 'ok123' },
-        es: { status: 'verified', checksum: 'ok456', baseChecksum: 'ok123' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/buttons/resource_entries.json',
+      JSON.stringify({
+        ok: {
+          source: 'OK',
+          es: 'Aceptar',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/tracker_meta.json',
+      JSON.stringify({
+        ok: {
+          en: { checksum: 'ok123' },
+          es: { status: 'verified', checksum: 'ok456', baseChecksum: 'ok123' },
+        },
+      }),
+    ],
 
     // Level 4
     ['/test/translations/apps/common/buttons/actions', 'directory'],
-    ['/test/translations/apps/common/buttons/actions/resource_entries.json', JSON.stringify({
-      submit: {
-        source: 'Submit',
-        es: 'Enviar'
-      }
-    })],
-    ['/test/translations/apps/common/buttons/actions/tracker_meta.json', JSON.stringify({
-      submit: {
-        en: { checksum: 'submit123' },
-        es: { status: 'translated', checksum: 'submit456', baseChecksum: 'submit123' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/buttons/actions/resource_entries.json',
+      JSON.stringify({
+        submit: {
+          source: 'Submit',
+          es: 'Enviar',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/actions/tracker_meta.json',
+      JSON.stringify({
+        submit: {
+          en: { checksum: 'submit123' },
+          es: {
+            status: 'translated',
+            checksum: 'submit456',
+            baseChecksum: 'submit123',
+          },
+        },
+      }),
+    ],
 
     // Level 5
     ['/test/translations/apps/common/buttons/actions/primary', 'directory'],
-    ['/test/translations/apps/common/buttons/actions/primary/resource_entries.json', JSON.stringify({
-      save: {
-        source: 'Save',
-        es: 'Guardar'
-      }
-    })],
-    ['/test/translations/apps/common/buttons/actions/primary/tracker_meta.json', JSON.stringify({
-      save: {
-        en: { checksum: 'save123' },
-        es: { status: 'verified', checksum: 'save456', baseChecksum: 'save123' }
-      }
-    })],
+    [
+      '/test/translations/apps/common/buttons/actions/primary/resource_entries.json',
+      JSON.stringify({
+        save: {
+          source: 'Save',
+          es: 'Guardar',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/actions/primary/tracker_meta.json',
+      JSON.stringify({
+        save: {
+          en: { checksum: 'save123' },
+          es: {
+            status: 'verified',
+            checksum: 'save456',
+            baseChecksum: 'save123',
+          },
+        },
+      }),
+    ],
 
     // Level 6
     ['/test/translations/apps/common/buttons/actions/primary/forms', 'directory'],
-    ['/test/translations/apps/common/buttons/actions/primary/forms/resource_entries.json', JSON.stringify({
-      create: {
-        source: 'Create',
-        es: 'Crear'
-      }
-    })],
-    ['/test/translations/apps/common/buttons/actions/primary/forms/tracker_meta.json', JSON.stringify({
-      create: {
-        en: { checksum: 'create123' },
-        es: { status: 'translated', checksum: 'create456', baseChecksum: 'create123' }
-      }
-    })]
+    [
+      '/test/translations/apps/common/buttons/actions/primary/forms/resource_entries.json',
+      JSON.stringify({
+        create: {
+          source: 'Create',
+          es: 'Crear',
+        },
+      }),
+    ],
+    [
+      '/test/translations/apps/common/buttons/actions/primary/forms/tracker_meta.json',
+      JSON.stringify({
+        create: {
+          en: { checksum: 'create123' },
+          es: {
+            status: 'translated',
+            checksum: 'create456',
+            baseChecksum: 'create123',
+          },
+        },
+      }),
+    ],
   ]);
 };
 
@@ -243,8 +375,7 @@ vi.mock('node:fs', () => ({
       const dirParts = dirPathStr.split('/').filter(Boolean);
 
       // Check if this is a direct child of dirPath
-      if (pathParts.length === dirParts.length + 1 &&
-          fsPath.startsWith(dirPathStr + '/')) {
+      if (pathParts.length === dirParts.length + 1 && fsPath.startsWith(`${dirPathStr}/`)) {
         const name = pathParts[pathParts.length - 1];
         const isDirectory = type === 'directory';
 
@@ -258,13 +389,13 @@ vi.mock('node:fs', () => ({
           isFIFO: () => false,
           isSocket: () => false,
           parentPath: dirPathStr,
-          path: dirPathStr
+          path: dirPathStr,
         } as fs.Dirent);
       }
     }
 
     return entries;
-  })
+  }),
 }));
 
 describe('loadFullResourceTree', () => {
@@ -284,23 +415,41 @@ describe('loadFullResourceTree', () => {
       // Create simple filesystem with just root and one level
       mockFs.clear();
       mockFs.set('/test/simple', 'directory');
-      mockFs.set('/test/simple/resource_entries.json', JSON.stringify({
-        root: { source: 'Root', es: 'Raíz' }
-      }));
-      mockFs.set('/test/simple/tracker_meta.json', JSON.stringify({
-        root: { en: { checksum: 'r1' }, es: { status: 'translated', checksum: 'r2', baseChecksum: 'r1' } }
-      }));
+      mockFs.set(
+        '/test/simple/resource_entries.json',
+        JSON.stringify({
+          root: { source: 'Root', es: 'Raíz' },
+        }),
+      );
+      mockFs.set(
+        '/test/simple/tracker_meta.json',
+        JSON.stringify({
+          root: {
+            en: { checksum: 'r1' },
+            es: { status: 'translated', checksum: 'r2', baseChecksum: 'r1' },
+          },
+        }),
+      );
       mockFs.set('/test/simple/level1', 'directory');
-      mockFs.set('/test/simple/level1/resource_entries.json', JSON.stringify({
-        child: { source: 'Child', es: 'Niño' }
-      }));
-      mockFs.set('/test/simple/level1/tracker_meta.json', JSON.stringify({
-        child: { en: { checksum: 'c1' }, es: { status: 'verified', checksum: 'c2', baseChecksum: 'c1' } }
-      }));
+      mockFs.set(
+        '/test/simple/level1/resource_entries.json',
+        JSON.stringify({
+          child: { source: 'Child', es: 'Niño' },
+        }),
+      );
+      mockFs.set(
+        '/test/simple/level1/tracker_meta.json',
+        JSON.stringify({
+          child: {
+            en: { checksum: 'c1' },
+            es: { status: 'verified', checksum: 'c2', baseChecksum: 'c1' },
+          },
+        }),
+      );
 
       const result = loadFullResourceTree({
         translationsFolder: '/test/simple',
-        cwd: '/'
+        cwd: '/',
       });
 
       // Root should have resources
@@ -328,7 +477,7 @@ describe('loadFullResourceTree', () => {
     it('should load tree with 6+ levels of deep nesting', () => {
       const result = loadFullResourceTree({
         translationsFolder,
-        cwd: '/'
+        cwd: '/',
       });
 
       // Verify root level
@@ -395,7 +544,7 @@ describe('loadFullResourceTree', () => {
     it('should mark all folders as loaded: true', () => {
       const result = loadFullResourceTree({
         translationsFolder,
-        cwd: '/'
+        cwd: '/',
       });
 
       // Helper function to recursively check all children
@@ -415,10 +564,12 @@ describe('loadFullResourceTree', () => {
 
   describe('error handling', () => {
     it('should throw error for missing translations folder', () => {
-      expect(() => loadFullResourceTree({
-        translationsFolder: '/test/nonexistent',
-        cwd: '/'
-      })).toThrow('Folder not found');
+      expect(() =>
+        loadFullResourceTree({
+          translationsFolder: '/test/nonexistent',
+          cwd: '/',
+        }),
+      ).toThrow('Folder not found');
     });
 
     it('should handle empty folders gracefully', () => {
@@ -427,7 +578,7 @@ describe('loadFullResourceTree', () => {
 
       const result = loadFullResourceTree({
         translationsFolder: '/test/empty',
-        cwd: '/'
+        cwd: '/',
       });
 
       expect(result.folderPathSegments).toEqual([]);
@@ -439,20 +590,34 @@ describe('loadFullResourceTree', () => {
       mockFs.clear();
       mockFs.set('/test/malformed', 'directory');
       mockFs.set('/test/malformed/resource_entries.json', 'not valid json {{{');
-      mockFs.set('/test/malformed/tracker_meta.json', JSON.stringify({
-        key: { en: { checksum: 'test' } }
-      }));
+      mockFs.set(
+        '/test/malformed/tracker_meta.json',
+        JSON.stringify({
+          key: { en: { checksum: 'test' } },
+        }),
+      );
       mockFs.set('/test/malformed/child', 'directory');
-      mockFs.set('/test/malformed/child/resource_entries.json', JSON.stringify({
-        valid: { source: 'Valid', es: 'Válido' }
-      }));
-      mockFs.set('/test/malformed/child/tracker_meta.json', JSON.stringify({
-        valid: { en: { checksum: 'v1' }, es: { status: 'translated', checksum: 'v2', baseChecksum: 'v1' } }
-      }));
+      mockFs.set(
+        '/test/malformed/child/resource_entries.json',
+        JSON.stringify({
+          valid: { source: 'Valid', es: 'Válido' },
+        }),
+      );
+      mockFs.set(
+        '/test/malformed/child/tracker_meta.json',
+        JSON.stringify({
+          valid: {
+            en: { checksum: 'v1' },
+            es: { status: 'translated', checksum: 'v2', baseChecksum: 'v1' },
+          },
+        }),
+      );
+
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const result = loadFullResourceTree({
         translationsFolder: '/test/malformed',
-        cwd: '/'
+        cwd: '/',
       });
 
       // Root should have no resources due to malformed JSON
@@ -466,6 +631,8 @@ describe('loadFullResourceTree', () => {
       if (!childTree) return;
       expect(childTree.resources).toHaveLength(1);
       expect(childTree.resources[0].key).toBe('valid');
+
+      consoleWarnSpy.mockRestore();
     });
   });
 
@@ -474,19 +641,37 @@ describe('loadFullResourceTree', () => {
       // Create a circular reference: parent -> child -> parent
       mockFs.clear();
       mockFs.set('/test/cycle', 'directory');
-      mockFs.set('/test/cycle/resource_entries.json', JSON.stringify({
-        root: { source: 'Root', es: 'Raíz' }
-      }));
-      mockFs.set('/test/cycle/tracker_meta.json', JSON.stringify({
-        root: { en: { checksum: 'r1' }, es: { status: 'translated', checksum: 'r2', baseChecksum: 'r1' } }
-      }));
+      mockFs.set(
+        '/test/cycle/resource_entries.json',
+        JSON.stringify({
+          root: { source: 'Root', es: 'Raíz' },
+        }),
+      );
+      mockFs.set(
+        '/test/cycle/tracker_meta.json',
+        JSON.stringify({
+          root: {
+            en: { checksum: 'r1' },
+            es: { status: 'translated', checksum: 'r2', baseChecksum: 'r1' },
+          },
+        }),
+      );
       mockFs.set('/test/cycle/child', 'directory');
-      mockFs.set('/test/cycle/child/resource_entries.json', JSON.stringify({
-        child: { source: 'Child', es: 'Niño' }
-      }));
-      mockFs.set('/test/cycle/child/tracker_meta.json', JSON.stringify({
-        child: { en: { checksum: 'c1' }, es: { status: 'translated', checksum: 'c2', baseChecksum: 'c1' } }
-      }));
+      mockFs.set(
+        '/test/cycle/child/resource_entries.json',
+        JSON.stringify({
+          child: { source: 'Child', es: 'Niño' },
+        }),
+      );
+      mockFs.set(
+        '/test/cycle/child/tracker_meta.json',
+        JSON.stringify({
+          child: {
+            en: { checksum: 'c1' },
+            es: { status: 'translated', checksum: 'c2', baseChecksum: 'c1' },
+          },
+        }),
+      );
 
       // Mock realpathSync to create a cycle
       const originalRealpathSync = vi.mocked(fs.realpathSync);
@@ -504,7 +689,7 @@ describe('loadFullResourceTree', () => {
 
       const result = loadFullResourceTree({
         translationsFolder: '/test/cycle',
-        cwd: '/'
+        cwd: '/',
       });
 
       // Should load successfully
@@ -533,7 +718,7 @@ describe('loadFullResourceTree', () => {
     it('should preserve all metadata in deeply nested resources', () => {
       const result = loadFullResourceTree({
         translationsFolder,
-        cwd: '/'
+        cwd: '/',
       });
 
       // Navigate to deepest level

@@ -27,33 +27,21 @@ describe('import-common', () => {
     });
 
     it('should reject keys with consecutive dots', () => {
-      expect(() => validateImportKey('common..buttons')).toThrow(
-        'consecutive dots'
-      );
+      expect(() => validateImportKey('common..buttons')).toThrow('consecutive dots');
     });
 
     it('should reject keys with leading dots', () => {
-      expect(() => validateImportKey('.common')).toThrow(
-        'leading or trailing dot'
-      );
+      expect(() => validateImportKey('.common')).toThrow('leading or trailing dot');
     });
 
     it('should reject keys with trailing dots', () => {
-      expect(() => validateImportKey('common.')).toThrow(
-        'leading or trailing dot'
-      );
+      expect(() => validateImportKey('common.')).toThrow('leading or trailing dot');
     });
 
     it('should reject keys with invalid characters', () => {
-      expect(() => validateImportKey('common.buttons!')).toThrow(
-        'Invalid key segment'
-      );
-      expect(() => validateImportKey('common.buttons spaces')).toThrow(
-        'Invalid key segment'
-      );
-      expect(() => validateImportKey('common.buttons@ok')).toThrow(
-        'Invalid key segment'
-      );
+      expect(() => validateImportKey('common.buttons!')).toThrow('Invalid key segment');
+      expect(() => validateImportKey('common.buttons spaces')).toThrow('Invalid key segment');
+      expect(() => validateImportKey('common.buttons@ok')).toThrow('Invalid key segment');
     });
   });
 
@@ -87,15 +75,9 @@ describe('import-common', () => {
     });
 
     it('should throw error for unknown extensions', () => {
-      expect(() => detectImportFormat('file.txt')).toThrow(
-        'Cannot auto-detect format'
-      );
-      expect(() => detectImportFormat('file.xml')).toThrow(
-        'Cannot auto-detect format'
-      );
-      expect(() => detectImportFormat('file')).toThrow(
-        'Cannot auto-detect format'
-      );
+      expect(() => detectImportFormat('file.txt')).toThrow('Cannot auto-detect format');
+      expect(() => detectImportFormat('file.xml')).toThrow('Cannot auto-detect format');
+      expect(() => detectImportFormat('file')).toThrow('Cannot auto-detect format');
     });
   });
 
@@ -222,13 +204,7 @@ describe('import-common', () => {
     });
 
     it('should detect multiple duplicate keys', () => {
-      const keys = [
-        'common.title',
-        'dashboard.title',
-        'common.title',
-        'dashboard.title',
-        'common.title',
-      ];
+      const keys = ['common.title', 'dashboard.title', 'common.title', 'dashboard.title', 'common.title'];
       const duplicates = detectDuplicateKeys(keys);
       expect(duplicates.size).toBe(2);
       expect(duplicates.get('common.title')).toBe(3);
@@ -240,5 +216,4 @@ describe('import-common', () => {
       expect(duplicates.size).toBe(0);
     });
   });
-
 });

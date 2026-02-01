@@ -24,7 +24,7 @@ describe('initCommand', () => {
       exportFolder: 'dist/exports',
       importFolder: 'dist/imports',
       baseLocale: 'fr',
-      locales: ['fr', 'en', 'es']
+      locales: ['fr', 'en', 'es'],
     };
 
     await initCommand(options);
@@ -36,9 +36,9 @@ describe('initCommand', () => {
       baseLocale: 'fr',
       locales: ['fr', 'en', 'es'],
       collections: {
-        'TestCollection': {
-          translationsFolder: 'src/i18n'
-        }
+        TestCollection: {
+          translationsFolder: 'src/i18n',
+        },
       },
       bundles: {
         main: {
@@ -49,10 +49,7 @@ describe('initCommand', () => {
       },
     };
 
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expectedConfigPath,
-      JSON.stringify(expectedConfig, null, 2)
-    );
+    expect(mockWriteFileSync).toHaveBeenCalledWith(expectedConfigPath, JSON.stringify(expectedConfig, null, 2));
   });
 
   it('should use default values when parameters are not provided', async () => {
@@ -60,7 +57,7 @@ describe('initCommand', () => {
 
     const options = {
       collectionName: 'Main',
-      translationsFolder: 'src/translations'
+      translationsFolder: 'src/translations',
     };
 
     await initCommand(options);
@@ -72,9 +69,9 @@ describe('initCommand', () => {
       baseLocale: 'en',
       locales: [],
       collections: {
-        'Main': {
-          translationsFolder: 'src/translations'
-        }
+        Main: {
+          translationsFolder: 'src/translations',
+        },
       },
       bundles: {
         main: {
@@ -85,10 +82,7 @@ describe('initCommand', () => {
       },
     };
 
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expectedConfigPath,
-      JSON.stringify(expectedConfig, null, 2)
-    );
+    expect(mockWriteFileSync).toHaveBeenCalledWith(expectedConfigPath, JSON.stringify(expectedConfig, null, 2));
   });
 
   it('should not write file if config already exists', async () => {
@@ -96,7 +90,7 @@ describe('initCommand', () => {
 
     const options = {
       collectionName: 'Main',
-      translationsFolder: 'src/i18n'
+      translationsFolder: 'src/i18n',
     };
 
     await initCommand(options);

@@ -1,5 +1,5 @@
-import { TranslationStatus } from './translation-status';
-import { LocaleMetadata } from './locale-metadata';
+import type { TranslationStatus } from './translation-status';
+import type { LocaleMetadata } from './locale-metadata';
 
 /**
  * Gets the initial status for a newly created resource entry.
@@ -27,17 +27,11 @@ export function getTranslatedStatus(): TranslationStatus {
  * @param newBaseChecksum - The new checksum of the base locale value
  * @returns true if the entry should be marked stale
  */
-export function shouldMarkStale(
-  currentMetadata: LocaleMetadata,
-  newBaseChecksum: string
-): boolean {
+export function shouldMarkStale(currentMetadata: LocaleMetadata, newBaseChecksum: string): boolean {
   // Only mark stale if:
   // 1. There's a previous baseChecksum (meaning this was a translated entry)
   // 2. The new base checksum differs from the stored one
-  return (
-    currentMetadata.baseChecksum !== undefined &&
-    currentMetadata.baseChecksum !== newBaseChecksum
-  );
+  return currentMetadata.baseChecksum !== undefined && currentMetadata.baseChecksum !== newBaseChecksum;
 }
 
 /**
@@ -59,10 +53,7 @@ export function createBaseLocaleMetadata(checksum: string): LocaleMetadata {
  * @param baseChecksum - The MD5 checksum of the base value at time of translation
  * @returns Metadata object for the translated locale
  */
-export function createTranslatedMetadata(
-  checksum: string,
-  baseChecksum: string
-): LocaleMetadata {
+export function createTranslatedMetadata(checksum: string, baseChecksum: string): LocaleMetadata {
   return {
     checksum,
     baseChecksum,
@@ -77,10 +68,7 @@ export function createTranslatedMetadata(
  * @param newBaseChecksum - The new checksum of the base locale value
  * @returns Updated metadata (may mark as stale)
  */
-export function updateMetadataForBaseChange(
-  metadata: LocaleMetadata,
-  newBaseChecksum: string
-): LocaleMetadata {
+export function updateMetadataForBaseChange(metadata: LocaleMetadata, newBaseChecksum: string): LocaleMetadata {
   if (shouldMarkStale(metadata, newBaseChecksum)) {
     return {
       ...metadata,

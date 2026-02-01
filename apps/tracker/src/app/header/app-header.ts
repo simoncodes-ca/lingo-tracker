@@ -5,21 +5,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { TranslocoModule } from '@jsverse/transloco';
-import { ThemeService, ThemeMode } from '../shared/services/theme.service';
+import { ThemeService, type ThemeMode } from '../shared/services/theme.service';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    MatToolbarModule,
-    MatIconModule,
-    MatButtonModule,
-    MatMenuModule,
-    TranslocoModule,
-  ],
+  imports: [CommonModule, MatToolbarModule, MatIconModule, MatButtonModule, MatMenuModule, TranslocoModule],
   templateUrl: './app-header.html',
   styleUrl: './app-header.scss',
 })

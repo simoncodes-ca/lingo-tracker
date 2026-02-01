@@ -93,7 +93,7 @@ describe('hierarchy-builder', () => {
         'a.third': '3',
       });
 
-      const keys = Object.keys((result.a as Record<string, string>));
+      const keys = Object.keys(result.a as Record<string, string>);
       expect(keys).toEqual(['first', 'second', 'third']);
     });
 

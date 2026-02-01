@@ -6,16 +6,16 @@ import {
   computed,
   inject,
   viewChild,
-  ElementRef,
-  OnDestroy,
+  type ElementRef,
+  type OnDestroy,
   HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayModule, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
-import { ViewContainerRef, TemplateRef } from '@angular/core';
-import { TranslationStatus } from '@simoncodes-ca/data-transfer';
+import { ViewContainerRef, type TemplateRef } from '@angular/core';
+import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
 
 /** Locale state for rollup display */
 export interface LocaleState {
@@ -64,15 +64,15 @@ const CLOSE_DELAY = 120;
 
         <!-- segments (drawn in deterministic order) -->
         @for (seg of ringSegments(); track seg.status) {
-          <circle
-            class="seg"
-            cx="20"
-            cy="20"
-            [attr.r]="radius"
-            [attr.stroke]="seg.color"
-            [attr.stroke-dasharray]="seg.dashArray"
-            [attr.stroke-dashoffset]="seg.dashOffset"
-          />
+        <circle
+          class="seg"
+          cx="20"
+          cy="20"
+          [attr.r]="radius"
+          [attr.stroke]="seg.color"
+          [attr.stroke-dasharray]="seg.dashArray"
+          [attr.stroke-dashoffset]="seg.dashOffset"
+        />
         }
       </svg>
 
@@ -104,136 +104,145 @@ const CLOSE_DELAY = 120;
       >
         <div class="grid">
           @for (row of tooltipLocaleRows(); track row.code) {
-            <div class="row">
-              <mat-icon class="row-icon" [style.color]="row.color" aria-hidden="true">{{ row.icon }}</mat-icon>
-              <span class="label">{{ row.label }}</span>
-              <span class="locale-code">{{ row.code }}</span>
-            </div>
+          <div class="row">
+            <mat-icon
+              class="row-icon"
+              [style.color]="row.color"
+              aria-hidden="true"
+              >{{ row.icon }}</mat-icon
+            >
+            <span class="label">{{ row.label }}</span>
+            <span class="locale-code">{{ row.code }}</span>
+          </div>
           }
         </div>
       </div>
     </ng-template>
   `,
-  styles: [`
-    :host {
-      display: inline-block;
-    }
+  styles: [
+    `
+      :host {
+        display: inline-block;
+      }
 
-    .rollup {
-      width: 40px;
-      height: 40px;
-      position: relative;
-      display: grid;
-      place-items: center;
-      border-radius: var(--border-radius-lg);
-      outline: none;
-      cursor: default;
-      user-select: none;
-    }
+      .rollup {
+        width: 40px;
+        height: 40px;
+        position: relative;
+        display: grid;
+        place-items: center;
+        border-radius: var(--border-radius-lg);
+        outline: none;
+        cursor: default;
+        user-select: none;
+      }
 
-    .rollup:focus-visible {
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 35%, transparent);
-      border-radius: var(--border-radius-lg);
-    }
+      .rollup:focus-visible {
+        box-shadow: 0 0 0 3px
+          color-mix(in srgb, var(--focus-ring-color) 35%, transparent);
+        border-radius: var(--border-radius-lg);
+      }
 
-    .ring {
-      width: 40px;
-      height: 40px;
-      display: block;
-    }
+      .ring {
+        width: 40px;
+        height: 40px;
+        display: block;
+      }
 
-    .track {
-      fill: none;
-      stroke: var(--color-border);
-      stroke-width: 6;
-    }
+      .track {
+        fill: none;
+        stroke: var(--color-border);
+        stroke-width: 6;
+      }
 
-    .seg {
-      fill: none;
-      stroke-width: 6;
-      stroke-linecap: butt;
-      transform: rotate(-90deg);
-      transform-origin: 20px 20px;
-    }
+      .seg {
+        fill: none;
+        stroke-width: 6;
+        stroke-linecap: butt;
+        transform: rotate(-90deg);
+        transform-origin: 20px 20px;
+      }
 
-    .center {
-      position: absolute;
-      width: 22px;
-      height: 22px;
-      border-radius: var(--border-radius-full);
-      display: grid;
-      place-items: center;
-      background: var(--color-background);
-      box-shadow: var(--shadow-sm);
-    }
+      .center {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border-radius: var(--border-radius-full);
+        display: grid;
+        place-items: center;
+        background: var(--color-background);
+        box-shadow: var(--shadow-sm);
+      }
 
-    .center--issue {
-      border: 2px solid color-mix(in srgb, var(--color-warning) 45%, transparent);
-    }
+      .center--issue {
+        border: 2px solid
+          color-mix(in srgb, var(--color-warning) 45%, transparent);
+      }
 
-    .center-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      line-height: 16px;
-    }
+      .center-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        line-height: 16px;
+      }
 
-    .icon--issue {
-      color: var(--color-warning);
-    }
+      .icon--issue {
+        color: var(--color-warning);
+      }
 
-    .icon--translated {
-      color: var(--color-info);
-    }
+      .icon--translated {
+        color: var(--color-info);
+      }
 
-    .icon--verified {
-      color: var(--color-success);
-    }
+      .icon--verified {
+        color: var(--color-success);
+      }
 
-    /* Tooltip panel - always dark for contrast in both themes */
-    .tooltip {
-      min-width: 200px;
-      max-width: 360px;
-      padding: var(--spacing-3);
-      border-radius: var(--border-radius-xl);
-      background: #18181b;
-      color: #fafafa;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
+      /* Tooltip panel - always dark for contrast in both themes */
+      .tooltip {
+        min-width: 200px;
+        max-width: 360px;
+        padding: var(--spacing-3);
+        border-radius: var(--border-radius-xl);
+        background: #18181b;
+        color: #fafafa;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
 
-    .grid {
-      display: flex;
-      flex-direction: column;
-      gap: var(--spacing-2);
-    }
+      .grid {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-2);
+      }
 
-    .row {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-2);
-      font-size: var(--font-size-xs);
-      line-height: 1.33;
-    }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-2);
+        font-size: var(--font-size-xs);
+        line-height: 1.33;
+      }
 
-    .row-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      line-height: 16px;
-      flex-shrink: 0;
-    }
+      .row-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        line-height: 16px;
+        flex-shrink: 0;
+      }
 
-    .label {
-      flex-shrink: 0;
-    }
+      .label {
+        flex-shrink: 0;
+      }
 
-    .locale-code {
-      margin-left: auto;
-      opacity: 0.85;
-      font-weight: var(--font-weight-medium);
-    }
-  `],
+      .locale-code {
+        margin-left: auto;
+        opacity: 0.85;
+        font-weight: var(--font-weight-medium);
+      }
+    `,
+  ],
   host: {
     class: 'translation-rollup',
   },
@@ -295,9 +304,7 @@ export class TranslationRollup implements OnDestroy {
   /** Effective locales (excluding base locale) */
   private readonly effectiveLocales = computed(() => {
     const base = this.baseLocale().toLowerCase();
-    return (this.locales() ?? []).filter(
-      (l) => (l?.code ?? '').toLowerCase() !== base
-    );
+    return (this.locales() ?? []).filter((l) => (l?.code ?? '').toLowerCase() !== base);
   });
 
   /** Get locale codes by status */
@@ -320,26 +327,17 @@ export class TranslationRollup implements OnDestroy {
   readonly total = computed(() => this.effectiveLocales().length);
 
   /** Count of translated + verified */
-  private readonly translatedLike = computed(
-    () => this.counts().translated + this.counts().verified
-  );
+  private readonly translatedLike = computed(() => this.counts().translated + this.counts().verified);
 
   /** Whether there are issues (new or stale) */
-  readonly hasIssues = computed(
-    () => this.counts().new > 0 || this.counts().stale > 0
-  );
+  readonly hasIssues = computed(() => this.counts().new > 0 || this.counts().stale > 0);
 
   /** Whether all locales are verified */
-  readonly isAllVerified = computed(
-    () => this.total() > 0 && this.counts().verified === this.total()
-  );
+  readonly isAllVerified = computed(() => this.total() > 0 && this.counts().verified === this.total());
 
   /** Whether all locales are translated (but not all verified) */
   readonly isAllTranslated = computed(
-    () =>
-      this.total() > 0 &&
-      this.translatedLike() === this.total() &&
-      !this.isAllVerified()
+    () => this.total() > 0 && this.translatedLike() === this.total() && !this.isAllVerified(),
   );
 
   /** Center icon based on state */
@@ -514,13 +512,7 @@ export class TranslationRollup implements OnDestroy {
     const triggerEl = this.trigger()?.nativeElement;
     const overlayEl = this.overlayRef?.overlayElement;
 
-    if (
-      target &&
-      triggerEl &&
-      overlayEl &&
-      !triggerEl.contains(target) &&
-      !overlayEl.contains(target)
-    ) {
+    if (target && triggerEl && overlayEl && !triggerEl.contains(target) && !overlayEl.contains(target)) {
       this.close();
     }
   }

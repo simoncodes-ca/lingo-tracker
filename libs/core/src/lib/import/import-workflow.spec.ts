@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { setupImportWorkflow, buildImportResult } from './import-workflow';
-import { ImportOptions } from './types';
+import type { ImportOptions } from './types';
 
 describe('import-workflow', () => {
   describe('setupImportWorkflow', () => {
@@ -98,7 +98,7 @@ describe('import-workflow', () => {
       };
 
       expect(() => setupImportWorkflow(options)).toThrow(
-        'Cannot import into base locale "en" with strategy "translation-service"'
+        'Cannot import into base locale "en" with strategy "translation-service"',
       );
     });
 
@@ -213,9 +213,7 @@ describe('import-workflow', () => {
           resourcesSkipped: 0,
           resourcesFailed: 0,
         },
-        statusTransitions: [
-          { from: 'translated', to: 'verified', count: 20 },
-        ],
+        statusTransitions: [{ from: 'translated', to: 'verified', count: 20 }],
         changes: [],
         filesModified: new Set(),
         warnings: [],
