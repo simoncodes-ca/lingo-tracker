@@ -41,6 +41,8 @@ describe('CollectionCacheService', () => {
       providers: [CollectionCacheService],
     }).compile();
 
+    module.useLogger(false);
+
     service = module.get<CollectionCacheService>(CollectionCacheService);
 
     jest.clearAllMocks();

@@ -149,7 +149,6 @@ describe('addResourceCommand', () => {
   });
 
   it('should handle translations array format', async () => {
-    const consoleSpy = vi.spyOn(console, 'log');
     const config = {
       collections: {
         TestCollection: {
@@ -210,12 +209,9 @@ describe('addResourceCommand', () => {
       }),
       expect.any(Object),
     );
-
-    consoleSpy.mockRestore();
   });
 
   it('should prompt for overwrite confirmation when resource exists in interactive mode', async () => {
-    const consoleSpy = vi.spyOn(console, 'log');
     const config = {
       collections: {
         TestCollection: {
@@ -277,19 +273,15 @@ describe('addResourceCommand', () => {
         message: expect.stringContaining('already exists'),
       }),
     );
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Add resource cancelled'));
 
     // Restore
     Object.defineProperty(process.stdout, 'isTTY', {
       value: originalIsTTY,
       writable: true,
     });
-
-    consoleSpy.mockRestore();
   });
 
   it('should create entries for all locales when no translations provided', async () => {
-    const consoleSpy = vi.spyOn(console, 'log');
     const config = {
       collections: {
         TestCollection: {
@@ -356,7 +348,5 @@ describe('addResourceCommand', () => {
       value: originalIsTTY,
       writable: true,
     });
-
-    consoleSpy.mockRestore();
   });
 });

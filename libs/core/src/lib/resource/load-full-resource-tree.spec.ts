@@ -613,6 +613,8 @@ describe('loadFullResourceTree', () => {
         }),
       );
 
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
       const result = loadFullResourceTree({
         translationsFolder: '/test/malformed',
         cwd: '/',
@@ -629,6 +631,8 @@ describe('loadFullResourceTree', () => {
       if (!childTree) return;
       expect(childTree.resources).toHaveLength(1);
       expect(childTree.resources[0].key).toBe('valid');
+
+      consoleWarnSpy.mockRestore();
     });
   });
 

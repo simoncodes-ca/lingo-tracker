@@ -74,11 +74,15 @@ describe('generateBundleTypes', () => {
   it('should handle empty bundles', async () => {
     vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([]);
 
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
     const result = await generateBundleTypes('main', mockConfig);
 
     expect(result.fileGenerated).toBe(false);
     expect(result.skippedReason).toBe('empty-bundle');
     expect(fs.writeFileSync).not.toHaveBeenCalled();
+
+    consoleWarnSpy.mockRestore();
   });
 
   it('should create directory if it does not exist', async () => {
