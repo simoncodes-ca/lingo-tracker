@@ -1,0 +1,191 @@
+<div role="dialog" [attr.aria-labelledby]="'dialog-title'" class="dialog-wrapper">
+  <div class="dialog-header">
+    <div class="dialog-header-content">
+      <h2 id="dialog-title" class="mat-dialog-title">{{ dialogTitle() }}</h2>
+      <p class="dialog-subtitle">{{ dialogSubtitle() }}</p>
+    </div>
+
+    <button
+      mat-icon-button
+      class="close-button"
+      aria-label="Close dialog"
+      (click)="onCancel()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <!-- Error Message Display -->
+    @if (errorMessage()) {
+      <div class="error-banner" role="alert">
+        <mat-icon class="error-icon">error</mat-icon>
+        <span class="error-text">{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <!-- Translation Key Input -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Translation Key</mat-label>
+        <input
+          matInput
+          formControlName="key"
+          placeholder="button_submit"
+          required
+          autocomplete="off"
+        />
+        @if (form.controls.key.invalid && form.controls.key.touched) {
+          <mat-error>{{ getKeyErrorMessage() }}</mat-error>
+        }
+        <mat-hint>Use only letters, numbers, underscores, and hyphens</mat-hint>
+      </mat-form-field>
+
+      <!-- Folder Picker -->
+      <app-folder-picker
+        [selectedPath]="selectedFolderPath()"
+        [rootFolders]="store.rootFolders()"
+        [folderExists]="folderExists()"
+        (folderSelected)="onFolderSelected($event)"
+        (loadFolder)="onLoadFolder($event)"
+      />
+
+      <!-- Similar Resources Warning -->
+      <app-similar-resources-warning
+        [results]="similarResources()"
+        [isLoading]="isSearchingSimilar()"
+        (resourceClicked)="onSimilarResourceClick($event)"
+      />
+
+      <!-- Base Locale Section -->
+      <div class="base-locale-card">
+        <div class="locale-card-header">
+          <mat-icon class="locale-icon">language</mat-icon>
+          <h3 class="locale-title">{{ data.baseLocale.toUpperCase() }}</h3>
+          <span class="base-badge">Base</span>
+        </div>
+
+        <!-- Base Value -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ data.baseLocale.toUpperCase() }} Translation</mat-label>
+          <textarea
+            matInput
+            formControlName="baseValue"
+            [placeholder]="'Enter ' + data.baseLocale.toUpperCase() + ' translation...'"
+            required
+            rows="3"
+            cdkTextareaAutosize
+            cdkAutosizeMinRows="3"
+            cdkAutosizeMaxRows="10"
+          ></textarea>
+          @if (form.controls.baseValue.hasError('required') && form.controls.baseValue.touched) {
+            <mat-error>Base translation is required</mat-error>
+          }
+        </mat-form-field>
+        <div class="character-count">
+          {{ baseValueCharacterCount() }} characters
+        </div>
+
+        <!-- Comment -->
+        <mat-form-field appearance="outline" class="full-width comment-field">
+          <mat-label>Comment (Optional)</mat-label>
+          <textarea
+            matInput
+            formControlName="comment"
+            placeholder="Add context for translators..."
+            rows="2"
+            cdkTextareaAutosize
+            cdkAutosizeMinRows="2"
+            cdkAutosizeMaxRows="6"
+          ></textarea>
+          <mat-hint>Provide context or instructions for translators</mat-hint>
+        </mat-form-field>
+        <div class="character-count">
+          {{ commentCharacterCount() }} characters
+        </div>
+      </div>
+
+      <!-- Other Locales Toggle -->
+      @if (otherLocales().length > 0) {
+        <div class="other-locales-toggle">
+          <mat-slide-toggle
+            [checked]="showOtherLocales()"
+            (change)="onToggleOtherLocales()"
+            color="primary"
+          >
+            Add translations for other locales ({{ otherLocales().length }} available)
+          </mat-slide-toggle>
+        </div>
+
+        <!-- Other Locale Cards -->
+        @if (showOtherLocales()) {
+          <div class="other-locales-section">
+            @for (localeControl of form.controls.translations.controls; track localeControl.value.locale; let i = $index) {
+              <div class="locale-card other-locale-card" [formGroup]="getLocaleFormGroup(i)">
+                <div class="locale-card-header">
+                  <mat-icon class="locale-icon">translate</mat-icon>
+                  <h3 class="locale-title">{{ getLocaleDisplayName(localeControl.value.locale) }}</h3>
+                  @if (isEditMode()) {
+                    <mat-form-field appearance="outline" class="status-select">
+                      <mat-label>Status</mat-label>
+                      <mat-select formControlName="status">
+                        @for (statusOption of translationStatusOptions; track statusOption) {
+                          <mat-option [value]="statusOption">
+                            {{ statusOption }}
+                          </mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  }
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>{{ getLocaleDisplayName(localeControl.value.locale) }} Translation</mat-label>
+                  <textarea
+                    matInput
+                    formControlName="value"
+                    [placeholder]="'Enter ' + getLocaleDisplayName(localeControl.value.locale) + ' translation...'"
+                    rows="3"
+                    cdkTextareaAutosize
+                    cdkAutosizeMinRows="3"
+                    cdkAutosizeMaxRows="10"
+                  ></textarea>
+                </mat-form-field>
+                <div class="character-count">
+                  {{ getLocaleCharacterCount(localeControl.value.locale) }} characters
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button
+      mat-button
+      type="button"
+      (click)="onCancel()"
+      [disabled]="isSubmitting()"
+      class="cancel-button"
+    >
+      Cancel
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      (click)="onSubmit()"
+      [disabled]="form.invalid || isSubmitting()"
+      class="submit-button"
+    >
+      @if (isSubmitting()) {
+        <mat-spinner diameter="20" class="submit-spinner"></mat-spinner>
+        Saving...
+      } @else {
+        {{ saveButtonLabel() }}
+      }
+    </button>
+  </mat-dialog-actions>
+</div>

@@ -1,14 +1,16 @@
-import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { Router } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { CollectionsStore } from './store/collections.store';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
+import { TagList } from '../shared/tag-list/tag-list.component';
 
 /**
  * Collections Manager component for viewing and managing translation collections.
@@ -31,12 +33,14 @@ import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
     MatButtonModule,
     MatProgressSpinnerModule,
     MatIconModule,
+    MatMenuModule,
     TranslocoModule,
+    TagList,
   ],
   templateUrl: './collections-manager.html',
   styleUrl: './collections-manager.scss',
 })
-export class CollectionsManager implements OnInit {
+export class CollectionsManager {
   readonly store = inject(CollectionsStore);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -44,10 +48,6 @@ export class CollectionsManager implements OnInit {
   private readonly transloco = inject(TranslocoService);
 
   readonly TOKENS = TRACKER_TOKENS;
-
-  ngOnInit(): void {
-    this.store.loadCollections();
-  }
 
   /**
    * Opens the create collection dialog.

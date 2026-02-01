@@ -1,0 +1,27 @@
+{
+  "help": {
+    "en": {
+      "checksum": "6a26f548831e6a8c26bfbbd9f6ec61e0"
+    },
+    "fr-ca": {
+      "checksum": "6a26f548831e6a8c26bfbbd9f6ec61e0",
+      "baseChecksum": "6a26f548831e6a8c26bfbbd9f6ec61e0",
+      "status": "new"
+    },
+    "es": {
+      "checksum": "6a26f548831e6a8c26bfbbd9f6ec61e0",
+      "baseChecksum": "6a26f548831e6a8c26bfbbd9f6ec61e0",
+      "status": "new"
+    },
+    "de": {
+      "checksum": "6a26f548831e6a8c26bfbbd9f6ec61e0",
+      "baseChecksum": "6a26f548831e6a8c26bfbbd9f6ec61e0",
+      "status": "new"
+    },
+    "ja": {
+      "checksum": "6a26f548831e6a8c26bfbbd9f6ec61e0",
+      "baseChecksum": "6a26f548831e6a8c26bfbbd9f6ec61e0",
+      "status": "new"
+    }
+  }
+}

@@ -4,7 +4,12 @@
       "checksum": "c7c796f3d37ab9fbc712335f9def7b81"
     },
     "es": {
-      "checksum": "c7c796f3d37ab9fbc712335f9def7b81",
+      "checksum": "314327c9c01efdaf9b13c8fc63bd8699",
+      "baseChecksum": "c7c796f3d37ab9fbc712335f9def7b81",
+      "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "e6160bbbf04cdd9876bc46a26ee10275",
       "baseChecksum": "c7c796f3d37ab9fbc712335f9def7b81",
       "status": "new"
     }
@@ -14,7 +19,12 @@
       "checksum": "1cf7c14142897e3c49ea7b6b28ceb567"
     },
     "es": {
-      "checksum": "1cf7c14142897e3c49ea7b6b28ceb567",
+      "checksum": "79ce7dc9b91b861abc1a56e455c408b7",
+      "baseChecksum": "1cf7c14142897e3c49ea7b6b28ceb567",
+      "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "bd752f5f93dba1891ff51c46b38731bf",
       "baseChecksum": "1cf7c14142897e3c49ea7b6b28ceb567",
       "status": "new"
     }
@@ -24,6 +34,11 @@
       "checksum": "d15b505cce09406de9f918cb1f8c641c"
     },
     "es": {
+      "checksum": "a57c0a0f1fbaf1260332fb8580e428e6",
+      "baseChecksum": "d15b505cce09406de9f918cb1f8c641c",
+      "status": "new"
+    },
+    "fr-ca": {
       "checksum": "d15b505cce09406de9f918cb1f8c641c",
       "baseChecksum": "d15b505cce09406de9f918cb1f8c641c",
       "status": "new"

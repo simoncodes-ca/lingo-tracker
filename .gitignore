@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+.DS_Store
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -155,3 +156,4 @@ vitest.config.*.timestamp*
 # Git worktrees for isolated feature development
 .worktrees/
 /apps/tracker/src/i18n-types/tracker-resources.ts
+/sample-translations/mock-design-system/

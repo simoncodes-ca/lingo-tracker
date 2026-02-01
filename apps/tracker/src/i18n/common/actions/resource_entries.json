@@ -5,7 +5,8 @@
     "tags": [
       "common"
     ],
-    "es": "Edit"
+    "es": "Editar",
+    "fr-ca": "Modifier"
   },
   "delete": {
     "source": "Delete",
@@ -13,7 +14,8 @@
     "tags": [
       "common"
     ],
-    "es": "Delete"
+    "es": "Eliminar",
+    "fr-ca": "Supprimer"
   },
   "retry": {
     "source": "Retry",
@@ -21,20 +23,44 @@
     "tags": [
       "common"
     ],
-    "es": "Retry"
+    "es": "Reintentar",
+    "fr-ca": "Réessayer"
   },
   "cancel": {
     "source": "Cancel",
     "comment": "Text on a button to cancel whatever opration the user was about to do",
-    "es": "Cancel"
+    "es": "Cancelar",
+    "fr-ca": "Annuler"
   },
   "ok": {
     "source": "OK",
-    "es": "OK"
+    "es": "OK",
+    "fr-ca": "OK"
   },
   "save": {
     "source": "Save",
     "comment": "Save button text in edit mode",
-    "es": "Save"
+    "es": "Guardar",
+    "fr-ca": "Enregistrer"
+  },
+  "back": {
+    "source": "Back",
+    "es": "Volver",
+    "fr-ca": "Retour"
+  },
+  "clickToCopy": {
+    "source": "click to copy",
+    "comment": "Message to user that item can be copied to clipboard",
+    "es": "clic para copiar",
+    "fr-ca": "cliquer pour copier"
+  },
+  "move": {
+    "source": "Move",
+    "comment": "Action label to move an item to a different location",
+    "tags": [
+      "common"
+    ],
+    "es": "Mover",
+    "fr-ca": "Déplacer"
   }
 }

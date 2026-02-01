@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpException, NotFoundException } from '@nestjs/common';
 import { TranslationStatus, LocaleMetadata } from '@simoncodes-ca/core';
+import { ResourceTreeDto } from '@simoncodes-ca/data-transfer';
 import { ResourcesController } from './resources.controller';
 import { ConfigService } from '../../config/config.service';
+import { CollectionCacheService, CacheStatus } from '../../cache/collection-cache.service';
 import * as core from '@simoncodes-ca/core';
 
 // Mock the core module
@@ -16,6 +18,7 @@ jest.mock('@simoncodes-ca/core', () => {
     moveResourcesByPattern: jest.fn(),
     editResource: jest.fn(),
     loadResourceTree: jest.fn(),
+    extractSubtree: jest.fn(),
   };
 });
 
@@ -74,6 +77,7 @@ describe('ResourcesController', () => {
   let resourcesModule: TestingModule;
   let resourcesController: ResourcesController;
   let configService: ConfigService;
+  let cacheService: CollectionCacheService;
 
   const mockConfig = {
     exportFolder: 'dist/lingo-export',
@@ -89,6 +93,15 @@ describe('ResourcesController', () => {
     },
   };
 
+  const mockCacheService = {
+    getCacheStatus: jest.fn(),
+    getCache: jest.fn(),
+    getCacheMetadata: jest.fn(),
+    getCacheStats: jest.fn(),
+    indexCollection: jest.fn(),
+    clearCache: jest.fn(),
+  };
+
   beforeEach(async () => {
     resourcesModule = await Test.createTestingModule({
       controllers: [ResourcesController],
@@ -99,11 +112,16 @@ describe('ResourcesController', () => {
             getConfig: jest.fn().mockReturnValue(mockConfig),
           },
         },
+        {
+          provide: CollectionCacheService,
+          useValue: mockCacheService,
+        },
       ],
     }).compile();
 
     resourcesController = resourcesModule.get<ResourcesController>(ResourcesController);
     configService = resourcesModule.get<ConfigService>(ConfigService);
+    cacheService = resourcesModule.get<CollectionCacheService>(CollectionCacheService);
   });
 
   afterEach(() => {
@@ -942,45 +960,46 @@ describe('ResourcesController', () => {
   });
 
   describe('getTree', () => {
-    it('should return resource tree for root with default depth', async () => {
-      const loadResourceTree = core.loadResourceTree as jest.Mock;
-      const mockTreeNode = {
-        folderPathSegments: [],
-        resources: [
-          {
-            key: 'title',
-            source: 'Title',
-            translations: { es: 'Título' },
-            metadata: {
-              en: { checksum: 'a' },
-              es: { status: 'new', checksum: '', baseChecksum: 'a' }
-            }
+    const mockTreeNode = {
+      folderPathSegments: [],
+      resources: [
+        {
+          key: 'title',
+          source: 'Title',
+          translations: { es: 'Título' },
+          metadata: {
+            en: { checksum: 'a' },
+            es: { status: 'new', checksum: '', baseChecksum: 'a' }
           }
-        ],
-        children: []
-      };
+        }
+      ],
+      children: []
+    };
 
-      loadResourceTree.mockReturnValue(mockTreeNode);
+    it('should return full cached tree when cache is READY and no path provided', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const getCache = cacheService.getCache as jest.Mock;
 
-      const result = await resourcesController.getTree('test-collection', '', '2');
+      getCacheStatus.mockReturnValue(CacheStatus.READY);
+      getCache.mockReturnValue(mockTreeNode);
 
-      expect(result).toHaveProperty('path', '');
-      expect(result).toHaveProperty('resources');
-      expect(result.resources).toHaveLength(1);
-      expect(result.resources[0].key).toBe('title');
-      expect(result).toHaveProperty('children');
-      expect(loadResourceTree).toHaveBeenCalledWith(
-        expect.objectContaining({
-          translationsFolder: './translations/test',
-          path: '',
-          depth: 2
-        })
-      );
+      const result = await resourcesController.getTree('test-collection', '');
+      const tree = result as ResourceTreeDto;
+
+      expect(tree).toHaveProperty('path', '');
+      expect(tree).toHaveProperty('resources');
+      expect(tree.resources).toHaveLength(1);
+      expect(tree.resources[0].key).toBe('title');
+      expect(getCacheStatus).toHaveBeenCalledWith('test-collection');
+      expect(getCache).toHaveBeenCalledWith('test-collection');
     });
 
-    it('should accept path query parameter', async () => {
-      const loadResourceTree = core.loadResourceTree as jest.Mock;
-      const mockTreeNode = {
+    it('should extract and return subtree when cache is READY and path is provided', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const getCache = cacheService.getCache as jest.Mock;
+      const extractSubtree = core.extractSubtree as jest.Mock;
+
+      const mockSubtree = {
         folderPathSegments: ['apps'],
         resources: [
           {
@@ -995,48 +1014,100 @@ describe('ResourcesController', () => {
         children: []
       };
 
-      loadResourceTree.mockReturnValue(mockTreeNode);
+      getCacheStatus.mockReturnValue(CacheStatus.READY);
+      getCache.mockReturnValue(mockTreeNode);
+      extractSubtree.mockReturnValue(mockSubtree);
 
-      const result = await resourcesController.getTree('test-collection', 'apps', '2');
+      const result = await resourcesController.getTree('test-collection', 'apps');
+      const tree = result as ResourceTreeDto;
 
-      expect(result.path).toBe('apps');
-      expect(result.resources).toHaveLength(1);
-      expect(result.resources[0].key).toBe('test');
-      expect(loadResourceTree).toHaveBeenCalledWith(
+      expect(tree.path).toBe('apps');
+      expect(tree.resources).toHaveLength(1);
+      expect(tree.resources[0].key).toBe('test');
+      expect(extractSubtree).toHaveBeenCalledWith(mockTreeNode, 'apps');
+    });
+
+    it('should return 202 when cache is NOT_STARTED and trigger indexing', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const indexCollection = cacheService.indexCollection as jest.Mock;
+
+      getCacheStatus.mockReturnValue(CacheStatus.NOT_STARTED);
+      indexCollection.mockResolvedValue(undefined);
+
+      const mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      };
+
+      await resourcesController.getTree('test-collection', '', mockResponse as any);
+
+      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test', 3);
+      expect(mockResponse.status).toHaveBeenCalledWith(202);
+      expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          translationsFolder: './translations/test',
-          path: 'apps',
-          depth: 2
+          status: 'not-ready',
+          message: expect.stringContaining('indexing started'),
         })
       );
     });
 
-    it('should accept depth query parameter', async () => {
-      const loadResourceTree = core.loadResourceTree as jest.Mock;
-      const mockTreeNode = {
-        folderPathSegments: [],
-        resources: [],
-        children: [
-          {
-            name: 'apps',
-            fullPathSegments: ['apps'],
-            loaded: false
-          }
-        ]
+    it('should return 202 when cache is INDEXING', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+
+      getCacheStatus.mockReturnValue(CacheStatus.INDEXING);
+
+      const mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
       };
 
-      loadResourceTree.mockReturnValue(mockTreeNode);
+      await resourcesController.getTree('test-collection', '', mockResponse as any);
 
-      const result = await resourcesController.getTree('test-collection', '', '0');
-
-      expect(result.children[0].loaded).toBe(false);
-      expect(loadResourceTree).toHaveBeenCalledWith(
+      expect(mockResponse.status).toHaveBeenCalledWith(202);
+      expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          translationsFolder: './translations/test',
-          path: '',
-          depth: 0
+          status: 'indexing',
+          message: expect.stringContaining('currently being indexed'),
         })
       );
+    });
+
+    it('should return 202 when cache is ERROR and trigger re-indexing', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const indexCollection = cacheService.indexCollection as jest.Mock;
+
+      getCacheStatus.mockReturnValue(CacheStatus.ERROR);
+      indexCollection.mockResolvedValue(undefined);
+
+      const mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      };
+
+      await resourcesController.getTree('test-collection', '', mockResponse as any);
+
+      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test', 3);
+      expect(mockResponse.status).toHaveBeenCalledWith(202);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'not-ready',
+          message: expect.stringContaining('re-indexing'),
+        })
+      );
+    });
+
+    it('should return 404 when path is not found in cached tree', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const getCache = cacheService.getCache as jest.Mock;
+      const extractSubtree = core.extractSubtree as jest.Mock;
+
+      getCacheStatus.mockReturnValue(CacheStatus.READY);
+      getCache.mockReturnValue(mockTreeNode);
+      extractSubtree.mockReturnValue(null);
+
+      await expect(
+        resourcesController.getTree('test-collection', 'nonexistent.path')
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should return 404 for non-existent collection', async () => {
@@ -1047,41 +1118,134 @@ describe('ResourcesController', () => {
       jest.spyOn(configService, 'getConfig').mockReturnValue(configWithoutCollection);
 
       await expect(
-        resourcesController.getTree('nonexistent', '', '2')
+        resourcesController.getTree('nonexistent', '')
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should return 400 for invalid depth', async () => {
-      await expect(
-        resourcesController.getTree('test-collection', '', '-1')
-      ).rejects.toThrow(HttpException);
+    it('should throw error when cache is READY but tree is null', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const getCache = cacheService.getCache as jest.Mock;
 
-      try {
-        await resourcesController.getTree('test-collection', '', '-1');
-      } catch (error: any) {
-        expect(error.status).toBe(400);
-      }
+      getCacheStatus.mockReturnValue(CacheStatus.READY);
+      getCache.mockReturnValue(null);
 
       await expect(
-        resourcesController.getTree('test-collection', '', '15')
+        resourcesController.getTree('test-collection', '')
       ).rejects.toThrow(HttpException);
-
-      try {
-        await resourcesController.getTree('test-collection', '', '15');
-      } catch (error: any) {
-        expect(error.status).toBe(400);
-      }
     });
+  });
 
-    it('should return 404 for non-existent folder path', async () => {
-      const loadResourceTree = core.loadResourceTree as jest.Mock;
-      loadResourceTree.mockImplementation(() => {
-        throw new Error('Folder not found: nonexistent.path');
+  describe('getCacheStatus', () => {
+    it('should return cache status READY with indexedAt', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const getCacheMetadata = cacheService.getCacheMetadata as jest.Mock;
+      const getCacheStats = cacheService.getCacheStats as jest.Mock;
+
+      const indexedAt = new Date('2026-01-21T12:00:00Z');
+      getCacheStatus.mockReturnValue(CacheStatus.READY);
+      getCacheMetadata.mockReturnValue({ indexedAt, error: undefined });
+      getCacheStats.mockReturnValue({ totalKeys: 42, localeCount: 3 });
+
+      const result = await resourcesController.getCacheStatus('test-collection');
+
+      expect(result).toEqual({
+        status: 'ready',
+        collectionName: 'test-collection',
+        indexedAt: indexedAt.toISOString(),
+        stats: {
+          totalKeys: 42,
+          localeCount: 3,
+        },
       });
+      expect(getCacheStatus).toHaveBeenCalledWith('test-collection');
+      expect(getCacheMetadata).toHaveBeenCalledWith('test-collection');
+      expect(getCacheStats).toHaveBeenCalledWith('test-collection');
+    });
+
+    it('should return cache status INDEXING', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const getCacheMetadata = cacheService.getCacheMetadata as jest.Mock;
+
+      getCacheStatus.mockReturnValue(CacheStatus.INDEXING);
+      getCacheMetadata.mockReturnValue({ indexedAt: null, error: undefined });
+
+      const result = await resourcesController.getCacheStatus('test-collection');
+
+      expect(result).toEqual({
+        status: 'indexing',
+        collectionName: 'test-collection',
+      });
+    });
+
+    it('should return cache status ERROR with error message', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const getCacheMetadata = cacheService.getCacheMetadata as jest.Mock;
+
+      getCacheStatus.mockReturnValue(CacheStatus.ERROR);
+      getCacheMetadata.mockReturnValue({ indexedAt: null, error: 'Failed to load tree' });
+
+      const result = await resourcesController.getCacheStatus('test-collection');
+
+      expect(result).toEqual({
+        status: 'error',
+        collectionName: 'test-collection',
+        error: 'Failed to load tree',
+      });
+    });
+
+    it('should trigger indexing when status is NOT_STARTED', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const getCacheMetadata = cacheService.getCacheMetadata as jest.Mock;
+      const indexCollection = cacheService.indexCollection as jest.Mock;
+
+      getCacheStatus.mockReturnValue(CacheStatus.NOT_STARTED);
+      getCacheMetadata.mockReturnValue(null);
+      indexCollection.mockResolvedValue(undefined);
+
+      const result = await resourcesController.getCacheStatus('test-collection');
+
+      expect(result).toEqual({
+        status: 'not-started',
+        collectionName: 'test-collection',
+      });
+      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test', 3);
+    });
+
+    it('should return 404 for non-existent collection', async () => {
+      const configWithoutCollection = {
+        ...mockConfig,
+        collections: {},
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithoutCollection);
 
       await expect(
-        resourcesController.getTree('test-collection', 'nonexistent.path', '2')
+        resourcesController.getCacheStatus('nonexistent')
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should URI decode collection names with special characters', async () => {
+      const getCacheStatus = cacheService.getCacheStatus as jest.Mock;
+      const getCacheMetadata = cacheService.getCacheMetadata as jest.Mock;
+      const getCacheStats = cacheService.getCacheStats as jest.Mock;
+
+      const configWithEncodedName = {
+        ...mockConfig,
+        collections: {
+          'My Collection': {
+            translationsFolder: './translations/my-collection',
+          },
+        },
+      };
+      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithEncodedName);
+
+      getCacheStatus.mockReturnValue(CacheStatus.READY);
+      getCacheMetadata.mockReturnValue({ indexedAt: new Date(), error: undefined });
+      getCacheStats.mockReturnValue({ totalKeys: 10, localeCount: 2 });
+
+      const result = await resourcesController.getCacheStatus('My%20Collection');
+
+      expect(result.collectionName).toBe('My Collection');
+      expect(getCacheStatus).toHaveBeenCalledWith('My Collection');
     });
   });
 });

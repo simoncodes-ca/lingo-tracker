@@ -2,21 +2,25 @@
   "name": {
     "source": "Collection name",
     "comment": "Label for collection name input field",
-    "es": "Collection name"
+    "es": "Nombre de la colección",
+    "fr-ca": "Nom de la collection"
   },
   "translationsFolder": {
     "source": "Translations folder",
     "comment": "Label for translations folder path input field",
-    "es": "Translations folder"
+    "es": "Carpeta de traducciones",
+    "fr-ca": "Dossier de traductions"
   },
   "locales": {
     "source": "Locales",
     "comment": "Label for locales input field",
-    "es": "Locales"
+    "es": "Idiomas",
+    "fr-ca": "Langues"
   },
   "localesPlaceholder": {
     "source": "Comma-separated (e.g., en,fr,es)",
     "comment": "Placeholder text showing format for locale input",
-    "es": "Comma-separated (e.g., en,fr,es)"
+    "es": "Separados por comas (ej., en,fr,es)",
+    "fr-ca": "Séparés par des virgules (p. ex., en,fr,es)"
   }
 }

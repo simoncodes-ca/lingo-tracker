@@ -1,0 +1,34 @@
+@if (densityMode() === 'medium') {
+  <div class="metadata-row">
+    @if (tags().length) {
+      <app-tag-list [tags]="previewTags()" />
+      @if (hasMoreTags) {
+        <button
+          class="more-badge"
+          mat-icon-button
+          type="button"
+          [matMenuTriggerFor]="tagMenu"
+          aria-label="Show all tags"
+        >
+          +{{ additionalTagCount }}
+        </button>
+      }
+    }
+
+    <mat-menu #tagMenu="matMenu">
+      <button mat-menu-item disableRipple>
+        <app-tag-list-popover [tags]="tags()" />
+      </button>
+    </mat-menu>
+  </div>
+} @else if (densityMode() === 'full') {
+  <div class="metadata-row full">
+    @if (tags().length) {
+      <app-tag-list [tags]="tags()" />
+    }
+
+    @if (comment()) {
+      <div class="comment-text">{{ comment() }}</div>
+    }
+  </div>
+}

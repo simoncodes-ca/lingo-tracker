@@ -1,0 +1,24 @@
+<div
+  class="locale-translations"
+  [class.full]="densityMode() === 'full'"
+>
+  @for (lt of localeTranslations(); track lt.locale) {
+    <div class="locale-line" [class.full]="densityMode() === 'full'">
+      <div class="locale-label">
+        <span class="locale-code">{{ lt.locale }}</span>
+        <mat-icon [class]="'status-icon status-' + lt.status">
+          {{ getStatusIcon(lt.status) }}
+        </mat-icon>
+        <span class="status-chip">{{ getStatusLabel(lt.status) }}</span>
+        <span class="locale-separator">:</span>
+      </div>
+      <div
+        class="locale-value"
+        [class.full]="densityMode() === 'full'"
+        [class.expanded]="isExpanded()"
+        [innerHTML]="(lt.value || '—') | highlight : searchQuery()"
+      >
+      </div>
+    </div>
+  }
+</div>

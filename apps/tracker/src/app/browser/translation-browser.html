@@ -1,28 +1,48 @@
-<div class="browser-container">
-  <header class="browser-header">
-    <button
-      mat-icon-button
-      (click)="navigateToCollections()"
-      [attr.aria-label]="TOKENS.BROWSER.BACKBUTTON | transloco"
-    >
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <h1 class="collection-title">{{ collectionName() }}</h1>
-  </header>
+<div class="translation-browser">
+  <!-- Indexing Overlay -->
+  @if (!store.isCacheReady() && (store.cacheStatus() === 'indexing' || store.cacheStatus() === 'not-started' || store.cacheStatus() === 'error')) {
+    <app-indexing-overlay
+      [cacheStatus]="store.cacheStatus()"
+      [errorMessage]="store.cacheError()"
+      (retry)="store.checkCacheStatus()"
+    />
+  }
 
-  <main class="browser-content">
-    <mat-card class="placeholder-card">
-      <mat-card-content>
-        <div class="placeholder-content">
-          <mat-icon class="placeholder-icon">construction</mat-icon>
-          <h2>{{ TOKENS.BROWSER.PLACEHOLDER.TITLE | transloco }}</h2>
-          <p>{{ TOKENS.BROWSER.PLACEHOLDER.MESSAGE | transloco }}</p>
-          <p class="collection-info">
-            {{ TOKENS.BROWSER.PLACEHOLDER.COLLECTION | transloco }}:
-            <strong>{{ collectionName() }}</strong>
-          </p>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </main>
+  <!-- Browser Content (shown only when cache is ready) -->
+  @if (store.isCacheReady()) {
+    <div class="browser-content">
+      <!-- Left Sidebar: Folder Tree -->
+      <aside class="folder-sidebar">
+        <app-sidebar-header
+          [collectionName]="collectionName()"
+          [translationsFolder]="translationsFolder()"
+          [totalKeys]="store.collectionTotalKeys()"
+          [localeCount]="store.collectionLocaleCount()"
+          [statsLoading]="store.isCacheIndexing()"
+          (backClick)="navigateToCollections()"
+        />
+        <app-folder-tree
+          [collectionName]="collectionName()"
+        />
+      </aside>
+
+      <!-- Main Content: Translation List -->
+      <main class="translation-main">
+        <app-translation-header />
+
+        @if (collectionName() && activeLocales().length > 0) {
+          <app-translation-list
+            [collectionName]="collectionName()"
+            [baseLocale]="baseLocale()"
+          />
+        }
+
+        @if (collectionName() && activeLocales().length === 0) {
+          <div class="loading-config">
+            <p>{{ TOKENS.BROWSER.LOADINGCOLLECTIONCONFIGURATION | transloco }}</p>
+          </div>
+        }
+      </main>
+    </div>
+  }
 </div>

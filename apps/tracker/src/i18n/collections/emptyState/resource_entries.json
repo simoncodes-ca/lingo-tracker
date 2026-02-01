@@ -2,11 +2,13 @@
   "message": {
     "source": "No collections yet",
     "comment": "Message shown when user has no collections",
-    "es": "No collections yet"
+    "es": "Aún no hay colecciones",
+    "fr-ca": "Aucune collection pour l'instant"
   },
   "cta": {
     "source": "Create your first collection",
     "comment": "Call-to-action button in empty state to create first collection",
-    "es": "Create your first collection"
+    "es": "Crea tu primera colección",
+    "fr-ca": "Créez votre première collection"
   }
 }

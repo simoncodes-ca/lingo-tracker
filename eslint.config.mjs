@@ -13,6 +13,7 @@ export default [
       '**/.angular/**',
       '**/.claude/**',
       '**/.cursor/**',
+        '**/apps/tracker/src/i18n-types/**'
     ],
   },
   {

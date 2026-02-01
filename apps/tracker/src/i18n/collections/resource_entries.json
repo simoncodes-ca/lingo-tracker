@@ -2,11 +2,13 @@
   "title": {
     "source": "Collections",
     "comment": "Page title for collections management dashboard",
-    "es": "Collections"
+    "es": "Colecciones",
+    "fr-ca": "Collections"
   },
   "addButton": {
     "source": "Add Collection",
     "comment": "Button text to open dialog for creating a new collection",
-    "es": "Add Collection"
+    "es": "Agregar Colección",
+    "fr-ca": "Ajouter une Collection"
   }
 }

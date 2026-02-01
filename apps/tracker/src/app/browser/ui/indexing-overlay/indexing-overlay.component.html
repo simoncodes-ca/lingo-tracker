@@ -1,0 +1,28 @@
+@if (cacheStatus() === 'indexing' || cacheStatus() === 'not-started') {
+  <div class="indexing-overlay">
+    <mat-card class="indexing-card">
+      <mat-card-content>
+        <div class="indexing-content">
+          <mat-spinner diameter="48"></mat-spinner>
+          <p class="indexing-message">Indexing collection...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+}
+
+@if (cacheStatus() === 'error') {
+  <div class="indexing-overlay">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <div class="error-content">
+          <h3 class="error-title">Indexing Failed</h3>
+          <p class="error-message">{{ errorMessage() || 'An error occurred while indexing the collection.' }}</p>
+          <button mat-raised-button color="primary" (click)="onRetryClick()">
+            Retry
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+}

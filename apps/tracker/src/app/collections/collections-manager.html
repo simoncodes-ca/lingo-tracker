@@ -68,28 +68,28 @@
               <button
                 mat-icon-button
                 type="button"
-                [attr.aria-label]="TOKENS.COMMON.ACTIONS.EDIT| transloco"
-                (click)="$event.stopPropagation(); openEditDialog(item.name)"
+                [matMenuTriggerFor]="menu"
+                [attr.aria-label]="'More actions'"
+                (click)="$event.stopPropagation()"
               >
-                <mat-icon>edit</mat-icon>
+                <mat-icon>more_vert</mat-icon>
               </button>
-              <button
-                mat-icon-button
-                type="button"
-                [attr.aria-label]="TOKENS.COMMON.ACTIONS.DELETE | transloco"
-                (click)="$event.stopPropagation(); openDeleteDialog(item.name)"
-              >
-                <mat-icon>delete</mat-icon>
-              </button>
+
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="openEditDialog(item.name)">
+                  <mat-icon>edit</mat-icon>
+                  <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
+                </button>
+                <button mat-menu-item (click)="openDeleteDialog(item.name)">
+                  <mat-icon>delete</mat-icon>
+                  <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
+                </button>
+              </mat-menu>
             </div>
           </div>
           <div class="card-content">
             <p class="folder-path">{{ item.config.translationsFolder }}</p>
-            <div class="locale-badges">
-              @for (locale of item.locales; track locale) {
-                <span class="locale-badge">{{ locale }}</span>
-              }
-            </div>
+            <app-tag-list [tags]="item.locales" />
           </div>
         </div>
       }

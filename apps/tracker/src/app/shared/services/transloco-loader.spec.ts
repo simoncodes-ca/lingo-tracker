@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { firstValueFrom, finalize } from 'rxjs';
 import { TranslocoHttpLoader } from './transloco-loader';
@@ -12,8 +13,11 @@ describe('TranslocoHttpLoader', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [TranslocoHttpLoader],
+      providers: [
+        TranslocoHttpLoader,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
     });
 
     loader = TestBed.inject(TranslocoHttpLoader);

@@ -7,13 +7,16 @@ import { ConfigService } from './config/config.service';
 import { ConfigController } from './config/config.controller';
 import { CollectionsController } from './collections/collections.controller';
 import { ResourcesController } from './collections/resources/resources.controller';
+import { CollectionCacheService } from './cache/collection-cache.service';
 
 @Module({
-  imports: [ServeStaticModule.forRoot({
-    rootPath: join(__dirname, '..', 'tracker', 'browser'),
-  }),],
+  imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'tracker', 'browser'),
+    }),
+  ],
   controllers: [AppController, ConfigController, CollectionsController, ResourcesController],
-  providers: [AppService, ConfigService],
+  providers: [AppService, ConfigService, CollectionCacheService],
 })
 export class AppModule {
   constructor() {

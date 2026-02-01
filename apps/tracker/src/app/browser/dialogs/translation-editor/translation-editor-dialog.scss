@@ -1,0 +1,315 @@
+@use '../../../../styles/tokens.scss';
+
+// Dialog container with refined aesthetic
+:host {
+  display: block;
+  max-width: 750px;
+
+  ::ng-deep .mat-mdc-dialog-container {
+    padding: 0;
+    border-top: 3px solid var(--color-primary);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+// Dialog header section
+.dialog-header {
+  position: relative;
+  padding: var(--spacing-5) var(--spacing-6) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mat-dialog-title {
+  margin: 0 0 var(--spacing-1);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.dialog-subtitle {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+.close-button {
+  position: absolute;
+  top: var(--spacing-3);
+  right: var(--spacing-3);
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
+
+  &:hover { color: var(--color-text-primary); }
+}
+
+// Main content area
+.mat-dialog-content {
+  padding: var(--spacing-5) var(--spacing-6);
+  color: var(--color-text-primary);
+  min-height: 400px;
+  background-color: var(--color-background);
+}
+
+// Error banner styling
+.error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  margin-bottom: var(--spacing-5);
+  background-color: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--border-radius-md);
+  color: var(--color-error);
+}
+
+.error-icon {
+  color: var(--color-error);
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.error-text {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+}
+
+// Utility
+.full-width {
+  width: 100%;
+}
+
+// Folder display with monospace path
+.folder-display {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-5);
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: var(--color-background-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+}
+
+.folder-icon {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+.folder-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.folder-path {
+  font-size: var(--font-size-sm);
+  font-family: 'IBM Plex Mono', 'Monaco', 'Courier New', monospace;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Base locale card with distinctive left border
+.base-locale-card {
+  padding: var(--spacing-4);
+  margin-top: var(--spacing-5);
+  background-color: var(--color-background-subtle);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--border-radius-lg);
+  transition: box-shadow var(--transition-fast);
+
+  &:focus-within {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+}
+
+// Other locale cards with neutral left border
+.locale-card {
+  padding: var(--spacing-4);
+  background-color: var(--color-background-subtle);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  transition: all var(--transition-fast);
+
+  &:hover {
+    border-left-color: var(--color-text-tertiary);
+  }
+
+  &:focus-within {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+  }
+}
+
+// Card header layout
+.locale-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
+}
+
+.locale-icon {
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
+  flex-shrink: 0;
+}
+
+.locale-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+// Base badge - refined pill style
+.base-badge {
+  padding: var(--spacing-1) var(--spacing-3);
+  background-color: var(--color-primary);
+  color: white;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--border-radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.75px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+// Character count - subtle, right-aligned
+.character-count {
+  margin: -2px 0 var(--spacing-4) 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  text-align: right;
+  font-weight: var(--font-weight-normal);
+}
+
+// Comment field spacing
+.comment-field {
+  margin-top: var(--spacing-4);
+  margin-bottom: var(--spacing-4);
+}
+
+// Other locales toggle button
+.other-locales-toggle {
+  margin: var(--spacing-5) 0 var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+
+  &:hover {
+    background-color: var(--color-background-muted);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+// Other locales section with staggered animation
+.other-locales-section {
+  margin-top: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  animation: slideDown var(--transition-normal) ease-out;
+
+  .locale-card {
+    animation: cardSlide var(--transition-slow) ease-out;
+
+    @for $i from 1 through 10 {
+      &:nth-child(#{$i}) {
+        animation-delay: calc(#{$i} * 50ms);
+      }
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+@keyframes cardSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Status select styling
+.status-select {
+  width: 140px;
+  margin-left: auto;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+// Action buttons area
+.mat-dialog-actions {
+  padding: var(--spacing-4) var(--spacing-6);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-background);
+  display: flex;
+  gap: var(--spacing-3);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.submit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  transition: all var(--transition-fast);
+
+  &:not(:disabled):hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  &:not(:disabled):active { transform: translateY(0); }
+}
+
+.submit-spinner { display: inline-block; }
+
+.cancel-button {
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+
+  &:not(:disabled):hover {
+    color: var(--color-text-primary);
+    background-color: var(--color-background-muted);
+  }
+}

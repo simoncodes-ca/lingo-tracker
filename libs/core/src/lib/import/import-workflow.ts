@@ -16,6 +16,8 @@ export interface ImportWorkflowConfig {
   locale: string;
   /** Merged options with strategy defaults applied */
   mergedOptions: ImportOptions;
+  /** Whether this is a base locale import (migration strategy only) */
+  isBaseLocaleImport: boolean;
 }
 
 /**
@@ -24,19 +26,19 @@ export interface ImportWorkflowConfig {
  * This function performs common setup steps required by all import formats:
  * 1. Applies strategy-specific defaults for flags (createMissing, updateComments, updateTags)
  * 2. Determines the base locale from configuration
- * 3. Validates that the target locale is not the base locale
+ * 3. Validates that the target locale is not the base locale (except for migration strategy)
  * 4. Returns merged configuration ready for use
  *
  * Strategy defaults applied:
  * - `translation-service`: No creation, no comment/tag updates
  * - `verification`: No creation, no comment/tag updates
- * - `migration`: Allows creation, updates comments and tags
+ * - `migration`: Allows creation, updates comments and tags (can import into base locale)
  * - `update`: No creation by default, no comment/tag updates
  *
  * @param options - Raw import options from user or CLI
  * @returns Validated configuration with merged options and derived values
  *
- * @throws {Error} If attempting to import into the base locale
+ * @throws {Error} If attempting to import into the base locale with non-migration strategy
  *
  * @example
  * ```typescript
@@ -56,7 +58,8 @@ export interface ImportWorkflowConfig {
  * //     createMissing: false,
  * //     updateComments: false,
  * //     updateTags: false
- * //   }
+ * //   },
+ * //   isBaseLocaleImport: false
  * // }
  * ```
  */
@@ -76,9 +79,13 @@ export function setupImportWorkflow(options: ImportOptions): ImportWorkflowConfi
   const cwd = process.cwd();
   const baseLocale = 'en'; // TODO: Get from config
 
-  // Validate locale
-  if (locale === baseLocale) {
-    throw new Error(`Cannot import into base locale "${baseLocale}"`);
+  const isBaseLocaleImport = locale === baseLocale;
+
+  if (isBaseLocaleImport && strategy !== 'migration') {
+    throw new Error(
+      `Cannot import into base locale "${baseLocale}" with strategy "${strategy}". ` +
+      `Only "migration" strategy supports base locale imports.`
+    );
   }
 
   return {
@@ -86,6 +93,7 @@ export function setupImportWorkflow(options: ImportOptions): ImportWorkflowConfi
     baseLocale,
     locale,
     mergedOptions,
+    isBaseLocaleImport,
   };
 }
 

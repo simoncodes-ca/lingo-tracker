@@ -1,0 +1,8 @@
+<app-search-input
+  [placeholder]="(TOKENS.BROWSER.SEARCHTRANSLATIONS | transloco)"
+  [value]="searchValue()"
+  [isLoading]="store.isSearchLoading()"
+  [ariaLabel]="'Search translations'"
+  (valueChange)="onSearchChange($event)"
+  (cleared)="onClearSearch()"
+/>

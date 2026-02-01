@@ -2,16 +2,19 @@
   "title": {
     "source": "Translation Browser Coming Soon",
     "comment": "Placeholder title for browser feature",
-    "es": "Translation Browser Coming Soon"
+    "es": "Navegador de Traducciones Próximamente",
+    "fr-ca": "Navigateur de Traductions Bientôt Disponible"
   },
   "message": {
     "source": "The translation browser feature is currently under development. Soon you'll be able to view, edit, and manage all translations within this collection.",
     "comment": "Placeholder message explaining feature status",
-    "es": "The translation browser feature is currently under development. Soon you'll be able to view, edit, and manage all translations within this collection."
+    "es": "La función de navegador de traducciones está actualmente en desarrollo. Pronto podrás ver, editar y administrar todas las traducciones dentro de esta colección.",
+    "fr-ca": "La fonctionnalité de navigateur de traductions est actuellement en développement. Bientôt, vous pourrez consulter, modifier et gérer toutes les traductions dans cette collection."
   },
   "collection": {
     "source": "Collection",
     "comment": "Label for collection name display",
-    "es": "Collection"
+    "es": "Colección",
+    "fr-ca": "Collection"
   }
 }

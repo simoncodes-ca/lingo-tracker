@@ -35,8 +35,34 @@ pre {
   outline-offset: 2px;
 }
 
+// Search term highlighting
+mark.search-highlight {
+  background-color: var(--color-highlight, #fef08a);
+  color: var(--color-highlight-text, #18181b);
+  padding: 0 2px;
+  border-radius: var(--border-radius-md, 0.375rem);
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+}
+
 // Make overlay backdrops slightly darker
 .cdk-overlay-backdrop,
 .cdk-overlay-dark-backdrop {
   background: rgba(0, 0, 0, 0.4) !important;
+}
+
+// Translation rollup overlay animation
+.translation-rollup-overlay {
+  animation: rollup-fade-in 150ms ease-out;
+}
+
+@keyframes rollup-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

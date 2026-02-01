@@ -1,0 +1,89 @@
+.translation-item-locales {
+  display: block;
+}
+
+.locale-translations {
+  border-top: 1px solid var(--color-border);
+  display: grid;
+  gap: var(--spacing-2) var(--spacing-3);
+  grid-template-columns: auto 1fr;
+  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-3);
+}
+
+.locale-line {
+  display: contents;
+}
+
+.locale-label {
+  align-items: center;
+  display: flex;
+  gap: var(--spacing-1);
+}
+
+.locale-code {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  min-width: 44px;
+}
+
+.locale-separator {
+  color: var(--color-text-tertiary);
+}
+
+.status-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  height: 16px;
+  width: 16px;
+
+  &.status-new {
+    color: #f97316;
+  }
+
+  &.status-stale {
+    color: var(--color-warning);
+  }
+
+  &.status-translated {
+    color: var(--color-info);
+  }
+
+  &.status-verified {
+    color: var(--color-success);
+  }
+}
+
+.status-chip {
+  background-color: var(--color-background-subtle);
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 2px 8px;
+  min-width: 80px;
+}
+
+.locale-value {
+  align-self: center;
+  color: var(--color-text-secondary);
+  flex: 1;
+  font-family: var(--font-mono, 'Roboto Mono', monospace);
+  font-size: var(--font-size-sm);
+
+  &.full {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 6;
+    display: -webkit-box;
+    overflow: hidden;
+    transition: -webkit-line-clamp 200ms;
+
+    &.expanded {
+      -webkit-line-clamp: unset;
+      display: block;
+    }
+  }
+}

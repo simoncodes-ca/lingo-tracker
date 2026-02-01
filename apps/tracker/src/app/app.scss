@@ -1,3 +1,5 @@
+$footer-height: 32px;
+
 // Skip to main content link (keyboard navigation)
 .skip-to-main {
   position: absolute;
@@ -21,13 +23,59 @@
 
 .app-container {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr $footer-height;
   grid-template-areas:
     'header'
-    'content';
+    'content'
+    'footer';
   height: 100vh;
   width: 100%;
   overflow: hidden;
+}
+
+.app-footer {
+  grid-area: footer;
+  height: $footer-height;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4);
+  background-color: var(--color-background);
+  border-top: 1px solid var(--color-border);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  user-select: none;
+
+  .footer-links {
+    color: var(--color-text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+
+    a {
+      display: flex;
+      align-items: center;
+      color: inherit;
+      text-decoration: none;
+      transition: color var(--transition-fast);
+
+      &:hover {
+        color: var(--color-text);
+      }
+
+      mat-icon,
+      svg {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        margin-right: var(--spacing-1);
+      }
+    }
+  }
+
+  span {
+    color: var(--color-text-tertiary);
+  }
 }
 
 .app-header {
@@ -43,7 +91,6 @@
   grid-area: content;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--spacing-6);
   background-color: var(--color-background-subtle);
 
   // Smooth theme transitions

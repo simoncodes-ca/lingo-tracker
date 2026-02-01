@@ -1,0 +1,60 @@
+<div class="translation-main-header">
+  <div class="breadcrumb-row">
+    @if (formattedFolderPath(); as path) {
+      <mat-icon class="breadcrumb-icon">folder</mat-icon>
+      <span class="breadcrumb-path">{{ path }}</span>
+    } @else {
+      <span class="breadcrumb-empty">No resource folder selected</span>
+    }
+  </div>
+
+  <div class="header-content">
+    <app-translation-search />
+
+    <app-locale-filter [multiSelect]="store.canShowMultipleLocales()" />
+
+    <app-status-filter />
+
+    <button
+      type="button"
+      class="sort-direction-toggle"
+      (click)="handleSortDirectionToggle()"
+      [attr.aria-label]="store.sortDirection() === 'asc' ? 'Sort ascending' : 'Sort descending'"
+      [matTooltip]="store.sortDirection() === 'asc' ? 'Sort ascending (A→Z)' : 'Sort descending (Z→A)'"
+    >
+      <mat-icon>{{ store.sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+    </button>
+
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="handleAddTranslation()"
+      [disabled]="store.isDisabled() || !store.currentFolderPath()"
+      [matTooltip]="!store.currentFolderPath() ? 'Select a folder first' : 'Add a new translation'"
+      aria-label="Add translation"
+    >
+      <mat-icon>add</mat-icon>
+      <span>Add Translation</span>
+    </button>
+
+    <mat-button-toggle-group
+      class="density-toggle"
+      name="density"
+      aria-label="Density mode"
+      [value]="store.densityMode()"
+      (change)="handleDensityChange($event)"
+    >
+      <mat-button-toggle value="compact" aria-label="Compact density" [attr.aria-current]="store.densityMode() === 'compact' ? 'true' : null" matTooltip="Compact — single locale, high density, best for scanning">
+        <mat-icon>view_compact</mat-icon>
+      </mat-button-toggle>
+
+      <mat-button-toggle value="medium" aria-label="Medium density" [attr.aria-current]="store.densityMode() === 'medium' ? 'true' : null" matTooltip="Medium — balanced density with metadata">
+        <mat-icon>view_comfortable</mat-icon>
+      </mat-button-toggle>
+
+      <mat-button-toggle value="full" aria-label="Full density" [attr.aria-current]="store.densityMode() === 'full' ? 'true' : null" matTooltip="Full — detailed view with comments and tags">
+        <mat-icon>view_day</mat-icon>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+</div>

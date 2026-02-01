@@ -1,0 +1,76 @@
+<div class="folder-tree" [class.disabled]="store.isDisabled()">
+  <!-- Search Input -->
+  <div class="search-container">
+    <app-search-input
+      [placeholder]="(TOKENS.BROWSER.FILTERFOLDERS | transloco)"
+      [value]="store.folderTreeFilter()"
+      [disabled]="store.isDisabled()"
+      [ariaLabel]="'Filter folders'"
+      (valueChange)="onSearchChange($event)"
+    />
+    <mat-button-toggle-group
+      [value]="showNestedResources() ? 'nested' : 'current'"
+      (change)="setNestedResources($event.value === 'nested')"
+      [disabled]="store.isDisabled()"
+      class="nested-toggle-group"
+      aria-label="Resource display mode"
+    >
+      <mat-button-toggle
+        value="current"
+        matTooltip="Show only current folder"
+        aria-label="Show only current folder"
+      >
+        <mat-icon>folder</mat-icon>
+      </mat-button-toggle>
+      <mat-button-toggle
+        value="nested"
+        matTooltip="Show all nested resources"
+        aria-label="Show all nested resources"
+      >
+        <mat-icon>account_tree</mat-icon>
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  <!-- Loading State -->
+  @if (store.isFolderTreeLoading() && store.rootFolders().length === 0) {
+    <div class="loading-container" aria-live="polite" aria-busy="true">
+      <mat-spinner diameter="32"></mat-spinner>
+      <p class="loading-text">{{ TOKENS.BROWSER.LOADINGFOLDERS | transloco}}</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (store.error() && !store.isFolderTreeLoading()) {
+    <div class="error-container" role="alert" aria-live="assertive">
+      <mat-icon color="warn">error</mat-icon>
+      <p class="error-text">{{ store.error() }}</p>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!store.isFolderTreeLoading() && !store.error() && store.filteredFolders().length === 0) {
+    <div class="empty-state">
+      <mat-icon class="empty-icon">folder_off</mat-icon>
+      <p class="empty-text">
+        {{ (store.folderTreeFilter() ? TOKENS.BROWSER.NOFOLDERSMATCHSEARCH : TOKENS.BROWSER.NOFOLDERSFOUND) | transloco }}
+      </p>
+    </div>
+  }
+
+  <!-- Folder Tree -->
+  @if (store.filteredFolders().length > 0) {
+    <div class="folder-list" role="tree">
+      @for (folder of store.filteredFolders(); track folder.fullPath) {
+        <app-folder-node
+          [folder]="folder"
+          [selectedPath]="store.currentFolderPath()"
+          [showNestedResources]="showNestedResources()"
+          [disabled]="store.isDisabled()"
+          (folderClick)="onFolderClick($event)"
+          (loadFolder)="onLoadFolder($event)"
+        />
+      }
+    </div>
+  }
+</div>

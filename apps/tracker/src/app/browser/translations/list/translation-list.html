@@ -1,0 +1,66 @@
+<div class="translation-list-container">
+  @if (store.isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>{{ TOKENS.BROWSER.LOADINGTRANSLATIONS | transloco }}</p>
+    </div>
+  }
+
+  @if (store.error() && !store.isLoading()) {
+    <div class="error-container">
+      <p>{{ store.error() }}</p>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="store.selectFolder(store.currentFolderPath())"
+      >
+          {{ TOKENS.COMMON.ACTIONS.RETRY | transloco }}
+      </button>
+    </div>
+  }
+
+  @if (store.isSearchMode()) {
+    <div class="search-info">
+      <mat-icon>search</mat-icon>
+        <span>{{ TOKENS.BROWSER.SHOWINGSEARCHRESULTSFORX | transloco : { query: store.searchQuery() } }}</span>
+      <button mat-button (click)="store.clearSearch()">{{ TOKENS.BROWSER.CLEARSEARCH | transloco }}</button>
+    </div>
+  }
+
+  @if (!store.isLoading() && !store.error() && store.sortedTranslations().length === 0) {
+    <div class="empty-state">
+      <mat-card class="info-card">
+        <mat-card-content>
+          <div class="info-content">
+            <mat-icon class="info-icon">info</mat-icon>
+            <p>{{ TOKENS.BROWSER.NOTRANSLATIONSFOUNDINFOLDER | transloco}}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+
+  @if (!store.isLoading() && !store.error() && store.sortedTranslations().length > 0) {
+    <cdk-virtual-scroll-viewport
+      [itemSize]="currentItemSize()"
+      class="viewport"
+      role="list"
+      aria-label="Translation list"
+    >
+      <div role="presentation">
+        <app-translation-item
+          *cdkVirtualFor="let translation of store.sortedTranslations(); trackBy: trackByKey"
+          [translation]="translation"
+          [locales]="displayLocales()"
+          [baseLocale]="baseLocale()"
+          [folderPath]="store.isSearchMode() ? '' : store.currentFolderPath()"
+          (copyKey)="handleCopyKey($event)"
+          (editTranslation)="handleEdit($event)"
+          (moveTranslation)="handleMove($event)"
+          (deleteTranslation)="handleDelete($event)"
+          (expansionChanged)="handleItemExpansion($event)"
+        />
+      </div>
+    </cdk-virtual-scroll-viewport>
+  }
+</div>

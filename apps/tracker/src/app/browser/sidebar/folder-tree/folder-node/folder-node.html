@@ -1,0 +1,35 @@
+<div class="folder-node" [class.disabled]="disabled()">
+  <!-- Folder Header -->
+  <div
+    class="folder-header"
+    [class.selected]="isSelected()"
+    [class.unloaded]="!folder().loaded"
+    (click)="onFolderClick()"
+    [attr.role]="disabled() ? 'presentation' : 'treeitem'"
+    [attr.tabindex]="disabled() ? -1 : 0"
+    [attr.aria-label]="'Folder ' + folder().name"
+    [attr.aria-expanded]="folder().loaded ? 'true' : 'false'"
+    [attr.aria-selected]="isSelected()"
+    (keydown.enter)="onFolderClick()"
+    (keydown.space)="onFolderClick()"
+  >
+    <mat-icon class="folder-icon">{{ folderIcon() }}</mat-icon>
+    <span class="folder-name">{{ folder().name }}</span>
+  </div>
+
+  <!-- Loaded Children -->
+  @if (folder().loaded && folder().tree) {
+    <div class="folder-children">
+      @for (child of folder().tree!.children; track child.fullPath) {
+        <app-folder-node
+          [folder]="child"
+          [selectedPath]="selectedPath()"
+          [showNestedResources]="showNestedResources()"
+          [disabled]="disabled()"
+          (folderClick)="folderClick.emit($event)"
+          (loadFolder)="loadFolder.emit($event)"
+        />
+      }
+    </div>
+  }
+</div>

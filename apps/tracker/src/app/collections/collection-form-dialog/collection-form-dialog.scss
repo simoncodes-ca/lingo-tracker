@@ -2,10 +2,14 @@
   display: block;
   min-width: 420px;
   max-width: 600px;
+
+  .mdc-dialog__content {
+    padding-top: var(--spacing-4);
+  }
 }
 
 mat-dialog-content {
-  padding: var(--spacing-4) var(--spacing-6);
+  padding: var(--spacing-6);
 
   form {
     display: flex;

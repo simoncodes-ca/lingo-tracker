@@ -4,9 +4,14 @@
       "checksum": "bcc40d0f321165f8d57c4185fc0357df"
     },
     "es": {
-      "checksum": "bcc40d0f321165f8d57c4185fc0357df",
+      "checksum": "6f0aa5daa9d80a3d0d1e139c865464f6",
       "baseChecksum": "bcc40d0f321165f8d57c4185fc0357df",
       "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "4eccf5449475d38715d4d54aa6fdad49",
+      "baseChecksum": "bcc40d0f321165f8d57c4185fc0357df",
+      "status": "new"
     }
   }
 }
