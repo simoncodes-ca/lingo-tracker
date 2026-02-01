@@ -9,7 +9,6 @@ import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dial
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MoveResourceDialog } from '../../dialogs/move-resource';
-import { DeleteResourceDialog, DeleteResourceDialogResult } from '../../dialogs/delete-resource';
 import {
   TranslationEditorDialog,
   TranslationEditorDialogData,
@@ -20,7 +19,9 @@ import { TranslationItem } from './translation-item/translation-item';
 import { ResourceSummaryDto, UpdateResourceDto } from '@simoncodes-ca/data-transfer';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
-import { TranslationApiService } from '../../services/translation-api.service';
+import { BrowserApiService } from '../../services/browser-api.service';
+import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
+import { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
 
 @Component({
   selector: 'app-translation-list',
@@ -44,7 +45,7 @@ export class TranslationList {
   readonly store = inject(BrowserStore);
   private readonly snackBar: MatSnackBar = inject(MatSnackBar);
   private readonly dialog: MatDialog = inject(MatDialog);
-  private readonly translationApi = inject(TranslationApiService);
+  private readonly browserApi = inject(BrowserApiService);
 
   /** Collection name to load translations from */
   collectionName = input.required<string>();
@@ -105,7 +106,8 @@ export class TranslationList {
   // Snack messages centralized for clarity
   private readonly SNACK_COPY_OK = 'Copied to clipboard';
   private readonly SNACK_COPY_FAIL = 'Failed to copy';
-  private readonly SNACK_DELETE_PLACEHOLDER = 'Delete functionality coming soon';
+  private readonly SNACK_DELETE_SUCCESS = 'Resource deleted successfully';
+  private readonly SNACK_DELETE_FAIL = 'Failed to delete resource';
 
   /**
    * Handles copy-to-clipboard request from translation item.
@@ -214,7 +216,7 @@ export class TranslationList {
       });
     }
 
-    this.translationApi.updateResource(this.collectionName(), updateDto).subscribe({
+    this.browserApi.updateResource(this.collectionName(), updateDto).subscribe({
       next: () => {
         this.store.selectFolder(this.store.currentFolderPath());
         this.snackBar.open('Translation updated successfully', '', {
@@ -241,18 +243,60 @@ export class TranslationList {
 
   /**
    * Handles delete request from translation item.
-   * Shows the placeholder snackbar when delete is confirmed.
+   * Shows confirmation dialog and deletes the resource if confirmed.
    */
-  async handleDelete(translation: ResourceSummaryDto): Promise<void> {
-    const ref = this.openResourceDialog(DeleteResourceDialog, translation);
+  handleDelete(translation: ResourceSummaryDto): void {
+    const folderPath = this.store.currentFolderPath();
+    const fullKey = folderPath ? `${folderPath}.${translation.key}` : translation.key;
 
-    ref.afterClosed().subscribe((result: DeleteResourceDialogResult | undefined) => {
-      if (result?.confirmed) {
-        this.snackBar.open(this.SNACK_DELETE_PLACEHOLDER, '', { duration: 3000 });
-      }
+    const dialogData: ConfirmationDialogData = {
+      title: 'Delete Resource',
+      message: `Are you sure you want to delete the resource "${fullKey}"? This action cannot be undone.`,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      actionType: 'destructive',
+    };
+
+    const dialogRef = this.dialog.open(ConfirmationDialog, {
+      data: dialogData,
+      autoFocus: true,
+      restoreFocus: true,
     });
 
-    return Promise.resolve();
+    dialogRef.afterClosed().subscribe((confirmed: boolean | undefined) => {
+      if (confirmed) {
+        this.#performDelete(fullKey, translation.key);
+      }
+    });
+  }
+
+  #performDelete(fullKey: string, displayKey: string): void {
+    this.browserApi.deleteResource(this.collectionName(), [fullKey]).subscribe({
+      next: (response) => {
+        if (response.entriesDeleted > 0) {
+          this.store.removeResourceFromCache(displayKey);
+          this.snackBar.open(this.SNACK_DELETE_SUCCESS, '', {
+            duration: 2000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom',
+          });
+        } else {
+          this.snackBar.open(this.SNACK_DELETE_FAIL, '', {
+            duration: 4000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom',
+          });
+        }
+      },
+      error: (error: unknown) => {
+        const message = error instanceof Error ? error.message : this.SNACK_DELETE_FAIL;
+        this.snackBar.open(message, '', {
+          duration: 4000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom',
+        });
+      },
+    });
   }
 
   /** Track function for virtual scroll performance. */

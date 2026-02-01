@@ -39,7 +39,6 @@ import {
   SearchResultDto,
   FolderNodeDto,
 } from '@simoncodes-ca/data-transfer';
-import { TranslationApiService } from '../../services/translation-api.service';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
@@ -116,7 +115,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
     MatDialogRef<TranslationEditorDialog>
   );
   private readonly dialog = inject(MatDialog);
-  private readonly translationApi = inject(TranslationApiService);
   private readonly browserApi = inject(BrowserApiService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroy$ = new Subject<void>();
@@ -487,7 +485,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       updateDto.locales = locales;
     }
 
-    this.translationApi
+    this.browserApi
       .updateResource(this.data.collectionName, updateDto)
       .subscribe({
         next: () => {
@@ -534,7 +532,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
         filledTranslations.length > 0 ? filledTranslations : undefined,
     };
 
-    this.translationApi
+    this.browserApi
       .createResource(this.data.collectionName, createDto)
       .subscribe({
         next: () => {

@@ -49,7 +49,10 @@ describe('BrowserStore', () => {
 
   const mockCacheReady: CacheStatusDto = {
     status: 'ready',
-    error: null,
+    stats: {
+      totalKeys: 100,
+      localeCount: 3,
+    },
   };
 
   beforeEach(() => {
@@ -521,6 +524,7 @@ describe('BrowserStore', () => {
     beforeEach(() => {
       // Ensure localStorage is clean for each test
       localStorage.clear();
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
     });
 
     it('should update density mode state', () => {
@@ -535,7 +539,16 @@ describe('BrowserStore', () => {
 
     it('should persist and load view preferences to/from localStorage', () => {
       const coll = 'prefs-collection';
-      const prefs = { densityMode: 'full' as const, selectedLocales: ['es', 'fr'] };
+      const prefs = {
+        densityMode: 'full' as const,
+        selectedLocales: ['es', 'fr'],
+        showNestedResources: true,
+        compactLocale: null,
+        compactLocaleManuallyChanged: false,
+        sortField: 'key' as const,
+        sortDirection: 'asc' as const,
+        selectedStatuses: [],
+      };
 
       // Save via store method
       store.saveViewPreferences(coll, prefs);
@@ -551,9 +564,14 @@ describe('BrowserStore', () => {
       expect(loaded).toEqual(prefs);
     });
 
-    it('should automatically reduce selectedLocales to first when switching to compact', () => {
+    it('should automatically reduce selectedLocales to first when switching to compact', async () => {
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
+
       // Setup available locales and initial selection
       store.setSelectedCollection({ collectionName: 'c1', locales: ['en', 'es', 'fr'] });
+
+      await waitForSignals();
+
       // multi-select
       store.setSelectedLocales(['es', 'fr']);
       expect(store.selectedLocales()).toEqual(['es', 'fr']);
@@ -566,24 +584,41 @@ describe('BrowserStore', () => {
       expect(store.densityMode()).toBe('compact');
     });
 
-    it('should load preferences when collection is selected', () => {
+    it('should load preferences when collection is selected', async () => {
       const coll = 'load-collection';
-      const prefs = { densityMode: 'compact' as const, selectedLocales: ['fr'] };
+      const prefs = {
+        densityMode: 'compact' as const,
+        selectedLocales: ['fr'],
+        showNestedResources: true,
+        compactLocale: 'fr',
+        compactLocaleManuallyChanged: false,
+        sortField: 'key' as const,
+        sortDirection: 'asc' as const,
+        selectedStatuses: [],
+      };
       localStorage.setItem(`lingo-tracker:view-prefs:${coll}`, JSON.stringify(prefs));
 
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
+
       store.setSelectedCollection({ collectionName: coll, locales: ['en', 'fr', 'es'] });
+
+      await waitForSignals();
 
       // density mode should be applied and selectedLocales as well (compact implies single locale)
       expect(store.densityMode()).toBe('compact');
       expect(store.selectedLocales()).toEqual(['fr']);
     });
 
-    it('should default to base locale when switching to compact mode with no selection', () => {
+    it('should default to base locale when switching to compact mode with no selection', async () => {
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
+
       store.setSelectedCollection({
         collectionName: 'c1',
         locales: ['en', 'es', 'fr'],
         baseLocale: 'en'
       });
+
+      await waitForSignals();
 
       // No locales selected initially
       expect(store.selectedLocales()).toEqual([]);
@@ -595,10 +630,21 @@ describe('BrowserStore', () => {
       expect(store.densityMode()).toBe('compact');
     });
 
-    it('should default to base locale when loading compact mode from localStorage with no selection', () => {
+    it('should default to base locale when loading compact mode from localStorage with no selection', async () => {
       const coll = 'compact-no-selection';
-      const prefs = { densityMode: 'compact' as const, selectedLocales: [], showNestedResources: true };
+      const prefs = {
+        densityMode: 'compact' as const,
+        selectedLocales: [],
+        showNestedResources: true,
+        compactLocale: null,
+        compactLocaleManuallyChanged: false,
+        sortField: 'key' as const,
+        sortDirection: 'asc' as const,
+        selectedStatuses: [],
+      };
       localStorage.setItem(`lingo-tracker:view-prefs:${coll}`, JSON.stringify(prefs));
+
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({
         collectionName: coll,
@@ -606,17 +652,23 @@ describe('BrowserStore', () => {
         baseLocale: 'en'
       });
 
+      await waitForSignals();
+
       // Should have applied compact mode and defaulted to base locale
       expect(store.densityMode()).toBe('compact');
       expect(store.selectedLocales()).toEqual(['en']);
     });
 
-    it('should fallback to first available locale if base locale is not in available locales', () => {
+    it('should fallback to first available locale if base locale is not in available locales', async () => {
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
+
       store.setSelectedCollection({
         collectionName: 'c1',
         locales: ['es', 'fr', 'de'],
         baseLocale: 'en' // not in available locales
       });
+
+      await waitForSignals();
 
       expect(store.selectedLocales()).toEqual([]);
 
@@ -656,12 +708,14 @@ describe('BrowserStore', () => {
   });
 
   describe('Locale Filtering', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
       store.setSelectedCollection({
         collectionName: 'test',
         locales: ['en', 'es', 'fr', 'de']
       });
+      await waitForSignals();
     });
 
     it('should initialize with empty selectedLocales', () => {
@@ -812,12 +866,14 @@ describe('BrowserStore', () => {
   });
 
   describe('Search State', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
       store.setSelectedCollection({
         collectionName: 'test',
         locales: ['en', 'es']
       });
+      await waitForSignals();
     });
 
     it('should initialize with empty search state', () => {
@@ -966,6 +1022,136 @@ describe('BrowserStore', () => {
 
         expect(store.isSearchLoading()).toBe(false);
       });
+    });
+  });
+
+  describe('Resource Deletion', () => {
+    it('should remove resource from translations cache', async () => {
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
+
+      store.setSelectedCollection({
+        collectionName: 'test',
+        locales: ['en', 'es'],
+      });
+
+      await waitForSignals();
+
+      expect(store.translations().length).toBe(1);
+      expect(store.translations()[0].key).toBe('welcome');
+
+      store.removeResourceFromCache('welcome');
+
+      expect(store.translations().length).toBe(0);
+    });
+
+    it('should remove resource from search results when in search mode', async () => {
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
+
+      store.setSelectedCollection({
+        collectionName: 'test',
+        locales: ['en', 'es'],
+      });
+
+      await waitForSignals();
+
+      const mockSearchResults = [
+        {
+          key: 'common.save',
+          translations: { en: 'Save', es: 'Guardar' },
+          status: { es: 'verified' as const },
+          matchType: 'partial-key' as const,
+        },
+        {
+          key: 'common.cancel',
+          translations: { en: 'Cancel', es: 'Cancelar' },
+          status: { es: 'verified' as const },
+          matchType: 'partial-key' as const,
+        },
+      ];
+
+      vi.spyOn(apiService, 'searchTranslations').mockReturnValue(
+        of({
+          query: 'common',
+          results: mockSearchResults,
+          totalFound: 2,
+          limited: false,
+        })
+      );
+
+      store.setSearchQuery('common');
+      store.searchTranslations('common');
+
+      await waitForSignals();
+
+      expect(store.searchResults().length).toBe(2);
+      expect(store.isSearchMode()).toBe(true);
+
+      store.removeResourceFromCache('common.save');
+
+      expect(store.searchResults().length).toBe(1);
+      expect(store.searchResults()[0].key).toBe('common.cancel');
+    });
+
+    it('should not affect other resources when removing one', async () => {
+      const mockMultipleResources: ResourceTreeDto = {
+        path: '',
+        resources: [
+          {
+            key: 'first',
+            translations: { en: 'First' },
+            status: {},
+          },
+          {
+            key: 'second',
+            translations: { en: 'Second' },
+            status: {},
+          },
+          {
+            key: 'third',
+            translations: { en: 'Third' },
+            status: {},
+          },
+        ],
+        children: [],
+      };
+
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockMultipleResources));
+
+      store.setSelectedCollection({
+        collectionName: 'test',
+        locales: ['en', 'es'],
+      });
+
+      await waitForSignals();
+
+      expect(store.translations().length).toBe(3);
+
+      store.removeResourceFromCache('second');
+
+      expect(store.translations().length).toBe(2);
+      expect(store.translations()[0].key).toBe('first');
+      expect(store.translations()[1].key).toBe('third');
+    });
+
+    it('should handle removal of non-existent resource gracefully', async () => {
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
+
+      store.setSelectedCollection({
+        collectionName: 'test',
+        locales: ['en', 'es'],
+      });
+
+      await waitForSignals();
+
+      const initialCount = store.translations().length;
+
+      store.removeResourceFromCache('nonexistent-key');
+
+      expect(store.translations().length).toBe(initialCount);
     });
   });
 });

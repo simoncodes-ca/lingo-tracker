@@ -481,6 +481,22 @@ export const BrowserStore = signalStore(
           })
         )
       ),
+
+      removeResourceFromCache(resourceKey: string): void {
+        const currentTranslations = store.translations();
+        const updatedTranslations = currentTranslations.filter(
+          (resource) => resource.key !== resourceKey
+        );
+        patchState(store, { translations: updatedTranslations });
+
+        if (store.isSearchMode()) {
+          const currentSearchResults = store.searchResults();
+          const updatedSearchResults = currentSearchResults.filter(
+            (resource) => resource.key !== resourceKey
+          );
+          patchState(store, { searchResults: updatedSearchResults });
+        }
+      },
     };
   }),
 

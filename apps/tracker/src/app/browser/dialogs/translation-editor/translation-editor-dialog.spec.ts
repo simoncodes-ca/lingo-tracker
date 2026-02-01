@@ -13,7 +13,6 @@ import {
 } from './translation-editor-dialog';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { of, throwError } from 'rxjs';
-import { TranslationApiService } from '../../services/translation-api.service';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -23,8 +22,7 @@ describe('TranslationEditorDialog', () => {
   let fixture: ComponentFixture<TranslationEditorDialog>;
   let dialogRef: { close: Mock };
   let mockDialog: { open: Mock };
-  let mockTranslationApi: { createResource: Mock; updateResource: Mock };
-  let mockBrowserApi: { searchTranslations: Mock };
+  let mockBrowserApi: { createResource: Mock; updateResource: Mock; searchTranslations: Mock };
   let mockSnackBar: { open: Mock };
 
   const createMockData = (
@@ -46,7 +44,6 @@ describe('TranslationEditorDialog', () => {
       providers: [
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: MatDialog, useValue: mockDialog },
-        { provide: TranslationApiService, useValue: mockTranslationApi },
         { provide: BrowserApiService, useValue: mockBrowserApi },
         { provide: MatSnackBar, useValue: mockSnackBar },
         {
@@ -76,12 +73,9 @@ describe('TranslationEditorDialog', () => {
       }),
     };
 
-    mockTranslationApi = {
+    mockBrowserApi = {
       createResource: vi.fn().mockReturnValue(of({})),
       updateResource: vi.fn().mockReturnValue(of({})),
-    };
-
-    mockBrowserApi = {
       searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
     };
 
@@ -283,11 +277,9 @@ describe('TranslationEditorDialog', () => {
           afterClosed: () => of(true),
         }),
       };
-      mockTranslationApi = {
+      mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({})),
-      };
-      mockBrowserApi = {
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
@@ -457,11 +449,9 @@ describe('TranslationEditorDialog', () => {
           afterClosed: () => of(true),
         }),
       };
-      mockTranslationApi = {
+      mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({})),
-      };
-      mockBrowserApi = {
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
@@ -585,11 +575,9 @@ describe('TranslationEditorDialog', () => {
           afterClosed: () => of(true),
         }),
       };
-      mockTranslationApi = {
+      mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({})),
-      };
-      mockBrowserApi = {
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
@@ -765,19 +753,17 @@ describe('TranslationEditorDialog', () => {
 
       const editData = createMockData('edit', mockResource);
       dialogRef = { close: vi.fn() };
-      mockTranslationApi = {
+      mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(
           of({ resolvedKey: 'common.buttons.existing_key', updated: true })
         ),
+        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
           afterClosed: () => of(true),
         }),
-      };
-      mockBrowserApi = {
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
       await setupTestBed(editData);
@@ -787,7 +773,7 @@ describe('TranslationEditorDialog', () => {
 
       await component.onSubmit();
 
-      expect(mockTranslationApi.updateResource).toHaveBeenCalledWith(
+      expect(mockBrowserApi.updateResource).toHaveBeenCalledWith(
         'test-collection',
         expect.objectContaining({
           key: 'common.buttons.existing_key',
@@ -807,19 +793,17 @@ describe('TranslationEditorDialog', () => {
 
       const editData = createMockData('edit', mockResource);
       dialogRef = { close: vi.fn() };
-      mockTranslationApi = {
+      mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(
           of({ resolvedKey: 'common.buttons.existing_key', updated: true })
         ),
+        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
           afterClosed: () => of(true),
         }),
-      };
-      mockBrowserApi = {
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
       await setupTestBed(editData);
@@ -832,7 +816,7 @@ describe('TranslationEditorDialog', () => {
 
       await component.onSubmit();
 
-      expect(mockTranslationApi.updateResource).toHaveBeenCalledWith(
+      expect(mockBrowserApi.updateResource).toHaveBeenCalledWith(
         'test-collection',
         expect.objectContaining({
           locales: {
@@ -858,7 +842,7 @@ describe('TranslationEditorDialog', () => {
       expect(component.errorMessage()).toBe(
         'Key renaming is not yet supported. Please use the same key or create a new resource.'
       );
-      expect(mockTranslationApi.updateResource).not.toHaveBeenCalled();
+      expect(mockBrowserApi.updateResource).not.toHaveBeenCalled();
       expect(dialogRef.close).not.toHaveBeenCalled();
     });
 
@@ -871,7 +855,7 @@ describe('TranslationEditorDialog', () => {
 
       const editData = createMockData('edit', mockResource);
       dialogRef = { close: vi.fn() };
-      mockTranslationApi = {
+      mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(
           throwError(() => new HttpErrorResponse({
@@ -880,14 +864,12 @@ describe('TranslationEditorDialog', () => {
             error: { message: 'Resource not found' },
           }))
         ),
+        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
           afterClosed: () => of(true),
         }),
-      };
-      mockBrowserApi = {
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
       await setupTestBed(editData);
@@ -910,19 +892,17 @@ describe('TranslationEditorDialog', () => {
 
       const editData = createMockData('edit', mockResource);
       dialogRef = { close: vi.fn() };
-      mockTranslationApi = {
+      mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(
           of({ resolvedKey: 'common.buttons.existing_key', updated: true })
         ),
+        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
           afterClosed: () => of(true),
         }),
-      };
-      mockBrowserApi = {
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
       await setupTestBed(editData);

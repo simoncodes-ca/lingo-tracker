@@ -5,6 +5,12 @@ import {
   ResourceTreeDto,
   SearchResultsDto,
   CacheStatusDto,
+  CreateResourceDto,
+  CreateResourceResponseDto,
+  UpdateResourceDto,
+  UpdateResourceResponseDto,
+  DeleteResourceDto,
+  DeleteResourceResponseDto,
 } from '@simoncodes-ca/data-transfer';
 
 /**
@@ -77,6 +83,62 @@ export class BrowserApiService {
     return this.#http.get<SearchResultsDto>(
       `${this.#baseUrl}/${encodedName}/resources/search`,
       { params }
+    );
+  }
+
+  /**
+   * Creates a new translation resource.
+   *
+   * @param collectionName - Name of the collection
+   * @param dto - Resource creation data
+   * @returns Observable of creation response
+   */
+  createResource(
+    collectionName: string,
+    dto: CreateResourceDto
+  ): Observable<CreateResourceResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    return this.#http.post<CreateResourceResponseDto>(
+      `${this.#baseUrl}/${encodedName}/resources`,
+      dto
+    );
+  }
+
+  /**
+   * Updates an existing translation resource.
+   *
+   * @param collectionName - Name of the collection
+   * @param dto - Resource update data
+   * @returns Observable of update response
+   */
+  updateResource(
+    collectionName: string,
+    dto: UpdateResourceDto
+  ): Observable<UpdateResourceResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    return this.#http.patch<UpdateResourceResponseDto>(
+      `${this.#baseUrl}/${encodedName}/resources`,
+      dto
+    );
+  }
+
+  /**
+   * Deletes one or more translation resources.
+   *
+   * @param collectionName - Name of the collection
+   * @param resourceKeys - Array of resource keys to delete
+   * @returns Observable of deletion response
+   */
+  deleteResource(
+    collectionName: string,
+    resourceKeys: string[]
+  ): Observable<DeleteResourceResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: DeleteResourceDto = { keys: resourceKeys };
+    return this.#http.request<DeleteResourceResponseDto>(
+      'DELETE',
+      `${this.#baseUrl}/${encodedName}/resources`,
+      { body: dto }
     );
   }
 }
