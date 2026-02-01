@@ -4,11 +4,7 @@ import {
   provideZoneChangeDetection,
   isDevMode,
 } from '@angular/core';
-import {
-  provideRouter,
-  withPreloading,
-  PreloadAllModules,
-} from '@angular/router';
+import { provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
 import { appRoutes } from './app.routes';
 import { provideHttpClient } from '@angular/common/http';
 import { provideTransloco } from '@jsverse/transloco';

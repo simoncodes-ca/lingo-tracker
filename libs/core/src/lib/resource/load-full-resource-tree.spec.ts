@@ -151,10 +151,7 @@ const mockFs = vi.hoisted(() => {
     ],
 
     // Level 6: apps/common/buttons/actions/primary/forms directory
-    [
-      '/test/translations/apps/common/buttons/actions/primary/forms',
-      'directory',
-    ],
+    ['/test/translations/apps/common/buttons/actions/primary/forms', 'directory'],
     [
       '/test/translations/apps/common/buttons/actions/primary/forms/resource_entries.json',
       JSON.stringify({
@@ -329,10 +326,7 @@ const createMockFileSystem = () => {
     ],
 
     // Level 6
-    [
-      '/test/translations/apps/common/buttons/actions/primary/forms',
-      'directory',
-    ],
+    ['/test/translations/apps/common/buttons/actions/primary/forms', 'directory'],
     [
       '/test/translations/apps/common/buttons/actions/primary/forms/resource_entries.json',
       JSON.stringify({
@@ -381,10 +375,7 @@ vi.mock('node:fs', () => ({
       const dirParts = dirPathStr.split('/').filter(Boolean);
 
       // Check if this is a direct child of dirPath
-      if (
-        pathParts.length === dirParts.length + 1 &&
-        fsPath.startsWith(dirPathStr + '/')
-      ) {
+      if (pathParts.length === dirParts.length + 1 && fsPath.startsWith(dirPathStr + '/')) {
         const name = pathParts[pathParts.length - 1];
         const isDirectory = type === 'directory';
 

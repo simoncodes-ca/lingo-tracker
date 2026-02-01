@@ -1,11 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  OnInit,
-  inject,
-  computed,
-  effect,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -60,9 +53,7 @@ export class TranslationBrowser implements OnInit {
   /**
    * Computed signal for collection name from the unified store.
    */
-  readonly collectionName = computed(
-    () => this.store.selectedCollection() || '',
-  );
+  readonly collectionName = computed(() => this.store.selectedCollection() || '');
 
   /**
    * Computed signal for active locales from the unified store.

@@ -1,16 +1,8 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import prompts from 'prompts';
-import type {
-  LingoTrackerConfig,
-  TranslationStatus,
-} from '@simoncodes-ca/core';
-import {
-  createDefaultTranslations,
-  addResource,
-  resolveResourceKey,
-  splitResolvedKey,
-} from '@simoncodes-ca/core';
+import type { LingoTrackerConfig, TranslationStatus } from '@simoncodes-ca/core';
+import { createDefaultTranslations, addResource, resolveResourceKey, splitResolvedKey } from '@simoncodes-ca/core';
 import {
   loadConfiguration,
   parseCommaSeparatedList,
@@ -34,9 +26,7 @@ export interface AddResourceOptions {
   }>;
 }
 
-export async function addResourceCommand(
-  options: AddResourceOptions,
-): Promise<void> {
+export async function addResourceCommand(options: AddResourceOptions): Promise<void> {
   const loaded = loadConfiguration({ exitOnError: false });
   if (!loaded) return;
   const { config, cwd } = loaded;
@@ -51,23 +41,15 @@ export async function addResourceCommand(
 
   try {
     // Check if resource already exists
-    const resolvedKey = resolveResourceKey(
-      answers.key,
-      answers.targetFolder || undefined,
-    );
+    const resolvedKey = resolveResourceKey(answers.key, answers.targetFolder || undefined);
     const { folderPath, entryKey } = splitResolvedKey(resolvedKey);
 
     const fullFolderPath = folderPath.length
       ? join(collection.config.translationsFolder, ...folderPath)
       : collection.config.translationsFolder;
 
-    const entryResourcePath = resolve(
-      cwd,
-      fullFolderPath,
-      'resource_entries.json',
-    );
-    const resourceExists =
-      existsSync(entryResourcePath) && hasEntryKey(entryResourcePath, entryKey);
+    const entryResourcePath = resolve(cwd, fullFolderPath, 'resource_entries.json');
+    const resourceExists = existsSync(entryResourcePath) && hasEntryKey(entryResourcePath, entryKey);
 
     if (resourceExists) {
       if (process.stdout.isTTY) {
@@ -80,9 +62,7 @@ export async function addResourceCommand(
         });
 
         if (!confirm.value) {
-          ConsoleFormatter.error(
-            ErrorMessages.OPERATION_CANCELLED('Add resource'),
-          );
+          ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Add resource'));
           return;
         }
       }
@@ -107,8 +87,7 @@ export async function addResourceCommand(
         tags: tagsArray.length > 0 ? tagsArray : undefined,
         targetFolder: answers.targetFolder || undefined,
         baseLocale,
-        translations:
-          translations && translations.length > 0 ? translations : undefined,
+        translations: translations && translations.length > 0 ? translations : undefined,
       },
       { cwd },
     );
@@ -118,9 +97,7 @@ export async function addResourceCommand(
       ConsoleFormatter.indent('(newly created)');
     }
   } catch (e: unknown) {
-    ConsoleFormatter.error(
-      e instanceof Error ? e.message : 'Failed to add resource',
-    );
+    ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to add resource');
   }
 }
 
@@ -160,8 +137,7 @@ async function promptForMissing(
       type: 'text',
       name: 'key',
       message: 'Resource key (dot-delimited, e.g., apps.common.buttons.ok)',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -170,8 +146,7 @@ async function promptForMissing(
       type: 'text',
       name: 'value',
       message: 'Base value (source text)',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -212,9 +187,7 @@ async function promptForMissing(
   }
 
   // Handle translations in interactive mode
-  let translations:
-    | Array<{ locale: string; value: string; status: TranslationStatus }>
-    | undefined;
+  let translations: Array<{ locale: string; value: string; status: TranslationStatus }> | undefined;
   if (!options.translations && process.stdout.isTTY) {
     const collectionConfig = config.collections?.[collectionName];
     const baseLocale = collectionConfig?.baseLocale || config.baseLocale;
@@ -269,8 +242,7 @@ async function promptForMissing(
     value: options.value ?? (responses.value as string),
     comment: options.comment ?? (responses.comment as string) ?? '',
     tags: options.tags ?? (responses.tags as string) ?? '',
-    targetFolder:
-      options.targetFolder ?? (responses.targetFolder as string) ?? '',
+    targetFolder: options.targetFolder ?? (responses.targetFolder as string) ?? '',
     translations: options.translations || translations,
   };
 }

@@ -42,9 +42,9 @@ describe('deleteCollectionByName', () => {
       throw new Error('ENOENT: no such file or directory');
     });
 
-    expect(() =>
-      deleteCollectionByName('any', { cwd: '/nonexistent' }),
-    ).toThrow('Failed to read or parse configuration file');
+    expect(() => deleteCollectionByName('any', { cwd: '/nonexistent' })).toThrow(
+      'Failed to read or parse configuration file',
+    );
   });
 
   it('should throw an error if collection does not exist', () => {
@@ -58,17 +58,13 @@ describe('deleteCollectionByName', () => {
 
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2));
 
-    expect(() =>
-      deleteCollectionByName('nonexistent', { cwd: '/test' }),
-    ).toThrow('Collection "nonexistent" not found');
+    expect(() => deleteCollectionByName('nonexistent', { cwd: '/test' })).toThrow('Collection "nonexistent" not found');
   });
 
   it('should throw an error if config file is invalid JSON', () => {
     vi.mocked(fs.readFileSync).mockReturnValue('invalid json {');
 
-    expect(() => deleteCollectionByName('any', { cwd: '/test' })).toThrow(
-      'Failed to read or parse configuration file',
-    );
+    expect(() => deleteCollectionByName('any', { cwd: '/test' })).toThrow('Failed to read or parse configuration file');
   });
 
   it('should preserve other collections when deleting multiple', () => {
@@ -85,9 +81,7 @@ describe('deleteCollectionByName', () => {
 
     let currentConfig = initialConfig;
 
-    vi.mocked(fs.readFileSync).mockImplementation(() =>
-      JSON.stringify(currentConfig, null, 2),
-    );
+    vi.mocked(fs.readFileSync).mockImplementation(() => JSON.stringify(currentConfig, null, 2));
 
     vi.mocked(fs.writeFileSync).mockImplementation((_path, data) => {
       currentConfig = JSON.parse(data as string);

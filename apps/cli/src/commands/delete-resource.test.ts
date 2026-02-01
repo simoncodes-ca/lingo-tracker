@@ -71,11 +71,7 @@ describe('deleteResourceCommand', () => {
     await deleteResourceCommand(options);
 
     expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
-      keys: [
-        'apps.common.buttons.ok',
-        'apps.common.buttons.cancel',
-        'apps.common.buttons.save',
-      ],
+      keys: ['apps.common.buttons.ok', 'apps.common.buttons.cancel', 'apps.common.buttons.save'],
     });
   });
 
@@ -96,11 +92,7 @@ describe('deleteResourceCommand', () => {
     await deleteResourceCommand(options);
 
     expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
-      keys: [
-        'apps.common.buttons.ok',
-        'apps.common.buttons.cancel',
-        'apps.common.invalid',
-      ],
+      keys: ['apps.common.buttons.ok', 'apps.common.buttons.cancel', 'apps.common.invalid'],
     });
   });
 

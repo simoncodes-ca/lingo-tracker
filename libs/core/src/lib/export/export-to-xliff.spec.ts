@@ -1,17 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import { exportToXliff } from './export-to-xliff';
-import { ExportOptions, FilteredResource } from './types';
+import type { ExportOptions, FilteredResource } from './types';
 
 vi.mock('fs');
 
 const mockJsToXliff12 = vi.fn();
 vi.mock('xliff', () => ({
-  jsToXliff12: (
-    data: unknown,
-    options: unknown,
-    cb: (err: Error | null, result: string) => void,
-  ) => mockJsToXliff12(data, options, cb),
+  jsToXliff12: (data: unknown, options: unknown, cb: (err: Error | null, result: string) => void) =>
+    mockJsToXliff12(data, options, cb),
 }));
 
 describe('export-to-xliff', () => {
@@ -52,10 +49,7 @@ describe('export-to-xliff', () => {
     expect(result.filesCreated).toContain('es.xliff');
     expect(result.resourcesExported).toBe(1);
 
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      '/dist/export/es.xliff',
-      '<xliff>mock content</xliff>',
-    );
+    expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/export/es.xliff', '<xliff>mock content</xliff>');
 
     // Verify data passed to xliff
     const callArgs = mockJsToXliff12.mock.calls[0];
@@ -84,10 +78,7 @@ describe('export-to-xliff', () => {
     const result = await exportToXliff(mockResources, options, 'en');
 
     expect(result.filesCreated).toContain('custom-es.xliff');
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      '/dist/export/custom-es.xliff',
-      expect.any(String),
-    );
+    expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/export/custom-es.xliff', expect.any(String));
   });
 
   it('should handle errors from xliff library', async () => {

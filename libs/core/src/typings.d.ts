@@ -6,10 +6,7 @@ declare module 'xliff' {
   }
 
   export interface XliffJsObject {
-    resources: Record<
-      string,
-      Record<string, { source: string; target: string; note?: string }>
-    >;
+    resources: Record<string, Record<string, { source: string; target: string; note?: string }>>;
     sourceLanguage?: string;
     targetLanguage?: string;
   }

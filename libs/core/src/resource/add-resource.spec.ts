@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { addResource } from './add-resource';
 import * as fs from 'node:fs';
 import { resolve } from 'node:path';
-import { SafeAny } from '../constants';
+import type { SafeAny } from '../constants';
 
 vi.mock('node:fs');
 
@@ -197,9 +197,7 @@ describe('addResource', () => {
     vi.mocked(fs.existsSync).mockImplementation((path: SafeAny) => {
       return (path as string).includes('resource_entries.json');
     });
-    vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify({ ok: { source: 'OK' } }),
-    );
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ok: { source: 'OK' } }));
 
     const result = addResource(
       'translations',
@@ -305,9 +303,7 @@ describe('addResource', () => {
       vi.mocked(fs.existsSync).mockImplementation((path: SafeAny) => {
         return (path as string).includes('resource_entries.json');
       });
-      vi.mocked(fs.readFileSync).mockReturnValue(
-        JSON.stringify(existingContent),
-      );
+      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(existingContent));
 
       // First call
       const result1 = addResource(
@@ -365,9 +361,7 @@ describe('addResource', () => {
         {
           key: 'button.ok',
           baseValue: 'OK - NEW VALUE',
-          translations: [
-            { locale: 'fr-ca', value: "D'accord", status: 'translated' },
-          ],
+          translations: [{ locale: 'fr-ca', value: "D'accord", status: 'translated' }],
         },
         { cwd: '/test' },
       );
@@ -416,9 +410,7 @@ describe('addResource', () => {
       const mkdirCall = vi.mocked(fs.mkdirSync).mock.calls;
       const _secretPath = resolve('translations', '..', 'secret');
       // Check that no call was made with the secret path
-      const callWithSecret = mkdirCall.find((call) =>
-        call[0].toString().includes('secret'),
-      );
+      const callWithSecret = mkdirCall.find((call) => call[0].toString().includes('secret'));
       expect(callWithSecret).toBeUndefined();
     });
   });

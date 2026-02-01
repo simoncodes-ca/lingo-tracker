@@ -304,9 +304,7 @@ export class TranslationRollup implements OnDestroy {
   /** Effective locales (excluding base locale) */
   private readonly effectiveLocales = computed(() => {
     const base = this.baseLocale().toLowerCase();
-    return (this.locales() ?? []).filter(
-      (l) => (l?.code ?? '').toLowerCase() !== base,
-    );
+    return (this.locales() ?? []).filter((l) => (l?.code ?? '').toLowerCase() !== base);
   });
 
   /** Get locale codes by status */
@@ -329,26 +327,17 @@ export class TranslationRollup implements OnDestroy {
   readonly total = computed(() => this.effectiveLocales().length);
 
   /** Count of translated + verified */
-  private readonly translatedLike = computed(
-    () => this.counts().translated + this.counts().verified,
-  );
+  private readonly translatedLike = computed(() => this.counts().translated + this.counts().verified);
 
   /** Whether there are issues (new or stale) */
-  readonly hasIssues = computed(
-    () => this.counts().new > 0 || this.counts().stale > 0,
-  );
+  readonly hasIssues = computed(() => this.counts().new > 0 || this.counts().stale > 0);
 
   /** Whether all locales are verified */
-  readonly isAllVerified = computed(
-    () => this.total() > 0 && this.counts().verified === this.total(),
-  );
+  readonly isAllVerified = computed(() => this.total() > 0 && this.counts().verified === this.total());
 
   /** Whether all locales are translated (but not all verified) */
   readonly isAllTranslated = computed(
-    () =>
-      this.total() > 0 &&
-      this.translatedLike() === this.total() &&
-      !this.isAllVerified(),
+    () => this.total() > 0 && this.translatedLike() === this.total() && !this.isAllVerified(),
   );
 
   /** Center icon based on state */
@@ -380,12 +369,7 @@ export class TranslationRollup implements OnDestroy {
     const c = this.counts();
     const circ = this.circumference;
 
-    const order: TranslationStatus[] = [
-      'verified',
-      'translated',
-      'stale',
-      'new',
-    ];
+    const order: TranslationStatus[] = ['verified', 'translated', 'stale', 'new'];
 
     let acc = 0;
     return order
@@ -412,12 +396,7 @@ export class TranslationRollup implements OnDestroy {
 
   /** Tooltip rows - one row per locale, sorted by severity then locale code */
   readonly tooltipLocaleRows = computed(() => {
-    const order: TranslationStatus[] = [
-      'new',
-      'stale',
-      'translated',
-      'verified',
-    ];
+    const order: TranslationStatus[] = ['new', 'stale', 'translated', 'verified'];
     const orderIndex = (s: TranslationStatus) => order.indexOf(s);
 
     return this.effectiveLocales()
@@ -533,13 +512,7 @@ export class TranslationRollup implements OnDestroy {
     const triggerEl = this.trigger()?.nativeElement;
     const overlayEl = this.overlayRef?.overlayElement;
 
-    if (
-      target &&
-      triggerEl &&
-      overlayEl &&
-      !triggerEl.contains(target) &&
-      !overlayEl.contains(target)
-    ) {
+    if (target && triggerEl && overlayEl && !triggerEl.contains(target) && !overlayEl.contains(target)) {
       this.close();
     }
   }

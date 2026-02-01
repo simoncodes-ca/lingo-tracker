@@ -1,11 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  hasReferences,
-  extractReferences,
-  resolveReferences,
-  resolveAllReferences,
-} from './reference-resolver';
-import { ImportedResource } from './types';
+import { hasReferences, extractReferences, resolveReferences, resolveAllReferences } from './reference-resolver';
+import type { ImportedResource } from './types';
 
 describe('reference-resolver', () => {
   describe('hasReferences', () => {
@@ -28,9 +23,7 @@ describe('reference-resolver', () => {
     });
 
     it('should detect multiple references', () => {
-      expect(
-        hasReferences("{{t('greeting')}} {{name}}, {{t('welcome')}}"),
-      ).toBe(true);
+      expect(hasReferences("{{t('greeting')}} {{name}}, {{t('welcome')}}")).toBe(true);
     });
   });
 
@@ -63,9 +56,7 @@ describe('reference-resolver', () => {
     });
 
     it('should extract multiple references', () => {
-      const refs = extractReferences(
-        "{{t('greeting')}} {{name}}, {{t('welcome')}}",
-      );
+      const refs = extractReferences("{{t('greeting')}} {{name}}, {{t('welcome')}}");
       expect(refs).toHaveLength(3);
       expect(refs[0].key).toBe('greeting');
       expect(refs[1].key).toBe('welcome'); // t() patterns extracted first
@@ -134,12 +125,7 @@ describe('reference-resolver', () => {
       const resourceMap = new Map([['greeting', 'Hello']]);
       const warnings: string[] = [];
 
-      const result = resolveReferences(
-        '{{greeting}} {{missing}}',
-        resourceMap,
-        new Set(),
-        warnings,
-      );
+      const result = resolveReferences('{{greeting}} {{missing}}', resourceMap, new Set(), warnings);
       expect(result).toBe('Hello {{missing}}');
       expect(warnings).toHaveLength(1);
       expect(warnings[0]).toContain('Missing reference target: "missing"');
@@ -152,12 +138,7 @@ describe('reference-resolver', () => {
       ]);
       const warnings: string[] = [];
 
-      const result = resolveReferences(
-        '{{a}}',
-        resourceMap,
-        new Set(),
-        warnings,
-      );
+      const result = resolveReferences('{{a}}', resourceMap, new Set(), warnings);
       // Should preserve literal when circular reference detected
       expect(result).toBe('{{a}}');
     });
@@ -166,12 +147,7 @@ describe('reference-resolver', () => {
       const resourceMap = new Map([['greeting', 'Hello {{greeting}}']]);
       const warnings: string[] = [];
 
-      const result = resolveReferences(
-        '{{greeting}}',
-        resourceMap,
-        new Set(),
-        warnings,
-      );
+      const result = resolveReferences('{{greeting}}', resourceMap, new Set(), warnings);
       // The pattern resolves to 'Hello {{greeting}}', but the inner reference is circular and preserved
       expect(result).toBe('Hello {{greeting}}');
     });
@@ -189,10 +165,7 @@ describe('reference-resolver', () => {
         ['punctuation', '!'],
       ]);
 
-      const result = resolveReferences(
-        '{{greeting}} {{name}}{{punctuation}}',
-        resourceMap,
-      );
+      const result = resolveReferences('{{greeting}} {{name}}{{punctuation}}', resourceMap);
       expect(result).toBe('Hello World!');
     });
 
@@ -265,9 +238,7 @@ describe('reference-resolver', () => {
     });
 
     it('should warn on missing references', () => {
-      const resources: ImportedResource[] = [
-        { key: 'greeting', value: 'Hello {{missing}}' },
-      ];
+      const resources: ImportedResource[] = [{ key: 'greeting', value: 'Hello {{missing}}' }];
 
       const warnings: string[] = [];
       const result = resolveAllReferences(resources, true, warnings);

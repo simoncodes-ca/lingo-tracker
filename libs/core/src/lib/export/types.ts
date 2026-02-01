@@ -1,4 +1,4 @@
-import { TranslationStatus } from '../../resource/translation-status';
+import type { TranslationStatus } from '../../resource/translation-status';
 
 export type ExportFormat = 'xliff' | 'json';
 

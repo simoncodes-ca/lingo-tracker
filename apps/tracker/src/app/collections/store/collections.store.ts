@@ -1,11 +1,5 @@
 import { computed } from '@angular/core';
-import {
-  signalStore,
-  withState,
-  withComputed,
-  withMethods,
-  patchState,
-} from '@ngrx/signals';
+import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, tap, switchMap, catchError, of } from 'rxjs';
 import { inject } from '@angular/core';
@@ -63,9 +57,7 @@ export const CollectionsStore = signalStore(
     collectionEntries: computed(() => {
       const cfg = config();
       if (!cfg?.collections) return [];
-      return Object.entries(cfg.collections).map(
-        ([name, collection]) => ({ name, config: collection }) as const,
-      );
+      return Object.entries(cfg.collections).map(([name, collection]) => ({ name, config: collection }) as const);
     }),
 
     /**
@@ -119,10 +111,7 @@ export const CollectionsStore = signalStore(
                 });
               }),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to load collections';
+                const errorMessage = error instanceof Error ? error.message : 'Failed to load collections';
                 patchState(store, {
                   isLoading: false,
                   error: errorMessage,
@@ -154,10 +143,7 @@ export const CollectionsStore = signalStore(
                 });
               }),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to create collection';
+                const errorMessage = error instanceof Error ? error.message : 'Failed to create collection';
                 patchState(store, {
                   isLoading: false,
                   error: errorMessage,
@@ -197,10 +183,7 @@ export const CollectionsStore = signalStore(
                 });
               }),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to update collection';
+                const errorMessage = error instanceof Error ? error.message : 'Failed to update collection';
                 patchState(store, {
                   isLoading: false,
                   error: errorMessage,
@@ -232,10 +215,7 @@ export const CollectionsStore = signalStore(
                 });
               }),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to delete collection';
+                const errorMessage = error instanceof Error ? error.message : 'Failed to delete collection';
                 patchState(store, {
                   isLoading: false,
                   error: errorMessage,

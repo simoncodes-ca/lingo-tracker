@@ -9,19 +9,8 @@ import {
   HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  ReactiveFormsModule,
-  FormGroup,
-  FormControl,
-  Validators,
-  FormArray,
-} from '@angular/forms';
-import {
-  MatDialogModule,
-  MatDialogRef,
-  MAT_DIALOG_DATA,
-  MatDialog,
-} from '@angular/material/dialog';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -46,13 +35,7 @@ import { ConfirmationDialogData } from '../../../shared/components/confirmation-
 import { SimilarResourcesWarning } from './similar-resources-warning';
 import { FolderPicker } from './folder-picker/folder-picker';
 import { Subject } from 'rxjs';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  switchMap,
-  catchError,
-  takeUntil,
-} from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, takeUntil } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 export interface TranslationEditorDialogData {
@@ -162,30 +145,17 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
   readonly folderExists = computed(() => true);
 
   readonly otherLocales = computed(() =>
-    this.data.availableLocales.filter(
-      (locale) => locale !== this.data.baseLocale,
-    ),
+    this.data.availableLocales.filter((locale) => locale !== this.data.baseLocale),
   );
 
-  readonly translationStatusOptions: TranslationStatus[] = [
-    'new',
-    'translated',
-    'stale',
-    'verified',
-  ];
+  readonly translationStatusOptions: TranslationStatus[] = ['new', 'translated', 'stale', 'verified'];
 
   readonly isEditMode = computed(() => this.data.mode === 'edit');
-  readonly dialogTitle = computed(() =>
-    this.isEditMode() ? 'Edit Translation' : 'Create Translation',
-  );
+  readonly dialogTitle = computed(() => (this.isEditMode() ? 'Edit Translation' : 'Create Translation'));
   readonly dialogSubtitle = computed(() =>
-    this.isEditMode()
-      ? 'Update translation values and metadata'
-      : 'Add a new translation entry to your collection',
+    this.isEditMode() ? 'Update translation values and metadata' : 'Add a new translation entry to your collection',
   );
-  readonly saveButtonLabel = computed(() =>
-    this.isEditMode() ? 'Update Translation' : 'Save Translation',
-  );
+  readonly saveButtonLabel = computed(() => (this.isEditMode() ? 'Update Translation' : 'Save Translation'));
   readonly displayedFolderPath = computed(() => this.data.folderPath || 'root');
 
   ngOnInit(): void {
@@ -194,8 +164,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
     this.#initializeOtherLocaleFormControls();
 
     if (this.isEditMode() && this.data.resource) {
-      const baseValue =
-        this.data.resource.translations[this.data.baseLocale] || '';
+      const baseValue = this.data.resource.translations[this.data.baseLocale] || '';
       const comment = this.data.resource.comment || '';
 
       this.form.patchValue({
@@ -284,16 +253,14 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
   }
 
   #setupSimilarResourcesSearch(): void {
-    this.form.controls.baseValue.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((value) => {
-        const shouldSearch = this.#shouldSearchForSimilar(value);
-        if (shouldSearch) {
-          this.baseValueSearch$.next(value);
-        } else {
-          this.similarResources.set([]);
-        }
-      });
+    this.form.controls.baseValue.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
+      const shouldSearch = this.#shouldSearchForSimilar(value);
+      if (shouldSearch) {
+        this.baseValueSearch$.next(value);
+      } else {
+        this.similarResources.set([]);
+      }
+    });
 
     this.baseValueSearch$
       .pipe(
@@ -311,19 +278,17 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
           }
 
           this.isSearchingSimilar.set(true);
-          return this.browserApi
-            .searchTranslations(this.data.collectionName, query, 10)
-            .pipe(
-              catchError(() => {
-                this.isSearchingSimilar.set(false);
-                return of({
-                  query: '',
-                  results: [],
-                  totalFound: 0,
-                  limited: false,
-                });
-              }),
-            );
+          return this.browserApi.searchTranslations(this.data.collectionName, query, 10).pipe(
+            catchError(() => {
+              this.isSearchingSimilar.set(false);
+              return of({
+                query: '',
+                results: [],
+                totalFound: 0,
+                limited: false,
+              });
+            }),
+          );
         }),
         takeUntil(this.destroy$),
       )
@@ -427,10 +392,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
     }
   }
 
-  #handleEditSubmit(
-    formValue: TranslationFormValue,
-    commentValue: string,
-  ): void {
+  #handleEditSubmit(formValue: TranslationFormValue, commentValue: string): void {
     if (!this.data.resource) {
       this.errorMessage.set('Cannot update: resource data is missing');
       return;
@@ -449,15 +411,11 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
 
     if (hasKeyChanged) {
       this.isSubmitting.set(false);
-      this.errorMessage.set(
-        'Key renaming is not yet supported. Please use the same key or create a new resource.',
-      );
+      this.errorMessage.set('Key renaming is not yet supported. Please use the same key or create a new resource.');
       return;
     }
 
-    const filledTranslations = formValue.translations.filter(
-      (translation) => translation.value.trim().length > 0,
-    );
+    const filledTranslations = formValue.translations.filter((translation) => translation.value.trim().length > 0);
 
     const locales: Record<string, { value: string }> = {};
     filledTranslations.forEach((translation) => {
@@ -478,31 +436,25 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       updateDto.locales = locales;
     }
 
-    this.browserApi
-      .updateResource(this.data.collectionName, updateDto)
-      .subscribe({
-        next: () => {
-          this.dialogRef.close({
-            key: newKey,
-            baseValue: formValue.baseValue,
-            comment: commentValue || undefined,
-            folderPath: newFolderPath,
-            translations:
-              filledTranslations.length > 0 ? filledTranslations : undefined,
-            success: true,
-          });
-        },
-        error: (error: unknown) => {
-          this.isSubmitting.set(false);
-          this.#handleUpdateError(error);
-        },
-      });
+    this.browserApi.updateResource(this.data.collectionName, updateDto).subscribe({
+      next: () => {
+        this.dialogRef.close({
+          key: newKey,
+          baseValue: formValue.baseValue,
+          comment: commentValue || undefined,
+          folderPath: newFolderPath,
+          translations: filledTranslations.length > 0 ? filledTranslations : undefined,
+          success: true,
+        });
+      },
+      error: (error: unknown) => {
+        this.isSubmitting.set(false);
+        this.#handleUpdateError(error);
+      },
+    });
   }
 
-  #handleCreateSubmit(
-    formValue: TranslationFormValue,
-    commentValue: string,
-  ): void {
+  #handleCreateSubmit(formValue: TranslationFormValue, commentValue: string): void {
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
 
@@ -521,29 +473,25 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       baseValue: formValue.baseValue,
       comment: commentValue || undefined,
       baseLocale: this.data.baseLocale,
-      translations:
-        filledTranslations.length > 0 ? filledTranslations : undefined,
+      translations: filledTranslations.length > 0 ? filledTranslations : undefined,
     };
 
-    this.browserApi
-      .createResource(this.data.collectionName, createDto)
-      .subscribe({
-        next: () => {
-          this.dialogRef.close({
-            key: formValue.key,
-            baseValue: formValue.baseValue,
-            comment: commentValue || undefined,
-            folderPath: this.selectedFolderPath(),
-            translations:
-              filledTranslations.length > 0 ? filledTranslations : undefined,
-            success: true,
-          });
-        },
-        error: (error: unknown) => {
-          this.isSubmitting.set(false);
-          this.#handleCreateError(error, fullKey);
-        },
-      });
+    this.browserApi.createResource(this.data.collectionName, createDto).subscribe({
+      next: () => {
+        this.dialogRef.close({
+          key: formValue.key,
+          baseValue: formValue.baseValue,
+          comment: commentValue || undefined,
+          folderPath: this.selectedFolderPath(),
+          translations: filledTranslations.length > 0 ? filledTranslations : undefined,
+          success: true,
+        });
+      },
+      error: (error: unknown) => {
+        this.isSubmitting.set(false);
+        this.#handleCreateError(error, fullKey);
+      },
+    });
   }
 
   #buildFullKey(key: string): string {
@@ -574,15 +522,12 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       }
 
       if (error.status === 400) {
-        const message =
-          error.error?.message || error.message || 'Invalid request';
+        const message = error.error?.message || error.message || 'Invalid request';
         this.errorMessage.set(message);
         return;
       }
 
-      this.errorMessage.set(
-        error.error?.message || error.message || 'Failed to create translation',
-      );
+      this.errorMessage.set(error.error?.message || error.message || 'Failed to create translation');
       return;
     }
 
@@ -597,15 +542,12 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       }
 
       if (error.status === 400) {
-        const message =
-          error.error?.message || error.message || 'Invalid request';
+        const message = error.error?.message || error.message || 'Invalid request';
         this.errorMessage.set(message);
         return;
       }
 
-      this.errorMessage.set(
-        error.error?.message || error.message || 'Failed to update translation',
-      );
+      this.errorMessage.set(error.error?.message || error.message || 'Failed to update translation');
       return;
     }
 
@@ -620,11 +562,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       cancelButtonText: 'Choose Different Key',
     };
 
-    const dialogRef = this.dialog.open<
-      ConfirmationDialog,
-      ConfirmationDialogData,
-      boolean
-    >(ConfirmationDialog, {
+    const dialogRef = this.dialog.open<ConfirmationDialog, ConfirmationDialogData, boolean>(ConfirmationDialog, {
       data: dialogData,
       width: '500px',
     });
@@ -648,8 +586,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
 
     const confirmationDialogData: ConfirmationDialogData = {
       title: 'No Comment Added',
-      message:
-        'Comments help other translators understand context. Are you sure you want to save without a comment?',
+      message: 'Comments help other translators understand context. Are you sure you want to save without a comment?',
       confirmButtonText: 'Save Anyway',
       cancelButtonText: 'Add Comment',
     };

@@ -1,12 +1,8 @@
 import { existsSync, unlinkSync } from 'node:fs';
 import { resolveResourcePaths } from '../lib/resource/resource-file-paths';
-import {
-  readResourceEntries,
-  readTrackerMetadata,
-  writeJsonFile,
-} from '../lib/file-io/json-file-operations';
+import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
 import { validateKey } from './resource-key';
-import { TrackerMetadata } from './tracker-metadata';
+import type { TrackerMetadata } from './tracker-metadata';
 
 export interface DeleteResourceParams {
   keys: string[];
@@ -20,10 +16,7 @@ export interface DeleteResourceResult {
   }>;
 }
 
-export function deleteResource(
-  translationsFolder: string,
-  params: DeleteResourceParams,
-): DeleteResourceResult {
+export function deleteResource(translationsFolder: string, params: DeleteResourceParams): DeleteResourceResult {
   let entriesDeleted = 0;
   const errors: Array<{ key: string; error: string }> = [];
 
@@ -36,9 +29,7 @@ export function deleteResource(
     } catch (caughtError) {
       errors.push({
         key,
-        error:
-          (caughtError as { message?: string })?.message ||
-          'Unknown error occurred',
+        error: (caughtError as { message?: string })?.message || 'Unknown error occurred',
       });
     }
   }
@@ -49,10 +40,7 @@ export function deleteResource(
   };
 }
 
-function deleteSingleResource(
-  translationsFolder: string,
-  key: string,
-): boolean {
+function deleteSingleResource(translationsFolder: string, key: string): boolean {
   validateKey(key);
 
   const paths = resolveResourcePaths({

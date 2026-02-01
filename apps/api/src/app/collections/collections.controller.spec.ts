@@ -17,9 +17,7 @@ describe('CollectionsController', () => {
       controllers: [CollectionsController],
     }).compile();
 
-    collectionsController = collectionsModule.get<CollectionsController>(
-      CollectionsController,
-    );
+    collectionsController = collectionsModule.get<CollectionsController>(CollectionsController);
   });
 
   afterEach(() => {
@@ -33,8 +31,7 @@ describe('CollectionsController', () => {
         message: 'Collection "test-collection" deleted successfully',
       });
 
-      const result =
-        await collectionsController.deleteCollection('test-collection');
+      const result = await collectionsController.deleteCollection('test-collection');
 
       expect(result).toEqual({
         message: 'Collection "test-collection" deleted successfully',
@@ -48,8 +45,7 @@ describe('CollectionsController', () => {
         message: 'Collection "My Collection" deleted successfully',
       });
 
-      const result =
-        await collectionsController.deleteCollection('My%20Collection');
+      const result = await collectionsController.deleteCollection('My%20Collection');
 
       expect(result).toEqual({
         message: 'Collection "My Collection" deleted successfully',
@@ -63,9 +59,7 @@ describe('CollectionsController', () => {
         throw new Error('Collection not found');
       });
 
-      await expect(
-        collectionsController.deleteCollection('non-existent'),
-      ).rejects.toThrow(HttpException);
+      await expect(collectionsController.deleteCollection('non-existent')).rejects.toThrow(HttpException);
       expect(deleteCollectionByName).toHaveBeenCalledWith('non-existent');
     });
 
@@ -75,9 +69,7 @@ describe('CollectionsController', () => {
         throw new Error('Failed to delete collection');
       });
 
-      await expect(
-        collectionsController.deleteCollection('test-collection'),
-      ).rejects.toThrow(HttpException);
+      await expect(collectionsController.deleteCollection('test-collection')).rejects.toThrow(HttpException);
       expect(deleteCollectionByName).toHaveBeenCalledWith('test-collection');
     });
   });

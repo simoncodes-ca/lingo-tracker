@@ -1,20 +1,9 @@
 import prompts from 'prompts';
-import {
-  CONFIG_FILENAME,
-  addCollection,
-  DEFAULT_CONFIG,
-} from '@simoncodes-ca/core';
+import { CONFIG_FILENAME, addCollection, DEFAULT_CONFIG } from '@simoncodes-ca/core';
 import type { InitOptions } from '../types/init-options.js';
-import {
-  loadConfiguration,
-  ConsoleFormatter,
-  ErrorMessages,
-  executePromptsWithFallback,
-} from '../utils';
+import { loadConfiguration, ConsoleFormatter, ErrorMessages, executePromptsWithFallback } from '../utils';
 
-export async function addCollectionCommand(
-  options: InitOptions,
-): Promise<void> {
+export async function addCollectionCommand(options: InitOptions): Promise<void> {
   const loaded = loadConfiguration({ exitOnError: false });
   if (!loaded) return;
   const { config: existingConfig, cwd } = loaded;
@@ -44,9 +33,7 @@ export async function addCollectionCommand(
     const result = addCollection(collectionName, newCollection, { cwd });
     ConsoleFormatter.success(`${result.message} in ${CONFIG_FILENAME}`);
   } catch (e: unknown) {
-    ConsoleFormatter.error(
-      e instanceof Error ? e.message : 'Failed to add collection',
-    );
+    ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to add collection');
   }
 }
 
@@ -65,8 +52,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'collectionName',
       message: 'Collection name',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -75,8 +61,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'translationsFolder',
       message: 'Path to translations folder',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -128,10 +113,8 @@ async function promptForMissing(options: InitOptions): Promise<{
   return {
     collectionName: result.collectionName as string,
     translationsFolder: result.translationsFolder as string,
-    exportFolder:
-      (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
-    importFolder:
-      (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
+    exportFolder: (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
+    importFolder: (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
     baseLocale: (result.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
     locales: (result.locales as string[]) ?? DEFAULT_CONFIG.locales,
   };

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { processResourceGroup } from './process-resource-group';
-import { ResourceGroup } from './resource-grouping';
+import type { ResourceGroup } from './resource-grouping';
 
 describe('process-resource-group', () => {
   const testDir = join(process.cwd(), 'test-temp-process-group');

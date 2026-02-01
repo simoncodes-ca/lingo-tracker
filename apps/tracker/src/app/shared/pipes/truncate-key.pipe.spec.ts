@@ -29,12 +29,9 @@ describe('TruncateKeyPipe', () => {
 
   describe('basic truncation (firstPart...lastPart)', () => {
     it('should create basic truncation for long key with two segments', () => {
-      const key =
-        'verylongsegmentname'.repeat(2) + '.' + 'anotherlongsegment'.repeat(2);
+      const key = 'verylongsegmentname'.repeat(2) + '.' + 'anotherlongsegment'.repeat(2);
       const result = pipe.transform(key);
-      expect(result).toBe(
-        `${'verylongsegmentname'.repeat(2)}...${'anotherlongsegment'.repeat(2)}`,
-      );
+      expect(result).toBe(`${'verylongsegmentname'.repeat(2)}...${'anotherlongsegment'.repeat(2)}`);
     });
 
     it('should use basic truncation when it results in >= 50 chars', () => {
@@ -51,8 +48,7 @@ describe('TruncateKeyPipe', () => {
 
   describe('extended truncation (firstPart...secondToLastPart.lastPart)', () => {
     it('should use extended truncation when it stays under 50 chars', () => {
-      const key =
-        'apps.feature.component.with.very.long.nested.structure.property.value';
+      const key = 'apps.feature.component.with.very.long.nested.structure.property.value';
       const result = pipe.transform(key);
 
       expect(result).toBe('apps...property.value');
@@ -135,8 +131,7 @@ describe('TruncateKeyPipe', () => {
 
   describe('real-world examples', () => {
     it('should handle typical nested translation key', () => {
-      const key =
-        'apps.admin.users.permissions.roles.management.actions.delete';
+      const key = 'apps.admin.users.permissions.roles.management.actions.delete';
       const result = pipe.transform(key);
 
       expect(result).toBe('apps...actions.delete');
@@ -159,8 +154,7 @@ describe('TruncateKeyPipe', () => {
     });
 
     it('should handle deeply nested feature key', () => {
-      const key =
-        'applications.customer-portal.dashboard.widgets.recent-activity.empty-state.message';
+      const key = 'applications.customer-portal.dashboard.widgets.recent-activity.empty-state.message';
       const result = pipe.transform(key);
 
       expect(result).toBe('applications...empty-state.message');

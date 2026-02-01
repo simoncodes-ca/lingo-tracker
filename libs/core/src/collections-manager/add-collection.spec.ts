@@ -3,7 +3,7 @@ import { noop } from 'lodash';
 import { addCollection } from './add-collection';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { SafeAny } from '../constants';
+import type { SafeAny } from '../constants';
 
 vi.mock('node:fs');
 
@@ -23,16 +23,10 @@ describe('addCollection', () => {
 
   it('adds a minimal collection (only translationsFolder) and preserves root config', () => {
     const config = { ...baseConfig };
-    vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify(config, null, 2) as SafeAny,
-    );
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
     vi.mocked(fs.writeFileSync).mockImplementation(noop);
 
-    const result = addCollection(
-      'myCollection',
-      { translationsFolder: '  ./src/i18n  ' },
-      { cwd: '/test' },
-    );
+    const result = addCollection('myCollection', { translationsFolder: '  ./src/i18n  ' }, { cwd: '/test' });
 
     expect(result.message).toBe('Collection "myCollection" added successfully');
 
@@ -59,9 +53,7 @@ describe('addCollection', () => {
       collections: {},
     };
 
-    vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify(config, null, 2) as SafeAny,
-    );
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
     vi.mocked(fs.writeFileSync).mockImplementation(noop);
 
     addCollection(
@@ -95,28 +87,20 @@ describe('addCollection', () => {
       },
     };
 
-    vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify(config, null, 2) as SafeAny,
-    );
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
 
-    expect(() =>
-      addCollection(
-        'existing',
-        { translationsFolder: './new' },
-        { cwd: '/test' },
-      ),
-    ).toThrow('Collection "existing" already exists');
+    expect(() => addCollection('existing', { translationsFolder: './new' }, { cwd: '/test' })).toThrow(
+      'Collection "existing" already exists',
+    );
   });
 
   it('throws when translationsFolder is missing or blank', () => {
     const config = { ...baseConfig };
-    vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify(config, null, 2) as SafeAny,
-    );
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
 
-    expect(() =>
-      addCollection('blank', { translationsFolder: '   ' }, { cwd: '/test' }),
-    ).toThrow('translationsFolder is required');
+    expect(() => addCollection('blank', { translationsFolder: '   ' }, { cwd: '/test' })).toThrow(
+      'translationsFolder is required',
+    );
   });
 
   it('throws on invalid config file (read/parse failure)', () => {
@@ -124,17 +108,15 @@ describe('addCollection', () => {
       throw new Error('ENOENT');
     });
 
-    expect(() =>
-      addCollection('x', { translationsFolder: './t' }, { cwd: '/bad' }),
-    ).toThrow('Failed to read or parse configuration file');
+    expect(() => addCollection('x', { translationsFolder: './t' }, { cwd: '/bad' })).toThrow(
+      'Failed to read or parse configuration file',
+    );
   });
 
   it('uses default cwd when not provided', () => {
     const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue('/default-cwd');
     const config = { ...baseConfig, collections: {} };
-    vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify(config, null, 2) as SafeAny,
-    );
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
     vi.mocked(fs.writeFileSync).mockImplementation(noop);
 
     const result = addCollection('default', { translationsFolder: './t' });
@@ -143,25 +125,21 @@ describe('addCollection', () => {
     expect(cwdSpy).toHaveBeenCalled();
 
     const readCall = vi.mocked(fs.readFileSync).mock.calls[0];
-    expect(readCall[0]).toBe(
-      path.resolve('/default-cwd', '.lingo-tracker.json'),
-    );
+    expect(readCall[0]).toBe(path.resolve('/default-cwd', '.lingo-tracker.json'));
 
     cwdSpy.mockRestore();
   });
 
   it('throws when writing the config fails', () => {
     const config = { ...baseConfig, collections: {} };
-    vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify(config, null, 2) as SafeAny,
-    );
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
     vi.mocked(fs.writeFileSync).mockImplementation(() => {
       throw new Error('EACCES');
     });
 
-    expect(() =>
-      addCollection('x', { translationsFolder: './t' }, { cwd: '/test' }),
-    ).toThrow('Failed to write configuration file');
+    expect(() => addCollection('x', { translationsFolder: './t' }, { cwd: '/test' })).toThrow(
+      'Failed to write configuration file',
+    );
   });
 
   it('preserves existing collections when adding a new one', () => {
@@ -172,9 +150,7 @@ describe('addCollection', () => {
       },
     };
 
-    vi.mocked(fs.readFileSync).mockReturnValue(
-      JSON.stringify(config, null, 2) as SafeAny,
-    );
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
     vi.mocked(fs.writeFileSync).mockImplementation(noop);
 
     addCollection('newOne', { translationsFolder: './new' }, { cwd: '/test' });

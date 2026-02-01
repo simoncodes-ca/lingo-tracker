@@ -65,9 +65,7 @@ export class CollectionsManager {
             name: result.name,
             collection: result.config,
           });
-          this.showSuccessToast(
-            this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.CREATED),
-          );
+          this.showSuccessToast(this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.CREATED));
         }
       });
     });
@@ -79,9 +77,7 @@ export class CollectionsManager {
   openEditDialog(name: string): void {
     const config = this.store.collections()[name];
     if (!config) {
-      this.showErrorToast(
-        this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.ERROR),
-      );
+      this.showErrorToast(this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.ERROR));
       return;
     }
 
@@ -102,9 +98,7 @@ export class CollectionsManager {
             newName: result.name !== name ? result.name : undefined,
             collection: result.config,
           });
-          this.showSuccessToast(
-            this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.UPDATED),
-          );
+          this.showSuccessToast(this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.UPDATED));
         }
       });
     });
@@ -114,40 +108,25 @@ export class CollectionsManager {
    * Opens the delete confirmation dialog.
    */
   openDeleteDialog(name: string): void {
-    import('../shared/components/confirmation-dialog/confirmation-dialog').then(
-      (m) => {
-        const dialogRef = this.dialog.open(m.ConfirmationDialog, {
-          data: {
-            title: this.transloco.translate(
-              TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.TITLE,
-            ),
-            message: this.transloco.translate(
-              TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.MESSAGE,
-              { name },
-            ),
-            confirmButtonText: this.transloco.translate(
-              TRACKER_TOKENS.COMMON.ACTIONS.DELETE,
-            ),
-            cancelButtonText: this.transloco.translate(
-              TRACKER_TOKENS.COMMON.ACTIONS.CANCEL,
-            ),
-            actionType: 'destructive',
-          },
-          width: '400px',
-        });
+    import('../shared/components/confirmation-dialog/confirmation-dialog').then((m) => {
+      const dialogRef = this.dialog.open(m.ConfirmationDialog, {
+        data: {
+          title: this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.TITLE),
+          message: this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.MESSAGE, { name }),
+          confirmButtonText: this.transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DELETE),
+          cancelButtonText: this.transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.CANCEL),
+          actionType: 'destructive',
+        },
+        width: '400px',
+      });
 
-        dialogRef.afterClosed().subscribe((confirmed) => {
-          if (confirmed) {
-            this.store.deleteCollection(name);
-            this.showSuccessToast(
-              this.transloco.translate(
-                TRACKER_TOKENS.COLLECTIONS.TOAST.DELETED,
-              ),
-            );
-          }
-        });
-      },
-    );
+      dialogRef.afterClosed().subscribe((confirmed) => {
+        if (confirmed) {
+          this.store.deleteCollection(name);
+          this.showSuccessToast(this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.DELETED));
+        }
+      });
+    });
   }
 
   /**

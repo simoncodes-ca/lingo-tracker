@@ -1,8 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from './config.service';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -57,10 +54,7 @@ describe('ConfigService', () => {
 
       const result = service.getConfig();
 
-      expect(mockFs.readFileSync).toHaveBeenCalledWith(
-        '/mock/path/.lingo-tracker.json',
-        'utf8',
-      );
+      expect(mockFs.readFileSync).toHaveBeenCalledWith('/mock/path/.lingo-tracker.json', 'utf8');
       expect(result).toEqual(mockConfig);
     });
 
@@ -82,36 +76,28 @@ describe('ConfigService', () => {
       });
 
       expect(() => service.getConfig()).toThrow(InternalServerErrorException);
-      expect(() => service.getConfig()).toThrow(
-        'Failed to read configuration file',
-      );
+      expect(() => service.getConfig()).toThrow('Failed to read configuration file');
     });
 
     it('should throw InternalServerErrorException when file contains invalid JSON', () => {
       mockFs.readFileSync.mockReturnValue('invalid json content {');
 
       expect(() => service.getConfig()).toThrow(InternalServerErrorException);
-      expect(() => service.getConfig()).toThrow(
-        'Invalid configuration file format',
-      );
+      expect(() => service.getConfig()).toThrow('Invalid configuration file format');
     });
 
     it('should throw InternalServerErrorException when file is empty', () => {
       mockFs.readFileSync.mockReturnValue('');
 
       expect(() => service.getConfig()).toThrow(InternalServerErrorException);
-      expect(() => service.getConfig()).toThrow(
-        'Invalid configuration file format',
-      );
+      expect(() => service.getConfig()).toThrow('Invalid configuration file format');
     });
 
     it('should throw InternalServerErrorException when file contains non-JSON content', () => {
       mockFs.readFileSync.mockReturnValue('This is not JSON at all');
 
       expect(() => service.getConfig()).toThrow(InternalServerErrorException);
-      expect(() => service.getConfig()).toThrow(
-        'Invalid configuration file format',
-      );
+      expect(() => service.getConfig()).toThrow('Invalid configuration file format');
     });
 
     it('should handle minimal valid config', () => {
@@ -172,9 +158,7 @@ describe('ConfigService', () => {
         collections: {},
       };
 
-      mockFs.readFileSync.mockReturnValue(
-        JSON.stringify(configWithEmptyCollections),
-      );
+      mockFs.readFileSync.mockReturnValue(JSON.stringify(configWithEmptyCollections));
 
       const result = service.getConfig();
 

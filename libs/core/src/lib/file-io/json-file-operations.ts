@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { ResourceEntries } from '../../resource/resource-entry';
-import { TrackerMetadata } from '../../resource/tracker-metadata';
-import { LingoTrackerConfig } from '../../config/lingo-tracker-config';
+import type { ResourceEntries } from '../../resource/resource-entry';
+import type { TrackerMetadata } from '../../resource/tracker-metadata';
+import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { ErrorMessages } from '../errors/error-messages';
 
 export interface JsonFileReadOptions<T> {
@@ -65,9 +65,7 @@ export function readJsonFile<T>(options: JsonFileReadOptions<T>): T {
   } catch (error) {
     const context = errorContext ? `${errorContext}: ` : '';
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `${context}${ErrorMessages.jsonParseFailed(filePath, errorMessage)}`,
-    );
+    throw new Error(`${context}${ErrorMessages.jsonParseFailed(filePath, errorMessage)}`);
   }
 }
 
@@ -98,9 +96,7 @@ export function writeJsonFile(options: JsonFileWriteOptions): void {
   }
 
   try {
-    const content = pretty
-      ? JSON.stringify(data, null, 2)
-      : JSON.stringify(data);
+    const content = pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data);
     writeFileSync(filePath, content, 'utf8');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -111,10 +107,7 @@ export function writeJsonFile(options: JsonFileWriteOptions): void {
 /**
  * Type-safe helper for reading resource entries files.
  */
-export function readResourceEntries(
-  filePath: string,
-  defaultValue?: ResourceEntries,
-): ResourceEntries {
+export function readResourceEntries(filePath: string, defaultValue?: ResourceEntries): ResourceEntries {
   return readJsonFile<ResourceEntries>({
     filePath,
     defaultValue,
@@ -125,10 +118,7 @@ export function readResourceEntries(
 /**
  * Type-safe helper for reading tracker metadata files.
  */
-export function readTrackerMetadata(
-  filePath: string,
-  defaultValue?: TrackerMetadata,
-): TrackerMetadata {
+export function readTrackerMetadata(filePath: string, defaultValue?: TrackerMetadata): TrackerMetadata {
   return readJsonFile<TrackerMetadata>({
     filePath,
     defaultValue,

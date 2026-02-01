@@ -1,15 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { exportToJson } from './export-to-json';
 import { exportToXliff } from './export-to-xliff';
-import { ExportOptions, FilteredResource } from './types';
+import type { ExportOptions, FilteredResource } from './types';
 
 vi.mock('fs');
 vi.mock('xliff', () => ({
-  jsToXliff12: (
-    _obj: unknown,
-    _opt: unknown,
-    cb: (err: Error | null, result: string) => void,
-  ) => cb(null, '<xliff>...</xliff>'),
+  jsToXliff12: (_obj: unknown, _opt: unknown, cb: (err: Error | null, result: string) => void) =>
+    cb(null, '<xliff>...</xliff>'),
 }));
 
 describe('Verbose Logging', () => {
@@ -36,9 +33,7 @@ describe('Verbose Logging', () => {
     const onProgress = vi.fn();
     exportToJson(mockResources, { ...mockOptions, onProgress });
 
-    expect(onProgress).toHaveBeenCalledWith(
-      expect.stringContaining('Processing es'),
-    );
+    expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Processing es'));
     expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Writing'));
   });
 
@@ -46,9 +41,7 @@ describe('Verbose Logging', () => {
     const onProgress = vi.fn();
     await exportToXliff(mockResources, { ...mockOptions, onProgress }, 'en');
 
-    expect(onProgress).toHaveBeenCalledWith(
-      expect.stringContaining('Processing es'),
-    );
+    expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Processing es'));
     expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Writing'));
   });
 });

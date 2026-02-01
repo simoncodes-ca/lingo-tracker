@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { extractSubtree, extractResourcesRecursively } from './extract-subtree';
-import { ResourceTreeNode, ResourceTreeEntry } from './load-resource-tree';
+import type { ResourceTreeNode, ResourceTreeEntry } from './load-resource-tree';
 
 describe('extractSubtree', () => {
   describe('root extraction', () => {
@@ -236,23 +236,10 @@ describe('extractSubtree', () => {
           resources: [],
           children: [
             {
-              name:
-                levels[i] === 'a'
-                  ? 'b'
-                  : levels[i] === 'b'
-                    ? 'c'
-                    : levels[i] === 'c'
-                      ? 'd'
-                      : 'e',
+              name: levels[i] === 'a' ? 'b' : levels[i] === 'b' ? 'c' : levels[i] === 'c' ? 'd' : 'e',
               fullPathSegments: [
                 ...parentSegments,
-                levels[i] === 'a'
-                  ? 'b'
-                  : levels[i] === 'b'
-                    ? 'c'
-                    : levels[i] === 'c'
-                      ? 'd'
-                      : 'e',
+                levels[i] === 'a' ? 'b' : levels[i] === 'b' ? 'c' : levels[i] === 'c' ? 'd' : 'e',
               ],
               loaded: true,
               tree: currentTree,

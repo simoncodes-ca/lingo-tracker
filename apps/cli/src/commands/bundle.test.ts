@@ -107,9 +107,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({});
 
-      expect(console.log).toHaveBeenCalledWith(
-        '❌ No bundles configured in .lingo-tracker.json',
-      );
+      expect(console.log).toHaveBeenCalledWith('❌ No bundles configured in .lingo-tracker.json');
     });
 
     it('should error when bundles property is missing', async () => {
@@ -123,9 +121,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({});
 
-      expect(console.log).toHaveBeenCalledWith(
-        '❌ No bundles configured in .lingo-tracker.json',
-      );
+      expect(console.log).toHaveBeenCalledWith('❌ No bundles configured in .lingo-tracker.json');
     });
   });
 
@@ -182,9 +178,7 @@ describe('bundleCommand', () => {
     it('should show error for non-existent bundle', async () => {
       await bundleCommand({ name: 'nonexistent' });
 
-      expect(console.log).toHaveBeenCalledWith(
-        '❌ Bundle "nonexistent" not found.',
-      );
+      expect(console.log).toHaveBeenCalledWith('❌ Bundle "nonexistent" not found.');
       expect(mockGenerateBundle).not.toHaveBeenCalled();
     });
   });
@@ -319,9 +313,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith(
-        '  └─ Types: src/generated/core-tokens.ts (100 keys)',
-      );
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: src/generated/core-tokens.ts (100 keys)');
     });
 
     it('should display type generation skipped (empty)', async () => {
@@ -341,9 +333,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith(
-        '  └─ Types: Skipped (empty-bundle)',
-      );
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (empty-bundle)');
     });
 
     it('should display type generation skipped (no config)', async () => {
@@ -357,9 +347,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith(
-        '  └─ Types: Skipped (no typeDist configured)',
-      );
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (no typeDist configured)');
     });
   });
 
@@ -397,9 +385,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core,admin' });
 
-      expect(console.log).toHaveBeenCalledWith(
-        '⚠️  1 bundle(s) failed to generate',
-      );
+      expect(console.log).toHaveBeenCalledWith('⚠️  1 bundle(s) failed to generate');
     });
   });
 
@@ -456,9 +442,7 @@ describe('bundleCommand', () => {
         throw new Error('Bundle generation cancelled');
       });
 
-      await expect(bundleCommand({})).rejects.toThrow(
-        'Bundle generation cancelled',
-      );
+      await expect(bundleCommand({})).rejects.toThrow('Bundle generation cancelled');
     });
   });
 });

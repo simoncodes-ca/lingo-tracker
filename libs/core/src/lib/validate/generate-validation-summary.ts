@@ -1,8 +1,4 @@
-import {
-  ResourceValidationResult,
-  ValidationOptions,
-  ResourceValidationDetail,
-} from './types';
+import type { ResourceValidationResult, ValidationOptions, ResourceValidationDetail } from './types';
 
 /**
  * Maximum number of resources to display in each failure/warning category
@@ -37,10 +33,7 @@ const MAX_RESOURCES_TO_DISPLAY = 100;
  * console.log(summary);
  * ```
  */
-export function generateValidationSummary(
-  result: ResourceValidationResult,
-  options: ValidationOptions,
-): string {
+export function generateValidationSummary(result: ResourceValidationResult, options: ValidationOptions): string {
   const sections: string[] = [];
 
   sections.push(buildHeaderSection(result));
@@ -125,16 +118,12 @@ function buildStatusBreakdownSection(result: ResourceValidationResult): string {
  * @returns Formatted failures section string
  * @internal
  */
-function buildFailuresSection(
-  failures: readonly ResourceValidationDetail[],
-): string {
+function buildFailuresSection(failures: readonly ResourceValidationDetail[]): string {
   const lines = [`❌ Failures (${failures.length}):`, '─'.repeat(50)];
 
   const failuresByLocale = groupByLocale(failures);
 
-  for (const [locale, localeFailures] of Object.entries(
-    failuresByLocale,
-  ).sort()) {
+  for (const [locale, localeFailures] of Object.entries(failuresByLocale).sort()) {
     lines.push(`  Locale: ${locale} (${localeFailures.length} failures)`);
 
     const resourcesToShow = localeFailures.slice(0, MAX_RESOURCES_TO_DISPLAY);
@@ -142,9 +131,7 @@ function buildFailuresSection(
 
     for (const failure of resourcesToShow) {
       const statusEmoji = getStatusEmoji(failure.status);
-      lines.push(
-        `    ${statusEmoji} [${failure.collection}] ${failure.key} (${failure.status})`,
-      );
+      lines.push(`    ${statusEmoji} [${failure.collection}] ${failure.key} (${failure.status})`);
     }
 
     if (remaining > 0) {
@@ -171,10 +158,7 @@ function buildFailuresSection(
  * @returns Formatted warnings section string
  * @internal
  */
-function buildWarningsSection(
-  warnings: readonly ResourceValidationDetail[],
-  options: ValidationOptions,
-): string {
+function buildWarningsSection(warnings: readonly ResourceValidationDetail[], options: ValidationOptions): string {
   const lines = [`⚠️  Warnings (${warnings.length}):`, '─'.repeat(50)];
 
   if (options.allowTranslated) {
@@ -183,18 +167,14 @@ function buildWarningsSection(
 
   const warningsByLocale = groupByLocale(warnings);
 
-  for (const [locale, localeWarnings] of Object.entries(
-    warningsByLocale,
-  ).sort()) {
+  for (const [locale, localeWarnings] of Object.entries(warningsByLocale).sort()) {
     lines.push(`  Locale: ${locale} (${localeWarnings.length} warnings)`);
 
     const resourcesToShow = localeWarnings.slice(0, MAX_RESOURCES_TO_DISPLAY);
     const remaining = localeWarnings.length - MAX_RESOURCES_TO_DISPLAY;
 
     for (const warning of resourcesToShow) {
-      lines.push(
-        `    ✏️  [${warning.collection}] ${warning.key} (${warning.status})`,
-      );
+      lines.push(`    ✏️  [${warning.collection}] ${warning.key} (${warning.status})`);
     }
 
     if (remaining > 0) {
@@ -217,10 +197,7 @@ function buildWarningsSection(
  * @returns Formatted footer string
  * @internal
  */
-function buildFooterSection(
-  result: ResourceValidationResult,
-  options: ValidationOptions,
-): string {
+function buildFooterSection(result: ResourceValidationResult, options: ValidationOptions): string {
   const lines = ['─'.repeat(50), '📋 Summary:'];
 
   // Count breakdown
@@ -252,9 +229,7 @@ function buildFooterSection(
  * @returns Object mapping locale to array of resources
  * @internal
  */
-function groupByLocale(
-  resources: readonly ResourceValidationDetail[],
-): Record<string, ResourceValidationDetail[]> {
+function groupByLocale(resources: readonly ResourceValidationDetail[]): Record<string, ResourceValidationDetail[]> {
   const grouped: Record<string, ResourceValidationDetail[]> = {};
 
   for (const resource of resources) {

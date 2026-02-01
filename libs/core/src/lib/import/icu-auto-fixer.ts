@@ -81,9 +81,7 @@ export interface ICUAutoFixResult {
  * // }
  * ```
  */
-export function extractICUPlaceholders(
-  value: string,
-): PlaceholderExtractionResult {
+export function extractICUPlaceholders(value: string): PlaceholderExtractionResult {
   const placeholders: ICUPlaceholder[] = [];
   const textSegments: string[] = [];
 
@@ -126,11 +124,7 @@ export function extractICUPlaceholders(
         // Complete placeholder found
         const endPosition = i + 1;
         const fullText = value.substring(currentPlaceholderStart, endPosition);
-        const placeholder = parsePlaceholder(
-          fullText,
-          currentPlaceholderStart,
-          endPosition,
-        );
+        const placeholder = parsePlaceholder(fullText, currentPlaceholderStart, endPosition);
 
         if (placeholder) {
           placeholders.push(placeholder);
@@ -196,11 +190,7 @@ export function extractICUPlaceholders(
  * @returns Parsed placeholder or null if invalid
  * @internal
  */
-function parsePlaceholder(
-  fullText: string,
-  startPosition: number,
-  endPosition: number,
-): ICUPlaceholder | null {
+function parsePlaceholder(fullText: string, startPosition: number, endPosition: number): ICUPlaceholder | null {
   // Remove outer braces
   const innerText = fullText.substring(1, fullText.length - 1).trim();
 
@@ -354,10 +344,7 @@ export function hasICUPlaceholders(value: string): boolean {
  * // Returns: { wasFixed: true, value: "{count, plural, one {# elemento} other {# elementos}}", ... }
  * ```
  */
-export function autoFixICUPlaceholders(
-  baseValue: string,
-  translationValue: string,
-): ICUAutoFixResult {
+export function autoFixICUPlaceholders(baseValue: string, translationValue: string): ICUAutoFixResult {
   // Skip if base has no placeholders
   if (!hasICUPlaceholders(baseValue)) {
     return {
@@ -392,12 +379,7 @@ export function autoFixICUPlaceholders(
   }
 
   // Check if placeholders already match
-  if (
-    placeholdersMatch(
-      baseExtraction.placeholders,
-      translationExtraction.placeholders,
-    )
-  ) {
+  if (placeholdersMatch(baseExtraction.placeholders, translationExtraction.placeholders)) {
     return {
       wasFixed: false,
       value: translationValue,
@@ -405,11 +387,7 @@ export function autoFixICUPlaceholders(
   }
 
   // Attempt to fix by replacing translation placeholders with base placeholders
-  return replaceTranslationPlaceholders(
-    baseExtraction,
-    translationExtraction,
-    translationValue,
-  );
+  return replaceTranslationPlaceholders(baseExtraction, translationExtraction, translationValue);
 }
 
 /**
@@ -420,10 +398,7 @@ export function autoFixICUPlaceholders(
  * @returns true if placeholders match in count, names, and types
  * @internal
  */
-function placeholdersMatch(
-  basePlaceholders: ICUPlaceholder[],
-  translationPlaceholders: ICUPlaceholder[],
-): boolean {
+function placeholdersMatch(basePlaceholders: ICUPlaceholder[], translationPlaceholders: ICUPlaceholder[]): boolean {
   if (basePlaceholders.length !== translationPlaceholders.length) {
     return false;
   }
@@ -459,8 +434,7 @@ function handleMissingPlaceholders(
   // Simple heuristic: if base has one placeholder, try to find where it should go
   if (basePlaceholders.length === 1) {
     // Insert at the end as a safe default
-    const fixedValue =
-      `${translationValue} ${basePlaceholders[0].fullText}`.trim();
+    const fixedValue = `${translationValue} ${basePlaceholders[0].fullText}`.trim();
 
     return {
       wasFixed: true,
@@ -490,10 +464,7 @@ function handleMissingPlaceholders(
  * @returns Reconstructed placeholder text
  * @internal
  */
-function reconstructPlaceholder(
-  basePlaceholder: ICUPlaceholder,
-  translationPlaceholder: ICUPlaceholder,
-): string {
+function reconstructPlaceholder(basePlaceholder: ICUPlaceholder, translationPlaceholder: ICUPlaceholder): string {
   // If it's a simple placeholder, just use the base name
   if (basePlaceholder.type === 'simple') {
     return `{${basePlaceholder.name}}`;
@@ -501,14 +472,8 @@ function reconstructPlaceholder(
 
   // For complex placeholders (plural, select, number, date, time),
   // we need to extract the format string from the translation and combine with base name/type
-  const baseInner = basePlaceholder.fullText.substring(
-    1,
-    basePlaceholder.fullText.length - 1,
-  );
-  const translationInner = translationPlaceholder.fullText.substring(
-    1,
-    translationPlaceholder.fullText.length - 1,
-  );
+  const baseInner = basePlaceholder.fullText.substring(1, basePlaceholder.fullText.length - 1);
+  const translationInner = translationPlaceholder.fullText.substring(1, translationPlaceholder.fullText.length - 1);
 
   // Split both to get parts
   const baseParts = splitPlaceholderParts(baseInner);
@@ -527,32 +492,20 @@ function reconstructPlaceholder(
   } else {
     // Has format: {name, type, format}
     // Use base name and type, but translation's format
-    let format =
-      translationParts.length >= 3
-        ? translationParts[2].trim()
-        : baseParts[2].trim();
+    let format = translationParts.length >= 3 ? translationParts[2].trim() : baseParts[2].trim();
 
     // For plural/select, the format string may contain nested placeholder references
     // We need to replace the translation's placeholder name with the base placeholder name
     // For example: "one {# elemento} other {# elementos}" might have {numero} references
     // that need to become {count} references
-    if (
-      basePlaceholder.type === 'plural' ||
-      basePlaceholder.type === 'select'
-    ) {
+    if (basePlaceholder.type === 'plural' || basePlaceholder.type === 'select') {
       // Replace any instances of {translationName} with {baseName} in the format string
       const translationName = translationPlaceholder.name;
       const baseName = basePlaceholder.name;
 
       // Create regex to match {translationName} - need to escape special regex chars
-      const escapedTranslationName = translationName.replace(
-        /[.*+?^${}()|[\]\\]/g,
-        '\\$&',
-      );
-      const placeholderRegex = new RegExp(
-        `\\{${escapedTranslationName}\\}`,
-        'g',
-      );
+      const escapedTranslationName = translationName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const placeholderRegex = new RegExp(`\\{${escapedTranslationName}\\}`, 'g');
 
       format = format.replace(placeholderRegex, `{${baseName}}`);
     }
@@ -612,10 +565,7 @@ function replaceTranslationPlaceholders(
     }
 
     // Reconstruct placeholder with base name/type but translation's format
-    const reconstructedPlaceholder = reconstructPlaceholder(
-      basePlaceholders[i],
-      translationPlaceholders[i],
-    );
+    const reconstructedPlaceholder = reconstructPlaceholder(basePlaceholders[i], translationPlaceholders[i]);
     fixedValue += reconstructedPlaceholder;
 
     // Track what changed
@@ -633,9 +583,7 @@ function replaceTranslationPlaceholders(
   // Generate description of changes
   let description = '';
   if (originalPlaceholderNames.length > 0) {
-    const changes = originalPlaceholderNames
-      .map((orig, idx) => `${orig} → ${fixedPlaceholderNames[idx]}`)
-      .join(', ');
+    const changes = originalPlaceholderNames.map((orig, idx) => `${orig} → ${fixedPlaceholderNames[idx]}`).join(', ');
     description = `Replaced placeholders: ${changes}`;
   } else {
     description = 'Placeholders already match (no changes needed)';

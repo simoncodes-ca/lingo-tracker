@@ -1,5 +1,5 @@
-import { ImportChange, StatusTransition } from './types';
-import { TranslationStatus } from '../../resource/translation-status';
+import type { ImportChange, StatusTransition } from './types';
+import type { TranslationStatus } from '../../resource/translation-status';
 
 /**
  * Calculates summary statistics from an array of import changes.
@@ -42,9 +42,7 @@ export function calculateImportStatistics(changes: ImportChange[]): {
   resourcesFailed: number;
 } {
   const resourcesCreated = changes.filter((c) => c.type === 'created').length;
-  const resourcesUpdated = changes.filter(
-    (c) => c.type === 'updated' || c.type === 'value-changed',
-  ).length;
+  const resourcesUpdated = changes.filter((c) => c.type === 'updated' || c.type === 'value-changed').length;
   const resourcesSkipped = changes.filter((c) => c.type === 'skipped').length;
   const resourcesFailed = changes.filter((c) => c.type === 'failed').length;
 
@@ -98,17 +96,11 @@ export function calculateImportStatistics(changes: ImportChange[]): {
  * // ]
  * ```
  */
-export function calculateStatusTransitions(
-  changes: ImportChange[],
-): StatusTransition[] {
+export function calculateStatusTransitions(changes: ImportChange[]): StatusTransition[] {
   const transitionMap = new Map<string, number>();
 
   for (const change of changes) {
-    if (
-      change.type === 'created' ||
-      change.type === 'updated' ||
-      change.type === 'value-changed'
-    ) {
+    if (change.type === 'created' || change.type === 'updated' || change.type === 'value-changed') {
       const key = `${change.oldStatus || 'none'}→${change.newStatus}`;
       transitionMap.set(key, (transitionMap.get(key) || 0) + 1);
     }

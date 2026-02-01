@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  RESOURCE_ENTRIES_FILENAME,
-  TRACKER_META_FILENAME,
-} from '../../constants';
+import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
 import { loadCollectionResources } from './resource-loader';
 
 // Mock fs module
@@ -35,9 +32,7 @@ describe('resource-loader', () => {
       };
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(mockResourceEntries),
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockResourceEntries));
       vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
 
       const result = loadCollectionResources('/translations', 'fr', 'en');
@@ -54,16 +49,12 @@ describe('resource-loader', () => {
       };
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(mockResourceEntries),
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockResourceEntries));
       vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
 
       const result = loadCollectionResources('/translations', 'en', 'en');
 
-      expect(result).toEqual([
-        { key: 'ok', value: 'OK', tags: ['ui', 'buttons'] },
-      ]);
+      expect(result).toEqual([{ key: 'ok', value: 'OK', tags: ['ui', 'buttons'] }]);
     });
 
     it('should skip entries missing translation for target locale', () => {
@@ -73,16 +64,12 @@ describe('resource-loader', () => {
       };
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(mockResourceEntries),
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockResourceEntries));
       vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
 
       const result = loadCollectionResources('/translations', 'fr', 'en');
 
-      expect(result).toEqual([
-        { key: 'ok', value: "D'accord", tags: undefined },
-      ]);
+      expect(result).toEqual([{ key: 'ok', value: "D'accord", tags: undefined }]);
     });
 
     it('should recursively load from nested folders', () => {
@@ -101,17 +88,14 @@ describe('resource-loader', () => {
       vi.spyOn(fs, 'existsSync').mockImplementation((filepath) => {
         return (
           filepath === translationsFolder ||
-          filepath ===
-            path.join(translationsFolder, RESOURCE_ENTRIES_FILENAME) ||
+          filepath === path.join(translationsFolder, RESOURCE_ENTRIES_FILENAME) ||
           filepath === buttonsFolder ||
           filepath === path.join(buttonsFolder, RESOURCE_ENTRIES_FILENAME)
         );
       });
 
       vi.spyOn(fs, 'readFileSync').mockImplementation((filepath) => {
-        if (
-          filepath === path.join(translationsFolder, RESOURCE_ENTRIES_FILENAME)
-        ) {
+        if (filepath === path.join(translationsFolder, RESOURCE_ENTRIES_FILENAME)) {
           return JSON.stringify(mockRootEntries);
         }
         if (filepath === path.join(buttonsFolder, RESOURCE_ENTRIES_FILENAME)) {
@@ -167,9 +151,7 @@ describe('resource-loader', () => {
         ].includes(filepath as string);
       });
 
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(mockButtonsEntries),
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockButtonsEntries));
 
       vi.spyOn(fs, 'readdirSync').mockImplementation((dirpath) => {
         if (dirpath === translationsFolder) {
@@ -186,9 +168,7 @@ describe('resource-loader', () => {
 
       const result = loadCollectionResources(translationsFolder, 'en', 'en');
 
-      expect(result).toEqual([
-        { key: 'apps.common.buttons.ok', value: 'OK', tags: undefined },
-      ]);
+      expect(result).toEqual([{ key: 'apps.common.buttons.ok', value: 'OK', tags: undefined }]);
     });
 
     it('should skip invalid JSON files and log warning', () => {
@@ -203,9 +183,7 @@ describe('resource-loader', () => {
       const result = loadCollectionResources('/translations', 'en', 'en');
 
       expect(result).toEqual([]);
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Skipping invalid JSON'),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Skipping invalid JSON'));
     });
 
     it('should ignore non-directory entries when scanning folders', () => {
@@ -214,9 +192,7 @@ describe('resource-loader', () => {
       };
 
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(
-        JSON.stringify(mockResourceEntries),
-      );
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockResourceEntries));
       vi.spyOn(fs, 'readdirSync').mockReturnValue([
         { name: RESOURCE_ENTRIES_FILENAME, isDirectory: () => false },
         { name: TRACKER_META_FILENAME, isDirectory: () => false },

@@ -1,4 +1,4 @@
-import { loadResourceTree, ResourceTreeNode } from './load-resource-tree';
+import { loadResourceTree, type ResourceTreeNode } from './load-resource-tree';
 
 export interface LoadFullResourceTreeOptions {
   /** Root translations folder path */
@@ -20,9 +20,7 @@ export interface LoadFullResourceTreeOptions {
  * @returns Complete resource tree with all descendants loaded
  * @throws Error if the translations folder does not exist
  */
-export function loadFullResourceTree(
-  options: LoadFullResourceTreeOptions,
-): ResourceTreeNode {
+export function loadFullResourceTree(options: LoadFullResourceTreeOptions): ResourceTreeNode {
   const { translationsFolder, cwd = process.cwd() } = options;
 
   // Load the entire tree by passing Infinity as depth

@@ -1,10 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  MoveResourceDialog,
-  MoveResourceDialogData,
-} from './move-resource-dialog';
+import { MoveResourceDialog, MoveResourceDialogData } from './move-resource-dialog';
 import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 
 describe('MoveResourceDialog', () => {

@@ -29,26 +29,17 @@ describe('processMultiselectWithAll', () => {
   });
 
   it('should return undefined when __ALL__ is selected', () => {
-    const result = processMultiselectWithAll(
-      [ALL_ITEMS_SENTINEL],
-      allAvailableItems,
-    );
+    const result = processMultiselectWithAll([ALL_ITEMS_SENTINEL], allAvailableItems);
     expect(result).toBeUndefined();
   });
 
   it('should return undefined when __ALL__ plus other items are selected (All takes precedence)', () => {
-    const result = processMultiselectWithAll(
-      [ALL_ITEMS_SENTINEL, 'en', 'fr'],
-      allAvailableItems,
-    );
+    const result = processMultiselectWithAll([ALL_ITEMS_SENTINEL, 'en', 'fr'], allAvailableItems);
     expect(result).toBeUndefined();
   });
 
   it('should return undefined when __ALL__ is in the middle of selections', () => {
-    const result = processMultiselectWithAll(
-      ['en', ALL_ITEMS_SENTINEL, 'fr'],
-      allAvailableItems,
-    );
+    const result = processMultiselectWithAll(['en', ALL_ITEMS_SENTINEL, 'fr'], allAvailableItems);
     expect(result).toBeUndefined();
   });
 
@@ -68,18 +59,12 @@ describe('processMultiselectWithAll', () => {
   });
 
   it('should return all items when all are manually selected (no __ALL__)', () => {
-    const result = processMultiselectWithAll(
-      ['en', 'fr', 'de', 'es'],
-      allAvailableItems,
-    );
+    const result = processMultiselectWithAll(['en', 'fr', 'de', 'es'], allAvailableItems);
     expect(result).toEqual(['en', 'fr', 'de', 'es']);
   });
 
   it('should preserve order of selected items', () => {
-    const result = processMultiselectWithAll(
-      ['es', 'en', 'de'],
-      allAvailableItems,
-    );
+    const result = processMultiselectWithAll(['es', 'en', 'de'], allAvailableItems);
     expect(result).toEqual(['es', 'en', 'de']);
   });
 
@@ -303,12 +288,10 @@ describe('executePromptsWithFallback', () => {
     });
 
     it('should throw error with operation name when cancelled', async () => {
-      vi.mocked(prompts).mockImplementation(
-        async (_questions: any, options: any) => {
-          options.onCancel();
-          return {};
-        },
-      );
+      vi.mocked(prompts).mockImplementation(async (_questions: any, options: any) => {
+        options.onCancel();
+        return {};
+      });
 
       const questions = [{ type: 'text', name: 'key', message: 'Enter key' }];
 
@@ -322,12 +305,10 @@ describe('executePromptsWithFallback', () => {
     });
 
     it('should use default operation name when cancelled without operationName', async () => {
-      vi.mocked(prompts).mockImplementation(
-        async (_questions: any, options: any) => {
-          options.onCancel();
-          return {};
-        },
-      );
+      vi.mocked(prompts).mockImplementation(async (_questions: any, options: any) => {
+        options.onCancel();
+        return {};
+      });
 
       const questions = [{ type: 'text', name: 'key', message: 'Enter key' }];
 
@@ -381,9 +362,7 @@ describe('executePromptsWithFallback', () => {
           currentValues,
           requiredFields: ['key', 'value', 'collection'],
         }),
-      ).rejects.toThrow(
-        'Missing required options in non-interactive mode: --value, --collection',
-      );
+      ).rejects.toThrow('Missing required options in non-interactive mode: --value, --collection');
     });
 
     it('should throw error listing all missing fields', async () => {
@@ -396,16 +375,12 @@ describe('executePromptsWithFallback', () => {
           currentValues,
           requiredFields: ['key', 'value', 'collection'],
         }),
-      ).rejects.toThrow(
-        'Missing required options in non-interactive mode: --key, --value, --collection',
-      );
+      ).rejects.toThrow('Missing required options in non-interactive mode: --key, --value, --collection');
     });
 
     it('should return current values when no required fields specified', async () => {
       const currentValues = { key: 'test' };
-      const questions = [
-        { type: 'text', name: 'value', message: 'Enter value' },
-      ];
+      const questions = [{ type: 'text', name: 'value', message: 'Enter value' }];
 
       const result = await executePromptsWithFallback({
         questions,

@@ -10,10 +10,7 @@ export class HighlightPipe implements PipeTransform {
   readonly #sanitizer = inject(DomSanitizer);
   readonly #minimumSearchLength = 3;
 
-  transform(
-    text: string | null | undefined,
-    searchTerm: string | null | undefined,
-  ): SafeHtml {
+  transform(text: string | null | undefined, searchTerm: string | null | undefined): SafeHtml {
     if (!text) {
       return '';
     }

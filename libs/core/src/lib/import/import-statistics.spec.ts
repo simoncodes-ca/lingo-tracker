@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  calculateImportStatistics,
-  calculateStatusTransitions,
-} from './import-statistics';
-import { ImportChange } from './types';
+import { calculateImportStatistics, calculateStatusTransitions } from './import-statistics';
+import type { ImportChange } from './types';
 
 describe('import-statistics', () => {
   describe('calculateImportStatistics', () => {

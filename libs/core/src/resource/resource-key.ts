@@ -35,38 +35,25 @@ export interface KeyValidationOptions {
  * @param options - Validation options
  * @throws Error if any validation rule is violated
  */
-export function validateKey(
-  key: string,
-  options: KeyValidationOptions = {},
-): void {
-  const {
-    allowLeadingTrailingDots = false,
-    allowConsecutiveDots = false,
-    errorContext = 'Key validation',
-  } = options;
+export function validateKey(key: string, options: KeyValidationOptions = {}): void {
+  const { allowLeadingTrailingDots = false, allowConsecutiveDots = false, errorContext = 'Key validation' } = options;
 
   if (!key || key.trim() === '') {
     throw new Error(`${errorContext}: Key cannot be empty`);
   }
 
   if (!allowConsecutiveDots && key.includes('..')) {
-    throw new Error(
-      `${errorContext}: Invalid key format "${key}" (consecutive dots not allowed)`,
-    );
+    throw new Error(`${errorContext}: Invalid key format "${key}" (consecutive dots not allowed)`);
   }
 
   if (!allowLeadingTrailingDots && (key.startsWith('.') || key.endsWith('.'))) {
-    throw new Error(
-      `${errorContext}: Invalid key format "${key}" (leading or trailing dot not allowed)`,
-    );
+    throw new Error(`${errorContext}: Invalid key format "${key}" (leading or trailing dot not allowed)`);
   }
 
   const segments = key.split('.');
   for (const segment of segments) {
     if (!isValidSegment(segment)) {
-      throw new Error(
-        `${errorContext}: Invalid key segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`,
-      );
+      throw new Error(`${errorContext}: Invalid key segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`);
     }
   }
 }
@@ -86,9 +73,7 @@ export function validateTargetFolder(targetFolder: string): void {
   const segments = targetFolder.split('.');
   for (const segment of segments) {
     if (!isValidSegment(segment)) {
-      throw new Error(
-        `Invalid targetFolder segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`,
-      );
+      throw new Error(`Invalid targetFolder segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`);
     }
   }
 }
@@ -102,9 +87,7 @@ export function validateTargetFolder(targetFolder: string): void {
  * @returns The resolved key as a dot-delimited string
  */
 export function resolveResourceKey(key: string, targetFolder?: string): string {
-  return targetFolder && targetFolder.trim() !== ''
-    ? `${targetFolder}.${key}`
-    : key;
+  return targetFolder && targetFolder.trim() !== '' ? `${targetFolder}.${key}` : key;
 }
 
 /**

@@ -57,22 +57,14 @@ describe('tag-filter', () => {
 
     describe('specific tags with "All" operator', () => {
       it('should match when entry has all specified tags', () => {
-        expect(matchesTags(['ui', 'critical'], ['ui', 'critical'], 'All')).toBe(
-          true,
-        );
-        expect(
-          matchesTags(['ui', 'critical', 'extra'], ['ui', 'critical'], 'All'),
-        ).toBe(true);
+        expect(matchesTags(['ui', 'critical'], ['ui', 'critical'], 'All')).toBe(true);
+        expect(matchesTags(['ui', 'critical', 'extra'], ['ui', 'critical'], 'All')).toBe(true);
       });
 
       it('should not match when entry is missing any tag', () => {
         expect(matchesTags(['ui'], ['ui', 'critical'], 'All')).toBe(false);
-        expect(matchesTags(['critical'], ['ui', 'critical'], 'All')).toBe(
-          false,
-        );
-        expect(matchesTags(['ui', 'other'], ['ui', 'critical'], 'All')).toBe(
-          false,
-        );
+        expect(matchesTags(['critical'], ['ui', 'critical'], 'All')).toBe(false);
+        expect(matchesTags(['ui', 'other'], ['ui', 'critical'], 'All')).toBe(false);
       });
 
       it('should not match when entry has no tags', () => {

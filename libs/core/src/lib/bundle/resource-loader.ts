@@ -5,7 +5,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
-import { ResourceEntries } from '../../resource/resource-entry';
+import type { ResourceEntries } from '../../resource/resource-entry';
 
 export interface FlatResource {
   readonly key: string;
@@ -87,16 +87,8 @@ function loadFolderResources(
   for (const entry of entries) {
     if (entry.isDirectory()) {
       const subfolderPath = path.join(folderPath, entry.name);
-      const subKeyPrefix = keyPrefix
-        ? `${keyPrefix}.${entry.name}`
-        : entry.name;
-      loadFolderResources(
-        subfolderPath,
-        subKeyPrefix,
-        locale,
-        baseLocale,
-        resources,
-      );
+      const subKeyPrefix = keyPrefix ? `${keyPrefix}.${entry.name}` : entry.name;
+      loadFolderResources(subfolderPath, subKeyPrefix, locale, baseLocale, resources);
     }
   }
 }

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { LingoTrackerConfig } from '../../../config/lingo-tracker-config';
+import type { LingoTrackerConfig } from '../../../config/lingo-tracker-config';
 import { loadCollectionResources } from '../resource-loader';
 import { matchesPattern } from '../pattern-matcher';
 import { matchesTags } from '../tag-filter';
@@ -16,10 +16,7 @@ export interface GenerateTypesResult {
   skippedReason?: 'no-typeDist' | 'empty-bundle';
 }
 
-export async function generateBundleTypes(
-  bundleKey: string,
-  config: LingoTrackerConfig,
-): Promise<GenerateTypesResult> {
+export async function generateBundleTypes(bundleKey: string, config: LingoTrackerConfig): Promise<GenerateTypesResult> {
   const bundleDef = config.bundles?.[bundleKey];
 
   if (!bundleDef || !bundleDef.typeDist) {
@@ -48,9 +45,7 @@ export async function generateBundleTypes(
     const collectionConfig = config.collections[collectionDef.name];
 
     if (!collectionConfig) {
-      console.warn(
-        `Collection '${collectionDef.name}' not found in configuration`,
-      );
+      console.warn(`Collection '${collectionDef.name}' not found in configuration`);
       continue;
     }
 
@@ -71,11 +66,7 @@ export async function generateBundleTypes(
         for (const rule of collectionDef.entriesSelectionRules) {
           if (
             matchesPattern(resource.key, rule.matchingPattern) &&
-            matchesTags(
-              resource.tags || [],
-              rule.matchingTags,
-              rule.matchingTagOperator,
-            )
+            matchesTags(resource.tags || [], rule.matchingTags, rule.matchingTagOperator)
           ) {
             isMatch = true;
             break;
@@ -97,9 +88,7 @@ export async function generateBundleTypes(
   const sortedKeys = Array.from(allKeys).sort();
 
   if (sortedKeys.length === 0) {
-    console.warn(
-      `Warning: Bundle '${bundleKey}' is empty. Skipping type generation.`,
-    );
+    console.warn(`Warning: Bundle '${bundleKey}' is empty. Skipping type generation.`);
     return {
       bundleKey,
       typeDist: bundleDef.typeDist,
@@ -112,10 +101,7 @@ export async function generateBundleTypes(
   // Generate content
   const hierarchy = buildTypeHierarchy(sortedKeys);
   const constantName = bundleKeyToConstantName(bundleKey);
-  const fileContent =
-    generateFileHeader(bundleKey) +
-    '\n\n' +
-    serializeHierarchy(hierarchy, constantName);
+  const fileContent = generateFileHeader(bundleKey) + '\n\n' + serializeHierarchy(hierarchy, constantName);
 
   // Resolve output path
   // If typeDist is relative, resolve it relative to the config file location (which we don't have directly here,

@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  parseCommaSeparatedList,
-  parseCommaSeparatedListRequired,
-} from './string-parsers';
+import { parseCommaSeparatedList, parseCommaSeparatedListRequired } from './string-parsers';
 
 describe('parseCommaSeparatedList', () => {
   it('should parse comma-separated values', () => {
@@ -58,27 +55,19 @@ describe('parseCommaSeparatedListRequired', () => {
   });
 
   it('should throw for empty string', () => {
-    expect(() => parseCommaSeparatedListRequired('')).toThrow(
-      'At least one value is required',
-    );
+    expect(() => parseCommaSeparatedListRequired('')).toThrow('At least one value is required');
   });
 
   it('should throw for undefined input', () => {
-    expect(() => parseCommaSeparatedListRequired(undefined)).toThrow(
-      'At least one value is required',
-    );
+    expect(() => parseCommaSeparatedListRequired(undefined)).toThrow('At least one value is required');
   });
 
   it('should throw for only whitespace', () => {
-    expect(() => parseCommaSeparatedListRequired('  ,  ')).toThrow(
-      'At least one value is required',
-    );
+    expect(() => parseCommaSeparatedListRequired('  ,  ')).toThrow('At least one value is required');
   });
 
   it('should use custom field name in error message', () => {
-    expect(() => parseCommaSeparatedListRequired('', 'locale')).toThrow(
-      'At least one locale is required',
-    );
+    expect(() => parseCommaSeparatedListRequired('', 'locale')).toThrow('At least one locale is required');
   });
 
   it('should handle single value', () => {

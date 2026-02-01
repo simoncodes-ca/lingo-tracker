@@ -3,8 +3,5 @@ export interface LingoTrackerConfigDto {
   importFolder: string;
   baseLocale: string;
   locales: string[];
-  collections: Record<
-    string,
-    import('./lingo-tracker-collection.dto').LingoTrackerCollectionDto
-  >;
+  collections: Record<string, import('./lingo-tracker-collection.dto').LingoTrackerCollectionDto>;
 }

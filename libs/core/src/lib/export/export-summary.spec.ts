@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateExportSummary } from './export-summary';
-import { ExportOptions, ExportResult } from './types';
+import type { ExportOptions, ExportResult } from './types';
 
 describe('generateExportSummary', () => {
   const mockOptions: ExportOptions = {

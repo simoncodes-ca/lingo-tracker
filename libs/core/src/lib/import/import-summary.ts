@@ -1,11 +1,4 @@
-import {
-  ImportOptions,
-  ImportResult,
-  ImportChange,
-  StatusTransition,
-  ICUAutoFix,
-  ICUAutoFixError,
-} from './types';
+import type { ImportOptions, ImportResult, ImportChange, StatusTransition, ICUAutoFix, ICUAutoFixError } from './types';
 
 /**
  * Generates a comprehensive markdown summary of the import operation.
@@ -28,10 +21,7 @@ import {
  * fs.writeFileSync('import-summary.md', summary);
  * ```
  */
-export function generateImportSummary(
-  result: ImportResult,
-  options: ImportOptions,
-): string {
+export function generateImportSummary(result: ImportResult, options: ImportOptions): string {
   const isDryRun = result.dryRun;
   const title = isDryRun ? '# Import Summary (DRY RUN)' : '# Import Summary';
   const date = new Date().toISOString().replace('T', ' ').split('.')[0];
@@ -48,21 +38,11 @@ export function generateImportSummary(
 
 ## Results
 
-- **Resources ${isDryRun ? 'Would Be ' : ''}Imported**: ${
-    result.resourcesImported
-  }
-- **Resources ${isDryRun ? 'Would Be ' : ''}Created**: ${
-    result.resourcesCreated
-  }
-- **Resources ${isDryRun ? 'Would Be ' : ''}Updated**: ${
-    result.resourcesUpdated
-  }
-- **Resources ${isDryRun ? 'Would Be ' : ''}Skipped**: ${
-    result.resourcesSkipped
-  }
-- **Resources ${isDryRun ? 'Would Have ' : ''}Failed**: ${
-    result.resourcesFailed
-  }
+- **Resources ${isDryRun ? 'Would Be ' : ''}Imported**: ${result.resourcesImported}
+- **Resources ${isDryRun ? 'Would Be ' : ''}Created**: ${result.resourcesCreated}
+- **Resources ${isDryRun ? 'Would Be ' : ''}Updated**: ${result.resourcesUpdated}
+- **Resources ${isDryRun ? 'Would Be ' : ''}Skipped**: ${result.resourcesSkipped}
+- **Resources ${isDryRun ? 'Would Have ' : ''}Failed**: ${result.resourcesFailed}
 `;
 
   // Status transitions
@@ -193,11 +173,8 @@ function formatStatusTransitions(transitions: StatusTransition[]): string {
     .map((t) => {
       const from = t.from || 'none';
       const to = t.to;
-      const description =
-        from === 'none' ? '(Created)' : from === to ? '(value changed)' : '';
-      return `- **${capitalize(from)} → ${capitalize(to)}**: ${t.count}${
-        description ? ' ' + description : ''
-      }`;
+      const description = from === 'none' ? '(Created)' : from === to ? '(value changed)' : '';
+      return `- **${capitalize(from)} → ${capitalize(to)}**: ${t.count}${description ? ' ' + description : ''}`;
     })
     .join('\n');
 }
@@ -269,39 +246,28 @@ function formatList(items: string[]): string {
  * @returns Formatted markdown sections for each change category
  * @internal
  */
-function formatDetailedChanges(
-  changes: ImportChange[],
-  isDryRun: boolean,
-): string {
+function formatDetailedChanges(changes: ImportChange[], isDryRun: boolean): string {
   const created = changes.filter((c) => c.type === 'created');
-  const updated = changes.filter(
-    (c) => c.type === 'updated' || c.type === 'value-changed',
-  );
+  const updated = changes.filter((c) => c.type === 'updated' || c.type === 'value-changed');
   const skipped = changes.filter((c) => c.type === 'skipped');
   const failed = changes.filter((c) => c.type === 'failed');
 
   let output = '';
 
   // Created resources
-  output += `### ${
-    isDryRun ? 'Resources That Would Be Created' : 'Created Resources'
-  }\n\n`;
+  output += `### ${isDryRun ? 'Resources That Would Be Created' : 'Created Resources'}\n\n`;
   if (created.length === 0) {
     output += `_None${
       isDryRun
         ? ''
-        : ` - strategy \`${changes.length > 0 ? 'does not allow' : ''}\` ${
-            changes.length > 0 ? 'creation' : ''
-          }`
+        : ` - strategy \`${changes.length > 0 ? 'does not allow' : ''}\` ${changes.length > 0 ? 'creation' : ''}`
     }_\n\n`;
   } else {
     output += formatCreatedChanges(created);
   }
 
   // Updated resources
-  output += `### ${
-    isDryRun ? 'Resources That Would Be Updated' : 'Updated Resources'
-  }\n\n`;
+  output += `### ${isDryRun ? 'Resources That Would Be Updated' : 'Updated Resources'}\n\n`;
   if (updated.length === 0) {
     output += '_None_\n\n';
   } else {
@@ -310,17 +276,13 @@ function formatDetailedChanges(
 
   // Skipped resources
   if (skipped.length > 0) {
-    output += `### ${
-      isDryRun ? 'Resources That Would Be Skipped' : 'Skipped Resources'
-    }\n\n`;
+    output += `### ${isDryRun ? 'Resources That Would Be Skipped' : 'Skipped Resources'}\n\n`;
     output += formatSkippedChanges(skipped);
   }
 
   // Failed resources
   if (failed.length > 0) {
-    output += `### ${
-      isDryRun ? 'Resources That Would Fail' : 'Failed Resources'
-    }\n\n`;
+    output += `### ${isDryRun ? 'Resources That Would Fail' : 'Failed Resources'}\n\n`;
     output += formatFailedChanges(failed);
   }
 
@@ -381,12 +343,9 @@ function formatUpdatedChanges(changes: ImportChange[]): string {
           : c.newStatus
             ? ` (${c.newStatus})`
             : '';
-      const valueChanged =
-        oldVal !== newVal ? ', value changed' : ', checksum updated';
+      const valueChanged = oldVal !== newVal ? ', value changed' : ', checksum updated';
 
-      return `${i + 1}. \`${
-        c.key
-      }\`: "${oldVal}" → "${newVal}"${statusChange}${valueChanged}`;
+      return `${i + 1}. \`${c.key}\`: "${oldVal}" → "${newVal}"${statusChange}${valueChanged}`;
     })
     .join('\n');
 
@@ -466,10 +425,7 @@ function formatFailedChanges(changes: ImportChange[]): string {
  * @returns Formatted markdown list of auto-fixes
  * @internal
  */
-function formatICUAutoFixes(
-  autoFixes: ICUAutoFix[],
-  isDryRun: boolean,
-): string {
+function formatICUAutoFixes(autoFixes: ICUAutoFix[], isDryRun: boolean): string {
   const maxToShow = 20;
   const fixesToShow = autoFixes.slice(0, maxToShow);
   const remaining = autoFixes.length - maxToShow;
@@ -481,10 +437,7 @@ function formatICUAutoFixes(
   output += fixesToShow
     .map((fix, i) => {
       const placeholderChanges = fix.originalPlaceholders
-        .map(
-          (orig: string, idx: number) =>
-            `${orig} → ${fix.fixedPlaceholders[idx]}`,
-        )
+        .map((orig: string, idx: number) => `${orig} → ${fix.fixedPlaceholders[idx]}`)
         .join(', ');
 
       return `${i + 1}. \`${fix.key}\`

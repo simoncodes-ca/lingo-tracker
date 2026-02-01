@@ -16,9 +16,7 @@ describe('ConfirmationDialog', () => {
     message: 'Test Message',
   };
 
-  const reconfigureTestBedWithData = async (
-    data: ConfirmationDialogData,
-  ): Promise<void> => {
+  const reconfigureTestBedWithData = async (data: ConfirmationDialogData): Promise<void> => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [ConfirmationDialog],
@@ -106,9 +104,7 @@ describe('ConfirmationDialog', () => {
 
     it('should return default translated cancel button text when not provided', () => {
       expect(component.cancelButtonText).toBe('Cancel');
-      expect(mockTransloco.translate).toHaveBeenCalledWith(
-        'common.actions.cancel',
-      );
+      expect(mockTransloco.translate).toHaveBeenCalledWith('common.actions.cancel');
     });
   });
 

@@ -8,16 +8,12 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'collections',
-    loadComponent: () =>
-      import('./collections/collections-manager').then(
-        (m) => m.CollectionsManager,
-      ),
+    loadComponent: () => import('./collections/collections-manager').then((m) => m.CollectionsManager),
     title: 'Collections',
   },
   {
     path: 'browser/:collectionName',
-    loadComponent: () =>
-      import('./browser/translation-browser').then((m) => m.TranslationBrowser),
+    loadComponent: () => import('./browser/translation-browser').then((m) => m.TranslationBrowser),
     title: 'Translation Browser',
   },
 ];

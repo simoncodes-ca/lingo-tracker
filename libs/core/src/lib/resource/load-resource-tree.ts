@@ -1,12 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {
-  RESOURCE_ENTRIES_FILENAME,
-  TRACKER_META_FILENAME,
-} from '../../constants';
-import { ResourceEntries } from '../../resource/resource-entry';
-import { TrackerMetadata } from '../../resource/tracker-metadata';
-import { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
+import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import type { ResourceEntries } from '../../resource/resource-entry';
+import type { TrackerMetadata } from '../../resource/tracker-metadata';
+import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
 
 export interface ResourceTreeNode {
   /** Folder path segments (empty array for root) */
@@ -49,15 +46,8 @@ export interface LoadResourceTreeOptions {
   cwd?: string;
 }
 
-export function loadResourceTree(
-  options: LoadResourceTreeOptions,
-): ResourceTreeNode {
-  const {
-    translationsFolder,
-    path: folderPath = '',
-    depth = 2,
-    cwd = process.cwd(),
-  } = options;
+export function loadResourceTree(options: LoadResourceTreeOptions): ResourceTreeNode {
+  const { translationsFolder, path: folderPath = '', depth = 2, cwd = process.cwd() } = options;
 
   // Parse folder path into segments
   const pathSegments = folderPath ? folderPath.split('.').filter(Boolean) : [];
@@ -77,13 +67,7 @@ export function loadResourceTree(
   const visitedPaths = new Set<string>();
 
   // Load recursively
-  return loadFolderRecursive(
-    absoluteFolderPath,
-    pathSegments,
-    0,
-    depth,
-    visitedPaths,
-  );
+  return loadFolderRecursive(absoluteFolderPath, pathSegments, 0, depth, visitedPaths);
 }
 
 function loadFolderRecursive(
@@ -113,12 +97,8 @@ function loadFolderRecursive(
 
   if (fs.existsSync(entriesPath) && fs.existsSync(metaPath)) {
     try {
-      const entries: ResourceEntries = JSON.parse(
-        fs.readFileSync(entriesPath, 'utf8'),
-      );
-      const metadata: TrackerMetadata = JSON.parse(
-        fs.readFileSync(metaPath, 'utf8'),
-      );
+      const entries: ResourceEntries = JSON.parse(fs.readFileSync(entriesPath, 'utf8'));
+      const metadata: TrackerMetadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
 
       for (const [key, entry] of Object.entries(entries)) {
         const meta = metadata[key];
@@ -126,12 +106,7 @@ function loadFolderRecursive(
 
         const translations: Record<string, string> = {};
         for (const [prop, value] of Object.entries(entry)) {
-          if (
-            prop !== 'source' &&
-            prop !== 'tags' &&
-            prop !== 'comment' &&
-            typeof value === 'string'
-          ) {
+          if (prop !== 'source' && prop !== 'tags' && prop !== 'comment' && typeof value === 'string') {
             translations[prop] = value;
           }
         }
@@ -165,13 +140,7 @@ function loadFolderRecursive(
 
     if (currentDepth < maxDepth) {
       // Recursively load child
-      const childTree = loadFolderRecursive(
-        childPath,
-        childPathSegments,
-        currentDepth + 1,
-        maxDepth,
-        visitedPaths,
-      );
+      const childTree = loadFolderRecursive(childPath, childPathSegments, currentDepth + 1, maxDepth, visitedPaths);
 
       children.push({
         name: childName,

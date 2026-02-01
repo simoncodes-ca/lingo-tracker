@@ -1,12 +1,9 @@
-import { ExportOptions, ExportResult } from './types';
+import type { ExportOptions, ExportResult } from './types';
 
 /**
  * Generates a markdown summary of the export operation.
  */
-export function generateExportSummary(
-  result: ExportResult,
-  options: ExportOptions,
-): string {
+export function generateExportSummary(result: ExportResult, options: ExportOptions): string {
   const isDryRun = options.dryRun;
   const title = isDryRun ? '# Export Summary (DRY RUN)' : '# Export Summary';
   const date = new Date().toISOString().replace('T', ' ').split('.')[0];

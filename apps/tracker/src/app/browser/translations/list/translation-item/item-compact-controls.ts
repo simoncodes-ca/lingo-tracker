@@ -26,14 +26,7 @@ import { TranslationRollup, LocaleState } from './translation-rollup';
   selector: 'app-translation-item-compact-controls',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    MatIconModule,
-    MatMenuModule,
-    MatIconButton,
-    MatTooltipModule,
-    TranslocoPipe,
-    TranslationRollup,
-  ],
+  imports: [MatIconModule, MatMenuModule, MatIconButton, MatTooltipModule, TranslocoPipe, TranslationRollup],
   templateUrl: './item-compact-controls.html',
   styleUrl: './item-compact-controls.scss',
   host: {

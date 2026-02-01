@@ -37,9 +37,7 @@ interface NormalizeCommandResult {
   };
 }
 
-export async function normalizeCommand(
-  options: NormalizeOptions,
-): Promise<void> {
+export async function normalizeCommand(options: NormalizeOptions): Promise<void> {
   const loaded = loadConfiguration({ exitOnError: false });
   if (!loaded) return;
   const { config, cwd } = loaded;
@@ -100,9 +98,7 @@ export async function normalizeCommand(
       });
 
       if (!options.json) {
-        ConsoleFormatter.indent(
-          `✅ Entries processed: ${result.entriesProcessed}`,
-        );
+        ConsoleFormatter.indent(`✅ Entries processed: ${result.entriesProcessed}`);
         ConsoleFormatter.indent(`✅ Locales added: ${result.localesAdded}`);
         ConsoleFormatter.indent(`✅ Files created: ${result.filesCreated}`);
         ConsoleFormatter.indent(`✅ Files updated: ${result.filesUpdated}`);
@@ -110,11 +106,7 @@ export async function normalizeCommand(
       }
     } catch (e: unknown) {
       if (!options.json) {
-        ConsoleFormatter.indent(
-          `❌ ${
-            e instanceof Error ? e.message : 'Failed to normalize collection'
-          }`,
-        );
+        ConsoleFormatter.indent(`❌ ${e instanceof Error ? e.message : 'Failed to normalize collection'}`);
       }
     }
   }
@@ -151,13 +143,8 @@ export async function normalizeCommand(
       collectionsProcessed: collectionResults.length,
     };
 
-    ConsoleFormatter.section(
-      `Summary (${totals.collectionsProcessed} collections)`,
-    );
-    ConsoleFormatter.keyValue(
-      'Total entries processed',
-      totals.entriesProcessed,
-    );
+    ConsoleFormatter.section(`Summary (${totals.collectionsProcessed} collections)`);
+    ConsoleFormatter.keyValue('Total entries processed', totals.entriesProcessed);
     ConsoleFormatter.keyValue('Total locales added', totals.localesAdded);
     ConsoleFormatter.keyValue('Total files created', totals.filesCreated);
     ConsoleFormatter.keyValue('Total files updated', totals.filesUpdated);
@@ -222,9 +209,7 @@ async function promptForMissing(
 
       // Show confirmation for --all mode
       console.log('');
-      ConsoleFormatter.warning(
-        'This will normalize ALL collections in your project.',
-      );
+      ConsoleFormatter.warning('This will normalize ALL collections in your project.');
       const confirmed = await prompts({
         type: 'confirm',
         name: 'confirmed',
@@ -249,9 +234,7 @@ async function promptForMissing(
   // Handle --all flag with confirmation
   if (options.all && process.stdout.isTTY && !responses.all) {
     console.log('');
-    ConsoleFormatter.warning(
-      'This will normalize ALL collections in your project.',
-    );
+    ConsoleFormatter.warning('This will normalize ALL collections in your project.');
     const confirmed = await prompts({
       type: 'confirm',
       name: 'confirmed',

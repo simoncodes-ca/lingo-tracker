@@ -24,11 +24,7 @@ describe('TranslationSearch', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationSearch,
-        NoopAnimationsModule,
-        getTranslocoTestingModule(),
-      ],
+      imports: [TranslationSearch, NoopAnimationsModule, getTranslocoTestingModule()],
       providers: [{ provide: BrowserStore, useValue: mockStore }],
     }).compileComponents();
 
@@ -53,32 +49,23 @@ describe('TranslationSearch', () => {
 
   describe('Template Rendering', () => {
     it('should render SearchInput component', () => {
-      const searchInput =
-        fixture.nativeElement.querySelector('app-search-input');
+      const searchInput = fixture.nativeElement.querySelector('app-search-input');
       expect(searchInput).toBeTruthy();
     });
 
     it('should pass correct placeholder to SearchInput', () => {
-      const searchInputDebug = fixture.debugElement.query(
-        By.directive(SearchInput),
-      );
-      const searchInputComponent =
-        searchInputDebug.componentInstance as SearchInput;
+      const searchInputDebug = fixture.debugElement.query(By.directive(SearchInput));
+      const searchInputComponent = searchInputDebug.componentInstance as SearchInput;
       // The placeholder should be resolved by transloco
-      expect(searchInputComponent.placeholder()).toBe(
-        'Search (min 3 characters)...',
-      );
+      expect(searchInputComponent.placeholder()).toBe('Search (min 3 characters)...');
     });
 
     it('should pass isLoading state to SearchInput', () => {
       mockStore.isSearchLoading.set(true);
       fixture.detectChanges();
 
-      const searchInputDebug = fixture.debugElement.query(
-        By.directive(SearchInput),
-      );
-      const searchInputComponent =
-        searchInputDebug.componentInstance as SearchInput;
+      const searchInputDebug = fixture.debugElement.query(By.directive(SearchInput));
+      const searchInputComponent = searchInputDebug.componentInstance as SearchInput;
       expect(searchInputComponent.isLoading()).toBe(true);
     });
 

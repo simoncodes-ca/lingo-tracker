@@ -1,13 +1,9 @@
-import { ResourceSummaryDto } from './resource-tree.dto';
+import type { ResourceSummaryDto } from './resource-tree.dto';
 
 /**
  * Match type for search results.
  */
-export type MatchType =
-  | 'exact-key'
-  | 'partial-key'
-  | 'exact-value'
-  | 'partial-value';
+export type MatchType = 'exact-key' | 'partial-key' | 'exact-value' | 'partial-value';
 
 /**
  * DTO for a single search result.

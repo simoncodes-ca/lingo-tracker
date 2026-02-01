@@ -1,11 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-  signal,
-  computed,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,9 +26,7 @@ export class SimilarResourcesWarning {
     const limit = this.isExpanded() ? this.#displayLimit() : 3;
     return this.results().slice(0, limit);
   });
-  readonly hasMoreResults = computed(
-    () => this.results().length > this.#displayLimit(),
-  );
+  readonly hasMoreResults = computed(() => this.results().length > this.#displayLimit());
   readonly showMoreButtonLabel = computed(() => {
     const remaining = this.results().length - this.#displayLimit();
     return `Show ${remaining} more`;

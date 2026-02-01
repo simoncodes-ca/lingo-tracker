@@ -15,12 +15,7 @@ import { CollectionCacheService } from './cache/collection-cache.service';
       rootPath: join(__dirname, '..', 'tracker', 'browser'),
     }),
   ],
-  controllers: [
-    AppController,
-    ConfigController,
-    CollectionsController,
-    ResourcesController,
-  ],
+  controllers: [AppController, ConfigController, CollectionsController, ResourcesController],
   providers: [AppService, ConfigService, CollectionCacheService],
 })
 export class AppModule {

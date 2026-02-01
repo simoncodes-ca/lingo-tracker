@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { moveResource } from './move-resource';
 import { RESOURCE_ENTRIES_FILENAME } from '../constants';
-import { vi, describe, it, expect, beforeEach, Mock } from 'vitest';
+import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 import * as fs from 'node:fs';
 
 // Mock node:fs
@@ -42,11 +42,9 @@ describe('Move Resource', () => {
       throw new Error(`ENOENT: no such file or directory, open '${path}'`);
     });
 
-    (fs.writeFileSync as Mock).mockImplementation(
-      (path: string, data: string) => {
-        mockFileSystem.set(path, data);
-      },
-    );
+    (fs.writeFileSync as Mock).mockImplementation((path: string, data: string) => {
+      mockFileSystem.set(path, data);
+    });
 
     (fs.mkdirSync as Mock).mockImplementation((path: string) => {
       mockDirectories.add(path);

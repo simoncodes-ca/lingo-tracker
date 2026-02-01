@@ -1,4 +1,4 @@
-import { TranslationStatus } from './translation-status';
+import type { TranslationStatus } from './translation-status';
 
 /**
  * Creates default translations for all non-base locales using the base value.
@@ -12,9 +12,7 @@ export function createDefaultTranslations(
   locales: string[],
   baseLocale: string,
   baseValue: string,
-):
-  | Array<{ locale: string; value: string; status: TranslationStatus }>
-  | undefined {
+): Array<{ locale: string; value: string; status: TranslationStatus }> | undefined {
   const nonBaseLocales = locales.filter((locale) => locale !== baseLocale);
 
   if (nonBaseLocales.length === 0) {

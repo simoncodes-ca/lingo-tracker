@@ -1,5 +1,5 @@
-import { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
-import { TranslationStatus } from '../../resource/translation-status';
+import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
+import type { TranslationStatus } from '../../resource/translation-status';
 import { calculateChecksum } from '../../resource/checksum';
 import { createBaseLocaleMetadata } from '../../resource/status-helpers';
 
@@ -38,9 +38,7 @@ export interface UpdateBaseValueParams {
  * @param params - Metadata creation parameters
  * @returns Complete metadata object ready to be written
  */
-export function createResourceMetadata(
-  params: CreateResourceMetadataParams,
-): ResourceEntryMetadata {
+export function createResourceMetadata(params: CreateResourceMetadataParams): ResourceEntryMetadata {
   const { baseValue, baseLocale, translations = [] } = params;
 
   const metadata: ResourceEntryMetadata = {};
@@ -80,9 +78,7 @@ export function createResourceMetadata(
  * @param params - Update parameters
  * @returns Updated metadata object
  */
-export function updateMetadataForBaseValueChange(
-  params: UpdateBaseValueParams,
-): ResourceEntryMetadata {
+export function updateMetadataForBaseValueChange(params: UpdateBaseValueParams): ResourceEntryMetadata {
   const { metadata, newBaseValue, baseLocale } = params;
 
   const newBaseChecksum = calculateChecksum(newBaseValue);

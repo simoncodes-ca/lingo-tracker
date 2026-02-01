@@ -12,12 +12,7 @@ describe('IndexingOverlay', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        IndexingOverlay,
-        MatProgressSpinnerModule,
-        MatCardModule,
-        MatButtonModule,
-      ],
+      imports: [IndexingOverlay, MatProgressSpinnerModule, MatCardModule, MatButtonModule],
     }).compileComponents();
 
     fixture = TestBed.createComponent(IndexingOverlay);
@@ -38,9 +33,7 @@ describe('IndexingOverlay', () => {
 
       expect(spinner).toBeTruthy();
       expect(message).toBeTruthy();
-      expect(message.nativeElement.textContent).toContain(
-        'Indexing collection...',
-      );
+      expect(message.nativeElement.textContent).toContain('Indexing collection...');
     });
 
     it('should display spinner when status is "not-started"', () => {
@@ -52,9 +45,7 @@ describe('IndexingOverlay', () => {
 
       expect(spinner).toBeTruthy();
       expect(message).toBeTruthy();
-      expect(message.nativeElement.textContent).toContain(
-        'Indexing collection...',
-      );
+      expect(message.nativeElement.textContent).toContain('Indexing collection...');
     });
 
     it('should display overlay with semi-transparent background when indexing', () => {
@@ -69,10 +60,7 @@ describe('IndexingOverlay', () => {
   describe('Error State', () => {
     it('should display error message when status is "error"', () => {
       fixture.componentRef.setInput('cacheStatus', 'error');
-      fixture.componentRef.setInput(
-        'errorMessage',
-        'Failed to load resource tree',
-      );
+      fixture.componentRef.setInput('errorMessage', 'Failed to load resource tree');
       fixture.detectChanges();
 
       const errorTitle = fixture.debugElement.query(By.css('.error-title'));
@@ -81,9 +69,7 @@ describe('IndexingOverlay', () => {
       expect(errorTitle).toBeTruthy();
       expect(errorTitle.nativeElement.textContent).toContain('Indexing Failed');
       expect(errorMessage).toBeTruthy();
-      expect(errorMessage.nativeElement.textContent).toContain(
-        'Failed to load resource tree',
-      );
+      expect(errorMessage.nativeElement.textContent).toContain('Failed to load resource tree');
     });
 
     it('should display default error message when no error message provided', () => {
@@ -93,9 +79,7 @@ describe('IndexingOverlay', () => {
 
       const errorMessage = fixture.debugElement.query(By.css('.error-message'));
       expect(errorMessage).toBeTruthy();
-      expect(errorMessage.nativeElement.textContent).toContain(
-        'An error occurred while indexing the collection.',
-      );
+      expect(errorMessage.nativeElement.textContent).toContain('An error occurred while indexing the collection.');
     });
 
     it('should display retry button when status is "error"', () => {

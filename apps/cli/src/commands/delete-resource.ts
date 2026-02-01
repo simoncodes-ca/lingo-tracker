@@ -17,9 +17,7 @@ export interface DeleteResourceOptions {
   yes?: boolean;
 }
 
-export async function deleteResourceCommand(
-  options: DeleteResourceOptions,
-): Promise<void> {
+export async function deleteResourceCommand(options: DeleteResourceOptions): Promise<void> {
   const loaded = loadConfiguration({ exitOnError: false });
   if (!loaded) return;
   const { config, cwd } = loaded;
@@ -47,9 +45,7 @@ export async function deleteResourceCommand(
   if (!options.yes && isInteractiveTerminal()) {
     const confirmed = await confirmDeletion(keys);
     if (!confirmed) {
-      ConsoleFormatter.error(
-        ErrorMessages.OPERATION_CANCELLED('Delete resource'),
-      );
+      ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Delete resource'));
       return;
     }
   }
@@ -71,15 +67,11 @@ export async function deleteResourceCommand(
       }
     }
   } catch (e: unknown) {
-    ConsoleFormatter.error(
-      e instanceof Error ? e.message : 'Failed to delete resource',
-    );
+    ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to delete resource');
   }
 }
 
-async function promptForMissing(
-  options: DeleteResourceOptions,
-): Promise<{ key: string }> {
+async function promptForMissing(options: DeleteResourceOptions): Promise<{ key: string }> {
   const questions: prompts.PromptObject[] = [];
 
   if (!options.key) {
@@ -87,8 +79,7 @@ async function promptForMissing(
       type: 'text',
       name: 'key',
       message: 'Resource key(s) (single key or comma-separated)',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 

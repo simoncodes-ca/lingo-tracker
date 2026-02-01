@@ -12,8 +12,7 @@ import { ResourceTreeDto, CacheStatusDto } from '@simoncodes-ca/data-transfer';
  * to wait for multiple microtasks to allow signals to update.
  * We use a small delay to ensure all async operations complete.
  */
-const waitForSignals = () =>
-  new Promise<void>((resolve) => setTimeout(resolve, 10));
+const waitForSignals = () => new Promise<void>((resolve) => setTimeout(resolve, 10));
 
 describe('BrowserStore', () => {
   let store: InstanceType<typeof BrowserStore>;
@@ -82,9 +81,7 @@ describe('BrowserStore', () => {
 
   describe('Collection Selection', () => {
     it('should set selected collection and load root folders', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({
@@ -103,9 +100,7 @@ describe('BrowserStore', () => {
     });
 
     it('should reset state when switching collections', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       // Select first collection
@@ -133,9 +128,7 @@ describe('BrowserStore', () => {
 
   describe('Folder Tree Loading', () => {
     it('should load root folders successfully when cache is ready', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({
@@ -154,12 +147,8 @@ describe('BrowserStore', () => {
 
     it('should handle root folder loading errors', async () => {
       const error = new Error('Collection not found');
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
-      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(
-        throwError(() => error),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(throwError(() => error));
 
       store.setSelectedCollection({
         collectionName: 'nonexistent',
@@ -174,9 +163,7 @@ describe('BrowserStore', () => {
     });
 
     it('should set loading state during folder tree fetch', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       expect(store.isFolderTreeLoading()).toBe(false);
@@ -195,9 +182,7 @@ describe('BrowserStore', () => {
 
   describe('Folder Children Loading', () => {
     it('should load folder children and update tree', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree')
         .mockReturnValueOnce(of(mockTreeRoot))
         .mockReturnValueOnce(of(mockTreeCommon));
@@ -224,9 +209,7 @@ describe('BrowserStore', () => {
 
     it('should handle folder children loading errors', async () => {
       const error = new Error('Failed to load folder contents');
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree')
         .mockReturnValueOnce(of(mockTreeRoot))
         .mockReturnValueOnce(throwError(() => error));
@@ -249,9 +232,7 @@ describe('BrowserStore', () => {
 
   describe('Folder Selection and Translation Loading', () => {
     it('should select folder and load its translations', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree')
         .mockReturnValueOnce(of(mockTreeRoot))
         .mockReturnValueOnce(of(mockTreeCommon));
@@ -275,9 +256,7 @@ describe('BrowserStore', () => {
 
     it('should handle translation loading errors', async () => {
       const error = new Error('Failed to load translations');
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree')
         .mockReturnValueOnce(of(mockTreeRoot))
         .mockReturnValueOnce(throwError(() => error));
@@ -299,9 +278,7 @@ describe('BrowserStore', () => {
     });
 
     it('should set loading state during translation fetch', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree')
         .mockReturnValueOnce(of(mockTreeRoot))
         .mockReturnValueOnce(of(mockTreeCommon));
@@ -331,9 +308,7 @@ describe('BrowserStore', () => {
     });
 
     it('should filter folders based on search term', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({
@@ -351,9 +326,7 @@ describe('BrowserStore', () => {
     });
 
     it('should return all folders when filter is empty', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({
@@ -392,9 +365,7 @@ describe('BrowserStore', () => {
 
   describe('Computed Signals', () => {
     it('should compute breadcrumbs from current folder path', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.selectFolder('common.buttons.primary');
@@ -413,9 +384,7 @@ describe('BrowserStore', () => {
     it('should compute isLoading correctly', async () => {
       expect(store.isLoading()).toBe(false);
 
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
       store.setSelectedCollection({
         collectionName: 'app-translations',
@@ -435,9 +404,7 @@ describe('BrowserStore', () => {
         children: [],
       };
 
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(emptyTree));
 
       store.setSelectedCollection({
@@ -453,9 +420,7 @@ describe('BrowserStore', () => {
     });
 
     it('should compute hasTranslations and translationCount correctly', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({
@@ -474,12 +439,8 @@ describe('BrowserStore', () => {
   describe('Error Handling', () => {
     it('should clear error when clearError is called', async () => {
       const error = new Error('Test error');
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
-      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(
-        throwError(() => error),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(throwError(() => error));
 
       store.setSelectedCollection({
         collectionName: 'app-translations',
@@ -496,9 +457,7 @@ describe('BrowserStore', () => {
 
     it('should clear error when new operation starts', async () => {
       const error = new Error('Test error');
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree')
         .mockReturnValueOnce(throwError(() => error))
         .mockReturnValueOnce(of(mockTreeRoot));
@@ -535,9 +494,7 @@ describe('BrowserStore', () => {
 
   describe('Reset', () => {
     it('should reset store to initial state', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({
@@ -565,9 +522,7 @@ describe('BrowserStore', () => {
     beforeEach(() => {
       // Ensure localStorage is clean for each test
       localStorage.clear();
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
     });
 
     it('should update density mode state', () => {
@@ -642,10 +597,7 @@ describe('BrowserStore', () => {
         sortDirection: 'asc' as const,
         selectedStatuses: [],
       };
-      localStorage.setItem(
-        `lingo-tracker:view-prefs:${coll}`,
-        JSON.stringify(prefs),
-      );
+      localStorage.setItem(`lingo-tracker:view-prefs:${coll}`, JSON.stringify(prefs));
 
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
@@ -694,10 +646,7 @@ describe('BrowserStore', () => {
         sortDirection: 'asc' as const,
         selectedStatuses: [],
       };
-      localStorage.setItem(
-        `lingo-tracker:view-prefs:${coll}`,
-        JSON.stringify(prefs),
-      );
+      localStorage.setItem(`lingo-tracker:view-prefs:${coll}`, JSON.stringify(prefs));
 
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
@@ -736,9 +685,7 @@ describe('BrowserStore', () => {
 
   describe('Refresh Translations', () => {
     it('should reload current folder translations', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree')
         .mockReturnValueOnce(of(mockTreeRoot))
         .mockReturnValueOnce(of(mockTreeCommon))
@@ -766,9 +713,7 @@ describe('BrowserStore', () => {
 
   describe('Locale Filtering', () => {
     beforeEach(async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
       store.setSelectedCollection({
         collectionName: 'test',
@@ -926,9 +871,7 @@ describe('BrowserStore', () => {
 
   describe('Search State', () => {
     beforeEach(async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
       store.setSelectedCollection({
         collectionName: 'test',
@@ -974,9 +917,7 @@ describe('BrowserStore', () => {
 
     describe('Computed: displayedTranslations', () => {
       it('should return folder translations when not in search mode', async () => {
-        vi.spyOn(apiService, 'getResourceTree').mockReturnValue(
-          of(mockTreeRoot),
-        );
+        vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
         store.loadRootFolders();
 
@@ -1058,9 +999,7 @@ describe('BrowserStore', () => {
 
       it('should handle search errors', async () => {
         const error = new Error('Search failed');
-        vi.spyOn(apiService, 'searchTranslations').mockReturnValue(
-          throwError(() => error),
-        );
+        vi.spyOn(apiService, 'searchTranslations').mockReturnValue(throwError(() => error));
 
         store.searchTranslations('test');
 
@@ -1092,9 +1031,7 @@ describe('BrowserStore', () => {
 
   describe('Resource Deletion', () => {
     it('should remove resource from translations cache', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({
@@ -1113,9 +1050,7 @@ describe('BrowserStore', () => {
     });
 
     it('should remove resource from search results when in search mode', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({
@@ -1186,12 +1121,8 @@ describe('BrowserStore', () => {
         children: [],
       };
 
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
-      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(
-        of(mockMultipleResources),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockMultipleResources));
 
       store.setSelectedCollection({
         collectionName: 'test',
@@ -1210,9 +1141,7 @@ describe('BrowserStore', () => {
     });
 
     it('should handle removal of non-existent resource gracefully', async () => {
-      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(
-        of(mockCacheReady),
-      );
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
 
       store.setSelectedCollection({

@@ -1,8 +1,4 @@
-import {
-  buildTypeHierarchy,
-  serializeHierarchy,
-  TypeHierarchyNode,
-} from './hierarchy-builder';
+import { buildTypeHierarchy, serializeHierarchy, type TypeHierarchyNode } from './hierarchy-builder';
 
 describe('Hierarchy Builder', () => {
   describe('buildTypeHierarchy', () => {
@@ -24,15 +20,11 @@ describe('Hierarchy Builder', () => {
 
       expect(result.children['COMMON']).toBeDefined();
       expect(result.children['COMMON'].children['BUTTONS']).toBeDefined();
-      expect(
-        result.children['COMMON'].children['BUTTONS'].children['OK'],
-      ).toEqual({
+      expect(result.children['COMMON'].children['BUTTONS'].children['OK']).toEqual({
         children: {},
         value: 'common.buttons.ok',
       });
-      expect(
-        result.children['COMMON'].children['BUTTONS'].children['CANCEL'],
-      ).toEqual({
+      expect(result.children['COMMON'].children['BUTTONS'].children['CANCEL']).toEqual({
         children: {},
         value: 'common.buttons.cancel',
       });
@@ -46,9 +38,7 @@ describe('Hierarchy Builder', () => {
         children: {},
         value: 'common.title',
       });
-      expect(
-        result.children['COMMON'].children['BUTTONS'].children['OK'],
-      ).toEqual({
+      expect(result.children['COMMON'].children['BUTTONS'].children['OK']).toEqual({
         children: {},
         value: 'common.buttons.ok',
       });
@@ -98,9 +88,7 @@ describe('Hierarchy Builder', () => {
       expect(output).toContain('COMMON: {');
       expect(output).toContain("OK: 'common.ok',");
       expect(output).toContain('} as const;');
-      expect(output).toContain(
-        'export type CommonTokens = typeof COMMON_TOKENS;',
-      );
+      expect(output).toContain('export type CommonTokens = typeof COMMON_TOKENS;');
     });
 
     it('should properly indent nested objects', () => {

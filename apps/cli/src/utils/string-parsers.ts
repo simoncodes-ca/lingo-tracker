@@ -8,9 +8,7 @@
  * parseCommaSeparatedList("") → undefined
  * parseCommaSeparatedList(undefined) → undefined
  */
-export function parseCommaSeparatedList(
-  input: string | undefined,
-): string[] | undefined {
+export function parseCommaSeparatedList(input: string | undefined): string[] | undefined {
   if (!input) return undefined;
 
   const result = input
@@ -25,10 +23,7 @@ export function parseCommaSeparatedList(
  * Same as parseCommaSeparatedList but throws if result is empty.
  * Use when at least one value is required.
  */
-export function parseCommaSeparatedListRequired(
-  input: string | undefined,
-  fieldName = 'value',
-): string[] {
+export function parseCommaSeparatedListRequired(input: string | undefined, fieldName = 'value'): string[] {
   const result = parseCommaSeparatedList(input);
   if (!result || result.length === 0) {
     throw new Error(`At least one ${fieldName} is required`);

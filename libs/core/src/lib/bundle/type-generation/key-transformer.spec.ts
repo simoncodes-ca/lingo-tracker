@@ -1,8 +1,4 @@
-import {
-  bundleKeyToConstantName,
-  segmentToPropertyName,
-  splitKeyIntoSegments,
-} from './key-transformer';
+import { bundleKeyToConstantName, segmentToPropertyName, splitKeyIntoSegments } from './key-transformer';
 
 describe('Key Transformer', () => {
   describe('bundleKeyToConstantName', () => {
@@ -55,11 +51,7 @@ describe('Key Transformer', () => {
 
   describe('splitKeyIntoSegments', () => {
     it('should split simple dot-delimited key', () => {
-      expect(splitKeyIntoSegments('common.buttons.ok')).toEqual([
-        'common',
-        'buttons',
-        'ok',
-      ]);
+      expect(splitKeyIntoSegments('common.buttons.ok')).toEqual(['common', 'buttons', 'ok']);
     });
 
     it('should handle single segment key', () => {
@@ -67,11 +59,7 @@ describe('Key Transformer', () => {
     });
 
     it('should handle key with numeric segments', () => {
-      expect(splitKeyIntoSegments('errors.404.message')).toEqual([
-        'errors',
-        '404',
-        'message',
-      ]);
+      expect(splitKeyIntoSegments('errors.404.message')).toEqual(['errors', '404', 'message']);
     });
   });
 });

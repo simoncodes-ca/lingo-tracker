@@ -6,7 +6,7 @@ import {
   validateICUSyntax,
 } from './icu-auto-fixer';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
-import { ImportedResource } from './types';
+import type { ImportedResource } from './types';
 
 describe('ICU Auto-Fix Integration', () => {
   describe('Real-world Translation Scenarios', () => {
@@ -24,42 +24,33 @@ describe('ICU Auto-Fix Integration', () => {
 
     it('should handle French translation with plural forms', () => {
       const baseValue = '{count, plural, one {# item} other {# items}}';
-      const translatedValue =
-        '{nombre, plural, one {# élément} other {# éléments}}';
+      const translatedValue = '{nombre, plural, one {# élément} other {# éléments}}';
 
       const result = autoFixICUPlaceholders(baseValue, translatedValue);
 
       expect(result.wasFixed).toBe(true);
-      expect(result.value).toBe(
-        '{count, plural, one {# élément} other {# éléments}}',
-      );
+      expect(result.value).toBe('{count, plural, one {# élément} other {# éléments}}');
     });
 
     it('should handle German translation with select statements', () => {
       const baseValue = '{gender, select, male {he} female {she} other {they}}';
-      const translatedValue =
-        '{geschlecht, select, male {er} female {sie} other {sie}}';
+      const translatedValue = '{geschlecht, select, male {er} female {sie} other {sie}}';
 
       const result = autoFixICUPlaceholders(baseValue, translatedValue);
 
       expect(result.wasFixed).toBe(true);
-      expect(result.value).toBe(
-        '{gender, select, male {er} female {sie} other {sie}}',
-      );
+      expect(result.value).toBe('{gender, select, male {er} female {sie} other {sie}}');
     });
 
     it('should handle complex message with multiple placeholder types', () => {
-      const baseValue =
-        'Hello {name}, you have {count, plural, one {# message} other {# messages}} from {sender}';
+      const baseValue = 'Hello {name}, you have {count, plural, one {# message} other {# messages}} from {sender}';
       const translatedValue =
         'Hola {nombre}, tienes {cantidad, plural, one {# mensaje} other {# mensajes}} de {remitente}';
 
       const result = autoFixICUPlaceholders(baseValue, translatedValue);
 
       expect(result.wasFixed).toBe(true);
-      expect(result.value).toBe(
-        'Hola {name}, tienes {count, plural, one {# mensaje} other {# mensajes}} de {sender}',
-      );
+      expect(result.value).toBe('Hola {name}, tienes {count, plural, one {# mensaje} other {# mensajes}} de {sender}');
     });
   });
 
@@ -125,12 +116,8 @@ describe('ICU Auto-Fix Integration', () => {
       });
 
       expect(result.resources[0].value).toBe('Hola {name}');
-      expect(result.resources[1].value).toBe(
-        '{count, plural, one {# elemento} other {# elementos}}',
-      );
-      expect(result.resources[2].value).toBe(
-        'Bienvenido {user}, tienes {count} notificaciones',
-      );
+      expect(result.resources[1].value).toBe('{count, plural, one {# elemento} other {# elementos}}');
+      expect(result.resources[2].value).toBe('Bienvenido {user}, tienes {count} notificaciones');
       expect(result.resources[3].value).toBe('Sin marcadores de posición');
 
       expect(result.autoFixes).toHaveLength(3); // First 3 were fixed
@@ -161,26 +148,20 @@ describe('ICU Auto-Fix Integration', () => {
       const extraError = result.autoFixErrors.find((e) => e.key === 'extra');
       expect(extraError?.error).toContain('extra placeholders');
 
-      const malformedError = result.autoFixErrors.find(
-        (e) => e.key === 'malformed',
-      );
+      const malformedError = result.autoFixErrors.find((e) => e.key === 'malformed');
       expect(malformedError?.error).toContain('Failed to parse');
     });
   });
 
   describe('Edge Cases and Complex Patterns', () => {
     it('should handle nested ICU patterns', () => {
-      const baseValue =
-        '{count, plural, one {You have {count} item} other {You have {count} items}}';
-      const translatedValue =
-        '{numero, plural, one {Tienes {numero} elemento} other {Tienes {numero} elementos}}';
+      const baseValue = '{count, plural, one {You have {count} item} other {You have {count} items}}';
+      const translatedValue = '{numero, plural, one {Tienes {numero} elemento} other {Tienes {numero} elementos}}';
 
       const result = autoFixICUPlaceholders(baseValue, translatedValue);
 
       expect(result.wasFixed).toBe(true);
-      expect(result.value).toBe(
-        '{count, plural, one {Tienes {count} elemento} other {Tienes {count} elementos}}',
-      );
+      expect(result.value).toBe('{count, plural, one {Tienes {count} elemento} other {Tienes {count} elementos}}');
     });
 
     it('should handle number formatters', () => {
@@ -195,28 +176,22 @@ describe('ICU Auto-Fix Integration', () => {
 
     it('should handle date and time formatters', () => {
       const baseValue = 'Date: {today, date, short} at {now, time, medium}';
-      const translatedValue =
-        'Fecha: {hoy, date, short} a las {ahora, time, medium}';
+      const translatedValue = 'Fecha: {hoy, date, short} a las {ahora, time, medium}';
 
       const result = autoFixICUPlaceholders(baseValue, translatedValue);
 
       expect(result.wasFixed).toBe(true);
-      expect(result.value).toBe(
-        'Fecha: {today, date, short} a las {now, time, medium}',
-      );
+      expect(result.value).toBe('Fecha: {today, date, short} a las {now, time, medium}');
     });
 
     it('should preserve whitespace and punctuation', () => {
       const baseValue = 'Hello   {name}  ,  you have  {count}  items  .';
-      const translatedValue =
-        'Hola   {nombre}  ,  tienes  {cantidad}  elementos  .';
+      const translatedValue = 'Hola   {nombre}  ,  tienes  {cantidad}  elementos  .';
 
       const result = autoFixICUPlaceholders(baseValue, translatedValue);
 
       expect(result.wasFixed).toBe(true);
-      expect(result.value).toBe(
-        'Hola   {name}  ,  tienes  {count}  elementos  .',
-      );
+      expect(result.value).toBe('Hola   {name}  ,  tienes  {count}  elementos  .');
     });
 
     it('should handle escaped braces in translations', () => {
@@ -257,20 +232,14 @@ describe('ICU Auto-Fix Integration', () => {
   describe('Utility Functions', () => {
     it('hasICUPlaceholders should detect various placeholder types', () => {
       expect(hasICUPlaceholders('Hello {name}')).toBe(true);
-      expect(hasICUPlaceholders('{count, plural, one {#} other {#}}')).toBe(
-        true,
-      );
-      expect(
-        hasICUPlaceholders('{gender, select, male {he} female {she}}'),
-      ).toBe(true);
+      expect(hasICUPlaceholders('{count, plural, one {#} other {#}}')).toBe(true);
+      expect(hasICUPlaceholders('{gender, select, male {he} female {she}}')).toBe(true);
       expect(hasICUPlaceholders('No placeholders')).toBe(false);
       expect(hasICUPlaceholders("'{escaped}'")).toBe(false);
     });
 
     it('extractICUPlaceholders should extract all placeholder types', () => {
-      const result = extractICUPlaceholders(
-        'Hello {name}, you have {count, plural, one {# item} other {# items}}',
-      );
+      const result = extractICUPlaceholders('Hello {name}, you have {count, plural, one {# item} other {# items}}');
 
       expect(result.success).toBe(true);
       expect(result.placeholders).toHaveLength(2);
@@ -282,9 +251,7 @@ describe('ICU Auto-Fix Integration', () => {
 
     it('validateICUSyntax should validate syntax', () => {
       expect(validateICUSyntax('Hello {name}')).toBe(true);
-      expect(validateICUSyntax('{count, plural, one {#} other {#}}')).toBe(
-        true,
-      );
+      expect(validateICUSyntax('{count, plural, one {#} other {#}}')).toBe(true);
       expect(validateICUSyntax('Hello {name')).toBe(false);
       expect(validateICUSyntax('Hello name}')).toBe(false);
     });

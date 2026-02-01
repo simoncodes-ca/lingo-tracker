@@ -23,17 +23,12 @@ describe('Cleanup Empty Folders', () => {
       const emptyFolder = path.join(testDir, 'empty');
 
       // Mock getAllFoldersBottomUp to return our test structure
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        emptyFolder,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([emptyFolder, testDir]);
 
       // Mock isFolderEmpty
-      vi.spyOn(folderUtils, 'isFolderEmpty').mockImplementation(
-        (folderPath) => {
-          return folderPath === emptyFolder;
-        },
-      );
+      vi.spyOn(folderUtils, 'isFolderEmpty').mockImplementation((folderPath) => {
+        return folderPath === emptyFolder;
+      });
 
       // Mock rmSync to track calls
       vi.mocked(fs.rmSync).mockImplementation(() => undefined);
@@ -49,10 +44,7 @@ describe('Cleanup Empty Folders', () => {
       const testDir = '/test-root';
       const emptyFolder = path.join(testDir, 'empty-entries');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        emptyFolder,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([emptyFolder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
       vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
@@ -67,10 +59,7 @@ describe('Cleanup Empty Folders', () => {
       const testDir = '/test-root';
       const folder = path.join(testDir, 'only-meta');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        folder,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([folder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
       vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
@@ -85,10 +74,7 @@ describe('Cleanup Empty Folders', () => {
       const testDir = '/test-root';
       const folder = path.join(testDir, 'with-gitkeep');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        folder,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([folder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
       vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
@@ -103,10 +89,7 @@ describe('Cleanup Empty Folders', () => {
       const testDir = '/test-root';
       const folder = path.join(testDir, 'with-entries');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        folder,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([folder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(false);
 
       const result = cleanupEmptyFolders(testDir);
@@ -120,11 +103,7 @@ describe('Cleanup Empty Folders', () => {
       const parentFolder = path.join(testDir, 'parent');
       const childFolder = path.join(parentFolder, 'child');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        childFolder,
-        parentFolder,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([childFolder, parentFolder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(false);
 
       const result = cleanupEmptyFolders(testDir);
@@ -138,11 +117,7 @@ describe('Cleanup Empty Folders', () => {
       const apps = path.join(testDir, 'apps');
       const common = path.join(apps, 'common');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        common,
-        apps,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([common, apps, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
       vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
@@ -187,12 +162,10 @@ describe('Cleanup Empty Folders', () => {
         testDir,
       ]);
 
-      vi.spyOn(folderUtils, 'isFolderEmpty').mockImplementation(
-        (folderPath) => {
-          // Only buttons and common are empty
-          return folderPath === buttons || folderPath === common;
-        },
-      );
+      vi.spyOn(folderUtils, 'isFolderEmpty').mockImplementation((folderPath) => {
+        // Only buttons and common are empty
+        return folderPath === buttons || folderPath === common;
+      });
 
       vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
@@ -213,11 +186,7 @@ describe('Cleanup Empty Folders', () => {
       const emptyFolder1 = path.join(testDir, 'empty1');
       const emptyFolder2 = path.join(testDir, 'empty2');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        emptyFolder1,
-        emptyFolder2,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([emptyFolder1, emptyFolder2, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
 
       const result = cleanupEmptyFolders(testDir, true);
@@ -236,18 +205,11 @@ describe('Cleanup Empty Folders', () => {
       const empty2 = path.join(testDir, 'empty2');
       const withEntries = path.join(testDir, 'with-entries');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        empty1,
-        empty2,
-        withEntries,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([empty1, empty2, withEntries, testDir]);
 
-      vi.spyOn(folderUtils, 'isFolderEmpty').mockImplementation(
-        (folderPath) => {
-          return folderPath === empty1 || folderPath === empty2;
-        },
-      );
+      vi.spyOn(folderUtils, 'isFolderEmpty').mockImplementation((folderPath) => {
+        return folderPath === empty1 || folderPath === empty2;
+      });
 
       vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
@@ -264,10 +226,7 @@ describe('Cleanup Empty Folders', () => {
       const testDir = '/test-root';
       const folder = path.join(testDir, 'hidden-files');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        folder,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([folder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
       vi.mocked(fs.rmSync).mockImplementation(() => undefined);
 
@@ -281,10 +240,7 @@ describe('Cleanup Empty Folders', () => {
       const testDir = '/test-root';
       const emptyFolder = path.join(testDir, 'empty');
 
-      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([
-        emptyFolder,
-        testDir,
-      ]);
+      vi.spyOn(folderUtils, 'getAllFoldersBottomUp').mockReturnValue([emptyFolder, testDir]);
       vi.spyOn(folderUtils, 'isFolderEmpty').mockReturnValue(true);
 
       // Mock rmSync to throw an error

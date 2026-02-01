@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  applyICUAutoFixToResource,
-  applyICUAutoFixToResources,
-} from './apply-icu-auto-fix';
-import { ImportedResource } from './types';
+import { applyICUAutoFixToResource, applyICUAutoFixToResources } from './apply-icu-auto-fix';
+import type { ImportedResource } from './types';
 
 describe('apply-icu-auto-fix', () => {
   describe('applyICUAutoFixToResource', () => {
@@ -100,9 +97,7 @@ describe('apply-icu-auto-fix', () => {
         baseValue: '{count, plural, one {# item} other {# items}}',
       });
 
-      expect(result.resource.value).toBe(
-        '{count, plural, one {# elemento} other {# elementos}}',
-      );
+      expect(result.resource.value).toBe('{count, plural, one {# elemento} other {# elementos}}');
       expect(result.autoFix).toBeDefined();
       expect(result.autoFix?.description).toContain('{numero, plural');
     });
@@ -159,9 +154,7 @@ describe('apply-icu-auto-fix', () => {
       });
 
       expect(progressMessages.length).toBeGreaterThan(0);
-      expect(progressMessages.some((msg) => msg.includes('test.key'))).toBe(
-        true,
-      );
+      expect(progressMessages.some((msg) => msg.includes('test.key'))).toBe(true);
     });
   });
 
@@ -233,9 +226,7 @@ describe('apply-icu-auto-fix', () => {
     });
 
     it('should skip resources without base value', () => {
-      const resources: ImportedResource[] = [
-        { key: 'key1', value: 'Hola {nombre}' },
-      ];
+      const resources: ImportedResource[] = [{ key: 'key1', value: 'Hola {nombre}' }];
 
       const result = applyICUAutoFixToResources({
         resources,
@@ -247,9 +238,7 @@ describe('apply-icu-auto-fix', () => {
     });
 
     it('should call progress callback when verbose is enabled', () => {
-      const resources: ImportedResource[] = [
-        { key: 'key1', value: 'Hola {nombre}' },
-      ];
+      const resources: ImportedResource[] = [{ key: 'key1', value: 'Hola {nombre}' }];
 
       const progressMessages: string[] = [];
 

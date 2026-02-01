@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { generateBundleTypes } from './generate-types';
-import { LingoTrackerConfig } from '../../../config/lingo-tracker-config';
+import type { LingoTrackerConfig } from '../../../config/lingo-tracker-config';
 import * as resourceLoader from '../resource-loader';
 
 vi.mock('fs');
@@ -82,9 +82,7 @@ describe('generateBundleTypes', () => {
   });
 
   it('should create directory if it does not exist', async () => {
-    vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([
-      { key: 'test', value: 'test' },
-    ]);
+    vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'test', value: 'test' }]);
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
     await generateBundleTypes('main', mockConfig);
@@ -113,9 +111,7 @@ describe('generateBundleTypes', () => {
       },
     };
 
-    vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([
-      { key: 'ok', value: 'OK' },
-    ]);
+    vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'ok', value: 'OK' }]);
 
     const result = await generateBundleTypes('prefixed', configWithPrefix);
 

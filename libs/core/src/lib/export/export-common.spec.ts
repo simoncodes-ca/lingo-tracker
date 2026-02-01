@@ -1,14 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
-import {
-  RESOURCE_ENTRIES_FILENAME,
-  TRACKER_META_FILENAME,
-} from '../../constants';
+import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
 import {
   loadResourcesFromCollections,
   filterResources,
   validateOutputDirectory,
-  LoadedResource,
+  type LoadedResource,
 } from './export-common';
 
 // Mock fs module
@@ -42,9 +39,7 @@ describe('export-common', () => {
         throw new Error('Permission denied');
       });
 
-      expect(() => validateOutputDirectory('/dist/export')).toThrow(
-        'Could not create output directory',
-      );
+      expect(() => validateOutputDirectory('/dist/export')).toThrow('Could not create output directory');
     });
 
     it('should throw error if directory is not writable', () => {
@@ -53,9 +48,7 @@ describe('export-common', () => {
         throw new Error('Not writable');
       });
 
-      expect(() => validateOutputDirectory('/dist/export')).toThrow(
-        'not writable',
-      );
+      expect(() => validateOutputDirectory('/dist/export')).toThrow('not writable');
     });
   });
 
@@ -175,12 +168,7 @@ describe('export-common', () => {
     ];
 
     it('should filter by status', () => {
-      const result = filterResources(
-        mockResources,
-        'es',
-        ['translated'],
-        undefined,
-      );
+      const result = filterResources(mockResources, 'es', ['translated'], undefined);
       expect(result).toHaveLength(1);
       expect(result[0].key).toBe('key1');
     });
@@ -192,12 +180,7 @@ describe('export-common', () => {
     });
 
     it('should combine status and tag filters', () => {
-      const result = filterResources(
-        mockResources,
-        'es',
-        ['translated'],
-        ['backend'],
-      );
+      const result = filterResources(mockResources, 'es', ['translated'], ['backend']);
       expect(result).toHaveLength(0);
     });
 

@@ -1,4 +1,4 @@
-import { TranslationStatus } from './translation-status';
+import type { TranslationStatus } from './translation-status';
 
 /**
  * Metadata for a single locale entry.

@@ -66,7 +66,7 @@ async function processFile(inputPath) {
     const flattened = flattenTranslations(parsedJson);
     const outputJson = JSON.stringify(flattened, null, 2);
 
-    await writeFile(outputPath, outputJson + '\n', 'utf-8');
+    await writeFile(outputPath, `${outputJson}\n`, 'utf-8');
     console.log(`Processing: ${inputPath} → ${outputPath}`);
   } catch (error) {
     if (error instanceof SyntaxError) {
@@ -85,9 +85,7 @@ async function main() {
   const pattern = process.argv[2];
 
   if (!pattern) {
-    console.error(
-      'Usage: node scripts/flatten-translations.js <input-file-or-glob-pattern>',
-    );
+    console.error('Usage: node scripts/flatten-translations.js <input-file-or-glob-pattern>');
     process.exit(1);
   }
 
@@ -108,9 +106,7 @@ async function main() {
       await processFile(filePath);
     }
 
-    console.log(
-      `\nProcessed ${matchedFiles.length} file${matchedFiles.length === 1 ? '' : 's'}`,
-    );
+    console.log(`\nProcessed ${matchedFiles.length} file${matchedFiles.length === 1 ? '' : 's'}`);
   } catch (error) {
     console.error(`Error: ${error.message}`);
     process.exit(1);

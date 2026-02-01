@@ -1,13 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { ResourceEntry } from './resource-entry';
-import { TranslationStatus } from './translation-status';
+import type { ResourceEntry } from './resource-entry';
+import type { TranslationStatus } from './translation-status';
 import { validateAndResolvePaths } from '../lib/resource/resource-file-paths';
 import { ensureDirectoryExists } from '../lib/file-io/directory-operations';
-import {
-  readResourceEntries,
-  readTrackerMetadata,
-  writeJsonFile,
-} from '../lib/file-io/json-file-operations';
+import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
 import { createResourceMetadata } from '../lib/resource/metadata-operations';
 
 export interface AddResourceOptions {
@@ -66,9 +62,7 @@ export function addResource(
   });
 
   // Check if entry already exists
-  const isNewEntry =
-    !existsSync(paths.resourceEntriesPath) ||
-    !hasEntryKey(paths.resourceEntriesPath, paths.entryKey);
+  const isNewEntry = !existsSync(paths.resourceEntriesPath) || !hasEntryKey(paths.resourceEntriesPath, paths.entryKey);
 
   // Load or create resource entries
   const resourceEntries = readResourceEntries(paths.resourceEntriesPath, {});

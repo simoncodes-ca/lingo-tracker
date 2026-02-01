@@ -1,9 +1,4 @@
-import {
-  ResourceTreeDto,
-  ResourceSummaryDto,
-  FolderNodeDto,
-  TranslationStatus,
-} from '@simoncodes-ca/data-transfer';
+import { ResourceTreeDto, ResourceSummaryDto, FolderNodeDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
 import { ResourceTreeNode, ResourceTreeEntry } from '@simoncodes-ca/core';
 
 export function mapResourceTreeToDto(node: ResourceTreeNode): ResourceTreeDto {
@@ -14,9 +9,7 @@ export function mapResourceTreeToDto(node: ResourceTreeNode): ResourceTreeDto {
   };
 }
 
-function mapResourceEntryToSummary(
-  entry: ResourceTreeEntry,
-): ResourceSummaryDto {
+function mapResourceEntryToSummary(entry: ResourceTreeEntry): ResourceSummaryDto {
   // Find base locale (the one without status/baseChecksum in metadata)
   let baseLocale: string | undefined;
   for (const [locale, meta] of Object.entries(entry.metadata)) {

@@ -1,22 +1,7 @@
 import { computed, inject, effect } from '@angular/core';
-import {
-  signalStore,
-  withState,
-  withComputed,
-  withMethods,
-  patchState,
-} from '@ngrx/signals';
+import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import {
-  pipe,
-  tap,
-  switchMap,
-  catchError,
-  of,
-  interval,
-  takeWhile,
-  startWith,
-} from 'rxjs';
+import { pipe, tap, switchMap, catchError, of, interval, takeWhile, startWith } from 'rxjs';
 import {
   FolderNodeDto,
   ResourceSummaryDto,
@@ -148,22 +133,17 @@ export const BrowserStore = signalStore(
         if (!filter) return rootFolders();
 
         const matchesFilter = (folder: FolderNodeDto): boolean =>
-          folder.name.toLowerCase().includes(filter) ||
-          folder.fullPath.toLowerCase().includes(filter);
+          folder.name.toLowerCase().includes(filter) || folder.fullPath.toLowerCase().includes(filter);
 
         const filterTree = (folders: FolderNodeDto[]): FolderNodeDto[] =>
           folders.reduce<FolderNodeDto[]>((acc, folder) => {
             const folderMatches = matchesFilter(folder);
-            const childrenMatch = folder.tree?.children
-              ? filterTree(folder.tree.children)
-              : [];
+            const childrenMatch = folder.tree?.children ? filterTree(folder.tree.children) : [];
 
             if (folderMatches || childrenMatch.length > 0) {
               acc.push({
                 ...folder,
-                tree: folder.tree
-                  ? { ...folder.tree, children: childrenMatch }
-                  : undefined,
+                tree: folder.tree ? { ...folder.tree, children: childrenMatch } : undefined,
               });
             }
 
@@ -179,9 +159,7 @@ export const BrowserStore = signalStore(
         return path.split('.');
       }),
 
-      isLoading: computed(
-        () => isFolderTreeLoading() || isTranslationsLoading(),
-      ),
+      isLoading: computed(() => isFolderTreeLoading() || isTranslationsLoading()),
 
       isEmpty: computed(() => translations().length === 0),
 
@@ -199,8 +177,7 @@ export const BrowserStore = signalStore(
         const selected = selectedLocales();
         const available = availableLocales();
 
-        if (selected.length === 0 || selected.length === available.length)
-          return 'All locales';
+        if (selected.length === 0 || selected.length === available.length) return 'All locales';
         if (selected.length === 1) return selected[0];
         return `${selected.length} locales`;
       }),
@@ -243,9 +220,7 @@ export const BrowserStore = signalStore(
 
       isShowingAllStatuses: computed(() => selectedStatuses().length === 0),
 
-      displayedTranslations: computed(() =>
-        isSearchMode() ? searchResults() : translations(),
-      ),
+      displayedTranslations: computed(() => (isSearchMode() ? searchResults() : translations())),
 
       sortedTranslations: computed(() => {
         const items = isSearchMode() ? searchResults() : translations();
@@ -254,10 +229,7 @@ export const BrowserStore = signalStore(
         // Filter by status first
         let filteredItems = items;
         if (statuses.length > 0) {
-          const localesForFiltering =
-            selectedLocales().length > 0
-              ? selectedLocales()
-              : availableLocales();
+          const localesForFiltering = selectedLocales().length > 0 ? selectedLocales() : availableLocales();
 
           filteredItems = items.filter((item) => {
             return localesForFiltering.some((locale) => {
@@ -267,12 +239,7 @@ export const BrowserStore = signalStore(
           });
         }
 
-        return sortTranslations(
-          filteredItems,
-          sortField(),
-          sortDirection(),
-          selectedLocales(),
-        );
+        return sortTranslations(filteredItems, sortField(), sortDirection(), selectedLocales());
       }),
 
       isCacheReady: computed(() => cacheStatus() === 'ready'),
@@ -286,9 +253,7 @@ export const BrowserStore = signalStore(
 
       collectionTotalKeys: computed(() => collectionStats()?.totalKeys ?? null),
 
-      collectionLocaleCount: computed(
-        () => collectionStats()?.localeCount ?? null,
-      ),
+      collectionLocaleCount: computed(() => collectionStats()?.localeCount ?? null),
 
       hasCollectionStats: computed(() => collectionStats() !== null),
     }),
@@ -361,10 +326,7 @@ export const BrowserStore = signalStore(
                 }),
               ),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to load translations';
+                const errorMessage = error instanceof Error ? error.message : 'Failed to load translations';
                 patchState(store, {
                   isTranslationsLoading: false,
                   error: errorMessage,
@@ -378,9 +340,7 @@ export const BrowserStore = signalStore(
 
       loadRootFolders: rxMethod<void>(
         pipe(
-          tap(() =>
-            patchState(store, { isFolderTreeLoading: true, error: null }),
-          ),
+          tap(() => patchState(store, { isFolderTreeLoading: true, error: null })),
           switchMap(() => {
             const collection = store.selectedCollection();
             const includeNested = store.showNestedResources();
@@ -400,10 +360,7 @@ export const BrowserStore = signalStore(
                 }),
               ),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to load folders';
+                const errorMessage = error instanceof Error ? error.message : 'Failed to load folders';
                 patchState(store, {
                   isFolderTreeLoading: false,
                   error: errorMessage,
@@ -417,9 +374,7 @@ export const BrowserStore = signalStore(
 
       loadFolderChildren: rxMethod<string>(
         pipe(
-          tap(() =>
-            patchState(store, { isFolderTreeLoading: true, error: null }),
-          ),
+          tap(() => patchState(store, { isFolderTreeLoading: true, error: null })),
           switchMap((folderPath) => {
             const collection = store.selectedCollection();
             const includeNested = store.showNestedResources();
@@ -428,47 +383,40 @@ export const BrowserStore = signalStore(
               return of(null);
             }
 
-            return api
-              .getResourceTree(collection, folderPath, includeNested)
-              .pipe(
-                tap((treeData) => {
-                  const updateFolder = (
-                    folders: FolderNodeDto[],
-                  ): FolderNodeDto[] =>
-                    folders.map((folder) => {
-                      if (folder.fullPath === folderPath) {
-                        return { ...folder, loaded: true, tree: treeData };
-                      }
-                      if (folder.tree) {
-                        return {
-                          ...folder,
-                          tree: {
-                            ...folder.tree,
-                            children: updateFolder(folder.tree.children),
-                          },
-                        };
-                      }
-                      return folder;
-                    });
+            return api.getResourceTree(collection, folderPath, includeNested).pipe(
+              tap((treeData) => {
+                const updateFolder = (folders: FolderNodeDto[]): FolderNodeDto[] =>
+                  folders.map((folder) => {
+                    if (folder.fullPath === folderPath) {
+                      return { ...folder, loaded: true, tree: treeData };
+                    }
+                    if (folder.tree) {
+                      return {
+                        ...folder,
+                        tree: {
+                          ...folder.tree,
+                          children: updateFolder(folder.tree.children),
+                        },
+                      };
+                    }
+                    return folder;
+                  });
 
-                  patchState(store, {
-                    rootFolders: updateFolder(store.rootFolders()),
-                    isFolderTreeLoading: false,
-                    error: null,
-                  });
-                }),
-                catchError((error: unknown) => {
-                  const errorMessage =
-                    error instanceof Error
-                      ? error.message
-                      : 'Failed to load folder contents';
-                  patchState(store, {
-                    isFolderTreeLoading: false,
-                    error: errorMessage,
-                  });
-                  return of(null);
-                }),
-              );
+                patchState(store, {
+                  rootFolders: updateFolder(store.rootFolders()),
+                  isFolderTreeLoading: false,
+                  error: null,
+                });
+              }),
+              catchError((error: unknown) => {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to load folder contents';
+                patchState(store, {
+                  isFolderTreeLoading: false,
+                  error: errorMessage,
+                });
+                return of(null);
+              }),
+            );
           }),
         ),
       ),
@@ -477,24 +425,18 @@ export const BrowserStore = signalStore(
         const isCompactMode = store.densityMode() === 'compact';
         patchState(store, {
           selectedLocales: locales,
-          compactLocaleManuallyChanged: isCompactMode
-            ? true
-            : store.compactLocaleManuallyChanged(),
+          compactLocaleManuallyChanged: isCompactMode ? true : store.compactLocaleManuallyChanged(),
         });
       },
 
       toggleLocale(locale: string): void {
         const current = store.selectedLocales();
         const isCompactMode = store.densityMode() === 'compact';
-        const newLocales = current.includes(locale)
-          ? current.filter((l) => l !== locale)
-          : [...current, locale];
+        const newLocales = current.includes(locale) ? current.filter((l) => l !== locale) : [...current, locale];
 
         patchState(store, {
           selectedLocales: newLocales,
-          compactLocaleManuallyChanged: isCompactMode
-            ? true
-            : store.compactLocaleManuallyChanged(),
+          compactLocaleManuallyChanged: isCompactMode ? true : store.compactLocaleManuallyChanged(),
         });
       },
 
@@ -526,9 +468,7 @@ export const BrowserStore = signalStore(
 
       toggleStatus(status: TranslationStatus): void {
         const current = store.selectedStatuses();
-        const newStatuses = current.includes(status)
-          ? current.filter((s) => s !== status)
-          : [...current, status];
+        const newStatuses = current.includes(status) ? current.filter((s) => s !== status) : [...current, status];
         patchState(store, { selectedStatuses: newStatuses });
       },
 
@@ -561,9 +501,7 @@ export const BrowserStore = signalStore(
 
       searchTranslations: rxMethod<string>(
         pipe(
-          tap(() =>
-            patchState(store, { isSearchLoading: true, searchError: null }),
-          ),
+          tap(() => patchState(store, { isSearchLoading: true, searchError: null })),
           switchMap((query) => {
             const collection = store.selectedCollection();
             if (!collection || query.trim().length === 0) {
@@ -580,10 +518,7 @@ export const BrowserStore = signalStore(
                 }),
               ),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to search translations';
+                const errorMessage = error instanceof Error ? error.message : 'Failed to search translations';
                 patchState(store, {
                   isSearchLoading: false,
                   searchError: errorMessage,
@@ -598,16 +533,12 @@ export const BrowserStore = signalStore(
 
       removeResourceFromCache(resourceKey: string): void {
         const currentTranslations = store.translations();
-        const updatedTranslations = currentTranslations.filter(
-          (resource) => resource.key !== resourceKey,
-        );
+        const updatedTranslations = currentTranslations.filter((resource) => resource.key !== resourceKey);
         patchState(store, { translations: updatedTranslations });
 
         if (store.isSearchMode()) {
           const currentSearchResults = store.searchResults();
-          const updatedSearchResults = currentSearchResults.filter(
-            (resource) => resource.key !== resourceKey,
-          );
+          const updatedSearchResults = currentSearchResults.filter((resource) => resource.key !== resourceKey);
           patchState(store, { searchResults: updatedSearchResults });
         }
       },
@@ -639,25 +570,16 @@ export const BrowserStore = signalStore(
                     : null,
                 });
 
-                if (
-                  statusDto.status === 'ready' &&
-                  store.rootFolders().length === 0
-                ) {
+                if (statusDto.status === 'ready' && store.rootFolders().length === 0) {
                   store.loadRootFolders();
                 }
               }),
               takeWhile((statusDto) => {
                 if (statusDto === null) return false;
-                return (
-                  statusDto.status === 'indexing' ||
-                  statusDto.status === 'not-started'
-                );
+                return statusDto.status === 'indexing' || statusDto.status === 'not-started';
               }, true),
               catchError((error: unknown) => {
-                const errorMessage =
-                  error instanceof Error
-                    ? error.message
-                    : 'Failed to check cache status';
+                const errorMessage = error instanceof Error ? error.message : 'Failed to check cache status';
                 patchState(store, {
                   cacheStatus: 'error',
                   cacheError: errorMessage,
@@ -673,12 +595,9 @@ export const BrowserStore = signalStore(
   }),
 
   withMethods((store) => {
-    const storageKey = (collectionName: string) =>
-      `lingo-tracker:view-prefs:${collectionName}`;
+    const storageKey = (collectionName: string) => `lingo-tracker:view-prefs:${collectionName}`;
 
-    function loadViewPreferences(
-      collectionName: string,
-    ): ViewPreferences | null {
+    function loadViewPreferences(collectionName: string): ViewPreferences | null {
       try {
         const raw = localStorage.getItem(storageKey(collectionName));
         if (!raw) return null;
@@ -688,10 +607,7 @@ export const BrowserStore = signalStore(
       }
     }
 
-    function saveViewPreferences(
-      collectionName: string,
-      prefs: ViewPreferences,
-    ): void {
+    function saveViewPreferences(collectionName: string, prefs: ViewPreferences): void {
       try {
         localStorage.setItem(storageKey(collectionName), JSON.stringify(prefs));
       } catch {
@@ -726,8 +642,7 @@ export const BrowserStore = signalStore(
         arraysEqual(existing.selectedLocales, prefs.selectedLocales) &&
         existing.showNestedResources === prefs.showNestedResources &&
         existing.compactLocale === prefs.compactLocale &&
-        existing.compactLocaleManuallyChanged ===
-          prefs.compactLocaleManuallyChanged &&
+        existing.compactLocaleManuallyChanged === prefs.compactLocaleManuallyChanged &&
         existing.sortField === prefs.sortField &&
         existing.sortDirection === prefs.sortDirection &&
         arraysEqual(existing.selectedStatuses, prefs.selectedStatuses)
@@ -741,11 +656,7 @@ export const BrowserStore = signalStore(
     });
 
     return {
-      setSelectedCollection(params: {
-        collectionName: string;
-        locales: string[];
-        baseLocale?: string;
-      }): void {
+      setSelectedCollection(params: { collectionName: string; locales: string[]; baseLocale?: string }): void {
         const loaded = loadViewPreferences(params.collectionName);
         const baseLocale = params.baseLocale || '';
 
@@ -761,8 +672,7 @@ export const BrowserStore = signalStore(
           expandedFolders: new Set<string>(),
           showNestedResources: loaded?.showNestedResources ?? true,
           compactLocale: loaded?.compactLocale ?? null,
-          compactLocaleManuallyChanged:
-            loaded?.compactLocaleManuallyChanged ?? false,
+          compactLocaleManuallyChanged: loaded?.compactLocaleManuallyChanged ?? false,
           sortField: loaded?.sortField ?? 'key',
           sortDirection: loaded?.sortDirection ?? 'asc',
           selectedStatuses: loaded?.selectedStatuses ?? [],
@@ -779,10 +689,7 @@ export const BrowserStore = signalStore(
 
           if (mode === 'compact') {
             const savedCompactLocale = store.compactLocale();
-            if (
-              savedCompactLocale &&
-              params.locales.includes(savedCompactLocale)
-            ) {
+            if (savedCompactLocale && params.locales.includes(savedCompactLocale)) {
               newSelected = [savedCompactLocale];
             } else if (currentSelected.length === 0) {
               if (baseLocale && params.locales.includes(baseLocale)) {
@@ -817,8 +724,7 @@ export const BrowserStore = signalStore(
 
         let newSelectedLocales = currentSelected;
         let newCompactLocale = store.compactLocale();
-        let newCompactLocaleManuallyChanged =
-          store.compactLocaleManuallyChanged();
+        let newCompactLocaleManuallyChanged = store.compactLocaleManuallyChanged();
         let newNonCompactSelectedLocales = store.nonCompactSelectedLocales();
 
         if (isEnteringCompactMode) {
@@ -826,10 +732,7 @@ export const BrowserStore = signalStore(
           newNonCompactSelectedLocales = currentSelected;
           newCompactLocaleManuallyChanged = false;
 
-          if (
-            newCompactLocale &&
-            store.availableLocales().includes(newCompactLocale)
-          ) {
+          if (newCompactLocale && store.availableLocales().includes(newCompactLocale)) {
             // Use previously saved compact locale
             newSelectedLocales = [newCompactLocale];
           } else if (currentSelected.length > 0) {
@@ -880,10 +783,7 @@ export const BrowserStore = signalStore(
         return loadViewPreferences(collectionName);
       },
 
-      saveViewPreferences(
-        collectionName: string,
-        prefs: ViewPreferences,
-      ): void {
+      saveViewPreferences(collectionName: string, prefs: ViewPreferences): void {
         saveViewPreferences(collectionName, prefs);
       },
     };

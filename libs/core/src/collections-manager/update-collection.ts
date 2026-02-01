@@ -1,4 +1,4 @@
-import { LingoTrackerCollection } from '../config/lingo-tracker-collection';
+import type { LingoTrackerCollection } from '../config/lingo-tracker-collection';
 import { updateConfig } from '../lib/config/config-file-operations';
 import { ErrorMessages } from '../lib/errors/error-messages';
 
@@ -12,11 +12,7 @@ export function updateCollection(
   collection: LingoTrackerCollection,
   options: UpdateCollectionOptions = {},
 ): { message: string } {
-  if (
-    !collection ||
-    !collection.translationsFolder ||
-    !collection.translationsFolder.trim()
-  ) {
+  if (!collection || !collection.translationsFolder || !collection.translationsFolder.trim()) {
     throw new Error('translationsFolder is required');
   }
 
@@ -39,31 +35,19 @@ export function updateCollection(
     };
 
     // Append only properties that are explicitly different from the root config
-    if (
-      collection.exportFolder !== undefined &&
-      collection.exportFolder !== config.exportFolder
-    ) {
+    if (collection.exportFolder !== undefined && collection.exportFolder !== config.exportFolder) {
       minimalCollection.exportFolder = collection.exportFolder;
     }
 
-    if (
-      collection.importFolder !== undefined &&
-      collection.importFolder !== config.importFolder
-    ) {
+    if (collection.importFolder !== undefined && collection.importFolder !== config.importFolder) {
       minimalCollection.importFolder = collection.importFolder;
     }
 
-    if (
-      collection.baseLocale !== undefined &&
-      collection.baseLocale !== config.baseLocale
-    ) {
+    if (collection.baseLocale !== undefined && collection.baseLocale !== config.baseLocale) {
       minimalCollection.baseLocale = collection.baseLocale;
     }
 
-    if (
-      collection.locales !== undefined &&
-      JSON.stringify(collection.locales) !== JSON.stringify(config.locales)
-    ) {
+    if (collection.locales !== undefined && JSON.stringify(collection.locales) !== JSON.stringify(config.locales)) {
       minimalCollection.locales = collection.locales;
     }
 

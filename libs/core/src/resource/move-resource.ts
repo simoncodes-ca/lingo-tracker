@@ -2,13 +2,9 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { addResource } from './add-resource';
 import { deleteResource } from './delete-resource';
-import {
-  resolveResourceKey,
-  splitResolvedKey,
-  validateKey,
-} from './resource-key';
-import { ResourceEntries } from './resource-entry';
-import { TranslationStatus } from './translation-status';
+import { resolveResourceKey, splitResolvedKey, validateKey } from './resource-key';
+import type { ResourceEntries } from './resource-entry';
+import type { TranslationStatus } from './translation-status';
 import { RESOURCE_ENTRIES_FILENAME } from '../constants';
 
 export interface MoveResourceParams {
@@ -28,34 +24,14 @@ export interface MoveResourceResult {
  * Moves resources from source to destination.
  * Supports single key move and wildcard pattern move (ending with *).
  */
-export function moveResource(
-  translationsFolder: string,
-  params: MoveResourceParams,
-): MoveResourceResult {
-  const {
-    source,
-    destination,
-    override = false,
-    destinationTranslationsFolder,
-  } = params;
+export function moveResource(translationsFolder: string, params: MoveResourceParams): MoveResourceResult {
+  const { source, destination, override = false, destinationTranslationsFolder } = params;
   const targetFolder = destinationTranslationsFolder || translationsFolder;
 
   if (source.endsWith('*')) {
-    return moveResourcesByPattern(
-      translationsFolder,
-      source,
-      destination,
-      override,
-      targetFolder,
-    );
+    return moveResourcesByPattern(translationsFolder, source, destination, override, targetFolder);
   } else {
-    return moveSingleResource(
-      translationsFolder,
-      source,
-      destination,
-      override,
-      targetFolder,
-    );
+    return moveSingleResource(translationsFolder, source, destination, override, targetFolder);
   }
 }
 
@@ -82,11 +58,8 @@ function moveSingleResource(
 
   // 1. Check if source exists
   const sourceResolved = resolveResourceKey(sourceKey);
-  const { folderPath: srcFolder, entryKey: srcEntryKey } =
-    splitResolvedKey(sourceResolved);
-  const srcFullPath = srcFolder.length
-    ? join(sourceTranslationsFolder, ...srcFolder)
-    : sourceTranslationsFolder;
+  const { folderPath: srcFolder, entryKey: srcEntryKey } = splitResolvedKey(sourceResolved);
+  const srcFullPath = srcFolder.length ? join(sourceTranslationsFolder, ...srcFolder) : sourceTranslationsFolder;
   const srcResourcePath = resolve(srcFullPath, RESOURCE_ENTRIES_FILENAME);
 
   if (!existsSync(srcResourcePath)) {
@@ -111,8 +84,7 @@ function moveSingleResource(
 
   // 2. Check if destination exists (Collision Check)
   const destResolved = resolveResourceKey(destinationKey);
-  const { folderPath: destFolder, entryKey: destEntryKey } =
-    splitResolvedKey(destResolved);
+  const { folderPath: destFolder, entryKey: destEntryKey } = splitResolvedKey(destResolved);
   const destFullPath = destFolder.length
     ? join(destinationTranslationsFolder, ...destFolder)
     : destinationTranslationsFolder;
@@ -120,13 +92,9 @@ function moveSingleResource(
 
   if (existsSync(destResourcePath)) {
     try {
-      const destEntries: ResourceEntries = JSON.parse(
-        readFileSync(destResourcePath, 'utf8'),
-      );
+      const destEntries: ResourceEntries = JSON.parse(readFileSync(destResourcePath, 'utf8'));
       if (destEntryKey in destEntries && !override) {
-        result.warnings.push(
-          `Destination key already exists: ${destinationKey}. Use override option to force move.`,
-        );
+        result.warnings.push(`Destination key already exists: ${destinationKey}. Use override option to force move.`);
         return result;
       }
     } catch {
@@ -160,9 +128,7 @@ function moveSingleResource(
       translations: translations,
     });
   } catch (error) {
-    result.errors.push(
-      `Failed to create destination resource: ${(error as Error).message}`,
-    );
+    result.errors.push(`Failed to create destination resource: ${(error as Error).message}`);
     return result;
   }
 
@@ -171,9 +137,7 @@ function moveSingleResource(
     deleteResource(sourceTranslationsFolder, { keys: [sourceKey] });
   } catch (error) {
     result.warnings.push(
-      `Resource moved to ${destinationKey} but failed to delete source ${sourceKey}: ${
-        (error as Error).message
-      }`,
+      `Resource moved to ${destinationKey} but failed to delete source ${sourceKey}: ${(error as Error).message}`,
     );
     // Even if delete failed, we count it as moved (or partially moved)
     result.movedCount++;
@@ -210,9 +174,7 @@ function moveResourcesByPattern(
     const resourcePath = join(currentPath, RESOURCE_ENTRIES_FILENAME);
     if (existsSync(resourcePath)) {
       try {
-        const entries: ResourceEntries = JSON.parse(
-          readFileSync(resourcePath, 'utf8'),
-        );
+        const entries: ResourceEntries = JSON.parse(readFileSync(resourcePath, 'utf8'));
         Object.keys(entries).forEach((key) => {
           keysToMove.push(`${currentKeyPrefix}.${key}`);
         });
@@ -246,9 +208,7 @@ function moveResourcesByPattern(
   if (existsSync(rootFolderPath)) {
     scanFolder(rootFolderPath, cleanPrefix);
   } else {
-    result.warnings.push(
-      `No folder found for prefix ${cleanPrefix}. Nothing moved.`,
-    );
+    result.warnings.push(`No folder found for prefix ${cleanPrefix}. Nothing moved.`);
     return result;
   }
 

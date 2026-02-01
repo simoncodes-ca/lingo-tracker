@@ -16,9 +16,7 @@ vi.mock('@simoncodes-ca/core', async () => {
   return {
     ...actual,
     CONFIG_FILENAME: '.lingo-tracker.json',
-    addResource: vi
-      .fn()
-      .mockResolvedValue({ resolvedKey: 'test.key', created: true }),
+    addResource: vi.fn().mockResolvedValue({ resolvedKey: 'test.key', created: true }),
     resolveResourceKey: vi.fn((key: string, targetFolder?: string) => {
       return targetFolder ? `${targetFolder}.${key}` : key;
     }),
@@ -135,9 +133,7 @@ describe('addResourceCommand', () => {
     });
 
     // Mock promptForCollection to return the collection name
-    vi.mocked(utils.promptForCollection).mockResolvedValue(
-      'NonExistentCollection',
-    );
+    vi.mocked(utils.promptForCollection).mockResolvedValue('NonExistentCollection');
 
     // Mock resolveCollection to return null (collection not found)
     vi.mocked(utils.resolveCollection).mockReturnValue(null);
@@ -149,11 +145,7 @@ describe('addResourceCommand', () => {
     });
 
     // Should call resolveCollection and get null back
-    expect(utils.resolveCollection).toHaveBeenCalledWith(
-      'NonExistentCollection',
-      config,
-      '/test',
-    );
+    expect(utils.resolveCollection).toHaveBeenCalledWith('NonExistentCollection', config, '/test');
   });
 
   it('should handle translations array format', async () => {
@@ -285,9 +277,7 @@ describe('addResourceCommand', () => {
         message: expect.stringContaining('already exists'),
       }),
     );
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Add resource cancelled'),
-    );
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Add resource cancelled'));
 
     // Restore
     Object.defineProperty(process.stdout, 'isTTY', {

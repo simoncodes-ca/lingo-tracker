@@ -25,23 +25,14 @@ import { TranslationStatus } from '@simoncodes-ca/data-transfer';
   selector: 'app-status-filter',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    MatButtonModule,
-    MatIconModule,
-    MatMenuModule,
-    MatCheckboxModule,
-  ],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatMenuModule, MatCheckboxModule],
   templateUrl: './status-filter.html',
   styleUrl: './status-filter.scss',
 })
 export class StatusFilter {
   readonly store = inject(BrowserStore);
 
-  readonly statusConfig: Record<
-    TranslationStatus,
-    { label: string; icon: string; color: string }
-  > = {
+  readonly statusConfig: Record<TranslationStatus, { label: string; icon: string; color: string }> = {
     new: { label: 'New', icon: 'add_circle', color: '#f97316' },
     stale: { label: 'Stale', icon: 'warning', color: 'var(--color-warning)' },
     translated: {
@@ -56,12 +47,7 @@ export class StatusFilter {
     },
   };
 
-  readonly statuses: TranslationStatus[] = [
-    'new',
-    'stale',
-    'translated',
-    'verified',
-  ];
+  readonly statuses: TranslationStatus[] = ['new', 'stale', 'translated', 'verified'];
 
   /**
    * Checks if a status is currently selected.

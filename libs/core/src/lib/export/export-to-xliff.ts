@@ -1,4 +1,4 @@
-import { ExportOptions, ExportResult, FilteredResource } from './types';
+import type { ExportOptions, ExportResult, FilteredResource } from './types';
 import * as fs from 'fs';
 import * as path from 'path';
 import { jsToXliff12 } from 'xliff';
@@ -37,9 +37,7 @@ export async function exportToXliff(
   for (const [locale, localeResources] of resourcesByLocale.entries()) {
     try {
       if (options.onProgress) {
-        options.onProgress(
-          `Processing ${locale} (${localeResources.length} resources)`,
-        );
+        options.onProgress(`Processing ${locale} (${localeResources.length} resources)`);
       }
 
       const filename = getFilename(locale, options, baseLocale);
@@ -50,10 +48,7 @@ export async function exportToXliff(
       // We'll use a default namespace 'translations' as we merge everything.
       const xliffData = {
         resources: {
-          translations: {} as Record<
-            string,
-            { source: string; target: string; note?: string }
-          >,
+          translations: {} as Record<string, { source: string; target: string; note?: string }>,
         },
       };
 
@@ -96,20 +91,14 @@ export async function exportToXliff(
       result.filesCreated.push(filename);
       result.resourcesExported += localeResources.length;
     } catch (error) {
-      result.errors.push(
-        `Failed to export locale ${locale}: ${(error as Error).message}`,
-      );
+      result.errors.push(`Failed to export locale ${locale}: ${(error as Error).message}`);
     }
   }
 
   return result;
 }
 
-function getFilename(
-  locale: string,
-  options: ExportOptions,
-  baseLocale: string,
-): string {
+function getFilename(locale: string, options: ExportOptions, baseLocale: string): string {
   if (options.filenamePattern) {
     let name = options.filenamePattern
       .replace('{target}', locale)

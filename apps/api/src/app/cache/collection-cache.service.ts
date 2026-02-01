@@ -26,10 +26,7 @@ export class CollectionCacheService {
   #cachedCollection: CachedCollection | null = null;
 
   getCacheStatus(collectionName: string): CacheStatus {
-    if (
-      !this.#cachedCollection ||
-      this.#cachedCollection.collectionName !== collectionName
-    ) {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
       return CacheStatus.NOT_STARTED;
     }
 
@@ -37,10 +34,7 @@ export class CollectionCacheService {
   }
 
   getCache(collectionName: string): ResourceTreeNode | null {
-    if (
-      !this.#cachedCollection ||
-      this.#cachedCollection.collectionName !== collectionName
-    ) {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
       return null;
     }
 
@@ -51,13 +45,8 @@ export class CollectionCacheService {
     return this.#cachedCollection.tree;
   }
 
-  getCacheMetadata(
-    collectionName: string,
-  ): { indexedAt: Date | null; error?: string } | null {
-    if (
-      !this.#cachedCollection ||
-      this.#cachedCollection.collectionName !== collectionName
-    ) {
+  getCacheMetadata(collectionName: string): { indexedAt: Date | null; error?: string } | null {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
       return null;
     }
 
@@ -67,13 +56,8 @@ export class CollectionCacheService {
     };
   }
 
-  getCacheStats(
-    collectionName: string,
-  ): { totalKeys: number; localeCount: number } | null {
-    if (
-      !this.#cachedCollection ||
-      this.#cachedCollection.collectionName !== collectionName
-    ) {
+  getCacheStats(collectionName: string): { totalKeys: number; localeCount: number } | null {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
       return null;
     }
 
@@ -94,15 +78,8 @@ export class CollectionCacheService {
     error?: string,
     localeCount?: number,
   ): void {
-    if (
-      this.#cachedCollection &&
-      this.#cachedCollection.collectionName !== collectionName
-    ) {
-      this.#logger.log(
-        `Clearing cache for previous collection: ${
-          this.#cachedCollection.collectionName
-        }`,
-      );
+    if (this.#cachedCollection && this.#cachedCollection.collectionName !== collectionName) {
+      this.#logger.log(`Clearing cache for previous collection: ${this.#cachedCollection.collectionName}`);
       this.#cachedCollection = null;
     }
 
@@ -113,10 +90,7 @@ export class CollectionCacheService {
         tree: tree ?? null,
         indexedAt: status === CacheStatus.READY ? new Date() : null,
         error,
-        totalKeys:
-          status === CacheStatus.READY && tree
-            ? extractResourcesRecursively(tree).length
-            : 0,
+        totalKeys: status === CacheStatus.READY && tree ? extractResourcesRecursively(tree).length : 0,
         localeCount: status === CacheStatus.READY ? (localeCount ?? 0) : 0,
       };
     } else {
@@ -128,40 +102,27 @@ export class CollectionCacheService {
         this.#cachedCollection.indexedAt = new Date();
 
         if (tree) {
-          this.#cachedCollection.totalKeys =
-            extractResourcesRecursively(tree).length;
+          this.#cachedCollection.totalKeys = extractResourcesRecursively(tree).length;
           this.#cachedCollection.localeCount = localeCount ?? 0;
         }
       }
     }
 
-    this.#logger.log(
-      `Cache status set to ${status} for collection: ${collectionName}`,
-    );
+    this.#logger.log(`Cache status set to ${status} for collection: ${collectionName}`);
   }
 
   clearCache(): void {
     if (this.#cachedCollection) {
-      this.#logger.log(
-        `Clearing cache for collection: ${
-          this.#cachedCollection.collectionName
-        }`,
-      );
+      this.#logger.log(`Clearing cache for collection: ${this.#cachedCollection.collectionName}`);
       this.#cachedCollection = null;
     }
   }
 
-  async indexCollection(
-    collectionName: string,
-    translationsFolder: string,
-    localeCount?: number,
-  ): Promise<void> {
+  async indexCollection(collectionName: string, translationsFolder: string, localeCount?: number): Promise<void> {
     const currentStatus = this.getCacheStatus(collectionName);
 
     if (currentStatus === CacheStatus.INDEXING) {
-      this.#logger.warn(
-        `Collection ${collectionName} is already being indexed, skipping duplicate request`,
-      );
+      this.#logger.warn(`Collection ${collectionName} is already being indexed, skipping duplicate request`);
       return;
     }
 
@@ -180,9 +141,7 @@ export class CollectionCacheService {
       });
 
       const duration = Date.now() - startTime;
-      this.#logger.log(
-        `Successfully indexed collection ${indexingCollectionName} in ${duration}ms`,
-      );
+      this.#logger.log(`Successfully indexed collection ${indexingCollectionName} in ${duration}ms`);
 
       if (this.#cachedCollection?.collectionName !== indexingCollectionName) {
         this.#logger.log(
@@ -193,17 +152,10 @@ export class CollectionCacheService {
         return;
       }
 
-      this.setCacheStatus(
-        indexingCollectionName,
-        CacheStatus.READY,
-        tree,
-        undefined,
-        localeCount,
-      );
+      this.setCacheStatus(indexingCollectionName, CacheStatus.READY, tree, undefined, localeCount);
     } catch (error) {
       const duration = Date.now() - startTime;
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
 
       this.#logger.error(
         `Failed to index collection ${indexingCollectionName} after ${duration}ms: ${errorMessage}`,
@@ -219,12 +171,7 @@ export class CollectionCacheService {
         return;
       }
 
-      this.setCacheStatus(
-        indexingCollectionName,
-        CacheStatus.ERROR,
-        undefined,
-        errorMessage,
-      );
+      this.setCacheStatus(indexingCollectionName, CacheStatus.ERROR, undefined, errorMessage);
       throw error;
     }
   }

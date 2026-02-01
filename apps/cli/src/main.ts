@@ -32,9 +32,7 @@ program
   .option('--baseLocale <locale>', 'en')
   .option('--locales <locales...>', 'supported locales')
   .action(async (options) => {
-    const { addCollectionCommand } = await import(
-      './add-collection/add-collection'
-    );
+    const { addCollectionCommand } = await import('./add-collection/add-collection');
     await addCollectionCommand(options);
   });
 
@@ -43,9 +41,7 @@ program
   .description('Delete a translation collection from the project')
   .option('--collectionName <name>', 'Name of the collection to delete')
   .action(async (options) => {
-    const { deleteCollectionCommand } = await import(
-      './delete-collection/delete-collection'
-    );
+    const { deleteCollectionCommand } = await import('./delete-collection/delete-collection');
     await deleteCollectionCommand(options);
   });
 
@@ -53,10 +49,7 @@ program
   .command('add-resource')
   .description('Add a translation resource to a collection')
   .option('--collection <name>', 'Name of the collection')
-  .option(
-    '--key <key>',
-    'Resource key (dot-delimited, e.g., apps.common.buttons.ok)',
-  )
+  .option('--key <key>', 'Resource key (dot-delimited, e.g., apps.common.buttons.ok)')
   .option('--value <value>', 'Base value (source text)')
   .option('--comment <comment>', 'Optional context for translators')
   .option('--tags <tags>', 'Optional tags (comma-separated)')
@@ -69,9 +62,7 @@ program
     const { addResourceCommand } = await import('./add-resource/add-resource');
     const processedOptions = {
       ...options,
-      translations: options.translations
-        ? JSON.parse(options.translations)
-        : undefined,
+      translations: options.translations ? JSON.parse(options.translations) : undefined,
     };
     await addResourceCommand(processedOptions);
   });
@@ -96,15 +87,10 @@ program
   .command('delete-resource')
   .description('Delete one or more translation resources from a collection')
   .option('--collection <name>', 'Name of the collection')
-  .option(
-    '--key <keys>',
-    'Resource key(s) - single key or comma-separated (e.g., key1,key2,key3)',
-  )
+  .option('--key <keys>', 'Resource key(s) - single key or comma-separated (e.g., key1,key2,key3)')
   .option('--yes', 'Skip confirmation prompt')
   .action(async (options) => {
-    const { deleteResourceCommand } = await import(
-      './commands/delete-resource'
-    );
+    const { deleteResourceCommand } = await import('./commands/delete-resource');
     await deleteResourceCommand(options);
   });
 
@@ -112,10 +98,7 @@ program
   .command('move')
   .description('Move or rename translation resources')
   .option('--collection <name>', 'Name of the collection')
-  .option(
-    '--source <source>',
-    'Source key or pattern (e.g., common.buttons.ok or common.buttons.*)',
-  )
+  .option('--source <source>', 'Source key or pattern (e.g., common.buttons.ok or common.buttons.*)')
   .option('--dest <dest>', 'Destination key (e.g., common.actions.ok)')
   .option('--override', 'Override destination if it exists')
   .option('--verbose', 'Show detailed output')
@@ -126,9 +109,7 @@ program
 
 program
   .command('normalize')
-  .description(
-    'Normalize translation resources (fix checksums, add missing locales, clean up empty folders)',
-  )
+  .description('Normalize translation resources (fix checksums, add missing locales, clean up empty folders)')
   .option('--collection <name>', 'Collection name (required unless --all)')
   .option('--all', 'Normalize all collections')
   .option('--dry-run', 'Preview changes without applying them')
@@ -141,14 +122,8 @@ program
 program
   .command('bundle')
   .description('Generate translation bundles for deployment')
-  .option(
-    '--name <names>',
-    'Bundle name(s) - single name or comma-separated (e.g., core,admin)',
-  )
-  .option(
-    '--locale <locales>',
-    'Locale(s) to generate - comma-separated (e.g., en,fr)',
-  )
+  .option('--name <names>', 'Bundle name(s) - single name or comma-separated (e.g., core,admin)')
+  .option('--locale <locales>', 'Locale(s) to generate - comma-separated (e.g., en,fr)')
   .option('--verbose', 'Show detailed output including warnings')
   .action(async (options) => {
     const { bundleCommand } = await import('./commands/bundle');
@@ -159,49 +134,19 @@ program
   .command('export')
   .description('Export translation resources to XLIFF or JSON')
   .option('-f, --format <format>', 'Export format (xliff | json)')
-  .option(
-    '-c, --collection <names>',
-    'Specific collection(s) to export (comma-separated)',
-  )
-  .option(
-    '-l, --locale <locales>',
-    'Target locale(s) to export (comma-separated)',
-  )
-  .option(
-    '-s, --status <statuses>',
-    'Filter by translation status (comma-separated)',
-    'new,stale',
-  )
+  .option('-c, --collection <names>', 'Specific collection(s) to export (comma-separated)')
+  .option('-l, --locale <locales>', 'Target locale(s) to export (comma-separated)')
+  .option('-s, --status <statuses>', 'Filter by translation status (comma-separated)', 'new,stale')
   .option('-t, --tags <tags>', 'Filter by tags (comma-separated)')
   .option('-o, --output <path>', 'Output directory path')
-  .option(
-    '--structure <type>',
-    'JSON structure (flat | hierarchical)',
-    'hierarchical',
-  )
+  .option('--structure <type>', 'JSON structure (flat | hierarchical)', 'hierarchical')
   .option('--rich', 'Include metadata in JSON objects', false)
   .option('--include-base', 'Include base locale value (JSON only)', false)
-  .option(
-    '--include-status',
-    'Include status in rich objects (JSON only)',
-    false,
-  )
-  .option(
-    '--include-comment',
-    'Include comment in rich objects (JSON only)',
-    true,
-  )
-  .option(
-    '--include-tags',
-    'Include tags array in rich objects (JSON only)',
-    false,
-  )
+  .option('--include-status', 'Include status in rich objects (JSON only)', false)
+  .option('--include-comment', 'Include comment in rich objects (JSON only)', true)
+  .option('--include-tags', 'Include tags array in rich objects (JSON only)', false)
   .option('--filename <pattern>', 'Custom filename pattern')
-  .option(
-    '--dry-run',
-    'Show what would be exported without writing files',
-    false,
-  )
+  .option('--dry-run', 'Show what would be exported without writing files', false)
   .option('--verbose', 'Show detailed export progress', false)
   .action(async (options) => {
     const { exportCommand } = await import('./commands/export-cmd');
@@ -211,10 +156,7 @@ program
 program
   .command('import')
   .description('Import translation resources from XLIFF or JSON')
-  .option(
-    '-f, --format <format>',
-    'Import format (xliff | json) - auto-detected from file extension if omitted',
-  )
+  .option('-f, --format <format>', 'Import format (xliff | json) - auto-detected from file extension if omitted')
   .option('-s, --source <path>', 'Path to import file (required)')
   .option('-l, --locale <locale>', 'Target locale for import (e.g., es, fr-ca)')
   .option('-c, --collection <name>', 'Target collection to import into')
@@ -223,28 +165,12 @@ program
     'Import strategy (translation-service | verification | migration | update)',
     'translation-service',
   )
-  .option(
-    '--update-comments',
-    'Update resource comments from import data',
-    false,
-  )
+  .option('--update-comments', 'Update resource comments from import data', false)
   .option('--update-tags', 'Update resource tags from rich JSON', false)
-  .option(
-    '--preserve-status',
-    'Allow rich JSON to specify status (advanced)',
-    false,
-  )
+  .option('--preserve-status', 'Allow rich JSON to specify status (advanced)', false)
   .option('--create-missing', "Create new resources if they don't exist")
-  .option(
-    '--validate-base',
-    'Warn if source base value differs from existing',
-    true,
-  )
-  .option(
-    '--dry-run',
-    'Show what would be imported without modifying files',
-    false,
-  )
+  .option('--validate-base', 'Warn if source base value differs from existing', true)
+  .option('--dry-run', 'Show what would be imported without modifying files', false)
   .option('--verbose', 'Show detailed import progress', false)
   .addHelpText(
     'after',
@@ -309,14 +235,8 @@ Notes:
 
 program
   .command('validate')
-  .description(
-    'Verify translation completeness and readiness for production release',
-  )
-  .option(
-    '--allow-translated',
-    'Treat translated status as warning instead of error',
-    false,
-  )
+  .description('Verify translation completeness and readiness for production release')
+  .option('--allow-translated', 'Treat translated status as warning instead of error', false)
   .addHelpText(
     'after',
     `

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { searchTranslations, searchResourceTree, SearchParams } from './search';
+import { searchTranslations, searchResourceTree, type SearchParams } from './search';
 import type { ResourceTreeNode } from './load-resource-tree';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -15,21 +15,11 @@ describe('searchTranslations', () => {
     rmSync(testDir, { recursive: true, force: true });
   });
 
-  const createTestResource = (
-    path: string,
-    entries: Record<string, any>,
-    meta: Record<string, any>,
-  ) => {
+  const createTestResource = (path: string, entries: Record<string, any>, meta: Record<string, any>) => {
     const folderPath = join(testDir, ...path.split('.'));
     mkdirSync(folderPath, { recursive: true });
-    writeFileSync(
-      join(folderPath, 'resource_entries.json'),
-      JSON.stringify(entries, null, 2),
-    );
-    writeFileSync(
-      join(folderPath, 'tracker_meta.json'),
-      JSON.stringify(meta, null, 2),
-    );
+    writeFileSync(join(folderPath, 'resource_entries.json'), JSON.stringify(entries, null, 2));
+    writeFileSync(join(folderPath, 'tracker_meta.json'), JSON.stringify(meta, null, 2));
   };
 
   describe('Search by Key', () => {
@@ -86,9 +76,7 @@ describe('searchTranslations', () => {
       const results = searchTranslations(params);
 
       expect(results.length).toBeGreaterThan(0);
-      expect(results.every((r) => r.key.toLowerCase().includes('button'))).toBe(
-        true,
-      );
+      expect(results.every((r) => r.key.toLowerCase().includes('button'))).toBe(true);
     });
 
     it('should be case insensitive', () => {

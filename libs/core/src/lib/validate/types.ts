@@ -1,4 +1,4 @@
-import { TranslationStatus } from '../../resource/translation-status';
+import type { TranslationStatus } from '../../resource/translation-status';
 
 /**
  * Options for configuring resource validation behavior.

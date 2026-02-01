@@ -1,11 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  input,
-  output,
-  effect,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, input, output, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -73,11 +66,9 @@ export class FolderTree {
     });
 
     // Debounce search input
-    this.#searchSubject
-      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe((value) => {
-        this.store.setFolderTreeFilter(value);
-      });
+    this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed()).subscribe((value) => {
+      this.store.setFolderTreeFilter(value);
+    });
   }
 
   /**

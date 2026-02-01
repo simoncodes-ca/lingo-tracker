@@ -125,9 +125,7 @@ describe('Directory Operations', () => {
             errorContext,
             checkWritable: true,
           }),
-        ).toThrow(
-          "Creating resource folder: Directory '/app/translations' is not writable",
-        );
+        ).toThrow("Creating resource folder: Directory '/app/translations' is not writable");
       });
     });
 
@@ -282,8 +280,7 @@ describe('Directory Operations', () => {
       });
 
       it('should handle paths with special characters', () => {
-        const directoryPath =
-          '/app/translations/with spaces/and-dashes/under_scores';
+        const directoryPath = '/app/translations/with spaces/and-dashes/under_scores';
 
         vi.mocked(mkdirSync).mockImplementation(() => undefined);
 
@@ -366,9 +363,7 @@ describe('Directory Operations', () => {
             errorContext,
             checkWritable: true,
           }),
-        ).toThrow(
-          "Setting up resources: Could not create directory '/app/translations': Creation failed",
-        );
+        ).toThrow("Setting up resources: Could not create directory '/app/translations': Creation failed");
 
         // Test writability error
         vi.clearAllMocks();
@@ -383,9 +378,7 @@ describe('Directory Operations', () => {
             errorContext,
             checkWritable: true,
           }),
-        ).toThrow(
-          "Setting up resources: Directory '/app/translations' is not writable",
-        );
+        ).toThrow("Setting up resources: Directory '/app/translations' is not writable");
       });
     });
 

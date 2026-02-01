@@ -25,6 +25,7 @@
     "typecheck:data-transfer": "nx typecheck data-transfer",
     "typecheck": "pnpm run typecheck:core && pnpm run typecheck:data-transfer",
     "nx": "nx",
+    "lint": "pnpm exec biome lint libs scripts types",
     "format": "pnpm exec biome format --write apps libs scripts types",
     "format:check": "pnpm exec biome format apps libs scripts types",
     "format:write": "pnpm exec biome format --write apps libs scripts types",

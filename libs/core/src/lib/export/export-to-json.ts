@@ -1,15 +1,11 @@
-import { ExportOptions, ExportResult, FilteredResource } from './types';
+import type { ExportOptions, ExportResult, FilteredResource } from './types';
 import * as fs from 'fs';
 import * as path from 'path';
 
 /**
  * Exports resources to JSON format.
  */
-export function exportToJson(
-  resources: FilteredResource[],
-  options: ExportOptions,
-  baseLocale?: string,
-): ExportResult {
+export function exportToJson(resources: FilteredResource[], options: ExportOptions, baseLocale?: string): ExportResult {
   const result: ExportResult = {
     format: 'json',
     filesCreated: [],
@@ -36,9 +32,7 @@ export function exportToJson(
   for (const [locale, localeResources] of resourcesByLocale.entries()) {
     try {
       if (options.onProgress) {
-        options.onProgress(
-          `Processing ${locale} (${localeResources.length} resources)`,
-        );
+        options.onProgress(`Processing ${locale} (${localeResources.length} resources)`);
       }
 
       const filename = getFilename(locale, options, baseLocale);
@@ -51,17 +45,11 @@ export function exportToJson(
         content = buildFlatStructure(localeResources, options);
       } else {
         // Default to hierarchical
-        content = buildHierarchicalStructure(
-          localeResources,
-          options,
-          conflicts,
-        );
+        content = buildHierarchicalStructure(localeResources, options, conflicts);
       }
 
       if (conflicts.length > 0) {
-        result.hierarchicalConflicts.push(
-          ...conflicts.map((c) => `[${locale}] ${c}`),
-        );
+        result.hierarchicalConflicts.push(...conflicts.map((c) => `[${locale}] ${c}`));
       }
 
       if (fs.existsSync(filePath)) {
@@ -78,20 +66,14 @@ export function exportToJson(
       result.filesCreated.push(filename);
       result.resourcesExported += localeResources.length;
     } catch (error) {
-      result.errors.push(
-        `Failed to export locale ${locale}: ${(error as Error).message}`,
-      );
+      result.errors.push(`Failed to export locale ${locale}: ${(error as Error).message}`);
     }
   }
 
   return result;
 }
 
-function getFilename(
-  locale: string,
-  options: ExportOptions,
-  baseLocale?: string,
-): string {
+function getFilename(locale: string, options: ExportOptions, baseLocale?: string): string {
   if (options.filenamePattern) {
     let name = options.filenamePattern
       .replace('{locale}', locale)
@@ -110,10 +92,7 @@ function getFilename(
   return `${locale}.json`;
 }
 
-export function buildFlatStructure(
-  resources: FilteredResource[],
-  options: ExportOptions,
-): Record<string, unknown> {
+export function buildFlatStructure(resources: FilteredResource[], options: ExportOptions): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const res of resources) {
@@ -150,10 +129,7 @@ export function buildHierarchicalStructure(
           // If it's an object, it means we have a parent collision (e.g. 'a.b' existed, now adding 'a').
           // But since we are at the leaf of 'a', 'a' is the key.
           // If current[part] is an object, it means 'a' was already created as a parent for something else.
-          if (
-            typeof current[part] === 'object' &&
-            !isRichValue(current[part])
-          ) {
+          if (typeof current[part] === 'object' && !isRichValue(current[part])) {
             conflicts.push(`${res.key} conflicts with existing children`);
           } else {
             // Overwrite or duplicate key?
@@ -171,11 +147,7 @@ export function buildHierarchicalStructure(
         // If current[part] exists but is not an object (it's a leaf value from a previous key),
         // or it is a rich value object (which is technically an object but conceptually a leaf).
         if (typeof current[part] !== 'object' || isRichValue(current[part])) {
-          conflicts.push(
-            `${res.key} conflicts with parent ${parts
-              .slice(0, i + 1)
-              .join('.')}`,
-          );
+          conflicts.push(`${res.key} conflicts with parent ${parts.slice(0, i + 1).join('.')}`);
           // We can't continue traversing down a leaf.
           // We have to stop or overwrite.
           // Requirement says: "Hierarchical format will error if a key is both a parent and leaf value"
@@ -199,16 +171,11 @@ function isRichValue(obj: unknown): boolean {
     obj !== null &&
     typeof obj === 'object' &&
     'value' in obj &&
-    Object.keys(obj).every((k) =>
-      ['value', 'baseValue', 'comment', 'status', 'tags'].includes(k),
-    )
+    Object.keys(obj).every((k) => ['value', 'baseValue', 'comment', 'status', 'tags'].includes(k))
   );
 }
 
-function formatValue(
-  resource: FilteredResource,
-  options: ExportOptions,
-): unknown {
+function formatValue(resource: FilteredResource, options: ExportOptions): unknown {
   if (options.richJson) {
     const richObj: Record<string, unknown> = {
       value: resource.value,

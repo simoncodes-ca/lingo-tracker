@@ -1,8 +1,8 @@
 import { calculateChecksum } from '../../resource/checksum';
-import { ResourceEntry } from '../../resource/resource-entry';
-import { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
-import { TranslationStatus } from '../../resource/translation-status';
-import { LocaleMetadata } from '../../resource/locale-metadata';
+import type { ResourceEntry } from '../../resource/resource-entry';
+import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
+import type { TranslationStatus } from '../../resource/translation-status';
+import type { LocaleMetadata } from '../../resource/locale-metadata';
 
 export interface NormalizeEntryParams {
   readonly entryKey: string;
@@ -65,36 +65,19 @@ interface TrackLocaleChangesParams {
   readonly newStatus: TranslationStatus;
 }
 
-function updateBaseLocaleMetadata(
-  params: UpdateBaseLocaleMetadataParams,
-): number {
-  const {
-    currentBaseChecksum,
-    previousBaseMetadata,
-    normalizedMetadata,
-    baseLocale,
-  } = params;
+function updateBaseLocaleMetadata(params: UpdateBaseLocaleMetadataParams): number {
+  const { currentBaseChecksum, previousBaseMetadata, normalizedMetadata, baseLocale } = params;
 
   normalizedMetadata[baseLocale] = {
     checksum: currentBaseChecksum,
   };
 
-  const wasChecksumUpdated =
-    !previousBaseMetadata ||
-    previousBaseMetadata.checksum !== currentBaseChecksum;
+  const wasChecksumUpdated = !previousBaseMetadata || previousBaseMetadata.checksum !== currentBaseChecksum;
   return wasChecksumUpdated ? 1 : 0;
 }
 
-function determineTranslationStatus(
-  params: DetermineTranslationStatusParams,
-): TranslationStatus {
-  const {
-    hadLocaleEntry,
-    baseValueChanged,
-    currentLocaleValue,
-    baseValue,
-    previousStatus,
-  } = params;
+function determineTranslationStatus(params: DetermineTranslationStatusParams): TranslationStatus {
+  const { hadLocaleEntry, baseValueChanged, currentLocaleValue, baseValue, previousStatus } = params;
 
   if (!hadLocaleEntry) {
     return 'new';
@@ -107,11 +90,8 @@ function determineTranslationStatus(
   return previousStatus || 'translated';
 }
 
-function createLocaleMetadata(
-  params: CreateLocaleMetadataParams,
-): LocaleMetadata {
-  const { currentLocaleChecksum, currentBaseChecksum, translationStatus } =
-    params;
+function createLocaleMetadata(params: CreateLocaleMetadataParams): LocaleMetadata {
+  const { currentLocaleChecksum, currentBaseChecksum, translationStatus } = params;
 
   return {
     checksum: currentLocaleChecksum,
@@ -125,16 +105,11 @@ function trackLocaleChanges(params: TrackLocaleChangesParams) {
 
   return {
     wasStatusChanged: previousLocaleMetadata?.status !== newStatus,
-    wasChecksumUpdated:
-      previousLocaleMetadata?.checksum !== currentLocaleChecksum,
+    wasChecksumUpdated: previousLocaleMetadata?.checksum !== currentLocaleChecksum,
   };
 }
 
-function ensureLocaleEntryExists(
-  normalizedEntry: ResourceEntry,
-  locale: string,
-  baseValue: string,
-): boolean {
+function ensureLocaleEntryExists(normalizedEntry: ResourceEntry, locale: string, baseValue: string): boolean {
   const localeValueInEntry = normalizedEntry[locale];
   const hadLocaleEntry = typeof localeValueInEntry === 'string';
 
@@ -163,20 +138,9 @@ interface ProcessAllLocalesResult {
 }
 
 function processLocale(params: ProcessLocaleParams): ProcessLocaleResult {
-  const {
-    locale,
-    baseValue,
-    currentBaseChecksum,
-    baseValueChanged,
-    previousLocaleMetadata,
-    normalizedEntry,
-  } = params;
+  const { locale, baseValue, currentBaseChecksum, baseValueChanged, previousLocaleMetadata, normalizedEntry } = params;
 
-  const hadLocaleEntry = ensureLocaleEntryExists(
-    normalizedEntry,
-    locale,
-    baseValue,
-  );
+  const hadLocaleEntry = ensureLocaleEntryExists(normalizedEntry, locale, baseValue);
   const currentLocaleValue = normalizedEntry[locale] as string;
   const currentLocaleChecksum = calculateChecksum(currentLocaleValue);
 
@@ -207,9 +171,7 @@ function processLocale(params: ProcessLocaleParams): ProcessLocaleResult {
   };
 }
 
-function processAllLocales(
-  params: ProcessAllLocalesParams,
-): ProcessAllLocalesResult {
+function processAllLocales(params: ProcessAllLocalesParams): ProcessAllLocalesResult {
   const {
     locales,
     baseLocale,
@@ -264,9 +226,7 @@ function processAllLocales(
  * @param params - Normalization parameters including entry data and configuration
  * @returns Normalized entry and metadata with change summary
  */
-export function normalizeEntry(
-  params: NormalizeEntryParams,
-): NormalizeEntryResult {
+export function normalizeEntry(params: NormalizeEntryParams): NormalizeEntryResult {
   const { resourceEntry, metadata, baseLocale, locales } = params;
 
   if (!baseLocale) {
@@ -283,8 +243,7 @@ export function normalizeEntry(
   const baseValue = resourceEntry.source;
   const currentBaseChecksum = calculateChecksum(baseValue);
   const previousBaseChecksum = metadata[baseLocale]?.checksum;
-  const baseValueChanged =
-    !!previousBaseChecksum && previousBaseChecksum !== currentBaseChecksum;
+  const baseValueChanged = !!previousBaseChecksum && previousBaseChecksum !== currentBaseChecksum;
 
   const baseChecksumsUpdated = updateBaseLocaleMetadata({
     currentBaseChecksum,

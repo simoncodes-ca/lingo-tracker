@@ -12,12 +12,7 @@ import {
   ImportResult,
   generateImportSummary,
 } from '@simoncodes-ca/core';
-import {
-  loadConfiguration,
-  ConsoleFormatter,
-  ErrorMessages,
-  isInteractiveTerminal,
-} from '../utils';
+import { loadConfiguration, ConsoleFormatter, ErrorMessages, isInteractiveTerminal } from '../utils';
 
 export const LARGE_FILE_SIZE_THRESHOLD = 5;
 
@@ -36,9 +31,7 @@ export interface ImportCommandOptions {
   verbose?: boolean;
 }
 
-export async function importCommand(
-  options: ImportCommandOptions,
-): Promise<void> {
+export async function importCommand(options: ImportCommandOptions): Promise<void> {
   const loaded = loadConfiguration();
   if (!loaded) return;
   const { config, cwd } = loaded;
@@ -58,16 +51,12 @@ export async function importCommand(
 
   // Validate required options
   if (!answers.source) {
-    ConsoleFormatter.error(
-      'Source file is required. Use --source or run in interactive mode.',
-    );
+    ConsoleFormatter.error('Source file is required. Use --source or run in interactive mode.');
     process.exit(1);
   }
 
   if (!answers.locale) {
-    ConsoleFormatter.error(
-      'Target locale is required. Use --locale or run in interactive mode.',
-    );
+    ConsoleFormatter.error('Target locale is required. Use --locale or run in interactive mode.');
     process.exit(1);
   }
 
@@ -79,9 +68,7 @@ export async function importCommand(
       const fileSizeMB = stats.size / (1024 * 1024);
 
       if (fileSizeMB > LARGE_FILE_SIZE_THRESHOLD) {
-        ConsoleFormatter.warning(
-          `Large import file detected: ${fileSizeMB.toFixed(2)} MB`,
-        );
+        ConsoleFormatter.warning(`Large import file detected: ${fileSizeMB.toFixed(2)} MB`);
         ConsoleFormatter.indent('Import may take longer than usual.');
       }
     }
@@ -103,9 +90,7 @@ export async function importCommand(
     validateBase: answers.validateBase !== false, // Default true
     dryRun: answers.dryRun || false,
     verbose: answers.verbose || false,
-    onProgress: answers.verbose
-      ? (msg: string) => console.log(`  ${msg}`)
-      : undefined,
+    onProgress: answers.verbose ? (msg: string) => console.log(`  ${msg}`) : undefined,
   };
 
   // Auto-detect format if not specified
@@ -123,14 +108,11 @@ export async function importCommand(
 
   // Resolve translations folder
   const collectionConfig =
-    finalOptions.collection && config.collections
-      ? config.collections[finalOptions.collection]
-      : undefined;
+    finalOptions.collection && config.collections ? config.collections[finalOptions.collection] : undefined;
 
   // Collections have translationsFolder as required property
   // If no collection is specified, use default 'src/translations'
-  const translationsFolder =
-    collectionConfig?.translationsFolder || 'src/translations';
+  const translationsFolder = collectionConfig?.translationsFolder || 'src/translations';
 
   const translationsFolderPath = path.resolve(cwd, translationsFolder);
 
@@ -185,17 +167,12 @@ export async function importCommand(
   if (!finalOptions.dryRun) {
     try {
       const summary = generateImportSummary(result, finalOptions);
-      const summaryPath = path.join(
-        translationsFolderPath,
-        'import-summary.md',
-      );
+      const summaryPath = path.join(translationsFolderPath, 'import-summary.md');
       fs.writeFileSync(summaryPath, summary, 'utf8');
       console.log('');
       console.log(`📄 Import summary written to: ${summaryPath}`);
     } catch (error) {
-      ConsoleFormatter.warning(
-        `Failed to write summary file: ${(error as Error).message}`,
-      );
+      ConsoleFormatter.warning(`Failed to write summary file: ${(error as Error).message}`);
     }
   } else {
     // For dry-run, still generate summary but don't write to file
@@ -291,9 +268,7 @@ async function promptForMissing(
   // For migration strategy, include base locale in the available choices
   const strategy = answers.strategy || 'translation-service';
   const allowBaseLocale = strategy === 'migration';
-  const targetLocales = allowBaseLocale
-    ? configuredLocales
-    : configuredLocales.filter((loc) => loc !== baseLocale);
+  const targetLocales = allowBaseLocale ? configuredLocales : configuredLocales.filter((loc) => loc !== baseLocale);
 
   // Prompt for target locale
   if (!answers.locale) {
@@ -342,10 +317,7 @@ async function promptForMissing(
       ],
     });
 
-    if (
-      collectionAnswer.collection === undefined &&
-      !('collection' in collectionAnswer)
-    ) {
+    if (collectionAnswer.collection === undefined && !('collection' in collectionAnswer)) {
       throw new Error('Import cancelled');
     }
 
@@ -362,8 +334,7 @@ async function promptForMissing(
         {
           title: 'Translation Service',
           value: 'translation-service',
-          description:
-            'Import from professional translation services (default)',
+          description: 'Import from professional translation services (default)',
         },
         {
           title: 'Verification',
@@ -490,9 +461,7 @@ function displayResults(result: ImportResult, options: ImportOptions): void {
       ConsoleFormatter.indent(warning);
     });
     if (result.warnings.length > 10) {
-      ConsoleFormatter.indent(
-        `... and ${result.warnings.length - 10} more warnings`,
-      );
+      ConsoleFormatter.indent(`... and ${result.warnings.length - 10} more warnings`);
     }
   }
 
@@ -504,9 +473,7 @@ function displayResults(result: ImportResult, options: ImportOptions): void {
       ConsoleFormatter.indent(error);
     });
     if (result.errors.length > 10) {
-      ConsoleFormatter.indent(
-        `... and ${result.errors.length - 10} more errors`,
-      );
+      ConsoleFormatter.indent(`... and ${result.errors.length - 10} more errors`);
     }
   }
 

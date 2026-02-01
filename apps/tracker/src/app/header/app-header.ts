@@ -12,14 +12,7 @@ import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
   selector: 'app-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    MatToolbarModule,
-    MatIconModule,
-    MatButtonModule,
-    MatMenuModule,
-    TranslocoModule,
-  ],
+  imports: [CommonModule, MatToolbarModule, MatIconModule, MatButtonModule, MatMenuModule, TranslocoModule],
   templateUrl: './app-header.html',
   styleUrl: './app-header.scss',
 })

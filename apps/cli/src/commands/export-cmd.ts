@@ -41,9 +41,7 @@ export interface ExportCommandOptions {
   verbose?: boolean;
 }
 
-export async function exportCommand(
-  options: ExportCommandOptions,
-): Promise<void> {
+export async function exportCommand(options: ExportCommandOptions): Promise<void> {
   const loaded = loadConfiguration();
   if (!loaded) return;
   const { config, cwd } = loaded;
@@ -60,9 +58,7 @@ export async function exportCommand(
   }
 
   if (!answers.format) {
-    ConsoleFormatter.error(
-      'Format is required. Use --format or run in interactive mode.',
-    );
+    ConsoleFormatter.error('Format is required. Use --format or run in interactive mode.');
     process.exit(1);
   }
 
@@ -98,16 +94,12 @@ export async function exportCommand(
   // Resolve collections
   const collectionNames = parseCommaSeparatedList(options.collection);
 
-  const allCollections = Object.entries(config.collections || {}).map(
-    ([name, col]) => ({
-      name,
-      path: col.translationsFolder,
-    }),
-  );
+  const allCollections = Object.entries(config.collections || {}).map(([name, col]) => ({
+    name,
+    path: col.translationsFolder,
+  }));
 
-  const collectionsToProcess = allCollections.filter(
-    (c) => !collectionNames || collectionNames.includes(c.name),
-  );
+  const collectionsToProcess = allCollections.filter((c) => !collectionNames || collectionNames.includes(c.name));
 
   if (collectionsToProcess.length === 0) {
     ConsoleFormatter.warning('No matching collections found.');
@@ -117,8 +109,7 @@ export async function exportCommand(
   // Resolve locales
   const localeNames = parseCommaSeparatedList(options.locale);
   const targetLocales = (config.locales || []).filter(
-    (l: string) =>
-      l !== config.baseLocale && (!localeNames || localeNames.includes(l)),
+    (l: string) => l !== config.baseLocale && (!localeNames || localeNames.includes(l)),
   );
 
   if (targetLocales.length === 0) {
@@ -127,15 +118,11 @@ export async function exportCommand(
   }
 
   // Resolve status and tags
-  const statusFilter = parseCommaSeparatedList(options.status)?.map(
-    (s) => s as TranslationStatus,
-  );
+  const statusFilter = parseCommaSeparatedList(options.status)?.map((s) => s as TranslationStatus);
   const tagFilter = parseCommaSeparatedList(options.tags);
 
   ConsoleFormatter.progress(`Exporting to ${options.format.toUpperCase()}...`);
-  ConsoleFormatter.indent(
-    `Collections: ${collectionsToProcess.map((c) => c.name).join(', ')}`,
-  );
+  ConsoleFormatter.indent(`Collections: ${collectionsToProcess.map((c) => c.name).join(', ')}`);
   ConsoleFormatter.indent(`Locales: ${targetLocales.join(', ')}`);
   ConsoleFormatter.indent(`Output: ${outputDir}`);
   if (options.dryRun) ConsoleFormatter.indent('[DRY RUN]');
@@ -174,33 +161,19 @@ export async function exportCommand(
   const allFilesCreated: string[] = [];
 
   for (const locale of targetLocales) {
-    const filtered = filterResources(
-      allResources,
-      locale,
-      statusFilter,
-      tagFilter,
-    );
+    const filtered = filterResources(allResources, locale, statusFilter, tagFilter);
 
     if (filtered.length === 0) {
-      if (options.verbose)
-        console.log(`   Skipping ${locale}: No matching resources.`);
+      if (options.verbose) console.log(`   Skipping ${locale}: No matching resources.`);
       continue;
     }
 
     try {
       let result: ExportResult;
       if (options.format === 'xliff') {
-        result = await exportToXliff(
-          filtered,
-          { ...exportOptions, locales: [locale] },
-          config.baseLocale,
-        );
+        result = await exportToXliff(filtered, { ...exportOptions, locales: [locale] }, config.baseLocale);
       } else {
-        result = exportToJson(
-          filtered,
-          { ...exportOptions, locales: [locale] },
-          config.baseLocale,
-        );
+        result = exportToJson(filtered, { ...exportOptions, locales: [locale] }, config.baseLocale);
       }
 
       totalResources += result.resourcesExported;
@@ -211,20 +184,14 @@ export async function exportCommand(
 
       if (result.filesCreated.length > 0) {
         ConsoleFormatter.indent(
-          `✅ ${locale}: Exported ${
-            result.resourcesExported
-          } resources to ${result.filesCreated.join(', ')}`,
+          `✅ ${locale}: Exported ${result.resourcesExported} resources to ${result.filesCreated.join(', ')}`,
         );
       } else if (result.errors.length > 0) {
         ConsoleFormatter.indent(`❌ ${locale}: Failed`);
       }
     } catch (error) {
-      ConsoleFormatter.indent(
-        `❌ ${locale}: Export failed - ${(error as Error).message}`,
-      );
-      allErrors.push(
-        `Export for locale ${locale} failed: ${(error as Error).message}`,
-      );
+      ConsoleFormatter.indent(`❌ ${locale}: Export failed - ${(error as Error).message}`);
+      allErrors.push(`Export for locale ${locale} failed: ${(error as Error).message}`);
     }
   }
 
@@ -312,9 +279,7 @@ async function promptForMissing(
   }> = {};
 
   const collectionNames = Object.keys(config.collections || {});
-  const targetLocales = (config.locales || []).filter(
-    (l: string) => l !== config.baseLocale,
-  );
+  const targetLocales = (config.locales || []).filter((l: string) => l !== config.baseLocale);
 
   const questions: prompts.PromptObject[] = [];
 
@@ -443,8 +408,7 @@ async function promptForMissing(
       questions.push({
         type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
           const selectedFormat = options.format || values.format;
-          const isRich =
-            options.rich !== undefined ? options.rich : values.rich;
+          const isRich = options.rich !== undefined ? options.rich : values.rich;
           return selectedFormat === 'json' && isRich ? 'toggle' : null;
         },
         name: 'includeBase',
@@ -460,8 +424,7 @@ async function promptForMissing(
       questions.push({
         type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
           const selectedFormat = options.format || values.format;
-          const isRich =
-            options.rich !== undefined ? options.rich : values.rich;
+          const isRich = options.rich !== undefined ? options.rich : values.rich;
           return selectedFormat === 'json' && isRich ? 'toggle' : null;
         },
         name: 'includeStatus',
@@ -477,8 +440,7 @@ async function promptForMissing(
       questions.push({
         type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
           const selectedFormat = options.format || values.format;
-          const isRich =
-            options.rich !== undefined ? options.rich : values.rich;
+          const isRich = options.rich !== undefined ? options.rich : values.rich;
           return selectedFormat === 'json' && isRich ? 'toggle' : null;
         },
         name: 'includeComment',
@@ -494,8 +456,7 @@ async function promptForMissing(
       questions.push({
         type: (_prev: unknown, values: { format?: string; rich?: boolean }) => {
           const selectedFormat = options.format || values.format;
-          const isRich =
-            options.rich !== undefined ? options.rich : values.rich;
+          const isRich = options.rich !== undefined ? options.rich : values.rich;
           return selectedFormat === 'json' && isRich ? 'toggle' : null;
         },
         name: 'includeTags',
@@ -512,8 +473,7 @@ async function promptForMissing(
     questions.push({
       type: 'text',
       name: 'filename',
-      message:
-        'Custom filename pattern (optional, e.g., "translations-{locale}.{ext}")',
+      message: 'Custom filename pattern (optional, e.g., "translations-{locale}.{ext}")',
       initial: '',
     });
   }
@@ -553,10 +513,7 @@ async function promptForMissing(
 
     // Handle multiselect "All" options
     if (result.collections) {
-      const selected = processMultiselectWithAll(
-        result.collections,
-        collectionNames,
-      );
+      const selected = processMultiselectWithAll(result.collections, collectionNames);
       responses.collection = multiselectResultToString(selected);
     }
 

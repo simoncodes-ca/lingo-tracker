@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { importFromJson } from './import-from-json';
 import { importFromXliff } from './import-from-xliff';
-import { ImportOptions } from './types';
+import type { ImportOptions } from './types';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -13,12 +13,8 @@ describe('import error handling integration', () => {
     vi.clearAllMocks();
 
     // Mock path functions
-    vi.spyOn(path, 'resolve').mockImplementation((...segments) =>
-      segments.join('/'),
-    );
-    vi.spyOn(path, 'join').mockImplementation((...segments) =>
-      segments.join('/'),
-    );
+    vi.spyOn(path, 'resolve').mockImplementation((...segments) => segments.join('/'));
+    vi.spyOn(path, 'join').mockImplementation((...segments) => segments.join('/'));
     vi.spyOn(path, 'dirname').mockImplementation((p) => {
       const parts = String(p).split('/');
       parts.pop();
@@ -35,9 +31,7 @@ describe('import error handling integration', () => {
         locale: 'es',
       };
 
-      expect(() => importFromJson('/translations', options)).toThrow(
-        'Source file not found',
-      );
+      expect(() => importFromJson('/translations', options)).toThrow('Source file not found');
     });
 
     it('should throw error when importing into base locale', () => {
@@ -49,9 +43,7 @@ describe('import error handling integration', () => {
         locale: 'en', // base locale
       };
 
-      expect(() => importFromJson('/translations', options)).toThrow(
-        'Cannot import into base locale',
-      );
+      expect(() => importFromJson('/translations', options)).toThrow('Cannot import into base locale');
     });
 
     it('should throw error when JSON file is malformed', () => {
@@ -63,9 +55,7 @@ describe('import error handling integration', () => {
         locale: 'es',
       };
 
-      expect(() => importFromJson('/translations', options)).toThrow(
-        'Failed to parse JSON file',
-      );
+      expect(() => importFromJson('/translations', options)).toThrow('Failed to parse JSON file');
     });
 
     it('should throw error when XLIFF source file not found', async () => {
@@ -76,9 +66,7 @@ describe('import error handling integration', () => {
         locale: 'es',
       };
 
-      await expect(importFromXliff('/translations', options)).rejects.toThrow(
-        'Source file not found',
-      );
+      await expect(importFromXliff('/translations', options)).rejects.toThrow('Source file not found');
     });
 
     it('should throw error when XLIFF file is malformed', async () => {
@@ -90,9 +78,7 @@ describe('import error handling integration', () => {
         locale: 'es',
       };
 
-      await expect(importFromXliff('/translations', options)).rejects.toThrow(
-        'Failed to parse XLIFF content',
-      );
+      await expect(importFromXliff('/translations', options)).rejects.toThrow('Failed to parse XLIFF content');
     });
   });
 
@@ -124,14 +110,8 @@ describe('import error handling integration', () => {
       // All 3 resources fail because migration strategy requires baseValue for creation
       expect(result.resourcesFailed).toBe(3);
       expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.errors.some((e) => e.includes('common..invalid'))).toBe(
-        true,
-      );
-      expect(
-        result.changes.find(
-          (c) => c.key === 'common..invalid' && c.type === 'failed',
-        ),
-      ).toBeDefined();
+      expect(result.errors.some((e) => e.includes('common..invalid'))).toBe(true);
+      expect(result.changes.find((c) => c.key === 'common..invalid' && c.type === 'failed')).toBeDefined();
     });
 
     it('should skip resources with hierarchical conflicts', () => {
@@ -158,9 +138,7 @@ describe('import error handling integration', () => {
       const result = importFromJson('/translations', options);
 
       expect(result.errors.length).toBeGreaterThan(0);
-      expect(
-        result.errors.some((e) => e.includes('Hierarchical conflict')),
-      ).toBe(true);
+      expect(result.errors.some((e) => e.includes('Hierarchical conflict'))).toBe(true);
       // Both resources fail - both have conflicts, and both need baseValue for migration
       expect(result.resourcesFailed).toBe(2);
     });
@@ -248,10 +226,8 @@ describe('import error handling integration', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('test.json')) return JSON.stringify(importData);
-        if (pathStr.includes('resource_entries.json'))
-          return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json'))
-          return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
         return '{}';
       });
       vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
@@ -264,9 +240,7 @@ describe('import error handling integration', () => {
       const result = importFromJson('/translations/common', options);
 
       expect(result.warnings.length).toBeGreaterThan(0);
-      const mismatchWarning = result.warnings.find((w) =>
-        w.includes('Base value mismatch'),
-      );
+      const mismatchWarning = result.warnings.find((w) => w.includes('Base value mismatch'));
       expect(mismatchWarning).toBeDefined();
       expect(mismatchWarning).toContain('preserving LingoTracker value');
     });
@@ -292,13 +266,9 @@ describe('import error handling integration', () => {
       const result = importFromJson('/translations', options);
 
       expect(result.resourcesSkipped).toBe(1);
-      const skippedChange = result.changes.find(
-        (c) => c.key === 'new.resource',
-      );
+      const skippedChange = result.changes.find((c) => c.key === 'new.resource');
       expect(skippedChange?.type).toBe('skipped');
-      expect(skippedChange?.reason).toContain(
-        'strategy does not allow creation',
-      );
+      expect(skippedChange?.reason).toContain('strategy does not allow creation');
     });
 
     it('should warn on very long keys', () => {
@@ -325,9 +295,7 @@ describe('import error handling integration', () => {
       const result = importFromJson('/translations', options);
 
       expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings.some((w) => w.includes('Very long key'))).toBe(
-        true,
-      );
+      expect(result.warnings.some((w) => w.includes('Very long key'))).toBe(true);
     });
   });
 
@@ -395,10 +363,8 @@ describe('import error handling integration', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('test.json')) return JSON.stringify(importData);
-        if (pathStr.includes('resource_entries.json'))
-          return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json'))
-          return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
         return '{}';
       });
       vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);

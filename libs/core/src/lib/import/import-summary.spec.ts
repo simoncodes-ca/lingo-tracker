@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateImportSummary } from './import-summary';
-import { ImportResult, ImportOptions } from './types';
+import type { ImportResult, ImportOptions } from './types';
 
 describe('import-summary', () => {
   describe('generateImportSummary', () => {
@@ -53,9 +53,7 @@ describe('import-summary', () => {
       expect(summary).toContain('**New → Translated**: 5');
       expect(summary).toContain('**Stale → Translated**: 5');
       expect(summary).toContain('## Files Modified');
-      expect(summary).toContain(
-        '/test/translations/common/resource_entries.json',
-      );
+      expect(summary).toContain('/test/translations/common/resource_entries.json');
     });
 
     it('should generate dry-run summary', () => {
@@ -107,10 +105,7 @@ describe('import-summary', () => {
         changes: [],
         statusTransitions: [],
         filesModified: [],
-        warnings: [
-          'Base value mismatch for key: common.title',
-          'Duplicate key in import file: common.subtitle',
-        ],
+        warnings: ['Base value mismatch for key: common.title', 'Duplicate key in import file: common.subtitle'],
         errors: [],
         dryRun: false,
       };
@@ -125,9 +120,7 @@ describe('import-summary', () => {
 
       expect(summary).toContain('## Warnings');
       expect(summary).toContain('Base value mismatch for key: common.title');
-      expect(summary).toContain(
-        'Duplicate key in import file: common.subtitle',
-      );
+      expect(summary).toContain('Duplicate key in import file: common.subtitle');
     });
 
     it('should include errors section when errors exist', () => {
@@ -146,10 +139,7 @@ describe('import-summary', () => {
         statusTransitions: [],
         filesModified: [],
         warnings: [],
-        errors: [
-          'Invalid key format: common..invalid',
-          'Hierarchical conflict: common',
-        ],
+        errors: ['Invalid key format: common..invalid', 'Hierarchical conflict: common'],
         dryRun: false,
       };
 
@@ -217,9 +207,7 @@ describe('import-summary', () => {
       expect(summary).toContain('### Created Resources');
       expect(summary).toContain('`common.title`: "Título" (translated)');
       expect(summary).toContain('`common.subtitle`: "Subtítulo" (translated)');
-      expect(summary).toContain(
-        '`dashboard.welcome`: "Bienvenido" (translated)',
-      );
+      expect(summary).toContain('`dashboard.welcome`: "Bienvenido" (translated)');
     });
 
     it('should format detailed changes for updated resources', () => {
@@ -268,12 +256,8 @@ describe('import-summary', () => {
       const summary = generateImportSummary(result, options);
 
       expect(summary).toContain('### Updated Resources');
-      expect(summary).toContain(
-        '`common.ok`: "" → "Aceptar" (new → translated)',
-      );
-      expect(summary).toContain(
-        '`common.cancel`: "Cancelar" → "Cancelar Ahora"',
-      );
+      expect(summary).toContain('`common.ok`: "" → "Aceptar" (new → translated)');
+      expect(summary).toContain('`common.cancel`: "Cancelar" → "Cancelar Ahora"');
     });
 
     it('should format detailed changes for skipped resources', () => {
@@ -316,9 +300,7 @@ describe('import-summary', () => {
       const summary = generateImportSummary(result, options);
 
       expect(summary).toContain('### Skipped Resources');
-      expect(summary).toContain(
-        '`new.resource` (strategy does not allow creation)',
-      );
+      expect(summary).toContain('`new.resource` (strategy does not allow creation)');
       expect(summary).toContain('`empty.value` (empty target value)');
     });
 
@@ -362,21 +344,14 @@ describe('import-summary', () => {
       const summary = generateImportSummary(result, options);
 
       expect(summary).toContain('### Failed Resources');
-      expect(summary).toContain(
-        '`common..invalid` - Invalid key format: consecutive dots',
-      );
-      expect(summary).toContain(
-        '`common` - Hierarchical conflict: has value and child keys',
-      );
+      expect(summary).toContain('`common..invalid` - Invalid key format: consecutive dots');
+      expect(summary).toContain('`common` - Hierarchical conflict: has value and child keys');
     });
 
     it('should limit displayed items to first 10 with overflow indicator', () => {
       const warnings = Array.from({ length: 15 }, (_, i) => `Warning ${i + 1}`);
       const errors = Array.from({ length: 12 }, (_, i) => `Error ${i + 1}`);
-      const files = Array.from(
-        { length: 20 },
-        (_, i) => `/test/file${i + 1}.json`,
-      );
+      const files = Array.from({ length: 20 }, (_, i) => `/test/file${i + 1}.json`);
 
       const result: ImportResult = {
         format: 'json',
@@ -508,9 +483,7 @@ describe('import-summary', () => {
         resourcesSkipped: 0,
         resourcesFailed: 0,
         changes: [],
-        statusTransitions: [
-          { from: 'translated', to: 'translated', count: 10 },
-        ],
+        statusTransitions: [{ from: 'translated', to: 'translated', count: 10 }],
         filesModified: [],
         warnings: [],
         errors: [],
@@ -525,9 +498,7 @@ describe('import-summary', () => {
 
       const summary = generateImportSummary(result, options);
 
-      expect(summary).toContain(
-        '**Translated → Translated**: 10 (value changed)',
-      );
+      expect(summary).toContain('**Translated → Translated**: 10 (value changed)');
     });
 
     it('should handle created resources in status transitions', () => {

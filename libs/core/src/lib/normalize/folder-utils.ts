@@ -17,10 +17,7 @@ interface FolderInfo {
 export function getAllFoldersBottomUp(rootPath: string): string[] {
   const foldersWithDepth: FolderInfo[] = [];
 
-  function collectFoldersRecursively(
-    currentPath: string,
-    currentDepth: number,
-  ): void {
+  function collectFoldersRecursively(currentPath: string, currentDepth: number): void {
     if (!fs.existsSync(currentPath)) {
       return;
     }
@@ -46,9 +43,7 @@ export function getAllFoldersBottomUp(rootPath: string): string[] {
   collectFoldersRecursively(rootPath, 0);
 
   // Sort by depth descending (deepest folders first) for bottom-up processing
-  return foldersWithDepth
-    .sort((a, b) => b.depth - a.depth)
-    .map((folder) => folder.path);
+  return foldersWithDepth.sort((a, b) => b.depth - a.depth).map((folder) => folder.path);
 }
 
 /**

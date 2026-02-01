@@ -49,10 +49,7 @@ describe('initCommand', () => {
       },
     };
 
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expectedConfigPath,
-      JSON.stringify(expectedConfig, null, 2),
-    );
+    expect(mockWriteFileSync).toHaveBeenCalledWith(expectedConfigPath, JSON.stringify(expectedConfig, null, 2));
   });
 
   it('should use default values when parameters are not provided', async () => {
@@ -85,10 +82,7 @@ describe('initCommand', () => {
       },
     };
 
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      expectedConfigPath,
-      JSON.stringify(expectedConfig, null, 2),
-    );
+    expect(mockWriteFileSync).toHaveBeenCalledWith(expectedConfigPath, JSON.stringify(expectedConfig, null, 2));
   });
 
   it('should not write file if config already exists', async () => {

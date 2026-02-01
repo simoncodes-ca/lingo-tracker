@@ -1,9 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import {
-  provideHttpClientTesting,
-  HttpTestingController,
-} from '@angular/common/http/testing';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TranslationBrowser } from './translation-browser';
@@ -17,11 +14,7 @@ describe('TranslationBrowser - Integration', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TranslationBrowser, getTranslocoTestingModule()],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        provideRouter([]),
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationBrowser);
@@ -41,21 +34,16 @@ describe('TranslationBrowser - Integration', () => {
     });
 
     // Flush the cache status request to make the browser content visible
-    const cacheReq = httpMock.expectOne(
-      '/api/collections/test-collection/resources/cache/status',
-    );
+    const cacheReq = httpMock.expectOne('/api/collections/test-collection/resources/cache/status');
     cacheReq.flush({ status: 'ready', error: null });
 
     // Flush the root folders request
-    const treeReq = httpMock.expectOne(
-      '/api/collections/test-collection/resources/tree?path=&includeNested=true',
-    );
+    const treeReq = httpMock.expectOne('/api/collections/test-collection/resources/tree?path=&includeNested=true');
     treeReq.flush({ path: '', resources: [], children: [] });
 
     fixture.detectChanges();
 
-    const collectionName =
-      fixture.nativeElement.querySelector('.collection-name');
+    const collectionName = fixture.nativeElement.querySelector('.collection-name');
     expect(collectionName?.textContent).toBe('test-collection');
   });
 });

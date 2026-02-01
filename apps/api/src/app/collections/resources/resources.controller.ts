@@ -45,10 +45,7 @@ import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
 import { mapResourceTreeToDto } from '../../mappers/resource-tree.mapper';
 import { mapSearchResultsToDto } from '../../mappers/search-result.mapper';
-import {
-  CollectionCacheService,
-  CacheStatus,
-} from '../../cache/collection-cache.service';
+import { CollectionCacheService, CacheStatus } from '../../cache/collection-cache.service';
 
 @Controller('collections/:collectionName/resources')
 export class ResourcesController {
@@ -69,9 +66,7 @@ export class ResourcesController {
       const config = this.configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
-        throw new NotFoundException(
-          `Collection "${decodedCollectionName}" not found`,
-        );
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
       }
 
       const collection = config.collections[decodedCollectionName];
@@ -83,10 +78,7 @@ export class ResourcesController {
       const resources = Array.isArray(body) ? body : [body];
 
       if (resources.length === 0) {
-        throw new HttpException(
-          'At least one resource is required',
-          HttpStatus.BAD_REQUEST,
-        );
+        throw new HttpException('At least one resource is required', HttpStatus.BAD_REQUEST);
       }
 
       let entriesCreated = 0;
@@ -100,11 +92,7 @@ export class ResourcesController {
           const translations =
             resource.translations && resource.translations.length > 0
               ? resource.translations
-              : createDefaultTranslations(
-                  locales,
-                  resourceBaseLocale,
-                  resource.baseValue,
-                );
+              : createDefaultTranslations(locales, resourceBaseLocale, resource.baseValue);
 
           const params = mapDtoToAddResourceParams({
             ...resource,
@@ -121,14 +109,8 @@ export class ResourcesController {
         } catch (error: unknown) {
           // Validation errors (invalid key, etc.) should return 400
           const errorMessage = error instanceof Error ? error.message : '';
-          if (
-            errorMessage.includes('Invalid') ||
-            errorMessage.includes('cannot be empty')
-          ) {
-            throw new HttpException(
-              `Validation error for resource: ${errorMessage}`,
-              HttpStatus.BAD_REQUEST,
-            );
+          if (errorMessage.includes('Invalid') || errorMessage.includes('cannot be empty')) {
+            throw new HttpException(`Validation error for resource: ${errorMessage}`, HttpStatus.BAD_REQUEST);
           }
           // Re-throw other errors to be caught by outer catch
           throw error;
@@ -154,8 +136,7 @@ export class ResourcesController {
       }
 
       // File system errors or other unexpected errors
-      const errorMessage =
-        error instanceof Error ? error.message : 'Error creating resources';
+      const errorMessage = error instanceof Error ? error.message : 'Error creating resources';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -170,9 +151,7 @@ export class ResourcesController {
       const config = this.configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
-        throw new NotFoundException(
-          `Collection "${decodedCollectionName}" not found`,
-        );
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
       }
 
       if (!dto.keys || !Array.isArray(dto.keys) || dto.keys.length === 0) {
@@ -205,8 +184,7 @@ export class ResourcesController {
         throw error;
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : 'Error deleting resources';
+      const errorMessage = error instanceof Error ? error.message : 'Error deleting resources';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -221,9 +199,7 @@ export class ResourcesController {
       const config = this.configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
-        throw new NotFoundException(
-          `Collection "${decodedCollectionName}" not found`,
-        );
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
       }
 
       const collection = config.collections[decodedCollectionName];
@@ -251,13 +227,10 @@ export class ResourcesController {
             // We could throw here, or treat it as an error for this specific move op
             // For consistency with other bulk ops, let's add it to errors and continue
             result.errors = result.errors || [];
-            result.errors.push(
-              `Destination collection "${destCollectionName}" not found`,
-            );
+            result.errors.push(`Destination collection "${destCollectionName}" not found`);
             continue;
           }
-          destinationTranslationsFolder =
-            config.collections[destCollectionName].translationsFolder;
+          destinationTranslationsFolder = config.collections[destCollectionName].translationsFolder;
         }
 
         const moveResult = moveResource(translationsFolder, {
@@ -283,15 +256,11 @@ export class ResourcesController {
 
       return result;
     } catch (error: unknown) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof HttpException
-      ) {
+      if (error instanceof NotFoundException || error instanceof HttpException) {
         throw error;
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : 'Error moving resources';
+      const errorMessage = error instanceof Error ? error.message : 'Error moving resources';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -306,9 +275,7 @@ export class ResourcesController {
       const config = this.configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
-        throw new NotFoundException(
-          `Collection "${decodedCollectionName}" not found`,
-        );
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
       }
 
       const collection = config.collections[decodedCollectionName];
@@ -331,15 +298,11 @@ export class ResourcesController {
         message: result.message,
       };
     } catch (error: unknown) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof HttpException
-      ) {
+      if (error instanceof NotFoundException || error instanceof HttpException) {
         throw error;
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : 'Error updating resource';
+      const errorMessage = error instanceof Error ? error.message : 'Error updating resource';
 
       if (errorMessage.includes('Resource not found')) {
         throw new NotFoundException(errorMessage);
@@ -374,8 +337,7 @@ export class ResourcesController {
         includeNested !== undefined &&
         typeof includeNested === 'object' &&
         includeNested !== null &&
-        typeof (includeNested as Record<string, unknown>).status ===
-          'function' &&
+        typeof (includeNested as Record<string, unknown>).status === 'function' &&
         typeof (includeNested as Record<string, unknown>).json === 'function'
       ) {
         responseObj = includeNested as unknown as Response;
@@ -385,38 +347,22 @@ export class ResourcesController {
       const config = this.configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
-        throw new NotFoundException(
-          `Collection "${decodedCollectionName}" not found`,
-        );
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
       }
 
       const collection = config.collections[decodedCollectionName];
       const translationsFolder = collection.translationsFolder;
 
       // Check cache status
-      const cacheStatus = this.cacheService.getCacheStatus(
-        decodedCollectionName,
-      );
+      const cacheStatus = this.cacheService.getCacheStatus(decodedCollectionName);
 
       // Handle cache states
-      if (
-        cacheStatus === CacheStatus.NOT_STARTED ||
-        cacheStatus === CacheStatus.ERROR
-      ) {
+      if (cacheStatus === CacheStatus.NOT_STARTED || cacheStatus === CacheStatus.ERROR) {
         // Trigger indexing asynchronously (don't await)
         const locales = collection.locales || config.locales || [];
-        this.cacheService
-          .indexCollection(
-            decodedCollectionName,
-            translationsFolder,
-            locales.length,
-          )
-          .catch((error) => {
-            this.#logger.warn(
-              `Async indexing failed for ${decodedCollectionName}`,
-              error,
-            );
-          });
+        this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
+          this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);
+        });
 
         const statusResponse: TreeStatusResponseDto = {
           status: 'not-ready',
@@ -436,8 +382,7 @@ export class ResourcesController {
       if (cacheStatus === CacheStatus.INDEXING) {
         const statusResponse: TreeStatusResponseDto = {
           status: 'indexing',
-          message:
-            'Collection is currently being indexed. Please try again shortly.',
+          message: 'Collection is currently being indexed. Please try again shortly.',
         };
 
         if (responseObj) {
@@ -451,10 +396,7 @@ export class ResourcesController {
       const cachedTree = this.cacheService.getCache(decodedCollectionName);
 
       if (!cachedTree) {
-        throw new HttpException(
-          'Cache is marked as ready but tree is not available',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+        throw new HttpException('Cache is marked as ready but tree is not available', HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
       // If no path specified, return full tree
@@ -471,9 +413,7 @@ export class ResourcesController {
       const subtree = extractSubtree(cachedTree, path);
 
       if (!subtree) {
-        throw new NotFoundException(
-          `Path "${path}" not found in collection tree`,
-        );
+        throw new NotFoundException(`Path "${path}" not found in collection tree`);
       }
 
       const treeDto = mapResourceTreeToDto(subtree);
@@ -524,29 +464,22 @@ export class ResourcesController {
         throw error;
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : 'Error loading resource tree';
+      const errorMessage = error instanceof Error ? error.message : 'Error loading resource tree';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @Get('cache/status')
-  async getCacheStatus(
-    @Param('collectionName') collectionName: string,
-  ): Promise<CacheStatusDto> {
+  async getCacheStatus(@Param('collectionName') collectionName: string): Promise<CacheStatusDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
       const config = this.configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
-        throw new NotFoundException(
-          `Collection "${decodedCollectionName}" not found`,
-        );
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
       }
 
-      const cacheStatus = this.cacheService.getCacheStatus(
-        decodedCollectionName,
-      );
+      const cacheStatus = this.cacheService.getCacheStatus(decodedCollectionName);
 
       // If cache is not started, trigger indexing asynchronously
       const collection = config.collections[decodedCollectionName];
@@ -554,31 +487,16 @@ export class ResourcesController {
         const translationsFolder = collection.translationsFolder;
         const locales = collection.locales || config.locales || [];
 
-        this.cacheService
-          .indexCollection(
-            decodedCollectionName,
-            translationsFolder,
-            locales.length,
-          )
-          .catch((error) => {
-            this.#logger.warn(
-              `Async indexing failed for ${decodedCollectionName}`,
-              error,
-            );
-          });
+        this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
+          this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);
+        });
       }
 
       // Get additional cache metadata
-      const metadata = this.cacheService.getCacheMetadata(
-        decodedCollectionName,
-      );
+      const metadata = this.cacheService.getCacheMetadata(decodedCollectionName);
 
       // Map CacheStatus enum to CacheStatusType string literal
-      const statusType = cacheStatus as
-        | 'not-started'
-        | 'indexing'
-        | 'ready'
-        | 'error';
+      const statusType = cacheStatus as 'not-started' | 'indexing' | 'ready' | 'error';
 
       const statusDto: CacheStatusDto = {
         status: statusType,
@@ -611,10 +529,7 @@ export class ResourcesController {
         throw error;
       }
 
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Error retrieving cache status';
+      const errorMessage = error instanceof Error ? error.message : 'Error retrieving cache status';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -629,9 +544,7 @@ export class ResourcesController {
       const config = this.configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
-        throw new NotFoundException(
-          `Collection "${decodedCollectionName}" not found`,
-        );
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
       }
 
       const collection = config.collections[decodedCollectionName];
@@ -675,9 +588,7 @@ export class ResourcesController {
 
       // Check if results were limited
       const limited = searchResults.length > maxResults;
-      const coreResults = limited
-        ? searchResults.slice(0, maxResults)
-        : searchResults;
+      const coreResults = limited ? searchResults.slice(0, maxResults) : searchResults;
       const results = mapSearchResultsToDto(coreResults);
 
       return {
@@ -695,8 +606,7 @@ export class ResourcesController {
         throw error;
       }
 
-      const errorMessage =
-        error instanceof Error ? error.message : 'Error searching translations';
+      const errorMessage = error instanceof Error ? error.message : 'Error searching translations';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

@@ -1,9 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import {
-  provideHttpClientTesting,
-  HttpTestingController,
-} from '@angular/common/http/testing';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { FolderTree } from './folder-tree';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
@@ -77,9 +74,7 @@ describe('FolderTree', () => {
     // FolderTree no longer loads on init - parent TranslationBrowser handles store initialization
     // Verify no HTTP requests are made
     httpMock.expectNone((request) => {
-      return request.url.includes(
-        '/api/collections/my-collection/resources/tree',
-      );
+      return request.url.includes('/api/collections/my-collection/resources/tree');
     });
   });
 

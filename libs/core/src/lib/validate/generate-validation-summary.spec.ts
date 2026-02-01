@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateValidationSummary } from './generate-validation-summary';
-import {
-  ResourceValidationResult,
-  ValidationOptions,
-  ResourceValidationDetail,
-} from './types';
+import type { ResourceValidationResult, ValidationOptions, ResourceValidationDetail } from './types';
 
 describe('generateValidationSummary', () => {
   const defaultOptions: ValidationOptions = {
@@ -97,9 +93,7 @@ describe('generateValidationSummary', () => {
       expect(summary).toContain('[main] resource-0 (new)');
       expect(summary).toContain('[main] resource-9 (new)');
       expect(summary).toContain('Total Failures: 10');
-      expect(summary).toContain(
-        '❌ Validation failed. Please review the failures above.',
-      );
+      expect(summary).toContain('❌ Validation failed. Please review the failures above.');
     });
 
     it('should display all stale resource failures', () => {
@@ -214,16 +208,11 @@ describe('generateValidationSummary', () => {
         allowTranslated: true,
       };
 
-      const summary = generateValidationSummary(
-        result,
-        optionsWithAllowTranslated,
-      );
+      const summary = generateValidationSummary(result, optionsWithAllowTranslated);
 
       expect(summary).toContain('✅ Validation PASSED');
       expect(summary).toContain('⚠️  Warnings (5)');
-      expect(summary).toContain(
-        'Resources with "translated" status (not yet verified)',
-      );
+      expect(summary).toContain('Resources with "translated" status (not yet verified)');
       expect(summary).toContain('Locale: es (5 warnings)');
       expect(summary).toContain('[main] resource-0 (translated)');
       expect(summary).toContain('Total Warnings: 5');
@@ -286,10 +275,7 @@ describe('generateValidationSummary', () => {
         allowTranslated: true,
       };
 
-      const summary = generateValidationSummary(
-        result,
-        optionsWithAllowTranslated,
-      );
+      const summary = generateValidationSummary(result, optionsWithAllowTranslated);
 
       expect(summary).toContain('❌ Validation FAILED');
       expect(summary).toContain('❌ Failures (5)');
@@ -297,9 +283,7 @@ describe('generateValidationSummary', () => {
       expect(summary).toContain('Total Failures: 5');
       expect(summary).toContain('Total Warnings: 5');
       expect(summary).toContain('Total Successes: 10');
-      expect(summary).toContain(
-        '❌ Validation failed. Please review the failures above.',
-      );
+      expect(summary).toContain('❌ Validation failed. Please review the failures above.');
     });
   });
 
@@ -418,10 +402,7 @@ describe('generateValidationSummary', () => {
         allowTranslated: true,
       };
 
-      const summary = generateValidationSummary(
-        result,
-        optionsWithAllowTranslated,
-      );
+      const summary = generateValidationSummary(result, optionsWithAllowTranslated);
 
       const itIndex = summary.indexOf('Locale: it');
       const jaIndex = summary.indexOf('Locale: ja');
@@ -518,10 +499,7 @@ describe('generateValidationSummary', () => {
         allowTranslated: true,
       };
 
-      const summary = generateValidationSummary(
-        result,
-        optionsWithAllowTranslated,
-      );
+      const summary = generateValidationSummary(result, optionsWithAllowTranslated);
 
       expect(summary).toContain('[main] resource-1');
       expect(summary).toContain('[feature-x] resource-2');
@@ -581,10 +559,7 @@ describe('generateValidationSummary', () => {
         allowTranslated: true,
       };
 
-      const summary = generateValidationSummary(
-        result,
-        optionsWithAllowTranslated,
-      );
+      const summary = generateValidationSummary(result, optionsWithAllowTranslated);
 
       expect(summary).toContain('⚠️  Warnings (120)');
       expect(summary).toContain('[main] resource-0 (translated)');
@@ -842,9 +817,7 @@ describe('generateValidationSummary', () => {
 
       const summary = generateValidationSummary(result, defaultOptions);
 
-      expect(summary).toContain(
-        'resource.with-dashes_and_underscores.and.dots',
-      );
+      expect(summary).toContain('resource.with-dashes_and_underscores.and.dots');
       expect(summary).toContain('resource.with.numbers.123.in.key');
     });
   });

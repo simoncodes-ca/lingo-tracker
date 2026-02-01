@@ -1,13 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  RESOURCE_ENTRIES_FILENAME,
-  TRACKER_META_FILENAME,
-} from '../../constants';
-import { ResourceEntries } from '../../resource/resource-entry';
-import { TrackerMetadata } from '../../resource/tracker-metadata';
-import { TranslationStatus } from '../../resource/translation-status';
-import { FilteredResource } from './types';
+import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import type { ResourceEntries } from '../../resource/resource-entry';
+import type { TrackerMetadata } from '../../resource/tracker-metadata';
+import type { TranslationStatus } from '../../resource/translation-status';
+import type { FilteredResource } from './types';
 
 export interface LoadedResource {
   key: string;
@@ -28,11 +25,7 @@ export function validateOutputDirectory(directory: string): void {
     try {
       fs.mkdirSync(directory, { recursive: true });
     } catch (error) {
-      throw new Error(
-        `Could not create output directory '${directory}': ${
-          (error as Error).message
-        }`,
-      );
+      throw new Error(`Could not create output directory '${directory}': ${(error as Error).message}`);
     }
   }
 
@@ -46,9 +39,7 @@ export function validateOutputDirectory(directory: string): void {
 /**
  * Loads all resources and metadata from a list of collections.
  */
-export function loadResourcesFromCollections(
-  collections: { name: string; path: string }[],
-): LoadedResource[] {
+export function loadResourcesFromCollections(collections: { name: string; path: string }[]): LoadedResource[] {
   const allResources: Map<string, LoadedResource> = new Map();
 
   for (const collection of collections) {
@@ -75,12 +66,8 @@ function loadFolderRecursively(
 
   if (fs.existsSync(entriesPath) && fs.existsSync(metaPath)) {
     try {
-      const entries: ResourceEntries = JSON.parse(
-        fs.readFileSync(entriesPath, 'utf8'),
-      );
-      const metadata: TrackerMetadata = JSON.parse(
-        fs.readFileSync(metaPath, 'utf8'),
-      );
+      const entries: ResourceEntries = JSON.parse(fs.readFileSync(entriesPath, 'utf8'));
+      const metadata: TrackerMetadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
 
       for (const [key, entry] of Object.entries(entries)) {
         const fullKey = keyPrefix ? `${keyPrefix}.${key}` : key;
@@ -107,25 +94,15 @@ function loadFolderRecursively(
         // But ResourceEntry type is flexible.
         // We'll iterate over keys that are not source, tags, comment
         for (const [prop, value] of Object.entries(entry)) {
-          if (
-            prop !== 'source' &&
-            prop !== 'tags' &&
-            prop !== 'comment' &&
-            typeof value === 'string'
-          ) {
+          if (prop !== 'source' && prop !== 'tags' && prop !== 'comment' && typeof value === 'string') {
             loadedResource.translations[prop] = value;
           }
         }
 
         // Extract status
         for (const [locale, localeMeta] of Object.entries(meta)) {
-          if (
-            localeMeta &&
-            typeof localeMeta === 'object' &&
-            'status' in localeMeta
-          ) {
-            loadedResource.status[locale] =
-              localeMeta.status as TranslationStatus;
+          if (localeMeta && typeof localeMeta === 'object' && 'status' in localeMeta) {
+            loadedResource.status[locale] = localeMeta.status as TranslationStatus;
           }
         }
 
@@ -133,9 +110,7 @@ function loadFolderRecursively(
         allResources.set(fullKey, loadedResource);
       }
     } catch (e) {
-      console.warn(
-        `Error loading files in ${folderPath}: ${(e as Error).message}`,
-      );
+      console.warn(`Error loading files in ${folderPath}: ${(e as Error).message}`);
     }
   }
 

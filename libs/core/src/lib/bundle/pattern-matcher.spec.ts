@@ -14,27 +14,13 @@ describe('pattern-matcher', () => {
 
     describe('exact match (no wildcard)', () => {
       it('should match exact key', () => {
-        expect(
-          matchesPattern('apps.common.buttons.ok', 'apps.common.buttons.ok'),
-        ).toBe(true);
+        expect(matchesPattern('apps.common.buttons.ok', 'apps.common.buttons.ok')).toBe(true);
       });
 
       it('should not match different keys', () => {
-        expect(
-          matchesPattern(
-            'apps.common.buttons.cancel',
-            'apps.common.buttons.ok',
-          ),
-        ).toBe(false);
-        expect(matchesPattern('apps.common', 'apps.common.buttons.ok')).toBe(
-          false,
-        );
-        expect(
-          matchesPattern(
-            'apps.common.buttons.ok.extra',
-            'apps.common.buttons.ok',
-          ),
-        ).toBe(false);
+        expect(matchesPattern('apps.common.buttons.cancel', 'apps.common.buttons.ok')).toBe(false);
+        expect(matchesPattern('apps.common', 'apps.common.buttons.ok')).toBe(false);
+        expect(matchesPattern('apps.common.buttons.ok.extra', 'apps.common.buttons.ok')).toBe(false);
       });
 
       it('should handle single-segment keys', () => {
@@ -63,12 +49,8 @@ describe('pattern-matcher', () => {
 
       it('should handle multi-level prefix patterns', () => {
         expect(matchesPattern('apps.common', 'apps.common.*')).toBe(true);
-        expect(matchesPattern('apps.common.buttons', 'apps.common.*')).toBe(
-          true,
-        );
-        expect(matchesPattern('apps.common.buttons.ok', 'apps.common.*')).toBe(
-          true,
-        );
+        expect(matchesPattern('apps.common.buttons', 'apps.common.*')).toBe(true);
+        expect(matchesPattern('apps.common.buttons.ok', 'apps.common.*')).toBe(true);
         expect(matchesPattern('apps', 'apps.common.*')).toBe(false);
         expect(matchesPattern('apps.other', 'apps.common.*')).toBe(false);
       });

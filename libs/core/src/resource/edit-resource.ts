@@ -1,11 +1,7 @@
 import { existsSync } from 'node:fs';
 import { calculateChecksum } from './checksum';
 import { validateAndResolvePaths } from '../lib/resource/resource-file-paths';
-import {
-  readResourceEntries,
-  readTrackerMetadata,
-  writeJsonFile,
-} from '../lib/file-io/json-file-operations';
+import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
 import { updateMetadataForBaseValueChange } from '../lib/resource/metadata-operations';
 
 export interface EditResourceOptions {
@@ -25,10 +21,7 @@ export interface EditResourceResult {
   message?: string;
 }
 
-export function editResource(
-  translationsFolder: string,
-  options: EditResourceOptions,
-): EditResourceResult {
+export function editResource(translationsFolder: string, options: EditResourceOptions): EditResourceResult {
   const { cwd = process.cwd(), baseLocale = 'en' } = options;
 
   const paths = validateAndResolvePaths({
@@ -38,10 +31,7 @@ export function editResource(
     cwd,
   });
 
-  if (
-    !existsSync(paths.resourceEntriesPath) ||
-    !existsSync(paths.trackerMetaPath)
-  ) {
+  if (!existsSync(paths.resourceEntriesPath) || !existsSync(paths.trackerMetaPath)) {
     throw new Error(`Resource not found: ${paths.resolvedKey}`);
   }
 
@@ -57,10 +47,7 @@ export function editResource(
   let hasChanges = false;
 
   // 1. Update Base Value
-  if (
-    options.baseValue !== undefined &&
-    options.baseValue !== resourceEntry.source
-  ) {
+  if (options.baseValue !== undefined && options.baseValue !== resourceEntry.source) {
     resourceEntry.source = options.baseValue;
 
     metaEntry = updateMetadataForBaseValueChange({
@@ -74,10 +61,7 @@ export function editResource(
   }
 
   // 2. Update Comment
-  if (
-    options.comment !== undefined &&
-    options.comment !== resourceEntry.comment
-  ) {
+  if (options.comment !== undefined && options.comment !== resourceEntry.comment) {
     resourceEntry.comment = options.comment;
     hasChanges = true;
   }
@@ -88,8 +72,7 @@ export function editResource(
     const currentTags = resourceEntry.tags || [];
     const newTags = options.tags;
     const isDifferent =
-      currentTags.length !== newTags.length ||
-      !currentTags.every((tag, index) => tag === newTags[index]);
+      currentTags.length !== newTags.length || !currentTags.every((tag, index) => tag === newTags[index]);
 
     if (isDifferent) {
       resourceEntry.tags = newTags;

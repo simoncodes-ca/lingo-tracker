@@ -8,11 +8,7 @@ import type { ResourceTreeNode } from './load-resource-tree';
 /**
  * Match type for search results.
  */
-export type MatchType =
-  | 'exact-key'
-  | 'partial-key'
-  | 'exact-value'
-  | 'partial-value';
+export type MatchType = 'exact-key' | 'partial-key' | 'exact-value' | 'partial-value';
 
 /**
  * Search result with match information.
@@ -130,11 +126,7 @@ export function searchTranslations(params: SearchParams): SearchResult[] {
           // Check value matches if no key match
           if (!matchType) {
             // Search source field if baseLocale is provided
-            if (
-              baseLocale &&
-              entry.source &&
-              typeof entry.source === 'string'
-            ) {
+            if (baseLocale && entry.source && typeof entry.source === 'string') {
               const normalizedValue = entry.source.toLowerCase();
               if (normalizedValue === normalizedQuery) {
                 matchType = 'exact-value';
@@ -148,11 +140,7 @@ export function searchTranslations(params: SearchParams): SearchResult[] {
             // Search all other locale translations
             for (const [locale, value] of Object.entries(entry)) {
               // Skip non-string properties (comment, tags, source)
-              if (
-                locale === 'comment' ||
-                locale === 'tags' ||
-                locale === 'source'
-              ) {
+              if (locale === 'comment' || locale === 'tags' || locale === 'source') {
                 continue;
               }
 
@@ -179,11 +167,7 @@ export function searchTranslations(params: SearchParams): SearchResult[] {
 
             // Extract all locale translations (excluding special fields)
             for (const locale in entry) {
-              if (
-                locale === 'comment' ||
-                locale === 'tags' ||
-                locale === 'source'
-              ) {
+              if (locale === 'comment' || locale === 'tags' || locale === 'source') {
                 continue;
               }
 
@@ -204,8 +188,7 @@ export function searchTranslations(params: SearchParams): SearchResult[] {
               translations,
               status,
               matchType,
-              matchedLocales:
-                matchedLocales.length > 0 ? matchedLocales : undefined,
+              matchedLocales: matchedLocales.length > 0 ? matchedLocales : undefined,
               comment: entry.comment,
               tags: entry.tags,
             });
@@ -391,8 +374,7 @@ export function searchResourceTree(params: SearchTreeParams): SearchResult[] {
           translations,
           status,
           matchType,
-          matchedLocales:
-            matchedLocales.length > 0 ? matchedLocales : undefined,
+          matchedLocales: matchedLocales.length > 0 ? matchedLocales : undefined,
           comment: entry.comment,
           tags: entry.tags,
         });

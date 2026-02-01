@@ -22,9 +22,7 @@ export interface EditResourceOptions {
   localeValue?: string;
 }
 
-export async function editResourceCommand(
-  options: EditResourceOptions,
-): Promise<void> {
+export async function editResourceCommand(options: EditResourceOptions): Promise<void> {
   const loaded = loadConfiguration({ exitOnError: false });
   if (!loaded) return;
   const { config, cwd } = loaded;
@@ -74,25 +72,19 @@ export async function editResourceCommand(
       [options.locale]: { value: options.localeValue },
     };
   } else if (options.locale || options.localeValue) {
-    ConsoleFormatter.warning(
-      'Both --locale and --localeValue must be provided to update a translation.',
-    );
+    ConsoleFormatter.warning('Both --locale and --localeValue must be provided to update a translation.');
   }
 
   try {
     const result = editResource(collection.translationsFolderPath, editOptions);
 
     if (result.updated) {
-      ConsoleFormatter.success(
-        `Resource "${result.resolvedKey}" updated successfully.`,
-      );
+      ConsoleFormatter.success(`Resource "${result.resolvedKey}" updated successfully.`);
     } else {
       ConsoleFormatter.info(result.message || 'No changes detected');
     }
   } catch (e: unknown) {
-    ConsoleFormatter.error(
-      e instanceof Error ? e.message : 'Failed to update resource',
-    );
+    ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to update resource');
   }
 }
 
@@ -111,8 +103,7 @@ async function promptForMissing(
       type: 'text',
       name: 'key',
       message: 'Resource key',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 

@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { normalize, NormalizeParams } from './normalize';
-import { ResourceEntries } from '../../resource/resource-entry';
-import { TrackerMetadata } from '../../resource/tracker-metadata';
+import { normalize, type NormalizeParams } from './normalize';
+import type { ResourceEntries } from '../../resource/resource-entry';
+import type { TrackerMetadata } from '../../resource/tracker-metadata';
 import { calculateChecksum } from '../../resource/checksum';
 import * as cleanupModule from './cleanup-empty-folders';
 
@@ -31,9 +31,7 @@ describe('Normalize', () => {
     vi.mocked(fs.statSync).mockImplementation((filepath) => {
       const entry = mockFs[filepath as string];
       if (!entry) {
-        throw new Error(
-          `ENOENT: no such file or directory, stat '${filepath}'`,
-        );
+        throw new Error(`ENOENT: no such file or directory, stat '${filepath}'`);
       }
       return {
         isDirectory: () => entry.type === 'directory',
@@ -52,9 +50,7 @@ describe('Normalize', () => {
     vi.mocked(fs.readFileSync).mockImplementation((filepath) => {
       const entry = mockFs[filepath as string];
       if (!entry || entry.type !== 'file') {
-        throw new Error(
-          `ENOENT: no such file or directory, open '${filepath}'`,
-        );
+        throw new Error(`ENOENT: no such file or directory, open '${filepath}'`);
       }
       return entry.content || '';
     });
@@ -329,9 +325,7 @@ describe('Normalize', () => {
       await normalize(params);
 
       // Verify metadata was written with stale status
-      const metaWriteCalls = vi
-        .mocked(fs.writeFileSync)
-        .mock.calls.filter((call) => call[0] === metaPath);
+      const metaWriteCalls = vi.mocked(fs.writeFileSync).mock.calls.filter((call) => call[0] === metaPath);
       expect(metaWriteCalls.length).toBeGreaterThan(0);
     });
 
@@ -379,10 +373,7 @@ describe('Normalize', () => {
       const result = await normalize(params);
 
       expect(result.foldersRemoved).toBe(1);
-      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(
-        testDir,
-        false,
-      );
+      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(testDir, false);
     });
 
     it('should return correct summary counts', async () => {
@@ -492,10 +483,7 @@ describe('Normalize', () => {
 
       // Files should not be modified in dry-run
       expect(fs.writeFileSync).not.toHaveBeenCalled();
-      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(
-        testDir,
-        true,
-      );
+      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(testDir, true);
     });
 
     it('should handle deeply nested folder structures', async () => {
@@ -720,9 +708,7 @@ describe('Normalize', () => {
       setupMockFileSystem(mockFs);
 
       // Spy on console.error to verify error message is logged
-      const consoleErrorSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => undefined);
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
       vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
         foldersRemoved: 0,

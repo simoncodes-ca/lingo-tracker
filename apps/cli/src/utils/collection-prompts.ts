@@ -19,17 +19,12 @@ import type { LingoTrackerConfig } from '@simoncodes-ca/core';
  * const collection = await promptForCollection(config, options.collection);
  * if (!collection) return;
  */
-export async function promptForCollection(
-  config: LingoTrackerConfig,
-  currentValue?: string,
-): Promise<string | null> {
+export async function promptForCollection(config: LingoTrackerConfig, currentValue?: string): Promise<string | null> {
   const collections = Object.keys(config.collections || {});
 
   // No collections available
   if (collections.length === 0) {
-    console.log(
-      '❌ No collections found. Run `lingo-tracker add-collection` first.',
-    );
+    console.log('❌ No collections found. Run `lingo-tracker add-collection` first.');
     return null;
   }
 

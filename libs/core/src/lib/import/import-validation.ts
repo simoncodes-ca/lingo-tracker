@@ -1,4 +1,4 @@
-import { ImportedResource, ImportChange } from './types';
+import type { ImportedResource, ImportChange } from './types';
 import {
   validateImportKey,
   isKeyTooLong,
@@ -84,10 +84,7 @@ export interface ValidationResult {
  * console.log(`Failed: ${result.failedChanges.length}`);
  * ```
  */
-export function validateImportResources(
-  resources: ImportedResource[],
-  config: ValidationConfig,
-): ValidationResult {
+export function validateImportResources(resources: ImportedResource[], config: ValidationConfig): ValidationResult {
   const warnings: string[] = [];
   const errors: string[] = [];
   const failedChanges: ImportChange[] = [];
@@ -98,9 +95,7 @@ export function validateImportResources(
   const duplicates = detectDuplicateKeys(keys);
   if (duplicates.size > 0) {
     for (const [key, count] of duplicates) {
-      warnings.push(
-        `Duplicate key in import file: "${key}" (used last occurrence, appeared ${count} times)`,
-      );
+      warnings.push(`Duplicate key in import file: "${key}" (used last occurrence, appeared ${count} times)`);
     }
   }
 
@@ -139,9 +134,7 @@ export function validateImportResources(
 
     // Warn on long keys
     if (config.warnOnLongKeys && isKeyTooLong(resource.key)) {
-      warnings.push(
-        `Very long key: "${resource.key}" (${resource.key.length} characters)`,
-      );
+      warnings.push(`Very long key: "${resource.key}" (${resource.key.length} characters)`);
     }
 
     // Skip empty values if configured

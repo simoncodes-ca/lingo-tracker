@@ -17,18 +17,13 @@ export interface MoveResourceOptions {
   verbose?: boolean;
 }
 
-export async function moveResourceCommand(
-  options: MoveResourceOptions,
-): Promise<void> {
+export async function moveResourceCommand(options: MoveResourceOptions): Promise<void> {
   const loaded = loadConfiguration({ exitOnError: false });
   if (!loaded) return;
   const { config, cwd } = loaded;
 
   // Prompt for source collection first
-  const sourceCollectionName = await promptForCollection(
-    config,
-    options.collection,
-  );
+  const sourceCollectionName = await promptForCollection(config, options.collection);
   if (!sourceCollectionName) return;
 
   // Validate source collection exists
@@ -73,9 +68,7 @@ export async function moveResourceCommand(
       }
     }
   } catch (e: unknown) {
-    console.log(
-      `❌ ${e instanceof Error ? e.message : 'Failed to move resource'}`,
-    );
+    console.log(`❌ ${e instanceof Error ? e.message : 'Failed to move resource'}`);
   }
 }
 
@@ -90,10 +83,8 @@ async function promptForMissing(options: MoveResourceOptions): Promise<{
     questions.push({
       type: 'text',
       name: 'source',
-      message:
-        'Source key or pattern (e.g. common.buttons.ok or common.buttons.*)',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      message: 'Source key or pattern (e.g. common.buttons.ok or common.buttons.*)',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -102,8 +93,7 @@ async function promptForMissing(options: MoveResourceOptions): Promise<{
       type: 'text',
       name: 'dest',
       message: 'Destination key (e.g. common.actions.ok)',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 

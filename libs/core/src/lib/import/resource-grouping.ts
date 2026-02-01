@@ -1,10 +1,7 @@
 import { resolve, join } from 'path';
-import { ImportedResource } from './types';
+import type { ImportedResource } from './types';
 import { splitResolvedKey } from '../../resource/resource-key';
-import {
-  RESOURCE_ENTRIES_FILENAME,
-  TRACKER_META_FILENAME,
-} from '../../constants';
+import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
 
 /**
  * Represents a group of resources that belong to the same folder path.
@@ -100,19 +97,11 @@ export function groupResourcesByFolder(
   const groups = new Map<string, ResourceGroup>();
 
   for (const resource of resources) {
-    const { folderPath: pathSegments, entryKey } = splitResolvedKey(
-      resource.key,
-    );
+    const { folderPath: pathSegments, entryKey } = splitResolvedKey(resource.key);
 
-    const fullFolderPath = pathSegments.length
-      ? join(translationsFolder, ...pathSegments)
-      : translationsFolder;
+    const fullFolderPath = pathSegments.length ? join(translationsFolder, ...pathSegments) : translationsFolder;
 
-    const entryResourcePath = resolve(
-      cwd,
-      fullFolderPath,
-      RESOURCE_ENTRIES_FILENAME,
-    );
+    const entryResourcePath = resolve(cwd, fullFolderPath, RESOURCE_ENTRIES_FILENAME);
     const entryMetaPath = resolve(cwd, fullFolderPath, TRACKER_META_FILENAME);
 
     if (!groups.has(fullFolderPath)) {

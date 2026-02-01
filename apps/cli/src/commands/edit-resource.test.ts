@@ -152,9 +152,7 @@ describe('editResourceCommand', () => {
     await editResourceCommand(options);
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'Both --locale and --localeValue must be provided',
-      ),
+      expect.stringContaining('Both --locale and --localeValue must be provided'),
     );
     expect(mockEditResource).toHaveBeenCalledWith(
       expect.any(String),

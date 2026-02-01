@@ -17,10 +17,7 @@ export interface CleanupResult {
  * @param dryRun - If true, counts folders that would be removed without deleting them
  * @returns Summary of folders removed with counts and paths
  */
-export function cleanupEmptyFolders(
-  translationsRoot: string,
-  dryRun = false,
-): CleanupResult {
+export function cleanupEmptyFolders(translationsRoot: string, dryRun = false): CleanupResult {
   const removedPaths: string[] = [];
 
   // Get all folders sorted bottom-up (deepest first) for safe recursive cleanup

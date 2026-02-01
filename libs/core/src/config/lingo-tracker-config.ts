@@ -1,5 +1,5 @@
-import { LingoTrackerCollection } from './lingo-tracker-collection';
-import { BundleDefinition } from './bundle-definition';
+import type { LingoTrackerCollection } from './lingo-tracker-collection';
+import type { BundleDefinition } from './bundle-definition';
 
 /**
  * Configuration structure for the .lingo-tracker.json file

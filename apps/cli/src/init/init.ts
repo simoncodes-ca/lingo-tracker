@@ -2,12 +2,7 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { InitOptions } from '../types/init-options.js';
-import {
-  CONFIG_FILENAME,
-  DEFAULT_CONFIG,
-  LingoTrackerConfig,
-  LingoTrackerCollection,
-} from '@simoncodes-ca/core';
+import { CONFIG_FILENAME, DEFAULT_CONFIG, LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
 import { getCwd, ConsoleFormatter, executePromptsWithFallback } from '../utils';
 
 export async function initCommand(options: InitOptions): Promise<void> {
@@ -15,9 +10,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   if (existsSync(configPath)) {
-    ConsoleFormatter.info(
-      'Lingo Tracker is already initialized in this folder. Nothing to do.',
-    );
+    ConsoleFormatter.info('Lingo Tracker is already initialized in this folder. Nothing to do.');
     return;
   }
 
@@ -72,8 +65,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       name: 'collectionName',
       message: 'Collection name',
       initial: 'Main',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -82,8 +74,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'translationsFolder',
       message: 'Path to translations folder',
-      validate: (val: string) =>
-        val && val.trim().length > 0 ? true : 'Required',
+      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -135,10 +126,8 @@ async function promptForMissing(options: InitOptions): Promise<{
   return {
     collectionName: (result.collectionName as string) ?? 'default',
     translationsFolder: result.translationsFolder as string,
-    exportFolder:
-      (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
-    importFolder:
-      (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
+    exportFolder: (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
+    importFolder: (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
     baseLocale: (result.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
     locales: (result.locales as string[]) ?? DEFAULT_CONFIG.locales,
   };

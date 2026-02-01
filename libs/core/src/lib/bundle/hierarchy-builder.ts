@@ -12,9 +12,7 @@
  * @param flatEntries - Map of dotted keys to values
  * @returns Hierarchical object
  */
-export function buildHierarchy(
-  flatEntries: Record<string, string>,
-): Record<string, unknown> {
+export function buildHierarchy(flatEntries: Record<string, string>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(flatEntries)) {
@@ -31,11 +29,7 @@ export function buildHierarchy(
  * @param key - Dot-delimited path (e.g., "apps.common.buttons.ok")
  * @param value - The value to set
  */
-function setNestedValue(
-  obj: Record<string, unknown>,
-  key: string,
-  value: string,
-): void {
+function setNestedValue(obj: Record<string, unknown>, key: string, value: string): void {
   const segments = key.split('.');
   let current = obj;
 

@@ -1,10 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-  computed,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -59,11 +53,7 @@ export class FolderSidebarHeader {
 
   /** Whether to display stats (both must be non-null and not loading) */
   readonly shouldDisplayStats = computed(() => {
-    return (
-      !this.statsLoading() &&
-      this.totalKeys() !== null &&
-      this.localeCount() !== null
-    );
+    return !this.statsLoading() && this.totalKeys() !== null && this.localeCount() !== null;
   });
 
   /** Formatted keys chip text */

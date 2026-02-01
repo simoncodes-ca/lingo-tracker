@@ -14,20 +14,15 @@ export const ErrorMessages = {
     `Failed to parse JSON file ${filePath}${reason ? `: ${reason}` : ''}`,
 
   directoryCreationFailed: (directoryPath: string, reason?: string) =>
-    `Could not create directory '${directoryPath}'${
-      reason ? `: ${reason}` : ''
-    }`,
+    `Could not create directory '${directoryPath}'${reason ? `: ${reason}` : ''}`,
 
-  configNotFound: () =>
-    'LingoTracker configuration file (.lingo-tracker.json) not found',
+  configNotFound: () => 'LingoTracker configuration file (.lingo-tracker.json) not found',
 
   resourceNotFound: (key: string) => `Resource not found: ${key}`,
 
   collectionNotFound: (name: string) => `Collection "${name}" not found`,
 
-  collectionAlreadyExists: (name: string) =>
-    `Collection "${name}" already exists`,
+  collectionAlreadyExists: (name: string) => `Collection "${name}" already exists`,
 
-  invalidKey: (key: string, reason: string) =>
-    `Invalid resource key "${key}": ${reason}`,
+  invalidKey: (key: string, reason: string) => `Invalid resource key "${key}": ${reason}`,
 } as const;

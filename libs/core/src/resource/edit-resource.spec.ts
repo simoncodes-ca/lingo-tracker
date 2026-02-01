@@ -1,11 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { editResource } from './edit-resource';
 import * as fs from 'node:fs';
-import {
-  SafeAny,
-  RESOURCE_ENTRIES_FILENAME,
-  TRACKER_META_FILENAME,
-} from '../constants';
+import { type SafeAny, RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../constants';
 
 vi.mock('node:fs');
 
@@ -22,16 +18,12 @@ describe('editResource', () => {
 
   it('should throw error if resource file does not exist', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
-    expect(() =>
-      editResource(translationsFolder, { key: 'buttons.save', cwd }),
-    ).toThrow(/Resource not found/);
+    expect(() => editResource(translationsFolder, { key: 'buttons.save', cwd })).toThrow(/Resource not found/);
   });
 
   it('should throw error if resource entry does not exist in file', () => {
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({}));
-    expect(() =>
-      editResource(translationsFolder, { key: 'buttons.save', cwd }),
-    ).toThrow(/Resource not found/);
+    expect(() => editResource(translationsFolder, { key: 'buttons.save', cwd })).toThrow(/Resource not found/);
   });
 
   it('should return updated: false if no changes are made', () => {
@@ -43,10 +35,8 @@ describe('editResource', () => {
     };
 
     vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
-      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME))
-        return JSON.stringify(initialResources);
-      if ((path as string).includes(TRACKER_META_FILENAME))
-        return JSON.stringify(initialMeta);
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
       return '{}';
     });
 
@@ -75,10 +65,8 @@ describe('editResource', () => {
     };
 
     vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
-      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME))
-        return JSON.stringify(initialResources);
-      if ((path as string).includes(TRACKER_META_FILENAME))
-        return JSON.stringify(initialMeta);
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
       return '{}';
     });
 
@@ -95,9 +83,7 @@ describe('editResource', () => {
 
     expect(updatedMeta.save.en.checksum).not.toBe('old_base_hash');
     expect(updatedMeta.save['fr-ca'].status).toBe('stale');
-    expect(updatedMeta.save['fr-ca'].baseChecksum).toBe(
-      updatedMeta.save.en.checksum,
-    );
+    expect(updatedMeta.save['fr-ca'].baseChecksum).toBe(updatedMeta.save.en.checksum);
 
     const updatedResources = JSON.parse(writeCall[0][1] as string);
     expect(updatedResources.save.source).toBe('Save Item');
@@ -112,10 +98,8 @@ describe('editResource', () => {
     };
 
     vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
-      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME))
-        return JSON.stringify(initialResources);
-      if ((path as string).includes(TRACKER_META_FILENAME))
-        return JSON.stringify(initialMeta);
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
       return '{}';
     });
 
@@ -150,10 +134,8 @@ describe('editResource', () => {
     };
 
     vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
-      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME))
-        return JSON.stringify(initialResources);
-      if ((path as string).includes(TRACKER_META_FILENAME))
-        return JSON.stringify(initialMeta);
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
       return '{}';
     });
 

@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { LingoTrackerConfig } from '@simoncodes-ca/core';
@@ -24,17 +20,13 @@ export class ConfigService {
       if (this.isNodeError(error) && error.code === 'ENOENT') {
         throw new NotFoundException('Configuration file not found');
       }
-      throw new InternalServerErrorException(
-        'Failed to read configuration file',
-      );
+      throw new InternalServerErrorException('Failed to read configuration file');
     }
 
     try {
       return JSON.parse(configContent) as LingoTrackerConfig;
     } catch {
-      throw new InternalServerErrorException(
-        'Invalid configuration file format',
-      );
+      throw new InternalServerErrorException('Invalid configuration file format');
     }
   }
 }

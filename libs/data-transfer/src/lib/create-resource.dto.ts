@@ -1,4 +1,4 @@
-import { TranslationStatus } from './translation-status';
+import type { TranslationStatus } from './translation-status';
 
 /**
  * DTO for creating a new translation resource entry.

@@ -23,8 +23,7 @@ export const ErrorMessages = {
   /**
    * Error when .lingo-tracker.json file is not found
    */
-  CONFIG_NOT_FOUND:
-    '❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.',
+  CONFIG_NOT_FOUND: '❌ No Lingo Tracker configuration found. Run `lingo-tracker init` first.',
 
   /**
    * Error when configuration file has invalid format
@@ -35,8 +34,7 @@ export const ErrorMessages = {
    * Error when configuration file cannot be parsed
    * @param error - Detailed error message from parser
    */
-  CONFIG_PARSE_FAILED: (error: string) =>
-    `❌ Failed to parse configuration file: ${error}`,
+  CONFIG_PARSE_FAILED: (error: string) => `❌ Failed to parse configuration file: ${error}`,
 
   // Collection Errors
   /**
@@ -48,15 +46,13 @@ export const ErrorMessages = {
   /**
    * Error when no collections exist in configuration
    */
-  NO_COLLECTIONS:
-    '❌ No collections found. Run `lingo-tracker add-collection` first.',
+  NO_COLLECTIONS: '❌ No collections found. Run `lingo-tracker add-collection` first.',
 
   /**
    * Error when trying to create a collection that already exists
    * @param name - Name of the existing collection
    */
-  COLLECTION_EXISTS: (name: string) =>
-    `❌ Collection "${name}" already exists.`,
+  COLLECTION_EXISTS: (name: string) => `❌ Collection "${name}" already exists.`,
 
   /**
    * Error when no collections are available for an operation
@@ -74,17 +70,14 @@ export const ErrorMessages = {
    * Error when multiple required options are missing
    * @param options - Array of missing option names (without -- prefix)
    */
-  MISSING_OPTIONS: (options: string[]) =>
-    `❌ Missing required options: ${options.map((o) => `--${o}`).join(', ')}`,
+  MISSING_OPTIONS: (options: string[]) => `❌ Missing required options: ${options.map((o) => `--${o}`).join(', ')}`,
 
   /**
    * Error when required option is missing in non-interactive mode
    * @param options - Array of missing option names (without -- prefix)
    */
   MISSING_OPTIONS_NON_INTERACTIVE: (options: string[]) =>
-    `❌ Missing required options in non-interactive mode: ${options
-      .map((o) => `--${o}`)
-      .join(', ')}`,
+    `❌ Missing required options in non-interactive mode: ${options.map((o) => `--${o}`).join(', ')}`,
 
   // Operation Errors
   /**
@@ -124,8 +117,7 @@ export const ErrorMessages = {
    * Error when specified locale is not found in configuration
    * @param locale - Locale code that was not found
    */
-  LOCALE_NOT_FOUND: (locale: string) =>
-    `❌ Locale "${locale}" not found in configuration.`,
+  LOCALE_NOT_FOUND: (locale: string) => `❌ Locale "${locale}" not found in configuration.`,
 
   /**
    * Error when no locales are configured
@@ -143,8 +135,7 @@ export const ErrorMessages = {
    * Error when a required directory is not found
    * @param dirPath - Path to the missing directory
    */
-  DIRECTORY_NOT_FOUND: (dirPath: string) =>
-    `❌ Directory not found: ${dirPath}`,
+  DIRECTORY_NOT_FOUND: (dirPath: string) => `❌ Directory not found: ${dirPath}`,
 
   /**
    * Error when file read operation fails
@@ -152,9 +143,7 @@ export const ErrorMessages = {
    * @param reason - Optional reason for failure
    */
   FILE_READ_FAILED: (filePath: string, reason?: string) =>
-    reason
-      ? `❌ Failed to read file ${filePath}: ${reason}`
-      : `❌ Failed to read file: ${filePath}`,
+    reason ? `❌ Failed to read file ${filePath}: ${reason}` : `❌ Failed to read file: ${filePath}`,
 
   /**
    * Error when file write operation fails
@@ -162,7 +151,5 @@ export const ErrorMessages = {
    * @param reason - Optional reason for failure
    */
   FILE_WRITE_FAILED: (filePath: string, reason?: string) =>
-    reason
-      ? `❌ Failed to write file ${filePath}: ${reason}`
-      : `❌ Failed to write file: ${filePath}`,
+    reason ? `❌ Failed to write file ${filePath}: ${reason}` : `❌ Failed to write file: ${filePath}`,
 } as const;

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import { exportToJson } from './export-to-json';
-import { ExportOptions, FilteredResource } from './types';
+import type { ExportOptions, FilteredResource } from './types';
 
 // Mock fs module
 vi.mock('fs');
@@ -62,10 +62,7 @@ describe('export-to-json', () => {
     expect(result.filesCreated).toContain('es.json');
     expect(result.resourcesExported).toBe(3);
 
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      '/dist/export/es.json',
-      expect.stringContaining('"common": {'),
-    );
+    expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/export/es.json', expect.stringContaining('"common": {'));
 
     const callArgs = vi.mocked(fs.writeFileSync).mock.calls[0];
     const content = JSON.parse(callArgs[1] as string);
@@ -170,9 +167,6 @@ describe('export-to-json', () => {
     const result = exportToJson(mockResources, options);
 
     expect(result.filesCreated).toContain('custom-es.json');
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      '/dist/export/custom-es.json',
-      expect.any(String),
-    );
+    expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/export/custom-es.json', expect.any(String));
   });
 });

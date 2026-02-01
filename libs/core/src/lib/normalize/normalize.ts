@@ -2,8 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { normalizeEntry } from './normalize-entry';
 import { cleanupEmptyFolders } from './cleanup-empty-folders';
-import { ResourceEntries } from '../../resource/resource-entry';
-import { TrackerMetadata } from '../../resource/tracker-metadata';
+import type { ResourceEntries } from '../../resource/resource-entry';
+import type { TrackerMetadata } from '../../resource/tracker-metadata';
 
 export interface NormalizeParams {
   readonly translationsFolder: string;
@@ -73,8 +73,7 @@ function loadResourceFiles(folderPath: string): ResourceFiles | null {
       resourceEntries = JSON.parse(content);
       resourceEntriesExisted = true;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('\n⚠️  Skipping folder due to invalid JSON:', folderPath);
       console.error('    Error in file: resource_entries.json');
       console.error('    Parse error:', errorMessage);
@@ -89,8 +88,7 @@ function loadResourceFiles(folderPath: string): ResourceFiles | null {
       trackerMetadata = JSON.parse(content);
       trackerMetaExisted = true;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('\n⚠️  Skipping folder due to invalid JSON:', folderPath);
       console.error('    Error in file: tracker_meta.json');
       console.error('    Parse error:', errorMessage);
@@ -114,9 +112,7 @@ interface NormalizeAllEntriesParams {
   readonly locales: string[];
 }
 
-function normalizeAllEntriesInFolder(
-  params: NormalizeAllEntriesParams,
-): NormalizedFolderData {
+function normalizeAllEntriesInFolder(params: NormalizeAllEntriesParams): NormalizedFolderData {
   const { resourceEntries, trackerMetadata, baseLocale, locales } = params;
 
   const entryKeys = Object.keys(resourceEntries);
@@ -155,11 +151,7 @@ function normalizeAllEntriesInFolder(
     entriesProcessedCount++;
     localesAddedCount += result.changes.localesAdded;
 
-    if (
-      result.changes.localesAdded > 0 ||
-      result.changes.checksumsUpdated > 0 ||
-      result.changes.statusesChanged > 0
-    ) {
+    if (result.changes.localesAdded > 0 || result.changes.checksumsUpdated > 0 || result.changes.statusesChanged > 0) {
       folderHadChanges = true;
     }
   }
@@ -173,16 +165,11 @@ function normalizeAllEntriesInFolder(
   };
 }
 
-function writeResourceFile(
-  filePath: string,
-  content: ResourceEntries | TrackerMetadata,
-): void {
+function writeResourceFile(filePath: string, content: ResourceEntries | TrackerMetadata): void {
   fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf8');
 }
 
-function persistFolderResources(
-  params: PersistResourcesParams,
-): PersistResourcesResult {
+function persistFolderResources(params: PersistResourcesParams): PersistResourcesResult {
   const {
     folderPath,
     resourceEntries,
@@ -240,9 +227,7 @@ interface NormalizeFolderParams {
   readonly counters: NormalizationCounters;
 }
 
-async function normalizeFolderResources(
-  params: NormalizeFolderParams,
-): Promise<void> {
+async function normalizeFolderResources(params: NormalizeFolderParams): Promise<void> {
   const { folderPath, baseLocale, locales, dryRun, counters } = params;
 
   const resourceFiles = loadResourceFiles(folderPath);
@@ -288,9 +273,7 @@ interface TraverseFolderParams {
   readonly counters: NormalizationCounters;
 }
 
-async function traverseAndNormalizeFolder(
-  params: TraverseFolderParams,
-): Promise<void> {
+async function traverseAndNormalizeFolder(params: TraverseFolderParams): Promise<void> {
   const { folderPath, baseLocale, locales, dryRun, counters } = params;
 
   const entries = fs.readdirSync(folderPath);
@@ -332,9 +315,7 @@ async function traverseAndNormalizeFolder(
  * @param params - Normalization parameters including folder path and locale configuration
  * @returns Summary of normalization results with counts of changes made
  */
-export async function normalize(
-  params: NormalizeParams,
-): Promise<NormalizeResult> {
+export async function normalize(params: NormalizeParams): Promise<NormalizeResult> {
   const { translationsFolder, baseLocale, locales, dryRun = false } = params;
 
   const counters: NormalizationCounters = {

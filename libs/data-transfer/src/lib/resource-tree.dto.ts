@@ -1,4 +1,4 @@
-import { TranslationStatus } from './translation-status';
+import type { TranslationStatus } from './translation-status';
 
 export interface ResourceTreeDto {
   /** Current folder path (dot-delimited, empty string for root) */

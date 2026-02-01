@@ -1,9 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import {
-  provideHttpClientTesting,
-  HttpTestingController,
-} from '@angular/common/http/testing';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -114,9 +111,7 @@ describe('TranslationList - Copy to Clipboard', () => {
   });
 
   it('should show error toast when clipboard write fails', async () => {
-    mockClipboard.writeText = vi.fn(() =>
-      Promise.reject(new Error('Clipboard error')),
-    );
+    mockClipboard.writeText = vi.fn(() => Promise.reject(new Error('Clipboard error')));
 
     fixture.componentRef.setInput('collectionName', 'test');
     fixture.detectChanges();
@@ -124,11 +119,7 @@ describe('TranslationList - Copy to Clipboard', () => {
     component.handleCopyKey('test.key');
     await Promise.resolve(); // Wait for clipboard promise to reject
 
-    expect(snackBarSpy.open).toHaveBeenCalledWith(
-      'Failed to copy',
-      '',
-      expect.objectContaining({ duration: 2000 }),
-    );
+    expect(snackBarSpy.open).toHaveBeenCalledWith('Failed to copy', '', expect.objectContaining({ duration: 2000 }));
   });
 });
 
@@ -165,9 +156,7 @@ describe('TranslationList - Loading and Error States', () => {
     fixture.detectChanges();
 
     const spinner = fixture.nativeElement.querySelector('mat-spinner');
-    const loadingText = fixture.nativeElement.querySelector(
-      '.loading-container p',
-    );
+    const loadingText = fixture.nativeElement.querySelector('.loading-container p');
 
     expect(spinner).toBeTruthy();
     expect(loadingText?.textContent).toContain('Loading translations');
@@ -187,23 +176,17 @@ describe('TranslationList - Loading and Error States', () => {
     });
 
     // First request for cache status (from setSelectedCollection -> checkCacheStatus)
-    const cacheReq = httpMock.expectOne(
-      '/api/collections/test/resources/cache/status',
-    );
+    const cacheReq = httpMock.expectOne('/api/collections/test/resources/cache/status');
     cacheReq.flush({ status: 'ready', error: null });
 
     // Second request for root folders (triggered when cache is ready)
-    const rootReq = httpMock.expectOne(
-      '/api/collections/test/resources/tree?path=&includeNested=true',
-    );
+    const rootReq = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
     rootReq.flush({ path: '', resources: [], children: [] });
 
     // Now select a folder and make it fail
     store.selectFolder('test-folder');
 
-    const req = httpMock.expectOne(
-      '/api/collections/test/resources/tree?path=test-folder&includeNested=true',
-    );
+    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=test-folder&includeNested=true');
     req.error(new ProgressEvent('error'), {
       status: 500,
       statusText: 'Server Error',
@@ -211,8 +194,7 @@ describe('TranslationList - Loading and Error States', () => {
 
     fixture.detectChanges();
 
-    const errorContainer =
-      fixture.nativeElement.querySelector('.error-container');
+    const errorContainer = fixture.nativeElement.querySelector('.error-container');
     expect(errorContainer).toBeTruthy();
   });
 });
@@ -250,15 +232,11 @@ describe('TranslationList - Virtual Scrolling', () => {
     });
 
     // First request for cache status
-    const cacheReq = httpMock.expectOne(
-      '/api/collections/test/resources/cache/status',
-    );
+    const cacheReq = httpMock.expectOne('/api/collections/test/resources/cache/status');
     cacheReq.flush({ status: 'ready', error: null });
 
     // Second request for root folders
-    const req = httpMock.expectOne(
-      '/api/collections/test/resources/tree?path=&includeNested=true',
-    );
+    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
     req.flush({
       path: '',
       resources: [
@@ -270,9 +248,7 @@ describe('TranslationList - Virtual Scrolling', () => {
 
     fixture.detectChanges();
 
-    const viewport = fixture.nativeElement.querySelector(
-      'cdk-virtual-scroll-viewport',
-    );
+    const viewport = fixture.nativeElement.querySelector('cdk-virtual-scroll-viewport');
     expect(viewport).toBeTruthy();
 
     // Virtual scroll doesn't always render items in test environment

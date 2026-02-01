@@ -65,10 +65,7 @@ export function buildTypeHierarchy(keys: string[]): TypeHierarchyNode {
  *
  * export type CommonTokens = typeof COMMON_TOKENS;
  */
-export function serializeHierarchy(
-  node: TypeHierarchyNode,
-  constantName: string,
-): string {
+export function serializeHierarchy(node: TypeHierarchyNode, constantName: string): string {
   const lines: string[] = [];
 
   // Generate the constant object

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { setupImportWorkflow, buildImportResult } from './import-workflow';
-import { ImportOptions } from './types';
+import type { ImportOptions } from './types';
 
 describe('import-workflow', () => {
   describe('setupImportWorkflow', () => {
@@ -193,10 +193,7 @@ describe('import-workflow', () => {
       expect(result.resourcesFailed).toBe(1);
       expect(result.statusTransitions).toHaveLength(2);
       expect(result.changes).toHaveLength(1);
-      expect(result.filesModified).toEqual([
-        '/path/to/file1.json',
-        '/path/to/file2.json',
-      ]);
+      expect(result.filesModified).toEqual(['/path/to/file1.json', '/path/to/file2.json']);
       expect(result.warnings).toEqual(['Warning 1', 'Warning 2']);
       expect(result.errors).toEqual(['Error 1']);
       expect(result.dryRun).toBe(false);
@@ -282,11 +279,7 @@ describe('import-workflow', () => {
     });
 
     it('should convert Set to Array for filesModified', () => {
-      const filesSet = new Set([
-        '/path/to/file1.json',
-        '/path/to/file2.json',
-        '/path/to/file3.json',
-      ]);
+      const filesSet = new Set(['/path/to/file1.json', '/path/to/file2.json', '/path/to/file3.json']);
 
       const result = buildImportResult({
         format: 'json',

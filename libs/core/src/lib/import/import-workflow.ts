@@ -1,11 +1,4 @@
-import {
-  ImportOptions,
-  ImportResult,
-  StatusTransition,
-  ImportChange,
-  ICUAutoFix,
-  ICUAutoFixError,
-} from './types';
+import type { ImportOptions, ImportResult, StatusTransition, ImportChange, ICUAutoFix, ICUAutoFixError } from './types';
 import { getStrategyDefaults } from './import-common';
 
 /**
@@ -70,9 +63,7 @@ export interface ImportWorkflowConfig {
  * // }
  * ```
  */
-export function setupImportWorkflow(
-  options: ImportOptions,
-): ImportWorkflowConfig {
+export function setupImportWorkflow(options: ImportOptions): ImportWorkflowConfig {
   const { locale, strategy = 'translation-service' } = options;
 
   // Apply strategy defaults for flags if not explicitly provided

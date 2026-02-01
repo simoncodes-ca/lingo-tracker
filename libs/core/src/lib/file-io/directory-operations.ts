@@ -36,12 +36,7 @@ export function ensureDirectoryExists(options: EnsureDirectoryOptions): void {
   } catch (error) {
     const context = errorContext ? `${errorContext}: ` : '';
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `${context}${ErrorMessages.directoryCreationFailed(
-        directoryPath,
-        errorMessage,
-      )}`,
-    );
+    throw new Error(`${context}${ErrorMessages.directoryCreationFailed(directoryPath, errorMessage)}`);
   }
 
   if (checkWritable) {
