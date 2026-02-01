@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
-import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { FolderNode } from '../../../sidebar/folder-tree/folder-node/folder-node';
 
 /**

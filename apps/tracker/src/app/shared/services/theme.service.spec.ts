@@ -185,7 +185,9 @@ describe('ThemeService', () => {
 
       // Simulate system theme change to dark
       const changeEvent = createMediaQueryListEvent(true);
-      mediaQueryListeners.forEach((listener) => listener(changeEvent));
+      mediaQueryListeners.forEach((listener) => {
+        listener(changeEvent);
+      });
 
       expect(service.effectiveTheme()).toBe('dark');
     });
@@ -198,7 +200,9 @@ describe('ThemeService', () => {
 
       // Simulate system theme change to light
       const changeEvent = createMediaQueryListEvent(false);
-      mediaQueryListeners.forEach((listener) => listener(changeEvent));
+      mediaQueryListeners.forEach((listener) => {
+        listener(changeEvent);
+      });
 
       expect(service.effectiveTheme()).toBe('light');
     });
@@ -209,7 +213,9 @@ describe('ThemeService', () => {
 
       // Simulate system theme change
       const changeEvent = createMediaQueryListEvent(true);
-      mediaQueryListeners.forEach((listener) => listener(changeEvent));
+      mediaQueryListeners.forEach((listener) => {
+        listener(changeEvent);
+      });
 
       // Should still be dark, not affected by system change
       expect(service.effectiveTheme()).toBe('dark');

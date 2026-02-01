@@ -202,7 +202,7 @@ describe('import-from-xliff', () => {
       });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const _writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',

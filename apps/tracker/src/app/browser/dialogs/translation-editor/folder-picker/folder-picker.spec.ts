@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FolderPicker } from './folder-picker';
-import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 
 describe('FolderPicker', () => {
   let component: FolderPicker;

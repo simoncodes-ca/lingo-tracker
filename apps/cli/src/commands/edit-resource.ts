@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import prompts from 'prompts';
+import type prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
 import { editResource } from '@simoncodes-ca/core';
 import {

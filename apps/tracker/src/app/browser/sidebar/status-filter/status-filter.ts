@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { BrowserStore } from '../../store/browser.store';
-import { TranslationStatus } from '@simoncodes-ca/data-transfer';
+import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
 
 /**
  * StatusFilter component provides a dropdown for filtering

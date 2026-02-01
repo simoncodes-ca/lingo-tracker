@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { importCommand, ImportCommandOptions } from './import-cmd';
+import { importCommand, type ImportCommandOptions } from './import-cmd';
 import * as path from 'path';
 
 vi.mock('fs');

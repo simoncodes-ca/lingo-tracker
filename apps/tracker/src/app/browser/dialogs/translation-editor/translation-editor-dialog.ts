@@ -2,8 +2,8 @@ import {
   Component,
   ChangeDetectionStrategy,
   inject,
-  OnInit,
-  OnDestroy,
+  type OnInit,
+  type OnDestroy,
   signal,
   computed,
   HostListener,
@@ -20,7 +20,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TextFieldModule } from '@angular/cdk/text-field';
-import {
+import type {
   ResourceSummaryDto,
   TranslationStatus,
   CreateResourceDto,
@@ -31,7 +31,7 @@ import {
 import { BrowserApiService } from '../../services/browser-api.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
-import { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
+import type { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
 import { SimilarResourcesWarning } from './similar-resources-warning';
 import { FolderPicker } from './folder-picker/folder-picker';
 import { Subject } from 'rxjs';

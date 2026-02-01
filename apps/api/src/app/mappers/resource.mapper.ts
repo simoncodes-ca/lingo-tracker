@@ -1,5 +1,5 @@
-import { AddResourceParams } from '@simoncodes-ca/core';
-import { CreateResourceDto } from '@simoncodes-ca/data-transfer';
+import type { AddResourceParams } from '@simoncodes-ca/core';
+import type { CreateResourceDto } from '@simoncodes-ca/data-transfer';
 
 export function mapDtoToAddResourceParams(dto: CreateResourceDto): AddResourceParams {
   return {

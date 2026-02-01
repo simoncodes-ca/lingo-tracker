@@ -29,7 +29,7 @@ describe('TruncateKeyPipe', () => {
 
   describe('basic truncation (firstPart...lastPart)', () => {
     it('should create basic truncation for long key with two segments', () => {
-      const key = 'verylongsegmentname'.repeat(2) + '.' + 'anotherlongsegment'.repeat(2);
+      const key = `${'verylongsegmentname'.repeat(2)}.${'anotherlongsegment'.repeat(2)}`;
       const result = pipe.transform(key);
       expect(result).toBe(`${'verylongsegmentname'.repeat(2)}...${'anotherlongsegment'.repeat(2)}`);
     });
@@ -87,7 +87,7 @@ describe('TruncateKeyPipe', () => {
     });
 
     it('should handle key where first and last segments are identical', () => {
-      const key = 'segment.' + 'x'.repeat(50) + '.segment';
+      const key = `segment.${'x'.repeat(50)}.segment`;
       const result = pipe.transform(key);
 
       expect(result).toBe('segment...segment');
@@ -101,7 +101,7 @@ describe('TruncateKeyPipe', () => {
     });
 
     it('should handle key with empty segments', () => {
-      const key = 'a'.repeat(30) + '..' + 'z'.repeat(30);
+      const key = `${'a'.repeat(30)}..${'z'.repeat(30)}`;
       const result = pipe.transform(key);
 
       expect(result).toContain('...');
@@ -111,7 +111,7 @@ describe('TruncateKeyPipe', () => {
   describe('boundary conditions', () => {
     it('should handle key that is exactly 49 characters (under threshold)', () => {
       // 20 + 1 + 20 + 1 + 7 = 49 chars
-      const key = 'a'.repeat(20) + '.' + 'b'.repeat(20) + '.' + 'c'.repeat(7);
+      const key = `${'a'.repeat(20)}.${'b'.repeat(20)}.${'c'.repeat(7)}`;
       expect(key.length).toBe(49);
 
       const result = pipe.transform(key);
@@ -120,7 +120,7 @@ describe('TruncateKeyPipe', () => {
 
     it('should handle key that is exactly 50 characters (at threshold)', () => {
       // 20 + 1 + 20 + 1 + 8 = 50 chars
-      const key = 'a'.repeat(20) + '.' + 'b'.repeat(20) + '.' + 'c'.repeat(8);
+      const key = `${'a'.repeat(20)}.${'b'.repeat(20)}.${'c'.repeat(8)}`;
       expect(key.length).toBe(50);
 
       const result = pipe.transform(key);

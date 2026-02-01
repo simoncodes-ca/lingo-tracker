@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { CONFIG_FILENAME, LingoTrackerConfig } from '@simoncodes-ca/core';
+import { CONFIG_FILENAME, type LingoTrackerConfig } from '@simoncodes-ca/core';
 
 /**
  * Gets the current working directory, respecting INIT_CWD for pnpm compatibility.

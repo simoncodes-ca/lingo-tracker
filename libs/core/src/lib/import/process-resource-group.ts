@@ -411,8 +411,6 @@ export function processResourceGroup(
           // Update strategy: preserve existing status
           newStatus = oldStatus || 'translated';
           break;
-        case 'translation-service':
-        case 'migration':
         default:
           // Translation-service and migration: set to translated
           newStatus = 'translated';

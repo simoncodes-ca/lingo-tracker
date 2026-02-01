@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TranslocoService } from '@jsverse/transloco';
-import { ConfirmationDialogData } from './confirmation-dialog-data';
+import type { ConfirmationDialogData } from './confirmation-dialog-data';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 
 /**

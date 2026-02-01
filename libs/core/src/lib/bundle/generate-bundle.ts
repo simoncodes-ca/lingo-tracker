@@ -186,11 +186,11 @@ function getBundleOutputPath(bundleDefinition: BundleDefinition, locale: string)
 
   // Handle subdirectory pattern (e.g., "{locale}/main")
   if (fileName.includes('/')) {
-    return path.join(bundleDefinition.dist, fileName + '.json');
+    return path.join(bundleDefinition.dist, `${fileName}.json`);
   }
 
   // Standard file pattern
-  return path.join(bundleDefinition.dist, fileName + '.json');
+  return path.join(bundleDefinition.dist, `${fileName}.json`);
 }
 
 /**

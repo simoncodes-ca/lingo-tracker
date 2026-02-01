@@ -1,5 +1,10 @@
-import { ResourceTreeDto, ResourceSummaryDto, FolderNodeDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
-import { ResourceTreeNode, ResourceTreeEntry } from '@simoncodes-ca/core';
+import type {
+  ResourceTreeDto,
+  ResourceSummaryDto,
+  FolderNodeDto,
+  TranslationStatus,
+} from '@simoncodes-ca/data-transfer';
+import type { ResourceTreeNode, ResourceTreeEntry } from '@simoncodes-ca/core';
 
 export function mapResourceTreeToDto(node: ResourceTreeNode): ResourceTreeDto {
   return {

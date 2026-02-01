@@ -13,7 +13,7 @@ import {
   Res,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import {
   addResource,
   createDefaultTranslations,
@@ -24,8 +24,9 @@ import {
   searchResourceTree,
   extractSubtree,
   extractResourcesRecursively,
+  type SearchResult,
 } from '@simoncodes-ca/core';
-import {
+import type {
   CreateResourceDto,
   CreateResourceResponseDto,
   DeleteResourceDto,
@@ -566,7 +567,7 @@ export class ResourcesController {
 
       // Try to use cached tree for faster search
       const cachedTree = this.cacheService.getCache(decodedCollectionName);
-      let searchResults;
+      let searchResults: SearchResult[];
 
       if (cachedTree) {
         // Use in-memory search on cached tree

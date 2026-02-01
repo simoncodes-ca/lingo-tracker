@@ -8,7 +8,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { TruncateKeyPipe } from '../../../../shared/pipes/truncate-key.pipe';
 import { TagList } from '../../../../shared/tag-list/tag-list.component';
-import { TranslationRollup, LocaleState } from './translation-rollup';
+import { TranslationRollup, type LocaleState } from './translation-rollup';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 
 /**

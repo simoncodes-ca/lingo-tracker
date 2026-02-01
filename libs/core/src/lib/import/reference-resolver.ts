@@ -67,8 +67,9 @@ export function extractReferences(value: string): Array<{ pattern: string; key: 
 
   // Pattern 1: {{t('key')}} or {{t("key")}}
   const functionPattern = /\{\{t\(['"]([^'"]+)['"]\)\}\}/g;
-  let match;
+  let match: RegExpExecArray | null;
 
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec while loop pattern
   while ((match = functionPattern.exec(value)) !== null) {
     results.push({
       pattern: match[0],
@@ -82,6 +83,7 @@ export function extractReferences(value: string): Array<{ pattern: string; key: 
   // Pattern 2: {{key}}
   const directPattern = /\{\{([^}]+)\}\}/g;
 
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec while loop pattern
   while ((match = directPattern.exec(value)) !== null) {
     const content = match[1];
     // Skip if it's a t() function call (already handled)

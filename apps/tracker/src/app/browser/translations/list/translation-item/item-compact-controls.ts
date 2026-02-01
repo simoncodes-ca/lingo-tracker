@@ -13,10 +13,10 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconButton } from '@angular/material/button';
-import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
+import { type MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
-import { TranslationRollup, LocaleState } from './translation-rollup';
+import { TranslationRollup, type LocaleState } from './translation-rollup';
 
 /**
  * Controls displayed on the right side of compact density mode items.

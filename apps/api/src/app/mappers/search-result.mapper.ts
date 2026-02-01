@@ -1,5 +1,5 @@
-import { SearchResult } from '@simoncodes-ca/core';
-import { SearchResultDto } from '@simoncodes-ca/data-transfer';
+import type { SearchResult } from '@simoncodes-ca/core';
+import type { SearchResultDto } from '@simoncodes-ca/data-transfer';
 
 /**
  * Maps a SearchResult from the core domain model to SearchResultDto for API responses.

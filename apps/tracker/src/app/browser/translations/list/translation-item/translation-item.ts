@@ -7,16 +7,16 @@ import {
   effect,
   inject,
   signal,
-  OnDestroy,
-  EffectRef,
+  type OnDestroy,
+  type EffectRef,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
+import type { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
 import { BrowserStore } from '../../../store/browser.store';
 import { TranslationItemHeader } from './item-header';
 import { TranslationItemLocales } from './item-locales';
 import { TranslationItemCompactControls } from './item-compact-controls';
-import { LocaleState } from './translation-rollup';
+import type { LocaleState } from './translation-rollup';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 
 const EXPAND_THRESHOLD = 200;

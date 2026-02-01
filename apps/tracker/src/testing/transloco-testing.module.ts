@@ -1,4 +1,4 @@
-import { TranslocoTestingModule, TranslocoTestingOptions } from '@jsverse/transloco';
+import { TranslocoTestingModule, type TranslocoTestingOptions } from '@jsverse/transloco';
 
 /**
  * Creates a configured TranslocoTestingModule for unit tests.

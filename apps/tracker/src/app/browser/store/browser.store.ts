@@ -2,7 +2,7 @@ import { computed, inject, effect } from '@angular/core';
 import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, tap, switchMap, catchError, of, interval, takeWhile, startWith } from 'rxjs';
-import {
+import type {
   FolderNodeDto,
   ResourceSummaryDto,
   SearchResultDto,
@@ -682,7 +682,7 @@ export const BrowserStore = signalStore(
           error: null,
         });
 
-        if (loaded && loaded.densityMode) {
+        if (loaded?.densityMode) {
           const mode = loaded.densityMode;
           const currentSelected = store.selectedLocales();
           let newSelected = currentSelected;

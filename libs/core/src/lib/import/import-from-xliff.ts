@@ -156,7 +156,7 @@ function loadBaseLocaleValues(
 
       for (const { key, entryKey } of keys) {
         const entry = resourceEntries[entryKey];
-        if (entry && entry.source) {
+        if (entry?.source) {
           baseValues.set(key, entry.source);
         }
       }

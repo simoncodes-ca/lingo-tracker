@@ -1,5 +1,5 @@
-import { LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
-import { LingoTrackerConfigDto, LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
+import type { LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
+import type { LingoTrackerConfigDto, LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 import { mapCollectionToDto } from './collection.mapper';
 
 function mapConfigCollections(

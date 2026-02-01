@@ -1,13 +1,13 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import {
   TranslationEditorDialog,
-  TranslationEditorDialogData,
-  TranslationEditorResult,
+  type TranslationEditorDialogData,
+  type TranslationEditorResult,
 } from './translation-editor-dialog';
-import { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { of, throwError } from 'rxjs';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { MatSnackBar } from '@angular/material/snack-bar';

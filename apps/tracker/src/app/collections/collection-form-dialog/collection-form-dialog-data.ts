@@ -1,4 +1,4 @@
-import { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
+import type { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 
 /**
  * Data passed to the Collection Form Dialog.

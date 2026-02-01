@@ -1,5 +1,5 @@
 import { mapResourceTreeToDto } from './resource-tree.mapper';
-import { ResourceTreeNode } from '@simoncodes-ca/core';
+import type { ResourceTreeNode } from '@simoncodes-ca/core';
 
 describe('mapResourceTreeToDto', () => {
   it('should map simple tree node to DTO', () => {

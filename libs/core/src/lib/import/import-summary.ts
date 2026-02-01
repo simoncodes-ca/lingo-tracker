@@ -174,7 +174,7 @@ function formatStatusTransitions(transitions: StatusTransition[]): string {
       const from = t.from || 'none';
       const to = t.to;
       const description = from === 'none' ? '(Created)' : from === to ? '(value changed)' : '';
-      return `- **${capitalize(from)} → ${capitalize(to)}**: ${t.count}${description ? ' ' + description : ''}`;
+      return `- **${capitalize(from)} → ${capitalize(to)}**: ${t.count}${description ? ` ${description}` : ''}`;
     })
     .join('\n');
 }
@@ -315,7 +315,7 @@ function formatCreatedChanges(changes: ImportChange[]): string {
     output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
   }
 
-  return output + '\n\n';
+  return `${output}\n\n`;
 }
 
 /**
@@ -353,7 +353,7 @@ function formatUpdatedChanges(changes: ImportChange[]): string {
     output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
   }
 
-  return output + '\n\n';
+  return `${output}\n\n`;
 }
 
 /**
@@ -382,7 +382,7 @@ function formatSkippedChanges(changes: ImportChange[]): string {
     output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
   }
 
-  return output + '\n\n';
+  return `${output}\n\n`;
 }
 
 /**
@@ -411,7 +411,7 @@ function formatFailedChanges(changes: ImportChange[]): string {
     output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
   }
 
-  return output + '\n\n';
+  return `${output}\n\n`;
 }
 
 /**

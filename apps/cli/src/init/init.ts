@@ -1,8 +1,13 @@
 import { existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import prompts from 'prompts';
+import type prompts from 'prompts';
 import type { InitOptions } from '../types/init-options.js';
-import { CONFIG_FILENAME, DEFAULT_CONFIG, LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
+import {
+  CONFIG_FILENAME,
+  DEFAULT_CONFIG,
+  type LingoTrackerConfig,
+  type LingoTrackerCollection,
+} from '@simoncodes-ca/core';
 import { getCwd, ConsoleFormatter, executePromptsWithFallback } from '../utils';
 
 export async function initCommand(options: InitOptions): Promise<void> {

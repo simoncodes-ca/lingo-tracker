@@ -840,7 +840,7 @@ describe('import-from-json', () => {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+        const _writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -888,7 +888,7 @@ describe('import-from-json', () => {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+        const _writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/path/to/file.json',
@@ -1314,7 +1314,7 @@ describe('import-from-json', () => {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+        const _writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1457,7 +1457,7 @@ describe('import-from-json', () => {
           return '{}';
         });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+        const _writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1501,7 +1501,7 @@ describe('import-from-json', () => {
           return '{}';
         });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+        const _writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1602,7 +1602,7 @@ describe('import-from-json', () => {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+        const _writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',
@@ -1796,7 +1796,7 @@ describe('import-from-json', () => {
 
         const mkdirSyncSpy = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+        const _writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
 
         const options: ImportOptions = {
           source: '/import/import.json',

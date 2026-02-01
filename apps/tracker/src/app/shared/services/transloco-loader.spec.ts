@@ -4,7 +4,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { firstValueFrom, finalize } from 'rxjs';
 import { TranslocoHttpLoader } from './transloco-loader';
-import { Translation } from '@jsverse/transloco';
+import type { Translation } from '@jsverse/transloco';
 
 describe('TranslocoHttpLoader', () => {
   let loader: TranslocoHttpLoader;

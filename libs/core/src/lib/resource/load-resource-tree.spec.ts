@@ -243,7 +243,7 @@ vi.mock('node:fs', () => ({
       const dirParts = dirPathStr.split('/').filter(Boolean);
 
       // Check if this is a direct child of dirPath
-      if (pathParts.length === dirParts.length + 1 && fsPath.startsWith(dirPathStr + '/')) {
+      if (pathParts.length === dirParts.length + 1 && fsPath.startsWith(`${dirPathStr}/`)) {
         const name = pathParts[pathParts.length - 1];
         const isDirectory = type === 'directory';
 

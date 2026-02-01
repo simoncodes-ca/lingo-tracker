@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnDestroy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, type OnDestroy, signal } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { BrowserStore } from '../../store/browser.store';

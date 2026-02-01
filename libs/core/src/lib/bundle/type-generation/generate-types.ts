@@ -101,7 +101,7 @@ export async function generateBundleTypes(bundleKey: string, config: LingoTracke
   // Generate content
   const hierarchy = buildTypeHierarchy(sortedKeys);
   const constantName = bundleKeyToConstantName(bundleKey);
-  const fileContent = generateFileHeader(bundleKey) + '\n\n' + serializeHierarchy(hierarchy, constantName);
+  const fileContent = `${generateFileHeader(bundleKey)}\n\n${serializeHierarchy(hierarchy, constantName)}`;
 
   // Resolve output path
   // If typeDist is relative, resolve it relative to the config file location (which we don't have directly here,

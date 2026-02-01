@@ -1,6 +1,6 @@
 import { Controller, Delete, Param, HttpException, HttpStatus, Post, Body, Put } from '@nestjs/common';
 import { addCollection, deleteCollectionByName, updateCollection } from '@simoncodes-ca/core';
-import { CreateCollectionDto, UpdateCollectionDto } from '@simoncodes-ca/data-transfer';
+import type { CreateCollectionDto, UpdateCollectionDto } from '@simoncodes-ca/data-transfer';
 import { mapDtoToCollection } from '../mappers/collection.mapper';
 
 @Controller('collections')

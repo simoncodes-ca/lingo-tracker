@@ -6,16 +6,16 @@ import {
   computed,
   inject,
   viewChild,
-  ElementRef,
-  OnDestroy,
+  type ElementRef,
+  type OnDestroy,
   HostListener,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayModule, type OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
-import { ViewContainerRef, TemplateRef } from '@angular/core';
-import { TranslationStatus } from '@simoncodes-ca/data-transfer';
+import { ViewContainerRef, type TemplateRef } from '@angular/core';
+import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
 
 /** Locale state for rollup display */
 export interface LocaleState {

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { LingoTrackerConfigDto, CreateCollectionDto, UpdateCollectionDto } from '@simoncodes-ca/data-transfer';
+import type { Observable } from 'rxjs';
+import type { LingoTrackerConfigDto, CreateCollectionDto, UpdateCollectionDto } from '@simoncodes-ca/data-transfer';
 
 /**
  * Service for making API calls related to collections management.

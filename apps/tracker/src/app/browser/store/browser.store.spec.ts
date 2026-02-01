@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { BrowserStore } from './browser.store';
 import { BrowserApiService } from '../services/browser-api.service';
-import { ResourceTreeDto, CacheStatusDto } from '@simoncodes-ca/data-transfer';
+import type { ResourceTreeDto, CacheStatusDto } from '@simoncodes-ca/data-transfer';
 
 /**
  * Helper to wait for async signal updates from rxMethod.

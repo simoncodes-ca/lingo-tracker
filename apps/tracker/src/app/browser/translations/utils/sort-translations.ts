@@ -1,4 +1,4 @@
-import { TranslationStatus } from '@simoncodes-ca/data-transfer';
+import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
 
 export type SortField = 'key' | 'status';
 export type SortDirection = 'asc' | 'desc';

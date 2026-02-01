@@ -4,7 +4,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { firstValueFrom } from 'rxjs';
 import { BrowserApiService } from './browser-api.service';
-import {
+import type {
   ResourceTreeDto,
   SearchResultsDto,
   CreateResourceDto,

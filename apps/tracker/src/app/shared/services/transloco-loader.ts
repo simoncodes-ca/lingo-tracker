@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Translation, TranslocoLoader } from '@jsverse/transloco';
-import { Observable, catchError, of } from 'rxjs';
+import type { Translation, TranslocoLoader } from '@jsverse/transloco';
+import { type Observable, catchError, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class TranslocoHttpLoader implements TranslocoLoader {

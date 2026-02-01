@@ -59,7 +59,7 @@ export function extractResourcesRecursively(node: ResourceTreeNode): ResourceTre
 
   while (stack.length > 0) {
     const child = stack.pop();
-    if (child && child.loaded && child.tree) {
+    if (child?.loaded && child.tree) {
       allResources.push(...child.tree.resources);
       stack.push(...child.tree.children);
     }

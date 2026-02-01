@@ -4,7 +4,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, tap, switchMap, catchError, of } from 'rxjs';
 import { inject } from '@angular/core';
 import { CollectionsApiService } from '../services/collections-api.service';
-import {
+import type {
   LingoTrackerCollectionDto,
   LingoTrackerConfigDto,
   CreateCollectionDto,

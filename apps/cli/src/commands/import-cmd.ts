@@ -2,14 +2,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import prompts from 'prompts';
 import {
-  LingoTrackerConfig,
-  ImportOptions,
-  ImportFormat,
-  ImportStrategy,
+  type LingoTrackerConfig,
+  type ImportOptions,
+  type ImportFormat,
+  type ImportStrategy,
   importFromJson,
   importFromXliff,
   detectImportFormat,
-  ImportResult,
+  type ImportResult,
   generateImportSummary,
 } from '@simoncodes-ca/core';
 import { loadConfiguration, ConsoleFormatter, ErrorMessages, isInteractiveTerminal } from '../utils';
@@ -38,7 +38,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
 
   const isTTY = isInteractiveTerminal();
 
-  let answers;
+  let answers: Partial<ImportCommandOptions>;
   try {
     answers = await promptForMissing(options, config, isTTY);
   } catch (error) {

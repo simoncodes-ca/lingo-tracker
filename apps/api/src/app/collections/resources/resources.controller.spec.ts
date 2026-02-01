@@ -1,7 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { HttpException, NotFoundException } from '@nestjs/common';
-import { TranslationStatus, LocaleMetadata } from '@simoncodes-ca/core';
-import { ResourceTreeDto } from '@simoncodes-ca/data-transfer';
+import type { TranslationStatus, LocaleMetadata } from '@simoncodes-ca/core';
+import type { ResourceTreeDto } from '@simoncodes-ca/data-transfer';
 import { ResourcesController } from './resources.controller';
 import { ConfigService } from '../../config/config.service';
 import { CollectionCacheService, CacheStatus } from '../../cache/collection-cache.service';
@@ -19,6 +19,10 @@ jest.mock('@simoncodes-ca/core', () => {
     editResource: jest.fn(),
     loadResourceTree: jest.fn(),
     extractSubtree: jest.fn(),
+    createDefaultTranslations: jest.fn(),
+    extractResourcesRecursively: jest.fn(),
+    searchResourceTree: jest.fn(),
+    searchTranslations: jest.fn(),
   };
 });
 
@@ -463,6 +467,12 @@ describe('ResourcesController', () => {
         created: true,
       });
 
+      const createDefaultTranslations = core.createDefaultTranslations as jest.Mock;
+      createDefaultTranslations.mockReturnValue([
+        { locale: 'fr-ca', value: 'OK', status: 'new' },
+        { locale: 'es', value: 'OK', status: 'new' },
+      ]);
+
       const dto = {
         key: 'app.button.ok',
         baseValue: 'OK',
@@ -491,6 +501,13 @@ describe('ResourcesController', () => {
         resolvedKey: 'app.button.ok',
         created: true,
       });
+
+      const createDefaultTranslations = core.createDefaultTranslations as jest.Mock;
+      createDefaultTranslations.mockReturnValue([
+        { locale: 'fr-ca', value: 'OK', status: 'new' },
+        { locale: 'es', value: 'OK', status: 'new' },
+        { locale: 'de', value: 'OK', status: 'new' },
+      ]);
 
       const configWithCollectionLocales = {
         ...mockConfig,
@@ -529,6 +546,9 @@ describe('ResourcesController', () => {
         resolvedKey: 'app.button.ok',
         created: true,
       });
+
+      const createDefaultTranslations = core.createDefaultTranslations as jest.Mock;
+      createDefaultTranslations.mockReturnValue(undefined);
 
       const configWithNoLocales = {
         ...mockConfig,
@@ -1266,6 +1286,63 @@ describe('ResourcesController', () => {
 
       expect(result.collectionName).toBe('My Collection');
       expect(getCacheStatus).toHaveBeenCalledWith('My Collection');
+    });
+  });
+
+  describe('search', () => {
+    it('should successfully search for translations using cache', async () => {
+      const searchResourceTree = core.searchResourceTree as jest.Mock;
+      const mockResults = [
+        {
+          key: 'app.title',
+          source: 'LingoTracker',
+          translations: { es: 'LingoTracker' },
+          metadata: { en: { checksum: 'a' }, es: { status: 'translated', checksum: 'b', baseChecksum: 'a' } },
+        },
+      ];
+      searchResourceTree.mockReturnValue(mockResults);
+      (cacheService.getCache as jest.Mock).mockReturnValue({ resources: [], children: [] });
+
+      const result = await resourcesController.search('test-collection', { query: 'lingo' });
+
+      expect(result.query).toBe('lingo');
+      expect(result.results).toHaveLength(1);
+      expect(result.results[0].key).toBe('app.title');
+      expect(searchResourceTree).toHaveBeenCalled();
+    });
+
+    it('should fall back to disk-based search when cache is not available', async () => {
+      const searchTranslations = core.searchTranslations as jest.Mock;
+      searchTranslations.mockReturnValue([]);
+      (cacheService.getCache as jest.Mock).mockReturnValue(null);
+
+      await resourcesController.search('test-collection', { query: 'lingo' });
+
+      expect(searchTranslations).toHaveBeenCalledWith(
+        expect.objectContaining({
+          translationsFolder: './translations/test',
+          query: 'lingo',
+        }),
+      );
+    });
+
+    it('should return empty results for empty query', async () => {
+      const result = await resourcesController.search('test-collection', { query: '' });
+      expect(result.results).toEqual([]);
+    });
+
+    it('should cap maxResults at 500', async () => {
+      const searchResourceTree = core.searchResourceTree as jest.Mock;
+      searchResourceTree.mockReturnValue([]);
+      (cacheService.getCache as jest.Mock).mockReturnValue({ resources: [], children: [] });
+
+      await resourcesController.search('test-collection', { query: 'test', maxResults: 1000 });
+
+      expect(searchResourceTree).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maxResults: 501, // 500 + 1 for limited detection
+        }),
+      );
     });
   });
 });

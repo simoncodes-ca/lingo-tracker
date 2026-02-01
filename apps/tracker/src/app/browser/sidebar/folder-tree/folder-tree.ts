@@ -8,7 +8,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FolderNode } from './folder-node/folder-node';
 import { BrowserStore } from '../../store/browser.store';
-import { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { TranslocoModule } from '@jsverse/transloco';
 import { SearchInput } from '../../../shared/components/search-input';

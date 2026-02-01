@@ -2,17 +2,17 @@ import * as path from 'path';
 import * as fs from 'fs';
 import prompts from 'prompts';
 import {
-  LingoTrackerConfig,
-  ExportOptions,
-  ExportFormat,
-  TranslationStatus,
+  type LingoTrackerConfig,
+  type ExportOptions,
+  type ExportFormat,
+  type TranslationStatus,
   loadResourcesFromCollections,
   filterResources,
   validateOutputDirectory,
   exportToJson,
   exportToXliff,
   generateExportSummary,
-  ExportResult,
+  type ExportResult,
 } from '@simoncodes-ca/core';
 import {
   loadConfiguration,
@@ -46,7 +46,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
   if (!loaded) return;
   const { config, cwd } = loaded;
 
-  let answers;
+  let answers: Partial<ExportCommandOptions>;
   try {
     answers = await promptForMissing(options, config);
   } catch (error) {
@@ -202,13 +202,17 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
   if (allWarnings.length > 0) {
     console.log('');
     ConsoleFormatter.warning(`Warnings (${allWarnings.length}):`);
-    allWarnings.forEach((w) => ConsoleFormatter.indent(`- ${w}`));
+    allWarnings.forEach((w) => {
+      ConsoleFormatter.indent(`- ${w}`);
+    });
   }
 
   if (allErrors.length > 0) {
     console.log('');
     ConsoleFormatter.error(`Errors (${allErrors.length}):`);
-    allErrors.forEach((e) => ConsoleFormatter.indent(`- ${e}`));
+    allErrors.forEach((e) => {
+      ConsoleFormatter.indent(`- ${e}`);
+    });
     if (!options.dryRun) process.exitCode = 1;
   }
 
