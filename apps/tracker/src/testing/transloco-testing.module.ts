@@ -1,4 +1,7 @@
-import { TranslocoTestingModule, TranslocoTestingOptions } from '@jsverse/transloco';
+import {
+  TranslocoTestingModule,
+  TranslocoTestingOptions,
+} from '@jsverse/transloco';
 
 /**
  * Creates a configured TranslocoTestingModule for unit tests.
@@ -9,7 +12,9 @@ import { TranslocoTestingModule, TranslocoTestingOptions } from '@jsverse/transl
  * @param options - Optional Transloco testing configuration overrides
  * @returns Configured TranslocoTestingModule
  */
-export function getTranslocoTestingModule(options: TranslocoTestingOptions = {}) {
+export function getTranslocoTestingModule(
+  options: TranslocoTestingOptions = {},
+) {
   return TranslocoTestingModule.forRoot({
     langs: {
       en: {
@@ -19,7 +24,7 @@ export function getTranslocoTestingModule(options: TranslocoTestingOptions = {})
         'browser.clickToLoad': 'click to load',
         'browser.filterFolders': 'Filter folders...',
         'browser.loadingTranslations': 'Loading translations...',
-      }
+      },
     },
     translocoConfig: {
       availableLangs: ['en'],

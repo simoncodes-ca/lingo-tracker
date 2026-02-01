@@ -11,13 +11,13 @@ describe('mapResourceTreeToDto', () => {
           source: 'App Title',
           translations: { es: 'Título', fr: 'Titre' },
           metadata: {
-            'en': { checksum: 'a1' },
-            'es': { status: 'translated', checksum: 'b1', baseChecksum: 'a1' },
-            'fr': { status: 'stale', checksum: 'c1', baseChecksum: 'a1' }
-          }
-        }
+            en: { checksum: 'a1' },
+            es: { status: 'translated', checksum: 'b1', baseChecksum: 'a1' },
+            fr: { status: 'stale', checksum: 'c1', baseChecksum: 'a1' },
+          },
+        },
       ],
-      children: []
+      children: [],
     };
 
     const dto = mapResourceTreeToDto(node);
@@ -28,12 +28,12 @@ describe('mapResourceTreeToDto', () => {
     expect(dto.resources[0].translations).toEqual({
       en: 'App Title',
       es: 'Título',
-      fr: 'Titre'
+      fr: 'Titre',
     });
     expect(dto.resources[0].status).toEqual({
       en: undefined,
       es: 'translated',
-      fr: 'stale'
+      fr: 'stale',
     });
     expect(dto.children).toEqual([]);
   });
@@ -42,7 +42,7 @@ describe('mapResourceTreeToDto', () => {
     const node: ResourceTreeNode = {
       folderPathSegments: ['apps', 'common'],
       resources: [],
-      children: []
+      children: [],
     };
 
     const dto = mapResourceTreeToDto(node);
@@ -60,19 +60,21 @@ describe('mapResourceTreeToDto', () => {
           loaded: true,
           tree: {
             folderPathSegments: ['apps'],
-            resources: [{
-              key: 'test',
-              source: 'Test',
-              translations: { es: 'Prueba' },
-              metadata: {
-                'en': { checksum: 't1' },
-                'es': { status: 'new', checksum: '', baseChecksum: 't1' }
-              }
-            }],
-            children: []
-          }
-        }
-      ]
+            resources: [
+              {
+                key: 'test',
+                source: 'Test',
+                translations: { es: 'Prueba' },
+                metadata: {
+                  en: { checksum: 't1' },
+                  es: { status: 'new', checksum: '', baseChecksum: 't1' },
+                },
+              },
+            ],
+            children: [],
+          },
+        },
+      ],
     };
 
     const dto = mapResourceTreeToDto(node);
@@ -90,7 +92,7 @@ describe('mapResourceTreeToDto', () => {
       expect(tree.resources).toHaveLength(1);
       expect(tree.resources[0].translations).toEqual({
         en: 'Test',
-        es: 'Prueba'
+        es: 'Prueba',
       });
     }
   });
@@ -103,9 +105,9 @@ describe('mapResourceTreeToDto', () => {
         {
           name: 'apps',
           fullPathSegments: ['apps'],
-          loaded: false
-        }
-      ]
+          loaded: false,
+        },
+      ],
     };
 
     const dto = mapResourceTreeToDto(node);
@@ -127,11 +129,11 @@ describe('mapResourceTreeToDto', () => {
           comment: 'Test comment',
           tags: ['ui', 'test'],
           metadata: {
-            'en': { checksum: 't1' }
-          }
-        }
+            en: { checksum: 't1' },
+          },
+        },
       ],
-      children: []
+      children: [],
     };
 
     const dto = mapResourceTreeToDto(node);

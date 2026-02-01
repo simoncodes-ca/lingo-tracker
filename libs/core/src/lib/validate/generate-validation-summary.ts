@@ -1,4 +1,8 @@
-import { ResourceValidationResult, ValidationOptions, ResourceValidationDetail } from './types';
+import {
+  ResourceValidationResult,
+  ValidationOptions,
+  ResourceValidationDetail,
+} from './types';
 
 /**
  * Maximum number of resources to display in each failure/warning category
@@ -35,7 +39,7 @@ const MAX_RESOURCES_TO_DISPLAY = 100;
  */
 export function generateValidationSummary(
   result: ResourceValidationResult,
-  options: ValidationOptions
+  options: ValidationOptions,
 ): string {
   const sections: string[] = [];
 
@@ -121,15 +125,16 @@ function buildStatusBreakdownSection(result: ResourceValidationResult): string {
  * @returns Formatted failures section string
  * @internal
  */
-function buildFailuresSection(failures: readonly ResourceValidationDetail[]): string {
-  const lines = [
-    `❌ Failures (${failures.length}):`,
-    '─'.repeat(50),
-  ];
+function buildFailuresSection(
+  failures: readonly ResourceValidationDetail[],
+): string {
+  const lines = [`❌ Failures (${failures.length}):`, '─'.repeat(50)];
 
   const failuresByLocale = groupByLocale(failures);
 
-  for (const [locale, localeFailures] of Object.entries(failuresByLocale).sort()) {
+  for (const [locale, localeFailures] of Object.entries(
+    failuresByLocale,
+  ).sort()) {
     lines.push(`  Locale: ${locale} (${localeFailures.length} failures)`);
 
     const resourcesToShow = localeFailures.slice(0, MAX_RESOURCES_TO_DISPLAY);
@@ -137,7 +142,9 @@ function buildFailuresSection(failures: readonly ResourceValidationDetail[]): st
 
     for (const failure of resourcesToShow) {
       const statusEmoji = getStatusEmoji(failure.status);
-      lines.push(`    ${statusEmoji} [${failure.collection}] ${failure.key} (${failure.status})`);
+      lines.push(
+        `    ${statusEmoji} [${failure.collection}] ${failure.key} (${failure.status})`,
+      );
     }
 
     if (remaining > 0) {
@@ -166,12 +173,9 @@ function buildFailuresSection(failures: readonly ResourceValidationDetail[]): st
  */
 function buildWarningsSection(
   warnings: readonly ResourceValidationDetail[],
-  options: ValidationOptions
+  options: ValidationOptions,
 ): string {
-  const lines = [
-    `⚠️  Warnings (${warnings.length}):`,
-    '─'.repeat(50),
-  ];
+  const lines = [`⚠️  Warnings (${warnings.length}):`, '─'.repeat(50)];
 
   if (options.allowTranslated) {
     lines.push('  Resources with "translated" status (not yet verified):');
@@ -179,14 +183,18 @@ function buildWarningsSection(
 
   const warningsByLocale = groupByLocale(warnings);
 
-  for (const [locale, localeWarnings] of Object.entries(warningsByLocale).sort()) {
+  for (const [locale, localeWarnings] of Object.entries(
+    warningsByLocale,
+  ).sort()) {
     lines.push(`  Locale: ${locale} (${localeWarnings.length} warnings)`);
 
     const resourcesToShow = localeWarnings.slice(0, MAX_RESOURCES_TO_DISPLAY);
     const remaining = localeWarnings.length - MAX_RESOURCES_TO_DISPLAY;
 
     for (const warning of resourcesToShow) {
-      lines.push(`    ✏️  [${warning.collection}] ${warning.key} (${warning.status})`);
+      lines.push(
+        `    ✏️  [${warning.collection}] ${warning.key} (${warning.status})`,
+      );
     }
 
     if (remaining > 0) {
@@ -209,11 +217,11 @@ function buildWarningsSection(
  * @returns Formatted footer string
  * @internal
  */
-function buildFooterSection(result: ResourceValidationResult, options: ValidationOptions): string {
-  const lines = [
-    '─'.repeat(50),
-    '📋 Summary:',
-  ];
+function buildFooterSection(
+  result: ResourceValidationResult,
+  options: ValidationOptions,
+): string {
+  const lines = ['─'.repeat(50), '📋 Summary:'];
 
   // Count breakdown
   lines.push(`  Total Failures: ${result.failures.length}`);
@@ -245,7 +253,7 @@ function buildFooterSection(result: ResourceValidationResult, options: Validatio
  * @internal
  */
 function groupByLocale(
-  resources: readonly ResourceValidationDetail[]
+  resources: readonly ResourceValidationDetail[],
 ): Record<string, ResourceValidationDetail[]> {
   const grouped: Record<string, ResourceValidationDetail[]> = {};
 

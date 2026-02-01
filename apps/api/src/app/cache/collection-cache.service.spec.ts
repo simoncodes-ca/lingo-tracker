@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CollectionCacheService, CacheStatus } from './collection-cache.service';
+import {
+  CollectionCacheService,
+  CacheStatus,
+} from './collection-cache.service';
 import * as core from '@simoncodes-ca/core';
 import { ResourceTreeNode } from '@simoncodes-ca/core';
 
@@ -76,7 +79,12 @@ describe('CollectionCacheService', () => {
     });
 
     it('should return ERROR status for failed collection', () => {
-      service.setCacheStatus('Main', CacheStatus.ERROR, undefined, 'Test error');
+      service.setCacheStatus(
+        'Main',
+        CacheStatus.ERROR,
+        undefined,
+        'Test error',
+      );
       const status = service.getCacheStatus('Main');
       expect(status).toBe(CacheStatus.ERROR);
     });
@@ -103,7 +111,12 @@ describe('CollectionCacheService', () => {
     });
 
     it('should return null when collection is in ERROR status', () => {
-      service.setCacheStatus('Main', CacheStatus.ERROR, undefined, 'Test error');
+      service.setCacheStatus(
+        'Main',
+        CacheStatus.ERROR,
+        undefined,
+        'Test error',
+      );
       const cache = service.getCache('Main');
       expect(cache).toBeNull();
     });
@@ -143,7 +156,12 @@ describe('CollectionCacheService', () => {
     });
 
     it('should set ERROR status with error message', () => {
-      service.setCacheStatus('Main', CacheStatus.ERROR, undefined, 'Test error message');
+      service.setCacheStatus(
+        'Main',
+        CacheStatus.ERROR,
+        undefined,
+        'Test error message',
+      );
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.ERROR);
     });
 
@@ -173,7 +191,12 @@ describe('CollectionCacheService', () => {
       const mockTree = createMockTree();
       mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
       service.setCacheStatus('Main', CacheStatus.READY, mockTree, undefined, 3);
-      service.setCacheStatus('Main', CacheStatus.ERROR, undefined, 'Something went wrong');
+      service.setCacheStatus(
+        'Main',
+        CacheStatus.ERROR,
+        undefined,
+        'Something went wrong',
+      );
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.ERROR);
     });
 
@@ -239,7 +262,9 @@ describe('CollectionCacheService', () => {
       });
 
       // Verify extractResourcesRecursively was called with the tree
-      expect(mockCore.extractResourcesRecursively).toHaveBeenCalledWith(mockTree);
+      expect(mockCore.extractResourcesRecursively).toHaveBeenCalledWith(
+        mockTree,
+      );
     });
   });
 

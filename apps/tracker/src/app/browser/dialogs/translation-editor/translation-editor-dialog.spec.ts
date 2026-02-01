@@ -22,12 +22,16 @@ describe('TranslationEditorDialog', () => {
   let fixture: ComponentFixture<TranslationEditorDialog>;
   let dialogRef: { close: Mock };
   let mockDialog: { open: Mock };
-  let mockBrowserApi: { createResource: Mock; updateResource: Mock; searchTranslations: Mock };
+  let mockBrowserApi: {
+    createResource: Mock;
+    updateResource: Mock;
+    searchTranslations: Mock;
+  };
   let mockSnackBar: { open: Mock };
 
   const createMockData = (
     mode: 'create' | 'edit',
-    resource?: ResourceSummaryDto
+    resource?: ResourceSummaryDto,
   ): TranslationEditorDialogData => ({
     mode,
     resource,
@@ -76,7 +80,9 @@ describe('TranslationEditorDialog', () => {
     mockBrowserApi = {
       createResource: vi.fn().mockReturnValue(of({})),
       updateResource: vi.fn().mockReturnValue(of({})),
-      searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+      searchTranslations: vi
+        .fn()
+        .mockReturnValue(of({ results: [], total: 0 })),
     };
 
     mockSnackBar = {
@@ -94,7 +100,7 @@ describe('TranslationEditorDialog', () => {
     it('should display create mode title and subtitle', () => {
       expect(component.dialogTitle()).toBe('Create Translation');
       expect(component.dialogSubtitle()).toBe(
-        'Add a new translation entry to your collection'
+        'Add a new translation entry to your collection',
       );
     });
 
@@ -108,7 +114,7 @@ describe('TranslationEditorDialog', () => {
 
       expect(component.dialogTitle()).toBe('Edit Translation');
       expect(component.dialogSubtitle()).toBe(
-        'Update translation values and metadata'
+        'Update translation values and metadata',
       );
     });
 
@@ -173,7 +179,7 @@ describe('TranslationEditorDialog', () => {
       component.form.controls.key.setValue('');
       component.form.controls.key.markAsTouched();
       expect(component.getKeyErrorMessage()).toBe(
-        'Translation key is required'
+        'Translation key is required',
       );
     });
 
@@ -181,7 +187,7 @@ describe('TranslationEditorDialog', () => {
       component.form.controls.key.setValue('test.key');
       component.form.controls.key.markAsTouched();
       expect(component.getKeyErrorMessage()).toBe(
-        'Only letters, numbers, underscores, and hyphens allowed'
+        'Only letters, numbers, underscores, and hyphens allowed',
       );
     });
   });
@@ -189,9 +195,7 @@ describe('TranslationEditorDialog', () => {
   describe('Form Validation - Base Value Field', () => {
     it('should require base value field', () => {
       component.form.controls.baseValue.setValue('');
-      expect(component.form.controls.baseValue.hasError('required')).toBe(
-        true
-      );
+      expect(component.form.controls.baseValue.hasError('required')).toBe(true);
     });
 
     it('should accept non-empty base value', () => {
@@ -215,7 +219,7 @@ describe('TranslationEditorDialog', () => {
 
     it('should accept any comment value', () => {
       component.form.controls.comment.setValue(
-        'This is a comment for translators'
+        'This is a comment for translators',
       );
       expect(component.form.controls.comment.valid).toBe(true);
     });
@@ -245,7 +249,9 @@ describe('TranslationEditorDialog', () => {
 
       // In create mode, dialogRef.close is called after API success
       expect(dialogRef.close).toHaveBeenCalled();
-      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      const result = dialogRef.close.mock.calls.at(
+        -1,
+      )?.[0] as TranslationEditorResult;
       expect(result.key).toBe('test_key');
       expect(result.baseValue).toBe('Test Value');
       expect(result.comment).toBe('Test comment');
@@ -264,7 +270,9 @@ describe('TranslationEditorDialog', () => {
 
       await component.onSubmit();
 
-      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      const result = dialogRef.close.mock.calls.at(
+        -1,
+      )?.[0] as TranslationEditorResult;
       expect(result.comment).toBeUndefined();
     });
 
@@ -280,7 +288,9 @@ describe('TranslationEditorDialog', () => {
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({})),
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        searchTranslations: vi
+          .fn()
+          .mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
       await setupTestBed(dataWithoutFolder);
@@ -290,7 +300,9 @@ describe('TranslationEditorDialog', () => {
       component.form.controls.comment.setValue('Test comment'); // Add comment to skip confirmation
       await component.onSubmit();
 
-      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      const result = dialogRef.close.mock.calls.at(
+        -1,
+      )?.[0] as TranslationEditorResult;
       expect(result.folderPath).toBe('');
     });
   });
@@ -416,7 +428,9 @@ describe('TranslationEditorDialog', () => {
 
       await component.onSubmit();
 
-      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      const result = dialogRef.close.mock.calls.at(
+        -1,
+      )?.[0] as TranslationEditorResult;
       expect(result.translations).toBeDefined();
       expect(result.translations?.length).toBe(1);
       expect(result.translations?.[0].locale).toBe('fr');
@@ -431,7 +445,9 @@ describe('TranslationEditorDialog', () => {
 
       await component.onSubmit();
 
-      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      const result = dialogRef.close.mock.calls.at(
+        -1,
+      )?.[0] as TranslationEditorResult;
       expect(result.translations).toBeUndefined();
     });
 
@@ -452,14 +468,16 @@ describe('TranslationEditorDialog', () => {
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({})),
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        searchTranslations: vi
+          .fn()
+          .mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
       await setupTestBed(editData);
 
       const translationsArray = component.form.controls.translations;
       const frControl = translationsArray.controls.find(
-        (c) => c.value.locale === 'fr'
+        (c) => c.value.locale === 'fr',
       );
 
       frControl?.patchValue({
@@ -468,7 +486,9 @@ describe('TranslationEditorDialog', () => {
 
       await component.onSubmit();
 
-      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      const result = dialogRef.close.mock.calls.at(
+        -1,
+      )?.[0] as TranslationEditorResult;
       expect(result.translations).toBeDefined();
       const frTranslation = result.translations?.find((t) => t.locale === 'fr');
       expect(frTranslation?.status).toBe('verified');
@@ -554,10 +574,10 @@ describe('TranslationEditorDialog', () => {
 
       const translationsArray = component.form.controls.translations;
       const frControl = translationsArray.controls.find(
-        (c) => c.value.locale === 'fr'
+        (c) => c.value.locale === 'fr',
       );
       const deControl = translationsArray.controls.find(
-        (c) => c.value.locale === 'de'
+        (c) => c.value.locale === 'de',
       );
 
       expect(frControl?.value.value).toBe('Valeur existante');
@@ -578,7 +598,9 @@ describe('TranslationEditorDialog', () => {
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({})),
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        searchTranslations: vi
+          .fn()
+          .mockReturnValue(of({ results: [], total: 0 })),
       };
       mockSnackBar = { open: vi.fn() };
       await setupTestBed(createMockData('create'));
@@ -593,7 +615,9 @@ describe('TranslationEditorDialog', () => {
 
       expect(mockDialog.open).not.toHaveBeenCalled();
       expect(dialogRef.close).toHaveBeenCalled();
-      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      const result = dialogRef.close.mock.calls.at(
+        -1,
+      )?.[0] as TranslationEditorResult;
       expect(result.key).toBe('test_key');
       expect(result.baseValue).toBe('Test Value');
       expect(result.comment).toBe('Test comment');
@@ -623,7 +647,7 @@ describe('TranslationEditorDialog', () => {
           },
           width: '400px',
           disableClose: true,
-        })
+        }),
       );
     });
 
@@ -655,7 +679,9 @@ describe('TranslationEditorDialog', () => {
       await component.onSubmit();
 
       expect(dialogRef.close).toHaveBeenCalled();
-      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      const result = dialogRef.close.mock.calls.at(
+        -1,
+      )?.[0] as TranslationEditorResult;
       expect(result.key).toBe('test_key');
       expect(result.baseValue).toBe('Test Value');
       expect(result.comment).toBeUndefined();
@@ -755,10 +781,14 @@ describe('TranslationEditorDialog', () => {
       dialogRef = { close: vi.fn() };
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
-        updateResource: vi.fn().mockReturnValue(
-          of({ resolvedKey: 'common.buttons.existing_key', updated: true })
-        ),
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        updateResource: vi
+          .fn()
+          .mockReturnValue(
+            of({ resolvedKey: 'common.buttons.existing_key', updated: true }),
+          ),
+        searchTranslations: vi
+          .fn()
+          .mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
@@ -779,7 +809,7 @@ describe('TranslationEditorDialog', () => {
           key: 'common.buttons.existing_key',
           baseValue: 'Updated Value',
           comment: 'Updated comment',
-        })
+        }),
       );
       expect(dialogRef.close).toHaveBeenCalled();
     });
@@ -795,10 +825,14 @@ describe('TranslationEditorDialog', () => {
       dialogRef = { close: vi.fn() };
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
-        updateResource: vi.fn().mockReturnValue(
-          of({ resolvedKey: 'common.buttons.existing_key', updated: true })
-        ),
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        updateResource: vi
+          .fn()
+          .mockReturnValue(
+            of({ resolvedKey: 'common.buttons.existing_key', updated: true }),
+          ),
+        searchTranslations: vi
+          .fn()
+          .mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
@@ -810,7 +844,7 @@ describe('TranslationEditorDialog', () => {
 
       const translationsArray = component.form.controls.translations;
       const frControl = translationsArray.controls.find(
-        (c) => c.value.locale === 'fr'
+        (c) => c.value.locale === 'fr',
       );
       frControl?.patchValue({ value: 'Nouvelle valeur' });
 
@@ -822,7 +856,7 @@ describe('TranslationEditorDialog', () => {
           locales: {
             fr: { value: 'Nouvelle valeur' },
           },
-        })
+        }),
       );
     });
 
@@ -840,7 +874,7 @@ describe('TranslationEditorDialog', () => {
       await component.onSubmit();
 
       expect(component.errorMessage()).toBe(
-        'Key renaming is not yet supported. Please use the same key or create a new resource.'
+        'Key renaming is not yet supported. Please use the same key or create a new resource.',
       );
       expect(mockBrowserApi.updateResource).not.toHaveBeenCalled();
       expect(dialogRef.close).not.toHaveBeenCalled();
@@ -858,13 +892,18 @@ describe('TranslationEditorDialog', () => {
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(
-          throwError(() => new HttpErrorResponse({
-            status: 404,
-            statusText: 'Not Found',
-            error: { message: 'Resource not found' },
-          }))
+          throwError(
+            () =>
+              new HttpErrorResponse({
+                status: 404,
+                statusText: 'Not Found',
+                error: { message: 'Resource not found' },
+              }),
+          ),
         ),
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        searchTranslations: vi
+          .fn()
+          .mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
@@ -877,7 +916,7 @@ describe('TranslationEditorDialog', () => {
       await component.onSubmit();
 
       expect(component.errorMessage()).toBe(
-        'Resource not found. It may have been deleted.'
+        'Resource not found. It may have been deleted.',
       );
       expect(dialogRef.close).not.toHaveBeenCalled();
     });
@@ -894,10 +933,14 @@ describe('TranslationEditorDialog', () => {
       dialogRef = { close: vi.fn() };
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
-        updateResource: vi.fn().mockReturnValue(
-          of({ resolvedKey: 'common.buttons.existing_key', updated: true })
-        ),
-        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        updateResource: vi
+          .fn()
+          .mockReturnValue(
+            of({ resolvedKey: 'common.buttons.existing_key', updated: true }),
+          ),
+        searchTranslations: vi
+          .fn()
+          .mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
@@ -911,7 +954,9 @@ describe('TranslationEditorDialog', () => {
 
       await component.onSubmit();
 
-      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      const result = dialogRef.close.mock.calls.at(
+        -1,
+      )?.[0] as TranslationEditorResult;
       expect(result.success).toBe(true);
       expect(result.key).toBe('existing_key');
       expect(result.baseValue).toBe('Updated Value');

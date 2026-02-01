@@ -3,17 +3,18 @@ import { TranslationStatus } from '@simoncodes-ca/data-transfer';
 export type SortField = 'key' | 'status';
 export type SortDirection = 'asc' | 'desc';
 
-export const STATUS_PRIORITY: Record<TranslationStatus | 'undefined', number> = {
-  new: 0,
-  stale: 1,
-  translated: 2,
-  verified: 3,
-  undefined: 3,
-};
+export const STATUS_PRIORITY: Record<TranslationStatus | 'undefined', number> =
+  {
+    new: 0,
+    stale: 1,
+    translated: 2,
+    verified: 3,
+    undefined: 3,
+  };
 
 export function getWorstStatus(
   statuses: Record<string, TranslationStatus | undefined>,
-  locales: string[]
+  locales: string[],
 ): number {
   if (locales.length === 0) {
     return STATUS_PRIORITY.verified;
@@ -37,12 +38,12 @@ export function sortTranslations<
   T extends {
     key: string;
     status?: Record<string, TranslationStatus | undefined>;
-  }
+  },
 >(
   items: T[],
   field: SortField,
   direction: SortDirection,
-  selectedLocales: string[]
+  selectedLocales: string[],
 ): T[] {
   const sortedItems = [...items];
 

@@ -35,11 +35,14 @@ export interface KeyValidationOptions {
  * @param options - Validation options
  * @throws Error if any validation rule is violated
  */
-export function validateKey(key: string, options: KeyValidationOptions = {}): void {
+export function validateKey(
+  key: string,
+  options: KeyValidationOptions = {},
+): void {
   const {
     allowLeadingTrailingDots = false,
     allowConsecutiveDots = false,
-    errorContext = 'Key validation'
+    errorContext = 'Key validation',
   } = options;
 
   if (!key || key.trim() === '') {
@@ -47,18 +50,22 @@ export function validateKey(key: string, options: KeyValidationOptions = {}): vo
   }
 
   if (!allowConsecutiveDots && key.includes('..')) {
-    throw new Error(`${errorContext}: Invalid key format "${key}" (consecutive dots not allowed)`);
+    throw new Error(
+      `${errorContext}: Invalid key format "${key}" (consecutive dots not allowed)`,
+    );
   }
 
   if (!allowLeadingTrailingDots && (key.startsWith('.') || key.endsWith('.'))) {
-    throw new Error(`${errorContext}: Invalid key format "${key}" (leading or trailing dot not allowed)`);
+    throw new Error(
+      `${errorContext}: Invalid key format "${key}" (leading or trailing dot not allowed)`,
+    );
   }
 
   const segments = key.split('.');
   for (const segment of segments) {
     if (!isValidSegment(segment)) {
       throw new Error(
-        `${errorContext}: Invalid key segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`
+        `${errorContext}: Invalid key segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`,
       );
     }
   }
@@ -80,7 +87,7 @@ export function validateTargetFolder(targetFolder: string): void {
   for (const segment of segments) {
     if (!isValidSegment(segment)) {
       throw new Error(
-        `Invalid targetFolder segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`
+        `Invalid targetFolder segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`,
       );
     }
   }
@@ -106,9 +113,7 @@ export function resolveResourceKey(key: string, targetFolder?: string): string {
  * @param resolvedKey - The fully resolved key (e.g., "apps.common.buttons.cancel")
  * @returns An object with { segments: string[], folderPath: string[], entryKey: string }
  */
-export function splitResolvedKey(
-  resolvedKey: string
-): {
+export function splitResolvedKey(resolvedKey: string): {
   segments: string[];
   folderPath: string[];
   entryKey: string;

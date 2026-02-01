@@ -23,4 +23,3 @@ export interface CreateResourceDto {
     status: TranslationStatus;
   }>;
 }
-

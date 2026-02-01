@@ -25,7 +25,7 @@ export interface FlatResource {
 export function loadCollectionResources(
   translationsFolder: string,
   locale: string,
-  baseLocale: string
+  baseLocale: string,
 ): FlatResource[] {
   const resources: FlatResource[] = [];
 
@@ -52,7 +52,7 @@ function loadFolderResources(
   keyPrefix: string,
   locale: string,
   baseLocale: string,
-  resources: FlatResource[]
+  resources: FlatResource[],
 ): void {
   const resourceEntriesPath = path.join(folderPath, RESOURCE_ENTRIES_FILENAME);
 
@@ -87,8 +87,16 @@ function loadFolderResources(
   for (const entry of entries) {
     if (entry.isDirectory()) {
       const subfolderPath = path.join(folderPath, entry.name);
-      const subKeyPrefix = keyPrefix ? `${keyPrefix}.${entry.name}` : entry.name;
-      loadFolderResources(subfolderPath, subKeyPrefix, locale, baseLocale, resources);
+      const subKeyPrefix = keyPrefix
+        ? `${keyPrefix}.${entry.name}`
+        : entry.name;
+      loadFolderResources(
+        subfolderPath,
+        subKeyPrefix,
+        locale,
+        baseLocale,
+        resources,
+      );
     }
   }
 }

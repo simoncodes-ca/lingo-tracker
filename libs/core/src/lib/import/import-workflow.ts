@@ -1,4 +1,11 @@
-import { ImportOptions, ImportResult, StatusTransition, ImportChange, ICUAutoFix, ICUAutoFixError } from './types';
+import {
+  ImportOptions,
+  ImportResult,
+  StatusTransition,
+  ImportChange,
+  ICUAutoFix,
+  ICUAutoFixError,
+} from './types';
 import { getStrategyDefaults } from './import-common';
 
 /**
@@ -63,7 +70,9 @@ export interface ImportWorkflowConfig {
  * // }
  * ```
  */
-export function setupImportWorkflow(options: ImportOptions): ImportWorkflowConfig {
+export function setupImportWorkflow(
+  options: ImportOptions,
+): ImportWorkflowConfig {
   const { locale, strategy = 'translation-service' } = options;
 
   // Apply strategy defaults for flags if not explicitly provided
@@ -84,7 +93,7 @@ export function setupImportWorkflow(options: ImportOptions): ImportWorkflowConfi
   if (isBaseLocaleImport && strategy !== 'migration') {
     throw new Error(
       `Cannot import into base locale "${baseLocale}" with strategy "${strategy}". ` +
-      `Only "migration" strategy supports base locale imports.`
+        `Only "migration" strategy supports base locale imports.`,
     );
   }
 

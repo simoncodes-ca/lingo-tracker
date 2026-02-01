@@ -2,7 +2,12 @@ import { existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import prompts from 'prompts';
 import type { InitOptions } from '../types/init-options.js';
-import { CONFIG_FILENAME, DEFAULT_CONFIG, LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
+import {
+  CONFIG_FILENAME,
+  DEFAULT_CONFIG,
+  LingoTrackerConfig,
+  LingoTrackerCollection,
+} from '@simoncodes-ca/core';
 import { getCwd, ConsoleFormatter, executePromptsWithFallback } from '../utils';
 
 export async function initCommand(options: InitOptions): Promise<void> {
@@ -10,7 +15,9 @@ export async function initCommand(options: InitOptions): Promise<void> {
   const configPath = resolve(cwd, CONFIG_FILENAME);
 
   if (existsSync(configPath)) {
-    ConsoleFormatter.info('Lingo Tracker is already initialized in this folder. Nothing to do.');
+    ConsoleFormatter.info(
+      'Lingo Tracker is already initialized in this folder. Nothing to do.',
+    );
     return;
   }
 
@@ -23,7 +30,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
   const locales = answers.locales;
 
   // for the initial collection, we want to store only the translationsFolder, to store all other properties in the global config
-  // because more than likely 
+  // because more than likely
   const collection: LingoTrackerCollection = {
     translationsFolder,
   };
@@ -34,7 +41,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
     baseLocale,
     locales,
     collections: {
-      [collectionName]: collection
+      [collectionName]: collection,
     },
     bundles: {
       main: {
@@ -65,7 +72,8 @@ async function promptForMissing(options: InitOptions): Promise<{
       name: 'collectionName',
       message: 'Collection name',
       initial: 'Main',
-      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required')
+      validate: (val: string) =>
+        val && val.trim().length > 0 ? true : 'Required',
     });
   }
 
@@ -74,7 +82,8 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'translationsFolder',
       message: 'Path to translations folder',
-      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required')
+      validate: (val: string) =>
+        val && val.trim().length > 0 ? true : 'Required',
     });
   }
 
@@ -83,7 +92,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'exportFolder',
       message: 'Export folder',
-      initial: DEFAULT_CONFIG.exportFolder
+      initial: DEFAULT_CONFIG.exportFolder,
     });
   }
 
@@ -92,7 +101,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       type: 'text',
       name: 'importFolder',
       message: 'Import folder',
-      initial: DEFAULT_CONFIG.importFolder
+      initial: DEFAULT_CONFIG.importFolder,
     });
   }
 
@@ -102,7 +111,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       name: 'baseLocale',
       message: 'Base locale',
       initial: DEFAULT_CONFIG.baseLocale,
-      validate: (val) => (val && val.trim().length > 0 ? true : 'Required')
+      validate: (val) => (val && val.trim().length > 0 ? true : 'Required'),
     });
   }
 
@@ -112,7 +121,7 @@ async function promptForMissing(options: InitOptions): Promise<{
       name: 'locales',
       message: 'Supported locales (comma-separated)',
       initial: 'en,fr-ca,es,de',
-      separator: ','
+      separator: ',',
     });
   }
 
@@ -126,10 +135,11 @@ async function promptForMissing(options: InitOptions): Promise<{
   return {
     collectionName: (result.collectionName as string) ?? 'default',
     translationsFolder: result.translationsFolder as string,
-    exportFolder: (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
-    importFolder: (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
+    exportFolder:
+      (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
+    importFolder:
+      (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
     baseLocale: (result.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
-    locales: (result.locales as string[]) ?? DEFAULT_CONFIG.locales
+    locales: (result.locales as string[]) ?? DEFAULT_CONFIG.locales,
   };
 }
-

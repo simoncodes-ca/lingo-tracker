@@ -80,7 +80,7 @@ export class CollectionsManager {
     const config = this.store.collections()[name];
     if (!config) {
       this.showErrorToast(
-        this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.ERROR)
+        this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.ERROR),
       );
       return;
     }
@@ -103,7 +103,7 @@ export class CollectionsManager {
             collection: result.config,
           });
           this.showSuccessToast(
-            this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.UPDATED)
+            this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.UPDATED),
           );
         }
       });
@@ -118,16 +118,18 @@ export class CollectionsManager {
       (m) => {
         const dialogRef = this.dialog.open(m.ConfirmationDialog, {
           data: {
-            title: this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.TITLE),
+            title: this.transloco.translate(
+              TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.TITLE,
+            ),
             message: this.transloco.translate(
-                TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.MESSAGE,
-              { name }
+              TRACKER_TOKENS.COLLECTIONS.DIALOG.DELETE.MESSAGE,
+              { name },
             ),
             confirmButtonText: this.transloco.translate(
               TRACKER_TOKENS.COMMON.ACTIONS.DELETE,
             ),
             cancelButtonText: this.transloco.translate(
-                TRACKER_TOKENS.COMMON.ACTIONS.CANCEL,
+              TRACKER_TOKENS.COMMON.ACTIONS.CANCEL,
             ),
             actionType: 'destructive',
           },
@@ -138,11 +140,13 @@ export class CollectionsManager {
           if (confirmed) {
             this.store.deleteCollection(name);
             this.showSuccessToast(
-              this.transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.DELETED),
+              this.transloco.translate(
+                TRACKER_TOKENS.COLLECTIONS.TOAST.DELETED,
+              ),
             );
           }
         });
-      }
+      },
     );
   }
 

@@ -13,7 +13,7 @@ export class TranslocoHttpLoader implements TranslocoLoader {
         console.error(`Failed to load translation file for '${lang}':`, error);
         // Return empty object as fallback
         return of({});
-      })
+      }),
     );
   }
 }

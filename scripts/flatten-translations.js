@@ -31,11 +31,7 @@ function flattenTranslations(obj, currentPath = '') {
  * Determine if an object is a leaf node (has translation data).
  */
 function isLeafNode(value) {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'value' in value
-  );
+  return typeof value === 'object' && value !== null && 'value' in value;
 }
 
 /**
@@ -89,7 +85,9 @@ async function main() {
   const pattern = process.argv[2];
 
   if (!pattern) {
-    console.error('Usage: node scripts/flatten-translations.js <input-file-or-glob-pattern>');
+    console.error(
+      'Usage: node scripts/flatten-translations.js <input-file-or-glob-pattern>',
+    );
     process.exit(1);
   }
 
@@ -110,7 +108,9 @@ async function main() {
       await processFile(filePath);
     }
 
-    console.log(`\nProcessed ${matchedFiles.length} file${matchedFiles.length === 1 ? '' : 's'}`);
+    console.log(
+      `\nProcessed ${matchedFiles.length} file${matchedFiles.length === 1 ? '' : 's'}`,
+    );
   } catch (error) {
     console.error(`Error: ${error.message}`);
     process.exit(1);

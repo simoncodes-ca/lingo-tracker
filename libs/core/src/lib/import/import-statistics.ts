@@ -41,10 +41,12 @@ export function calculateImportStatistics(changes: ImportChange[]): {
   resourcesSkipped: number;
   resourcesFailed: number;
 } {
-  const resourcesCreated = changes.filter(c => c.type === 'created').length;
-  const resourcesUpdated = changes.filter(c => c.type === 'updated' || c.type === 'value-changed').length;
-  const resourcesSkipped = changes.filter(c => c.type === 'skipped').length;
-  const resourcesFailed = changes.filter(c => c.type === 'failed').length;
+  const resourcesCreated = changes.filter((c) => c.type === 'created').length;
+  const resourcesUpdated = changes.filter(
+    (c) => c.type === 'updated' || c.type === 'value-changed',
+  ).length;
+  const resourcesSkipped = changes.filter((c) => c.type === 'skipped').length;
+  const resourcesFailed = changes.filter((c) => c.type === 'failed').length;
 
   return {
     resourcesCreated,
@@ -96,11 +98,17 @@ export function calculateImportStatistics(changes: ImportChange[]): {
  * // ]
  * ```
  */
-export function calculateStatusTransitions(changes: ImportChange[]): StatusTransition[] {
+export function calculateStatusTransitions(
+  changes: ImportChange[],
+): StatusTransition[] {
   const transitionMap = new Map<string, number>();
 
   for (const change of changes) {
-    if (change.type === 'created' || change.type === 'updated' || change.type === 'value-changed') {
+    if (
+      change.type === 'created' ||
+      change.type === 'updated' ||
+      change.type === 'value-changed'
+    ) {
       const key = `${change.oldStatus || 'none'}→${change.newStatus}`;
       transitionMap.set(key, (transitionMap.get(key) || 0) + 1);
     }

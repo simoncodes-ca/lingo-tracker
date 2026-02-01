@@ -32,7 +32,9 @@ import { MatButtonModule } from '@angular/material/button';
 })
 export class IndexingOverlay {
   /** Cache status determines which UI to display */
-  cacheStatus = input<'not-started' | 'indexing' | 'ready' | 'error' | null>(null);
+  cacheStatus = input<'not-started' | 'indexing' | 'ready' | 'error' | null>(
+    null,
+  );
 
   /** Error message to display when status is 'error' */
   errorMessage = input<string | null>(null);

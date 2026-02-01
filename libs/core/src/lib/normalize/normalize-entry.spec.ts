@@ -62,7 +62,9 @@ describe('Normalize Entry', () => {
       expect(result.metadata['es']).toBeDefined();
       expect(result.metadata['es'].status).toBe('new');
       expect(result.metadata['es'].checksum).toBe(calculateChecksum('Cancel'));
-      expect(result.metadata['es'].baseChecksum).toBe(calculateChecksum('Cancel'));
+      expect(result.metadata['es'].baseChecksum).toBe(
+        calculateChecksum('Cancel'),
+      );
 
       expect(result.changes.localesAdded).toBe(1);
     });

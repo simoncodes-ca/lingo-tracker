@@ -2,9 +2,7 @@
   "loading": {
     "source": "Loading",
     "comment": "Message shown while data is loading",
-    "tags": [
-      "data"
-    ],
+    "tags": ["data"],
     "es": "Cargando",
     "fr-ca": "Chargement"
   }

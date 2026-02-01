@@ -1,5 +1,8 @@
 import * as path from 'path';
-import { validateResources, generateValidationSummary } from '@simoncodes-ca/core';
+import {
+  validateResources,
+  generateValidationSummary,
+} from '@simoncodes-ca/core';
 import { loadConfiguration } from '../utils';
 
 /**
@@ -72,15 +75,19 @@ export interface ValidateCommandOptions {
  * $ lingo-tracker validate || exit 1
  * ```
  */
-export async function validateCommand(options: ValidateCommandOptions): Promise<void> {
+export async function validateCommand(
+  options: ValidateCommandOptions,
+): Promise<void> {
   const loaded = loadConfiguration();
   if (!loaded) return;
   const { config, cwd } = loaded;
 
-  const allCollections = Object.entries(config.collections || {}).map(([name, collectionConfig]) => ({
-    name,
-    path: path.resolve(cwd, collectionConfig.translationsFolder),
-  }));
+  const allCollections = Object.entries(config.collections || {}).map(
+    ([name, collectionConfig]) => ({
+      name,
+      path: path.resolve(cwd, collectionConfig.translationsFolder),
+    }),
+  );
 
   if (allCollections.length === 0) {
     console.error('❌ No collections found in configuration.');
@@ -88,25 +95,24 @@ export async function validateCommand(options: ValidateCommandOptions): Promise<
   }
 
   const targetLocales = (config.locales || []).filter(
-    (locale: string) => locale !== config.baseLocale
+    (locale: string) => locale !== config.baseLocale,
   );
 
   if (targetLocales.length === 0) {
     console.error('❌ No target locales found in configuration.');
-    console.error('Target locales are all configured locales except the base locale.');
+    console.error(
+      'Target locales are all configured locales except the base locale.',
+    );
     process.exit(1);
   }
 
-  const validationResult = validateResources(
-    allCollections,
-    targetLocales,
-    { allowTranslated: options.allowTranslated ?? false }
-  );
+  const validationResult = validateResources(allCollections, targetLocales, {
+    allowTranslated: options.allowTranslated ?? false,
+  });
 
-  const summary = generateValidationSummary(
-    validationResult,
-    { allowTranslated: options.allowTranslated ?? false }
-  );
+  const summary = generateValidationSummary(validationResult, {
+    allowTranslated: options.allowTranslated ?? false,
+  });
 
   console.log(summary);
 

@@ -32,10 +32,7 @@ export {
   extractFromHierarchical,
 } from './import-from-json';
 
-export {
-  importFromXliff,
-  extractFromXliff,
-} from './import-from-xliff';
+export { importFromXliff, extractFromXliff } from './import-from-xliff';
 
 // Export reference resolution utilities
 export {
@@ -46,9 +43,7 @@ export {
 } from './reference-resolver';
 
 // Export summary generation
-export {
-  generateImportSummary,
-} from './import-summary';
+export { generateImportSummary } from './import-summary';
 
 // Export resource grouping utilities
 export type { ResourceGroup } from './resource-grouping';
@@ -58,7 +53,10 @@ export { groupResourcesByFolder } from './resource-grouping';
 export { processResourceGroup } from './process-resource-group';
 
 // Export statistics calculation utilities
-export { calculateImportStatistics, calculateStatusTransitions } from './import-statistics';
+export {
+  calculateImportStatistics,
+  calculateStatusTransitions,
+} from './import-statistics';
 
 // Export validation utilities
 export type { ValidationConfig, ValidationResult } from './import-validation';

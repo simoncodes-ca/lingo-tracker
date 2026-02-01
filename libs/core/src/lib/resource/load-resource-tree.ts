@@ -1,6 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import {
+  RESOURCE_ENTRIES_FILENAME,
+  TRACKER_META_FILENAME,
+} from '../../constants';
 import { ResourceEntries } from '../../resource/resource-entry';
 import { TrackerMetadata } from '../../resource/tracker-metadata';
 import { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
@@ -46,21 +49,24 @@ export interface LoadResourceTreeOptions {
   cwd?: string;
 }
 
-export function loadResourceTree(options: LoadResourceTreeOptions): ResourceTreeNode {
+export function loadResourceTree(
+  options: LoadResourceTreeOptions,
+): ResourceTreeNode {
   const {
     translationsFolder,
     path: folderPath = '',
     depth = 2,
-    cwd = process.cwd()
+    cwd = process.cwd(),
   } = options;
 
   // Parse folder path into segments
   const pathSegments = folderPath ? folderPath.split('.').filter(Boolean) : [];
 
   // Resolve absolute folder path
-  const absoluteFolderPath = pathSegments.length > 0
-    ? path.resolve(cwd, translationsFolder, ...pathSegments)
-    : path.resolve(cwd, translationsFolder);
+  const absoluteFolderPath =
+    pathSegments.length > 0
+      ? path.resolve(cwd, translationsFolder, ...pathSegments)
+      : path.resolve(cwd, translationsFolder);
 
   // Check if folder exists
   if (!fs.existsSync(absoluteFolderPath)) {
@@ -76,7 +82,7 @@ export function loadResourceTree(options: LoadResourceTreeOptions): ResourceTree
     pathSegments,
     0,
     depth,
-    visitedPaths
+    visitedPaths,
   );
 }
 
@@ -85,7 +91,7 @@ function loadFolderRecursive(
   pathSegments: string[],
   currentDepth: number,
   maxDepth: number,
-  visitedPaths: Set<string>
+  visitedPaths: Set<string>,
 ): ResourceTreeNode {
   // Check for cycles using realpath
   const realPath = fs.realpathSync(folderPath);
@@ -94,7 +100,7 @@ function loadFolderRecursive(
     return {
       folderPathSegments: pathSegments,
       resources: [],
-      children: []
+      children: [],
     };
   }
   visitedPaths.add(realPath);
@@ -107,8 +113,12 @@ function loadFolderRecursive(
 
   if (fs.existsSync(entriesPath) && fs.existsSync(metaPath)) {
     try {
-      const entries: ResourceEntries = JSON.parse(fs.readFileSync(entriesPath, 'utf8'));
-      const metadata: TrackerMetadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+      const entries: ResourceEntries = JSON.parse(
+        fs.readFileSync(entriesPath, 'utf8'),
+      );
+      const metadata: TrackerMetadata = JSON.parse(
+        fs.readFileSync(metaPath, 'utf8'),
+      );
 
       for (const [key, entry] of Object.entries(entries)) {
         const meta = metadata[key];
@@ -116,7 +126,12 @@ function loadFolderRecursive(
 
         const translations: Record<string, string> = {};
         for (const [prop, value] of Object.entries(entry)) {
-          if (prop !== 'source' && prop !== 'tags' && prop !== 'comment' && typeof value === 'string') {
+          if (
+            prop !== 'source' &&
+            prop !== 'tags' &&
+            prop !== 'comment' &&
+            typeof value === 'string'
+          ) {
             translations[prop] = value;
           }
         }
@@ -127,7 +142,7 @@ function loadFolderRecursive(
           translations,
           comment: entry.comment,
           tags: entry.tags,
-          metadata: meta
+          metadata: meta,
         });
       }
     } catch (error) {
@@ -155,21 +170,21 @@ function loadFolderRecursive(
         childPathSegments,
         currentDepth + 1,
         maxDepth,
-        visitedPaths
+        visitedPaths,
       );
 
       children.push({
         name: childName,
         fullPathSegments: childPathSegments,
         loaded: true,
-        tree: childTree
+        tree: childTree,
       });
     } else {
       // Mark child as unloaded
       children.push({
         name: childName,
         fullPathSegments: childPathSegments,
-        loaded: false
+        loaded: false,
       });
     }
   }
@@ -177,6 +192,6 @@ function loadFolderRecursive(
   return {
     folderPathSegments: pathSegments,
     resources,
-    children
+    children,
   };
 }

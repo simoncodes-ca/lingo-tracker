@@ -90,7 +90,9 @@ export interface ConfigLoadOptions {
  * const { config, cwd } = loaded;
  * ```
  */
-export function loadConfiguration(options?: ConfigLoadOptions): ConfigLoadResult | null {
+export function loadConfiguration(
+  options?: ConfigLoadOptions,
+): ConfigLoadResult | null {
   const exitOnError = options?.exitOnError ?? true;
 
   const cwd = getCwd();
@@ -111,7 +113,9 @@ export function loadConfiguration(options?: ConfigLoadOptions): ConfigLoadResult
       return null;
     }
   } catch (error) {
-    console.error(`❌ Failed to parse configuration file: ${(error as Error).message}`);
+    console.error(
+      `❌ Failed to parse configuration file: ${(error as Error).message}`,
+    );
 
     if (exitOnError) {
       process.exit(1);

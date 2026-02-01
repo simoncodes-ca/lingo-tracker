@@ -56,7 +56,9 @@ describe('import-validation', () => {
         expect(result.errors[0]).toContain('common');
         expect(result.failedChanges).toHaveLength(1);
         expect(result.failedChanges[0].type).toBe('failed');
-        expect(result.failedChanges[0].reason).toContain('Hierarchical conflict');
+        expect(result.failedChanges[0].reason).toContain(
+          'Hierarchical conflict',
+        );
       });
 
       it('should detect multiple hierarchical conflicts', () => {
@@ -110,7 +112,9 @@ describe('import-validation', () => {
           warnOnLongKeys: true,
         });
 
-        expect(result.warnings.some(w => w.includes('Very long key'))).toBe(true);
+        expect(result.warnings.some((w) => w.includes('Very long key'))).toBe(
+          true,
+        );
         expect(result.validResources).toHaveLength(2); // Still valid
       });
 
@@ -125,7 +129,9 @@ describe('import-validation', () => {
           warnOnLongKeys: false,
         });
 
-        expect(result.warnings.some(w => w.includes('Very long key'))).toBe(false);
+        expect(result.warnings.some((w) => w.includes('Very long key'))).toBe(
+          false,
+        );
       });
     });
 
@@ -144,8 +150,12 @@ describe('import-validation', () => {
 
         expect(result.validResources).toHaveLength(1);
         expect(result.validResources[0].key).toBe('key3');
-        expect(result.warnings.some(w => w.includes('Empty value skipped'))).toBe(true);
-        expect(result.failedChanges.filter(c => c.type === 'skipped')).toHaveLength(2);
+        expect(
+          result.warnings.some((w) => w.includes('Empty value skipped')),
+        ).toBe(true);
+        expect(
+          result.failedChanges.filter((c) => c.type === 'skipped'),
+        ).toHaveLength(2);
       });
 
       it('should not skip empty values when skipEmptyValues is false', () => {
@@ -160,7 +170,9 @@ describe('import-validation', () => {
         });
 
         expect(result.validResources).toHaveLength(2);
-        expect(result.warnings.some(w => w.includes('Empty value skipped'))).toBe(false);
+        expect(
+          result.warnings.some((w) => w.includes('Empty value skipped')),
+        ).toBe(false);
       });
     });
 
@@ -255,9 +267,7 @@ describe('import-validation', () => {
       });
 
       it('should track skipped changes for empty values', () => {
-        const resources: ImportedResource[] = [
-          { key: 'empty.key', value: '' },
-        ];
+        const resources: ImportedResource[] = [{ key: 'empty.key', value: '' }];
 
         const result = validateImportResources(resources, {
           skipEmptyValues: true,

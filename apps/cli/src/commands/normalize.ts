@@ -1,7 +1,13 @@
 import prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
 import { normalize } from '@simoncodes-ca/core';
-import { loadConfiguration, resolveCollection, ConsoleFormatter, ErrorMessages, aggregateNumericFields } from '../utils';
+import {
+  loadConfiguration,
+  resolveCollection,
+  ConsoleFormatter,
+  ErrorMessages,
+  aggregateNumericFields,
+} from '../utils';
 
 export interface NormalizeOptions {
   collection?: string;
@@ -31,7 +37,9 @@ interface NormalizeCommandResult {
   };
 }
 
-export async function normalizeCommand(options: NormalizeOptions): Promise<void> {
+export async function normalizeCommand(
+  options: NormalizeOptions,
+): Promise<void> {
   const loaded = loadConfiguration({ exitOnError: false });
   if (!loaded) return;
   const { config, cwd } = loaded;
@@ -92,7 +100,9 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
       });
 
       if (!options.json) {
-        ConsoleFormatter.indent(`✅ Entries processed: ${result.entriesProcessed}`);
+        ConsoleFormatter.indent(
+          `✅ Entries processed: ${result.entriesProcessed}`,
+        );
         ConsoleFormatter.indent(`✅ Locales added: ${result.localesAdded}`);
         ConsoleFormatter.indent(`✅ Files created: ${result.filesCreated}`);
         ConsoleFormatter.indent(`✅ Files updated: ${result.filesUpdated}`);
@@ -100,7 +110,11 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
       }
     } catch (e: unknown) {
       if (!options.json) {
-        ConsoleFormatter.indent(`❌ ${e instanceof Error ? e.message : 'Failed to normalize collection'}`);
+        ConsoleFormatter.indent(
+          `❌ ${
+            e instanceof Error ? e.message : 'Failed to normalize collection'
+          }`,
+        );
       }
     }
   }
@@ -137,8 +151,13 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
       collectionsProcessed: collectionResults.length,
     };
 
-    ConsoleFormatter.section(`Summary (${totals.collectionsProcessed} collections)`);
-    ConsoleFormatter.keyValue('Total entries processed', totals.entriesProcessed);
+    ConsoleFormatter.section(
+      `Summary (${totals.collectionsProcessed} collections)`,
+    );
+    ConsoleFormatter.keyValue(
+      'Total entries processed',
+      totals.entriesProcessed,
+    );
     ConsoleFormatter.keyValue('Total locales added', totals.localesAdded);
     ConsoleFormatter.keyValue('Total files created', totals.filesCreated);
     ConsoleFormatter.keyValue('Total files updated', totals.filesUpdated);
@@ -156,7 +175,7 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
 
 async function promptForMissing(
   options: NormalizeOptions,
-  config: LingoTrackerConfig
+  config: LingoTrackerConfig,
 ): Promise<{
   collection?: string;
   all: boolean;
@@ -179,7 +198,7 @@ async function promptForMissing(
 
     // Create choices array with individual collections and "All collections" option
     const choices = [
-      ...collections.map(c => ({ title: c, value: c })),
+      ...collections.map((c) => ({ title: c, value: c })),
       { title: 'All collections', value: '__ALL__' },
     ];
 
@@ -203,7 +222,9 @@ async function promptForMissing(
 
       // Show confirmation for --all mode
       console.log('');
-      ConsoleFormatter.warning('This will normalize ALL collections in your project.');
+      ConsoleFormatter.warning(
+        'This will normalize ALL collections in your project.',
+      );
       const confirmed = await prompts({
         type: 'confirm',
         name: 'confirmed',
@@ -228,7 +249,9 @@ async function promptForMissing(
   // Handle --all flag with confirmation
   if (options.all && process.stdout.isTTY && !responses.all) {
     console.log('');
-    ConsoleFormatter.warning('This will normalize ALL collections in your project.');
+    ConsoleFormatter.warning(
+      'This will normalize ALL collections in your project.',
+    );
     const confirmed = await prompts({
       type: 'confirm',
       name: 'confirmed',

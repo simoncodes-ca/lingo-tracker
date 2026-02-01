@@ -20,7 +20,6 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Authorization',
   });
 
-
   app.setGlobalPrefix(GLOBAL_PREFIX);
 
   const config = new DocumentBuilder()
@@ -34,7 +33,7 @@ async function bootstrap() {
   const port = process.env.LINGO_TRACKER_PORT || DEFAULT_PORT;
   await app.listen(port);
   Logger.log(
-    `🚀 Application is running on: http://localhost:${port}/${GLOBAL_PREFIX}`
+    `🚀 Application is running on: http://localhost:${port}/${GLOBAL_PREFIX}`,
   );
 }
 

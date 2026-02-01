@@ -12,16 +12,13 @@ export class HighlightPipe implements PipeTransform {
 
   transform(
     text: string | null | undefined,
-    searchTerm: string | null | undefined
+    searchTerm: string | null | undefined,
   ): SafeHtml {
     if (!text) {
       return '';
     }
 
-    if (
-      !searchTerm ||
-      searchTerm.length < this.#minimumSearchLength
-    ) {
+    if (!searchTerm || searchTerm.length < this.#minimumSearchLength) {
       return this.#sanitizer.bypassSecurityTrustHtml(this.#escapeHtml(text));
     }
 

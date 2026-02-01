@@ -42,12 +42,18 @@ vi.mock('../utils', () => ({
   },
   ErrorMessages: {
     OPERATION_CANCELLED: vi.fn((op: string) => `❌ ${op} cancelled.`),
-    MISSING_OPTION: vi.fn((opt: string) => `❌ Missing required option: --${opt}`),
+    MISSING_OPTION: vi.fn(
+      (opt: string) => `❌ Missing required option: --${opt}`,
+    ),
   },
 }));
 
 // Import the mocked functions
-import { importFromJson, importFromXliff, detectImportFormat } from '@simoncodes-ca/core';
+import {
+  importFromJson,
+  importFromXliff,
+  detectImportFormat,
+} from '@simoncodes-ca/core';
 import prompts from 'prompts';
 import { loadConfiguration } from '../utils';
 
@@ -56,8 +62,12 @@ describe('import-cmd', () => {
     vi.clearAllMocks();
 
     // Mock path functions
-    vi.spyOn(path, 'join').mockImplementation((...segments) => segments.join('/'));
-    vi.spyOn(path, 'resolve').mockImplementation((...segments) => segments.join('/'));
+    vi.spyOn(path, 'join').mockImplementation((...segments) =>
+      segments.join('/'),
+    );
+    vi.spyOn(path, 'resolve').mockImplementation((...segments) =>
+      segments.join('/'),
+    );
 
     // Mock process.cwd
     vi.spyOn(process, 'cwd').mockReturnValue('/test/project');
@@ -178,7 +188,9 @@ describe('import-cmd', () => {
       await importCommand(options);
 
       expect(detectImportFormat).toHaveBeenCalledWith('/test/import.xliff');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Detected format: xliff'));
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Detected format: xliff'),
+      );
     });
 
     it('should auto-detect JSON format from .json extension', async () => {
@@ -223,7 +235,9 @@ describe('import-cmd', () => {
       await importCommand(options);
 
       expect(detectImportFormat).toHaveBeenCalledWith('/test/import.json');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Detected format: json'));
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Detected format: json'),
+      );
     });
 
     it('should exit with error if format detection fails', async () => {
@@ -259,7 +273,7 @@ describe('import-cmd', () => {
 
       await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
       expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Cannot auto-detect format')
+        expect.stringContaining('Cannot auto-detect format'),
       );
     });
   });
@@ -313,7 +327,7 @@ describe('import-cmd', () => {
           source: '/test/import.json',
           locale: 'es',
           format: 'json',
-        })
+        }),
       );
     });
 
@@ -365,7 +379,7 @@ describe('import-cmd', () => {
           source: '/test/import.xliff',
           locale: 'es',
           format: 'xliff',
-        })
+        }),
       );
     });
 
@@ -403,7 +417,7 @@ describe('import-cmd', () => {
 
       await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
       expect(console.log).toHaveBeenCalledWith(
-        expect.stringContaining('Import failed: Source file not found')
+        expect.stringContaining('Import failed: Source file not found'),
       );
     });
   });
@@ -445,8 +459,14 @@ describe('import-cmd', () => {
       vi.mocked(prompts).mockResolvedValue({ strategy: 'translation-service' });
 
       // Mock TTY
-      Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
-      Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+      Object.defineProperty(process.stdin, 'isTTY', {
+        value: true,
+        configurable: true,
+      });
+      Object.defineProperty(process.stdout, 'isTTY', {
+        value: true,
+        configurable: true,
+      });
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -494,8 +514,14 @@ describe('import-cmd', () => {
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       // Mock non-TTY
-      Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
-      Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+      Object.defineProperty(process.stdin, 'isTTY', {
+        value: false,
+        configurable: true,
+      });
+      Object.defineProperty(process.stdout, 'isTTY', {
+        value: true,
+        configurable: true,
+      });
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -551,7 +577,9 @@ describe('import-cmd', () => {
 
       await importCommand(options);
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Import completed successfully!'));
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Import completed successfully!'),
+      );
     });
 
     it('should display warnings for import with warnings', async () => {
@@ -594,8 +622,12 @@ describe('import-cmd', () => {
 
       await importCommand(options);
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Warnings (2)'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Import completed with warnings'));
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Warnings (2)'),
+      );
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Import completed with warnings'),
+      );
     });
 
     it('should exit with code 1 for import with errors', async () => {
@@ -640,7 +672,9 @@ describe('import-cmd', () => {
       };
 
       await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Errors (2)'));
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Errors (2)'),
+      );
     });
 
     it('should display dry-run message', async () => {
@@ -684,8 +718,12 @@ describe('import-cmd', () => {
 
       await importCommand(options);
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Mode: DRY RUN (no changes will be made)'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Dry run complete. No changes were made.'));
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Mode: DRY RUN (no changes will be made)'),
+      );
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Dry run complete. No changes were made.'),
+      );
     });
   });
 
@@ -736,7 +774,7 @@ describe('import-cmd', () => {
 
       expect(importFromJson).toHaveBeenCalledWith(
         '/test/project/src/admin-translations',
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -782,7 +820,7 @@ describe('import-cmd', () => {
 
       expect(importFromJson).toHaveBeenCalledWith(
         '/test/project/src/translations',
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });

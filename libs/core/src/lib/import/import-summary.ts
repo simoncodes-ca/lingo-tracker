@@ -1,4 +1,11 @@
-import { ImportOptions, ImportResult, ImportChange, StatusTransition, ICUAutoFix, ICUAutoFixError } from './types';
+import {
+  ImportOptions,
+  ImportResult,
+  ImportChange,
+  StatusTransition,
+  ICUAutoFix,
+  ICUAutoFixError,
+} from './types';
 
 /**
  * Generates a comprehensive markdown summary of the import operation.
@@ -21,12 +28,15 @@ import { ImportOptions, ImportResult, ImportChange, StatusTransition, ICUAutoFix
  * fs.writeFileSync('import-summary.md', summary);
  * ```
  */
-export function generateImportSummary(result: ImportResult, options: ImportOptions): string {
-    const isDryRun = result.dryRun;
-    const title = isDryRun ? '# Import Summary (DRY RUN)' : '# Import Summary';
-    const date = new Date().toISOString().replace('T', ' ').split('.')[0];
+export function generateImportSummary(
+  result: ImportResult,
+  options: ImportOptions,
+): string {
+  const isDryRun = result.dryRun;
+  const title = isDryRun ? '# Import Summary (DRY RUN)' : '# Import Summary';
+  const date = new Date().toISOString().replace('T', ' ').split('.')[0];
 
-    let summary = `${title}
+  let summary = `${title}
 
 **Date**: ${date}
 **Format**: ${result.format.toUpperCase()}
@@ -38,81 +48,91 @@ export function generateImportSummary(result: ImportResult, options: ImportOptio
 
 ## Results
 
-- **Resources ${isDryRun ? 'Would Be ' : ''}Imported**: ${result.resourcesImported}
-- **Resources ${isDryRun ? 'Would Be ' : ''}Created**: ${result.resourcesCreated}
-- **Resources ${isDryRun ? 'Would Be ' : ''}Updated**: ${result.resourcesUpdated}
-- **Resources ${isDryRun ? 'Would Be ' : ''}Skipped**: ${result.resourcesSkipped}
-- **Resources ${isDryRun ? 'Would Have ' : ''}Failed**: ${result.resourcesFailed}
+- **Resources ${isDryRun ? 'Would Be ' : ''}Imported**: ${
+    result.resourcesImported
+  }
+- **Resources ${isDryRun ? 'Would Be ' : ''}Created**: ${
+    result.resourcesCreated
+  }
+- **Resources ${isDryRun ? 'Would Be ' : ''}Updated**: ${
+    result.resourcesUpdated
+  }
+- **Resources ${isDryRun ? 'Would Be ' : ''}Skipped**: ${
+    result.resourcesSkipped
+  }
+- **Resources ${isDryRun ? 'Would Have ' : ''}Failed**: ${
+    result.resourcesFailed
+  }
 `;
 
-    // Status transitions
-    if (result.statusTransitions.length > 0) {
-        summary += `
+  // Status transitions
+  if (result.statusTransitions.length > 0) {
+    summary += `
 ## Changes by Status
 
 ${formatStatusTransitions(result.statusTransitions)}
 `;
-    }
+  }
 
-    // Files modified
-    if (!isDryRun && result.filesModified.length > 0) {
-        summary += `
+  // Files modified
+  if (!isDryRun && result.filesModified.length > 0) {
+    summary += `
 ## Files Modified
 
 ${formatFilesModified(result.filesModified)}
 `;
-    } else if (isDryRun && result.filesModified.length > 0) {
-        summary += `
+  } else if (isDryRun && result.filesModified.length > 0) {
+    summary += `
 ## Files That Would Be Modified
 
 ${formatFilesModified(result.filesModified)}
 `;
-    }
+  }
 
-    // Warnings
-    if (result.warnings.length > 0) {
-        summary += `
+  // Warnings
+  if (result.warnings.length > 0) {
+    summary += `
 ## Warnings
 
 ${formatList(result.warnings)}
 `;
-    }
+  }
 
-    // Errors
-    if (result.errors.length > 0) {
-        summary += `
+  // Errors
+  if (result.errors.length > 0) {
+    summary += `
 ## Errors
 
 ${formatList(result.errors)}
 `;
-    }
+  }
 
-    // ICU Auto-Fixes
-    if (result.icuAutoFixes && result.icuAutoFixes.length > 0) {
-        summary += `
+  // ICU Auto-Fixes
+  if (result.icuAutoFixes && result.icuAutoFixes.length > 0) {
+    summary += `
 ## ICU Auto-Fixes
 
 ${formatICUAutoFixes(result.icuAutoFixes, isDryRun)}
 `;
-    }
+  }
 
-    // ICU Auto-Fix Errors
-    if (result.icuAutoFixErrors && result.icuAutoFixErrors.length > 0) {
-        summary += `
+  // ICU Auto-Fix Errors
+  if (result.icuAutoFixErrors && result.icuAutoFixErrors.length > 0) {
+    summary += `
 ## ICU Auto-Fix Errors
 
 ${formatICUAutoFixErrors(result.icuAutoFixErrors)}
 `;
-    }
+  }
 
-    // Detailed changes
-    summary += `
+  // Detailed changes
+  summary += `
 ## Detailed Changes
 
 ${formatDetailedChanges(result.changes, isDryRun)}
 `;
 
-    return summary;
+  return summary;
 }
 
 /**
@@ -126,28 +146,28 @@ ${formatDetailedChanges(result.changes, isDryRun)}
  * @internal
  */
 function formatFlags(options: ImportOptions): string {
-    const flags: string[] = [];
+  const flags: string[] = [];
 
-    if (options.updateComments !== undefined) {
-        flags.push(`--update-comments=${options.updateComments}`);
-    }
-    if (options.updateTags !== undefined) {
-        flags.push(`--update-tags=${options.updateTags}`);
-    }
-    if (options.createMissing !== undefined) {
-        flags.push(`--create-missing=${options.createMissing}`);
-    }
-    if (options.preserveStatus !== undefined) {
-        flags.push(`--preserve-status=${options.preserveStatus}`);
-    }
-    if (options.validateBase !== undefined) {
-        flags.push(`--validate-base=${options.validateBase}`);
-    }
-    if (options.dryRun) {
-        flags.push('--dry-run=true');
-    }
+  if (options.updateComments !== undefined) {
+    flags.push(`--update-comments=${options.updateComments}`);
+  }
+  if (options.updateTags !== undefined) {
+    flags.push(`--update-tags=${options.updateTags}`);
+  }
+  if (options.createMissing !== undefined) {
+    flags.push(`--create-missing=${options.createMissing}`);
+  }
+  if (options.preserveStatus !== undefined) {
+    flags.push(`--preserve-status=${options.preserveStatus}`);
+  }
+  if (options.validateBase !== undefined) {
+    flags.push(`--validate-base=${options.validateBase}`);
+  }
+  if (options.dryRun) {
+    flags.push('--dry-run=true');
+  }
 
-    return flags.length > 0 ? flags.join(', ') : 'None';
+  return flags.length > 0 ? flags.join(', ') : 'None';
 }
 
 /**
@@ -165,16 +185,21 @@ function formatFlags(options: ImportOptions): string {
  * Returns: "- **New → Translated**: 45\n- **Stale → Translated**: 38 (value changed)"
  */
 function formatStatusTransitions(transitions: StatusTransition[]): string {
-    if (transitions.length === 0) {
-        return '_No status transitions_';
-    }
+  if (transitions.length === 0) {
+    return '_No status transitions_';
+  }
 
-    return transitions.map(t => {
-        const from = t.from || 'none';
-        const to = t.to;
-        const description = from === 'none' ? '(Created)' : from === to ? '(value changed)' : '';
-        return `- **${capitalize(from)} → ${capitalize(to)}**: ${t.count}${description ? ' ' + description : ''}`;
-    }).join('\n');
+  return transitions
+    .map((t) => {
+      const from = t.from || 'none';
+      const to = t.to;
+      const description =
+        from === 'none' ? '(Created)' : from === to ? '(value changed)' : '';
+      return `- **${capitalize(from)} → ${capitalize(to)}**: ${t.count}${
+        description ? ' ' + description : ''
+      }`;
+    })
+    .join('\n');
 }
 
 /**
@@ -188,21 +213,21 @@ function formatStatusTransitions(transitions: StatusTransition[]): string {
  * @internal
  */
 function formatFilesModified(files: string[]): string {
-    if (files.length === 0) {
-        return '_No files modified_';
-    }
+  if (files.length === 0) {
+    return '_No files modified_';
+  }
 
-    const maxToShow = 10;
-    const filesToShow = files.slice(0, maxToShow);
-    const remaining = files.length - maxToShow;
+  const maxToShow = 10;
+  const filesToShow = files.slice(0, maxToShow);
+  const remaining = files.length - maxToShow;
 
-    let output = filesToShow.map(f => `- \`${f}\``).join('\n');
+  let output = filesToShow.map((f) => `- \`${f}\``).join('\n');
 
-    if (remaining > 0) {
-        output += `\n- _(+ ${remaining} more files)_`;
-    }
+  if (remaining > 0) {
+    output += `\n- _(+ ${remaining} more files)_`;
+  }
 
-    return output;
+  return output;
 }
 
 /**
@@ -216,21 +241,21 @@ function formatFilesModified(files: string[]): string {
  * @internal
  */
 function formatList(items: string[]): string {
-    if (items.length === 0) {
-        return '_None_';
-    }
+  if (items.length === 0) {
+    return '_None_';
+  }
 
-    const maxToShow = 10;
-    const itemsToShow = items.slice(0, maxToShow);
-    const remaining = items.length - maxToShow;
+  const maxToShow = 10;
+  const itemsToShow = items.slice(0, maxToShow);
+  const remaining = items.length - maxToShow;
 
-    let output = itemsToShow.map(item => `- ${item}`).join('\n');
+  let output = itemsToShow.map((item) => `- ${item}`).join('\n');
 
-    if (remaining > 0) {
-        output += `\n- _(... and ${remaining} more)_`;
-    }
+  if (remaining > 0) {
+    output += `\n- _(... and ${remaining} more)_`;
+  }
 
-    return output;
+  return output;
 }
 
 /**
@@ -244,43 +269,62 @@ function formatList(items: string[]): string {
  * @returns Formatted markdown sections for each change category
  * @internal
  */
-function formatDetailedChanges(changes: ImportChange[], isDryRun: boolean): string {
-    const created = changes.filter(c => c.type === 'created');
-    const updated = changes.filter(c => c.type === 'updated' || c.type === 'value-changed');
-    const skipped = changes.filter(c => c.type === 'skipped');
-    const failed = changes.filter(c => c.type === 'failed');
+function formatDetailedChanges(
+  changes: ImportChange[],
+  isDryRun: boolean,
+): string {
+  const created = changes.filter((c) => c.type === 'created');
+  const updated = changes.filter(
+    (c) => c.type === 'updated' || c.type === 'value-changed',
+  );
+  const skipped = changes.filter((c) => c.type === 'skipped');
+  const failed = changes.filter((c) => c.type === 'failed');
 
-    let output = '';
+  let output = '';
 
-    // Created resources
-    output += `### ${isDryRun ? 'Resources That Would Be Created' : 'Created Resources'}\n\n`;
-    if (created.length === 0) {
-        output += `_None${isDryRun ? '' : ` - strategy \`${changes.length > 0 ? 'does not allow' : ''}\` ${changes.length > 0 ? 'creation' : ''}`}_\n\n`;
-    } else {
-        output += formatCreatedChanges(created);
-    }
+  // Created resources
+  output += `### ${
+    isDryRun ? 'Resources That Would Be Created' : 'Created Resources'
+  }\n\n`;
+  if (created.length === 0) {
+    output += `_None${
+      isDryRun
+        ? ''
+        : ` - strategy \`${changes.length > 0 ? 'does not allow' : ''}\` ${
+            changes.length > 0 ? 'creation' : ''
+          }`
+    }_\n\n`;
+  } else {
+    output += formatCreatedChanges(created);
+  }
 
-    // Updated resources
-    output += `### ${isDryRun ? 'Resources That Would Be Updated' : 'Updated Resources'}\n\n`;
-    if (updated.length === 0) {
-        output += '_None_\n\n';
-    } else {
-        output += formatUpdatedChanges(updated);
-    }
+  // Updated resources
+  output += `### ${
+    isDryRun ? 'Resources That Would Be Updated' : 'Updated Resources'
+  }\n\n`;
+  if (updated.length === 0) {
+    output += '_None_\n\n';
+  } else {
+    output += formatUpdatedChanges(updated);
+  }
 
-    // Skipped resources
-    if (skipped.length > 0) {
-        output += `### ${isDryRun ? 'Resources That Would Be Skipped' : 'Skipped Resources'}\n\n`;
-        output += formatSkippedChanges(skipped);
-    }
+  // Skipped resources
+  if (skipped.length > 0) {
+    output += `### ${
+      isDryRun ? 'Resources That Would Be Skipped' : 'Skipped Resources'
+    }\n\n`;
+    output += formatSkippedChanges(skipped);
+  }
 
-    // Failed resources
-    if (failed.length > 0) {
-        output += `### ${isDryRun ? 'Resources That Would Fail' : 'Failed Resources'}\n\n`;
-        output += formatFailedChanges(failed);
-    }
+  // Failed resources
+  if (failed.length > 0) {
+    output += `### ${
+      isDryRun ? 'Resources That Would Fail' : 'Failed Resources'
+    }\n\n`;
+    output += formatFailedChanges(failed);
+  }
 
-    return output;
+  return output;
 }
 
 /**
@@ -294,20 +338,22 @@ function formatDetailedChanges(changes: ImportChange[], isDryRun: boolean): stri
  * @internal
  */
 function formatCreatedChanges(changes: ImportChange[]): string {
-    const maxToShow = 20;
-    const changesToShow = changes.slice(0, maxToShow);
-    const remaining = changes.length - maxToShow;
+  const maxToShow = 20;
+  const changesToShow = changes.slice(0, maxToShow);
+  const remaining = changes.length - maxToShow;
 
-    let output = changesToShow.map((c, i) => {
-        const status = c.newStatus ? ` (${c.newStatus})` : '';
-        return `${i + 1}. \`${c.key}\`: "${c.newValue || ''}"${status}`;
-    }).join('\n');
+  let output = changesToShow
+    .map((c, i) => {
+      const status = c.newStatus ? ` (${c.newStatus})` : '';
+      return `${i + 1}. \`${c.key}\`: "${c.newValue || ''}"${status}`;
+    })
+    .join('\n');
 
-    if (remaining > 0) {
-        output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
-    }
+  if (remaining > 0) {
+    output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
+  }
 
-    return output + '\n\n';
+  return output + '\n\n';
 }
 
 /**
@@ -321,26 +367,34 @@ function formatCreatedChanges(changes: ImportChange[]): string {
  * @internal
  */
 function formatUpdatedChanges(changes: ImportChange[]): string {
-    const maxToShow = 20;
-    const changesToShow = changes.slice(0, maxToShow);
-    const remaining = changes.length - maxToShow;
+  const maxToShow = 20;
+  const changesToShow = changes.slice(0, maxToShow);
+  const remaining = changes.length - maxToShow;
 
-    let output = changesToShow.map((c, i) => {
-        const oldVal = c.oldValue || '';
-        const newVal = c.newValue || '';
-        const statusChange = c.oldStatus && c.newStatus && c.oldStatus !== c.newStatus
-            ? ` (${c.oldStatus} → ${c.newStatus})`
-            : c.newStatus ? ` (${c.newStatus})` : '';
-        const valueChanged = oldVal !== newVal ? ', value changed' : ', checksum updated';
+  let output = changesToShow
+    .map((c, i) => {
+      const oldVal = c.oldValue || '';
+      const newVal = c.newValue || '';
+      const statusChange =
+        c.oldStatus && c.newStatus && c.oldStatus !== c.newStatus
+          ? ` (${c.oldStatus} → ${c.newStatus})`
+          : c.newStatus
+            ? ` (${c.newStatus})`
+            : '';
+      const valueChanged =
+        oldVal !== newVal ? ', value changed' : ', checksum updated';
 
-        return `${i + 1}. \`${c.key}\`: "${oldVal}" → "${newVal}"${statusChange}${valueChanged}`;
-    }).join('\n');
+      return `${i + 1}. \`${
+        c.key
+      }\`: "${oldVal}" → "${newVal}"${statusChange}${valueChanged}`;
+    })
+    .join('\n');
 
-    if (remaining > 0) {
-        output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
-    }
+  if (remaining > 0) {
+    output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
+  }
 
-    return output + '\n\n';
+  return output + '\n\n';
 }
 
 /**
@@ -354,20 +408,22 @@ function formatUpdatedChanges(changes: ImportChange[]): string {
  * @internal
  */
 function formatSkippedChanges(changes: ImportChange[]): string {
-    const maxToShow = 20;
-    const changesToShow = changes.slice(0, maxToShow);
-    const remaining = changes.length - maxToShow;
+  const maxToShow = 20;
+  const changesToShow = changes.slice(0, maxToShow);
+  const remaining = changes.length - maxToShow;
 
-    let output = changesToShow.map((c, i) => {
-        const reason = c.reason ? ` (${c.reason})` : '';
-        return `${i + 1}. \`${c.key}\`${reason}`;
-    }).join('\n');
+  let output = changesToShow
+    .map((c, i) => {
+      const reason = c.reason ? ` (${c.reason})` : '';
+      return `${i + 1}. \`${c.key}\`${reason}`;
+    })
+    .join('\n');
 
-    if (remaining > 0) {
-        output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
-    }
+  if (remaining > 0) {
+    output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
+  }
 
-    return output + '\n\n';
+  return output + '\n\n';
 }
 
 /**
@@ -381,20 +437,22 @@ function formatSkippedChanges(changes: ImportChange[]): string {
  * @internal
  */
 function formatFailedChanges(changes: ImportChange[]): string {
-    const maxToShow = 20;
-    const changesToShow = changes.slice(0, maxToShow);
-    const remaining = changes.length - maxToShow;
+  const maxToShow = 20;
+  const changesToShow = changes.slice(0, maxToShow);
+  const remaining = changes.length - maxToShow;
 
-    let output = changesToShow.map((c, i) => {
-        const reason = c.reason ? ` - ${c.reason}` : '';
-        return `${i + 1}. \`${c.key}\`${reason}`;
-    }).join('\n');
+  let output = changesToShow
+    .map((c, i) => {
+      const reason = c.reason ? ` - ${c.reason}` : '';
+      return `${i + 1}. \`${c.key}\`${reason}`;
+    })
+    .join('\n');
 
-    if (remaining > 0) {
-        output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
-    }
+  if (remaining > 0) {
+    output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
+  }
 
-    return output + '\n\n';
+  return output + '\n\n';
 }
 
 /**
@@ -408,31 +466,39 @@ function formatFailedChanges(changes: ImportChange[]): string {
  * @returns Formatted markdown list of auto-fixes
  * @internal
  */
-function formatICUAutoFixes(autoFixes: ICUAutoFix[], isDryRun: boolean): string {
-    const maxToShow = 20;
-    const fixesToShow = autoFixes.slice(0, maxToShow);
-    const remaining = autoFixes.length - maxToShow;
+function formatICUAutoFixes(
+  autoFixes: ICUAutoFix[],
+  isDryRun: boolean,
+): string {
+  const maxToShow = 20;
+  const fixesToShow = autoFixes.slice(0, maxToShow);
+  const remaining = autoFixes.length - maxToShow;
 
-    const prefix = isDryRun ? 'Would auto-fix' : 'Auto-fixed';
+  const prefix = isDryRun ? 'Would auto-fix' : 'Auto-fixed';
 
-    let output = `_${prefix} ${autoFixes.length} translation(s) with modified ICU placeholders. Review these to ensure critical translations are correct._\n\n`;
+  let output = `_${prefix} ${autoFixes.length} translation(s) with modified ICU placeholders. Review these to ensure critical translations are correct._\n\n`;
 
-    output += fixesToShow.map((fix, i) => {
-        const placeholderChanges = fix.originalPlaceholders
-            .map((orig: string, idx: number) => `${orig} → ${fix.fixedPlaceholders[idx]}`)
-            .join(', ');
+  output += fixesToShow
+    .map((fix, i) => {
+      const placeholderChanges = fix.originalPlaceholders
+        .map(
+          (orig: string, idx: number) =>
+            `${orig} → ${fix.fixedPlaceholders[idx]}`,
+        )
+        .join(', ');
 
-        return `${i + 1}. \`${fix.key}\`
+      return `${i + 1}. \`${fix.key}\`
    - **Original**: "${fix.originalValue}"
    - **Auto-fixed**: "${fix.fixedValue}"
    - **Changes**: ${placeholderChanges}`;
-    }).join('\n\n');
+    })
+    .join('\n\n');
 
-    if (remaining > 0) {
-        output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
-    }
+  if (remaining > 0) {
+    output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
+  }
 
-    return output;
+  return output;
 }
 
 /**
@@ -446,23 +512,25 @@ function formatICUAutoFixes(autoFixes: ICUAutoFix[], isDryRun: boolean): string 
  * @internal
  */
 function formatICUAutoFixErrors(autoFixErrors: ICUAutoFixError[]): string {
-    const maxToShow = 20;
-    const errorsToShow = autoFixErrors.slice(0, maxToShow);
-    const remaining = autoFixErrors.length - maxToShow;
+  const maxToShow = 20;
+  const errorsToShow = autoFixErrors.slice(0, maxToShow);
+  const remaining = autoFixErrors.length - maxToShow;
 
-    let output = `_The following translations could not be auto-fixed and were skipped. Manual correction required._\n\n`;
+  let output = `_The following translations could not be auto-fixed and were skipped. Manual correction required._\n\n`;
 
-    output += errorsToShow.map((error, i) => {
-        return `${i + 1}. \`${error.key}\`
+  output += errorsToShow
+    .map((error, i) => {
+      return `${i + 1}. \`${error.key}\`
    - **Original**: "${error.originalValue}"
    - **Error**: ${error.error}`;
-    }).join('\n\n');
+    })
+    .join('\n\n');
 
-    if (remaining > 0) {
-        output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
-    }
+  if (remaining > 0) {
+    output += `\n\n_(... ${remaining} more, showing first ${maxToShow} in detail)_`;
+  }
 
-    return output;
+  return output;
 }
 
 /**
@@ -475,6 +543,6 @@ function formatICUAutoFixErrors(autoFixErrors: ICUAutoFixError[]): string {
  * @internal
  */
 function capitalize(str: string): string {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

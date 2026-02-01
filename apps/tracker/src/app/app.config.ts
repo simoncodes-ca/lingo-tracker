@@ -4,7 +4,11 @@ import {
   provideZoneChangeDetection,
   isDevMode,
 } from '@angular/core';
-import { provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
+import {
+  provideRouter,
+  withPreloading,
+  PreloadAllModules,
+} from '@angular/router';
 import { appRoutes } from './app.routes';
 import { provideHttpClient } from '@angular/common/http';
 import { provideTransloco } from '@jsverse/transloco';
@@ -14,10 +18,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(
-      appRoutes,
-      withPreloading(PreloadAllModules)
-    ),
+    provideRouter(appRoutes, withPreloading(PreloadAllModules)),
     provideHttpClient(),
     provideTransloco({
       config: {

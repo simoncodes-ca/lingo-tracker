@@ -16,7 +16,9 @@ vi.mock('@simoncodes-ca/core', async () => {
   return {
     ...actual,
     CONFIG_FILENAME: '.lingo-tracker.json',
-    addResource: vi.fn().mockResolvedValue({ resolvedKey: 'test.key', created: true }),
+    addResource: vi
+      .fn()
+      .mockResolvedValue({ resolvedKey: 'test.key', created: true }),
     resolveResourceKey: vi.fn((key: string, targetFolder?: string) => {
       return targetFolder ? `${targetFolder}.${key}` : key;
     }),
@@ -37,7 +39,10 @@ vi.mock('../utils', async () => {
     resolveCollection: vi.fn(),
     parseCommaSeparatedList: vi.fn((input: string | undefined) => {
       if (!input) return undefined;
-      const result = input.split(',').map((item) => item.trim()).filter(Boolean);
+      const result = input
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
       return result.length > 0 ? result : undefined;
     }),
   };
@@ -74,7 +79,9 @@ describe('addResourceCommand', () => {
     });
 
     // Should call loadConfiguration with exitOnError: false
-    expect(utils.loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
+    expect(utils.loadConfiguration).toHaveBeenCalledWith({
+      exitOnError: false,
+    });
   });
 
   it('should validate key format - config check happens first', async () => {
@@ -89,7 +96,9 @@ describe('addResourceCommand', () => {
     });
 
     // Config error is checked before key validation
-    expect(utils.loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
+    expect(utils.loadConfiguration).toHaveBeenCalledWith({
+      exitOnError: false,
+    });
   });
 
   it('should handle command with all parameters', async () => {
@@ -106,7 +115,9 @@ describe('addResourceCommand', () => {
     });
 
     // Should stop early since config doesn't exist
-    expect(utils.loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
+    expect(utils.loadConfiguration).toHaveBeenCalledWith({
+      exitOnError: false,
+    });
   });
 
   it('should show error when collection does not exist', async () => {
@@ -124,7 +135,9 @@ describe('addResourceCommand', () => {
     });
 
     // Mock promptForCollection to return the collection name
-    vi.mocked(utils.promptForCollection).mockResolvedValue('NonExistentCollection');
+    vi.mocked(utils.promptForCollection).mockResolvedValue(
+      'NonExistentCollection',
+    );
 
     // Mock resolveCollection to return null (collection not found)
     vi.mocked(utils.resolveCollection).mockReturnValue(null);
@@ -136,7 +149,11 @@ describe('addResourceCommand', () => {
     });
 
     // Should call resolveCollection and get null back
-    expect(utils.resolveCollection).toHaveBeenCalledWith('NonExistentCollection', config, '/test');
+    expect(utils.resolveCollection).toHaveBeenCalledWith(
+      'NonExistentCollection',
+      config,
+      '/test',
+    );
   });
 
   it('should handle translations array format', async () => {
@@ -177,7 +194,7 @@ describe('addResourceCommand', () => {
       key: 'buttons.ok',
       value: 'OK',
       translations: [
-        { locale: 'fr-ca', value: 'D\'accord', status: 'translated' },
+        { locale: 'fr-ca', value: "D'accord", status: 'translated' },
         { locale: 'es', value: 'Aceptar', status: 'verified' },
       ],
     });
@@ -187,11 +204,19 @@ describe('addResourceCommand', () => {
       '/test/translations',
       expect.objectContaining({
         translations: expect.arrayContaining([
-          expect.objectContaining({ locale: 'fr-ca', value: 'D\'accord', status: 'translated' }),
-          expect.objectContaining({ locale: 'es', value: 'Aceptar', status: 'verified' }),
+          expect.objectContaining({
+            locale: 'fr-ca',
+            value: "D'accord",
+            status: 'translated',
+          }),
+          expect.objectContaining({
+            locale: 'es',
+            value: 'Aceptar',
+            status: 'verified',
+          }),
         ]),
       }),
-      expect.any(Object)
+      expect.any(Object),
     );
 
     consoleSpy.mockRestore();
@@ -258,10 +283,10 @@ describe('addResourceCommand', () => {
       expect.objectContaining({
         type: 'confirm',
         message: expect.stringContaining('already exists'),
-      })
+      }),
     );
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Add resource cancelled')
+      expect.stringContaining('Add resource cancelled'),
     );
 
     // Restore
@@ -324,12 +349,16 @@ describe('addResourceCommand', () => {
       '/test/translations',
       expect.objectContaining({
         translations: expect.arrayContaining([
-          expect.objectContaining({ locale: 'fr-ca', value: 'OK', status: 'new' }),
+          expect.objectContaining({
+            locale: 'fr-ca',
+            value: 'OK',
+            status: 'new',
+          }),
           expect.objectContaining({ locale: 'es', value: 'OK', status: 'new' }),
           expect.objectContaining({ locale: 'de', value: 'OK', status: 'new' }),
         ]),
       }),
-      expect.any(Object)
+      expect.any(Object),
     );
 
     // Restore

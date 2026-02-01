@@ -74,14 +74,14 @@ describe('Resource Key Utilities', () => {
 
     it('should concatenate targetFolder and key', () => {
       expect(resolveResourceKey('buttons.ok', 'apps.common')).toBe(
-        'apps.common.buttons.ok'
+        'apps.common.buttons.ok',
       );
       expect(resolveResourceKey('cancel', 'dialogs')).toBe('dialogs.cancel');
     });
 
     it('should allow overlapping segments (no de-duplication)', () => {
       expect(resolveResourceKey('apps.buttons', 'apps.common')).toBe(
-        'apps.common.apps.buttons'
+        'apps.common.apps.buttons',
       );
     });
   });

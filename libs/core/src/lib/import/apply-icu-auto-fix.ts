@@ -53,7 +53,7 @@ interface ApplyICUAutoFixResult {
  * ```
  */
 export function applyICUAutoFixToResource(
-  config: ApplyICUAutoFixConfig
+  config: ApplyICUAutoFixConfig,
 ): ApplyICUAutoFixResult {
   const { resource, baseValue, verbose, onProgress } = config;
 
@@ -71,7 +71,9 @@ export function applyICUAutoFixToResource(
   // Handle auto-fix error
   if (autoFixResult.error) {
     if (verbose && onProgress) {
-      onProgress(`  ❌ ICU auto-fix failed for ${resource.key}: ${autoFixResult.error}`);
+      onProgress(
+        `  ❌ ICU auto-fix failed for ${resource.key}: ${autoFixResult.error}`,
+      );
     }
 
     const autoFixError: ICUAutoFixError = {
@@ -86,7 +88,9 @@ export function applyICUAutoFixToResource(
   // Handle successful auto-fix
   if (autoFixResult.wasFixed) {
     if (verbose && onProgress) {
-      onProgress(`  ✓ Auto-fixed ICU placeholders for ${resource.key}: ${autoFixResult.description}`);
+      onProgress(
+        `  ✓ Auto-fixed ICU placeholders for ${resource.key}: ${autoFixResult.description}`,
+      );
     }
 
     const autoFix: ICUAutoFix = {
@@ -180,10 +184,14 @@ export function applyICUAutoFixToResources(params: {
 
   if (verbose && onProgress) {
     if (autoFixes.length > 0) {
-      onProgress(`\n✓ Auto-fixed ${autoFixes.length} translation(s) with modified ICU placeholders`);
+      onProgress(
+        `\n✓ Auto-fixed ${autoFixes.length} translation(s) with modified ICU placeholders`,
+      );
     }
     if (autoFixErrors.length > 0) {
-      onProgress(`\n❌ Failed to auto-fix ${autoFixErrors.length} translation(s) - manual correction required`);
+      onProgress(
+        `\n❌ Failed to auto-fix ${autoFixErrors.length} translation(s) - manual correction required`,
+      );
     }
   }
 

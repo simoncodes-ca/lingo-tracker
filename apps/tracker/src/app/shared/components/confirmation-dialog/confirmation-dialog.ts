@@ -55,11 +55,17 @@ export class ConfirmationDialog {
   private readonly transloco = inject(TranslocoService);
 
   get confirmButtonText(): string {
-    return this.data.confirmButtonText ?? this.transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.OK);
+    return (
+      this.data.confirmButtonText ??
+      this.transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.OK)
+    );
   }
 
   get cancelButtonText(): string {
-    return this.data.cancelButtonText ?? this.transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.CANCEL);
+    return (
+      this.data.cancelButtonText ??
+      this.transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.CANCEL)
+    );
   }
 
   get isDestructive(): boolean {

@@ -13,10 +13,10 @@ describe('importFromJson - integration tests', () => {
 
     // Mock path functions
     vi.spyOn(path, 'resolve').mockImplementation((...segments) =>
-      segments.join('/')
+      segments.join('/'),
     );
     vi.spyOn(path, 'join').mockImplementation((...segments) =>
-      segments.join('/')
+      segments.join('/'),
     );
   });
 
@@ -77,7 +77,9 @@ describe('importFromJson - integration tests', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const writeFileSyncSpy = vi
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => undefined);
 
       // Execute import
       const options: ImportOptions = {
@@ -102,12 +104,20 @@ describe('importFromJson - integration tests', () => {
       const writeCalls = writeFileSyncSpy.mock.calls;
 
       // Check that resource_entries.json and tracker_meta.json were written
-      expect(writeCalls.some(call => String(call[0]).includes('resource_entries.json'))).toBe(true);
-      expect(writeCalls.some(call => String(call[0]).includes('tracker_meta.json'))).toBe(true);
+      expect(
+        writeCalls.some((call) =>
+          String(call[0]).includes('resource_entries.json'),
+        ),
+      ).toBe(true);
+      expect(
+        writeCalls.some((call) =>
+          String(call[0]).includes('tracker_meta.json'),
+        ),
+      ).toBe(true);
 
       // Verify updated resource entries
-      const resourceEntriesCall = writeCalls.find(call =>
-        String(call[0]).includes('resource_entries.json')
+      const resourceEntriesCall = writeCalls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
       );
       if (resourceEntriesCall) {
         const updatedEntries = JSON.parse(String(resourceEntriesCall[1]));
@@ -116,8 +126,8 @@ describe('importFromJson - integration tests', () => {
       }
 
       // Verify updated metadata
-      const metaCall = writeCalls.find(call =>
-        String(call[0]).includes('tracker_meta.json')
+      const metaCall = writeCalls.find((call) =>
+        String(call[0]).includes('tracker_meta.json'),
       );
       if (metaCall) {
         const updatedMeta = JSON.parse(String(metaCall[1]));
@@ -190,8 +200,10 @@ describe('importFromJson - integration tests', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('import.json')) return JSON.stringify(importData);
-        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json'))
+          return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json'))
+          return JSON.stringify(existingMeta);
         return '{}';
       });
       vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
@@ -207,10 +219,15 @@ describe('importFromJson - integration tests', () => {
       // - undefined → translated (title - new translation)
       // - new → translated (description - updated translation)
       expect(result.statusTransitions.length).toBeGreaterThanOrEqual(1);
-      expect(result.statusTransitions.every(t => t.to === 'translated')).toBe(true);
+      expect(result.statusTransitions.every((t) => t.to === 'translated')).toBe(
+        true,
+      );
 
       // Verify total count matches resources updated
-      const totalCount = result.statusTransitions.reduce((sum, t) => sum + t.count, 0);
+      const totalCount = result.statusTransitions.reduce(
+        (sum, t) => sum + t.count,
+        0,
+      );
       expect(totalCount).toBe(result.resourcesUpdated);
     });
   });
@@ -240,12 +257,16 @@ describe('importFromJson - integration tests', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('import.json')) return JSON.stringify(importData);
-        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json'))
+          return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json'))
+          return JSON.stringify(existingMeta);
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const writeFileSyncSpy = vi
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/import.json',
@@ -258,8 +279,8 @@ describe('importFromJson - integration tests', () => {
       expect(writeFileSyncSpy).toHaveBeenCalled();
 
       // Verify hierarchical structure was correctly extracted
-      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('resource_entries.json')
+      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
       );
       if (resourceEntriesCall) {
         const updatedEntries = JSON.parse(String(resourceEntriesCall[1]));
@@ -293,8 +314,10 @@ describe('importFromJson - integration tests', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('import.json')) return JSON.stringify(importData);
-        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json'))
+          return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json'))
+          return JSON.stringify(existingMeta);
         return '{}';
       });
       vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
@@ -304,7 +327,10 @@ describe('importFromJson - integration tests', () => {
         locale: 'es',
       };
 
-      const result = importFromJson('/translations/apps/dashboard/widgets/chart', options);
+      const result = importFromJson(
+        '/translations/apps/dashboard/widgets/chart',
+        options,
+      );
 
       expect(result.resourcesUpdated).toBe(1);
       expect(result.changes[0].key).toBe('apps.dashboard.widgets.chart.title');
@@ -336,12 +362,16 @@ describe('importFromJson - integration tests', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('import.json')) return JSON.stringify(importData);
-        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json'))
+          return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json'))
+          return JSON.stringify(existingMeta);
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const writeFileSyncSpy = vi
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/import.json',
@@ -353,8 +383,8 @@ describe('importFromJson - integration tests', () => {
       expect(result.resourcesUpdated).toBe(1);
 
       // Verify checksum was recalculated
-      const metaCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('tracker_meta.json')
+      const metaCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('tracker_meta.json'),
       );
       if (metaCall) {
         const updatedMeta = JSON.parse(String(metaCall[1]));
@@ -385,8 +415,10 @@ describe('importFromJson - integration tests', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('import.json')) return JSON.stringify(importData);
-        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json'))
+          return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json'))
+          return JSON.stringify(existingMeta);
         return '{}';
       });
       vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
@@ -399,8 +431,12 @@ describe('importFromJson - integration tests', () => {
       const result = importFromJson('/translations/common/buttons', options);
 
       expect(result.filesModified.length).toBeGreaterThan(0);
-      expect(result.filesModified.some(f => f.includes('resource_entries.json'))).toBe(true);
-      expect(result.filesModified.some(f => f.includes('tracker_meta.json'))).toBe(true);
+      expect(
+        result.filesModified.some((f) => f.includes('resource_entries.json')),
+      ).toBe(true);
+      expect(
+        result.filesModified.some((f) => f.includes('tracker_meta.json')),
+      ).toBe(true);
     });
   });
 });

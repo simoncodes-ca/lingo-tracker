@@ -14,7 +14,10 @@ import { loadCollectionResources, FlatResource } from './resource-loader';
 import { matchesPattern } from './pattern-matcher';
 import { matchesTags } from './tag-filter';
 import { buildHierarchy } from './hierarchy-builder';
-import { generateBundleTypes, GenerateTypesResult } from './type-generation/generate-types';
+import {
+  generateBundleTypes,
+  GenerateTypesResult,
+} from './type-generation/generate-types';
 
 export interface GenerateBundleParams {
   readonly bundleKey: string;
@@ -38,7 +41,7 @@ export interface GenerateBundleResult {
  * @returns Result with count of files generated and any warnings
  */
 export async function generateBundle(
-  params: GenerateBundleParams
+  params: GenerateBundleParams,
 ): Promise<GenerateBundleResult> {
   const { bundleKey, bundleDefinition, config, locales } = params;
   const warnings: string[] = [];
@@ -48,7 +51,12 @@ export async function generateBundle(
   let filesGenerated = 0;
 
   for (const locale of targetLocales) {
-    const bundleData = collectBundleData(bundleDefinition, config, locale, warnings);
+    const bundleData = collectBundleData(
+      bundleDefinition,
+      config,
+      locale,
+      warnings,
+    );
 
     if (Object.keys(bundleData).length === 0) {
       warnings.push(`Bundle '${bundleKey}' for locale '${locale}' is empty`);
@@ -57,10 +65,7 @@ export async function generateBundle(
 
     const hierarchicalData = buildHierarchy(bundleData);
 
-    const outputPath = getBundleOutputPath(
-      bundleDefinition,
-      locale
-    );
+    const outputPath = getBundleOutputPath(bundleDefinition, locale);
     writeBundleFile(outputPath, hierarchicalData);
 
     filesGenerated++;
@@ -76,10 +81,16 @@ export async function generateBundle(
         // We don't increment filesGenerated here as it tracks bundle JSON files
         // But we could add a note to warnings or a new field if needed
       } else if (typeGenerationResult.skippedReason === 'empty-bundle') {
-        warnings.push(`Type generation skipped for '${bundleKey}': Bundle is empty`);
+        warnings.push(
+          `Type generation skipped for '${bundleKey}': Bundle is empty`,
+        );
       }
     } catch (error) {
-      warnings.push(`Type generation failed for '${bundleKey}': ${error instanceof Error ? error.message : String(error)}`);
+      warnings.push(
+        `Type generation failed for '${bundleKey}': ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
   }
 
@@ -99,7 +110,7 @@ function collectBundleData(
   bundleDefinition: BundleDefinition,
   config: LingoTrackerConfig,
   locale: string,
-  warnings: string[]
+  warnings: string[],
 ): Record<string, string> {
   const bundleData: Record<string, string> = {};
 
@@ -107,7 +118,7 @@ function collectBundleData(
 
   if (bundleDefinition.collections === 'All') {
     for (const [collectionName, collectionConfig] of Object.entries(
-      config.collections
+      config.collections,
     )) {
       const collectionBundleDef: CollectionBundleDefinition = {
         name: collectionName,
@@ -118,7 +129,7 @@ function collectBundleData(
         collectionConfig.translationsFolder,
         locale,
         baseLocale,
-        bundleData
+        bundleData,
       );
     }
   } else {
@@ -127,7 +138,7 @@ function collectBundleData(
 
       if (!collectionConfig) {
         warnings.push(
-          `Collection '${collectionBundleDef.name}' not found in config`
+          `Collection '${collectionBundleDef.name}' not found in config`,
         );
         continue;
       }
@@ -137,7 +148,7 @@ function collectBundleData(
         collectionConfig.translationsFolder,
         locale,
         baseLocale,
-        bundleData
+        bundleData,
       );
     }
   }
@@ -153,9 +164,13 @@ function processCollection(
   translationsFolder: string,
   locale: string,
   baseLocale: string,
-  bundleData: Record<string, string>
+  bundleData: Record<string, string>,
 ): void {
-  const resources = loadCollectionResources(translationsFolder, locale, baseLocale);
+  const resources = loadCollectionResources(
+    translationsFolder,
+    locale,
+    baseLocale,
+  );
   const filteredResources = filterResources(resources, collectionDef);
   const mergeStrategy = collectionDef.mergeStrategy ?? 'merge';
 
@@ -182,7 +197,7 @@ function processCollection(
  */
 function filterResources(
   resources: FlatResource[],
-  collectionDef: CollectionBundleDefinition
+  collectionDef: CollectionBundleDefinition,
 ): FlatResource[] {
   if (collectionDef.entriesSelectionRules === 'All') {
     return resources;
@@ -198,14 +213,14 @@ function filterResources(
  */
 function matchesAnyRule(
   resource: FlatResource,
-  rules: EntrySelectionRule[]
+  rules: EntrySelectionRule[],
 ): boolean {
   return rules.some((rule) => {
     const patternMatch = matchesPattern(resource.key, rule.matchingPattern);
     const tagMatch = matchesTags(
       resource.tags,
       rule.matchingTags,
-      rule.matchingTagOperator
+      rule.matchingTagOperator,
     );
     return patternMatch && tagMatch;
   });
@@ -216,7 +231,7 @@ function matchesAnyRule(
  */
 function getBundleOutputPath(
   bundleDefinition: BundleDefinition,
-  locale: string
+  locale: string,
 ): string {
   const fileName = bundleDefinition.bundleName.replace('{locale}', locale);
 
@@ -234,7 +249,7 @@ function getBundleOutputPath(
  */
 function writeBundleFile(
   outputPath: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ): void {
   const outputDir = path.dirname(outputPath);
   if (!fs.existsSync(outputDir)) {

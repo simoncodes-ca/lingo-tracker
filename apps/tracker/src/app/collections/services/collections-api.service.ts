@@ -27,12 +27,10 @@ export class CollectionsApiService {
   /**
    * Creates a new collection.
    */
-  createCollection(
-    data: CreateCollectionDto
-  ): Observable<{ message: string }> {
+  createCollection(data: CreateCollectionDto): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(
       `${this.apiBase}/collections`,
-      data
+      data,
     );
   }
 
@@ -43,11 +41,11 @@ export class CollectionsApiService {
    */
   updateCollection(
     name: string,
-    data: UpdateCollectionDto
+    data: UpdateCollectionDto,
   ): Observable<{ message: string }> {
     return this.http.put<{ message: string }>(
       `${this.apiBase}/collections/${encodeURIComponent(name)}`,
-      data
+      data,
     );
   }
 
@@ -56,8 +54,8 @@ export class CollectionsApiService {
    * @param name Collection name to delete (URI encoded by HttpClient)
    */
   deleteCollection(name: string): Observable<{ message: string }> {
-    return this.http.delete<{ message: string}>(
-      `${this.apiBase}/collections/${encodeURIComponent(name)}`
+    return this.http.delete<{ message: string }>(
+      `${this.apiBase}/collections/${encodeURIComponent(name)}`,
     );
   }
 }

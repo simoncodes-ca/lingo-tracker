@@ -15,20 +15,37 @@ describe('searchTranslations', () => {
     rmSync(testDir, { recursive: true, force: true });
   });
 
-  const createTestResource = (path: string, entries: Record<string, any>, meta: Record<string, any>) => {
+  const createTestResource = (
+    path: string,
+    entries: Record<string, any>,
+    meta: Record<string, any>,
+  ) => {
     const folderPath = join(testDir, ...path.split('.'));
     mkdirSync(folderPath, { recursive: true });
-    writeFileSync(join(folderPath, 'resource_entries.json'), JSON.stringify(entries, null, 2));
-    writeFileSync(join(folderPath, 'tracker_meta.json'), JSON.stringify(meta, null, 2));
+    writeFileSync(
+      join(folderPath, 'resource_entries.json'),
+      JSON.stringify(entries, null, 2),
+    );
+    writeFileSync(
+      join(folderPath, 'tracker_meta.json'),
+      JSON.stringify(meta, null, 2),
+    );
   };
 
   describe('Search by Key', () => {
     it('should find exact key match', () => {
-      createTestResource('buttons', {
-        ok: { source: 'OK', en: 'OK', es: 'Aceptar' }
-      }, {
-        ok: { en: { checksum: 'abc', status: 'verified' }, es: { checksum: 'def', status: 'verified' } }
-      });
+      createTestResource(
+        'buttons',
+        {
+          ok: { source: 'OK', en: 'OK', es: 'Aceptar' },
+        },
+        {
+          ok: {
+            en: { checksum: 'abc', status: 'verified' },
+            es: { checksum: 'def', status: 'verified' },
+          },
+        },
+      );
 
       const params: SearchParams = {
         translationsFolder: testDir,
@@ -43,13 +60,23 @@ describe('searchTranslations', () => {
     });
 
     it('should find partial key match', () => {
-      createTestResource('common.buttons', {
-        save: { source: 'Save', en: 'Save', es: 'Guardar' },
-        cancel: { source: 'Cancel', en: 'Cancel', es: 'Cancelar' },
-      }, {
-        save: { en: { checksum: 'abc', status: 'verified' }, es: { checksum: 'def', status: 'verified' } },
-        cancel: { en: { checksum: 'ghi', status: 'verified' }, es: { checksum: 'jkl', status: 'verified' } },
-      });
+      createTestResource(
+        'common.buttons',
+        {
+          save: { source: 'Save', en: 'Save', es: 'Guardar' },
+          cancel: { source: 'Cancel', en: 'Cancel', es: 'Cancelar' },
+        },
+        {
+          save: {
+            en: { checksum: 'abc', status: 'verified' },
+            es: { checksum: 'def', status: 'verified' },
+          },
+          cancel: {
+            en: { checksum: 'ghi', status: 'verified' },
+            es: { checksum: 'jkl', status: 'verified' },
+          },
+        },
+      );
 
       const params: SearchParams = {
         translationsFolder: testDir,
@@ -59,15 +86,28 @@ describe('searchTranslations', () => {
       const results = searchTranslations(params);
 
       expect(results.length).toBeGreaterThan(0);
-      expect(results.every(r => r.key.toLowerCase().includes('button'))).toBe(true);
+      expect(results.every((r) => r.key.toLowerCase().includes('button'))).toBe(
+        true,
+      );
     });
 
     it('should be case insensitive', () => {
-      createTestResource('messages', {
-        error: { source: 'Error occurred', en: 'Error occurred', es: 'Ocurrió un error' }
-      }, {
-        error: { en: { checksum: 'abc', status: 'verified' }, es: { checksum: 'def', status: 'verified' } }
-      });
+      createTestResource(
+        'messages',
+        {
+          error: {
+            source: 'Error occurred',
+            en: 'Error occurred',
+            es: 'Ocurrió un error',
+          },
+        },
+        {
+          error: {
+            en: { checksum: 'abc', status: 'verified' },
+            es: { checksum: 'def', status: 'verified' },
+          },
+        },
+      );
 
       const params: SearchParams = {
         translationsFolder: testDir,
@@ -83,11 +123,18 @@ describe('searchTranslations', () => {
 
   describe('Search by Value', () => {
     it('should find exact value match in any locale', () => {
-      createTestResource('labels', {
-        name: { source: 'Name', en: 'Name', es: 'Nombre' }
-      }, {
-        name: { en: { checksum: 'abc', status: 'verified' }, es: { checksum: 'def', status: 'verified' } }
-      });
+      createTestResource(
+        'labels',
+        {
+          name: { source: 'Name', en: 'Name', es: 'Nombre' },
+        },
+        {
+          name: {
+            en: { checksum: 'abc', status: 'verified' },
+            es: { checksum: 'def', status: 'verified' },
+          },
+        },
+      );
 
       const params: SearchParams = {
         translationsFolder: testDir,
@@ -103,11 +150,22 @@ describe('searchTranslations', () => {
     });
 
     it('should find partial value match', () => {
-      createTestResource('messages', {
-        welcome: { source: 'Welcome to our application', en: 'Welcome to our application', es: 'Bienvenido a nuestra aplicación' }
-      }, {
-        welcome: { en: { checksum: 'abc', status: 'verified' }, es: { checksum: 'def', status: 'verified' } }
-      });
+      createTestResource(
+        'messages',
+        {
+          welcome: {
+            source: 'Welcome to our application',
+            en: 'Welcome to our application',
+            es: 'Bienvenido a nuestra aplicación',
+          },
+        },
+        {
+          welcome: {
+            en: { checksum: 'abc', status: 'verified' },
+            es: { checksum: 'def', status: 'verified' },
+          },
+        },
+      );
 
       const params: SearchParams = {
         translationsFolder: testDir,
@@ -122,15 +180,19 @@ describe('searchTranslations', () => {
     });
 
     it('should return all locale values for matched results', () => {
-      createTestResource('common', {
-        hello: { source: 'Hello', en: 'Hello', es: 'Hola', fr: 'Bonjour' }
-      }, {
-        hello: {
-          en: { checksum: 'abc', status: 'verified' },
-          es: { checksum: 'def', status: 'verified' },
-          fr: { checksum: 'ghi', status: 'verified' }
-        }
-      });
+      createTestResource(
+        'common',
+        {
+          hello: { source: 'Hello', en: 'Hello', es: 'Hola', fr: 'Bonjour' },
+        },
+        {
+          hello: {
+            en: { checksum: 'abc', status: 'verified' },
+            es: { checksum: 'def', status: 'verified' },
+            fr: { checksum: 'ghi', status: 'verified' },
+          },
+        },
+      );
 
       const params: SearchParams = {
         translationsFolder: testDir,
@@ -148,14 +210,22 @@ describe('searchTranslations', () => {
     });
 
     it('should include base locale value from source field when baseLocale is provided', () => {
-      createTestResource('common', {
-        greeting: { source: 'Hello World', en: 'Hello World', es: 'Hola Mundo' }
-      }, {
-        greeting: {
-          en: { checksum: 'abc', status: 'verified' },
-          es: { checksum: 'def', status: 'verified' }
-        }
-      });
+      createTestResource(
+        'common',
+        {
+          greeting: {
+            source: 'Hello World',
+            en: 'Hello World',
+            es: 'Hola Mundo',
+          },
+        },
+        {
+          greeting: {
+            en: { checksum: 'abc', status: 'verified' },
+            es: { checksum: 'def', status: 'verified' },
+          },
+        },
+      );
 
       const params: SearchParams = {
         translationsFolder: testDir,
@@ -175,14 +245,18 @@ describe('searchTranslations', () => {
     });
 
     it('should not duplicate base locale value if it already exists in translations', () => {
-      createTestResource('common', {
-        message: { source: 'Original', en: 'Modified', es: 'Modificado' }
-      }, {
-        message: {
-          en: { checksum: 'abc', status: 'verified' },
-          es: { checksum: 'def', status: 'verified' }
-        }
-      });
+      createTestResource(
+        'common',
+        {
+          message: { source: 'Original', en: 'Modified', es: 'Modificado' },
+        },
+        {
+          message: {
+            en: { checksum: 'abc', status: 'verified' },
+            es: { checksum: 'def', status: 'verified' },
+          },
+        },
+      );
 
       const params: SearchParams = {
         translationsFolder: testDir,
@@ -199,13 +273,17 @@ describe('searchTranslations', () => {
     });
 
     it('should search source field when baseLocale is provided', () => {
-      createTestResource('common', {
-        sourceOnly: { source: 'SourceValue', es: 'Valor de origen' }
-      }, {
-        sourceOnly: {
-          es: { checksum: 'def', status: 'verified' }
-        }
-      });
+      createTestResource(
+        'common',
+        {
+          sourceOnly: { source: 'SourceValue', es: 'Valor de origen' },
+        },
+        {
+          sourceOnly: {
+            es: { checksum: 'def', status: 'verified' },
+          },
+        },
+      );
 
       const params: SearchParams = {
         translationsFolder: testDir,
@@ -225,15 +303,32 @@ describe('searchTranslations', () => {
 
   describe('Result Ranking', () => {
     beforeEach(() => {
-      createTestResource('buttons', {
-        save: { source: 'Save', en: 'Save', es: 'Guardar' },
-        saveAs: { source: 'Save As', en: 'Save As', es: 'Guardar como' },
-        autoSave: { source: 'Auto Save', en: 'Auto Save', es: 'Guardado automático' },
-      }, {
-        save: { en: { checksum: 'abc', status: 'verified' }, es: { checksum: 'def', status: 'verified' } },
-        saveAs: { en: { checksum: 'ghi', status: 'verified' }, es: { checksum: 'jkl', status: 'verified' } },
-        autoSave: { en: { checksum: 'mno', status: 'verified' }, es: { checksum: 'pqr', status: 'verified' } },
-      });
+      createTestResource(
+        'buttons',
+        {
+          save: { source: 'Save', en: 'Save', es: 'Guardar' },
+          saveAs: { source: 'Save As', en: 'Save As', es: 'Guardar como' },
+          autoSave: {
+            source: 'Auto Save',
+            en: 'Auto Save',
+            es: 'Guardado automático',
+          },
+        },
+        {
+          save: {
+            en: { checksum: 'abc', status: 'verified' },
+            es: { checksum: 'def', status: 'verified' },
+          },
+          saveAs: {
+            en: { checksum: 'ghi', status: 'verified' },
+            es: { checksum: 'jkl', status: 'verified' },
+          },
+          autoSave: {
+            en: { checksum: 'mno', status: 'verified' },
+            es: { checksum: 'pqr', status: 'verified' },
+          },
+        },
+      );
     });
 
     it('should rank exact key matches highest', () => {
@@ -254,8 +349,8 @@ describe('searchTranslations', () => {
       });
 
       // Find exact value match vs partial
-      const exactMatch = results.find(r => r.matchType === 'exact-value');
-      const partialMatch = results.find(r => r.matchType === 'partial-value');
+      const exactMatch = results.find((r) => r.matchType === 'exact-value');
+      const partialMatch = results.find((r) => r.matchType === 'partial-value');
 
       if (exactMatch && partialMatch) {
         const exactIdx = results.indexOf(exactMatch);
@@ -269,11 +364,15 @@ describe('searchTranslations', () => {
     it('should limit results to maxResults parameter', () => {
       // Create many resources
       for (let i = 0; i < 100; i++) {
-        createTestResource(`test.item${i}`, {
-          label: { source: `Item ${i}`, en: `Item ${i}` }
-        }, {
-          label: { en: { checksum: 'abc', status: 'verified' } }
-        });
+        createTestResource(
+          `test.item${i}`,
+          {
+            label: { source: `Item ${i}`, en: `Item ${i}` },
+          },
+          {
+            label: { en: { checksum: 'abc', status: 'verified' } },
+          },
+        );
       }
 
       const results = searchTranslations({
@@ -288,11 +387,15 @@ describe('searchTranslations', () => {
     it('should default to 100 results max', () => {
       // Create 150 resources
       for (let i = 0; i < 150; i++) {
-        createTestResource(`test.item${i}`, {
-          label: { source: `Item ${i}`, en: `Item ${i}` }
-        }, {
-          label: { en: { checksum: 'abc', status: 'verified' } }
-        });
+        createTestResource(
+          `test.item${i}`,
+          {
+            label: { source: `Item ${i}`, en: `Item ${i}` },
+          },
+          {
+            label: { en: { checksum: 'abc', status: 'verified' } },
+          },
+        );
       }
 
       const results = searchTranslations({
@@ -315,11 +418,15 @@ describe('searchTranslations', () => {
     });
 
     it('should return empty array for no matches', () => {
-      createTestResource('test', {
-        key: { source: 'value', en: 'value' }
-      }, {
-        key: { en: { checksum: 'abc', status: 'verified' } }
-      });
+      createTestResource(
+        'test',
+        {
+          key: { source: 'value', en: 'value' },
+        },
+        {
+          key: { en: { checksum: 'abc', status: 'verified' } },
+        },
+      );
 
       const results = searchTranslations({
         translationsFolder: testDir,
@@ -357,7 +464,7 @@ describe('searchResourceTree', () => {
             {
               key: 'ok',
               source: 'OK',
-              translations: { es: 'Aceptar', fr: 'D\'accord' },
+              translations: { es: 'Aceptar', fr: "D'accord" },
               metadata: {
                 es: { checksum: 'abc', status: 'verified' },
                 fr: { checksum: 'def', status: 'translated' },

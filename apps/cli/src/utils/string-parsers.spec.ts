@@ -59,25 +59,25 @@ describe('parseCommaSeparatedListRequired', () => {
 
   it('should throw for empty string', () => {
     expect(() => parseCommaSeparatedListRequired('')).toThrow(
-      'At least one value is required'
+      'At least one value is required',
     );
   });
 
   it('should throw for undefined input', () => {
     expect(() => parseCommaSeparatedListRequired(undefined)).toThrow(
-      'At least one value is required'
+      'At least one value is required',
     );
   });
 
   it('should throw for only whitespace', () => {
     expect(() => parseCommaSeparatedListRequired('  ,  ')).toThrow(
-      'At least one value is required'
+      'At least one value is required',
     );
   });
 
   it('should use custom field name in error message', () => {
     expect(() => parseCommaSeparatedListRequired('', 'locale')).toThrow(
-      'At least one locale is required'
+      'At least one locale is required',
     );
   });
 

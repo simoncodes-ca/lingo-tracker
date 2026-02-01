@@ -1,11 +1,8 @@
-import {
-    segmentToPropertyName,
-    splitKeyIntoSegments,
-} from './key-transformer';
+import { segmentToPropertyName, splitKeyIntoSegments } from './key-transformer';
 
 export interface TypeHierarchyNode {
-    children: Record<string, TypeHierarchyNode>;
-    value?: string;
+  children: Record<string, TypeHierarchyNode>;
+  value?: string;
 }
 
 /**
@@ -30,30 +27,30 @@ export interface TypeHierarchyNode {
  * }
  */
 export function buildTypeHierarchy(keys: string[]): TypeHierarchyNode {
-    const root: TypeHierarchyNode = { children: {} };
+  const root: TypeHierarchyNode = { children: {} };
 
-    for (const key of keys) {
-        const segments = splitKeyIntoSegments(key);
-        let currentNode = root;
+  for (const key of keys) {
+    const segments = splitKeyIntoSegments(key);
+    let currentNode = root;
 
-        for (let i = 0; i < segments.length; i++) {
-            const segment = segments[i];
-            const propertyName = segmentToPropertyName(segment);
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      const propertyName = segmentToPropertyName(segment);
 
-            if (!currentNode.children[propertyName]) {
-                currentNode.children[propertyName] = { children: {} };
-            }
+      if (!currentNode.children[propertyName]) {
+        currentNode.children[propertyName] = { children: {} };
+      }
 
-            currentNode = currentNode.children[propertyName];
+      currentNode = currentNode.children[propertyName];
 
-            // If this is the last segment, set the value
-            if (i === segments.length - 1) {
-                currentNode.value = key;
-            }
-        }
+      // If this is the last segment, set the value
+      if (i === segments.length - 1) {
+        currentNode.value = key;
+      }
     }
+  }
 
-    return root;
+  return root;
 }
 
 /**
@@ -69,67 +66,67 @@ export function buildTypeHierarchy(keys: string[]): TypeHierarchyNode {
  * export type CommonTokens = typeof COMMON_TOKENS;
  */
 export function serializeHierarchy(
-    node: TypeHierarchyNode,
-    constantName: string
+  node: TypeHierarchyNode,
+  constantName: string,
 ): string {
-    const lines: string[] = [];
+  const lines: string[] = [];
 
-    // Generate the constant object
-    lines.push(`export const ${constantName} = {`);
-    lines.push(serializeNode(node, 1));
-    lines.push(`} as const;`);
-    lines.push('');
+  // Generate the constant object
+  lines.push(`export const ${constantName} = {`);
+  lines.push(serializeNode(node, 1));
+  lines.push(`} as const;`);
+  lines.push('');
 
-    // Generate the type definition
-    // Convert CONSTANT_NAME to PascalCase for the type name
-    // e.g. COMMON_TOKENS -> CommonTokens
-    const typeName = constantName
-        .split('_')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-        .join('');
+  // Generate the type definition
+  // Convert CONSTANT_NAME to PascalCase for the type name
+  // e.g. COMMON_TOKENS -> CommonTokens
+  const typeName = constantName
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join('');
 
-    lines.push(`export type ${typeName} = typeof ${constantName};`);
+  lines.push(`export type ${typeName} = typeof ${constantName};`);
 
-    return lines.join('\n');
+  return lines.join('\n');
 }
 
 function serializeNode(node: TypeHierarchyNode, indentLevel: number): string {
-    const indent = '  '.repeat(indentLevel);
-    const lines: string[] = [];
+  const indent = '  '.repeat(indentLevel);
+  const lines: string[] = [];
 
-    const entries = Object.entries(node.children);
+  const entries = Object.entries(node.children);
 
-    // Sort entries alphabetically for deterministic output
-    entries.sort(([a], [b]) => a.localeCompare(b));
+  // Sort entries alphabetically for deterministic output
+  entries.sort(([a], [b]) => a.localeCompare(b));
 
-    for (const [key, childNode] of entries) {
-        // If it's a leaf node (has value), output key: value
-        if (childNode.value) {
-            // Check if it also has children (mixed node)
-            if (Object.keys(childNode.children).length > 0) {
-                // This is a tricky case: a key is both a value and a parent.
-                // TypeScript objects can't easily represent this directly if we want strict typing for the value.
-                // However, in i18n bundles, usually a key is EITHER a leaf OR a parent.
-                // If it happens, we prioritize the children structure but we might lose the direct value access
-                // or we need a special property like `_value`.
-                // For this implementation, we will treat it as an object and ignore the leaf value at this level
-                // because standard i18n libraries usually expect keys to be leaves.
-                // But to be safe and follow the spec "Leaf values are the original translation key strings",
-                // we'll recurse.
+  for (const [key, childNode] of entries) {
+    // If it's a leaf node (has value), output key: value
+    if (childNode.value) {
+      // Check if it also has children (mixed node)
+      if (Object.keys(childNode.children).length > 0) {
+        // This is a tricky case: a key is both a value and a parent.
+        // TypeScript objects can't easily represent this directly if we want strict typing for the value.
+        // However, in i18n bundles, usually a key is EITHER a leaf OR a parent.
+        // If it happens, we prioritize the children structure but we might lose the direct value access
+        // or we need a special property like `_value`.
+        // For this implementation, we will treat it as an object and ignore the leaf value at this level
+        // because standard i18n libraries usually expect keys to be leaves.
+        // But to be safe and follow the spec "Leaf values are the original translation key strings",
+        // we'll recurse.
 
-                lines.push(`${indent}${key}: {`);
-                lines.push(serializeNode(childNode, indentLevel + 1));
-                lines.push(`${indent}},`);
-            } else {
-                lines.push(`${indent}${key}: '${childNode.value}',`);
-            }
-        } else {
-            // It's a parent node
-            lines.push(`${indent}${key}: {`);
-            lines.push(serializeNode(childNode, indentLevel + 1));
-            lines.push(`${indent}},`);
-        }
+        lines.push(`${indent}${key}: {`);
+        lines.push(serializeNode(childNode, indentLevel + 1));
+        lines.push(`${indent}},`);
+      } else {
+        lines.push(`${indent}${key}: '${childNode.value}',`);
+      }
+    } else {
+      // It's a parent node
+      lines.push(`${indent}${key}: {`);
+      lines.push(serializeNode(childNode, indentLevel + 1));
+      lines.push(`${indent}},`);
     }
+  }
 
-    return lines.join('\n');
+  return lines.join('\n');
 }

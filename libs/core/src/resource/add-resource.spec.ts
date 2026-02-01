@@ -22,7 +22,7 @@ describe('addResource', () => {
         key: 'app.button.ok',
         baseValue: 'OK',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     expect(result.resolvedKey).toBe('app.button.ok');
@@ -46,7 +46,7 @@ describe('addResource', () => {
         comment: 'Button to cancel operations',
         tags: ['ui', 'buttons'],
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
@@ -66,7 +66,7 @@ describe('addResource', () => {
         baseValue: 'OK',
         targetFolder: 'app.button',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     expect(result.resolvedKey).toBe('app.button.ok');
@@ -79,7 +79,7 @@ describe('addResource', () => {
         key: 'app.button.ok',
         baseValue: 'OK',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     const mkdirCall = vi.mocked(fs.mkdirSync).mock.calls[0];
@@ -94,7 +94,7 @@ describe('addResource', () => {
         key: 'button.ok',
         baseValue: 'OK',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
@@ -112,16 +112,16 @@ describe('addResource', () => {
         key: 'button.ok',
         baseValue: 'OK',
         translations: [
-          { locale: 'fr-ca', value: 'D\'accord', status: 'translated' },
+          { locale: 'fr-ca', value: "D'accord", status: 'translated' },
           { locale: 'es', value: 'Aceptar', status: 'verified' },
         ],
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
     const resourceContent = JSON.parse(writeCall[0][1] as string);
-    expect(resourceContent.ok['fr-ca']).toBe('D\'accord');
+    expect(resourceContent.ok['fr-ca']).toBe("D'accord");
     expect(resourceContent.ok.es).toBe('Aceptar');
 
     const metaContent = JSON.parse(writeCall[1][1] as string);
@@ -141,7 +141,7 @@ describe('addResource', () => {
           { locale: 'fr-ca', value: 'OK', status: 'translated' }, // Same as base value
         ],
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
@@ -158,8 +158,8 @@ describe('addResource', () => {
           key: 'invalid..key',
           baseValue: 'Value',
         },
-        { cwd: '/test' }
-      )
+        { cwd: '/test' },
+      ),
     ).toThrow();
   });
 
@@ -172,8 +172,8 @@ describe('addResource', () => {
           baseValue: 'OK',
           targetFolder: 'invalid@folder',
         },
-        { cwd: '/test' }
-      )
+        { cwd: '/test' },
+      ),
     ).toThrow();
   });
 
@@ -186,7 +186,7 @@ describe('addResource', () => {
         key: 'button.ok',
         baseValue: 'OK',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     expect(result.created).toBe(true);
@@ -197,7 +197,9 @@ describe('addResource', () => {
     vi.mocked(fs.existsSync).mockImplementation((path: SafeAny) => {
       return (path as string).includes('resource_entries.json');
     });
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ok: { source: 'OK' } }));
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ ok: { source: 'OK' } }),
+    );
 
     const result = addResource(
       'translations',
@@ -205,7 +207,7 @@ describe('addResource', () => {
         key: 'button.ok',
         baseValue: 'OK - Updated',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     expect(result.created).toBe(false);
@@ -224,7 +226,7 @@ describe('addResource', () => {
         key: 'button.ok',
         baseValue: 'OK',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
@@ -241,7 +243,7 @@ describe('addResource', () => {
         baseValue: 'OK',
         baseLocale: 'fr',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
@@ -270,7 +272,7 @@ describe('addResource', () => {
         key: 'cancel',
         baseValue: 'Cancel',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     expect(result.resolvedKey).toBe('cancel');
@@ -288,7 +290,7 @@ describe('addResource', () => {
         baseValue: 'OK',
         targetFolder: 'app.button',
       },
-      { cwd: '/test' }
+      { cwd: '/test' },
     );
 
     // app.button + app.ok = app.button.app.ok (no de-duplication)
@@ -303,7 +305,9 @@ describe('addResource', () => {
       vi.mocked(fs.existsSync).mockImplementation((path: SafeAny) => {
         return (path as string).includes('resource_entries.json');
       });
-      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(existingContent));
+      vi.mocked(fs.readFileSync).mockReturnValue(
+        JSON.stringify(existingContent),
+      );
 
       // First call
       const result1 = addResource(
@@ -312,7 +316,7 @@ describe('addResource', () => {
           key: 'button.ok',
           baseValue: 'OK',
         },
-        { cwd: '/test' }
+        { cwd: '/test' },
       );
 
       // Second call with same params
@@ -322,7 +326,7 @@ describe('addResource', () => {
           key: 'button.ok',
           baseValue: 'OK',
         },
-        { cwd: '/test' }
+        { cwd: '/test' },
       );
 
       // Both should produce same resolved key
@@ -333,12 +337,16 @@ describe('addResource', () => {
   describe('integration: base value change detection', () => {
     it('should create new checksum when base value changes', () => {
       const existingContent = {
-        ok: { source: 'OK', 'fr-ca': 'D\'accord' },
+        ok: { source: 'OK', 'fr-ca': "D'accord" },
       };
       const existingMeta = {
         ok: {
           en: { checksum: 'old-base-hash' },
-          'fr-ca': { checksum: 'trans-hash', baseChecksum: 'old-base-hash', status: 'translated' },
+          'fr-ca': {
+            checksum: 'trans-hash',
+            baseChecksum: 'old-base-hash',
+            status: 'translated',
+          },
         },
       };
 
@@ -357,9 +365,11 @@ describe('addResource', () => {
         {
           key: 'button.ok',
           baseValue: 'OK - NEW VALUE',
-          translations: [{ locale: 'fr-ca', value: 'D\'accord', status: 'translated' }],
+          translations: [
+            { locale: 'fr-ca', value: "D'accord", status: 'translated' },
+          ],
         },
-        { cwd: '/test' }
+        { cwd: '/test' },
       );
 
       const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
@@ -377,7 +387,7 @@ describe('addResource', () => {
       expect(() => {
         addResource('translations', {
           key: '../secret.key',
-          baseValue: 'test'
+          baseValue: 'test',
         });
       }).toThrow('Key validation: Invalid key format');
     });
@@ -387,7 +397,7 @@ describe('addResource', () => {
         addResource('translations', {
           key: 'valid.key',
           targetFolder: '../secret',
-          baseValue: 'test'
+          baseValue: 'test',
         });
       }).toThrow('Invalid targetFolder segment');
     });
@@ -397,7 +407,7 @@ describe('addResource', () => {
         addResource('translations', {
           key: 'valid.key',
           targetFolder: '../secret',
-          baseValue: 'test'
+          baseValue: 'test',
         });
       } catch (_e) {
         // Ignore error
@@ -406,7 +416,9 @@ describe('addResource', () => {
       const mkdirCall = vi.mocked(fs.mkdirSync).mock.calls;
       const _secretPath = resolve('translations', '..', 'secret');
       // Check that no call was made with the secret path
-      const callWithSecret = mkdirCall.find(call => call[0].toString().includes('secret'));
+      const callWithSecret = mkdirCall.find((call) =>
+        call[0].toString().includes('secret'),
+      );
       expect(callWithSecret).toBeUndefined();
     });
   });

@@ -1,4 +1,7 @@
-import { loadResourcesFromCollections, LoadedResource } from '../export/export-common';
+import {
+  loadResourcesFromCollections,
+  LoadedResource,
+} from '../export/export-common';
 import { TranslationStatus } from '../../resource/translation-status';
 import {
   ValidationOptions,
@@ -62,7 +65,7 @@ import {
 export function validateResources(
   collections: Array<{ name: string; path: string }>,
   targetLocales: readonly string[],
-  options: ValidationOptions
+  options: ValidationOptions,
 ): ResourceValidationResult {
   // Load all resources from all collections
   const loadedResources = loadResourcesFromCollections(collections);
@@ -86,10 +89,7 @@ export function validateResources(
     for (const locale of targetLocales) {
       totalResourcesValidated++;
 
-      const validationDetail = validateSingleResourceInLocale(
-        resource,
-        locale,
-      );
+      const validationDetail = validateSingleResourceInLocale(resource, locale);
 
       // Update status counts
       statusCounts[validationDetail.status]++;
@@ -100,7 +100,7 @@ export function validateResources(
         options,
         failures,
         warnings,
-        successes
+        successes,
       );
     }
   }
@@ -165,7 +165,7 @@ function categorizeValidationDetail(
   options: ValidationOptions,
   failures: ResourceValidationDetail[],
   warnings: ResourceValidationDetail[],
-  successes: ResourceValidationDetail[]
+  successes: ResourceValidationDetail[],
 ): void {
   switch (detail.status) {
     case 'new':

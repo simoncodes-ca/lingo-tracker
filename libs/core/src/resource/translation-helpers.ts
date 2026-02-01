@@ -11,18 +11,19 @@ import { TranslationStatus } from './translation-status';
 export function createDefaultTranslations(
   locales: string[],
   baseLocale: string,
-  baseValue: string
-): Array<{ locale: string; value: string; status: TranslationStatus }> | undefined {
-  const nonBaseLocales = locales.filter(locale => locale !== baseLocale);
-  
+  baseValue: string,
+):
+  | Array<{ locale: string; value: string; status: TranslationStatus }>
+  | undefined {
+  const nonBaseLocales = locales.filter((locale) => locale !== baseLocale);
+
   if (nonBaseLocales.length === 0) {
     return undefined;
   }
-  
-  return nonBaseLocales.map(locale => ({
+
+  return nonBaseLocales.map((locale) => ({
     locale,
     value: baseValue,
     status: 'new' as TranslationStatus,
   }));
 }
-

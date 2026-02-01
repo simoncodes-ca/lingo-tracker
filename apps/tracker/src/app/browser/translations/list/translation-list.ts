@@ -1,11 +1,21 @@
-import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  input,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ComponentType } from '@angular/cdk/portal';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MoveResourceDialog } from '../../dialogs/move-resource';
@@ -16,7 +26,10 @@ import {
 } from '../../dialogs/translation-editor';
 import { BrowserStore } from '../../store/browser.store';
 import { TranslationItem } from './translation-item/translation-item';
-import { ResourceSummaryDto, UpdateResourceDto } from '@simoncodes-ca/data-transfer';
+import {
+  ResourceSummaryDto,
+  UpdateResourceDto,
+} from '@simoncodes-ca/data-transfer';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { BrowserApiService } from '../../services/browser-api.service';
@@ -71,7 +84,8 @@ export class TranslationList {
         return 88; // medium mode per spec
       case 'full': {
         // If touch device (approx), add extra padding
-        const isTouch = typeof window !== 'undefined' && 'ontouchstart' in window;
+        const isTouch =
+          typeof window !== 'undefined' && 'ontouchstart' in window;
         return isTouch ? 176 : 160; // slightly larger on touch to avoid overlap
       }
       default:
@@ -145,7 +159,10 @@ export class TranslationList {
    * Opens a dialog that receives the resource and collection name as data.
    * Keeps dialog opening logic DRY across edit/move/delete dialogs.
    */
-  private openResourceDialog<T>(component: ComponentType<T>, resource: ResourceSummaryDto): MatDialogRef<T> {
+  private openResourceDialog<T>(
+    component: ComponentType<T>,
+    resource: ResourceSummaryDto,
+  ): MatDialogRef<T> {
     // Capture the element that triggered the dialog so we can restore focus when the dialog closes.
     const previousActive = document.activeElement as HTMLElement | null;
 
@@ -170,7 +187,9 @@ export class TranslationList {
   /** Handles edit request from translation item. */
   handleEdit(translation: ResourceSummaryDto): void {
     const folderPath = this.store.currentFolderPath();
-    const fullKey = folderPath ? `${folderPath}.${translation.key}` : translation.key;
+    const fullKey = folderPath
+      ? `${folderPath}.${translation.key}`
+      : translation.key;
 
     const dialogData: TranslationEditorDialogData = {
       mode: 'edit',
@@ -189,15 +208,20 @@ export class TranslationList {
       restoreFocus: false,
     });
 
-    dialogRef.afterClosed().subscribe((result: TranslationEditorResult | undefined) => {
-      if (result && !result.success) {
-        // Result returned but not marked as success - user made changes but didn't use create flow
-        this.#handleEditUpdate(fullKey, result);
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .subscribe((result: TranslationEditorResult | undefined) => {
+        if (result && !result.success) {
+          // Result returned but not marked as success - user made changes but didn't use create flow
+          this.#handleEditUpdate(fullKey, result);
+        }
+      });
   }
 
-  #handleEditUpdate(originalKey: string, result: TranslationEditorResult): void {
+  #handleEditUpdate(
+    originalKey: string,
+    result: TranslationEditorResult,
+  ): void {
     const updateDto: UpdateResourceDto = {
       key: originalKey,
       baseValue: result.baseValue,
@@ -226,7 +250,10 @@ export class TranslationList {
         });
       },
       error: (error: unknown) => {
-        const message = error instanceof Error ? error.message : 'Failed to update translation';
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Failed to update translation';
         this.snackBar.open(message, '', {
           duration: 4000,
           horizontalPosition: 'center',
@@ -247,7 +274,9 @@ export class TranslationList {
    */
   handleDelete(translation: ResourceSummaryDto): void {
     const folderPath = this.store.currentFolderPath();
-    const fullKey = folderPath ? `${folderPath}.${translation.key}` : translation.key;
+    const fullKey = folderPath
+      ? `${folderPath}.${translation.key}`
+      : translation.key;
 
     const dialogData: ConfirmationDialogData = {
       title: 'Delete Resource',
@@ -289,7 +318,8 @@ export class TranslationList {
         }
       },
       error: (error: unknown) => {
-        const message = error instanceof Error ? error.message : this.SNACK_DELETE_FAIL;
+        const message =
+          error instanceof Error ? error.message : this.SNACK_DELETE_FAIL;
         this.snackBar.open(message, '', {
           duration: 4000,
           horizontalPosition: 'center',

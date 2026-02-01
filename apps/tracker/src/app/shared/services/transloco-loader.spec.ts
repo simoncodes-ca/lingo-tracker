@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import {
+  provideHttpClientTesting,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { firstValueFrom, finalize } from 'rxjs';
 import { TranslocoHttpLoader } from './transloco-loader';
@@ -88,68 +91,88 @@ describe('TranslocoHttpLoader', () => {
   describe('Error Handling', () => {
     it('should return empty object when HTTP request fails', async () => {
       const lang = 'en';
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
+      consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(loader.getTranslation(lang));
 
       const req = httpMock.expectOne(`/assets/i18n/${lang}.json`);
-      req.error(new ProgressEvent('error'), { status: 404, statusText: 'Not Found' });
+      req.error(new ProgressEvent('error'), {
+        status: 404,
+        statusText: 'Not Found',
+      });
 
       const translation = await translationPromise;
       expect(translation).toEqual({});
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Failed to load translation file for '${lang}':`,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
     it('should return empty object when file is not found (404)', async () => {
       const lang = 'unknown';
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
+      consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(loader.getTranslation(lang));
 
       const req = httpMock.expectOne(`/assets/i18n/${lang}.json`);
-      req.error(new ProgressEvent('error'), { status: 404, statusText: 'Not Found' });
+      req.error(new ProgressEvent('error'), {
+        status: 404,
+        statusText: 'Not Found',
+      });
 
       const translation = await translationPromise;
       expect(translation).toEqual({});
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Failed to load translation file for '${lang}':`,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
     it('should return empty object when server returns 500 error', async () => {
       const lang = 'en';
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
+      consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(loader.getTranslation(lang));
 
       const req = httpMock.expectOne(`/assets/i18n/${lang}.json`);
-      req.error(new ProgressEvent('error'), { status: 500, statusText: 'Internal Server Error' });
+      req.error(new ProgressEvent('error'), {
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
 
       const translation = await translationPromise;
       expect(translation).toEqual({});
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Failed to load translation file for '${lang}':`,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
     it('should log error message with language when loading fails', async () => {
       const lang = 'fr';
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
+      consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(loader.getTranslation(lang));
 
       const req = httpMock.expectOne(`/assets/i18n/${lang}.json`);
-      req.error(new ProgressEvent('error'), { status: 404, statusText: 'Not Found' });
+      req.error(new ProgressEvent('error'), {
+        status: 404,
+        statusText: 'Not Found',
+      });
 
       await translationPromise;
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         `Failed to load translation file for '${lang}':`,
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -164,8 +187,8 @@ describe('TranslocoHttpLoader', () => {
         loader.getTranslation(lang).pipe(
           finalize(() => {
             completedCallbackCalled = true;
-          })
-        )
+          }),
+        ),
       );
 
       const req = httpMock.expectOne(`/assets/i18n/${lang}.json`);
@@ -179,14 +202,16 @@ describe('TranslocoHttpLoader', () => {
     it('should complete the observable after error', async () => {
       const lang = 'en';
       let completedCallbackCalled = false;
-      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
+      consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(undefined);
 
       const translationPromise = firstValueFrom(
         loader.getTranslation(lang).pipe(
           finalize(() => {
             completedCallbackCalled = true;
-          })
-        )
+          }),
+        ),
       );
 
       const req = httpMock.expectOne(`/assets/i18n/${lang}.json`);

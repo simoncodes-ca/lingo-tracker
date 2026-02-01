@@ -2,7 +2,7 @@ import {
   ResourceTreeDto,
   ResourceSummaryDto,
   FolderNodeDto,
-  TranslationStatus
+  TranslationStatus,
 } from '@simoncodes-ca/data-transfer';
 import { ResourceTreeNode, ResourceTreeEntry } from '@simoncodes-ca/core';
 
@@ -10,11 +10,13 @@ export function mapResourceTreeToDto(node: ResourceTreeNode): ResourceTreeDto {
   return {
     path: node.folderPathSegments.join('.'),
     resources: node.resources.map(mapResourceEntryToSummary),
-    children: node.children.map(mapFolderChildToDto)
+    children: node.children.map(mapFolderChildToDto),
   };
 }
 
-function mapResourceEntryToSummary(entry: ResourceTreeEntry): ResourceSummaryDto {
+function mapResourceEntryToSummary(
+  entry: ResourceTreeEntry,
+): ResourceSummaryDto {
   // Find base locale (the one without status/baseChecksum in metadata)
   let baseLocale: string | undefined;
   for (const [locale, meta] of Object.entries(entry.metadata)) {
@@ -41,7 +43,7 @@ function mapResourceEntryToSummary(entry: ResourceTreeEntry): ResourceSummaryDto
     translations,
     status,
     comment: entry.comment,
-    tags: entry.tags
+    tags: entry.tags,
   };
 }
 
@@ -55,6 +57,6 @@ function mapFolderChildToDto(child: {
     name: child.name,
     fullPath: child.fullPathSegments.join('.'),
     loaded: child.loaded,
-    tree: child.tree ? mapResourceTreeToDto(child.tree) : undefined
+    tree: child.tree ? mapResourceTreeToDto(child.tree) : undefined,
   };
 }

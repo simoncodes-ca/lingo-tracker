@@ -25,9 +25,7 @@ describe('LocaleFilter', () => {
 
     await TestBed.configureTestingModule({
       imports: [LocaleFilter, NoopAnimationsModule],
-      providers: [
-        { provide: BrowserStore, useValue: mockStore },
-      ],
+      providers: [{ provide: BrowserStore, useValue: mockStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(LocaleFilter);
@@ -47,7 +45,9 @@ describe('LocaleFilter', () => {
 
   describe('Template Rendering', () => {
     it('should display filter trigger button', () => {
-      const button = fixture.nativeElement.querySelector('[data-testid="locale-filter-trigger"]');
+      const button = fixture.nativeElement.querySelector(
+        '[data-testid="locale-filter-trigger"]',
+      );
       expect(button).toBeTruthy();
     });
 
@@ -98,7 +98,9 @@ describe('LocaleFilter', () => {
       mockStore.filterableLocales.set([]);
       fixture.detectChanges();
 
-      const trigger = fixture.nativeElement.querySelector('[data-testid="locale-filter-trigger"]');
+      const trigger = fixture.nativeElement.querySelector(
+        '[data-testid="locale-filter-trigger"]',
+      );
       expect(trigger).toBeTruthy();
     });
 

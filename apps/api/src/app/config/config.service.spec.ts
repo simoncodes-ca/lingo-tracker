@@ -82,28 +82,36 @@ describe('ConfigService', () => {
       });
 
       expect(() => service.getConfig()).toThrow(InternalServerErrorException);
-      expect(() => service.getConfig()).toThrow('Failed to read configuration file');
+      expect(() => service.getConfig()).toThrow(
+        'Failed to read configuration file',
+      );
     });
 
     it('should throw InternalServerErrorException when file contains invalid JSON', () => {
       mockFs.readFileSync.mockReturnValue('invalid json content {');
 
       expect(() => service.getConfig()).toThrow(InternalServerErrorException);
-      expect(() => service.getConfig()).toThrow('Invalid configuration file format');
+      expect(() => service.getConfig()).toThrow(
+        'Invalid configuration file format',
+      );
     });
 
     it('should throw InternalServerErrorException when file is empty', () => {
       mockFs.readFileSync.mockReturnValue('');
 
       expect(() => service.getConfig()).toThrow(InternalServerErrorException);
-      expect(() => service.getConfig()).toThrow('Invalid configuration file format');
+      expect(() => service.getConfig()).toThrow(
+        'Invalid configuration file format',
+      );
     });
 
     it('should throw InternalServerErrorException when file contains non-JSON content', () => {
       mockFs.readFileSync.mockReturnValue('This is not JSON at all');
 
       expect(() => service.getConfig()).toThrow(InternalServerErrorException);
-      expect(() => service.getConfig()).toThrow('Invalid configuration file format');
+      expect(() => service.getConfig()).toThrow(
+        'Invalid configuration file format',
+      );
     });
 
     it('should handle minimal valid config', () => {
@@ -164,7 +172,9 @@ describe('ConfigService', () => {
         collections: {},
       };
 
-      mockFs.readFileSync.mockReturnValue(JSON.stringify(configWithEmptyCollections));
+      mockFs.readFileSync.mockReturnValue(
+        JSON.stringify(configWithEmptyCollections),
+      );
 
       const result = service.getConfig();
 

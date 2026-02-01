@@ -3,7 +3,11 @@ import { ResourceEntry } from './resource-entry';
 import { TranslationStatus } from './translation-status';
 import { validateAndResolvePaths } from '../lib/resource/resource-file-paths';
 import { ensureDirectoryExists } from '../lib/file-io/directory-operations';
-import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
+import {
+  readResourceEntries,
+  readTrackerMetadata,
+  writeJsonFile,
+} from '../lib/file-io/json-file-operations';
 import { createResourceMetadata } from '../lib/resource/metadata-operations';
 
 export interface AddResourceOptions {
@@ -42,7 +46,7 @@ export interface AddResourceParams {
 export function addResource(
   translationsFolder: string,
   params: AddResourceParams,
-  options: AddResourceOptions = {}
+  options: AddResourceOptions = {},
 ): { resolvedKey: string; created: boolean } {
   const { cwd = process.cwd() } = options;
   const baseLocale = params.baseLocale || 'en';
@@ -58,11 +62,12 @@ export function addResource(
   // Ensure directory exists
   ensureDirectoryExists({
     directoryPath: paths.folderPath,
-    errorContext: 'Creating resource folder'
+    errorContext: 'Creating resource folder',
   });
 
   // Check if entry already exists
-  const isNewEntry = !existsSync(paths.resourceEntriesPath) ||
+  const isNewEntry =
+    !existsSync(paths.resourceEntriesPath) ||
     !hasEntryKey(paths.resourceEntriesPath, paths.entryKey);
 
   // Load or create resource entries

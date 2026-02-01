@@ -5,7 +5,10 @@ import {
   resolveResourceKey,
   splitResolvedKey,
 } from '../../resource/resource-key';
-import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import {
+  RESOURCE_ENTRIES_FILENAME,
+  TRACKER_META_FILENAME,
+} from '../../constants';
 
 export interface ResolvedResourcePaths {
   /** The fully resolved key (targetFolder.key) */
@@ -63,12 +66,13 @@ export interface ResourcePathResolutionParams {
  * ```
  */
 export function resolveResourcePaths(
-  params: ResourcePathResolutionParams
+  params: ResourcePathResolutionParams,
 ): ResolvedResourcePaths {
   const { key, translationsFolder, targetFolder, cwd = process.cwd() } = params;
 
   const resolvedKey = resolveResourceKey(key, targetFolder);
-  const { folderPath: folderPathSegments, entryKey } = splitResolvedKey(resolvedKey);
+  const { folderPath: folderPathSegments, entryKey } =
+    splitResolvedKey(resolvedKey);
 
   const relativeFolderPath = folderPathSegments.length
     ? join(translationsFolder, ...folderPathSegments)
@@ -93,7 +97,7 @@ export function resolveResourcePaths(
  * Throws if key or targetFolder are invalid.
  */
 export function validateAndResolvePaths(
-  params: ResourcePathResolutionParams
+  params: ResourcePathResolutionParams,
 ): ResolvedResourcePaths {
   validateKey(params.key);
 

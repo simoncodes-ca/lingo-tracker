@@ -1,11 +1,20 @@
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
-import { ImportOptions, ImportedResource, ImportResult, ICUAutoFix, ICUAutoFixError } from './types';
+import {
+  ImportOptions,
+  ImportedResource,
+  ImportResult,
+  ICUAutoFix,
+  ICUAutoFixError,
+} from './types';
 import { TranslationStatus } from '../../resource/translation-status';
 import { resolveAllReferences } from './reference-resolver';
 import { groupResourcesByFolder } from './resource-grouping';
 import { processResourceGroup } from './process-resource-group';
-import { calculateImportStatistics, calculateStatusTransitions } from './import-statistics';
+import {
+  calculateImportStatistics,
+  calculateStatusTransitions,
+} from './import-statistics';
 import { validateImportResources } from './import-validation';
 import { setupImportWorkflow, buildImportResult } from './import-workflow';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
@@ -38,11 +47,13 @@ import { join } from 'path';
  * detectJsonStructure({common: {ok: "OK"}, "other.key": "Value"}); // 'hierarchical'
  * ```
  */
-export function detectJsonStructure(data: Record<string, unknown>): 'flat' | 'hierarchical' {
+export function detectJsonStructure(
+  data: Record<string, unknown>,
+): 'flat' | 'hierarchical' {
   const keys = Object.keys(data);
 
   // If all keys at root level contain dots, it's flat
-  const allKeysHaveDots = keys.every(key => key.includes('.'));
+  const allKeysHaveDots = keys.every((key) => key.includes('.'));
 
   if (allKeysHaveDots && keys.length > 0) {
     return 'flat';
@@ -67,7 +78,10 @@ function isRichObject(value: unknown): value is Record<string, unknown> {
 /**
  * Extracts resource from a rich format object
  */
-function extractRichResource(key: string, obj: Record<string, unknown>): ImportedResource {
+function extractRichResource(
+  key: string,
+  obj: Record<string, unknown>,
+): ImportedResource {
   const resource: ImportedResource = {
     key,
     value: obj['value'] as string,
@@ -86,7 +100,9 @@ function extractRichResource(key: string, obj: Record<string, unknown>): Importe
   }
 
   if (Array.isArray(obj['tags'])) {
-    resource.tags = obj['tags'].filter(tag => typeof tag === 'string') as string[];
+    resource.tags = obj['tags'].filter(
+      (tag) => typeof tag === 'string',
+    ) as string[];
   }
 
   return resource;
@@ -134,7 +150,9 @@ function extractRichResource(key: string, obj: Record<string, unknown>): Importe
  * // Returns: [{key: "common.submit", value: "Submit", comment: "Form...", ...}]
  * ```
  */
-export function extractFromFlat(data: Record<string, unknown>): ImportedResource[] {
+export function extractFromFlat(
+  data: Record<string, unknown>,
+): ImportedResource[] {
   const resources: ImportedResource[] = [];
 
   for (const [key, value] of Object.entries(data)) {
@@ -207,7 +225,7 @@ export function extractFromFlat(data: Record<string, unknown>): ImportedResource
  */
 export function extractFromHierarchical(
   data: Record<string, unknown>,
-  prefix = ''
+  prefix = '',
 ): ImportedResource[] {
   const resources: ImportedResource[] = [];
 
@@ -223,9 +241,15 @@ export function extractFromHierarchical(
     } else if (isRichObject(value)) {
       // Rich format object - leaf node
       resources.push(extractRichResource(fullKey, value));
-    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    } else if (
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value)
+    ) {
       // Nested object - recurse
-      resources.push(...extractFromHierarchical(value as Record<string, unknown>, fullKey));
+      resources.push(
+        ...extractFromHierarchical(value as Record<string, unknown>, fullKey),
+      );
     }
     // Skip other types (arrays, null, etc.)
   }
@@ -247,15 +271,20 @@ export function extractFromHierarchical(
 function loadBaseLocaleValues(
   resources: ImportedResource[],
   translationsFolder: string,
-  cwd: string
+  cwd: string,
 ): Map<string, string> {
   const baseValues = new Map<string, string>();
 
   // Group by folder to minimize file reads
-  const folderToKeys = new Map<string, Array<{ key: string; entryKey: string }>>();
+  const folderToKeys = new Map<
+    string,
+    Array<{ key: string; entryKey: string }>
+  >();
 
   for (const resource of resources) {
-    const { folderPath: pathSegments, entryKey } = splitResolvedKey(resource.key);
+    const { folderPath: pathSegments, entryKey } = splitResolvedKey(
+      resource.key,
+    );
 
     const fullFolderPath = pathSegments.length
       ? join(translationsFolder, ...pathSegments)
@@ -273,7 +302,11 @@ function loadBaseLocaleValues(
 
   // Load base values from each folder
   for (const [folderPath, keys] of folderToKeys.entries()) {
-    const entryResourcePath = resolve(cwd, folderPath, RESOURCE_ENTRIES_FILENAME);
+    const entryResourcePath = resolve(
+      cwd,
+      folderPath,
+      RESOURCE_ENTRIES_FILENAME,
+    );
 
     if (!existsSync(entryResourcePath)) {
       continue;
@@ -368,17 +401,13 @@ function loadBaseLocaleValues(
  */
 export function importFromJson(
   translationsFolder: string,
-  options: ImportOptions
+  options: ImportOptions,
 ): ImportResult {
-  const {
-    source,
-    dryRun = false,
-    verbose = false,
-    onProgress,
-  } = options;
+  const { source, dryRun = false, verbose = false, onProgress } = options;
 
   // Setup and validate workflow configuration
-  const { cwd, baseLocale, locale, mergedOptions, isBaseLocaleImport } = setupImportWorkflow(options);
+  const { cwd, baseLocale, locale, mergedOptions, isBaseLocaleImport } =
+    setupImportWorkflow(options);
 
   // Read and parse JSON file
   const sourceFilePath = resolve(cwd, source);
@@ -400,9 +429,10 @@ export function importFromJson(
   const structure = detectJsonStructure(jsonData);
   onProgress?.(`Detected ${structure} JSON structure`);
 
-  let resources = structure === 'flat'
-    ? extractFromFlat(jsonData)
-    : extractFromHierarchical(jsonData);
+  let resources =
+    structure === 'flat'
+      ? extractFromFlat(jsonData)
+      : extractFromHierarchical(jsonData);
 
   onProgress?.(`Extracted ${resources.length} resources from JSON`);
 
@@ -422,7 +452,11 @@ export function importFromJson(
   }
 
   // Load base locale values for ICU auto-fix
-  const baseLocaleValues = loadBaseLocaleValues(resources, translationsFolder, cwd);
+  const baseLocaleValues = loadBaseLocaleValues(
+    resources,
+    translationsFolder,
+    cwd,
+  );
 
   // Apply ICU auto-fix to all resources
   const icuFixResult = applyICUAutoFixToResources({
@@ -450,7 +484,11 @@ export function importFromJson(
   const filesModified = new Set<string>();
 
   // Group resources by folder for batch processing
-  const resourceGroups = groupResourcesByFolder(validResources, translationsFolder, cwd);
+  const resourceGroups = groupResourcesByFolder(
+    validResources,
+    translationsFolder,
+    cwd,
+  );
 
   // Process each group
   for (const group of resourceGroups.values()) {
@@ -468,7 +506,7 @@ export function importFromJson(
       dryRun,
       isBaseLocaleImport,
       filesModified,
-      warnings
+      warnings,
     );
 
     changes.push(...groupChanges);
@@ -478,9 +516,10 @@ export function importFromJson(
   const statistics = calculateImportStatistics(changes);
   const statusTransitions = calculateStatusTransitions(changes);
 
-  onProgress?.(dryRun
-    ? `Dry run complete: would import ${statistics.resourcesUpdated} resources`
-    : `Import complete: ${statistics.resourcesUpdated} resources imported`
+  onProgress?.(
+    dryRun
+      ? `Dry run complete: would import ${statistics.resourcesUpdated} resources`
+      : `Import complete: ${statistics.resourcesUpdated} resources imported`,
   );
 
   return buildImportResult({

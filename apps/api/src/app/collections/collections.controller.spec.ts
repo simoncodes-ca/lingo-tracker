@@ -5,7 +5,7 @@ import * as core from '@simoncodes-ca/core';
 
 // Mock the core module
 jest.mock('@simoncodes-ca/core', () => ({
-  deleteCollectionByName: jest.fn()
+  deleteCollectionByName: jest.fn(),
 }));
 
 describe('CollectionsController', () => {
@@ -17,7 +17,9 @@ describe('CollectionsController', () => {
       controllers: [CollectionsController],
     }).compile();
 
-    collectionsController = collectionsModule.get<CollectionsController>(CollectionsController);
+    collectionsController = collectionsModule.get<CollectionsController>(
+      CollectionsController,
+    );
   });
 
   afterEach(() => {
@@ -27,21 +29,31 @@ describe('CollectionsController', () => {
   describe('deleteCollection', () => {
     it('should successfully delete a collection', async () => {
       const deleteCollectionByName = core.deleteCollectionByName as jest.Mock;
-      deleteCollectionByName.mockReturnValue({ message: 'Collection "test-collection" deleted successfully' });
+      deleteCollectionByName.mockReturnValue({
+        message: 'Collection "test-collection" deleted successfully',
+      });
 
-      const result = await collectionsController.deleteCollection('test-collection');
+      const result =
+        await collectionsController.deleteCollection('test-collection');
 
-      expect(result).toEqual({ message: 'Collection "test-collection" deleted successfully' });
+      expect(result).toEqual({
+        message: 'Collection "test-collection" deleted successfully',
+      });
       expect(deleteCollectionByName).toHaveBeenCalledWith('test-collection');
     });
 
     it('should URI decode collection names with special characters', async () => {
       const deleteCollectionByName = core.deleteCollectionByName as jest.Mock;
-      deleteCollectionByName.mockReturnValue({ message: 'Collection "My Collection" deleted successfully' });
+      deleteCollectionByName.mockReturnValue({
+        message: 'Collection "My Collection" deleted successfully',
+      });
 
-      const result = await collectionsController.deleteCollection('My%20Collection');
+      const result =
+        await collectionsController.deleteCollection('My%20Collection');
 
-      expect(result).toEqual({ message: 'Collection "My Collection" deleted successfully' });
+      expect(result).toEqual({
+        message: 'Collection "My Collection" deleted successfully',
+      });
       expect(deleteCollectionByName).toHaveBeenCalledWith('My Collection');
     });
 
@@ -51,7 +63,9 @@ describe('CollectionsController', () => {
         throw new Error('Collection not found');
       });
 
-      await expect(collectionsController.deleteCollection('non-existent')).rejects.toThrow(HttpException);
+      await expect(
+        collectionsController.deleteCollection('non-existent'),
+      ).rejects.toThrow(HttpException);
       expect(deleteCollectionByName).toHaveBeenCalledWith('non-existent');
     });
 
@@ -61,7 +75,9 @@ describe('CollectionsController', () => {
         throw new Error('Failed to delete collection');
       });
 
-      await expect(collectionsController.deleteCollection('test-collection')).rejects.toThrow(HttpException);
+      await expect(
+        collectionsController.deleteCollection('test-collection'),
+      ).rejects.toThrow(HttpException);
       expect(deleteCollectionByName).toHaveBeenCalledWith('test-collection');
     });
   });

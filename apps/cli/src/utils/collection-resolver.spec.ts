@@ -46,7 +46,7 @@ describe('collection-resolver', () => {
       const result = resolveCollection('main', mockConfig, '/project');
 
       expect(result?.translationsFolderPath).toBe(
-        path.resolve('/project', 'src/i18n')
+        path.resolve('/project', 'src/i18n'),
       );
     });
 
@@ -55,7 +55,9 @@ describe('collection-resolver', () => {
       const sharedResult = resolveCollection('shared', mockConfig, '/project');
 
       expect(adminResult?.name).toBe('admin');
-      expect(adminResult?.config.translationsFolder).toBe('src/admin/translations');
+      expect(adminResult?.config.translationsFolder).toBe(
+        'src/admin/translations',
+      );
 
       expect(sharedResult?.name).toBe('shared');
       expect(sharedResult?.config.translationsFolder).toBe('../shared/i18n');
@@ -66,7 +68,7 @@ describe('collection-resolver', () => {
       const result = resolveCollection('main', mockConfig, baseDir);
 
       expect(result?.translationsFolderPath).toBe(
-        path.resolve(baseDir, 'src/i18n')
+        path.resolve(baseDir, 'src/i18n'),
       );
     });
 
@@ -74,7 +76,7 @@ describe('collection-resolver', () => {
       const result = resolveCollection('shared', mockConfig, '/project');
 
       expect(result?.translationsFolderPath).toBe(
-        path.resolve('/project', '../shared/i18n')
+        path.resolve('/project', '../shared/i18n'),
       );
     });
 
@@ -88,10 +90,14 @@ describe('collection-resolver', () => {
         },
       };
 
-      const result = resolveCollection('windows', windowsConfig, 'C:\\Projects\\App');
+      const result = resolveCollection(
+        'windows',
+        windowsConfig,
+        'C:\\Projects\\App',
+      );
 
       expect(result?.translationsFolderPath).toBe(
-        path.resolve('C:\\Projects\\App', 'src\\translations\\i18n')
+        path.resolve('C:\\Projects\\App', 'src\\translations\\i18n'),
       );
     });
   });
@@ -106,7 +112,9 @@ describe('collection-resolver', () => {
     it('should log error message when collection not found', () => {
       resolveCollection('nonexistent', mockConfig, '/project');
 
-      expect(console.log).toHaveBeenCalledWith('❌ Collection "nonexistent" not found.');
+      expect(console.log).toHaveBeenCalledWith(
+        '❌ Collection "nonexistent" not found.',
+      );
     });
 
     it('should return null when collections object is empty', () => {
@@ -118,7 +126,9 @@ describe('collection-resolver', () => {
       const result = resolveCollection('main', emptyConfig, '/project');
 
       expect(result).toBeNull();
-      expect(console.log).toHaveBeenCalledWith('❌ Collection "main" not found.');
+      expect(console.log).toHaveBeenCalledWith(
+        '❌ Collection "main" not found.',
+      );
     });
 
     it('should return null when collections property is undefined', () => {
@@ -129,10 +139,16 @@ describe('collection-resolver', () => {
         locales: ['en'],
       };
 
-      const result = resolveCollection('main', configWithoutCollections, '/project');
+      const result = resolveCollection(
+        'main',
+        configWithoutCollections,
+        '/project',
+      );
 
       expect(result).toBeNull();
-      expect(console.log).toHaveBeenCalledWith('❌ Collection "main" not found.');
+      expect(console.log).toHaveBeenCalledWith(
+        '❌ Collection "main" not found.',
+      );
     });
   });
 
@@ -149,7 +165,7 @@ describe('collection-resolver', () => {
         const result = resolveCollection('main', mockConfig, baseDir);
 
         expect(result?.translationsFolderPath).toBe(
-          path.resolve(baseDir, 'src/i18n')
+          path.resolve(baseDir, 'src/i18n'),
         );
       });
     });
@@ -158,16 +174,14 @@ describe('collection-resolver', () => {
       const result = resolveCollection('main', mockConfig, '/project/');
 
       expect(result?.translationsFolderPath).toBe(
-        path.resolve('/project/', 'src/i18n')
+        path.resolve('/project/', 'src/i18n'),
       );
     });
 
     it('should handle empty base directory', () => {
       const result = resolveCollection('main', mockConfig, '');
 
-      expect(result?.translationsFolderPath).toBe(
-        path.resolve('', 'src/i18n')
-      );
+      expect(result?.translationsFolderPath).toBe(path.resolve('', 'src/i18n'));
     });
   });
 
@@ -223,7 +237,11 @@ describe('collection-resolver', () => {
         },
       };
 
-      const result = resolveCollection('main-collection_v2', specialConfig, '/project');
+      const result = resolveCollection(
+        'main-collection_v2',
+        specialConfig,
+        '/project',
+      );
 
       expect(result?.name).toBe('main-collection_v2');
       expect(result).not.toBeNull();
@@ -239,7 +257,11 @@ describe('collection-resolver', () => {
         },
       };
 
-      const result = resolveCollection('main collection', spaceConfig, '/project');
+      const result = resolveCollection(
+        'main collection',
+        spaceConfig,
+        '/project',
+      );
 
       expect(result?.name).toBe('main collection');
       expect(result).not.toBeNull();
@@ -258,7 +280,7 @@ describe('collection-resolver', () => {
       const result = resolveCollection('dotted', dotConfig, '/project');
 
       expect(result?.translationsFolderPath).toBe(
-        path.resolve('/project', './src/./i18n')
+        path.resolve('/project', './src/./i18n'),
       );
     });
 
@@ -275,7 +297,7 @@ describe('collection-resolver', () => {
       const result = resolveCollection('absolute', slashConfig, '/project');
 
       expect(result?.translationsFolderPath).toBe(
-        path.resolve('/project', '/absolute/path/i18n')
+        path.resolve('/project', '/absolute/path/i18n'),
       );
     });
 
@@ -295,7 +317,9 @@ describe('collection-resolver', () => {
       resolveCollection('missing', mockConfig, '/project');
 
       expect(console.log).toHaveBeenCalledTimes(1);
-      expect(console.log).toHaveBeenCalledWith('❌ Collection "missing" not found.');
+      expect(console.log).toHaveBeenCalledWith(
+        '❌ Collection "missing" not found.',
+      );
     });
 
     it('should not log anything for successful resolution', () => {
@@ -307,7 +331,9 @@ describe('collection-resolver', () => {
     it('should include correct collection name in error message', () => {
       resolveCollection('wrong-collection-name', mockConfig, '/project');
 
-      expect(console.log).toHaveBeenCalledWith('❌ Collection "wrong-collection-name" not found.');
+      expect(console.log).toHaveBeenCalledWith(
+        '❌ Collection "wrong-collection-name" not found.',
+      );
     });
   });
 });

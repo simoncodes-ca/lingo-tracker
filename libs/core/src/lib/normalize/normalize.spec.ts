@@ -31,7 +31,9 @@ describe('Normalize', () => {
     vi.mocked(fs.statSync).mockImplementation((filepath) => {
       const entry = mockFs[filepath as string];
       if (!entry) {
-        throw new Error(`ENOENT: no such file or directory, stat '${filepath}'`);
+        throw new Error(
+          `ENOENT: no such file or directory, stat '${filepath}'`,
+        );
       }
       return {
         isDirectory: () => entry.type === 'directory',
@@ -50,7 +52,9 @@ describe('Normalize', () => {
     vi.mocked(fs.readFileSync).mockImplementation((filepath) => {
       const entry = mockFs[filepath as string];
       if (!entry || entry.type !== 'file') {
-        throw new Error(`ENOENT: no such file or directory, open '${filepath}'`);
+        throw new Error(
+          `ENOENT: no such file or directory, open '${filepath}'`,
+        );
       }
       return entry.content || '';
     });
@@ -97,7 +101,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -154,7 +161,7 @@ describe('Normalize', () => {
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         path.join(testDir, 'tracker_meta.json'),
         expect.any(String),
-        'utf8'
+        'utf8',
       );
     });
 
@@ -190,7 +197,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -241,7 +251,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -292,7 +305,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -363,7 +379,10 @@ describe('Normalize', () => {
       const result = await normalize(params);
 
       expect(result.foldersRemoved).toBe(1);
-      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(testDir, false);
+      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(
+        testDir,
+        false,
+      );
     });
 
     it('should return correct summary counts', async () => {
@@ -390,7 +409,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -440,7 +462,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -467,7 +492,10 @@ describe('Normalize', () => {
 
       // Files should not be modified in dry-run
       expect(fs.writeFileSync).not.toHaveBeenCalled();
-      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(testDir, true);
+      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(
+        testDir,
+        true,
+      );
     });
 
     it('should handle deeply nested folder structures', async () => {
@@ -494,7 +522,10 @@ describe('Normalize', () => {
         [testDir]: { type: 'directory', children: ['apps'] },
         [level1]: { type: 'directory', children: ['common'] },
         [level2]: { type: 'directory', children: ['buttons'] },
-        [level3]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [level3]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -549,7 +580,10 @@ describe('Normalize', () => {
       };
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
         [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
       };
@@ -616,8 +650,14 @@ describe('Normalize', () => {
 
       const mockFs: MockFileSystem = {
         [testDir]: { type: 'directory', children: ['apps', 'shared'] },
-        [path.join(testDir, 'apps')]: { type: 'directory', children: ['buttons'] },
-        [path.join(testDir, 'shared')]: { type: 'directory', children: ['validation'] },
+        [path.join(testDir, 'apps')]: {
+          type: 'directory',
+          children: ['buttons'],
+        },
+        [path.join(testDir, 'shared')]: {
+          type: 'directory',
+          children: ['validation'],
+        },
         [appsButtons]: {
           type: 'directory',
           children: ['resource_entries.json', 'tracker_meta.json'],
@@ -669,7 +709,10 @@ describe('Normalize', () => {
       const metaPath = path.join(testDir, 'tracker_meta.json');
 
       const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json', 'tracker_meta.json'] },
+        [testDir]: {
+          type: 'directory',
+          children: ['resource_entries.json', 'tracker_meta.json'],
+        },
         [entriesPath]: { type: 'file', content: 'invalid json{' },
         [metaPath]: { type: 'file', content: 'invalid json{' },
       };
@@ -677,7 +720,9 @@ describe('Normalize', () => {
       setupMockFileSystem(mockFs);
 
       // Spy on console.error to verify error message is logged
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
 
       vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
         foldersRemoved: 0,
@@ -698,7 +743,7 @@ describe('Normalize', () => {
       // Should log an error message
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('⚠️  Skipping folder due to invalid JSON'),
-        testDir
+        testDir,
       );
 
       // Should NOT write any files (folder is skipped)

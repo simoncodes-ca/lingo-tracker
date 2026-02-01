@@ -21,13 +21,15 @@ import type { LingoTrackerConfig } from '@simoncodes-ca/core';
  */
 export async function promptForCollection(
   config: LingoTrackerConfig,
-  currentValue?: string
+  currentValue?: string,
 ): Promise<string | null> {
   const collections = Object.keys(config.collections || {});
 
   // No collections available
   if (collections.length === 0) {
-    console.log('❌ No collections found. Run `lingo-tracker add-collection` first.');
+    console.log(
+      '❌ No collections found. Run `lingo-tracker add-collection` first.',
+    );
     return null;
   }
 
@@ -51,7 +53,7 @@ export async function promptForCollection(
     type: 'select',
     name: 'collection',
     message: 'Select collection',
-    choices: collections.map(name => ({ title: name, value: name })),
+    choices: collections.map((name) => ({ title: name, value: name })),
   });
 
   return result.collection;

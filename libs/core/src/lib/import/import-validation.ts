@@ -1,5 +1,11 @@
 import { ImportedResource, ImportChange } from './types';
-import { validateImportKey, isKeyTooLong, isEmptyValue, detectHierarchicalConflicts, detectDuplicateKeys } from './import-common';
+import {
+  validateImportKey,
+  isKeyTooLong,
+  isEmptyValue,
+  detectHierarchicalConflicts,
+  detectDuplicateKeys,
+} from './import-common';
 
 /**
  * Configuration for import validation process.
@@ -80,7 +86,7 @@ export interface ValidationResult {
  */
 export function validateImportResources(
   resources: ImportedResource[],
-  config: ValidationConfig
+  config: ValidationConfig,
 ): ValidationResult {
   const warnings: string[] = [];
   const errors: string[] = [];
@@ -88,11 +94,13 @@ export function validateImportResources(
   const validResources: ImportedResource[] = [];
 
   // Detect duplicates
-  const keys = resources.map(r => r.key);
+  const keys = resources.map((r) => r.key);
   const duplicates = detectDuplicateKeys(keys);
   if (duplicates.size > 0) {
     for (const [key, count] of duplicates) {
-      warnings.push(`Duplicate key in import file: "${key}" (used last occurrence, appeared ${count} times)`);
+      warnings.push(
+        `Duplicate key in import file: "${key}" (used last occurrence, appeared ${count} times)`,
+      );
     }
   }
 
@@ -131,7 +139,9 @@ export function validateImportResources(
 
     // Warn on long keys
     if (config.warnOnLongKeys && isKeyTooLong(resource.key)) {
-      warnings.push(`Very long key: "${resource.key}" (${resource.key.length} characters)`);
+      warnings.push(
+        `Very long key: "${resource.key}" (${resource.key.length} characters)`,
+      );
     }
 
     // Skip empty values if configured

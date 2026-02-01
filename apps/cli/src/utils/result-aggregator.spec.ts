@@ -15,7 +15,11 @@ describe('aggregateNumericFields', () => {
       { count: 8, total: 200, errors: 2 },
     ];
 
-    const aggregated = aggregateNumericFields(results, ['count', 'total', 'errors']);
+    const aggregated = aggregateNumericFields(results, [
+      'count',
+      'total',
+      'errors',
+    ]);
 
     expect(aggregated).toEqual({
       count: 16,
@@ -27,7 +31,11 @@ describe('aggregateNumericFields', () => {
   it('should return zeros for empty results array', () => {
     const results: TestResult[] = [];
 
-    const aggregated = aggregateNumericFields(results, ['count', 'total', 'errors']);
+    const aggregated = aggregateNumericFields(results, [
+      'count',
+      'total',
+      'errors',
+    ]);
 
     expect(aggregated).toEqual({
       count: 0,
@@ -39,7 +47,11 @@ describe('aggregateNumericFields', () => {
   it('should handle single result', () => {
     const results: TestResult[] = [{ count: 10, total: 500, errors: 2 }];
 
-    const aggregated = aggregateNumericFields(results, ['count', 'total', 'errors']);
+    const aggregated = aggregateNumericFields(results, [
+      'count',
+      'total',
+      'errors',
+    ]);
 
     expect(aggregated).toEqual({
       count: 10,
@@ -73,7 +85,11 @@ describe('aggregateNumericFields', () => {
       { count: 3, total: 75, errors: 1, name: 'second', timestamp: new Date() },
     ];
 
-    const aggregated = aggregateNumericFields(results, ['count', 'total', 'errors']);
+    const aggregated = aggregateNumericFields(results, [
+      'count',
+      'total',
+      'errors',
+    ]);
 
     expect(aggregated).toEqual({
       count: 8,
@@ -106,7 +122,11 @@ describe('aggregateNumericFields', () => {
       { count: 0, total: 0, errors: 0 },
     ];
 
-    const aggregated = aggregateNumericFields(results, ['count', 'total', 'errors']);
+    const aggregated = aggregateNumericFields(results, [
+      'count',
+      'total',
+      'errors',
+    ]);
 
     expect(aggregated).toEqual({
       count: 0,
@@ -122,7 +142,11 @@ describe('aggregateNumericFields', () => {
       { count: 5, total: 50, errors: -1 },
     ];
 
-    const aggregated = aggregateNumericFields(results, ['count', 'total', 'errors']);
+    const aggregated = aggregateNumericFields(results, [
+      'count',
+      'total',
+      'errors',
+    ]);
 
     expect(aggregated).toEqual({
       count: 12,

@@ -9,7 +9,7 @@
  * parseCommaSeparatedList(undefined) → undefined
  */
 export function parseCommaSeparatedList(
-  input: string | undefined
+  input: string | undefined,
 ): string[] | undefined {
   if (!input) return undefined;
 
@@ -27,7 +27,7 @@ export function parseCommaSeparatedList(
  */
 export function parseCommaSeparatedListRequired(
   input: string | undefined,
-  fieldName = 'value'
+  fieldName = 'value',
 ): string[] {
   const result = parseCommaSeparatedList(input);
   if (!result || result.length === 0) {

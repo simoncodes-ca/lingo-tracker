@@ -13,7 +13,7 @@
  * @returns Hierarchical object
  */
 export function buildHierarchy(
-  flatEntries: Record<string, string>
+  flatEntries: Record<string, string>,
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
@@ -34,7 +34,7 @@ export function buildHierarchy(
 function setNestedValue(
   obj: Record<string, unknown>,
   key: string,
-  value: string
+  value: string,
 ): void {
   const segments = key.split('.');
   let current = obj;

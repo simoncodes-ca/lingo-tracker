@@ -16,10 +16,7 @@ describe('ThemeService', () => {
   const recreateService = (): void => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [
-        ThemeService,
-        { provide: PLATFORM_ID, useValue: 'browser' },
-      ],
+      providers: [ThemeService, { provide: PLATFORM_ID, useValue: 'browser' }],
     });
     service = TestBed.inject(ThemeService);
   };
@@ -58,11 +55,13 @@ describe('ThemeService', () => {
     mockMediaQueryList = {
       matches: false,
       media: '(prefers-color-scheme: dark)',
-      addEventListener: vi.fn((event: string, listener: (event: MediaQueryListEvent) => void) => {
-        if (event === 'change') {
-          mediaQueryListeners.push(listener);
-        }
-      }),
+      addEventListener: vi.fn(
+        (event: string, listener: (event: MediaQueryListEvent) => void) => {
+          if (event === 'change') {
+            mediaQueryListeners.push(listener);
+          }
+        },
+      ),
       removeEventListener: vi.fn(),
     } as unknown as MediaQueryList;
 
@@ -80,10 +79,7 @@ describe('ThemeService', () => {
     });
 
     TestBed.configureTestingModule({
-      providers: [
-        ThemeService,
-        { provide: PLATFORM_ID, useValue: 'browser' },
-      ],
+      providers: [ThemeService, { provide: PLATFORM_ID, useValue: 'browser' }],
     });
 
     service = TestBed.inject(ThemeService);
@@ -103,8 +99,13 @@ describe('ThemeService', () => {
     });
 
     it('should set up media query listener on initialization', () => {
-      expect(window.matchMedia).toHaveBeenCalledWith('(prefers-color-scheme: dark)');
-      expect(mockMediaQueryList.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+      expect(window.matchMedia).toHaveBeenCalledWith(
+        '(prefers-color-scheme: dark)',
+      );
+      expect(mockMediaQueryList.addEventListener).toHaveBeenCalledWith(
+        'change',
+        expect.any(Function),
+      );
     });
 
     it('should load theme preference from localStorage on init', () => {
@@ -122,7 +123,10 @@ describe('ThemeService', () => {
       recreateService();
       TestBed.flushEffects(); // Flush effects to ensure theme application runs
 
-      expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
+      expect(document.documentElement.setAttribute).toHaveBeenCalledWith(
+        'data-theme',
+        'light',
+      );
     });
   });
 
@@ -151,7 +155,10 @@ describe('ThemeService', () => {
     it('should persist theme preference to localStorage', () => {
       service.setTheme('dark');
 
-      expect(window.localStorage.setItem).toHaveBeenCalledWith('lingo-tracker-theme', 'dark');
+      expect(window.localStorage.setItem).toHaveBeenCalledWith(
+        'lingo-tracker-theme',
+        'dark',
+      );
     });
   });
 
@@ -191,7 +198,7 @@ describe('ThemeService', () => {
 
       // Simulate system theme change to dark
       const changeEvent = createMediaQueryListEvent(true);
-      mediaQueryListeners.forEach(listener => listener(changeEvent));
+      mediaQueryListeners.forEach((listener) => listener(changeEvent));
 
       expect(service.effectiveTheme()).toBe('dark');
     });
@@ -204,7 +211,7 @@ describe('ThemeService', () => {
 
       // Simulate system theme change to light
       const changeEvent = createMediaQueryListEvent(false);
-      mediaQueryListeners.forEach(listener => listener(changeEvent));
+      mediaQueryListeners.forEach((listener) => listener(changeEvent));
 
       expect(service.effectiveTheme()).toBe('light');
     });
@@ -215,7 +222,7 @@ describe('ThemeService', () => {
 
       // Simulate system theme change
       const changeEvent = createMediaQueryListEvent(true);
-      mediaQueryListeners.forEach(listener => listener(changeEvent));
+      mediaQueryListeners.forEach((listener) => listener(changeEvent));
 
       // Should still be dark, not affected by system change
       expect(service.effectiveTheme()).toBe('dark');
@@ -227,19 +234,27 @@ describe('ThemeService', () => {
       service.setTheme('light');
       TestBed.flushEffects();
 
-      expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light');
+      expect(document.documentElement.setAttribute).toHaveBeenCalledWith(
+        'data-theme',
+        'light',
+      );
     });
 
     it('should apply dark theme to document root', () => {
       service.setTheme('dark');
       TestBed.flushEffects();
 
-      expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark');
+      expect(document.documentElement.setAttribute).toHaveBeenCalledWith(
+        'data-theme',
+        'dark',
+      );
     });
 
     it('should remove old theme attribute before setting new one', () => {
-      const removeAttributeMock = document.documentElement.removeAttribute as ReturnType<typeof vi.fn>;
-      const setAttributeMock = document.documentElement.setAttribute as ReturnType<typeof vi.fn>;
+      const removeAttributeMock = document.documentElement
+        .removeAttribute as ReturnType<typeof vi.fn>;
+      const setAttributeMock = document.documentElement
+        .setAttribute as ReturnType<typeof vi.fn>;
 
       service.setTheme('dark');
       TestBed.flushEffects();
@@ -249,14 +264,19 @@ describe('ThemeService', () => {
 
       // Verify that removeAttribute was called BEFORE setAttribute
       const removeCallOrder = removeAttributeMock.mock.invocationCallOrder[0];
-      const setCallOrder = setAttributeMock.mock.invocationCallOrder[setAttributeMock.mock.calls.length - 1];
+      const setCallOrder =
+        setAttributeMock.mock.invocationCallOrder[
+          setAttributeMock.mock.calls.length - 1
+        ];
       expect(removeCallOrder).toBeLessThan(setCallOrder);
     });
   });
 
   describe('LocalStorage Error Handling', () => {
     it('should handle localStorage getItem errors gracefully', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(undefined);
       window.localStorage.getItem = vi.fn(() => {
         throw new Error('Storage error');
       });
@@ -269,7 +289,9 @@ describe('ThemeService', () => {
     });
 
     it('should handle localStorage setItem errors gracefully', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(undefined);
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(undefined);
       window.localStorage.setItem = vi.fn(() => {
         throw new Error('Storage error');
       });

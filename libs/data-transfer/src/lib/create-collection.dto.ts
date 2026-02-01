@@ -4,5 +4,3 @@ export interface CreateCollectionDto {
   name: string;
   collection: LingoTrackerCollectionDto;
 }
-
-

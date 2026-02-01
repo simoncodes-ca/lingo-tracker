@@ -7,20 +7,17 @@ export interface DeleteCollectionOptions {
 
 export function deleteCollectionByName(
   collectionName: string,
-  options: DeleteCollectionOptions = {}
+  options: DeleteCollectionOptions = {},
 ): { message: string } {
-  updateConfig(
-    (config) => {
-      if (!config.collections || !config.collections[collectionName]) {
-        throw new Error(ErrorMessages.collectionNotFound(collectionName));
-      }
+  updateConfig((config) => {
+    if (!config.collections || !config.collections[collectionName]) {
+      throw new Error(ErrorMessages.collectionNotFound(collectionName));
+    }
 
-      delete config.collections[collectionName];
+    delete config.collections[collectionName];
 
-      return config;
-    },
-    options.cwd
-  );
+    return config;
+  }, options.cwd);
 
   return { message: `Collection "${collectionName}" deleted successfully` };
 }

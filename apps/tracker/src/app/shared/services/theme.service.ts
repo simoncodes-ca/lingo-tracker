@@ -1,4 +1,11 @@
-import { Injectable, signal, computed, effect, inject, PLATFORM_ID } from '@angular/core';
+import {
+  Injectable,
+  signal,
+  computed,
+  effect,
+  inject,
+  PLATFORM_ID,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -7,7 +14,7 @@ export type EffectiveTheme = 'light' | 'dark';
 const THEME_STORAGE_KEY = 'lingo-tracker-theme';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ThemeService {
   private platformId = inject(PLATFORM_ID);

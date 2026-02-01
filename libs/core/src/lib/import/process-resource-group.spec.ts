@@ -53,7 +53,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(changes).toHaveLength(1);
@@ -96,7 +96,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(changes).toHaveLength(1);
@@ -133,7 +133,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(changes).toHaveLength(1);
@@ -151,20 +151,28 @@ describe('process-resource-group', () => {
         JSON.stringify({
           ok: { source: 'OK', es: 'Bien' },
           cancel: { source: 'Cancel', es: 'Cancelar' },
-        })
+        }),
       );
       writeFileSync(
         entryMetaPath,
         JSON.stringify({
           ok: {
             en: { checksum: 'base-checksum' },
-            es: { checksum: 'old-checksum', baseChecksum: 'base-checksum', status: 'translated' },
+            es: {
+              checksum: 'old-checksum',
+              baseChecksum: 'base-checksum',
+              status: 'translated',
+            },
           },
           cancel: {
             en: { checksum: 'cancel-base' },
-            es: { checksum: 'cancel-checksum', baseChecksum: 'cancel-base', status: 'verified' },
+            es: {
+              checksum: 'cancel-checksum',
+              baseChecksum: 'cancel-base',
+              status: 'verified',
+            },
           },
-        })
+        }),
       );
     });
 
@@ -195,7 +203,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(changes).toHaveLength(1);
@@ -236,7 +244,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(changes).toHaveLength(1);
@@ -272,7 +280,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(changes).toHaveLength(1);
@@ -311,7 +319,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(warnings).toHaveLength(1);
@@ -349,7 +357,7 @@ describe('process-resource-group', () => {
         true, // Dry run
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(changes).toHaveLength(1);
@@ -368,17 +376,26 @@ describe('process-resource-group', () => {
       writeFileSync(
         entryResourcePath,
         JSON.stringify({
-          ok: { source: 'OK', es: 'Bien', comment: 'Old comment', tags: ['old-tag'] },
-        })
+          ok: {
+            source: 'OK',
+            es: 'Bien',
+            comment: 'Old comment',
+            tags: ['old-tag'],
+          },
+        }),
       );
       writeFileSync(
         entryMetaPath,
         JSON.stringify({
           ok: {
             en: { checksum: 'base-checksum' },
-            es: { checksum: 'old-checksum', baseChecksum: 'base-checksum', status: 'translated' },
+            es: {
+              checksum: 'old-checksum',
+              baseChecksum: 'base-checksum',
+              status: 'translated',
+            },
           },
-        })
+        }),
       );
     });
 
@@ -410,7 +427,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       const entries = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
@@ -445,7 +462,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       const entries = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
@@ -480,7 +497,7 @@ describe('process-resource-group', () => {
         false,
         false,
         filesModified,
-        warnings
+        warnings,
       );
 
       const entries = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
@@ -514,11 +531,18 @@ describe('process-resource-group', () => {
         group,
         'en',
         'en',
-        { source: 'test.json', locale: 'en', strategy: 'migration', createMissing: true, updateComments: true, updateTags: true },
+        {
+          source: 'test.json',
+          locale: 'en',
+          strategy: 'migration',
+          createMissing: true,
+          updateComments: true,
+          updateTags: true,
+        },
         false,
         true, // isBaseLocaleImport
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(changes).toHaveLength(1);
@@ -547,16 +571,20 @@ describe('process-resource-group', () => {
         entryResourcePath,
         JSON.stringify({
           ok: { source: 'OK', es: 'Bien' },
-        })
+        }),
       );
       writeFileSync(
         entryMetaPath,
         JSON.stringify({
           ok: {
             en: { checksum: 'old-checksum' },
-            es: { checksum: 'es-checksum', baseChecksum: 'old-checksum', status: 'translated' },
+            es: {
+              checksum: 'es-checksum',
+              baseChecksum: 'old-checksum',
+              status: 'translated',
+            },
           },
-        })
+        }),
       );
 
       const group: ResourceGroup = {
@@ -585,7 +613,7 @@ describe('process-resource-group', () => {
         false,
         true, // isBaseLocaleImport
         filesModified,
-        warnings
+        warnings,
       );
 
       expect(changes).toHaveLength(1);
@@ -612,7 +640,7 @@ describe('process-resource-group', () => {
         entryResourcePath,
         JSON.stringify({
           ok: { source: 'OK', comment: 'Old comment', tags: ['old'] },
-        })
+        }),
       );
       writeFileSync(
         entryMetaPath,
@@ -620,7 +648,7 @@ describe('process-resource-group', () => {
           ok: {
             en: { checksum: 'checksum' },
           },
-        })
+        }),
       );
 
       const group: ResourceGroup = {
@@ -647,11 +675,17 @@ describe('process-resource-group', () => {
         group,
         'en',
         'en',
-        { source: 'test.json', locale: 'en', strategy: 'migration', updateComments: true, updateTags: true },
+        {
+          source: 'test.json',
+          locale: 'en',
+          strategy: 'migration',
+          updateComments: true,
+          updateTags: true,
+        },
         false,
         true, // isBaseLocaleImport
         filesModified,
-        warnings
+        warnings,
       );
 
       const entries = JSON.parse(readFileSync(entryResourcePath, 'utf8'));

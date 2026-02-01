@@ -7,4 +7,3 @@ export interface CreateResourceResponseDto {
   /** Whether the resource entry was newly created (true) or updated (false) */
   created: boolean;
 }
-

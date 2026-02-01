@@ -3,7 +3,7 @@
  * Includes warnings, bundle identifier, and disable comments.
  */
 export function generateFileHeader(bundleKey: string): string {
-    return `/* eslint-disable */
+  return `/* eslint-disable */
 // prettier-ignore
 /**
  * Auto-generated translation keys for bundle: ${bundleKey}

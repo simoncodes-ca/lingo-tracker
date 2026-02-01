@@ -10,10 +10,7 @@ describe('FolderNode', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        FolderNode,
-        getTranslocoTestingModule(),
-      ],
+      imports: [FolderNode, getTranslocoTestingModule()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FolderNode);

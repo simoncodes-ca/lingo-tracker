@@ -1,7 +1,11 @@
 import prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
 import { generateBundle } from '@simoncodes-ca/core';
-import { loadConfiguration, parseCommaSeparatedList, ConsoleFormatter } from '../utils';
+import {
+  loadConfiguration,
+  parseCommaSeparatedList,
+  ConsoleFormatter,
+} from '../utils';
 
 export interface BundleOptions {
   name?: string;
@@ -25,7 +29,9 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
   // Check if bundles are configured
   if (!config.bundles || Object.keys(config.bundles).length === 0) {
     ConsoleFormatter.error('No bundles configured in .lingo-tracker.json');
-    ConsoleFormatter.indent('Add a "bundles" section to your configuration file.');
+    ConsoleFormatter.indent(
+      'Add a "bundles" section to your configuration file.',
+    );
     return;
   }
 
@@ -41,9 +47,8 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
   }
 
   // Parse locale filter if provided
-  const localeFilter = answers.locales && answers.locales.length > 0
-    ? answers.locales
-    : undefined;
+  const localeFilter =
+    answers.locales && answers.locales.length > 0 ? answers.locales : undefined;
 
   // Process each bundle
   const bundleResults: BundleGenerationResult[] = [];
@@ -85,16 +90,18 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
       });
 
       ConsoleFormatter.indent(`✅ Files generated: ${result.filesGenerated}`);
-      ConsoleFormatter.indent(`✅ Locales: ${result.localesProcessed.join(', ')}`);
+      ConsoleFormatter.indent(
+        `✅ Locales: ${result.localesProcessed.join(', ')}`,
+      );
 
       if (result.typeGenerationResult) {
         if (result.typeGenerationResult.fileGenerated) {
           ConsoleFormatter.indent(
-            `└─ Types: ${result.typeGenerationResult.typeDist} (${result.typeGenerationResult.keysCount} keys)`
+            `└─ Types: ${result.typeGenerationResult.typeDist} (${result.typeGenerationResult.keysCount} keys)`,
           );
         } else if (result.typeGenerationResult.skippedReason) {
           ConsoleFormatter.indent(
-            `└─ Types: Skipped (${result.typeGenerationResult.skippedReason})`
+            `└─ Types: Skipped (${result.typeGenerationResult.skippedReason})`,
           );
         }
       } else if (bundleDefinition.typeDist) {
@@ -113,7 +120,8 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
         }
       }
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : 'Failed to generate bundle';
+      const errorMessage =
+        e instanceof Error ? e.message : 'Failed to generate bundle';
       bundleResults.push({
         bundleKey,
         filesGenerated: 0,
@@ -139,7 +147,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
         bundlesProcessed: 0,
         filesGenerated: 0,
         warningsCount: 0,
-      }
+      },
     );
 
     ConsoleFormatter.section(`Summary (${totals.bundlesProcessed} bundles)`);
@@ -162,7 +170,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
 
 async function promptForMissing(
   options: BundleOptions,
-  config: LingoTrackerConfig
+  config: LingoTrackerConfig,
 ): Promise<{
   names?: string[];
   locales?: string[];
@@ -192,7 +200,9 @@ async function promptForMissing(
   // If no bundle names provided, prompt for selection
   if (!options.name && process.stdout.isTTY) {
     if (bundleKeys.length === 0) {
-      ConsoleFormatter.error('No bundles configured. Add bundles to .lingo-tracker.json first.');
+      ConsoleFormatter.error(
+        'No bundles configured. Add bundles to .lingo-tracker.json first.',
+      );
       throw new Error('No bundles available');
     }
 

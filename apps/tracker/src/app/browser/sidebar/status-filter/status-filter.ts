@@ -38,14 +38,30 @@ import { TranslationStatus } from '@simoncodes-ca/data-transfer';
 export class StatusFilter {
   readonly store = inject(BrowserStore);
 
-  readonly statusConfig: Record<TranslationStatus, { label: string; icon: string; color: string }> = {
+  readonly statusConfig: Record<
+    TranslationStatus,
+    { label: string; icon: string; color: string }
+  > = {
     new: { label: 'New', icon: 'add_circle', color: '#f97316' },
     stale: { label: 'Stale', icon: 'warning', color: 'var(--color-warning)' },
-    translated: { label: 'Translated', icon: 'language', color: 'var(--color-info)' },
-    verified: { label: 'Verified', icon: 'check_circle', color: 'var(--color-success)' },
+    translated: {
+      label: 'Translated',
+      icon: 'language',
+      color: 'var(--color-info)',
+    },
+    verified: {
+      label: 'Verified',
+      icon: 'check_circle',
+      color: 'var(--color-success)',
+    },
   };
 
-  readonly statuses: TranslationStatus[] = ['new', 'stale', 'translated', 'verified'];
+  readonly statuses: TranslationStatus[] = [
+    'new',
+    'stale',
+    'translated',
+    'verified',
+  ];
 
   /**
    * Checks if a status is currently selected.

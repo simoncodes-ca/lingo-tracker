@@ -5,35 +5,50 @@ import { ExportOptions, FilteredResource } from './types';
 
 vi.mock('fs');
 vi.mock('xliff', () => ({
-    jsToXliff12: (_obj: unknown, _opt: unknown, cb: (err: Error | null, result: string) => void) => cb(null, '<xliff>...</xliff>'),
+  jsToXliff12: (
+    _obj: unknown,
+    _opt: unknown,
+    cb: (err: Error | null, result: string) => void,
+  ) => cb(null, '<xliff>...</xliff>'),
 }));
 
 describe('Verbose Logging', () => {
-    const mockResources: FilteredResource[] = [
-        { key: 'test', value: 'Test', baseValue: 'Test', status: 'translated', collection: 'Core', locale: 'es' }
-    ];
+  const mockResources: FilteredResource[] = [
+    {
+      key: 'test',
+      value: 'Test',
+      baseValue: 'Test',
+      status: 'translated',
+      collection: 'Core',
+      locale: 'es',
+    },
+  ];
 
-    const mockOptions: ExportOptions = {
-        format: 'json',
-        outputDirectory: '/dist',
-        collections: ['Core'],
-        locales: ['es'],
-        dryRun: false,
-    };
+  const mockOptions: ExportOptions = {
+    format: 'json',
+    outputDirectory: '/dist',
+    collections: ['Core'],
+    locales: ['es'],
+    dryRun: false,
+  };
 
-    it('should call onProgress in exportToJson', () => {
-        const onProgress = vi.fn();
-        exportToJson(mockResources, { ...mockOptions, onProgress });
+  it('should call onProgress in exportToJson', () => {
+    const onProgress = vi.fn();
+    exportToJson(mockResources, { ...mockOptions, onProgress });
 
-        expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Processing es'));
-        expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Writing'));
-    });
+    expect(onProgress).toHaveBeenCalledWith(
+      expect.stringContaining('Processing es'),
+    );
+    expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Writing'));
+  });
 
-    it('should call onProgress in exportToXliff', async () => {
-        const onProgress = vi.fn();
-        await exportToXliff(mockResources, { ...mockOptions, onProgress }, 'en');
+  it('should call onProgress in exportToXliff', async () => {
+    const onProgress = vi.fn();
+    await exportToXliff(mockResources, { ...mockOptions, onProgress }, 'en');
 
-        expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Processing es'));
-        expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Writing'));
-    });
+    expect(onProgress).toHaveBeenCalledWith(
+      expect.stringContaining('Processing es'),
+    );
+    expect(onProgress).toHaveBeenCalledWith(expect.stringContaining('Writing'));
+  });
 });

@@ -64,7 +64,7 @@ export const CollectionsStore = signalStore(
       const cfg = config();
       if (!cfg?.collections) return [];
       return Object.entries(cfg.collections).map(
-        ([name, collection]) => ({ name, config: collection } as const)
+        ([name, collection]) => ({ name, config: collection }) as const,
       );
     }),
 
@@ -128,10 +128,10 @@ export const CollectionsStore = signalStore(
                   error: errorMessage,
                 });
                 return of(null);
-              })
-            )
-          )
-        )
+              }),
+            ),
+          ),
+        ),
       ),
 
       /**
@@ -163,10 +163,10 @@ export const CollectionsStore = signalStore(
                   error: errorMessage,
                 });
                 return of(null);
-              })
-            )
-          )
-        )
+              }),
+            ),
+          ),
+        ),
       ),
 
       /**
@@ -206,10 +206,10 @@ export const CollectionsStore = signalStore(
                   error: errorMessage,
                 });
                 return of(null);
-              })
+              }),
             );
-          })
-        )
+          }),
+        ),
       ),
 
       /**
@@ -241,10 +241,10 @@ export const CollectionsStore = signalStore(
                   error: errorMessage,
                 });
                 return of(null);
-              })
-            )
-          )
-        )
+              }),
+            ),
+          ),
+        ),
       ),
 
       /**
@@ -261,5 +261,5 @@ export const CollectionsStore = signalStore(
         patchState(store, { error: null });
       },
     };
-  })
+  }),
 );

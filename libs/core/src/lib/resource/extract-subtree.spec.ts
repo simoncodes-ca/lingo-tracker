@@ -14,11 +14,13 @@ describe('extractSubtree', () => {
             translations: { es: 'Valor raíz' },
             metadata: {
               baseChecksum: 'abc123',
-              translations: { es: { checksum: 'def456', status: 'translated' } }
-            }
-          }
+              translations: {
+                es: { checksum: 'def456', status: 'translated' },
+              },
+            },
+          },
         ],
-        children: []
+        children: [],
       };
 
       const result = extractSubtree(tree, '');
@@ -30,7 +32,7 @@ describe('extractSubtree', () => {
       const tree: ResourceTreeNode = {
         folderPathSegments: [],
         resources: [],
-        children: []
+        children: [],
       };
 
       const result = extractSubtree(tree, '   ');
@@ -42,7 +44,7 @@ describe('extractSubtree', () => {
       const tree: ResourceTreeNode = {
         folderPathSegments: [],
         resources: [],
-        children: []
+        children: [],
       };
 
       const result = extractSubtree(tree, '...');
@@ -62,11 +64,11 @@ describe('extractSubtree', () => {
             translations: { es: 'Título Apps' },
             metadata: {
               baseChecksum: 'hash1',
-              translations: { es: { checksum: 'hash2', status: 'verified' } }
-            }
-          }
+              translations: { es: { checksum: 'hash2', status: 'verified' } },
+            },
+          },
         ],
-        children: []
+        children: [],
       };
 
       const tree: ResourceTreeNode = {
@@ -77,7 +79,7 @@ describe('extractSubtree', () => {
             name: 'apps',
             fullPathSegments: ['apps'],
             loaded: true,
-            tree: appsTree
+            tree: appsTree,
           },
           {
             name: 'common',
@@ -86,10 +88,10 @@ describe('extractSubtree', () => {
             tree: {
               folderPathSegments: ['common'],
               resources: [],
-              children: []
-            }
-          }
-        ]
+              children: [],
+            },
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'apps');
@@ -112,10 +114,10 @@ describe('extractSubtree', () => {
             tree: {
               folderPathSegments: ['apps'],
               resources: [],
-              children: []
-            }
-          }
-        ]
+              children: [],
+            },
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'nonexistent');
@@ -132,14 +134,14 @@ describe('extractSubtree', () => {
           {
             key: 'ok',
             source: 'OK',
-            translations: { es: 'Aceptar', fr: 'D\'accord' },
+            translations: { es: 'Aceptar', fr: "D'accord" },
             metadata: {
               baseChecksum: 'ok-hash',
               translations: {
                 es: { checksum: 'ok-es', status: 'verified' },
-                fr: { checksum: 'ok-fr', status: 'translated' }
-              }
-            }
+                fr: { checksum: 'ok-fr', status: 'translated' },
+              },
+            },
           },
           {
             key: 'cancel',
@@ -147,11 +149,13 @@ describe('extractSubtree', () => {
             translations: { es: 'Cancelar' },
             metadata: {
               baseChecksum: 'cancel-hash',
-              translations: { es: { checksum: 'cancel-es', status: 'verified' } }
-            }
-          }
+              translations: {
+                es: { checksum: 'cancel-es', status: 'verified' },
+              },
+            },
+          },
         ],
-        children: []
+        children: [],
       };
 
       const commonTree: ResourceTreeNode = {
@@ -162,9 +166,9 @@ describe('extractSubtree', () => {
             name: 'buttons',
             fullPathSegments: ['apps', 'common', 'buttons'],
             loaded: true,
-            tree: buttonsTree
-          }
-        ]
+            tree: buttonsTree,
+          },
+        ],
       };
 
       const appsTree: ResourceTreeNode = {
@@ -175,9 +179,9 @@ describe('extractSubtree', () => {
             name: 'common',
             fullPathSegments: ['apps', 'common'],
             loaded: true,
-            tree: commonTree
-          }
-        ]
+            tree: commonTree,
+          },
+        ],
       };
 
       const tree: ResourceTreeNode = {
@@ -188,9 +192,9 @@ describe('extractSubtree', () => {
             name: 'apps',
             fullPathSegments: ['apps'],
             loaded: true,
-            tree: appsTree
-          }
-        ]
+            tree: appsTree,
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'apps.common.buttons');
@@ -212,11 +216,13 @@ describe('extractSubtree', () => {
             translations: { es: 'Valor profundo' },
             metadata: {
               baseChecksum: 'deep-hash',
-              translations: { es: { checksum: 'deep-es', status: 'translated' } }
-            }
-          }
+              translations: {
+                es: { checksum: 'deep-es', status: 'translated' },
+              },
+            },
+          },
         ],
-        children: []
+        children: [],
       };
 
       // Build nested tree
@@ -230,12 +236,28 @@ describe('extractSubtree', () => {
           resources: [],
           children: [
             {
-              name: levels[i] === 'a' ? 'b' : (levels[i] === 'b' ? 'c' : (levels[i] === 'c' ? 'd' : 'e')),
-              fullPathSegments: [...parentSegments, levels[i] === 'a' ? 'b' : (levels[i] === 'b' ? 'c' : (levels[i] === 'c' ? 'd' : 'e'))],
+              name:
+                levels[i] === 'a'
+                  ? 'b'
+                  : levels[i] === 'b'
+                    ? 'c'
+                    : levels[i] === 'c'
+                      ? 'd'
+                      : 'e',
+              fullPathSegments: [
+                ...parentSegments,
+                levels[i] === 'a'
+                  ? 'b'
+                  : levels[i] === 'b'
+                    ? 'c'
+                    : levels[i] === 'c'
+                      ? 'd'
+                      : 'e',
+              ],
               loaded: true,
-              tree: currentTree
-            }
-          ]
+              tree: currentTree,
+            },
+          ],
         };
       }
 
@@ -279,21 +301,21 @@ describe('extractSubtree', () => {
                                     name: 'e',
                                     fullPathSegments: ['a', 'b', 'c', 'd', 'e'],
                                     loaded: true,
-                                    tree: level5Tree
-                                  }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
+                                    tree: level5Tree,
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'a.b.c.d.e');
@@ -308,7 +330,7 @@ describe('extractSubtree', () => {
       const commonTree: ResourceTreeNode = {
         folderPathSegments: ['apps', 'common'],
         resources: [],
-        children: []
+        children: [],
       };
 
       const appsTree: ResourceTreeNode = {
@@ -319,9 +341,9 @@ describe('extractSubtree', () => {
             name: 'common',
             fullPathSegments: ['apps', 'common'],
             loaded: true,
-            tree: commonTree
-          }
-        ]
+            tree: commonTree,
+          },
+        ],
       };
 
       const tree: ResourceTreeNode = {
@@ -332,9 +354,9 @@ describe('extractSubtree', () => {
             name: 'apps',
             fullPathSegments: ['apps'],
             loaded: true,
-            tree: appsTree
-          }
-        ]
+            tree: appsTree,
+          },
+        ],
       };
 
       // Path exists up to 'common' but 'buttons' doesn't exist
@@ -357,10 +379,10 @@ describe('extractSubtree', () => {
             tree: {
               folderPathSegments: ['apps'],
               resources: [],
-              children: []
-            }
-          }
-        ]
+              children: [],
+            },
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'nonexistent.path.here');
@@ -376,9 +398,9 @@ describe('extractSubtree', () => {
           {
             name: 'apps',
             fullPathSegments: ['apps'],
-            loaded: false // Child exists but not loaded
-          }
-        ]
+            loaded: false, // Child exists but not loaded
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'apps');
@@ -395,9 +417,9 @@ describe('extractSubtree', () => {
             name: 'apps',
             fullPathSegments: ['apps'],
             loaded: true,
-            tree: undefined // Marked as loaded but tree missing
-          }
-        ]
+            tree: undefined, // Marked as loaded but tree missing
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'apps');
@@ -411,7 +433,7 @@ describe('extractSubtree', () => {
       const appsTree: ResourceTreeNode = {
         folderPathSegments: ['apps'],
         resources: [],
-        children: []
+        children: [],
       };
 
       const tree: ResourceTreeNode = {
@@ -422,9 +444,9 @@ describe('extractSubtree', () => {
             name: 'apps',
             fullPathSegments: ['apps'],
             loaded: true,
-            tree: appsTree
-          }
-        ]
+            tree: appsTree,
+          },
+        ],
       };
 
       const result = extractSubtree(tree, '.apps');
@@ -436,7 +458,7 @@ describe('extractSubtree', () => {
       const appsTree: ResourceTreeNode = {
         folderPathSegments: ['apps'],
         resources: [],
-        children: []
+        children: [],
       };
 
       const tree: ResourceTreeNode = {
@@ -447,9 +469,9 @@ describe('extractSubtree', () => {
             name: 'apps',
             fullPathSegments: ['apps'],
             loaded: true,
-            tree: appsTree
-          }
-        ]
+            tree: appsTree,
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'apps.');
@@ -461,7 +483,7 @@ describe('extractSubtree', () => {
       const buttonsTree: ResourceTreeNode = {
         folderPathSegments: ['apps', 'common', 'buttons'],
         resources: [],
-        children: []
+        children: [],
       };
 
       const commonTree: ResourceTreeNode = {
@@ -472,9 +494,9 @@ describe('extractSubtree', () => {
             name: 'buttons',
             fullPathSegments: ['apps', 'common', 'buttons'],
             loaded: true,
-            tree: buttonsTree
-          }
-        ]
+            tree: buttonsTree,
+          },
+        ],
       };
 
       const appsTree: ResourceTreeNode = {
@@ -485,9 +507,9 @@ describe('extractSubtree', () => {
             name: 'common',
             fullPathSegments: ['apps', 'common'],
             loaded: true,
-            tree: commonTree
-          }
-        ]
+            tree: commonTree,
+          },
+        ],
       };
 
       const tree: ResourceTreeNode = {
@@ -498,9 +520,9 @@ describe('extractSubtree', () => {
             name: 'apps',
             fullPathSegments: ['apps'],
             loaded: true,
-            tree: appsTree
-          }
-        ]
+            tree: appsTree,
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'apps..common...buttons');
@@ -512,7 +534,7 @@ describe('extractSubtree', () => {
       const commonTree: ResourceTreeNode = {
         folderPathSegments: ['apps', 'common'],
         resources: [],
-        children: []
+        children: [],
       };
 
       const appsTree: ResourceTreeNode = {
@@ -523,9 +545,9 @@ describe('extractSubtree', () => {
             name: 'common',
             fullPathSegments: ['apps', 'common'],
             loaded: true,
-            tree: commonTree
-          }
-        ]
+            tree: commonTree,
+          },
+        ],
       };
 
       const tree: ResourceTreeNode = {
@@ -536,9 +558,9 @@ describe('extractSubtree', () => {
             name: 'apps',
             fullPathSegments: ['apps'],
             loaded: true,
-            tree: appsTree
-          }
-        ]
+            tree: appsTree,
+          },
+        ],
       };
 
       const result = extractSubtree(tree, '..apps...common..');
@@ -552,13 +574,13 @@ describe('extractSubtree', () => {
       const dialogsTree: ResourceTreeNode = {
         folderPathSegments: ['apps', 'common', 'dialogs'],
         resources: [],
-        children: []
+        children: [],
       };
 
       const buttonsTree: ResourceTreeNode = {
         folderPathSegments: ['apps', 'common', 'buttons'],
         resources: [],
-        children: []
+        children: [],
       };
 
       const commonTree: ResourceTreeNode = {
@@ -570,24 +592,26 @@ describe('extractSubtree', () => {
             translations: { es: 'Etiqueta común' },
             metadata: {
               baseChecksum: 'label-hash',
-              translations: { es: { checksum: 'label-es', status: 'verified' } }
-            }
-          }
+              translations: {
+                es: { checksum: 'label-es', status: 'verified' },
+              },
+            },
+          },
         ],
         children: [
           {
             name: 'buttons',
             fullPathSegments: ['apps', 'common', 'buttons'],
             loaded: true,
-            tree: buttonsTree
+            tree: buttonsTree,
           },
           {
             name: 'dialogs',
             fullPathSegments: ['apps', 'common', 'dialogs'],
             loaded: true,
-            tree: dialogsTree
-          }
-        ]
+            tree: dialogsTree,
+          },
+        ],
       };
 
       const appsTree: ResourceTreeNode = {
@@ -598,9 +622,9 @@ describe('extractSubtree', () => {
             name: 'common',
             fullPathSegments: ['apps', 'common'],
             loaded: true,
-            tree: commonTree
-          }
-        ]
+            tree: commonTree,
+          },
+        ],
       };
 
       const tree: ResourceTreeNode = {
@@ -611,9 +635,9 @@ describe('extractSubtree', () => {
             name: 'apps',
             fullPathSegments: ['apps'],
             loaded: true,
-            tree: appsTree
-          }
-        ]
+            tree: appsTree,
+          },
+        ],
       };
 
       const result = extractSubtree(tree, 'apps.common');

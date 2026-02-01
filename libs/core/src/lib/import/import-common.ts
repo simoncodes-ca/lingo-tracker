@@ -41,7 +41,7 @@ export function detectImportFormat(filePath: string): ImportFormat {
       return 'json';
     default:
       throw new Error(
-        `Cannot auto-detect format from extension ".${extension}". Please specify --format explicitly.`
+        `Cannot auto-detect format from extension ".${extension}". Please specify --format explicitly.`,
       );
   }
 }
@@ -101,7 +101,7 @@ export function validateLocale(locale: string): void {
   const localePattern = /^[a-z]{2,3}(-[a-z]{2,4})?$/i;
   if (!localePattern.test(locale)) {
     throw new Error(
-      `Invalid locale format: "${locale}". Expected format: "en", "es", "fr-ca", etc.`
+      `Invalid locale format: "${locale}". Expected format: "en", "es", "fr-ca", etc.`,
     );
   }
 }
@@ -130,7 +130,7 @@ export function detectHierarchicalConflicts(keys: string[]): string[] {
   for (const key of keys) {
     // Check if any other key starts with this key followed by a dot
     const hasChildren = keys.some(
-      (otherKey) => otherKey !== key && otherKey.startsWith(`${key}.`)
+      (otherKey) => otherKey !== key && otherKey.startsWith(`${key}.`),
     );
 
     if (hasChildren) {
@@ -165,4 +165,3 @@ export function detectDuplicateKeys(keys: string[]): Map<string, number> {
 
   return duplicates;
 }
-

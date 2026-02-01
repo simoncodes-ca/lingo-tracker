@@ -1,6 +1,14 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatButtonToggleModule, MatButtonToggleChange } from '@angular/material/button-toggle';
+import {
+  MatButtonToggleModule,
+  MatButtonToggleChange,
+} from '@angular/material/button-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -24,7 +32,16 @@ type DensityMode = 'compact' | 'medium' | 'full';
   selector: 'app-translation-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslationSearch, LocaleFilter, StatusFilter, MatButtonToggleModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [
+    CommonModule,
+    TranslationSearch,
+    LocaleFilter,
+    StatusFilter,
+    MatButtonToggleModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+  ],
   templateUrl: './translation-main-header.html',
   styleUrl: './translation-main-header.scss',
 })
@@ -75,15 +92,17 @@ export class TranslationMainHeader {
       data: dialogData,
     });
 
-    dialogRef.afterClosed().subscribe((result: TranslationEditorResult | undefined) => {
-      if (result?.success) {
-        this.store.selectFolder(this.store.currentFolderPath());
-        this.snackBar.open('Translation created successfully', '', {
-          duration: 2000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .subscribe((result: TranslationEditorResult | undefined) => {
+        if (result?.success) {
+          this.store.selectFolder(this.store.currentFolderPath());
+          this.snackBar.open('Translation created successfully', '', {
+            duration: 2000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom',
+          });
+        }
+      });
   }
 }

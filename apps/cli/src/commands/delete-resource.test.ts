@@ -9,7 +9,7 @@ vi.mock('@simoncodes-ca/core', async () => {
   const actual = await vi.importActual('@simoncodes-ca/core');
   return {
     ...actual,
-    deleteResource: vi.fn()
+    deleteResource: vi.fn(),
   };
 });
 
@@ -29,52 +29,54 @@ describe('deleteResourceCommand', () => {
     baseLocale: 'en',
     locales: ['en', 'fr'],
     collections: {
-      'default': {
-        translationsFolder: 'src/i18n'
-      }
-    }
+      default: {
+        translationsFolder: 'src/i18n',
+      },
+    },
   };
 
   it('should delete a single resource successfully', async () => {
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
     mockDeleteResource.mockReturnValue({
-      entriesDeleted: 1
+      entriesDeleted: 1,
     });
 
     const options = {
       collection: 'default',
       key: 'apps.common.buttons.ok',
-      yes: true
+      yes: true,
     };
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith(
-      '/test/project/src/i18n',
-      { keys: ['apps.common.buttons.ok'] }
-    );
+    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+      keys: ['apps.common.buttons.ok'],
+    });
   });
 
   it('should delete multiple resources from comma-separated keys', async () => {
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
     mockDeleteResource.mockReturnValue({
-      entriesDeleted: 3
+      entriesDeleted: 3,
     });
 
     const options = {
       collection: 'default',
       key: 'apps.common.buttons.ok, apps.common.buttons.cancel, apps.common.buttons.save',
-      yes: true
+      yes: true,
     };
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith(
-      '/test/project/src/i18n',
-      { keys: ['apps.common.buttons.ok', 'apps.common.buttons.cancel', 'apps.common.buttons.save'] }
-    );
+    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+      keys: [
+        'apps.common.buttons.ok',
+        'apps.common.buttons.cancel',
+        'apps.common.buttons.save',
+      ],
+    });
   });
 
   it('should handle partial success with errors', async () => {
@@ -82,23 +84,24 @@ describe('deleteResourceCommand', () => {
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
     mockDeleteResource.mockReturnValue({
       entriesDeleted: 2,
-      errors: [
-        { key: 'apps.common.invalid', error: 'Resource not found' }
-      ]
+      errors: [{ key: 'apps.common.invalid', error: 'Resource not found' }],
     });
 
     const options = {
       collection: 'default',
       key: 'apps.common.buttons.ok, apps.common.buttons.cancel, apps.common.invalid',
-      yes: true
+      yes: true,
     };
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith(
-      '/test/project/src/i18n',
-      { keys: ['apps.common.buttons.ok', 'apps.common.buttons.cancel', 'apps.common.invalid'] }
-    );
+    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+      keys: [
+        'apps.common.buttons.ok',
+        'apps.common.buttons.cancel',
+        'apps.common.invalid',
+      ],
+    });
   });
 
   it('should not delete if config does not exist', async () => {
@@ -109,7 +112,7 @@ describe('deleteResourceCommand', () => {
     const options = {
       collection: 'default',
       key: 'apps.common.buttons.ok',
-      yes: true
+      yes: true,
     };
 
     await deleteResourceCommand(options);
@@ -124,7 +127,7 @@ describe('deleteResourceCommand', () => {
     const options = {
       collection: 'nonexistent',
       key: 'apps.common.buttons.ok',
-      yes: true
+      yes: true,
     };
 
     await deleteResourceCommand(options);
@@ -136,21 +139,20 @@ describe('deleteResourceCommand', () => {
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
     mockDeleteResource.mockReturnValue({
-      entriesDeleted: 2
+      entriesDeleted: 2,
     });
 
     const options = {
       collection: 'default',
       key: 'apps.common.buttons.ok,  , apps.common.buttons.cancel,  ',
-      yes: true
+      yes: true,
     };
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith(
-      '/test/project/src/i18n',
-      { keys: ['apps.common.buttons.ok', 'apps.common.buttons.cancel'] }
-    );
+    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+      keys: ['apps.common.buttons.ok', 'apps.common.buttons.cancel'],
+    });
   });
 
   it('should handle zero deletions', async () => {
@@ -158,22 +160,19 @@ describe('deleteResourceCommand', () => {
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
     mockDeleteResource.mockReturnValue({
       entriesDeleted: 0,
-      errors: [
-        { key: 'apps.common.notfound', error: 'Resource not found' }
-      ]
+      errors: [{ key: 'apps.common.notfound', error: 'Resource not found' }],
     });
 
     const options = {
       collection: 'default',
       key: 'apps.common.notfound',
-      yes: true
+      yes: true,
     };
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith(
-      '/test/project/src/i18n',
-      { keys: ['apps.common.notfound'] }
-    );
+    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+      keys: ['apps.common.notfound'],
+    });
   });
 });

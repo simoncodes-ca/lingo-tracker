@@ -19,7 +19,10 @@ vi.mock('../utils', async () => {
     loadConfiguration: vi.fn(),
     parseCommaSeparatedList: vi.fn((input: string | undefined) => {
       if (!input) return undefined;
-      const result = input.split(',').map((item) => item.trim()).filter(Boolean);
+      const result = input
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
       return result.length > 0 ? result : undefined;
     }),
   };
@@ -89,7 +92,9 @@ describe('bundleCommand', () => {
 
       await bundleCommand({});
 
-      expect(utils.loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
+      expect(utils.loadConfiguration).toHaveBeenCalledWith({
+        exitOnError: false,
+      });
     });
 
     it('should error when no bundles are configured', async () => {
@@ -102,7 +107,9 @@ describe('bundleCommand', () => {
 
       await bundleCommand({});
 
-      expect(console.log).toHaveBeenCalledWith('❌ No bundles configured in .lingo-tracker.json');
+      expect(console.log).toHaveBeenCalledWith(
+        '❌ No bundles configured in .lingo-tracker.json',
+      );
     });
 
     it('should error when bundles property is missing', async () => {
@@ -116,7 +123,9 @@ describe('bundleCommand', () => {
 
       await bundleCommand({});
 
-      expect(console.log).toHaveBeenCalledWith('❌ No bundles configured in .lingo-tracker.json');
+      expect(console.log).toHaveBeenCalledWith(
+        '❌ No bundles configured in .lingo-tracker.json',
+      );
     });
   });
 
@@ -128,12 +137,12 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'core',
-        })
+        }),
       );
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'admin',
-        })
+        }),
       );
     });
 
@@ -144,7 +153,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'core',
-        })
+        }),
       );
     });
 
@@ -155,12 +164,12 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'core',
-        })
+        }),
       );
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'admin',
-        })
+        }),
       );
     });
 
@@ -173,7 +182,9 @@ describe('bundleCommand', () => {
     it('should show error for non-existent bundle', async () => {
       await bundleCommand({ name: 'nonexistent' });
 
-      expect(console.log).toHaveBeenCalledWith('❌ Bundle "nonexistent" not found.');
+      expect(console.log).toHaveBeenCalledWith(
+        '❌ Bundle "nonexistent" not found.',
+      );
       expect(mockGenerateBundle).not.toHaveBeenCalled();
     });
   });
@@ -185,7 +196,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           locales: ['en'],
-        })
+        }),
       );
     });
 
@@ -195,7 +206,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           locales: ['en', 'fr'],
-        })
+        }),
       );
     });
 
@@ -205,7 +216,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           locales: ['en', 'fr', 'es'],
-        })
+        }),
       );
     });
 
@@ -215,7 +226,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           locales: undefined,
-        })
+        }),
       );
     });
   });
@@ -309,7 +320,7 @@ describe('bundleCommand', () => {
       await bundleCommand({ name: 'core' });
 
       expect(console.log).toHaveBeenCalledWith(
-        '  └─ Types: src/generated/core-tokens.ts (100 keys)'
+        '  └─ Types: src/generated/core-tokens.ts (100 keys)',
       );
     });
 
@@ -331,7 +342,7 @@ describe('bundleCommand', () => {
       await bundleCommand({ name: 'core' });
 
       expect(console.log).toHaveBeenCalledWith(
-        '  └─ Types: Skipped (empty-bundle)'
+        '  └─ Types: Skipped (empty-bundle)',
       );
     });
 
@@ -347,7 +358,7 @@ describe('bundleCommand', () => {
       await bundleCommand({ name: 'core' });
 
       expect(console.log).toHaveBeenCalledWith(
-        '  └─ Types: Skipped (no typeDist configured)'
+        '  └─ Types: Skipped (no typeDist configured)',
       );
     });
   });
@@ -386,7 +397,9 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core,admin' });
 
-      expect(console.log).toHaveBeenCalledWith('⚠️  1 bundle(s) failed to generate');
+      expect(console.log).toHaveBeenCalledWith(
+        '⚠️  1 bundle(s) failed to generate',
+      );
     });
   });
 
@@ -409,7 +422,7 @@ describe('bundleCommand', () => {
             message: 'Select bundle to generate',
           }),
         ]),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -434,7 +447,7 @@ describe('bundleCommand', () => {
       expect(mockGenerateBundle).toHaveBeenCalledWith(
         expect.objectContaining({
           bundleKey: 'core',
-        })
+        }),
       );
     });
 
@@ -443,7 +456,9 @@ describe('bundleCommand', () => {
         throw new Error('Bundle generation cancelled');
       });
 
-      await expect(bundleCommand({})).rejects.toThrow('Bundle generation cancelled');
+      await expect(bundleCommand({})).rejects.toThrow(
+        'Bundle generation cancelled',
+      );
     });
   });
 });

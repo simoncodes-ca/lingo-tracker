@@ -10,7 +10,7 @@ import { ResourceTreeNode, ResourceTreeEntry } from './load-resource-tree';
  */
 export function extractSubtree(
   tree: ResourceTreeNode,
-  path: string
+  path: string,
 ): ResourceTreeNode | null {
   // Handle empty path - return full tree
   if (!path || path.trim() === '') {
@@ -32,7 +32,7 @@ export function extractSubtree(
   for (const segment of pathSegments) {
     // Find child matching this segment
     const matchingChild = currentNode.children.find(
-      (child) => child.name === segment
+      (child) => child.name === segment,
     );
 
     if (!matchingChild) {
@@ -59,7 +59,7 @@ export function extractSubtree(
  * @returns Array of all resource entries found in the subtree
  */
 export function extractResourcesRecursively(
-  node: ResourceTreeNode
+  node: ResourceTreeNode,
 ): ResourceTreeEntry[] {
   const allResources: ResourceTreeEntry[] = [...node.resources];
   const stack = [...node.children];

@@ -111,9 +111,7 @@ export interface TranslationEditorResult {
   ],
 })
 export class TranslationEditorDialog implements OnInit, OnDestroy {
-  private readonly dialogRef = inject(
-    MatDialogRef<TranslationEditorDialog>
-  );
+  private readonly dialogRef = inject(MatDialogRef<TranslationEditorDialog>);
   private readonly dialog = inject(MatDialog);
   private readonly browserApi = inject(BrowserApiService);
   private readonly snackBar = inject(MatSnackBar);
@@ -132,10 +130,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
 
   readonly form = new FormGroup({
     key: new FormControl<string>('', {
-      validators: [
-        Validators.required,
-        Validators.pattern(/^[a-zA-Z0-9_-]+$/),
-      ],
+      validators: [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)],
       nonNullable: true,
     }),
     baseValue: new FormControl<string>('', {
@@ -168,8 +163,8 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
 
   readonly otherLocales = computed(() =>
     this.data.availableLocales.filter(
-      (locale) => locale !== this.data.baseLocale
-    )
+      (locale) => locale !== this.data.baseLocale,
+    ),
   );
 
   readonly translationStatusOptions: TranslationStatus[] = [
@@ -181,19 +176,17 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
 
   readonly isEditMode = computed(() => this.data.mode === 'edit');
   readonly dialogTitle = computed(() =>
-    this.isEditMode() ? 'Edit Translation' : 'Create Translation'
+    this.isEditMode() ? 'Edit Translation' : 'Create Translation',
   );
   readonly dialogSubtitle = computed(() =>
     this.isEditMode()
       ? 'Update translation values and metadata'
-      : 'Add a new translation entry to your collection'
+      : 'Add a new translation entry to your collection',
   );
   readonly saveButtonLabel = computed(() =>
-    this.isEditMode() ? 'Update Translation' : 'Save Translation'
+    this.isEditMode() ? 'Update Translation' : 'Save Translation',
   );
-  readonly displayedFolderPath = computed(() =>
-    this.data.folderPath || 'root'
-  );
+  readonly displayedFolderPath = computed(() => this.data.folderPath || 'root');
 
   ngOnInit(): void {
     // Initialize folder path from dialog data
@@ -329,10 +322,10 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
                   totalFound: 0,
                   limited: false,
                 });
-              })
+              }),
             );
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe((searchResults) => {
         this.isSearchingSimilar.set(false);
@@ -436,7 +429,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
 
   #handleEditSubmit(
     formValue: TranslationFormValue,
-    commentValue: string
+    commentValue: string,
   ): void {
     if (!this.data.resource) {
       this.errorMessage.set('Cannot update: resource data is missing');
@@ -457,13 +450,13 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
     if (hasKeyChanged) {
       this.isSubmitting.set(false);
       this.errorMessage.set(
-        'Key renaming is not yet supported. Please use the same key or create a new resource.'
+        'Key renaming is not yet supported. Please use the same key or create a new resource.',
       );
       return;
     }
 
     const filledTranslations = formValue.translations.filter(
-      (translation) => translation.value.trim().length > 0
+      (translation) => translation.value.trim().length > 0,
     );
 
     const locales: Record<string, { value: string }> = {};
@@ -508,7 +501,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
 
   #handleCreateSubmit(
     formValue: TranslationFormValue,
-    commentValue: string
+    commentValue: string,
   ): void {
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
@@ -588,9 +581,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       }
 
       this.errorMessage.set(
-        error.error?.message ||
-          error.message ||
-          'Failed to create translation'
+        error.error?.message || error.message || 'Failed to create translation',
       );
       return;
     }
@@ -613,9 +604,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       }
 
       this.errorMessage.set(
-        error.error?.message ||
-          error.message ||
-          'Failed to update translation'
+        error.error?.message || error.message || 'Failed to update translation',
       );
       return;
     }
@@ -687,9 +676,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
     return this.localeCharacterCounts()[locale] || 0;
   }
 
-  getLocaleFormGroup(
-    index: number
-  ): FormGroup<{
+  getLocaleFormGroup(index: number): FormGroup<{
     locale: FormControl<string>;
     value: FormControl<string>;
     status: FormControl<TranslationStatus>;

@@ -65,7 +65,9 @@ export function readJsonFile<T>(options: JsonFileReadOptions<T>): T {
   } catch (error) {
     const context = errorContext ? `${errorContext}: ` : '';
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`${context}${ErrorMessages.jsonParseFailed(filePath, errorMessage)}`);
+    throw new Error(
+      `${context}${ErrorMessages.jsonParseFailed(filePath, errorMessage)}`,
+    );
   }
 }
 
@@ -111,12 +113,12 @@ export function writeJsonFile(options: JsonFileWriteOptions): void {
  */
 export function readResourceEntries(
   filePath: string,
-  defaultValue?: ResourceEntries
+  defaultValue?: ResourceEntries,
 ): ResourceEntries {
   return readJsonFile<ResourceEntries>({
     filePath,
     defaultValue,
-    errorContext: 'Reading resource entries'
+    errorContext: 'Reading resource entries',
   });
 }
 
@@ -125,12 +127,12 @@ export function readResourceEntries(
  */
 export function readTrackerMetadata(
   filePath: string,
-  defaultValue?: TrackerMetadata
+  defaultValue?: TrackerMetadata,
 ): TrackerMetadata {
   return readJsonFile<TrackerMetadata>({
     filePath,
     defaultValue,
-    errorContext: 'Reading tracker metadata'
+    errorContext: 'Reading tracker metadata',
   });
 }
 
@@ -140,6 +142,6 @@ export function readTrackerMetadata(
 export function readLingoConfig(filePath: string): LingoTrackerConfig {
   return readJsonFile<LingoTrackerConfig>({
     filePath,
-    errorContext: 'Reading LingoTracker configuration'
+    errorContext: 'Reading LingoTracker configuration',
   });
 }

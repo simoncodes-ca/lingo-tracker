@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import {
+  provideHttpClientTesting,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { firstValueFrom } from 'rxjs';
 import { BrowserApiService } from './browser-api.service';
@@ -47,11 +50,19 @@ describe('BrowserApiService', () => {
         children: [],
       };
 
-      const result$ = service.getResourceTree(collectionName, folderPath, includeNested);
+      const result$ = service.getResourceTree(
+        collectionName,
+        folderPath,
+        includeNested,
+      );
       const resultPromise = firstValueFrom(result$);
 
       const req = httpMock.expectOne(
-        `/api/collections/${encodeURIComponent(collectionName)}/resources/tree?path=${encodeURIComponent(folderPath)}&includeNested=${includeNested}`
+        `/api/collections/${encodeURIComponent(
+          collectionName,
+        )}/resources/tree?path=${encodeURIComponent(
+          folderPath,
+        )}&includeNested=${includeNested}`,
       );
       expect(req.request.method).toBe('GET');
       req.flush(mockResponse);
@@ -74,7 +85,9 @@ describe('BrowserApiService', () => {
       // Trigger the HTTP call asynchronously
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/${encodeURIComponent(collectionName)}/resources/tree?path=&includeNested=false`
+          `/api/collections/${encodeURIComponent(
+            collectionName,
+          )}/resources/tree?path=&includeNested=false`,
         );
         req.flush(mockResponse);
       });
@@ -104,15 +117,22 @@ describe('BrowserApiService', () => {
         limited: false,
       };
 
-      const result$ = service.searchTranslations(collectionName, query, maxResults);
+      const result$ = service.searchTranslations(
+        collectionName,
+        query,
+        maxResults,
+      );
 
       // Trigger the HTTP call asynchronously
       queueMicrotask(() => {
         const req = httpMock.expectOne(
           (request) =>
-            request.url === `/api/collections/${encodeURIComponent(collectionName)}/resources/search` &&
+            request.url ===
+              `/api/collections/${encodeURIComponent(
+                collectionName,
+              )}/resources/search` &&
             request.params.get('query') === query &&
-            request.params.get('maxResults') === maxResults.toString()
+            request.params.get('maxResults') === maxResults.toString(),
         );
         expect(req.request.method).toBe('GET');
         req.flush(mockResults);
@@ -139,7 +159,7 @@ describe('BrowserApiService', () => {
         const req = httpMock.expectOne(
           (request) =>
             request.url.includes('/search') &&
-            request.params.get('maxResults') === '100'
+            request.params.get('maxResults') === '100',
         );
         req.flush(mockResults);
       });
@@ -185,8 +205,8 @@ describe('BrowserApiService', () => {
       const result$ = service.searchTranslations(collectionName, query);
 
       queueMicrotask(() => {
-        const req = httpMock.expectOne(
-          (request) => request.url.includes(encodeURIComponent(collectionName))
+        const req = httpMock.expectOne((request) =>
+          request.url.includes(encodeURIComponent(collectionName)),
         );
         req.flush(mockResults);
       });
@@ -213,7 +233,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/${encodeURIComponent(collectionName)}/resources`
+          `/api/collections/${encodeURIComponent(collectionName)}/resources`,
         );
         expect(req.request.method).toBe('POST');
         expect(req.request.body).toEqual(createDto);
@@ -241,7 +261,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/my%20collection/resources`
+          `/api/collections/my%20collection/resources`,
         );
         req.flush(mockResponse);
       });
@@ -268,7 +288,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/${encodeURIComponent(collectionName)}/resources`
+          `/api/collections/${encodeURIComponent(collectionName)}/resources`,
         );
         expect(req.request.method).toBe('PATCH');
         expect(req.request.body).toEqual(updateDto);
@@ -299,7 +319,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/${encodeURIComponent(collectionName)}/resources`
+          `/api/collections/${encodeURIComponent(collectionName)}/resources`,
         );
         expect(req.request.body).toEqual(updateDto);
         req.flush(mockResponse);
@@ -325,7 +345,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/${encodeURIComponent(collectionName)}/resources`
+          `/api/collections/${encodeURIComponent(collectionName)}/resources`,
         );
         expect(req.request.body).toEqual(updateDto);
         req.flush(mockResponse);
@@ -351,7 +371,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/my%20collection/resources`
+          `/api/collections/my%20collection/resources`,
         );
         req.flush(mockResponse);
       });
@@ -374,7 +394,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/${encodeURIComponent(collectionName)}/resources`
+          `/api/collections/${encodeURIComponent(collectionName)}/resources`,
         );
         expect(req.request.method).toBe('DELETE');
         expect(req.request.body).toEqual({ keys: resourceKeys });
@@ -398,7 +418,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/${encodeURIComponent(collectionName)}/resources`
+          `/api/collections/${encodeURIComponent(collectionName)}/resources`,
         );
         expect(req.request.body).toEqual({ keys: resourceKeys });
         req.flush(mockResponse);
@@ -421,7 +441,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/${encodeURIComponent(collectionName)}/resources`
+          `/api/collections/${encodeURIComponent(collectionName)}/resources`,
         );
         req.flush(mockResponse);
       });
@@ -444,7 +464,7 @@ describe('BrowserApiService', () => {
 
       queueMicrotask(() => {
         const req = httpMock.expectOne(
-          `/api/collections/my%20collection%20with%20spaces/resources`
+          `/api/collections/my%20collection%20with%20spaces/resources`,
         );
         req.flush(mockResponse);
       });

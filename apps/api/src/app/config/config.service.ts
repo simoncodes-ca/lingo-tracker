@@ -24,7 +24,9 @@ export class ConfigService {
       if (this.isNodeError(error) && error.code === 'ENOENT') {
         throw new NotFoundException('Configuration file not found');
       }
-      throw new InternalServerErrorException('Failed to read configuration file');
+      throw new InternalServerErrorException(
+        'Failed to read configuration file',
+      );
     }
 
     try {

@@ -1,7 +1,10 @@
 import { resolve } from 'node:path';
 import { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { CONFIG_FILENAME } from '../../constants';
-import { readLingoConfig, writeJsonFile } from '../file-io/json-file-operations';
+import {
+  readLingoConfig,
+  writeJsonFile,
+} from '../file-io/json-file-operations';
 
 export interface ConfigFileOperations {
   /** Read the configuration file */
@@ -9,7 +12,9 @@ export interface ConfigFileOperations {
   /** Write the configuration file */
   write(config: LingoTrackerConfig): void;
   /** Update configuration with a partial modification */
-  update(updater: (config: LingoTrackerConfig) => LingoTrackerConfig): LingoTrackerConfig;
+  update(
+    updater: (config: LingoTrackerConfig) => LingoTrackerConfig,
+  ): LingoTrackerConfig;
 }
 
 export interface ConfigFileParams {
@@ -24,7 +29,7 @@ export interface ConfigFileParams {
  * Provides a clean interface for reading and writing config files.
  */
 export function createConfigFileOperations(
-  params: ConfigFileParams = {}
+  params: ConfigFileParams = {},
 ): ConfigFileOperations {
   const cwd = params.cwd ?? process.cwd();
   const validate = params.validate ?? true;
@@ -63,7 +68,9 @@ export function createConfigFileOperations(
       }
     },
 
-    update(updater: (config: LingoTrackerConfig) => LingoTrackerConfig): LingoTrackerConfig {
+    update(
+      updater: (config: LingoTrackerConfig) => LingoTrackerConfig,
+    ): LingoTrackerConfig {
       const currentConfig = this.read();
       const updatedConfig = updater(currentConfig);
       this.write(updatedConfig);
@@ -95,7 +102,7 @@ function validateConfig(config: LingoTrackerConfig): void {
  */
 export function updateConfig(
   updater: (config: LingoTrackerConfig) => LingoTrackerConfig,
-  cwd?: string
+  cwd?: string,
 ): LingoTrackerConfig {
   return createConfigFileOperations({ cwd }).update(updater);
 }

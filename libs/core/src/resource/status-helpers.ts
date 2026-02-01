@@ -29,7 +29,7 @@ export function getTranslatedStatus(): TranslationStatus {
  */
 export function shouldMarkStale(
   currentMetadata: LocaleMetadata,
-  newBaseChecksum: string
+  newBaseChecksum: string,
 ): boolean {
   // Only mark stale if:
   // 1. There's a previous baseChecksum (meaning this was a translated entry)
@@ -61,7 +61,7 @@ export function createBaseLocaleMetadata(checksum: string): LocaleMetadata {
  */
 export function createTranslatedMetadata(
   checksum: string,
-  baseChecksum: string
+  baseChecksum: string,
 ): LocaleMetadata {
   return {
     checksum,
@@ -79,7 +79,7 @@ export function createTranslatedMetadata(
  */
 export function updateMetadataForBaseChange(
   metadata: LocaleMetadata,
-  newBaseChecksum: string
+  newBaseChecksum: string,
 ): LocaleMetadata {
   if (shouldMarkStale(metadata, newBaseChecksum)) {
     return {

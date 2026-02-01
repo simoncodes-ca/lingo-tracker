@@ -1,5 +1,8 @@
 import { resolve } from 'node:path';
-import type { LingoTrackerConfig, LingoTrackerCollection } from '@simoncodes-ca/core';
+import type {
+  LingoTrackerConfig,
+  LingoTrackerCollection,
+} from '@simoncodes-ca/core';
 
 /**
  * Resolved collection data with computed paths
@@ -26,7 +29,7 @@ export interface ResolvedCollection {
 export function resolveCollection(
   collectionName: string,
   config: LingoTrackerConfig,
-  baseDirectory: string
+  baseDirectory: string,
 ): ResolvedCollection | null {
   const collectionConfig = config.collections?.[collectionName];
 
@@ -38,6 +41,9 @@ export function resolveCollection(
   return {
     name: collectionName,
     config: collectionConfig,
-    translationsFolderPath: resolve(baseDirectory, collectionConfig.translationsFolder),
+    translationsFolderPath: resolve(
+      baseDirectory,
+      collectionConfig.translationsFolder,
+    ),
   };
 }

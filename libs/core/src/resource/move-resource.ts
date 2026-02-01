@@ -30,15 +30,32 @@ export interface MoveResourceResult {
  */
 export function moveResource(
   translationsFolder: string,
-  params: MoveResourceParams
+  params: MoveResourceParams,
 ): MoveResourceResult {
-  const { source, destination, override = false, destinationTranslationsFolder } = params;
+  const {
+    source,
+    destination,
+    override = false,
+    destinationTranslationsFolder,
+  } = params;
   const targetFolder = destinationTranslationsFolder || translationsFolder;
 
   if (source.endsWith('*')) {
-    return moveResourcesByPattern(translationsFolder, source, destination, override, targetFolder);
+    return moveResourcesByPattern(
+      translationsFolder,
+      source,
+      destination,
+      override,
+      targetFolder,
+    );
   } else {
-    return moveSingleResource(translationsFolder, source, destination, override, targetFolder);
+    return moveSingleResource(
+      translationsFolder,
+      source,
+      destination,
+      override,
+      targetFolder,
+    );
   }
 }
 
@@ -47,9 +64,13 @@ function moveSingleResource(
   sourceKey: string,
   destinationKey: string,
   override: boolean,
-  destinationTranslationsFolder: string
+  destinationTranslationsFolder: string,
 ): MoveResourceResult {
-  const result: MoveResourceResult = { movedCount: 0, warnings: [], errors: [] };
+  const result: MoveResourceResult = {
+    movedCount: 0,
+    warnings: [],
+    errors: [],
+  };
 
   try {
     validateKey(sourceKey);
@@ -61,7 +82,8 @@ function moveSingleResource(
 
   // 1. Check if source exists
   const sourceResolved = resolveResourceKey(sourceKey);
-  const { folderPath: srcFolder, entryKey: srcEntryKey } = splitResolvedKey(sourceResolved);
+  const { folderPath: srcFolder, entryKey: srcEntryKey } =
+    splitResolvedKey(sourceResolved);
   const srcFullPath = srcFolder.length
     ? join(sourceTranslationsFolder, ...srcFolder)
     : sourceTranslationsFolder;
@@ -89,7 +111,8 @@ function moveSingleResource(
 
   // 2. Check if destination exists (Collision Check)
   const destResolved = resolveResourceKey(destinationKey);
-  const { folderPath: destFolder, entryKey: destEntryKey } = splitResolvedKey(destResolved);
+  const { folderPath: destFolder, entryKey: destEntryKey } =
+    splitResolvedKey(destResolved);
   const destFullPath = destFolder.length
     ? join(destinationTranslationsFolder, ...destFolder)
     : destinationTranslationsFolder;
@@ -97,9 +120,13 @@ function moveSingleResource(
 
   if (existsSync(destResourcePath)) {
     try {
-      const destEntries: ResourceEntries = JSON.parse(readFileSync(destResourcePath, 'utf8'));
+      const destEntries: ResourceEntries = JSON.parse(
+        readFileSync(destResourcePath, 'utf8'),
+      );
       if (destEntryKey in destEntries && !override) {
-        result.warnings.push(`Destination key already exists: ${destinationKey}. Use override option to force move.`);
+        result.warnings.push(
+          `Destination key already exists: ${destinationKey}. Use override option to force move.`,
+        );
         return result;
       }
     } catch {
@@ -108,7 +135,11 @@ function moveSingleResource(
   }
 
   // 3. Perform Move
-  const translations: Array<{ locale: string; value: string; status: TranslationStatus }> = [];
+  const translations: Array<{
+    locale: string;
+    value: string;
+    status: TranslationStatus;
+  }> = [];
 
   Object.keys(sourceData).forEach((key) => {
     if (key !== 'source' && key !== 'comment' && key !== 'tags') {
@@ -129,7 +160,9 @@ function moveSingleResource(
       translations: translations,
     });
   } catch (error) {
-    result.errors.push(`Failed to create destination resource: ${(error as Error).message}`);
+    result.errors.push(
+      `Failed to create destination resource: ${(error as Error).message}`,
+    );
     return result;
   }
 
@@ -137,7 +170,11 @@ function moveSingleResource(
   try {
     deleteResource(sourceTranslationsFolder, { keys: [sourceKey] });
   } catch (error) {
-    result.warnings.push(`Resource moved to ${destinationKey} but failed to delete source ${sourceKey}: ${(error as Error).message}`);
+    result.warnings.push(
+      `Resource moved to ${destinationKey} but failed to delete source ${sourceKey}: ${
+        (error as Error).message
+      }`,
+    );
     // Even if delete failed, we count it as moved (or partially moved)
     result.movedCount++;
     return result;
@@ -152,9 +189,13 @@ function moveResourcesByPattern(
   pattern: string,
   destinationKey: string,
   override: boolean,
-  destinationTranslationsFolder: string
+  destinationTranslationsFolder: string,
 ): MoveResourceResult {
-  const result: MoveResourceResult = { movedCount: 0, warnings: [], errors: [] };
+  const result: MoveResourceResult = {
+    movedCount: 0,
+    warnings: [],
+    errors: [],
+  };
 
   const prefix = pattern.slice(0, -1); // remove '*'
   const cleanPrefix = prefix.endsWith('.') ? prefix.slice(0, -1) : prefix;
@@ -169,8 +210,10 @@ function moveResourcesByPattern(
     const resourcePath = join(currentPath, RESOURCE_ENTRIES_FILENAME);
     if (existsSync(resourcePath)) {
       try {
-        const entries: ResourceEntries = JSON.parse(readFileSync(resourcePath, 'utf8'));
-        Object.keys(entries).forEach(key => {
+        const entries: ResourceEntries = JSON.parse(
+          readFileSync(resourcePath, 'utf8'),
+        );
+        Object.keys(entries).forEach((key) => {
           keysToMove.push(`${currentKeyPrefix}.${key}`);
         });
       } catch (_e) {
@@ -203,7 +246,9 @@ function moveResourcesByPattern(
   if (existsSync(rootFolderPath)) {
     scanFolder(rootFolderPath, cleanPrefix);
   } else {
-    result.warnings.push(`No folder found for prefix ${cleanPrefix}. Nothing moved.`);
+    result.warnings.push(
+      `No folder found for prefix ${cleanPrefix}. Nothing moved.`,
+    );
     return result;
   }
 
@@ -212,7 +257,13 @@ function moveResourcesByPattern(
     const suffix = sourceKey.slice(cleanPrefix.length + 1); // +1 for dot
     const newKey = `${destinationKey}.${suffix}`;
 
-    const singleResult = moveSingleResource(sourceTranslationsFolder, sourceKey, newKey, override, destinationTranslationsFolder);
+    const singleResult = moveSingleResource(
+      sourceTranslationsFolder,
+      sourceKey,
+      newKey,
+      override,
+      destinationTranslationsFolder,
+    );
 
     result.movedCount += singleResult.movedCount;
     result.warnings.push(...singleResult.warnings);

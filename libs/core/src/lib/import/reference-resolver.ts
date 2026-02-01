@@ -62,7 +62,9 @@ export function hasReferences(value: string): boolean {
  * // ]
  * ```
  */
-export function extractReferences(value: string): Array<{ pattern: string; key: string }> {
+export function extractReferences(
+  value: string,
+): Array<{ pattern: string; key: string }> {
   const results: Array<{ pattern: string; key: string }> = [];
 
   // Pattern 1: {{t('key')}} or {{t("key")}}
@@ -103,7 +105,7 @@ function resolveKey(
   key: string,
   resourceMap: Map<string, string>,
   visited: Set<string>,
-  warnings: string[]
+  warnings: string[],
 ): string | null {
   // Check for circular reference
   if (visited.has(key)) {
@@ -193,7 +195,7 @@ export function resolveReferences(
   value: string,
   resourceMap: Map<string, string>,
   visited: Set<string> = new Set(),
-  warnings: string[] = []
+  warnings: string[] = [],
 ): string {
   if (!hasReferences(value)) {
     return value;
@@ -274,7 +276,7 @@ export function resolveReferences(
 export function resolveAllReferences(
   resources: ImportedResource[],
   applyResolution: boolean,
-  warnings: string[]
+  warnings: string[],
 ): ImportedResource[] {
   if (!applyResolution) {
     return resources;
@@ -292,7 +294,12 @@ export function resolveAllReferences(
   for (const resource of resources) {
     if (hasReferences(resource.value)) {
       const visited = new Set<string>();
-      const resolvedValue = resolveReferences(resource.value, resourceMap, visited, warnings);
+      const resolvedValue = resolveReferences(
+        resource.value,
+        resourceMap,
+        visited,
+        warnings,
+      );
 
       // Check for circular reference (value didn't change)
       if (resolvedValue === resource.value && hasReferences(resolvedValue)) {
@@ -300,7 +307,9 @@ export function resolveAllReferences(
         const refs = extractReferences(resolvedValue);
         for (const { key } of refs) {
           if (resourceMap.has(key)) {
-            warnings.push(`Circular reference detected for "${resource.key}" -> "${key}" - preserving literal`);
+            warnings.push(
+              `Circular reference detected for "${resource.key}" -> "${key}" - preserving literal`,
+            );
           }
         }
       }

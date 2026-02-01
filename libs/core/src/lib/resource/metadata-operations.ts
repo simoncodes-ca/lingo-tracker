@@ -39,7 +39,7 @@ export interface UpdateBaseValueParams {
  * @returns Complete metadata object ready to be written
  */
 export function createResourceMetadata(
-  params: CreateResourceMetadataParams
+  params: CreateResourceMetadataParams,
 ): ResourceEntryMetadata {
   const { baseValue, baseLocale, translations = [] } = params;
 
@@ -81,7 +81,7 @@ export function createResourceMetadata(
  * @returns Updated metadata object
  */
 export function updateMetadataForBaseValueChange(
-  params: UpdateBaseValueParams
+  params: UpdateBaseValueParams,
 ): ResourceEntryMetadata {
   const { metadata, newBaseValue, baseLocale } = params;
 

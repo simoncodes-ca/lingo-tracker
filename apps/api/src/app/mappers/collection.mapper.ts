@@ -1,7 +1,9 @@
 import { LingoTrackerCollection } from '@simoncodes-ca/core';
 import { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 
-export function mapCollectionToDto(collection: LingoTrackerCollection): LingoTrackerCollectionDto {
+export function mapCollectionToDto(
+  collection: LingoTrackerCollection,
+): LingoTrackerCollectionDto {
   return {
     translationsFolder: collection.translationsFolder,
     exportFolder: collection.exportFolder,
@@ -11,7 +13,9 @@ export function mapCollectionToDto(collection: LingoTrackerCollection): LingoTra
   };
 }
 
-export function mapDtoToCollection(dto: LingoTrackerCollectionDto): LingoTrackerCollection {
+export function mapDtoToCollection(
+  dto: LingoTrackerCollectionDto,
+): LingoTrackerCollection {
   return {
     translationsFolder: dto.translationsFolder,
     exportFolder: dto.exportFolder,
@@ -20,5 +24,3 @@ export function mapDtoToCollection(dto: LingoTrackerCollectionDto): LingoTracker
     locales: dto.locales ? [...dto.locales] : undefined,
   };
 }
-
-

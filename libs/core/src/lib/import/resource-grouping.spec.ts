@@ -10,7 +10,11 @@ describe('groupResourcesByFolder', () => {
       { key: 'errors.notFound', value: 'Not Found' },
     ];
 
-    const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
+    const groups = groupResourcesByFolder(
+      resources,
+      'src/translations',
+      '/project',
+    );
 
     expect(groups.size).toBe(2);
     expect(groups.has('src/translations/common')).toBe(true);
@@ -34,7 +38,11 @@ describe('groupResourcesByFolder', () => {
       { key: 'goodbye', value: 'Goodbye' },
     ];
 
-    const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
+    const groups = groupResourcesByFolder(
+      resources,
+      'src/translations',
+      '/project',
+    );
 
     expect(groups.size).toBe(1);
     expect(groups.has('src/translations')).toBe(true);
@@ -53,11 +61,17 @@ describe('groupResourcesByFolder', () => {
       { key: 'apps.admin.settings.general.title', value: 'General Settings' },
     ];
 
-    const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
+    const groups = groupResourcesByFolder(
+      resources,
+      'src/translations',
+      '/project',
+    );
 
     expect(groups.size).toBe(2);
     expect(groups.has('src/translations/apps/admin/users/list')).toBe(true);
-    expect(groups.has('src/translations/apps/admin/settings/general')).toBe(true);
+    expect(groups.has('src/translations/apps/admin/settings/general')).toBe(
+      true,
+    );
 
     const usersListGroup = groups.get('src/translations/apps/admin/users/list');
     expect(usersListGroup).toBeDefined();
@@ -67,17 +81,23 @@ describe('groupResourcesByFolder', () => {
   });
 
   it('should create correct file paths', () => {
-    const resources: ImportedResource[] = [
-      { key: 'common.ok', value: 'OK' },
-    ];
+    const resources: ImportedResource[] = [{ key: 'common.ok', value: 'OK' }];
 
-    const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
+    const groups = groupResourcesByFolder(
+      resources,
+      'src/translations',
+      '/project',
+    );
 
     const commonGroup = groups.get('src/translations/common');
     expect(commonGroup).toBeDefined();
     expect(commonGroup?.folderPath).toBe('src/translations/common');
-    expect(commonGroup?.entryResourcePath).toBe('/project/src/translations/common/resource_entries.json');
-    expect(commonGroup?.entryMetaPath).toBe('/project/src/translations/common/tracker_meta.json');
+    expect(commonGroup?.entryResourcePath).toBe(
+      '/project/src/translations/common/resource_entries.json',
+    );
+    expect(commonGroup?.entryMetaPath).toBe(
+      '/project/src/translations/common/tracker_meta.json',
+    );
   });
 
   it('should handle mixed levels of nesting', () => {
@@ -87,7 +107,11 @@ describe('groupResourcesByFolder', () => {
       { key: 'apps.admin.title', value: 'Admin' },
     ];
 
-    const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
+    const groups = groupResourcesByFolder(
+      resources,
+      'src/translations',
+      '/project',
+    );
 
     expect(groups.size).toBe(3);
     expect(groups.has('src/translations')).toBe(true);
@@ -103,11 +127,15 @@ describe('groupResourcesByFolder', () => {
         baseValue: 'OK',
         comment: 'Button text',
         tags: ['buttons'],
-        status: 'translated'
+        status: 'translated',
       },
     ];
 
-    const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
+    const groups = groupResourcesByFolder(
+      resources,
+      'src/translations',
+      '/project',
+    );
 
     const commonGroup = groups.get('src/translations/common');
     expect(commonGroup).toBeDefined();

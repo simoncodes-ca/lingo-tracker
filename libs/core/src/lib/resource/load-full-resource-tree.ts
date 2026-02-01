@@ -20,7 +20,9 @@ export interface LoadFullResourceTreeOptions {
  * @returns Complete resource tree with all descendants loaded
  * @throws Error if the translations folder does not exist
  */
-export function loadFullResourceTree(options: LoadFullResourceTreeOptions): ResourceTreeNode {
+export function loadFullResourceTree(
+  options: LoadFullResourceTreeOptions,
+): ResourceTreeNode {
   const { translationsFolder, cwd = process.cwd() } = options;
 
   // Load the entire tree by passing Infinity as depth
@@ -29,6 +31,6 @@ export function loadFullResourceTree(options: LoadFullResourceTreeOptions): Reso
     translationsFolder,
     path: '',
     depth: Infinity,
-    cwd
+    cwd,
   });
 }

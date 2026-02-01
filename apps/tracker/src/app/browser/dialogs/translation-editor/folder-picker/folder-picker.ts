@@ -70,7 +70,7 @@ export class FolderPicker {
   });
 
   toggleExpanded(): void {
-    this.isExpanded.update(expanded => !expanded);
+    this.isExpanded.update((expanded) => !expanded);
   }
 
   onFolderClick(folder: FolderNodeDto): void {

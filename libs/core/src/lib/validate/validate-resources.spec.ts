@@ -42,12 +42,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es', 'fr'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(true);
@@ -70,7 +72,7 @@ describe('validateResources', () => {
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(true);
@@ -95,12 +97,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(false);
@@ -128,12 +132,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(false);
@@ -156,12 +162,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(false);
@@ -189,12 +197,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(false);
@@ -223,12 +233,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es'],
-        { allowTranslated: true }
+        { allowTranslated: true },
       );
 
       expect(result.passed).toBe(true); // No failures, only warnings
@@ -273,12 +285,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es', 'fr', 'de'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(false);
@@ -288,9 +302,13 @@ describe('validateResources', () => {
 
       // Failures: new (de/ok), stale (es/cancel), translated (fr/ok, de/cancel)
       expect(result.failures).toHaveLength(4);
-      expect(result.failures.filter(f => f.status === 'new')).toHaveLength(1);
-      expect(result.failures.filter(f => f.status === 'stale')).toHaveLength(1);
-      expect(result.failures.filter(f => f.status === 'translated')).toHaveLength(2);
+      expect(result.failures.filter((f) => f.status === 'new')).toHaveLength(1);
+      expect(result.failures.filter((f) => f.status === 'stale')).toHaveLength(
+        1,
+      );
+      expect(
+        result.failures.filter((f) => f.status === 'translated'),
+      ).toHaveLength(2);
 
       // Successes: verified (es/ok, fr/cancel)
       expect(result.successes).toHaveLength(2);
@@ -331,12 +349,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es', 'fr'],
-        { allowTranslated: true }
+        { allowTranslated: true },
       );
 
       expect(result.passed).toBe(false); // Still fails due to new/stale
@@ -344,9 +364,13 @@ describe('validateResources', () => {
       expect(result.warnings).toHaveLength(1); // translated
       expect(result.successes).toHaveLength(1); // verified
 
-      expect(result.failures.filter(f => f.status === 'new')).toHaveLength(1);
-      expect(result.failures.filter(f => f.status === 'stale')).toHaveLength(1);
-      expect(result.warnings.filter(w => w.status === 'translated')).toHaveLength(1);
+      expect(result.failures.filter((f) => f.status === 'new')).toHaveLength(1);
+      expect(result.failures.filter((f) => f.status === 'stale')).toHaveLength(
+        1,
+      );
+      expect(
+        result.warnings.filter((w) => w.status === 'translated'),
+      ).toHaveLength(1);
     });
   });
 
@@ -371,7 +395,9 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [
@@ -379,7 +405,7 @@ describe('validateResources', () => {
           { name: 'app', path: '/translations/app' },
         ],
         ['es'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(false);
@@ -394,21 +420,26 @@ describe('validateResources', () => {
   describe('comprehensive validation - no early exit', () => {
     it('should collect ALL failures across all resources and locales', () => {
       // Create 100 resources with new status across 2 locales
-      const mockResources: LoadedResource[] = Array.from({ length: 100 }, (_, i) => ({
-        key: `key${i}`,
-        fullKey: `namespace.key${i}`,
-        source: `Source ${i}`,
-        translations: {},
-        status: { es: 'new', fr: 'new' },
-        collection: 'main',
-      }));
+      const mockResources: LoadedResource[] = Array.from(
+        { length: 100 },
+        (_, i) => ({
+          key: `key${i}`,
+          fullKey: `namespace.key${i}`,
+          source: `Source ${i}`,
+          translations: {},
+          status: { es: 'new', fr: 'new' },
+          collection: 'main',
+        }),
+      );
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es', 'fr'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       // Should report ALL 200 failures (100 resources × 2 locales)
@@ -450,12 +481,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es', 'fr'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(false);
@@ -463,9 +496,13 @@ describe('validateResources', () => {
 
       // Should collect all failures: 2 new, 1 stale, 2 translated = 5 total
       expect(result.failures).toHaveLength(5);
-      expect(result.failures.filter(f => f.status === 'new')).toHaveLength(2);
-      expect(result.failures.filter(f => f.status === 'stale')).toHaveLength(1);
-      expect(result.failures.filter(f => f.status === 'translated')).toHaveLength(2);
+      expect(result.failures.filter((f) => f.status === 'new')).toHaveLength(2);
+      expect(result.failures.filter((f) => f.status === 'stale')).toHaveLength(
+        1,
+      );
+      expect(
+        result.failures.filter((f) => f.status === 'translated'),
+      ).toHaveLength(2);
 
       // Should have 1 success
       expect(result.successes).toHaveLength(1);
@@ -510,7 +547,9 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [
@@ -518,7 +557,7 @@ describe('validateResources', () => {
           { name: 'collection2', path: '/c2' },
         ],
         ['es'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(false);
@@ -526,8 +565,12 @@ describe('validateResources', () => {
       expect(result.failures).toHaveLength(4);
 
       // Verify all collections are represented
-      const collection1Failures = result.failures.filter(f => f.collection === 'collection1');
-      const collection2Failures = result.failures.filter(f => f.collection === 'collection2');
+      const collection1Failures = result.failures.filter(
+        (f) => f.collection === 'collection1',
+      );
+      const collection2Failures = result.failures.filter(
+        (f) => f.collection === 'collection2',
+      );
       expect(collection1Failures).toHaveLength(2);
       expect(collection2Failures).toHaveLength(2);
     });
@@ -546,17 +589,19 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es', 'fr'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(false);
       expect(result.failures).toHaveLength(2); // Both locales default to 'new'
-      expect(result.failures.every(f => f.status === 'new')).toBe(true);
+      expect(result.failures.every((f) => f.status === 'new')).toBe(true);
     });
 
     it('should handle validation with no target locales', () => {
@@ -571,12 +616,14 @@ describe('validateResources', () => {
         },
       ];
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         [],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(true); // No locales to validate
@@ -587,21 +634,26 @@ describe('validateResources', () => {
 
     it('should handle large numbers of resources efficiently', () => {
       // Create 1000 resources
-      const mockResources: LoadedResource[] = Array.from({ length: 1000 }, (_, i) => ({
-        key: `key${i}`,
-        fullKey: `ns.key${i}`,
-        source: `Source ${i}`,
-        translations: { es: `Value ${i}` },
-        status: { es: 'verified' },
-        collection: 'main',
-      }));
+      const mockResources: LoadedResource[] = Array.from(
+        { length: 1000 },
+        (_, i) => ({
+          key: `key${i}`,
+          fullKey: `ns.key${i}`,
+          source: `Source ${i}`,
+          translations: { es: `Value ${i}` },
+          status: { es: 'verified' },
+          collection: 'main',
+        }),
+      );
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(
+        mockResources,
+      );
 
       const result = validateResources(
         [{ name: 'main', path: '/translations' }],
         ['es'],
-        { allowTranslated: false }
+        { allowTranslated: false },
       );
 
       expect(result.passed).toBe(true);

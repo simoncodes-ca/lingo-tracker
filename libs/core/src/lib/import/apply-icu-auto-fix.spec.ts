@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { applyICUAutoFixToResource, applyICUAutoFixToResources } from './apply-icu-auto-fix';
+import {
+  applyICUAutoFixToResource,
+  applyICUAutoFixToResources,
+} from './apply-icu-auto-fix';
 import { ImportedResource } from './types';
 
 describe('apply-icu-auto-fix', () => {
@@ -97,7 +100,9 @@ describe('apply-icu-auto-fix', () => {
         baseValue: '{count, plural, one {# item} other {# items}}',
       });
 
-      expect(result.resource.value).toBe('{count, plural, one {# elemento} other {# elementos}}');
+      expect(result.resource.value).toBe(
+        '{count, plural, one {# elemento} other {# elementos}}',
+      );
       expect(result.autoFix).toBeDefined();
       expect(result.autoFix?.description).toContain('{numero, plural');
     });
@@ -154,7 +159,9 @@ describe('apply-icu-auto-fix', () => {
       });
 
       expect(progressMessages.length).toBeGreaterThan(0);
-      expect(progressMessages.some(msg => msg.includes('test.key'))).toBe(true);
+      expect(progressMessages.some((msg) => msg.includes('test.key'))).toBe(
+        true,
+      );
     });
   });
 
@@ -167,9 +174,9 @@ describe('apply-icu-auto-fix', () => {
       ];
 
       const baseValues: Record<string, string> = {
-        'key1': 'Hello {name}',
-        'key2': 'You have {count} items',
-        'key3': 'No placeholders',
+        key1: 'Hello {name}',
+        key2: 'You have {count} items',
+        key3: 'No placeholders',
       };
 
       const result = applyICUAutoFixToResources({
@@ -193,8 +200,8 @@ describe('apply-icu-auto-fix', () => {
       ];
 
       const baseValues: Record<string, string> = {
-        'key1': 'Hello {name}',
-        'key2': 'Valid {name}',
+        key1: 'Hello {name}',
+        key2: 'Valid {name}',
       };
 
       const result = applyICUAutoFixToResources({

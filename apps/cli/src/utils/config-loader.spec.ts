@@ -28,7 +28,9 @@ describe('config-loader', () => {
     vi.clearAllMocks();
 
     // Mock path.join to simply concatenate with '/'
-    vi.spyOn(path, 'join').mockImplementation((...segments) => segments.join('/'));
+    vi.spyOn(path, 'join').mockImplementation((...segments) =>
+      segments.join('/'),
+    );
 
     // Mock console methods
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -54,8 +56,13 @@ describe('config-loader', () => {
       expect(result?.config).toEqual(mockConfig);
       expect(result?.configPath).toBe('/test/project/.lingo-tracker.json');
       expect(result?.cwd).toBe('/test/project');
-      expect(fs.existsSync).toHaveBeenCalledWith('/test/project/.lingo-tracker.json');
-      expect(fs.readFileSync).toHaveBeenCalledWith('/test/project/.lingo-tracker.json', 'utf8');
+      expect(fs.existsSync).toHaveBeenCalledWith(
+        '/test/project/.lingo-tracker.json',
+      );
+      expect(fs.readFileSync).toHaveBeenCalledWith(
+        '/test/project/.lingo-tracker.json',
+        'utf8',
+      );
     });
 
     it('should parse complex configuration with bundles', () => {
@@ -71,7 +78,9 @@ describe('config-loader', () => {
 
       vi.spyOn(process, 'cwd').mockReturnValue('/test/project');
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(complexConfig));
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(
+        JSON.stringify(complexConfig),
+      );
 
       const result = loadConfiguration();
 
@@ -89,8 +98,12 @@ describe('config-loader', () => {
       });
 
       expect(() => loadConfiguration()).toThrow('Process exit: 1');
-      expect(console.error).toHaveBeenCalledWith('❌ Configuration file .lingo-tracker.json not found.');
-      expect(console.error).toHaveBeenCalledWith('Run "lingo-tracker init" to initialize a project.');
+      expect(console.error).toHaveBeenCalledWith(
+        '❌ Configuration file .lingo-tracker.json not found.',
+      );
+      expect(console.error).toHaveBeenCalledWith(
+        'Run "lingo-tracker init" to initialize a project.',
+      );
       expect(process.exit).toHaveBeenCalledWith(1);
     });
 
@@ -104,8 +117,12 @@ describe('config-loader', () => {
       const result = loadConfiguration({ exitOnError: false });
 
       expect(result).toBeNull();
-      expect(console.error).toHaveBeenCalledWith('❌ Configuration file .lingo-tracker.json not found.');
-      expect(console.error).toHaveBeenCalledWith('Run "lingo-tracker init" to initialize a project.');
+      expect(console.error).toHaveBeenCalledWith(
+        '❌ Configuration file .lingo-tracker.json not found.',
+      );
+      expect(console.error).toHaveBeenCalledWith(
+        'Run "lingo-tracker init" to initialize a project.',
+      );
       expect(process.exit).not.toHaveBeenCalled();
     });
   });
@@ -121,7 +138,7 @@ describe('config-loader', () => {
 
       expect(() => loadConfiguration()).toThrow('Process exit: 1');
       expect(console.error).toHaveBeenCalledWith(
-        expect.stringMatching(/^❌ Failed to parse configuration file:/)
+        expect.stringMatching(/^❌ Failed to parse configuration file:/),
       );
       expect(process.exit).toHaveBeenCalledWith(1);
     });
@@ -138,7 +155,7 @@ describe('config-loader', () => {
 
       expect(result).toBeNull();
       expect(console.error).toHaveBeenCalledWith(
-        expect.stringMatching(/^❌ Failed to parse configuration file:/)
+        expect.stringMatching(/^❌ Failed to parse configuration file:/),
       );
       expect(process.exit).not.toHaveBeenCalled();
     });
@@ -152,12 +169,12 @@ describe('config-loader', () => {
 
       expect(result).toBeNull();
       expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to parse configuration file:')
+        expect.stringContaining('Failed to parse configuration file:'),
       );
       // Verify the error message contains some parsing error detail
-      const errorCall = vi.mocked(console.error).mock.calls.find((call) =>
-        String(call[0]).includes('Failed to parse')
-      );
+      const errorCall = vi
+        .mocked(console.error)
+        .mock.calls.find((call) => String(call[0]).includes('Failed to parse'));
       expect(errorCall?.[0]).toMatch(/Expected|Unexpected|position|JSON/i);
     });
   });
@@ -173,8 +190,12 @@ describe('config-loader', () => {
 
       expect(result).not.toBeNull();
       expect(result?.cwd).toBe('/pnpm/workspace/project');
-      expect(result?.configPath).toBe('/pnpm/workspace/project/.lingo-tracker.json');
-      expect(fs.existsSync).toHaveBeenCalledWith('/pnpm/workspace/project/.lingo-tracker.json');
+      expect(result?.configPath).toBe(
+        '/pnpm/workspace/project/.lingo-tracker.json',
+      );
+      expect(fs.existsSync).toHaveBeenCalledWith(
+        '/pnpm/workspace/project/.lingo-tracker.json',
+      );
     });
 
     it('should fall back to process.cwd() when INIT_CWD not set', () => {
@@ -198,8 +219,12 @@ describe('config-loader', () => {
 
       loadConfiguration({ exitOnError: false });
 
-      expect(console.error).toHaveBeenCalledWith('❌ Configuration file .lingo-tracker.json not found.');
-      expect(console.error).toHaveBeenCalledWith('Run "lingo-tracker init" to initialize a project.');
+      expect(console.error).toHaveBeenCalledWith(
+        '❌ Configuration file .lingo-tracker.json not found.',
+      );
+      expect(console.error).toHaveBeenCalledWith(
+        'Run "lingo-tracker init" to initialize a project.',
+      );
       expect(console.error).toHaveBeenCalledTimes(2);
     });
 
@@ -212,7 +237,9 @@ describe('config-loader', () => {
 
       const errorCalls = vi.mocked(console.error).mock.calls;
       expect(errorCalls.length).toBe(1);
-      expect(errorCalls[0][0]).toMatch(/^❌ Failed to parse configuration file: /);
+      expect(errorCalls[0][0]).toMatch(
+        /^❌ Failed to parse configuration file: /,
+      );
     });
   });
 
@@ -237,7 +264,9 @@ describe('config-loader', () => {
 
       vi.spyOn(process, 'cwd').mockReturnValue('/test/project');
       vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(minimalConfig));
+      vi.spyOn(fs, 'readFileSync').mockReturnValue(
+        JSON.stringify(minimalConfig),
+      );
 
       const result = loadConfiguration();
 
@@ -255,7 +284,9 @@ describe('config-loader', () => {
       const result = loadConfiguration({ exitOnError: false });
 
       expect(result).toBeNull();
-      expect(console.error).toHaveBeenCalledWith('❌ Failed to parse configuration file: Permission denied');
+      expect(console.error).toHaveBeenCalledWith(
+        '❌ Failed to parse configuration file: Permission denied',
+      );
     });
   });
 });

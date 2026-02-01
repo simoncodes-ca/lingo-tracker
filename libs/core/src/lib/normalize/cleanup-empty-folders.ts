@@ -19,7 +19,7 @@ export interface CleanupResult {
  */
 export function cleanupEmptyFolders(
   translationsRoot: string,
-  dryRun = false
+  dryRun = false,
 ): CleanupResult {
   const removedPaths: string[] = [];
 

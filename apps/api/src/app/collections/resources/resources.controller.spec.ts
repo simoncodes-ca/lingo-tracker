@@ -4,7 +4,10 @@ import { TranslationStatus, LocaleMetadata } from '@simoncodes-ca/core';
 import { ResourceTreeDto } from '@simoncodes-ca/data-transfer';
 import { ResourcesController } from './resources.controller';
 import { ConfigService } from '../../config/config.service';
-import { CollectionCacheService, CacheStatus } from '../../cache/collection-cache.service';
+import {
+  CollectionCacheService,
+  CacheStatus,
+} from '../../cache/collection-cache.service';
 import * as core from '@simoncodes-ca/core';
 
 // Mock the core module
@@ -36,7 +39,9 @@ jest.mock('../../mappers/resource-tree.mapper', () => ({
       resources: treeNode.resources.map((r: any) => {
         // Find base locale
         let baseLocale: string | undefined;
-        for (const [locale, meta] of Object.entries<LocaleMetadata>(r.metadata)) {
+        for (const [locale, meta] of Object.entries<LocaleMetadata>(
+          r.metadata,
+        )) {
           if (meta.status === undefined && meta.baseChecksum === undefined) {
             baseLocale = locale;
             break;
@@ -51,7 +56,9 @@ jest.mock('../../mappers/resource-tree.mapper', () => ({
 
         // Extract status
         const status: Record<string, any> = {};
-        for (const [locale, meta] of Object.entries<LocaleMetadata>(r.metadata)) {
+        for (const [locale, meta] of Object.entries<LocaleMetadata>(
+          r.metadata,
+        )) {
           status[locale] = meta.status;
         }
 
@@ -60,15 +67,17 @@ jest.mock('../../mappers/resource-tree.mapper', () => ({
           translations,
           status,
           comment: r.comment,
-          tags: r.tags
+          tags: r.tags,
         };
       }),
       children: treeNode.children.map((c: any) => ({
         name: c.name,
         fullPath: c.fullPathSegments.join('.'),
         loaded: c.loaded,
-        tree: c.tree ? { path: c.fullPathSegments.join('.'), resources: [], children: [] } : undefined
-      }))
+        tree: c.tree
+          ? { path: c.fullPathSegments.join('.'), resources: [], children: [] }
+          : undefined,
+      })),
     };
   }),
 }));
@@ -119,9 +128,12 @@ describe('ResourcesController', () => {
       ],
     }).compile();
 
-    resourcesController = resourcesModule.get<ResourcesController>(ResourcesController);
+    resourcesController =
+      resourcesModule.get<ResourcesController>(ResourcesController);
     configService = resourcesModule.get<ConfigService>(ConfigService);
-    cacheService = resourcesModule.get<CollectionCacheService>(CollectionCacheService);
+    cacheService = resourcesModule.get<CollectionCacheService>(
+      CollectionCacheService,
+    );
   });
 
   afterEach(() => {
@@ -131,14 +143,20 @@ describe('ResourcesController', () => {
   describe('createResources', () => {
     it('should successfully create a single resource', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+      addResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        created: true,
+      });
 
       const dto = {
         key: 'app.button.ok',
         baseValue: 'OK',
       };
 
-      const result = await resourcesController.createResources('test-collection', dto);
+      const result = await resourcesController.createResources(
+        'test-collection',
+        dto,
+      );
 
       expect(result).toEqual({
         entriesCreated: 1,
@@ -158,14 +176,20 @@ describe('ResourcesController', () => {
       const addResource = core.addResource as jest.Mock;
       addResource
         .mockReturnValueOnce({ resolvedKey: 'app.button.ok', created: true })
-        .mockReturnValueOnce({ resolvedKey: 'app.button.cancel', created: true });
+        .mockReturnValueOnce({
+          resolvedKey: 'app.button.cancel',
+          created: true,
+        });
 
       const dtos = [
         { key: 'app.button.ok', baseValue: 'OK' },
         { key: 'app.button.cancel', baseValue: 'Cancel' },
       ];
 
-      const result = await resourcesController.createResources('test-collection', dtos);
+      const result = await resourcesController.createResources(
+        'test-collection',
+        dtos,
+      );
 
       expect(result).toEqual({
         entriesCreated: 2,
@@ -176,14 +200,20 @@ describe('ResourcesController', () => {
 
     it('should handle idempotent repeat (update existing resource)', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: false });
+      addResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        created: false,
+      });
 
       const dto = {
         key: 'app.button.ok',
         baseValue: 'OK',
       };
 
-      const result = await resourcesController.createResources('test-collection', dto);
+      const result = await resourcesController.createResources(
+        'test-collection',
+        dto,
+      );
 
       expect(result).toEqual({
         entriesCreated: 0,
@@ -195,7 +225,10 @@ describe('ResourcesController', () => {
       const addResource = core.addResource as jest.Mock;
       addResource
         .mockReturnValueOnce({ resolvedKey: 'app.button.ok', created: true })
-        .mockReturnValueOnce({ resolvedKey: 'app.button.cancel', created: false })
+        .mockReturnValueOnce({
+          resolvedKey: 'app.button.cancel',
+          created: false,
+        })
         .mockReturnValueOnce({ resolvedKey: 'app.button.save', created: true });
 
       const dtos = [
@@ -204,7 +237,10 @@ describe('ResourcesController', () => {
         { key: 'app.button.save', baseValue: 'Save' },
       ];
 
-      const result = await resourcesController.createResources('test-collection', dtos);
+      const result = await resourcesController.createResources(
+        'test-collection',
+        dtos,
+      );
 
       expect(result).toEqual({
         entriesCreated: 2,
@@ -215,7 +251,10 @@ describe('ResourcesController', () => {
 
     it('should use collection baseLocale when provided', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+      addResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        created: true,
+      });
 
       const configWithCustomBaseLocale = {
         ...mockConfig,
@@ -226,7 +265,9 @@ describe('ResourcesController', () => {
           },
         },
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithCustomBaseLocale);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithCustomBaseLocale);
 
       const dto = {
         key: 'app.button.ok',
@@ -245,7 +286,10 @@ describe('ResourcesController', () => {
 
     it('should use DTO baseLocale when explicitly provided', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+      addResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        created: true,
+      });
 
       const dto = {
         key: 'app.button.ok',
@@ -265,7 +309,10 @@ describe('ResourcesController', () => {
 
     it('should URI decode collection names with special characters', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+      addResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        created: true,
+      });
 
       const configWithEncodedName = {
         ...mockConfig,
@@ -275,7 +322,9 @@ describe('ResourcesController', () => {
           },
         },
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithEncodedName);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithEncodedName);
 
       const dto = {
         key: 'app.button.ok',
@@ -295,7 +344,9 @@ describe('ResourcesController', () => {
         ...mockConfig,
         collections: {},
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithoutCollection);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithoutCollection);
 
       const dto = {
         key: 'app.button.ok',
@@ -316,7 +367,9 @@ describe('ResourcesController', () => {
     it('should throw HttpException (400) for invalid key validation', async () => {
       const addResource = core.addResource as jest.Mock;
       addResource.mockImplementation(() => {
-        throw new Error('Invalid key segment "invalid@key". Segments must match pattern [A-Za-z0-9_-]+');
+        throw new Error(
+          'Invalid key segment "invalid@key". Segments must match pattern [A-Za-z0-9_-]+',
+        );
       });
 
       const dto = {
@@ -382,7 +435,10 @@ describe('ResourcesController', () => {
 
     it('should handle resource with all optional fields', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'apps.common.buttons.cancel', created: true });
+      addResource.mockReturnValue({
+        resolvedKey: 'apps.common.buttons.cancel',
+        created: true,
+      });
 
       const dto = {
         key: 'cancel',
@@ -392,7 +448,10 @@ describe('ResourcesController', () => {
         targetFolder: 'apps.common.buttons',
       };
 
-      const result = await resourcesController.createResources('test-collection', dto);
+      const result = await resourcesController.createResources(
+        'test-collection',
+        dto,
+      );
 
       expect(result).toEqual({
         entriesCreated: 1,
@@ -412,14 +471,25 @@ describe('ResourcesController', () => {
 
     it('should handle resource with translations', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+      addResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        created: true,
+      });
 
       const dto = {
         key: 'app.button.ok',
         baseValue: 'OK',
         translations: [
-          { locale: 'fr-ca', value: 'D\'accord', status: 'translated' as TranslationStatus },
-          { locale: 'es', value: 'De acuerdo', status: 'translated' as TranslationStatus },
+          {
+            locale: 'fr-ca',
+            value: "D'accord",
+            status: 'translated' as TranslationStatus,
+          },
+          {
+            locale: 'es',
+            value: 'De acuerdo',
+            status: 'translated' as TranslationStatus,
+          },
         ],
       };
 
@@ -429,7 +499,7 @@ describe('ResourcesController', () => {
         './translations/test',
         expect.objectContaining({
           translations: [
-            { locale: 'fr-ca', value: 'D\'accord', status: 'translated' },
+            { locale: 'fr-ca', value: "D'accord", status: 'translated' },
             { locale: 'es', value: 'De acuerdo', status: 'translated' },
           ],
         }),
@@ -438,7 +508,10 @@ describe('ResourcesController', () => {
 
     it('should automatically create entries for all non-base locales when translations are not provided', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+      addResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        created: true,
+      });
 
       const dto = {
         key: 'app.button.ok',
@@ -464,7 +537,10 @@ describe('ResourcesController', () => {
 
     it('should use collection locales when available, fall back to global locales', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+      addResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        created: true,
+      });
 
       const configWithCollectionLocales = {
         ...mockConfig,
@@ -476,7 +552,9 @@ describe('ResourcesController', () => {
           },
         },
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithCollectionLocales);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithCollectionLocales);
 
       const dto = {
         key: 'app.button.ok',
@@ -499,7 +577,10 @@ describe('ResourcesController', () => {
 
     it('should not create translations if locales array is empty', async () => {
       const addResource = core.addResource as jest.Mock;
-      addResource.mockReturnValue({ resolvedKey: 'app.button.ok', created: true });
+      addResource.mockReturnValue({
+        resolvedKey: 'app.button.ok',
+        created: true,
+      });
 
       const configWithNoLocales = {
         ...mockConfig,
@@ -512,7 +593,9 @@ describe('ResourcesController', () => {
         },
         locales: [], // Empty global locales
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithNoLocales);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithNoLocales);
 
       const dto = {
         key: 'app.button.ok',
@@ -535,7 +618,7 @@ describe('ResourcesController', () => {
       const deleteResource = core.deleteResource as jest.Mock;
       deleteResource.mockReturnValue({
         entriesDeleted: 1,
-        matchedKeys: ['app.button.ok']
+        matchedKeys: ['app.button.ok'],
       });
 
       const dto = {
@@ -548,17 +631,16 @@ describe('ResourcesController', () => {
         entriesDeleted: 1,
         errors: undefined,
       });
-      expect(deleteResource).toHaveBeenCalledWith(
-        './translations/test',
-        { keys: ['app.button.ok'] },
-      );
+      expect(deleteResource).toHaveBeenCalledWith('./translations/test', {
+        keys: ['app.button.ok'],
+      });
     });
 
     it('should successfully delete multiple resources (bulk operation)', async () => {
       const deleteResource = core.deleteResource as jest.Mock;
       deleteResource.mockReturnValue({
         entriesDeleted: 3,
-        matchedKeys: ['app.button.ok', 'app.button.cancel', 'app.button.save']
+        matchedKeys: ['app.button.ok', 'app.button.cancel', 'app.button.save'],
       });
 
       const dto = {
@@ -571,10 +653,9 @@ describe('ResourcesController', () => {
         entriesDeleted: 3,
         errors: undefined,
       });
-      expect(deleteResource).toHaveBeenCalledWith(
-        './translations/test',
-        { keys: ['app.button.ok', 'app.button.cancel', 'app.button.save'] },
-      );
+      expect(deleteResource).toHaveBeenCalledWith('./translations/test', {
+        keys: ['app.button.ok', 'app.button.cancel', 'app.button.save'],
+      });
     });
 
     it('should handle partial failures with errors array', async () => {
@@ -583,8 +664,11 @@ describe('ResourcesController', () => {
         entriesDeleted: 2,
         matchedKeys: ['app.button.ok', 'app.button.cancel'],
         errors: [
-          { key: 'app.button.invalid', error: 'Resource entry not found: app.button.invalid' }
-        ]
+          {
+            key: 'app.button.invalid',
+            error: 'Resource entry not found: app.button.invalid',
+          },
+        ],
       });
 
       const dto = {
@@ -596,8 +680,11 @@ describe('ResourcesController', () => {
       expect(result).toEqual({
         entriesDeleted: 2,
         errors: [
-          { key: 'app.button.invalid', error: 'Resource entry not found: app.button.invalid' }
-        ]
+          {
+            key: 'app.button.invalid',
+            error: 'Resource entry not found: app.button.invalid',
+          },
+        ],
       });
     });
 
@@ -613,7 +700,9 @@ describe('ResourcesController', () => {
           },
         },
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithEncodedName);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithEncodedName);
 
       const dto = {
         keys: ['app.button.ok'],
@@ -632,7 +721,9 @@ describe('ResourcesController', () => {
         ...mockConfig,
         collections: {},
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithoutCollection);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithoutCollection);
 
       const dto = {
         keys: ['app.button.ok'],
@@ -699,7 +790,7 @@ describe('ResourcesController', () => {
       const deleteResource = core.deleteResource as jest.Mock;
       deleteResource.mockReturnValue({
         entriesDeleted: 1,
-        matchedKeys: ['apps.common.buttons.ok']
+        matchedKeys: ['apps.common.buttons.ok'],
       });
 
       const dto = {
@@ -712,12 +803,10 @@ describe('ResourcesController', () => {
         entriesDeleted: 1,
         errors: undefined,
       });
-      expect(deleteResource).toHaveBeenCalledWith(
-        './translations/test',
-        { keys: ['apps.common.buttons.ok'] },
-      );
+      expect(deleteResource).toHaveBeenCalledWith('./translations/test', {
+        keys: ['apps.common.buttons.ok'],
+      });
     });
-
   });
 
   describe('move', () => {
@@ -726,7 +815,7 @@ describe('ResourcesController', () => {
       moveResource.mockReturnValue({
         movedCount: 1,
         warnings: [],
-        errors: []
+        errors: [],
       });
 
       const dto = {
@@ -754,11 +843,17 @@ describe('ResourcesController', () => {
       moveResource.mockReturnValue({
         movedCount: 1,
         warnings: [],
-        errors: []
+        errors: [],
       });
 
       const dto = {
-        moves: [{ source: 'app.button.ok', destination: 'app.actions.ok', override: true }],
+        moves: [
+          {
+            source: 'app.button.ok',
+            destination: 'app.actions.ok',
+            override: true,
+          },
+        ],
       };
 
       await resourcesController.move('test-collection', dto);
@@ -768,7 +863,7 @@ describe('ResourcesController', () => {
         expect.objectContaining({
           source: 'app.button.ok',
           destination: 'app.actions.ok',
-          override: true
+          override: true,
         }),
       );
     });
@@ -777,12 +872,16 @@ describe('ResourcesController', () => {
       const moveResource = core.moveResource as jest.Mock;
       moveResource
         .mockReturnValueOnce({ movedCount: 1, warnings: [], errors: [] })
-        .mockReturnValueOnce({ movedCount: 0, warnings: ['Exists'], errors: [] });
+        .mockReturnValueOnce({
+          movedCount: 0,
+          warnings: ['Exists'],
+          errors: [],
+        });
 
       const dto = {
         moves: [
           { source: 'a', destination: 'b' },
-          { source: 'c', destination: 'd' }
+          { source: 'c', destination: 'd' },
         ],
       };
 
@@ -795,16 +894,16 @@ describe('ResourcesController', () => {
 
     it('should throw BadRequest if moves array is empty', async () => {
       const dto = { moves: [] };
-      await expect(resourcesController.move('test-collection', dto)).rejects.toThrow(
-        HttpException,
-      );
+      await expect(
+        resourcesController.move('test-collection', dto),
+      ).rejects.toThrow(HttpException);
     });
 
     it('should throw BadRequest if moves is missing', async () => {
       const dto = {} as any;
-      await expect(resourcesController.move('test-collection', dto)).rejects.toThrow(
-        HttpException,
-      );
+      await expect(
+        resourcesController.move('test-collection', dto),
+      ).rejects.toThrow(HttpException);
     });
 
     it('should handle cross-collection move', async () => {
@@ -812,7 +911,7 @@ describe('ResourcesController', () => {
       moveResource.mockReturnValue({
         movedCount: 1,
         warnings: [],
-        errors: []
+        errors: [],
       });
 
       const dto = {
@@ -820,8 +919,8 @@ describe('ResourcesController', () => {
           {
             source: 'app.button.ok',
             destination: 'app.actions.ok',
-            toCollection: 'other-collection'
-          }
+            toCollection: 'other-collection',
+          },
         ],
       };
 
@@ -835,7 +934,9 @@ describe('ResourcesController', () => {
           },
         },
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithOtherCollection);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithOtherCollection);
 
       const result = await resourcesController.move('test-collection', dto);
 
@@ -845,7 +946,7 @@ describe('ResourcesController', () => {
         expect.objectContaining({
           source: 'app.button.ok',
           destination: 'app.actions.ok',
-          destinationTranslationsFolder: './translations/other'
+          destinationTranslationsFolder: './translations/other',
         }),
       );
     });
@@ -858,14 +959,16 @@ describe('ResourcesController', () => {
           {
             source: 'app.button.ok',
             destination: 'app.actions.ok',
-            toCollection: 'non-existent'
-          }
+            toCollection: 'non-existent',
+          },
         ],
       };
       const result = await resourcesController.move('test-collection', dto);
 
       expect(result.movedCount).toBe(0);
-      expect(result.errors).toContain('Destination collection "non-existent" not found');
+      expect(result.errors).toContain(
+        'Destination collection "non-existent" not found',
+      );
       expect(moveResource).not.toHaveBeenCalled();
     });
   });
@@ -969,11 +1072,11 @@ describe('ResourcesController', () => {
           translations: { es: 'Título' },
           metadata: {
             en: { checksum: 'a' },
-            es: { status: 'new', checksum: '', baseChecksum: 'a' }
-          }
-        }
+            es: { status: 'new', checksum: '', baseChecksum: 'a' },
+          },
+        },
       ],
-      children: []
+      children: [],
     };
 
     it('should return full cached tree when cache is READY and no path provided', async () => {
@@ -1007,18 +1110,21 @@ describe('ResourcesController', () => {
             source: 'Test',
             translations: { es: 'Prueba' },
             metadata: {
-              en: { checksum: 't' }
-            }
-          }
+              en: { checksum: 't' },
+            },
+          },
         ],
-        children: []
+        children: [],
       };
 
       getCacheStatus.mockReturnValue(CacheStatus.READY);
       getCache.mockReturnValue(mockTreeNode);
       extractSubtree.mockReturnValue(mockSubtree);
 
-      const result = await resourcesController.getTree('test-collection', 'apps');
+      const result = await resourcesController.getTree(
+        'test-collection',
+        'apps',
+      );
       const tree = result as ResourceTreeDto;
 
       expect(tree.path).toBe('apps');
@@ -1039,15 +1145,23 @@ describe('ResourcesController', () => {
         json: jest.fn().mockReturnThis(),
       };
 
-      await resourcesController.getTree('test-collection', '', mockResponse as any);
+      await resourcesController.getTree(
+        'test-collection',
+        '',
+        mockResponse as any,
+      );
 
-      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test', 3);
+      expect(indexCollection).toHaveBeenCalledWith(
+        'test-collection',
+        './translations/test',
+        3,
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(202);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'not-ready',
           message: expect.stringContaining('indexing started'),
-        })
+        }),
       );
     });
 
@@ -1061,14 +1175,18 @@ describe('ResourcesController', () => {
         json: jest.fn().mockReturnThis(),
       };
 
-      await resourcesController.getTree('test-collection', '', mockResponse as any);
+      await resourcesController.getTree(
+        'test-collection',
+        '',
+        mockResponse as any,
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(202);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'indexing',
           message: expect.stringContaining('currently being indexed'),
-        })
+        }),
       );
     });
 
@@ -1084,15 +1202,23 @@ describe('ResourcesController', () => {
         json: jest.fn().mockReturnThis(),
       };
 
-      await resourcesController.getTree('test-collection', '', mockResponse as any);
+      await resourcesController.getTree(
+        'test-collection',
+        '',
+        mockResponse as any,
+      );
 
-      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test', 3);
+      expect(indexCollection).toHaveBeenCalledWith(
+        'test-collection',
+        './translations/test',
+        3,
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(202);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'not-ready',
           message: expect.stringContaining('re-indexing'),
-        })
+        }),
       );
     });
 
@@ -1106,7 +1232,7 @@ describe('ResourcesController', () => {
       extractSubtree.mockReturnValue(null);
 
       await expect(
-        resourcesController.getTree('test-collection', 'nonexistent.path')
+        resourcesController.getTree('test-collection', 'nonexistent.path'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1115,10 +1241,12 @@ describe('ResourcesController', () => {
         ...mockConfig,
         collections: {},
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithoutCollection);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithoutCollection);
 
       await expect(
-        resourcesController.getTree('nonexistent', '')
+        resourcesController.getTree('nonexistent', ''),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1130,7 +1258,7 @@ describe('ResourcesController', () => {
       getCache.mockReturnValue(null);
 
       await expect(
-        resourcesController.getTree('test-collection', '')
+        resourcesController.getTree('test-collection', ''),
       ).rejects.toThrow(HttpException);
     });
   });
@@ -1146,7 +1274,8 @@ describe('ResourcesController', () => {
       getCacheMetadata.mockReturnValue({ indexedAt, error: undefined });
       getCacheStats.mockReturnValue({ totalKeys: 42, localeCount: 3 });
 
-      const result = await resourcesController.getCacheStatus('test-collection');
+      const result =
+        await resourcesController.getCacheStatus('test-collection');
 
       expect(result).toEqual({
         status: 'ready',
@@ -1169,7 +1298,8 @@ describe('ResourcesController', () => {
       getCacheStatus.mockReturnValue(CacheStatus.INDEXING);
       getCacheMetadata.mockReturnValue({ indexedAt: null, error: undefined });
 
-      const result = await resourcesController.getCacheStatus('test-collection');
+      const result =
+        await resourcesController.getCacheStatus('test-collection');
 
       expect(result).toEqual({
         status: 'indexing',
@@ -1182,9 +1312,13 @@ describe('ResourcesController', () => {
       const getCacheMetadata = cacheService.getCacheMetadata as jest.Mock;
 
       getCacheStatus.mockReturnValue(CacheStatus.ERROR);
-      getCacheMetadata.mockReturnValue({ indexedAt: null, error: 'Failed to load tree' });
+      getCacheMetadata.mockReturnValue({
+        indexedAt: null,
+        error: 'Failed to load tree',
+      });
 
-      const result = await resourcesController.getCacheStatus('test-collection');
+      const result =
+        await resourcesController.getCacheStatus('test-collection');
 
       expect(result).toEqual({
         status: 'error',
@@ -1202,13 +1336,18 @@ describe('ResourcesController', () => {
       getCacheMetadata.mockReturnValue(null);
       indexCollection.mockResolvedValue(undefined);
 
-      const result = await resourcesController.getCacheStatus('test-collection');
+      const result =
+        await resourcesController.getCacheStatus('test-collection');
 
       expect(result).toEqual({
         status: 'not-started',
         collectionName: 'test-collection',
       });
-      expect(indexCollection).toHaveBeenCalledWith('test-collection', './translations/test', 3);
+      expect(indexCollection).toHaveBeenCalledWith(
+        'test-collection',
+        './translations/test',
+        3,
+      );
     });
 
     it('should return 404 for non-existent collection', async () => {
@@ -1216,10 +1355,12 @@ describe('ResourcesController', () => {
         ...mockConfig,
         collections: {},
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithoutCollection);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithoutCollection);
 
       await expect(
-        resourcesController.getCacheStatus('nonexistent')
+        resourcesController.getCacheStatus('nonexistent'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1236,13 +1377,19 @@ describe('ResourcesController', () => {
           },
         },
       };
-      jest.spyOn(configService, 'getConfig').mockReturnValue(configWithEncodedName);
+      jest
+        .spyOn(configService, 'getConfig')
+        .mockReturnValue(configWithEncodedName);
 
       getCacheStatus.mockReturnValue(CacheStatus.READY);
-      getCacheMetadata.mockReturnValue({ indexedAt: new Date(), error: undefined });
+      getCacheMetadata.mockReturnValue({
+        indexedAt: new Date(),
+        error: undefined,
+      });
       getCacheStats.mockReturnValue({ totalKeys: 10, localeCount: 2 });
 
-      const result = await resourcesController.getCacheStatus('My%20Collection');
+      const result =
+        await resourcesController.getCacheStatus('My%20Collection');
 
       expect(result.collectionName).toBe('My Collection');
       expect(getCacheStatus).toHaveBeenCalledWith('My Collection');

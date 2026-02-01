@@ -110,9 +110,15 @@ describe('generate-bundle', () => {
       const result = await generateBundle(params);
 
       expect(result.filesGenerated).toBe(0);
-      expect(result.warnings).toContain("Bundle 'main' for locale 'en' is empty");
-      expect(result.warnings).toContain("Bundle 'main' for locale 'fr' is empty");
-      expect(result.warnings).toContain("Bundle 'main' for locale 'es' is empty");
+      expect(result.warnings).toContain(
+        "Bundle 'main' for locale 'en' is empty",
+      );
+      expect(result.warnings).toContain(
+        "Bundle 'main' for locale 'fr' is empty",
+      );
+      expect(result.warnings).toContain(
+        "Bundle 'main' for locale 'es' is empty",
+      );
     });
 
     it('should process all collections when collections is "All"', async () => {
@@ -122,7 +128,8 @@ describe('generate-bundle', () => {
         collections: 'All',
       };
 
-      const loadSpy = vi.spyOn(resourceLoader, 'loadCollectionResources')
+      const loadSpy = vi
+        .spyOn(resourceLoader, 'loadCollectionResources')
         .mockReturnValue([{ key: 'test', value: 'Test' }]);
 
       const params: GenerateBundleParams = {
@@ -145,9 +152,7 @@ describe('generate-bundle', () => {
         collections: [
           {
             name: 'default',
-            entriesSelectionRules: [
-              { matchingPattern: 'apps.*' },
-            ],
+            entriesSelectionRules: [{ matchingPattern: 'apps.*' }],
           },
         ],
       };
@@ -194,7 +199,9 @@ describe('generate-bundle', () => {
 
       const result = await generateBundle(params);
 
-      expect(result.warnings).toContain("Collection 'nonexistent' not found in config");
+      expect(result.warnings).toContain(
+        "Collection 'nonexistent' not found in config",
+      );
     });
 
     it('should apply bundledKeyPrefix', async () => {
@@ -249,8 +256,8 @@ describe('generate-bundle', () => {
         ],
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources')
-        .mockImplementation((folder) => {
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockImplementation(
+        (folder) => {
           if (folder === '/translations/default') {
             return [{ key: 'shared.title', value: 'Default Title' }];
           }
@@ -258,7 +265,8 @@ describe('generate-bundle', () => {
             return [{ key: 'shared.title', value: 'Admin Title' }];
           }
           return [];
-        });
+        },
+      );
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -292,8 +300,8 @@ describe('generate-bundle', () => {
         ],
       };
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources')
-        .mockImplementation((folder) => {
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockImplementation(
+        (folder) => {
           if (folder === '/translations/default') {
             return [{ key: 'shared.title', value: 'Default Title' }];
           }
@@ -301,7 +309,8 @@ describe('generate-bundle', () => {
             return [{ key: 'shared.title', value: 'Admin Title' }];
           }
           return [];
-        });
+        },
+      );
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -423,7 +432,7 @@ describe('generate-bundle', () => {
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         '/dist/bundles/main.en.json',
         expect.any(String),
-        'utf8'
+        'utf8',
       );
     });
 
@@ -450,7 +459,7 @@ describe('generate-bundle', () => {
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         '/dist/bundles/fr/main.json',
         expect.any(String),
-        'utf8'
+        'utf8',
       );
     });
 
@@ -475,10 +484,9 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(fs.mkdirSync).toHaveBeenCalledWith(
-        '/dist/bundles',
-        { recursive: true }
-      );
+      expect(fs.mkdirSync).toHaveBeenCalledWith('/dist/bundles', {
+        recursive: true,
+      });
     });
 
     it('should write properly formatted JSON', async () => {
@@ -572,7 +580,7 @@ describe('generate-bundle', () => {
         { key: 'test', value: 'Test' },
       ]);
       (generateBundleTypes as any).mockRejectedValue(
-        new Error('Type gen failed')
+        new Error('Type gen failed'),
       );
 
       const params: GenerateBundleParams = {
@@ -585,7 +593,7 @@ describe('generate-bundle', () => {
       const result = await generateBundle(params);
 
       expect(result.warnings).toContain(
-        "Type generation failed for 'main': Type gen failed"
+        "Type generation failed for 'main': Type gen failed",
       );
     });
   });

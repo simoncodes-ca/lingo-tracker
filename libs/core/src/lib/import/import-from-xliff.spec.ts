@@ -13,10 +13,10 @@ describe('import-from-xliff', () => {
 
     // Mock path functions
     vi.spyOn(path, 'resolve').mockImplementation((...segments) =>
-      segments.join('/')
+      segments.join('/'),
     );
     vi.spyOn(path, 'join').mockImplementation((...segments) =>
-      segments.join('/')
+      segments.join('/'),
     );
     vi.spyOn(path, 'dirname').mockImplementation((p) => {
       const parts = String(p).split('/');
@@ -109,7 +109,9 @@ describe('import-from-xliff', () => {
     it('should throw error for invalid XLIFF', async () => {
       const invalidXliff = 'This is not valid XML';
 
-      await expect(extractFromXliff(invalidXliff)).rejects.toThrow('Failed to parse XLIFF content');
+      await expect(extractFromXliff(invalidXliff)).rejects.toThrow(
+        'Failed to parse XLIFF content',
+      );
     });
   });
 
@@ -146,19 +148,26 @@ describe('import-from-xliff', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('test.xliff')) return xliffContent;
-        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json'))
+          return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json'))
+          return JSON.stringify(existingMeta);
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const writeFileSyncSpy = vi
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',
         locale: 'es',
       };
 
-      const result = await importFromXliff('/translations/common/buttons', options);
+      const result = await importFromXliff(
+        '/translations/common/buttons',
+        options,
+      );
 
       expect(result.format).toBe('xliff');
       expect(result.resourcesUpdated).toBe(1);
@@ -166,8 +175,8 @@ describe('import-from-xliff', () => {
 
       // Verify file was written
       expect(writeFileSyncSpy).toHaveBeenCalled();
-      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('resource_entries.json')
+      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
       );
       if (resourceEntriesCall) {
         const updatedEntries = JSON.parse(String(resourceEntriesCall[1]));
@@ -200,13 +209,17 @@ describe('import-from-xliff', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('test.xliff')) return xliffContent;
-        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json'))
+          return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json'))
+          return JSON.stringify(existingMeta);
         return '{}';
       });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const writeFileSyncSpy = vi
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',
@@ -216,7 +229,9 @@ describe('import-from-xliff', () => {
       const result = await importFromXliff('/translations/common', options);
 
       expect(result.warnings.length).toBeGreaterThan(0);
-      const mismatchWarning = result.warnings.find(w => w.includes('Base value mismatch'));
+      const mismatchWarning = result.warnings.find((w) =>
+        w.includes('Base value mismatch'),
+      );
       expect(mismatchWarning).toBeDefined();
       expect(mismatchWarning).toContain('common.title');
       expect(mismatchWarning).toContain('preserving LingoTracker value');
@@ -248,7 +263,9 @@ describe('import-from-xliff', () => {
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const writeFileSyncSpy = vi
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => undefined);
       vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
 
       const options: ImportOptions = {
@@ -263,8 +280,8 @@ describe('import-from-xliff', () => {
       expect(result.resourcesUpdated).toBe(0);
 
       // Verify new resource was created
-      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('resource_entries.json')
+      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
       );
       if (resourceEntriesCall) {
         const newEntries = JSON.parse(String(resourceEntriesCall[1]));
@@ -300,12 +317,16 @@ describe('import-from-xliff', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('test.xliff')) return xliffContent;
-        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json'))
+          return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json'))
+          return JSON.stringify(existingMeta);
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const writeFileSyncSpy = vi
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',
@@ -315,8 +336,8 @@ describe('import-from-xliff', () => {
 
       const _result = await importFromXliff('/translations/common', options);
 
-      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('resource_entries.json')
+      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
       );
       if (resourceEntriesCall) {
         const updatedEntries = JSON.parse(String(resourceEntriesCall[1]));
@@ -344,7 +365,11 @@ describe('import-from-xliff', () => {
       const existingMeta = {
         title: {
           en: { checksum: 'checksum-en' },
-          es: { checksum: 'checksum-old', baseChecksum: 'checksum-en', status: 'translated' },
+          es: {
+            checksum: 'checksum-old',
+            baseChecksum: 'checksum-en',
+            status: 'translated',
+          },
         },
       };
 
@@ -352,12 +377,16 @@ describe('import-from-xliff', () => {
       vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
         const pathStr = String(filePath);
         if (pathStr.includes('test.xliff')) return xliffContent;
-        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
-        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        if (pathStr.includes('resource_entries.json'))
+          return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json'))
+          return JSON.stringify(existingMeta);
         return '{}';
       });
 
-      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const writeFileSyncSpy = vi
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => undefined);
 
       const options: ImportOptions = {
         source: '/import/test.xliff',
@@ -368,8 +397,8 @@ describe('import-from-xliff', () => {
       const _result = await importFromXliff('/translations/common', options);
 
       // Verify status changed to verified
-      const metaCall = writeFileSyncSpy.mock.calls.find(call =>
-        String(call[0]).includes('tracker_meta.json')
+      const metaCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('tracker_meta.json'),
       );
       if (metaCall) {
         const updatedMeta = JSON.parse(String(metaCall[1]));
@@ -385,7 +414,9 @@ describe('import-from-xliff', () => {
         locale: 'es',
       };
 
-      await expect(importFromXliff('/translations/common', options)).rejects.toThrow('Source file not found');
+      await expect(
+        importFromXliff('/translations/common', options),
+      ).rejects.toThrow('Source file not found');
     });
 
     it('should handle invalid base locale error', async () => {
@@ -394,7 +425,9 @@ describe('import-from-xliff', () => {
         locale: 'en',
       };
 
-      await expect(importFromXliff('/translations/common', options)).rejects.toThrow('Cannot import into base locale');
+      await expect(
+        importFromXliff('/translations/common', options),
+      ).rejects.toThrow('Cannot import into base locale');
     });
   });
 });

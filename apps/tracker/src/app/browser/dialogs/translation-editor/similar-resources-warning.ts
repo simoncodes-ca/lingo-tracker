@@ -33,7 +33,9 @@ export class SimilarResourcesWarning {
     const limit = this.isExpanded() ? this.#displayLimit() : 3;
     return this.results().slice(0, limit);
   });
-  readonly hasMoreResults = computed(() => this.results().length > this.#displayLimit());
+  readonly hasMoreResults = computed(
+    () => this.results().length > this.#displayLimit(),
+  );
   readonly showMoreButtonLabel = computed(() => {
     const remaining = this.results().length - this.#displayLimit();
     return `Show ${remaining} more`;

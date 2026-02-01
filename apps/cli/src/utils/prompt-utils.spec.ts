@@ -31,7 +31,7 @@ describe('processMultiselectWithAll', () => {
   it('should return undefined when __ALL__ is selected', () => {
     const result = processMultiselectWithAll(
       [ALL_ITEMS_SENTINEL],
-      allAvailableItems
+      allAvailableItems,
     );
     expect(result).toBeUndefined();
   });
@@ -39,7 +39,7 @@ describe('processMultiselectWithAll', () => {
   it('should return undefined when __ALL__ plus other items are selected (All takes precedence)', () => {
     const result = processMultiselectWithAll(
       [ALL_ITEMS_SENTINEL, 'en', 'fr'],
-      allAvailableItems
+      allAvailableItems,
     );
     expect(result).toBeUndefined();
   });
@@ -47,7 +47,7 @@ describe('processMultiselectWithAll', () => {
   it('should return undefined when __ALL__ is in the middle of selections', () => {
     const result = processMultiselectWithAll(
       ['en', ALL_ITEMS_SENTINEL, 'fr'],
-      allAvailableItems
+      allAvailableItems,
     );
     expect(result).toBeUndefined();
   });
@@ -70,7 +70,7 @@ describe('processMultiselectWithAll', () => {
   it('should return all items when all are manually selected (no __ALL__)', () => {
     const result = processMultiselectWithAll(
       ['en', 'fr', 'de', 'es'],
-      allAvailableItems
+      allAvailableItems,
     );
     expect(result).toEqual(['en', 'fr', 'de', 'es']);
   });
@@ -78,7 +78,7 @@ describe('processMultiselectWithAll', () => {
   it('should preserve order of selected items', () => {
     const result = processMultiselectWithAll(
       ['es', 'en', 'de'],
-      allAvailableItems
+      allAvailableItems,
     );
     expect(result).toEqual(['es', 'en', 'de']);
   });
@@ -295,7 +295,11 @@ describe('executePromptsWithFallback', () => {
         currentValues,
       });
 
-      expect(result).toEqual({ existing: 'value', key: 'newkey', value: 'newvalue' });
+      expect(result).toEqual({
+        existing: 'value',
+        key: 'newkey',
+        value: 'newvalue',
+      });
     });
 
     it('should throw error with operation name when cancelled', async () => {
@@ -303,7 +307,7 @@ describe('executePromptsWithFallback', () => {
         async (_questions: any, options: any) => {
           options.onCancel();
           return {};
-        }
+        },
       );
 
       const questions = [{ type: 'text', name: 'key', message: 'Enter key' }];
@@ -313,7 +317,7 @@ describe('executePromptsWithFallback', () => {
           questions,
           currentValues: {},
           operationName: 'Add resource',
-        })
+        }),
       ).rejects.toThrow('Add resource cancelled');
     });
 
@@ -322,7 +326,7 @@ describe('executePromptsWithFallback', () => {
         async (_questions: any, options: any) => {
           options.onCancel();
           return {};
-        }
+        },
       );
 
       const questions = [{ type: 'text', name: 'key', message: 'Enter key' }];
@@ -331,7 +335,7 @@ describe('executePromptsWithFallback', () => {
         executePromptsWithFallback({
           questions,
           currentValues: {},
-        })
+        }),
       ).rejects.toThrow('Operation cancelled');
     });
   });
@@ -376,9 +380,9 @@ describe('executePromptsWithFallback', () => {
           questions,
           currentValues,
           requiredFields: ['key', 'value', 'collection'],
-        })
+        }),
       ).rejects.toThrow(
-        'Missing required options in non-interactive mode: --value, --collection'
+        'Missing required options in non-interactive mode: --value, --collection',
       );
     });
 
@@ -391,9 +395,9 @@ describe('executePromptsWithFallback', () => {
           questions,
           currentValues,
           requiredFields: ['key', 'value', 'collection'],
-        })
+        }),
       ).rejects.toThrow(
-        'Missing required options in non-interactive mode: --key, --value, --collection'
+        'Missing required options in non-interactive mode: --key, --value, --collection',
       );
     });
 

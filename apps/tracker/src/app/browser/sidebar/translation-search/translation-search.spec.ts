@@ -29,9 +29,7 @@ describe('TranslationSearch', () => {
         NoopAnimationsModule,
         getTranslocoTestingModule(),
       ],
-      providers: [
-        { provide: BrowserStore, useValue: mockStore },
-      ],
+      providers: [{ provide: BrowserStore, useValue: mockStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationSearch);
@@ -55,23 +53,32 @@ describe('TranslationSearch', () => {
 
   describe('Template Rendering', () => {
     it('should render SearchInput component', () => {
-      const searchInput = fixture.nativeElement.querySelector('app-search-input');
+      const searchInput =
+        fixture.nativeElement.querySelector('app-search-input');
       expect(searchInput).toBeTruthy();
     });
 
     it('should pass correct placeholder to SearchInput', () => {
-      const searchInputDebug = fixture.debugElement.query(By.directive(SearchInput));
-      const searchInputComponent = searchInputDebug.componentInstance as SearchInput;
+      const searchInputDebug = fixture.debugElement.query(
+        By.directive(SearchInput),
+      );
+      const searchInputComponent =
+        searchInputDebug.componentInstance as SearchInput;
       // The placeholder should be resolved by transloco
-      expect(searchInputComponent.placeholder()).toBe('Search (min 3 characters)...');
+      expect(searchInputComponent.placeholder()).toBe(
+        'Search (min 3 characters)...',
+      );
     });
 
     it('should pass isLoading state to SearchInput', () => {
       mockStore.isSearchLoading.set(true);
       fixture.detectChanges();
 
-      const searchInputDebug = fixture.debugElement.query(By.directive(SearchInput));
-      const searchInputComponent = searchInputDebug.componentInstance as SearchInput;
+      const searchInputDebug = fixture.debugElement.query(
+        By.directive(SearchInput),
+      );
+      const searchInputComponent =
+        searchInputDebug.componentInstance as SearchInput;
       expect(searchInputComponent.isLoading()).toBe(true);
     });
 
@@ -88,7 +95,7 @@ describe('TranslationSearch', () => {
       component.onSearchChange('test');
 
       // Wait for debounce
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       expect(mockStore.setSearchQuery).toHaveBeenCalledWith('test');
     });
@@ -96,7 +103,7 @@ describe('TranslationSearch', () => {
     it('should trigger search after debounce with 3+ characters', async () => {
       component.onSearchChange('button');
 
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       expect(mockStore.searchTranslations).toHaveBeenCalledWith('button');
     });
@@ -104,7 +111,7 @@ describe('TranslationSearch', () => {
     it('should not search for query with fewer than 3 characters', async () => {
       component.onSearchChange('ab');
 
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       expect(mockStore.setSearchQuery).not.toHaveBeenCalled();
       expect(mockStore.searchTranslations).not.toHaveBeenCalled();
@@ -112,14 +119,14 @@ describe('TranslationSearch', () => {
 
     it('should clear search when query becomes empty', async () => {
       component.onSearchChange('test');
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       mockStore.setSearchQuery.mockClear();
       mockStore.searchTranslations.mockClear();
       mockStore.clearSearch.mockClear();
 
       component.onSearchChange('');
-      await new Promise(resolve => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 350));
 
       expect(mockStore.clearSearch).toHaveBeenCalled();
       expect(mockStore.searchTranslations).not.toHaveBeenCalled();

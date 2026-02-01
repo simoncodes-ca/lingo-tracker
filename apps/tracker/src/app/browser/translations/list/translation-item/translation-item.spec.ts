@@ -25,14 +25,8 @@ describe('TranslationItem', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationItem,
-        getTranslocoTestingModule(),
-      ],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      imports: [TranslationItem, getTranslocoTestingModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
@@ -138,14 +132,8 @@ describe('TranslationItem - Compact helpers', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TranslationItem,
-        getTranslocoTestingModule(),
-      ],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      imports: [TranslationItem, getTranslocoTestingModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);
@@ -246,10 +234,7 @@ describe('TranslationItem - Full density expansion', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TranslationItem, getTranslocoTestingModule()],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationItem);

@@ -32,7 +32,7 @@ export class BrowserApiService {
   getCacheStatus(collectionName: string): Observable<CacheStatusDto> {
     const encodedName = encodeURIComponent(collectionName);
     return this.#http.get<CacheStatusDto>(
-      `${this.#baseUrl}/${encodedName}/resources/cache/status`
+      `${this.#baseUrl}/${encodedName}/resources/cache/status`,
     );
   }
 
@@ -48,7 +48,7 @@ export class BrowserApiService {
   getResourceTree(
     collectionName: string,
     path = '',
-    includeNested = false
+    includeNested = false,
   ): Observable<ResourceTreeDto> {
     const encodedName = encodeURIComponent(collectionName);
     const encodedPath = encodeURIComponent(path);
@@ -58,7 +58,7 @@ export class BrowserApiService {
 
     return this.#http.get<ResourceTreeDto>(
       `${this.#baseUrl}/${encodedName}/resources/tree`,
-      { params }
+      { params },
     );
   }
 
@@ -73,7 +73,7 @@ export class BrowserApiService {
   searchTranslations(
     collectionName: string,
     query: string,
-    maxResults = 100
+    maxResults = 100,
   ): Observable<SearchResultsDto> {
     const params = new HttpParams()
       .set('query', query)
@@ -82,7 +82,7 @@ export class BrowserApiService {
     const encodedName = encodeURIComponent(collectionName);
     return this.#http.get<SearchResultsDto>(
       `${this.#baseUrl}/${encodedName}/resources/search`,
-      { params }
+      { params },
     );
   }
 
@@ -95,12 +95,12 @@ export class BrowserApiService {
    */
   createResource(
     collectionName: string,
-    dto: CreateResourceDto
+    dto: CreateResourceDto,
   ): Observable<CreateResourceResponseDto> {
     const encodedName = encodeURIComponent(collectionName);
     return this.#http.post<CreateResourceResponseDto>(
       `${this.#baseUrl}/${encodedName}/resources`,
-      dto
+      dto,
     );
   }
 
@@ -113,12 +113,12 @@ export class BrowserApiService {
    */
   updateResource(
     collectionName: string,
-    dto: UpdateResourceDto
+    dto: UpdateResourceDto,
   ): Observable<UpdateResourceResponseDto> {
     const encodedName = encodeURIComponent(collectionName);
     return this.#http.patch<UpdateResourceResponseDto>(
       `${this.#baseUrl}/${encodedName}/resources`,
-      dto
+      dto,
     );
   }
 
@@ -131,14 +131,14 @@ export class BrowserApiService {
    */
   deleteResource(
     collectionName: string,
-    resourceKeys: string[]
+    resourceKeys: string[],
   ): Observable<DeleteResourceResponseDto> {
     const encodedName = encodeURIComponent(collectionName);
     const dto: DeleteResourceDto = { keys: resourceKeys };
     return this.#http.request<DeleteResourceResponseDto>(
       'DELETE',
       `${this.#baseUrl}/${encodedName}/resources`,
-      { body: dto }
+      { body: dto },
     );
   }
 }

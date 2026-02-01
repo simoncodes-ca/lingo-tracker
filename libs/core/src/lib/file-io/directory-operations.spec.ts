@@ -24,7 +24,9 @@ describe('Directory Operations', () => {
 
         ensureDirectoryExists({ directoryPath });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
       });
     });
 
@@ -39,7 +41,9 @@ describe('Directory Operations', () => {
         ensureDirectoryExists({ directoryPath });
 
         expect(mkdirSync).toHaveBeenCalledTimes(3);
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
       });
     });
 
@@ -55,7 +59,9 @@ describe('Directory Operations', () => {
           checkWritable: true,
         });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
         expect(accessSync).toHaveBeenCalledWith(directoryPath, constants.W_OK);
       });
 
@@ -69,7 +75,9 @@ describe('Directory Operations', () => {
           checkWritable: false,
         });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
         expect(accessSync).not.toHaveBeenCalled();
       });
 
@@ -80,7 +88,9 @@ describe('Directory Operations', () => {
 
         ensureDirectoryExists({ directoryPath });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
         expect(accessSync).not.toHaveBeenCalled();
       });
 
@@ -96,7 +106,7 @@ describe('Directory Operations', () => {
           ensureDirectoryExists({
             directoryPath,
             checkWritable: true,
-          })
+          }),
         ).toThrow("Directory '/app/translations' is not writable");
       });
 
@@ -114,8 +124,10 @@ describe('Directory Operations', () => {
             directoryPath,
             errorContext,
             checkWritable: true,
-          })
-        ).toThrow("Creating resource folder: Directory '/app/translations' is not writable");
+          }),
+        ).toThrow(
+          "Creating resource folder: Directory '/app/translations' is not writable",
+        );
       });
     });
 
@@ -132,8 +144,10 @@ describe('Directory Operations', () => {
           ensureDirectoryExists({
             directoryPath,
             errorContext,
-          })
-        ).toThrow("Creating resource folder: Could not create directory '/app/translations': EACCES: permission denied");
+          }),
+        ).toThrow(
+          "Creating resource folder: Could not create directory '/app/translations': EACCES: permission denied",
+        );
       });
 
       it('should throw error without context prefix when errorContext is omitted', () => {
@@ -143,9 +157,9 @@ describe('Directory Operations', () => {
           throw new Error('EACCES: permission denied');
         });
 
-        expect(() =>
-          ensureDirectoryExists({ directoryPath })
-        ).toThrow("Could not create directory '/app/translations': EACCES: permission denied");
+        expect(() => ensureDirectoryExists({ directoryPath })).toThrow(
+          "Could not create directory '/app/translations': EACCES: permission denied",
+        );
       });
 
       it('should handle Error objects properly', () => {
@@ -156,9 +170,9 @@ describe('Directory Operations', () => {
           throw new Error(errorMessage);
         });
 
-        expect(() =>
-          ensureDirectoryExists({ directoryPath })
-        ).toThrow(`Could not create directory '/app/translations': ${errorMessage}`);
+        expect(() => ensureDirectoryExists({ directoryPath })).toThrow(
+          `Could not create directory '/app/translations': ${errorMessage}`,
+        );
       });
 
       it('should handle non-Error thrown values', () => {
@@ -168,9 +182,9 @@ describe('Directory Operations', () => {
           throw 'String error';
         });
 
-        expect(() =>
-          ensureDirectoryExists({ directoryPath })
-        ).toThrow("Could not create directory '/app/translations': String error");
+        expect(() => ensureDirectoryExists({ directoryPath })).toThrow(
+          "Could not create directory '/app/translations': String error",
+        );
       });
 
       it('should handle thrown objects', () => {
@@ -180,9 +194,9 @@ describe('Directory Operations', () => {
           throw { code: 'EACCES' };
         });
 
-        expect(() =>
-          ensureDirectoryExists({ directoryPath })
-        ).toThrow("Could not create directory '/app/translations': [object Object]");
+        expect(() => ensureDirectoryExists({ directoryPath })).toThrow(
+          "Could not create directory '/app/translations': [object Object]",
+        );
       });
 
       it('should handle thrown null or undefined', () => {
@@ -192,9 +206,9 @@ describe('Directory Operations', () => {
           throw null;
         });
 
-        expect(() =>
-          ensureDirectoryExists({ directoryPath })
-        ).toThrow("Could not create directory '/app/translations': null");
+        expect(() => ensureDirectoryExists({ directoryPath })).toThrow(
+          "Could not create directory '/app/translations': null",
+        );
       });
     });
 
@@ -208,9 +222,9 @@ describe('Directory Operations', () => {
           throw error;
         });
 
-        expect(() =>
-          ensureDirectoryExists({ directoryPath })
-        ).toThrow("Could not create directory '/root/protected': EACCES: permission denied");
+        expect(() => ensureDirectoryExists({ directoryPath })).toThrow(
+          "Could not create directory '/root/protected': EACCES: permission denied",
+        );
       });
 
       it('should throw error on read-only filesystem', () => {
@@ -222,9 +236,9 @@ describe('Directory Operations', () => {
           throw error;
         });
 
-        expect(() =>
-          ensureDirectoryExists({ directoryPath })
-        ).toThrow("Could not create directory '/readonly/path': EROFS: read-only file system");
+        expect(() => ensureDirectoryExists({ directoryPath })).toThrow(
+          "Could not create directory '/readonly/path': EROFS: read-only file system",
+        );
       });
 
       it('should throw error on disk full', () => {
@@ -236,9 +250,9 @@ describe('Directory Operations', () => {
           throw error;
         });
 
-        expect(() =>
-          ensureDirectoryExists({ directoryPath })
-        ).toThrow("Could not create directory '/app/translations': ENOSPC: no space left on device");
+        expect(() => ensureDirectoryExists({ directoryPath })).toThrow(
+          "Could not create directory '/app/translations': ENOSPC: no space left on device",
+        );
       });
     });
 
@@ -250,9 +264,9 @@ describe('Directory Operations', () => {
           throw new Error('EINVAL: invalid argument');
         });
 
-        expect(() =>
-          ensureDirectoryExists({ directoryPath })
-        ).toThrow("Could not create directory '': EINVAL: invalid argument");
+        expect(() => ensureDirectoryExists({ directoryPath })).toThrow(
+          "Could not create directory '': EINVAL: invalid argument",
+        );
       });
 
       it('should handle relative paths', () => {
@@ -262,17 +276,22 @@ describe('Directory Operations', () => {
 
         ensureDirectoryExists({ directoryPath });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
       });
 
       it('should handle paths with special characters', () => {
-        const directoryPath = '/app/translations/with spaces/and-dashes/under_scores';
+        const directoryPath =
+          '/app/translations/with spaces/and-dashes/under_scores';
 
         vi.mocked(mkdirSync).mockImplementation(() => undefined);
 
         ensureDirectoryExists({ directoryPath });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
       });
 
       it('should handle Windows-style paths', () => {
@@ -282,7 +301,9 @@ describe('Directory Operations', () => {
 
         ensureDirectoryExists({ directoryPath });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
       });
 
       it('should handle paths with trailing slashes', () => {
@@ -292,7 +313,9 @@ describe('Directory Operations', () => {
 
         ensureDirectoryExists({ directoryPath });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
       });
 
       it('should handle paths with unicode characters', () => {
@@ -302,7 +325,9 @@ describe('Directory Operations', () => {
 
         ensureDirectoryExists({ directoryPath });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
       });
     });
 
@@ -320,7 +345,9 @@ describe('Directory Operations', () => {
           checkWritable: true,
         });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
         expect(accessSync).toHaveBeenCalledWith(directoryPath, constants.W_OK);
       });
 
@@ -338,8 +365,10 @@ describe('Directory Operations', () => {
             directoryPath,
             errorContext,
             checkWritable: true,
-          })
-        ).toThrow("Setting up resources: Could not create directory '/app/translations': Creation failed");
+          }),
+        ).toThrow(
+          "Setting up resources: Could not create directory '/app/translations': Creation failed",
+        );
 
         // Test writability error
         vi.clearAllMocks();
@@ -353,8 +382,10 @@ describe('Directory Operations', () => {
             directoryPath,
             errorContext,
             checkWritable: true,
-          })
-        ).toThrow("Setting up resources: Directory '/app/translations' is not writable");
+          }),
+        ).toThrow(
+          "Setting up resources: Directory '/app/translations' is not writable",
+        );
       });
     });
 
@@ -372,7 +403,9 @@ describe('Directory Operations', () => {
           checkWritable: true,
         });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
         expect(accessSync).toHaveBeenCalledWith(directoryPath, constants.W_OK);
       });
 
@@ -387,7 +420,9 @@ describe('Directory Operations', () => {
           errorContext,
         });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
       });
 
       it('should handle export directory creation', () => {
@@ -403,7 +438,9 @@ describe('Directory Operations', () => {
           checkWritable: true,
         });
 
-        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, { recursive: true });
+        expect(mkdirSync).toHaveBeenCalledWith(directoryPath, {
+          recursive: true,
+        });
         expect(accessSync).toHaveBeenCalledWith(directoryPath, constants.W_OK);
       });
     });

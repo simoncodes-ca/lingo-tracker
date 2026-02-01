@@ -87,12 +87,13 @@ export function processResourceGroup(
   dryRun: boolean,
   isBaseLocaleImport: boolean,
   filesModified: Set<string>,
-  warnings: string[]
+  warnings: string[],
 ): ImportChange[] {
   const changes: ImportChange[] = [];
 
   // Load existing data once for the folder
-  const exists = existsSync(group.entryResourcePath) && existsSync(group.entryMetaPath);
+  const exists =
+    existsSync(group.entryResourcePath) && existsSync(group.entryMetaPath);
 
   let resourceEntries: ResourceEntries = {};
   let trackerMeta: TrackerMetadata = {};
@@ -179,7 +180,8 @@ export function processResourceGroup(
         changes.push({
           key: resource.key,
           type: 'failed',
-          reason: 'Cannot create resource: base value not provided (required for creation)',
+          reason:
+            'Cannot create resource: base value not provided (required for creation)',
         });
         continue;
       }
@@ -297,7 +299,7 @@ export function processResourceGroup(
       if (existingBase !== resource.baseValue) {
         warnings.push(
           `Base value mismatch for "${resource.key}": import has "${resource.baseValue}", ` +
-          `LingoTracker has "${existingBase}" - preserving LingoTracker value`
+            `LingoTracker has "${existingBase}" - preserving LingoTracker value`,
         );
       }
     }
@@ -322,8 +324,11 @@ export function processResourceGroup(
 
         if (!trackerMeta[entryKey][locale]) {
           trackerMeta[entryKey][locale] = {
-            checksum: entryMeta?.[locale]?.checksum || calculateChecksum(oldValue),
-            baseChecksum: entryMeta?.[baseLocale]?.checksum || calculateChecksum(entry.source),
+            checksum:
+              entryMeta?.[locale]?.checksum || calculateChecksum(oldValue),
+            baseChecksum:
+              entryMeta?.[baseLocale]?.checksum ||
+              calculateChecksum(entry.source),
             status: verifiedStatus,
           };
         } else {
@@ -393,7 +398,8 @@ export function processResourceGroup(
     const newChecksum = calculateChecksum(resource.value);
 
     // Get base checksum from metadata
-    const baseChecksum = entryMeta?.[baseLocale]?.checksum || calculateChecksum(entry.source);
+    const baseChecksum =
+      entryMeta?.[baseLocale]?.checksum || calculateChecksum(entry.source);
 
     // Determine status based on strategy
     let newStatus: TranslationStatus;
@@ -445,7 +451,10 @@ export function processResourceGroup(
 
   // Write files once for the entire group
   const hasChanges = changes.some(
-    c => c.type === 'updated' || c.type === 'value-changed' || c.type === 'created'
+    (c) =>
+      c.type === 'updated' ||
+      c.type === 'value-changed' ||
+      c.type === 'created',
   );
 
   if (!dryRun && hasChanges) {
@@ -455,7 +464,10 @@ export function processResourceGroup(
       mkdirSync(folderPath, { recursive: true });
     }
 
-    writeFileSync(group.entryResourcePath, JSON.stringify(resourceEntries, null, 2));
+    writeFileSync(
+      group.entryResourcePath,
+      JSON.stringify(resourceEntries, null, 2),
+    );
     writeFileSync(group.entryMetaPath, JSON.stringify(trackerMeta, null, 2));
 
     filesModified.add(group.entryResourcePath);
