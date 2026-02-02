@@ -54,19 +54,14 @@ export interface CreateFolderResult {
  * // Result: { folderPath: '/app/translations/apps/common/buttons', created: true }
  * ```
  */
-export function createFolder(
-  translationsFolder: string,
-  params: CreateFolderParams
-): CreateFolderResult {
+export function createFolder(translationsFolder: string, params: CreateFolderParams): CreateFolderResult {
   const { folderName, parentPath } = params;
 
   // Validate folderName segments
   const folderSegments = folderName.split('.');
   for (const segment of folderSegments) {
     if (!isValidSegment(segment)) {
-      throw new Error(
-        `Invalid folder name segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`
-      );
+      throw new Error(`Invalid folder name segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`);
     }
   }
 
@@ -75,23 +70,17 @@ export function createFolder(
     const parentSegments = parentPath.split('.');
     for (const segment of parentSegments) {
       if (!isValidSegment(segment)) {
-        throw new Error(
-          `Invalid parent path segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`
-        );
+        throw new Error(`Invalid parent path segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`);
       }
     }
   }
 
   // Combine parent path and folder name
-  const fullDotPath = parentPath && parentPath.trim() !== ''
-    ? `${parentPath}.${folderName}`
-    : folderName;
+  const fullDotPath = parentPath && parentPath.trim() !== '' ? `${parentPath}.${folderName}` : folderName;
 
   // Convert dot-delimited path to filesystem path
   const pathSegments = fullDotPath.split('.');
-  const relativeFolderPath = pathSegments.length
-    ? join(translationsFolder, ...pathSegments)
-    : translationsFolder;
+  const relativeFolderPath = pathSegments.length ? join(translationsFolder, ...pathSegments) : translationsFolder;
 
   // Resolve to absolute path
   const absoluteFolderPath = resolve(relativeFolderPath);
@@ -103,11 +92,11 @@ export function createFolder(
   ensureDirectoryExists({
     directoryPath: absoluteFolderPath,
     errorContext: 'Creating folder',
-    checkWritable: true
+    checkWritable: true,
   });
 
   return {
     folderPath: absoluteFolderPath,
-    created: !alreadyExists
+    created: !alreadyExists,
   };
 }

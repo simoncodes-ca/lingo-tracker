@@ -1,12 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-  effect,
-  viewChild,
-  ElementRef,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, effect, viewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -27,13 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
   selector: 'app-inline-folder-input',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatIconModule,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
   templateUrl: './inline-folder-input.html',
   styleUrl: './inline-folder-input.scss',
 })
@@ -53,10 +39,7 @@ export class InlineFolderInput {
   /** Form control for folder name with validation */
   readonly folderNameControl = new FormControl('', {
     nonNullable: true,
-    validators: [
-      Validators.required,
-      Validators.pattern(/^[A-Za-z0-9_-]+$/),
-    ],
+    validators: [Validators.required, Validators.pattern(/^[A-Za-z0-9_-]+$/)],
   });
 
   constructor() {
@@ -116,9 +99,6 @@ export class InlineFolderInput {
    * Only show errors after the user has interacted with the input.
    */
   shouldShowError(): boolean {
-    return (
-      this.folderNameControl.invalid &&
-      (this.folderNameControl.dirty || this.folderNameControl.touched)
-    );
+    return this.folderNameControl.invalid && (this.folderNameControl.dirty || this.folderNameControl.touched);
   }
 }

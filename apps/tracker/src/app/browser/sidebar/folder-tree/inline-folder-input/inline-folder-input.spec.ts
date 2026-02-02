@@ -41,13 +41,7 @@ describe('InlineFolderInput', () => {
   });
 
   it('should invalidate folder names with special characters', () => {
-    const invalidNames = [
-      'folder name',
-      'folder@name',
-      'folder.name',
-      'folder/name',
-      'folder\\name',
-    ];
+    const invalidNames = ['folder name', 'folder@name', 'folder.name', 'folder/name', 'folder\\name'];
 
     invalidNames.forEach((name) => {
       component.folderNameControl.setValue(name);
@@ -104,9 +98,7 @@ describe('InlineFolderInput', () => {
     component.folderNameControl.setValue('invalid folder');
     component.folderNameControl.markAsTouched();
 
-    expect(component.getErrorMessage()).toBe(
-      'Only letters, numbers, dashes, and underscores allowed'
-    );
+    expect(component.getErrorMessage()).toBe('Only letters, numbers, dashes, and underscores allowed');
   });
 
   it('should show error only after user interaction', () => {
@@ -157,9 +149,7 @@ describe('InlineFolderInput', () => {
     const errorMessage = compiled.querySelector('.error-message');
 
     expect(errorMessage).toBeTruthy();
-    expect(errorMessage?.textContent?.trim()).toBe(
-      'Only letters, numbers, dashes, and underscores allowed'
-    );
+    expect(errorMessage?.textContent?.trim()).toBe('Only letters, numbers, dashes, and underscores allowed');
   });
 
   it('should trim whitespace before emitting confirm', () => {

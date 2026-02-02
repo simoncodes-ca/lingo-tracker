@@ -30,7 +30,7 @@ describe('createFolder', () => {
       expect(directoryOps.ensureDirectoryExists).toHaveBeenCalledWith({
         directoryPath: '/app/translations/apps',
         errorContext: 'Creating folder',
-        checkWritable: true
+        checkWritable: true,
       });
     });
 
@@ -49,7 +49,7 @@ describe('createFolder', () => {
       expect(directoryOps.ensureDirectoryExists).toHaveBeenCalledWith({
         directoryPath: '/app/translations/apps/common/buttons',
         errorContext: 'Creating folder',
-        checkWritable: true
+        checkWritable: true,
       });
     });
 
@@ -87,7 +87,7 @@ describe('createFolder', () => {
       const folderName = 'invalid!name';
 
       expect(() => createFolder(translationsFolder, { folderName })).toThrow(
-        'Invalid folder name segment "invalid!name". Segments must match pattern [A-Za-z0-9_-]+'
+        'Invalid folder name segment "invalid!name". Segments must match pattern [A-Za-z0-9_-]+',
       );
     });
 
@@ -96,7 +96,7 @@ describe('createFolder', () => {
       const folderName = 'apps.common.bad@segment';
 
       expect(() => createFolder(translationsFolder, { folderName })).toThrow(
-        'Invalid folder name segment "bad@segment". Segments must match pattern [A-Za-z0-9_-]+'
+        'Invalid folder name segment "bad@segment". Segments must match pattern [A-Za-z0-9_-]+',
       );
     });
 
@@ -106,7 +106,7 @@ describe('createFolder', () => {
       const parentPath = 'apps.invalid#path';
 
       expect(() => createFolder(translationsFolder, { folderName, parentPath })).toThrow(
-        'Invalid parent path segment "invalid#path". Segments must match pattern [A-Za-z0-9_-]+'
+        'Invalid parent path segment "invalid#path". Segments must match pattern [A-Za-z0-9_-]+',
       );
     });
 
@@ -280,7 +280,7 @@ describe('createFolder', () => {
       expect(directoryOps.ensureDirectoryExists).toHaveBeenCalledWith({
         directoryPath: '/workspace/i18n/common',
         errorContext: 'Creating folder',
-        checkWritable: true
+        checkWritable: true,
       });
     });
   });
