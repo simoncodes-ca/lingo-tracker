@@ -140,11 +140,10 @@ export class TranslationBrowser implements OnInit {
    */
   @HostListener('window:keydown.control.shift.n', ['$event'])
   @HostListener('window:keydown.meta.shift.n', ['$event'])
-  onCreateFolderShortcut(event: KeyboardEvent): void {
+  onCreateFolderShortcut(event: Event): void {
     // Don't trigger if user is typing in an input field
     const activeElement = document.activeElement;
-    if (activeElement instanceof HTMLInputElement ||
-        activeElement instanceof HTMLTextAreaElement) {
+    if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
       return;
     }
 
