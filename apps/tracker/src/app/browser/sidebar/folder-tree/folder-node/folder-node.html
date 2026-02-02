@@ -12,12 +12,26 @@
     [attr.aria-selected]="isSelected()"
     (keydown.enter)="onFolderClick()"
     (keydown.space)="onFolderClick()"
+    (keydown.delete)="onDeleteKeydown($event)"
   >
     <mat-icon class="folder-icon">{{ folderIcon() }}</mat-icon>
     <span class="folder-name">{{ folder().name }}</span>
     @if (isNewlyCreated()) {
       <span class="new-chip">New</span>
     }
+    <button
+      mat-icon-button
+      class="delete-button"
+      [disabled]="disabled()"
+      (click)="onDeleteClick($event)"
+      [attr.aria-label]="'Delete folder ' + folder().name"
+    >
+      @if (isDeleting()) {
+        <mat-icon class="spinner">refresh</mat-icon>
+      } @else {
+        <mat-icon>delete</mat-icon>
+      }
+    </button>
   </div>
 
   <!-- Loaded Children -->
@@ -38,6 +52,7 @@
           [disabled]="disabled()"
           (folderClick)="folderClick.emit($event)"
           (loadFolder)="loadFolder.emit($event)"
+          (deleteFolder)="deleteFolder.emit($event)"
         />
       }
     </div>

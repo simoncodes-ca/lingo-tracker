@@ -60,6 +60,27 @@ function insertFolderIntoTree(
   return updateChildren(folders, 0);
 }
 
+/**
+ * Removes a folder from the tree by its full path.
+ * Returns a new array with the folder removed (immutable update).
+ */
+function removeFolderFromTree(folders: FolderNodeDto[], pathToRemove: string): FolderNodeDto[] {
+  return folders
+    .filter((folder) => folder.fullPath !== pathToRemove)
+    .map((folder) => {
+      if (folder.tree?.children) {
+        return {
+          ...folder,
+          tree: {
+            ...folder.tree,
+            children: removeFolderFromTree(folder.tree.children, pathToRemove),
+          },
+        };
+      }
+      return folder;
+    });
+}
+
 interface ViewPreferences {
   densityMode: 'compact' | 'medium' | 'full';
   selectedLocales: string[];
@@ -89,6 +110,8 @@ interface BrowserState {
   isAddingFolder: boolean;
   addFolderParentPath: string | null;
   newlyCreatedFolderPath: string | null;
+  isDeletingFolder: boolean;
+  deletingFolderPath: string | null;
 
   translations: ResourceSummaryDto[];
   isTranslationsLoading: boolean;
@@ -129,6 +152,8 @@ const initialState: BrowserState = {
   isAddingFolder: false,
   addFolderParentPath: null,
   newlyCreatedFolderPath: null,
+  isDeletingFolder: false,
+  deletingFolderPath: null,
   translations: [],
   isTranslationsLoading: false,
   showNestedResources: true,
@@ -385,13 +410,21 @@ export const BrowserStore = signalStore(
             }
 
             return api.getResourceTree(collection, path, includeNested).pipe(
-              tap((tree) =>
-                patchState(store, {
-                  translations: tree.resources,
-                  isTranslationsLoading: false,
-                  error: null,
-                }),
-              ),
+              tap((tree) => {
+                // Check if response is actual tree data (has resources) vs status response (cache indexing)
+                if ('resources' in tree) {
+                  patchState(store, {
+                    translations: tree.resources,
+                    isTranslationsLoading: false,
+                    error: null,
+                  });
+                } else {
+                  // Cache is still indexing - keep current translations, just stop loading
+                  patchState(store, {
+                    isTranslationsLoading: false,
+                  });
+                }
+              }),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to load translations';
                 patchState(store, {
@@ -417,15 +450,23 @@ export const BrowserStore = signalStore(
             }
 
             return api.getResourceTree(collection, '', includeNested).pipe(
-              tap((treeData) =>
-                patchState(store, {
-                  rootFolders: treeData.children,
-                  translations: treeData.resources,
-                  currentFolderPath: '',
-                  isFolderTreeLoading: false,
-                  error: null,
-                }),
-              ),
+              tap((treeData) => {
+                // Check if response is actual tree data (has resources) vs status response (cache indexing)
+                if ('resources' in treeData) {
+                  patchState(store, {
+                    rootFolders: treeData.children,
+                    translations: treeData.resources,
+                    currentFolderPath: '',
+                    isFolderTreeLoading: false,
+                    error: null,
+                  });
+                } else {
+                  // Cache is still indexing - just stop loading
+                  patchState(store, {
+                    isFolderTreeLoading: false,
+                  });
+                }
+              }),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to load folders';
                 patchState(store, {
@@ -700,6 +741,63 @@ export const BrowserStore = signalStore(
                 patchState(store, {
                   isAddingFolder: false,
                   addFolderParentPath: null,
+                  error: errorMessage,
+                });
+                return of(null);
+              }),
+            );
+          }),
+        ),
+      ),
+
+      deleteFolder: rxMethod<string>(
+        pipe(
+          tap((folderPath) =>
+            patchState(store, {
+              isDeletingFolder: true,
+              deletingFolderPath: folderPath,
+              error: null,
+            }),
+          ),
+          switchMap((folderPath) => {
+            const collection = store.selectedCollection();
+
+            if (!collection) {
+              patchState(store, {
+                isDeletingFolder: false,
+                deletingFolderPath: null,
+              });
+              return of(null);
+            }
+
+            return api.deleteFolder(collection, folderPath).pipe(
+              tap((response) => {
+                if (response.deleted) {
+                  // Remove the folder from the tree
+                  const currentFolders = store.rootFolders();
+                  const updatedFolders = removeFolderFromTree(currentFolders, folderPath);
+
+                  // Compute parent folder path for navigation
+                  const pathSegments = folderPath.split('.');
+                  const parentFolderPath = pathSegments.length > 1 ? pathSegments.slice(0, -1).join('.') : '';
+
+                  patchState(store, {
+                    isDeletingFolder: false,
+                    deletingFolderPath: null,
+                    rootFolders: updatedFolders,
+                    currentFolderPath: parentFolderPath,
+                    error: null,
+                  });
+
+                  // Reload translations for the parent folder
+                  store.selectFolder(parentFolderPath);
+                }
+              }),
+              catchError((error: unknown) => {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to delete folder';
+                patchState(store, {
+                  isDeletingFolder: false,
+                  deletingFolderPath: null,
                   error: errorMessage,
                 });
                 return of(null);

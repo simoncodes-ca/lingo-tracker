@@ -85,8 +85,10 @@
           [selectedPath]="store.currentFolderPath()"
           [showNestedResources]="showNestedResources()"
           [disabled]="store.isDisabled()"
+          [isDeleting]="store.deletingFolderPath() === folder.fullPath"
           (folderClick)="onFolderClick($event)"
           (loadFolder)="onLoadFolder($event)"
+          (deleteFolder)="onDeleteFolder($event)"
         />
       }
     </div>

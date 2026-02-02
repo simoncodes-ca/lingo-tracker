@@ -24,7 +24,9 @@ import {
   searchResourceTree,
   extractSubtree,
   extractResourcesRecursively,
+  createResourceMetadata,
   type SearchResult,
+  type ResourceTreeEntry,
 } from '@simoncodes-ca/core';
 import type {
   CreateResourceDto,
@@ -107,6 +109,39 @@ export class ResourcesController {
             entriesCreated++;
             hasCreated = true;
           }
+
+          // Add resource to cache instead of clearing it
+          const resolvedKeyParts = result.resolvedKey.split('.');
+          const entryKey = resolvedKeyParts.pop() || '';
+          const folderPath = resolvedKeyParts.join('.');
+
+          // Build translations record (excluding base locale)
+          const translationsRecord: Record<string, string> = {};
+          const translationsArray = translations || [];
+          for (const t of translationsArray) {
+            if (t.locale !== resourceBaseLocale) {
+              translationsRecord[t.locale] = t.value;
+            }
+          }
+
+          // Create metadata for cache entry
+          const metadata = createResourceMetadata({
+            entryKey,
+            baseValue: resource.baseValue,
+            baseLocale: resourceBaseLocale,
+            translations: translationsArray,
+          });
+
+          const cacheEntry: ResourceTreeEntry = {
+            key: entryKey,
+            source: resource.baseValue,
+            translations: translationsRecord,
+            metadata,
+            ...(resource.comment && { comment: resource.comment }),
+            ...(resource.tags && resource.tags.length > 0 && { tags: resource.tags }),
+          };
+
+          this.cacheService.addResourceToCache(decodedCollectionName, cacheEntry, folderPath);
         } catch (error: unknown) {
           // Validation errors (invalid key, etc.) should return 400
           const errorMessage = error instanceof Error ? error.message : '';
@@ -116,11 +151,6 @@ export class ResourcesController {
           // Re-throw other errors to be caught by outer catch
           throw error;
         }
-      }
-
-      // Clear cache after successful resource creation
-      if (hasCreated) {
-        this.cacheService.clearCache();
       }
 
       return {

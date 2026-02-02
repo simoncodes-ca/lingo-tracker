@@ -107,6 +107,58 @@
     padding: 2px 6px;
     text-transform: uppercase;
   }
+
+  .delete-button {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    height: 24px;
+    justify-content: center;
+    margin-left: auto;
+    min-height: 24px;
+    min-width: 24px;
+    opacity: 0;
+    padding: 0;
+    transition: opacity 0.15s ease;
+    width: 24px;
+
+    ::ng-deep {
+      .mat-mdc-button-touch-target,
+      .mat-mdc-button-persistent-ripple {
+        height: 24px;
+        width: 24px;
+      }
+
+      .mat-mdc-button-persistent-ripple::before {
+        border-radius: 50%;
+      }
+    }
+
+    mat-icon {
+      color: var(--color-text-primary);
+      font-size: 18px;
+      height: 18px;
+      line-height: 18px;
+      width: 18px;
+
+      &.spinner {
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-background-muted);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+    }
+  }
+
+  &:hover .delete-button,
+  &.selected .delete-button {
+    opacity: 1;
+  }
 }
 
 @keyframes fade-in {
@@ -118,6 +170,16 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
 

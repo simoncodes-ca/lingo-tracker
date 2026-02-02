@@ -4,6 +4,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -47,6 +48,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class FolderTree {
   readonly store = inject(BrowserStore);
+  readonly dialog = inject(MatDialog);
   readonly TOKENS = TRACKER_TOKENS;
 
   /** Name of the collection to browse */
@@ -137,5 +139,40 @@ export class FolderTree {
   onAddFolderButtonClick(): void {
     const currentFolderPath = this.store.currentFolderPath();
     this.store.startAddingFolder(currentFolderPath || null);
+  }
+
+  /**
+   * Handles delete folder request from child nodes.
+   * Opens confirmation dialog and deletes folder if confirmed.
+   */
+  onDeleteFolder(folderPath: string): void {
+    const folderName = this.extractFolderNameFromPath(folderPath);
+
+    import('../../../shared/components/confirmation-dialog/confirmation-dialog').then((m) => {
+      const dialogRef = this.dialog.open(m.ConfirmationDialog, {
+        data: {
+          title: 'Delete Folder',
+          message: `Delete "${folderName}" and all its contents?`,
+          confirmButtonText: 'Delete',
+          actionType: 'destructive',
+        },
+        width: '400px',
+      });
+
+      dialogRef.afterClosed().subscribe((confirmed) => {
+        if (confirmed === true) {
+          this.store.deleteFolder(folderPath);
+        }
+      });
+    });
+  }
+
+  /**
+   * Extracts the folder name from a full folder path.
+   * For example: "apps.common.buttons" -> "buttons"
+   */
+  private extractFolderNameFromPath(folderPath: string): string {
+    const parts = folderPath.split('.');
+    return parts[parts.length - 1];
   }
 }

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output, effect, viewChild, ElementRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, effect, viewChild, type ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';

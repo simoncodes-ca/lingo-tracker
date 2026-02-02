@@ -46,6 +46,12 @@ export class FolderNode {
   /** Emitted when "load" is clicked for an unloaded folder */
   loadFolder = output<string>();
 
+  /** Emitted when delete button is clicked or Delete key is pressed */
+  deleteFolder = output<string>();
+
+  /** Whether this folder is currently being deleted */
+  isDeleting = input<boolean>(false);
+
   readonly TOKENS = TRACKER_TOKENS;
 
   /** Signal exposing whether a folder is being added */
@@ -123,5 +129,28 @@ export class FolderNode {
    */
   onFolderCancel(): void {
     this.store.cancelAddingFolder();
+  }
+
+  /**
+   * Handles delete button click.
+   * Stops event propagation to prevent folder selection.
+   */
+  onDeleteClick(event: Event): void {
+    event.stopPropagation();
+    if (!this.disabled()) {
+      this.deleteFolder.emit(this.folder().fullPath);
+    }
+  }
+
+  /**
+   * Handles Delete key press on folder header.
+   * Stops event propagation to prevent unwanted side effects.
+   */
+  onDeleteKeydown(event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    if (!this.disabled()) {
+      this.deleteFolder.emit(this.folder().fullPath);
+    }
   }
 }

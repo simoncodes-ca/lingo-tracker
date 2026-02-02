@@ -104,6 +104,7 @@ describe('ResourcesController', () => {
     getCacheStats: jest.fn(),
     indexCollection: jest.fn(),
     clearCache: jest.fn(),
+    addResourceToCache: jest.fn().mockReturnValue(true),
   };
 
   beforeEach(async () => {

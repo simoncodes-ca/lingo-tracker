@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InlineFolderInput } from './inline-folder-input';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';

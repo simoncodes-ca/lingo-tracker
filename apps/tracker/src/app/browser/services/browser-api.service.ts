@@ -13,6 +13,8 @@ import type {
   DeleteResourceResponseDto,
   CreateFolderDto,
   CreateFolderResponseDto,
+  DeleteFolderDto,
+  DeleteFolderResponseDto,
 } from '@simoncodes-ca/data-transfer';
 
 /**
@@ -122,5 +124,20 @@ export class BrowserApiService {
       ...(parentPath !== undefined && { parentPath }),
     };
     return this.#http.post<CreateFolderResponseDto>(`${this.#baseUrl}/${encodedName}/folders`, dto);
+  }
+
+  /**
+   * Deletes a folder and all its resources from a collection.
+   *
+   * @param collectionName - Name of the collection
+   * @param folderPath - Dot-delimited folder path to delete
+   * @returns Observable of folder deletion response
+   */
+  deleteFolder(collectionName: string, folderPath: string): Observable<DeleteFolderResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: DeleteFolderDto = { folderPath };
+    return this.#http.request<DeleteFolderResponseDto>('DELETE', `${this.#baseUrl}/${encodedName}/folders`, {
+      body: dto,
+    });
   }
 }
