@@ -1,6 +1,6 @@
 import { Controller, Post, Param, Body, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { createFolder } from '@simoncodes-ca/core';
-import { CreateFolderDto, CreateFolderResponseDto } from '@simoncodes-ca/data-transfer';
+import type { CreateFolderDto, CreateFolderResponseDto, FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { CollectionCacheService } from '../../cache/collection-cache.service';
 
@@ -32,14 +32,35 @@ export class FoldersController {
         parentPath: createFolderDto.parentPath,
       });
 
-      // Clear cache after successful folder creation
+      // Update cache incrementally after successful folder creation
       if (result.created) {
-        this.cacheService.clearCache();
+        this.cacheService.addFolderToCache(
+          decodedCollectionName,
+          createFolderDto.folderName,
+          createFolderDto.parentPath,
+        );
       }
+
+      // Build the folder node for the frontend to insert into tree
+      const fullPath = createFolderDto.parentPath
+        ? `${createFolderDto.parentPath}.${createFolderDto.folderName}`
+        : createFolderDto.folderName;
+
+      const folderNode: FolderNodeDto = {
+        name: createFolderDto.folderName,
+        fullPath,
+        loaded: true,
+        tree: {
+          path: fullPath,
+          resources: [],
+          children: [],
+        },
+      };
 
       return {
         folderPath: result.folderPath,
         created: result.created,
+        folder: folderNode,
       };
     } catch (error: unknown) {
       if (error instanceof NotFoundException) {

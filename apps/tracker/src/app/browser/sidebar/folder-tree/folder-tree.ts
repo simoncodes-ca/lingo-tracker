@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, input, output, effect } fro
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -33,6 +34,7 @@ import { MatIconModule } from '@angular/material/icon';
     CommonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatButtonModule,
     MatButtonToggleModule,
     MatTooltipModule,
     FolderNode,
@@ -126,5 +128,14 @@ export class FolderTree {
    */
   onFolderCancel(): void {
     this.store.cancelAddingFolder();
+  }
+
+  /**
+   * Initiates folder creation in the currently selected folder.
+   * Triggers the inline input for entering a new folder name.
+   */
+  onAddFolderButtonClick(): void {
+    const currentFolderPath = this.store.currentFolderPath();
+    this.store.startAddingFolder(currentFolderPath || null);
   }
 }

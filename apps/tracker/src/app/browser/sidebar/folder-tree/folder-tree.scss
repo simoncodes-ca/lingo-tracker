@@ -34,6 +34,31 @@
   margin-left: auto;
 }
 
+.add-folder-button {
+  flex-shrink: 0;
+  height: 40px;
+  width: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: all 150ms ease-in-out;
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-surface-hover);
+    border-color: var(--color-border-strong);
+  }
+
+  &:active:not(:disabled) {
+    background-color: var(--color-surface-active);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 .loading-container {
   display: flex;
   flex-direction: column;

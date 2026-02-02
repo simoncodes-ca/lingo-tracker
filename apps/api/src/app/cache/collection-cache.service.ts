@@ -118,6 +118,66 @@ export class CollectionCacheService {
     }
   }
 
+  /**
+   * Adds a folder to the cached tree without requiring a full re-index.
+   * @param collectionName - The collection name
+   * @param folderName - The name of the new folder
+   * @param parentPath - The parent path (dot-delimited) or undefined for root
+   * @returns true if the folder was added, false if cache wasn't ready or parent not found
+   */
+  addFolderToCache(collectionName: string, folderName: string, parentPath?: string): boolean {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
+      this.#logger.warn(`Cannot add folder to cache: no cache for collection ${collectionName}`);
+      return false;
+    }
+
+    if (this.#cachedCollection.status !== CacheStatus.READY || !this.#cachedCollection.tree) {
+      this.#logger.warn(`Cannot add folder to cache: cache not ready for collection ${collectionName}`);
+      return false;
+    }
+
+    const tree = this.#cachedCollection.tree;
+    const parentSegments = parentPath ? parentPath.split('.') : [];
+    const fullPathSegments = [...parentSegments, folderName];
+
+    // Find the parent node
+    let parentNode: ResourceTreeNode = tree;
+    for (const segment of parentSegments) {
+      const child = parentNode.children.find((c) => c.name === segment);
+      if (!child || !child.tree) {
+        this.#logger.warn(`Cannot add folder to cache: parent path "${parentPath}" not found or not loaded`);
+        return false;
+      }
+      parentNode = child.tree;
+    }
+
+    // Check if folder already exists
+    const existingChild = parentNode.children.find((c) => c.name === folderName);
+    if (existingChild) {
+      this.#logger.log(`Folder "${folderName}" already exists in cache at path "${parentPath || 'root'}"`);
+      return true;
+    }
+
+    // Create the new folder child entry
+    const newFolderChild = {
+      name: folderName,
+      fullPathSegments,
+      loaded: true,
+      tree: {
+        folderPathSegments: fullPathSegments,
+        resources: [],
+        children: [],
+      },
+    };
+
+    // Add to parent's children and sort alphabetically
+    parentNode.children.push(newFolderChild);
+    parentNode.children.sort((a, b) => a.name.localeCompare(b.name));
+
+    this.#logger.log(`Added folder "${folderName}" to cache at path "${parentPath || 'root'}"`);
+    return true;
+  }
+
   async indexCollection(collectionName: string, translationsFolder: string, localeCount?: number): Promise<void> {
     const currentStatus = this.getCacheStatus(collectionName);
 

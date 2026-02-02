@@ -54,9 +54,17 @@ export class FolderNode {
   /** Signal exposing the parent path for the folder being added */
   readonly addFolderParentPath = this.store.addFolderParentPath;
 
+  /** Signal exposing the path of the newly created folder */
+  readonly newlyCreatedFolderPath = this.store.newlyCreatedFolderPath;
+
   /** Whether the inline input should be shown for this folder */
   readonly shouldShowInlineInput = computed(() => {
     return this.isAddingFolder() && this.addFolderParentPath() === this.folder().fullPath;
+  });
+
+  /** Whether this folder was just created */
+  readonly isNewlyCreated = computed(() => {
+    return this.newlyCreatedFolderPath() === this.folder().fullPath;
   });
 
   /** Checks if this folder is a descendant of the selected folder */

@@ -105,26 +105,4 @@ describe('TranslationBrowser - Integration', () => {
     // Cleanup
     document.body.removeChild(input);
   });
-
-  it('should call store.startAddingFolder when onAddFolderClick is invoked', () => {
-    // Setup the component
-    component.store.setSelectedCollection({
-      collectionName: 'test-collection',
-      locales: ['en', 'es'],
-    });
-
-    // Select a folder path
-    component.store.selectFolder('folder.path');
-    fixture.detectChanges();
-
-    // Initially not adding folder
-    expect(component.store.isAddingFolder()).toBe(false);
-
-    // Call the method
-    component.onAddFolderClick();
-
-    // Should be adding folder with current path as parent
-    expect(component.store.isAddingFolder()).toBe(true);
-    expect(component.store.addFolderParentPath()).toBe('folder.path');
-  });
 });

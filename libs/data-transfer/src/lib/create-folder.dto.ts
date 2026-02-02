@@ -1,3 +1,5 @@
+import type { FolderNodeDto } from './resource-tree.dto';
+
 /**
  * DTO for creating a new folder in the resource hierarchy.
  */
@@ -19,9 +21,12 @@ export interface CreateFolderDto {
  * Response DTO for folder creation operation.
  */
 export interface CreateFolderResponseDto {
-  /** Full dot-delimited path to the created folder */
+  /** Full filesystem path to the created folder */
   folderPath: string;
 
   /** Whether the folder was newly created (false if it already existed) */
   created: boolean;
+
+  /** The folder node data for inserting into the tree */
+  folder: FolderNodeDto;
 }

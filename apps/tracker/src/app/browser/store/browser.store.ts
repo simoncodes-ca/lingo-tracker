@@ -1,7 +1,7 @@
 import { computed, inject, effect } from '@angular/core';
 import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, tap, switchMap, catchError, of, interval, takeWhile, startWith } from 'rxjs';
+import { pipe, tap, switchMap, catchError, of, interval, startWith, takeWhile } from 'rxjs';
 import type {
   FolderNodeDto,
   ResourceSummaryDto,
@@ -9,10 +9,56 @@ import type {
   SearchResultsDto,
   CacheStatusType,
   TranslationStatus,
-  CreateFolderResponseDto,
 } from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../services/browser-api.service';
 import { sortTranslations } from '../translations/utils/sort-translations';
+
+/**
+ * Inserts a new folder into the tree at the specified parent path.
+ * Returns a new array with the folder inserted (immutable update).
+ */
+function insertFolderIntoTree(
+  folders: FolderNodeDto[],
+  newFolder: FolderNodeDto,
+  parentPath: string | null,
+): FolderNodeDto[] {
+  if (!parentPath) {
+    // Insert at root level, maintaining alphabetical order
+    const updated = [...folders, newFolder];
+    updated.sort((a, b) => a.name.localeCompare(b.name));
+    return updated;
+  }
+
+  // Find and update the parent folder
+  const parentSegments = parentPath.split('.');
+
+  const updateChildren = (nodes: FolderNodeDto[], depth: number): FolderNodeDto[] => {
+    return nodes.map((node) => {
+      if (node.name === parentSegments[depth]) {
+        if (depth === parentSegments.length - 1) {
+          // This is the parent - insert the new folder into its children
+          const updatedChildren = [...(node.tree?.children ?? []), newFolder];
+          updatedChildren.sort((a, b) => a.name.localeCompare(b.name));
+          return {
+            ...node,
+            tree: node.tree
+              ? { ...node.tree, children: updatedChildren }
+              : { path: node.fullPath, resources: [], children: updatedChildren },
+          };
+        } else if (node.tree?.children) {
+          // Recurse deeper
+          return {
+            ...node,
+            tree: { ...node.tree, children: updateChildren(node.tree.children, depth + 1) },
+          };
+        }
+      }
+      return node;
+    });
+  };
+
+  return updateChildren(folders, 0);
+}
 
 interface ViewPreferences {
   densityMode: 'compact' | 'medium' | 'full';
@@ -42,6 +88,7 @@ interface BrowserState {
   isFolderTreeLoading: boolean;
   isAddingFolder: boolean;
   addFolderParentPath: string | null;
+  newlyCreatedFolderPath: string | null;
 
   translations: ResourceSummaryDto[];
   isTranslationsLoading: boolean;
@@ -81,6 +128,7 @@ const initialState: BrowserState = {
   isFolderTreeLoading: false,
   isAddingFolder: false,
   addFolderParentPath: null,
+  newlyCreatedFolderPath: null,
   translations: [],
   isTranslationsLoading: false,
   showNestedResources: true,
@@ -627,13 +675,25 @@ export const BrowserStore = signalStore(
             }
 
             return api.createFolder(collection, folderName, parentPath || undefined).pipe(
-              tap(() => {
+              tap((response) => {
+                // Insert the new folder into the tree locally
+                const currentFolders = store.rootFolders();
+                const updatedFolders = insertFolderIntoTree(currentFolders, response.folder, parentPath || null);
+
                 patchState(store, {
                   isAddingFolder: false,
                   addFolderParentPath: null,
+                  rootFolders: updatedFolders,
+                  newlyCreatedFolderPath: response.folder.fullPath,
                   error: null,
                 });
-                store.loadRootFolders();
+
+                // Auto-clear the "new" indicator after 3 seconds
+                setTimeout(() => {
+                  if (store.newlyCreatedFolderPath() === response.folder.fullPath) {
+                    patchState(store, { newlyCreatedFolderPath: null });
+                  }
+                }, 3000);
               }),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to create folder';

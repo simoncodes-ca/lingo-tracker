@@ -125,15 +125,6 @@ export class TranslationBrowser implements OnInit {
   }
 
   /**
-   * Handles the add folder button click from the sidebar header.
-   * Triggers folder creation in the currently selected folder.
-   */
-  onAddFolderClick(): void {
-    const currentFolderPath = this.store.currentFolderPath();
-    this.store.startAddingFolder(currentFolderPath || null);
-  }
-
-  /**
    * Handles Ctrl+Shift+N keyboard shortcut to create a new folder.
    * Creates a folder in the currently selected folder path.
    * Prevents action when an input element is focused.
@@ -148,6 +139,7 @@ export class TranslationBrowser implements OnInit {
     }
 
     event.preventDefault();
-    this.onAddFolderClick();
+    const currentFolderPath = this.store.currentFolderPath();
+    this.store.startAddingFolder(currentFolderPath || null);
   }
 }

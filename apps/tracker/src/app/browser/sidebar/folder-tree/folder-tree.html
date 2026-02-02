@@ -30,6 +30,17 @@
         <mat-icon>account_tree</mat-icon>
       </mat-button-toggle>
     </mat-button-toggle-group>
+    <button
+      mat-icon-button
+      type="button"
+      (click)="onAddFolderButtonClick()"
+      [disabled]="store.isDisabled()"
+      aria-label="Add folder"
+      matTooltip="Add folder (Ctrl+Shift+N)"
+      class="add-folder-button"
+    >
+      <mat-icon>create_new_folder</mat-icon>
+    </button>
   </div>
 
   <!-- Loading State -->

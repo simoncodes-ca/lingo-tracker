@@ -42,6 +42,9 @@ export class InlineFolderInput {
     validators: [Validators.required, Validators.pattern(/^[A-Za-z0-9_-]+$/)],
   });
 
+  /** Track if confirm was already emitted to prevent blur from canceling */
+  #confirmed = false;
+
   constructor() {
     // Auto-focus the input when component appears
     effect(() => {
@@ -60,6 +63,7 @@ export class InlineFolderInput {
     if (this.folderNameControl.valid) {
       const folderName = this.folderNameControl.value.trim();
       if (folderName) {
+        this.#confirmed = true;
         this.confirm.emit(folderName);
       }
     }
@@ -76,9 +80,12 @@ export class InlineFolderInput {
   /**
    * Handles input blur event.
    * Cancels the folder creation when clicking outside.
+   * Does not cancel if confirm was already emitted.
    */
   onBlur(): void {
-    this.cancel.emit();
+    if (!this.#confirmed) {
+      this.cancel.emit();
+    }
   }
 
   /**
