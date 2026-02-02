@@ -30,8 +30,13 @@
 .nested-toggle-group {
   --mat-button-toggle-height: 40px;
 
+  color: var(--color-text-secondary);
   flex-shrink: 0;
   margin-left: auto;
+
+  mat-icon {
+    color: var(--color-text-secondary);
+  }
 }
 
 .add-folder-button {
@@ -41,7 +46,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-sm);
   background-color: var(--color-surface);
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
   transition: all 150ms ease-in-out;
 
   &:hover:not(:disabled) {

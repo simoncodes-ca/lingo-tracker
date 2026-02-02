@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { BrowserStore } from '../../store/browser.store';
+import { BrowserStore } from '../../../store/browser.store';
 import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
 
 /**

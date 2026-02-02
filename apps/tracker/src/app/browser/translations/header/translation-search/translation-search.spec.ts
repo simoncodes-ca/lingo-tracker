@@ -3,10 +3,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TranslationSearch } from './translation-search';
-import { BrowserStore } from '../../store/browser.store';
+import { BrowserStore } from '../../../store/browser.store';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
-import { SearchInput } from '../../../shared/components/search-input';
+import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
+import { SearchInput } from '../../../../shared/components/search-input';
 
 describe('TranslationSearch', () => {
   let component: TranslationSearch;

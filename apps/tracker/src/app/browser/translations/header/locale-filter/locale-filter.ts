@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, type MatMenu } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioModule } from '@angular/material/radio';
-import { BrowserStore } from '../../store/browser.store';
+import { BrowserStore } from '../../../store/browser.store';
 
 /**
  * LocaleFilter component provides a dropdown for filtering

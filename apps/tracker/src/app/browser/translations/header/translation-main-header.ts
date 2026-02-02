@@ -6,13 +6,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { LocaleFilter, StatusFilter, TranslationSearch } from '../../sidebar';
+import { TranslationSearch } from './translation-search/translation-search';
 import { BrowserStore } from '../../store/browser.store';
 import {
   TranslationEditorDialog,
   type TranslationEditorDialogData,
   type TranslationEditorResult,
 } from '../../dialogs/translation-editor';
+import { LocaleFilter } from './locale-filter/locale-filter';
+import { StatusFilter } from './status-filter/status-filter';
 
 type DensityMode = 'compact' | 'medium' | 'full';
 

@@ -2,7 +2,7 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { LocaleFilter } from './locale-filter';
-import { BrowserStore } from '../../store/browser.store';
+import { BrowserStore } from '../../../store/browser.store';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('LocaleFilter', () => {

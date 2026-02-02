@@ -1,10 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, type OnDestroy, signal } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { BrowserStore } from '../../store/browser.store';
+import { BrowserStore } from '../../../store/browser.store';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
-import { SearchInput } from '../../../shared/components/search-input';
+import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
+import { SearchInput } from '../../../../shared/components/search-input';
 
 /**
  * TranslationSearch component provides a search input with debouncing

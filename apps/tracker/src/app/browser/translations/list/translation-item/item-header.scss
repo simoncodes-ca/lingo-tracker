@@ -41,10 +41,10 @@
 
 .key-chip {
   align-items: center;
-  background: #424242;
+  background: var(--color-neutral-200);
   border: none;
   border-radius: 16px;
-  color: #e0e0e0;
+  color: var(--color-text-primary);
   cursor: pointer;
   display: inline-flex;
   font-family: var(--font-mono, 'Roboto Mono', monospace);
@@ -57,7 +57,7 @@
   transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
 
   &:hover {
-    background-color: #535353;
+    background-color: var(--color-neutral-300);
 
     .copy-icon {
       opacity: 1;
@@ -88,7 +88,7 @@
 }
 
 .copy-icon {
-  color: #e0e0e0;
+  color: var(--color-text-secondary);
   flex-shrink: 0;
   font-size: 16px;
   height: 16px;
