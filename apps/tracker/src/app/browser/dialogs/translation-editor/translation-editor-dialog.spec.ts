@@ -16,7 +16,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 describe('TranslationEditorDialog', () => {
   let component: TranslationEditorDialog;
   let fixture: ComponentFixture<TranslationEditorDialog>;
-  let dialogRef: { close: Mock };
+  let dialogRef: { close: Mock; afterOpened: Mock };
   let mockDialog: { open: Mock };
   let mockBrowserApi: {
     createResource: Mock;
@@ -62,7 +62,7 @@ describe('TranslationEditorDialog', () => {
   };
 
   beforeEach(async () => {
-    dialogRef = { close: vi.fn() };
+    dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
 
     mockDialog = {
       open: vi.fn().mockReturnValue({
@@ -185,13 +185,6 @@ describe('TranslationEditorDialog', () => {
       component.form.controls.baseValue.setValue('Test translation');
       expect(component.form.controls.baseValue.valid).toBe(true);
     });
-
-    it('should update character count when base value changes', () => {
-      const testValue = 'Test translation text';
-      component.form.controls.baseValue.setValue(testValue);
-      fixture.detectChanges();
-      expect(component.baseValueCharacterCount()).toBe(testValue.length);
-    });
   });
 
   describe('Form Validation - Comment Field', () => {
@@ -203,13 +196,6 @@ describe('TranslationEditorDialog', () => {
     it('should accept any comment value', () => {
       component.form.controls.comment.setValue('This is a comment for translators');
       expect(component.form.controls.comment.valid).toBe(true);
-    });
-
-    it('should update character count when comment changes', () => {
-      const testComment = 'This is a test comment';
-      component.form.controls.comment.setValue(testComment);
-      fixture.detectChanges();
-      expect(component.commentCharacterCount()).toBe(testComment.length);
     });
   });
 
@@ -256,7 +242,7 @@ describe('TranslationEditorDialog', () => {
     it('should use empty string for folderPath when not provided', async () => {
       const dataWithoutFolder = createMockData('create');
       dataWithoutFolder.folderPath = undefined;
-      dialogRef = { close: vi.fn() };
+      dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
       mockDialog = {
         open: vi.fn().mockReturnValue({
           afterClosed: () => of(true),
@@ -370,22 +356,6 @@ describe('TranslationEditorDialog', () => {
     });
   });
 
-  describe('Other Locales Character Count', () => {
-    it('should track character count for locale translations', () => {
-      const translationsArray = component.form.controls.translations;
-      const firstLocaleControl = translationsArray.at(0);
-
-      firstLocaleControl.patchValue({
-        value: 'Test translation',
-      });
-
-      fixture.detectChanges();
-
-      const locale = firstLocaleControl.value.locale;
-      expect(component.getLocaleCharacterCount(locale)).toBe(16);
-    });
-  });
-
   describe('Form Submission with Other Locales', () => {
     it('should include filled translations in create mode with status "new"', async () => {
       component.form.controls.key.setValue('test_key');
@@ -428,7 +398,7 @@ describe('TranslationEditorDialog', () => {
       };
 
       const editData = createMockData('edit', mockResource);
-      dialogRef = { close: vi.fn() };
+      dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
       mockDialog = {
         open: vi.fn().mockReturnValue({
           afterClosed: () => of(true),
@@ -548,7 +518,7 @@ describe('TranslationEditorDialog', () => {
 
   describe('Comment Confirmation Flow', () => {
     beforeEach(async () => {
-      dialogRef = { close: vi.fn() };
+      dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
       mockDialog = {
         open: vi.fn().mockReturnValue({
           afterClosed: () => of(true),
@@ -731,7 +701,7 @@ describe('TranslationEditorDialog', () => {
       };
 
       const editData = createMockData('edit', mockResource);
-      dialogRef = { close: vi.fn() };
+      dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true })),
@@ -769,7 +739,7 @@ describe('TranslationEditorDialog', () => {
       };
 
       const editData = createMockData('edit', mockResource);
-      dialogRef = { close: vi.fn() };
+      dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true })),
@@ -827,7 +797,7 @@ describe('TranslationEditorDialog', () => {
       };
 
       const editData = createMockData('edit', mockResource);
-      dialogRef = { close: vi.fn() };
+      dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(
@@ -865,7 +835,7 @@ describe('TranslationEditorDialog', () => {
       };
 
       const editData = createMockData('edit', mockResource);
-      dialogRef = { close: vi.fn() };
+      dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true })),
