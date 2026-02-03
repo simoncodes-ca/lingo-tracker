@@ -185,7 +185,7 @@ export class TranslationList {
       width: '700px',
       maxHeight: '90vh',
       data: dialogData,
-      autoFocus: true,
+      autoFocus: false,
       restoreFocus: false,
     });
 

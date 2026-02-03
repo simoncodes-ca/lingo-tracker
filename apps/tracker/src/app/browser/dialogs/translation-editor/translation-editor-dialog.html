@@ -29,9 +29,9 @@
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Translation Key</mat-label>
         <input
+          #keyInput
           matInput
           formControlName="key"
-          placeholder="button_submit"
           required
           autocomplete="off"
         />
@@ -69,6 +69,7 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ data.baseLocale.toUpperCase() }} Translation</mat-label>
           <textarea
+            #baseValueInput
             matInput
             formControlName="baseValue"
             [placeholder]="'Enter ' + data.baseLocale.toUpperCase() + ' translation...'"

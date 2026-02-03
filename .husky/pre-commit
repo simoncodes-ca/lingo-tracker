@@ -7,4 +7,4 @@ if [ -n "$STAGED_FILES" ]; then
   echo "$STAGED_FILES" | xargs git add
 fi
 
-npm test
+pnpm typecheck

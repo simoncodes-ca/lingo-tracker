@@ -4,9 +4,12 @@ import {
   inject,
   type OnInit,
   type OnDestroy,
+  type AfterViewInit,
   signal,
   computed,
   HostListener,
+  ViewChild,
+  ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';
@@ -93,7 +96,7 @@ export interface TranslationEditorResult {
     FolderPicker,
   ],
 })
-export class TranslationEditorDialog implements OnInit, OnDestroy {
+export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit {
   private readonly dialogRef = inject(MatDialogRef<TranslationEditorDialog>);
   private readonly dialog = inject(MatDialog);
   private readonly browserApi = inject(BrowserApiService);
@@ -102,6 +105,9 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
   private readonly baseValueSearch$ = new Subject<string>();
 
   readonly data = inject<TranslationEditorDialogData>(MAT_DIALOG_DATA);
+
+  @ViewChild('keyInput') keyInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('baseValueInput') baseValueInput?: ElementRef<HTMLTextAreaElement>;
 
   #commentConfirmationShown = false;
   #originalBaseValue = '';
@@ -190,6 +196,16 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  ngAfterViewInit(): void {
+    this.dialogRef.afterOpened().subscribe(() => {
+      if (this.isEditMode()) {
+        this.baseValueInput?.nativeElement.focus();
+      } else {
+        this.keyInput?.nativeElement.focus();
+      }
+    });
   }
 
   #initializeOtherLocaleFormControls(): void {

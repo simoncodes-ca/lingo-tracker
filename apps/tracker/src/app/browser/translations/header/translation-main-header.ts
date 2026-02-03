@@ -84,6 +84,7 @@ export class TranslationMainHeader {
       width: '700px',
       maxHeight: '90vh',
       data: dialogData,
+      autoFocus: false,
     });
 
     dialogRef.afterClosed().subscribe((result: TranslationEditorResult | undefined) => {
