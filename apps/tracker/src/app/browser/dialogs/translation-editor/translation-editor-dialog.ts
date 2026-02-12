@@ -32,6 +32,7 @@ import type {
   FolderNodeDto,
 } from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../../services/browser-api.service';
+import { BrowserStore } from '../../store/browser.store';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
 import type { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
@@ -100,6 +101,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   private readonly dialogRef = inject(MatDialogRef<TranslationEditorDialog>);
   private readonly dialog = inject(MatDialog);
   private readonly browserApi = inject(BrowserApiService);
+  private readonly browserStore = inject(BrowserStore);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroy$ = new Subject<void>();
   private readonly baseValueSearch$ = new Subject<string>();
@@ -142,11 +144,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   readonly showOtherLocales = signal(false);
   readonly selectedFolderPath = signal<string>('');
 
-  // Stub for folder picker - store not yet implemented
-  readonly store = {
-    rootFolders: () => [] as FolderNodeDto[],
-  };
-  readonly folderExists = computed(() => true);
+  readonly rootFolders = computed(() => this.browserStore.rootFolders());
 
   readonly otherLocales = computed(() =>
     this.data.availableLocales.filter((locale) => locale !== this.data.baseLocale),
@@ -322,12 +320,13 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     this.showOtherLocales.set(!this.showOtherLocales());
   }
 
-  onFolderSelected(folderPath: string): void {
+  onFolderConfirmed(folderPath: string): void {
     this.selectedFolderPath.set(folderPath);
   }
 
-  onLoadFolder(_folderPath: string): void {
-    // Stub - folder loading not yet implemented
+  onFolderCreated(folder: FolderNodeDto): void {
+    // Store's createFolderAt already updated rootFolders, just update selection
+    this.selectedFolderPath.set(folder.fullPath);
   }
 
   onSimilarResourceClick(result: SearchResultDto): void {

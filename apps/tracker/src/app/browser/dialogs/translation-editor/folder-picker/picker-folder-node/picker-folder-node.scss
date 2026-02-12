@@ -1,0 +1,172 @@
+:host {
+  display: block;
+}
+
+.picker-folder-node {
+  // No top-level styles needed
+}
+
+.folder-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  cursor: pointer;
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.15s ease;
+  user-select: none;
+  position: relative;
+
+  // Hover state
+  &:hover:not(.selected) {
+    background-color: var(--color-background-muted);
+
+    .add-button {
+      opacity: 1;
+    }
+  }
+
+  // Selected state
+  &.selected {
+    background-color: var(--color-primary-subtle);
+    border-left: 3px solid var(--color-primary);
+    padding-left: calc(var(--spacing-3) - 3px);
+
+    .folder-icon {
+      color: var(--color-primary);
+    }
+
+    .folder-name {
+      color: var(--color-primary);
+      font-weight: var(--font-weight-semibold);
+    }
+
+    .add-button {
+      opacity: 1;
+    }
+  }
+
+  // Focused state for keyboard navigation
+  &.focused {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+
+    .add-button {
+      opacity: 1;
+    }
+  }
+
+  // Expand/collapse button
+  .expand-button {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    padding: 0;
+    flex-shrink: 0;
+
+    ::ng-deep {
+      .mat-mdc-button-touch-target,
+      .mat-mdc-button-persistent-ripple {
+        height: 24px;
+        width: 24px;
+      }
+
+      .mat-mdc-button-persistent-ripple::before {
+        border-radius: 50%;
+      }
+    }
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      color: var(--color-text-secondary);
+    }
+  }
+
+  // Placeholder to maintain alignment when no expand button
+  .expand-placeholder {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  // Folder icon
+  .folder-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+  }
+
+  // Folder name
+  .folder-name {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.15s ease, font-weight 0.15s ease;
+  }
+
+  // Checkmark icon for selected state
+  .checkmark-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--color-primary);
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  // Add folder button
+  .add-button {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    padding: 0;
+    flex-shrink: 0;
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+
+    ::ng-deep {
+      .mat-mdc-button-touch-target,
+      .mat-mdc-button-persistent-ripple {
+        height: 24px;
+        width: 24px;
+      }
+
+      .mat-mdc-button-persistent-ripple::before {
+        border-radius: 50%;
+      }
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      color: var(--color-text-secondary);
+    }
+
+    &:hover {
+      background-color: var(--color-background-muted);
+
+      mat-icon {
+        color: var(--color-primary);
+      }
+    }
+  }
+}
+
+// Children container with indentation and border
+.folder-children {
+  margin-left: var(--spacing-4);
+  padding-left: var(--spacing-2);
+  border-left: 1px solid var(--color-border);
+}

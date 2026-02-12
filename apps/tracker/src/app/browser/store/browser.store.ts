@@ -1,7 +1,7 @@
 import { computed, inject, effect } from '@angular/core';
 import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, tap, switchMap, catchError, of, interval, startWith, takeWhile } from 'rxjs';
+import { pipe, tap, switchMap, catchError, of, interval, startWith, takeWhile, Observable } from 'rxjs';
 import type {
   FolderNodeDto,
   ResourceSummaryDto,
@@ -9,6 +9,7 @@ import type {
   SearchResultsDto,
   CacheStatusType,
   TranslationStatus,
+  CreateFolderResponseDto,
 } from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../services/browser-api.service';
 import { sortTranslations } from '../translations/utils/sort-translations';
@@ -749,6 +750,46 @@ export const BrowserStore = signalStore(
           }),
         ),
       ),
+
+      /**
+       * Creates a folder with explicit parameters.
+       * Unlike createFolder (which reads from store state), this method takes
+       * parentPath as an argument and returns an Observable for direct subscription.
+       * Used by components that manage their own UI state (e.g., FolderPicker).
+       */
+      createFolderAt(folderName: string, parentPath: string | null): Observable<CreateFolderResponseDto | null> {
+        const collection = store.selectedCollection();
+
+        if (!collection) {
+          return of(null);
+        }
+
+        return api.createFolder(collection, folderName, parentPath || undefined).pipe(
+          tap((response) => {
+            // Insert the new folder into the tree locally
+            const currentFolders = store.rootFolders();
+            const updatedFolders = insertFolderIntoTree(currentFolders, response.folder, parentPath);
+
+            patchState(store, {
+              rootFolders: updatedFolders,
+              newlyCreatedFolderPath: response.folder.fullPath,
+              error: null,
+            });
+
+            // Auto-clear the "new" indicator after 3 seconds
+            setTimeout(() => {
+              if (store.newlyCreatedFolderPath() === response.folder.fullPath) {
+                patchState(store, { newlyCreatedFolderPath: null });
+              }
+            }, 3000);
+          }),
+          catchError((error: unknown) => {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to create folder';
+            patchState(store, { error: errorMessage });
+            throw error;
+          }),
+        );
+      },
 
       deleteFolder: rxMethod<string>(
         pipe(

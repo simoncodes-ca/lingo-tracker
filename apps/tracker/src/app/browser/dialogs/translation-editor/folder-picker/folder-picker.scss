@@ -43,24 +43,6 @@
   font-size: var(--font-size-sm);
 }
 
-.new-folder-chip {
-  align-items: center;
-  background-color: var(--color-success-light);
-  border-radius: var(--border-radius-sm);
-  color: var(--color-success-dark);
-  display: inline-flex;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  gap: var(--spacing-1);
-  padding: var(--spacing-1) var(--spacing-2);
-
-  .chip-icon {
-    font-size: var(--font-size-sm);
-    height: var(--font-size-sm);
-    width: var(--font-size-sm);
-  }
-}
-
 .chevron-icon {
   color: var(--color-text-tertiary);
   transition: transform 0.2s ease;
@@ -73,56 +55,46 @@
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   margin-top: -1px;
-  max-height: 400px;
   overflow-y: auto;
   padding: var(--spacing-3);
 }
 
-.root-folder-option {
-  margin-bottom: var(--spacing-3);
-}
+.empty-state {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-8) var(--spacing-4);
+  text-align: center;
 
-.root-folder-button {
-  justify-content: flex-start;
-  width: 100%;
+  .empty-icon {
+    color: var(--color-text-tertiary);
+    font-size: 64px;
+    height: 64px;
+    width: 64px;
+  }
 
-  mat-icon {
-    margin-right: var(--spacing-2);
+  .empty-message {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+    margin: 0;
+  }
+
+  .create-first-folder-button {
+    margin-top: var(--spacing-2);
+
+    mat-icon {
+      margin-right: var(--spacing-1);
+    }
   }
 }
 
 .folder-tree-container {
-  margin-bottom: var(--spacing-3);
-  max-height: 200px;
-  overflow-y: auto;
-}
+  outline: none;
 
-.empty-tree-message {
-  align-items: center;
-  color: var(--color-text-tertiary);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-  padding: var(--spacing-6);
-  text-align: center;
-
-  mat-icon {
-    font-size: 48px;
-    height: 48px;
-    width: 48px;
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--border-radius-sm);
   }
-
-  p {
-    font-size: var(--font-size-sm);
-    margin: 0;
-  }
-}
-
-.custom-folder-section {
-  border-top: 1px solid var(--color-border);
-  padding-top: var(--spacing-3);
-}
-
-.custom-folder-input {
-  width: 100%;
 }

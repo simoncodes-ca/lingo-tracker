@@ -43,11 +43,10 @@
 
       <!-- Folder Picker -->
       <app-folder-picker
-        [selectedPath]="selectedFolderPath()"
-        [rootFolders]="store.rootFolders()"
-        [folderExists]="folderExists()"
-        (folderSelected)="onFolderSelected($event)"
-        (loadFolder)="onLoadFolder($event)"
+        [currentPath]="selectedFolderPath()"
+        [rootFolders]="rootFolders()"
+        (folderConfirmed)="onFolderConfirmed($event)"
+        (folderCreated)="onFolderCreated($event)"
       />
 
       <!-- Base Locale Section -->

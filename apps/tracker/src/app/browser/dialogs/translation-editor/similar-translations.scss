@@ -11,6 +11,11 @@
   border-left: 3px solid var(--color-border-strong);
   border-radius: var(--border-radius-lg);
   overflow: hidden;
+  transition: border-left-color var(--transition-fast);
+
+  &.has-results {
+    border-left-color: var(--color-warning);
+  }
 }
 
 // Header
