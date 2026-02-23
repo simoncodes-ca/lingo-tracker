@@ -371,6 +371,11 @@ app-tag-list {
   opacity: 0.4;
 }
 
+.drag-placeholder {
+  height: 0;
+  overflow: hidden;
+}
+
 .cdk-drag-animating {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }

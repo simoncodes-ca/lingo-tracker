@@ -11,7 +11,7 @@ import {
   type EffectRef,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { CdkDrag } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragPlaceholder } from '@angular/cdk/drag-drop';
 import type { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
 import { BrowserStore } from '../../../store/browser.store';
 import { TranslationItemHeader } from './item-header';
@@ -39,6 +39,7 @@ const LONG_PRESS_THRESHOLD = 500;
     TranslationItemCompactControls,
     HighlightPipe,
     CdkDrag,
+    CdkDragPlaceholder,
   ],
   templateUrl: './translation-item.html',
   styleUrl: './translation-item.scss',
