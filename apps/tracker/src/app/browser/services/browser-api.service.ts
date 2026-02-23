@@ -15,6 +15,10 @@ import type {
   CreateFolderResponseDto,
   DeleteFolderDto,
   DeleteFolderResponseDto,
+  MoveResourceDto,
+  MoveResourceResponseDto,
+  MoveFolderDto,
+  MoveFolderResponseDto,
 } from '@simoncodes-ca/data-transfer';
 
 /**
@@ -139,5 +143,48 @@ export class BrowserApiService {
     return this.#http.request<DeleteFolderResponseDto>('DELETE', `${this.#baseUrl}/${encodedName}/folders`, {
       body: dto,
     });
+  }
+
+  /**
+   * Moves a translation resource to a different folder.
+   *
+   * @param collectionName - Name of the collection
+   * @param sourceKey - Full key of the resource to move
+   * @param destinationKey - Full destination key (including folder path and entry name)
+   * @returns Observable of move response
+   */
+  moveResource(collectionName: string, sourceKey: string, destinationKey: string): Observable<MoveResourceResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: MoveResourceDto = {
+      moves: [
+        {
+          source: sourceKey,
+          destination: destinationKey,
+        },
+      ],
+    };
+    return this.#http.post<MoveResourceResponseDto>(`${this.#baseUrl}/${encodedName}/resources/move`, dto);
+  }
+
+  /**
+   * Moves a folder and all its contents to a different location.
+   *
+   * @param collectionName - Name of the collection
+   * @param sourceFolderPath - Dot-delimited source folder path
+   * @param destinationFolderPath - Dot-delimited destination folder path
+   * @returns Observable of move response
+   */
+  moveFolder(
+    collectionName: string,
+    sourceFolderPath: string,
+    destinationFolderPath: string,
+  ): Observable<MoveFolderResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: MoveFolderDto = {
+      sourceFolderPath,
+      destinationFolderPath,
+      nestUnderDestination: true,
+    };
+    return this.#http.post<MoveFolderResponseDto>(`${this.#baseUrl}/${encodedName}/folders/move`, dto);
   }
 }

@@ -1,22 +1,26 @@
 @if (isCompactMode()) {
   <!-- Compact mode: key icon only with full key in tooltip -->
-  <button
-    class="key-icon-button"
-    type="button"
-    (click)="onCopyKey()"
-    (keydown.enter)="onCopyKey()"
-    [matTooltip]="fullKey()"
-    [attr.aria-label]="'Copy key: ' + fullKey()"
-  >
-    @if (showCopySuccess()) {
-      <mat-icon class="key-icon key-icon--success">check</mat-icon>
-    } @else {
-      <mat-icon class="key-icon">vpn_key</mat-icon>
-    }
-  </button>
+  <div class="compact-header-wrapper">
+    <mat-icon class="translation-drag-handle translation-drag-handle--compact" cdkDragHandle aria-label="Drag to move translation">drag_indicator</mat-icon>
+    <button
+      class="key-icon-button"
+      type="button"
+      (click)="onCopyKey()"
+      (keydown.enter)="onCopyKey()"
+      [matTooltip]="fullKey()"
+      [attr.aria-label]="'Copy key: ' + fullKey()"
+    >
+      @if (showCopySuccess()) {
+        <mat-icon class="key-icon key-icon--success">check</mat-icon>
+      } @else {
+        <mat-icon class="key-icon">vpn_key</mat-icon>
+      }
+    </button>
+  </div>
 } @else {
   <!-- Medium/Full mode: full header with actions -->
   <div class="item-header">
+    <mat-icon class="translation-drag-handle" cdkDragHandle aria-label="Drag to move translation">drag_indicator</mat-icon>
     <button
       class="key-chip"
       type="button"

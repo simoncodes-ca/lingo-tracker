@@ -1,11 +1,13 @@
 import { Controller, Post, Delete, Param, Body, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
-import { createFolder, deleteFolder } from '@simoncodes-ca/core';
+import { createFolder, deleteFolder, moveFolder } from '@simoncodes-ca/core';
 import type {
   CreateFolderDto,
   CreateFolderResponseDto,
   FolderNodeDto,
   DeleteFolderDto,
   DeleteFolderResponseDto,
+  MoveFolderDto,
+  MoveFolderResponseDto,
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { CollectionCacheService } from '../../cache/collection-cache.service';
@@ -136,6 +138,104 @@ export class FoldersController {
 
       // File system errors or other unexpected errors
       throw new HttpException(errorMessage || 'Error deleting folder', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('move')
+  async move(
+    @Param('collectionName') collectionName: string,
+    @Body() moveFolderDto: MoveFolderDto,
+  ): Promise<MoveFolderResponseDto> {
+    try {
+      const decodedCollectionName = decodeURIComponent(collectionName);
+      const config = this.configService.getConfig();
+
+      if (!config.collections || !config.collections[decodedCollectionName]) {
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
+      }
+
+      const collection = config.collections[decodedCollectionName];
+      const translationsFolder = collection.translationsFolder;
+
+      if (
+        !moveFolderDto.sourceFolderPath ||
+        moveFolderDto.destinationFolderPath === undefined ||
+        moveFolderDto.destinationFolderPath === null
+      ) {
+        throw new HttpException(
+          'Invalid request: sourceFolderPath and destinationFolderPath are required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Handle cross-collection moves
+      let destinationTranslationsFolder: string | undefined;
+      if (moveFolderDto.toCollection) {
+        const destCollectionName = decodeURIComponent(moveFolderDto.toCollection);
+        if (!config.collections || !config.collections[destCollectionName]) {
+          throw new NotFoundException(`Destination collection "${destCollectionName}" not found`);
+        }
+        destinationTranslationsFolder = config.collections[destCollectionName].translationsFolder;
+      }
+
+      // Perform the move
+      const result = moveFolder(translationsFolder, {
+        sourceFolderPath: moveFolderDto.sourceFolderPath,
+        destinationFolderPath: moveFolderDto.destinationFolderPath,
+        override: moveFolderDto.override,
+        nestUnderDestination: moveFolderDto.nestUnderDestination,
+        destinationTranslationsFolder,
+      });
+
+      // Update cache incrementally after successful folder move
+      if (result.movedCount > 0) {
+        const moved = this.cacheService.moveFolderInCache(
+          decodedCollectionName,
+          moveFolderDto.sourceFolderPath,
+          moveFolderDto.destinationFolderPath,
+        );
+        if (!moved) {
+          // Fallback: clear cache if incremental update failed
+          this.cacheService.clearCache();
+        }
+      }
+
+      // Check for critical errors that should return 400
+      const hasCriticalError = result.errors.some(
+        (err) =>
+          err.includes('Invalid') ||
+          err.includes('not found') ||
+          err.includes('circular') ||
+          err.includes('descendant'),
+      );
+
+      if (hasCriticalError && result.movedCount === 0) {
+        throw new HttpException(`Validation error: ${result.errors.join(', ')}`, HttpStatus.BAD_REQUEST);
+      }
+
+      return {
+        movedCount: result.movedCount,
+        foldersDeleted: result.foldersDeleted,
+        warnings: result.warnings,
+        errors: result.errors,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      // Validation errors should return 400
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (errorMessage.includes('Invalid') || errorMessage.includes('not found')) {
+        throw new HttpException(`Validation error: ${errorMessage}`, HttpStatus.BAD_REQUEST);
+      }
+
+      // File system errors or other unexpected errors
+      throw new HttpException(errorMessage || 'Error moving folder', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

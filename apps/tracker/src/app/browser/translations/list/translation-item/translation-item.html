@@ -8,6 +8,11 @@
   (touchend)="onTouchEnd($event)"
   (keydown)="onKeyDown($event)"
   tabindex="0"
+  cdkDrag
+  [cdkDragData]="dragData()"
+  [cdkDragDisabled]="isDragDisabled()"
+  (cdkDragStarted)="onDragStarted()"
+  (cdkDragEnded)="onDragEnded()"
 >
   <span
     id="{{ statusId() }}"

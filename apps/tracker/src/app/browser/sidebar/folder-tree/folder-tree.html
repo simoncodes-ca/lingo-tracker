@@ -71,7 +71,12 @@
 
   <!-- Folder Tree -->
   @if (store.filteredFolders().length > 0) {
-    <div class="folder-list" role="tree">
+    <div
+      #folderList
+      class="folder-list"
+      role="tree"
+      (mousemove)="activeDragData() ? onDragMoved($event) : null"
+    >
       @if (isAddingFolder() && addFolderParentPath() === null) {
         <app-inline-folder-input
           [parentPath]="null"
@@ -86,9 +91,14 @@
           [showNestedResources]="showNestedResources()"
           [disabled]="store.isDisabled()"
           [isDeleting]="store.deletingFolderPath() === folder.fullPath"
+          [activeDragData]="activeDragData()"
           (folderClick)="onFolderClick($event)"
           (loadFolder)="onLoadFolder($event)"
           (deleteFolder)="onDeleteFolder($event)"
+          (resourceDropped)="onResourceDropped($event)"
+          (folderDropped)="onFolderDropped($event)"
+          (dragStarted)="onDragStarted($event)"
+          (dragEnded)="onDragEnded()"
         />
       }
     </div>

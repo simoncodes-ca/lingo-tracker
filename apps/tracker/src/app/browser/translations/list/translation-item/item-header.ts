@@ -4,6 +4,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconButton } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { TruncateKeyPipe } from '../../../../shared/pipes/truncate-key.pipe';
@@ -24,6 +25,7 @@ import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
     MatMenuModule,
     MatTooltipModule,
     MatIconButton,
+    CdkDragHandle,
     TranslocoPipe,
     TruncateKeyPipe,
     TagList,

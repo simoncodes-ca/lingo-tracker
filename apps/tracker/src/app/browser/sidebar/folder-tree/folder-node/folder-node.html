@@ -1,20 +1,41 @@
-<div class="folder-node" [class.disabled]="disabled()">
-  <!-- Folder Header -->
+<div
+  class="folder-node"
+  [class.disabled]="disabled()"
+>
+  <!-- Drop Zone: wraps only the header, NOT children, to avoid nested cdkDropList -->
   <div
-    class="folder-header"
-    [class.selected]="isSelected()"
-    [class.unloaded]="!folder().loaded"
-    (click)="onFolderClick()"
-    [attr.role]="disabled() ? 'presentation' : 'treeitem'"
-    [attr.tabindex]="disabled() ? -1 : 0"
-    [attr.aria-label]="'Folder ' + folder().name"
-    [attr.aria-expanded]="folder().loaded ? 'true' : 'false'"
-    [attr.aria-selected]="isSelected()"
-    (keydown.enter)="onFolderClick()"
-    (keydown.space)="onFolderClick()"
-    (keydown.delete)="onDeleteKeydown($event)"
+    class="folder-drop-zone"
+    [class.drop-target-valid]="isHoveredDuringDrag() && activeDragData() && isValidDropTarget()"
+    [class.drop-target-invalid]="isHoveredDuringDrag() && activeDragData() && !isValidDropTarget()"
+    cdkDropList
+    [cdkDropListData]="folder().fullPath"
+    [cdkDropListEnterPredicate]="canDrop"
+    [cdkDropListSortingDisabled]="true"
+    (cdkDropListDropped)="onDrop($event)"
+    (cdkDropListEntered)="onDropListEntered()"
+    (cdkDropListExited)="onDropListExited()"
   >
-    <mat-icon class="folder-icon">{{ folderIcon() }}</mat-icon>
+    <!-- Folder Header -->
+    <div
+      class="folder-header"
+      [class.selected]="isSelected()"
+      [class.unloaded]="!folder().loaded"
+      (click)="onFolderClick()"
+      [attr.role]="disabled() ? 'presentation' : 'treeitem'"
+      [attr.tabindex]="disabled() ? -1 : 0"
+      [attr.aria-label]="'Folder ' + folder().name"
+      [attr.aria-expanded]="folder().loaded ? 'true' : 'false'"
+      [attr.aria-selected]="isSelected()"
+      (keydown.enter)="onFolderClick()"
+      (keydown.space)="onFolderClick()"
+      (keydown.delete)="onDeleteKeydown($event)"
+      cdkDrag
+      [cdkDragData]="dragData()"
+      [cdkDragDisabled]="disabled()"
+      (cdkDragStarted)="onDragStarted()"
+      (cdkDragEnded)="onDragEnded()"
+    >
+    <mat-icon class="folder-icon folder-drag-handle" cdkDragHandle aria-label="Drag to move folder">{{ folderIcon() }}</mat-icon>
     <span class="folder-name">{{ folder().name }}</span>
     @if (isNewlyCreated()) {
       <span class="new-chip">New</span>
@@ -33,6 +54,7 @@
       }
     </button>
   </div>
+  </div>
 
   <!-- Loaded Children -->
   @if (folder().loaded && folder().tree) {
@@ -50,9 +72,14 @@
           [selectedPath]="selectedPath()"
           [showNestedResources]="showNestedResources()"
           [disabled]="disabled()"
+          [activeDragData]="activeDragData()"
           (folderClick)="folderClick.emit($event)"
           (loadFolder)="loadFolder.emit($event)"
           (deleteFolder)="deleteFolder.emit($event)"
+          (resourceDropped)="resourceDropped.emit($event)"
+          (folderDropped)="folderDropped.emit($event)"
+          (dragStarted)="dragStarted.emit($event)"
+          (dragEnded)="dragEnded.emit()"
         />
       }
     </div>

@@ -1,6 +1,17 @@
-import { Component, ChangeDetectionStrategy, type OnInit, HostListener, inject, computed, effect } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  type OnInit,
+  HostListener,
+  inject,
+  computed,
+  effect,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -12,6 +23,7 @@ import { CollectionsStore } from '../collections/store/collections.store';
 import { BrowserStore } from './store/browser.store';
 import { TranslationList } from './translations/list/translation-list';
 import { IndexingOverlay } from './ui/indexing-overlay';
+import type { DragData } from './types/drag-data';
 
 /**
  * Translation Browser component for viewing and managing translations within a collection.
@@ -29,6 +41,7 @@ import { IndexingOverlay } from './ui/indexing-overlay';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
+    CdkDropListGroup,
     MatButtonModule,
     MatIconModule,
     MatCardModule,
@@ -49,6 +62,12 @@ export class TranslationBrowser implements OnInit {
   readonly store = inject(BrowserStore);
 
   readonly TOKENS = TRACKER_TOKENS;
+
+  /** Reference to the folder tree component */
+  readonly folderTreeRef = viewChild(FolderTree);
+
+  /** Signal tracking the currently dragged item */
+  readonly activeDragData = signal<DragData | null>(null);
 
   /**
    * Computed signal for collection name from the unified store.
@@ -141,5 +160,23 @@ export class TranslationBrowser implements OnInit {
     event.preventDefault();
     const currentFolderPath = this.store.currentFolderPath();
     this.store.startAddingFolder(currentFolderPath || null);
+  }
+
+  /**
+   * Handles drag started events from folder tree or translation list.
+   * Sets the active drag data for tracking.
+   */
+  onDragStarted(dragData: DragData): void {
+    console.log('Drag started in browser:', dragData);
+    this.activeDragData.set(dragData);
+  }
+
+  /**
+   * Handles drag ended events from folder tree or translation list.
+   * Clears the active drag data.
+   */
+  onDragEnded(): void {
+    console.log('Drag ended in browser');
+    this.activeDragData.set(null);
   }
 }

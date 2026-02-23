@@ -6,7 +6,7 @@ import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { PickerFolderNode } from './picker-folder-node/picker-folder-node';
 import { BrowserStore } from '../../../store/browser.store';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { HttpErrorResponse } from '@angular/common/http';
+import type { HttpErrorResponse } from '@angular/common/http';
 
 /**
  * Folder picker component for the Translation Editor Dialog.
@@ -221,7 +221,7 @@ export class FolderPicker {
     const paths: string[] = [];
     const expanded = this.expandedPaths();
 
-    const collectPaths = (folders: FolderNodeDto[], parentPath = ''): void => {
+    const collectPaths = (folders: FolderNodeDto[], _parentPath = ''): void => {
       for (const folder of folders) {
         paths.push(folder.fullPath);
         if (expanded.has(folder.fullPath) && folder.loaded && folder.tree?.children) {

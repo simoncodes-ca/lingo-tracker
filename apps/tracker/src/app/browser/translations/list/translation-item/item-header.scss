@@ -184,3 +184,33 @@
   top: 6px;
   width: 6px;
 }
+
+.translation-drag-handle {
+  color: var(--color-text-tertiary);
+  cursor: grab;
+  flex-shrink: 0;
+  font-size: 20px;
+  height: 20px;
+  transition: color var(--transition-fast);
+  width: 20px;
+
+  &:hover {
+    color: var(--color-text-secondary);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &--compact {
+    font-size: 18px;
+    height: 18px;
+    width: 18px;
+  }
+}
+
+.compact-header-wrapper {
+  align-items: center;
+  display: flex;
+  gap: var(--spacing-1);
+}

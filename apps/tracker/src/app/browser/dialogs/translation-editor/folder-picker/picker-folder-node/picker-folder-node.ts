@@ -70,7 +70,7 @@ export class PickerFolderNode {
 
   /** Whether this folder has children */
   readonly hasChildren = computed(() => {
-    return this.folder().tree && this.folder().tree!.children.length > 0;
+    return (this.folder().tree?.children.length ?? 0) > 0;
   });
 
   /** Icon to display for expand/collapse */

@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, input, computed, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { CdkDropList } from '@angular/cdk/drag-drop';
 import type { ComponentType } from '@angular/cdk/portal';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,6 +23,7 @@ import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
 import type { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
+import type { DragData } from '../../types/drag-data';
 
 @Component({
   selector: 'app-translation-list',
@@ -30,6 +32,7 @@ import type { ConfirmationDialogData } from '../../../shared/components/confirma
   imports: [
     CommonModule,
     ScrollingModule,
+    CdkDropList,
     MatProgressSpinnerModule,
     MatDialogModule,
     MatButtonModule,
@@ -52,6 +55,15 @@ export class TranslationList {
 
   /** Base locale (source language) */
   baseLocale = input<string>('en');
+
+  /** Emitted when drag starts on a translation item */
+  dragStarted = output<DragData>();
+
+  /** Emitted when drag ends on a translation item */
+  dragEnded = output<void>();
+
+  /** Predicate that rejects all drops — this list is a drag source only */
+  readonly noDropPredicate = () => false;
 
   /** Default item height for virtual scrolling (pixels). May be overridden by density mode. */
   readonly itemSize = 120;

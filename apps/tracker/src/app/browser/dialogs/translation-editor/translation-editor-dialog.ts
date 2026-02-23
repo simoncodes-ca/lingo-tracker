@@ -9,7 +9,7 @@ import {
   computed,
   HostListener,
   ViewChild,
-  ElementRef,
+  type ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';

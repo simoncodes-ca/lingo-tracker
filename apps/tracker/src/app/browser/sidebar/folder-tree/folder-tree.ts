@@ -1,4 +1,15 @@
-import { Component, ChangeDetectionStrategy, inject, input, output, effect } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  input,
+  output,
+  effect,
+  signal,
+  viewChild,
+  type ElementRef,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -16,6 +27,8 @@ import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { TranslocoModule } from '@jsverse/transloco';
 import { SearchInput } from '../../../shared/components/search-input';
 import { MatIconModule } from '@angular/material/icon';
+import type { DragData } from '../../types/drag-data';
+import { extractFolderNameFromPath } from '../../utils/folder-path.utils';
 
 /**
  * FolderTree component for hierarchical folder navigation.
@@ -57,8 +70,17 @@ export class FolderTree {
   /** Whether the tree is disabled (e.g., during translation search) */
   disabled = input<boolean>(false);
 
+  /** Active drag data from parent (may come from translation items) */
+  activeDragDataFromParent = input<DragData | null>(null, { alias: 'activeDragData' });
+
   /** Emitted when a folder is selected */
   folderSelected = output<string>();
+
+  /** Emitted when drag starts on a folder */
+  dragStarted = output<DragData>();
+
+  /** Emitted when drag ends on a folder */
+  dragEnded = output<void>();
 
   /** Signal exposing nested resources visibility from store */
   readonly showNestedResources = this.store.showNestedResources;
@@ -70,6 +92,23 @@ export class FolderTree {
   readonly addFolderParentPath = this.store.addFolderParentPath;
 
   readonly #searchSubject = new Subject<string>();
+
+  /** Reference to the scrollable folder list container */
+  readonly folderListRef = viewChild<ElementRef<HTMLDivElement>>('folderList');
+
+  /** Signal tracking the currently dragged item from folder nodes */
+  readonly #localActiveDragData = signal<DragData | null>(null);
+
+  /** Combined active drag data (from local folders or parent translation items) */
+  readonly activeDragData = computed(() => {
+    return this.#localActiveDragData() || this.activeDragDataFromParent();
+  });
+
+  /** Auto-scroll interval handle */
+  #autoScrollInterval: ReturnType<typeof setInterval> | null = null;
+
+  /** Last recorded mouse Y position */
+  #lastMouseY = 0;
 
   constructor() {
     // Sync disabled state to store
@@ -146,7 +185,7 @@ export class FolderTree {
    * Opens confirmation dialog and deletes folder if confirmed.
    */
   onDeleteFolder(folderPath: string): void {
-    const folderName = this.extractFolderNameFromPath(folderPath);
+    const folderName = extractFolderNameFromPath(folderPath);
 
     import('../../../shared/components/confirmation-dialog/confirmation-dialog').then((m) => {
       const dialogRef = this.dialog.open(m.ConfirmationDialog, {
@@ -168,11 +207,127 @@ export class FolderTree {
   }
 
   /**
-   * Extracts the folder name from a full folder path.
-   * For example: "apps.common.buttons" -> "buttons"
+   * Handles resource drop events bubbled up from folder nodes.
+   * Calls store to move the resource to the target folder.
    */
-  private extractFolderNameFromPath(folderPath: string): string {
-    const parts = folderPath.split('.');
-    return parts[parts.length - 1];
+  onResourceDropped(event: { dragData: DragData; targetFolderPath: string }): void {
+    const { dragData, targetFolderPath } = event;
+
+    if (dragData.type !== 'resource' || !dragData.key) {
+      console.error('Invalid resource drop event:', event);
+      return;
+    }
+
+    this.store.moveResource({
+      sourceKey: dragData.key,
+      destinationFolderPath: targetFolderPath,
+    });
+  }
+
+  /**
+   * Handles folder drop events bubbled up from folder nodes.
+   * Calls store to move the folder to the target location.
+   */
+  onFolderDropped(event: { dragData: DragData; targetFolderPath: string }): void {
+    const { dragData, targetFolderPath } = event;
+
+    if (dragData.type !== 'folder' || !dragData.path) {
+      console.error('Invalid folder drop event:', event);
+      return;
+    }
+
+    this.store.moveFolder({
+      sourceFolderPath: dragData.path,
+      destinationFolderPath: targetFolderPath,
+    });
+  }
+
+  /**
+   * Handles drag started event from folder nodes.
+   * Sets the active drag data and emits to parent.
+   */
+  onDragStarted(dragData: DragData): void {
+    this.#localActiveDragData.set(dragData);
+    this.dragStarted.emit(dragData);
+  }
+
+  /**
+   * Handles drag ended event from folder nodes.
+   * Clears the active drag data, stops auto-scroll, and emits to parent.
+   */
+  onDragEnded(): void {
+    this.#localActiveDragData.set(null);
+    this.#stopAutoScroll();
+    this.dragEnded.emit();
+  }
+
+  /**
+   * Handles mouse move events during drag.
+   * Checks if near edges and triggers auto-scroll.
+   */
+  onDragMoved(event: MouseEvent): void {
+    this.#lastMouseY = event.clientY;
+    this.#checkAutoScroll();
+  }
+
+  /**
+   * Checks if mouse is near top or bottom edge and triggers auto-scroll.
+   */
+  #checkAutoScroll(): void {
+    const folderList = this.folderListRef()?.nativeElement;
+    if (!folderList) return;
+
+    const rect = folderList.getBoundingClientRect();
+    const scrollThreshold = 50; // pixels from edge to trigger scroll
+
+    const distanceFromTop = this.#lastMouseY - rect.top;
+    const distanceFromBottom = rect.bottom - this.#lastMouseY;
+
+    // Check if near top edge
+    if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
+      this.#startAutoScroll('up');
+      return;
+    }
+
+    // Check if near bottom edge
+    if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
+      this.#startAutoScroll('down');
+      return;
+    }
+
+    // Not near any edge, stop auto-scroll
+    this.#stopAutoScroll();
+  }
+
+  /**
+   * Starts auto-scrolling in the specified direction.
+   */
+  #startAutoScroll(direction: 'up' | 'down'): void {
+    // Don't start if already scrolling in this direction
+    if (this.#autoScrollInterval) return;
+
+    const scrollSpeed = 15; // pixels per interval
+    const scrollInterval = 50; // milliseconds
+
+    this.#autoScrollInterval = setInterval(() => {
+      const folderList = this.folderListRef()?.nativeElement;
+      if (!folderList) {
+        this.#stopAutoScroll();
+        return;
+      }
+
+      const scrollAmount = direction === 'up' ? -scrollSpeed : scrollSpeed;
+      folderList.scrollBy({ top: scrollAmount, behavior: 'auto' });
+    }, scrollInterval);
+  }
+
+  /**
+   * Stops auto-scrolling.
+   */
+  #stopAutoScroll(): void {
+    if (this.#autoScrollInterval) {
+      clearInterval(this.#autoScrollInterval);
+      this.#autoScrollInterval = null;
+    }
   }
 }

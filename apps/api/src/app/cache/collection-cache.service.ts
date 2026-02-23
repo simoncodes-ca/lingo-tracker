@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as core from '@simoncodes-ca/core';
 import { extractResourcesRecursively } from '@simoncodes-ca/core';
-import type { ResourceTreeNode, ResourceTreeEntry } from '@simoncodes-ca/core';
+import type { ResourceTreeNode, ResourceTreeEntry, FolderChild } from '@simoncodes-ca/core';
 
 export enum CacheStatus {
   NOT_STARTED = 'not-started',
@@ -279,6 +279,95 @@ export class CollectionCacheService {
     }
 
     this.#logger.log(`Removed folder "${folderPath}" from cache`);
+    return true;
+  }
+
+  /**
+   * Moves a folder in the cached tree without requiring a full re-index.
+   * Removes the folder from its source location, updates all path references recursively,
+   * and inserts it at the destination location while keeping the cache in READY state.
+   * @param collectionName - The collection name
+   * @param sourceFolderPath - The dot-delimited path to the folder to move
+   * @param destinationFolderPath - The dot-delimited destination path (empty string for root)
+   * @returns true if the folder was moved successfully, false if cache wasn't ready or operation failed
+   */
+  moveFolderInCache(collectionName: string, sourceFolderPath: string, destinationFolderPath: string): boolean {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
+      this.#logger.warn(`Cannot move folder in cache: no cache for collection ${collectionName}`);
+      return false;
+    }
+
+    if (this.#cachedCollection.status !== CacheStatus.READY || !this.#cachedCollection.tree) {
+      this.#logger.warn(`Cannot move folder in cache: cache not ready for collection ${collectionName}`);
+      return false;
+    }
+
+    const tree = this.#cachedCollection.tree;
+    const sourceSegments = sourceFolderPath.split('.');
+    const folderName = sourceSegments[sourceSegments.length - 1];
+    const sourceParentSegments = sourceSegments.slice(0, -1);
+
+    // Find and remove from source parent
+    let sourceParent: ResourceTreeNode = tree;
+    for (const segment of sourceParentSegments) {
+      const child = sourceParent.children.find((c) => c.name === segment);
+      if (!child?.tree) {
+        this.#logger.warn(`Cannot move folder in cache: source parent path not found or not loaded`);
+        return false;
+      }
+      sourceParent = child.tree;
+    }
+
+    const sourceIndex = sourceParent.children.findIndex((c) => c.name === folderName);
+    if (sourceIndex === -1) {
+      this.#logger.warn(`Cannot move folder in cache: source folder "${sourceFolderPath}" not found`);
+      return false;
+    }
+
+    const [movedChild] = sourceParent.children.splice(sourceIndex, 1);
+
+    // Calculate new path prefix
+    const destSegments = destinationFolderPath ? destinationFolderPath.split('.') : [];
+    const newFolderSegments = [...destSegments, folderName];
+
+    // Find destination parent before modifying paths (so we can restore on failure)
+    let destParent: ResourceTreeNode = tree;
+    for (const segment of destSegments) {
+      const child = destParent.children.find((c) => c.name === segment);
+      if (!child?.tree) {
+        // Fallback: restore source if destination not found
+        sourceParent.children.splice(sourceIndex, 0, movedChild);
+        this.#logger.warn(`Cannot move folder in cache: destination path "${destinationFolderPath}" not found`);
+        return false;
+      }
+      destParent = child.tree;
+    }
+
+    // Recursively update paths for all descendants
+    const updatePaths = (child: FolderChild, parentSegments: string[]): void => {
+      const newFullPath = [...parentSegments, child.name];
+      child.fullPathSegments = newFullPath;
+      if (child.tree) {
+        child.tree.folderPathSegments = newFullPath;
+        for (const grandchild of child.tree.children) {
+          updatePaths(grandchild, newFullPath);
+        }
+      }
+    };
+
+    // Update the moved folder's paths
+    movedChild.fullPathSegments = newFolderSegments;
+    if (movedChild.tree) {
+      movedChild.tree.folderPathSegments = newFolderSegments;
+      for (const grandchild of movedChild.tree.children) {
+        updatePaths(grandchild, newFolderSegments);
+      }
+    }
+
+    destParent.children.push(movedChild);
+    destParent.children.sort((a, b) => a.name.localeCompare(b.name));
+
+    this.#logger.log(`Moved folder "${sourceFolderPath}" to "${destinationFolderPath || 'root'}" in cache`);
     return true;
   }
 

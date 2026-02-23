@@ -11,6 +11,7 @@ import {
   type EffectRef,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { CdkDrag } from '@angular/cdk/drag-drop';
 import type { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
 import { BrowserStore } from '../../../store/browser.store';
 import { TranslationItemHeader } from './item-header';
@@ -18,6 +19,7 @@ import { TranslationItemLocales } from './item-locales';
 import { TranslationItemCompactControls } from './item-compact-controls';
 import type { LocaleState } from './translation-rollup';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
+import type { DragData } from '../../../types/drag-data';
 
 const EXPAND_THRESHOLD = 200;
 const LONG_PRESS_THRESHOLD = 500;
@@ -36,6 +38,7 @@ const LONG_PRESS_THRESHOLD = 500;
     TranslationItemLocales,
     TranslationItemCompactControls,
     HighlightPipe,
+    CdkDrag,
   ],
   templateUrl: './translation-item.html',
   styleUrl: './translation-item.scss',
@@ -67,6 +70,12 @@ export class TranslationItem implements OnDestroy {
 
   /** Emitted when user selects Delete from context menu */
   deleteTranslation = output<ResourceSummaryDto>();
+
+  /** Emitted when drag starts on this item */
+  dragStarted = output<DragData>();
+
+  /** Emitted when drag ends on this item */
+  dragEnded = output<void>();
 
   private readonly store = inject(BrowserStore);
 
@@ -338,6 +347,24 @@ export class TranslationItem implements OnDestroy {
   });
 
   /**
+   * Drag data for this translation item.
+   * Contains resource key, folder path, and type identifier.
+   */
+  readonly dragData = computed<DragData>(() => ({
+    type: 'resource',
+    key: this.fullKey(),
+    folderPath: this.folderPath(),
+  }));
+
+  /**
+   * Whether dragging is disabled for this item.
+   * Disabled during search mode or when store is disabled.
+   */
+  readonly isDragDisabled = computed(() => {
+    return Boolean(this.searchQuery()) || this.store.isDisabled();
+  });
+
+  /**
    * Returns a comma-separated breakdown of statuses across all locales for use in tooltips.
    * Example: "2 stale, 3 verified, 1 new"
    */
@@ -375,4 +402,22 @@ export class TranslationItem implements OnDestroy {
 
     return ['new', 0] as const;
   });
+
+  /**
+   * Handles drag started event.
+   * Emits drag data to parent components for tracking.
+   */
+  onDragStarted(): void {
+    console.log('Drag started:', this.fullKey());
+    this.dragStarted.emit(this.dragData());
+  }
+
+  /**
+   * Handles drag ended event.
+   * Notifies parent components that drag has ended.
+   */
+  onDragEnded(): void {
+    console.log('Drag ended:', this.fullKey());
+    this.dragEnded.emit();
+  }
 }
