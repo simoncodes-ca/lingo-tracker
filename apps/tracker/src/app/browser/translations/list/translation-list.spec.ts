@@ -294,6 +294,9 @@ describe('TranslationList - Locale Filtering', () => {
       collectionName: 'test',
       locales: ['en', 'es', 'fr'],
     });
+    // Switch to full mode so multi-locale display is not restricted by compact auto-selection
+    store.setDensityMode('full');
+    store.clearAllLocales();
 
     fixture.componentRef.setInput('collectionName', 'test');
     fixture.componentRef.setInput('baseLocale', 'en');

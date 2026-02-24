@@ -16,7 +16,7 @@ import {
 import { LocaleFilter } from './locale-filter/locale-filter';
 import { StatusFilter } from './status-filter/status-filter';
 
-type DensityMode = 'compact' | 'medium' | 'full';
+type DensityMode = 'compact' | 'full';
 
 /**
  * TranslationMainHeader component provides search and filtering controls

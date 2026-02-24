@@ -77,10 +77,10 @@ export class TranslationList {
     const mode = this.store.densityMode();
 
     switch (mode) {
-      case 'compact':
-        return 44;
-      case 'medium':
-        return 88; // medium mode per spec
+      case 'compact': {
+        const isTouch = typeof window !== 'undefined' && 'ontouchstart' in window;
+        return isTouch ? 100 : 96;
+      }
       case 'full': {
         // If touch device (approx), add extra padding
         const isTouch = typeof window !== 'undefined' && 'ontouchstart' in window;

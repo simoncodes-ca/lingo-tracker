@@ -136,7 +136,7 @@ function rebaseFolderPaths(folder: FolderNodeDto, newParentPath: string): Folder
 }
 
 interface ViewPreferences {
-  densityMode: 'compact' | 'medium' | 'full';
+  densityMode: 'compact' | 'full';
   selectedLocales: string[];
   showNestedResources: boolean;
   compactLocale: string | null;
@@ -177,7 +177,7 @@ interface BrowserState {
   isSearchLoading: boolean;
   searchError: string | null;
 
-  densityMode: 'compact' | 'medium' | 'full';
+  densityMode: 'compact' | 'full';
   viewPreferences: Map<string, ViewPreferences>;
   compactLocale: string | null;
   compactLocaleManuallyChanged: boolean;
@@ -216,7 +216,7 @@ const initialState: BrowserState = {
   searchResults: [],
   isSearchLoading: false,
   searchError: null,
-  densityMode: 'medium',
+  densityMode: 'compact',
   viewPreferences: new Map<string, ViewPreferences>(),
   compactLocale: null,
   compactLocaleManuallyChanged: false,
@@ -1192,7 +1192,8 @@ export const BrowserStore = signalStore(
         });
 
         if (loaded?.densityMode) {
-          const mode = loaded.densityMode;
+          // Migrate legacy 'medium' preference to 'compact'
+          const mode = (loaded.densityMode as string) === 'medium' ? 'compact' : loaded.densityMode;
           const currentSelected = store.selectedLocales();
           let newSelected = currentSelected;
 
@@ -1221,7 +1222,7 @@ export const BrowserStore = signalStore(
         store.checkCacheStatus();
       },
 
-      setDensityMode(mode: 'compact' | 'medium' | 'full'): void {
+      setDensityMode(mode: 'compact' | 'full'): void {
         const currentDensityMode = store.densityMode();
         const currentSelected = store.selectedLocales();
         const wasCompactMode = currentDensityMode === 'compact';
@@ -1258,7 +1259,7 @@ export const BrowserStore = signalStore(
             }
           }
         } else if (isLeavingCompactMode) {
-          // Switching FROM compact mode to medium/full
+          // Switching FROM compact mode to full
           if (newCompactLocaleManuallyChanged) {
             // User manually changed locale in compact mode - use that as only selection
             newSelectedLocales = currentSelected;

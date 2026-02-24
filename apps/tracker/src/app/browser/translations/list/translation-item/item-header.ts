@@ -1,9 +1,8 @@
-import { Component, ChangeDetectionStrategy, input, output, signal, computed, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconButton } from '@angular/material/button';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
@@ -36,7 +35,6 @@ import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
   styleUrl: './item-header.scss',
   host: {
     class: 'translation-item-header',
-    '[class.compact]': 'isCompactMode()',
   },
 })
 export class TranslationItemHeader {
@@ -48,9 +46,6 @@ export class TranslationItemHeader {
 
   /** Base locale code */
   baseLocale = input<string>('en');
-
-  /** Compact mode flag */
-  isCompactMode = input<boolean>(false);
 
   /** Comment text for tooltip display */
   comment = input<string>();
@@ -84,11 +79,6 @@ export class TranslationItemHeader {
 
   readonly TOKENS = TRACKER_TOKENS;
 
-  private readonly snackBar = inject(MatSnackBar);
-
-  /** Tracks whether copy feedback is currently showing (check icon) */
-  readonly showCopySuccess = signal(false);
-
   /** Computed signal for the comment icon name based on toggle state */
   readonly commentIcon = computed(() => {
     return this.showComment() ? 'chat_bubble' : 'comment';
@@ -106,58 +96,8 @@ export class TranslationItemHeader {
     return commentText.toLowerCase().includes(query.toLowerCase());
   });
 
-  private copySuccessTimeoutId: number | undefined;
-
   onCopyKey(): void {
-    const key = this.fullKey();
-
-    // For non-compact mode, emit to parent (existing behavior)
-    if (!this.isCompactMode()) {
-      this.copyKey.emit(key);
-      return;
-    }
-
-    // Compact mode: handle clipboard and feedback directly
-    if (!navigator.clipboard?.writeText) {
-      this.snackBar.open('Failed to copy', '', {
-        duration: 2000,
-        horizontalPosition: 'center',
-        verticalPosition: 'bottom',
-      });
-      return;
-    }
-
-    navigator.clipboard
-      .writeText(key)
-      .then(() => {
-        // Show success feedback
-        this.showCopySuccess.set(true);
-
-        // Show snackbar
-        this.snackBar.open('Copied to clipboard', '', {
-          duration: 2000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
-
-        // Clear any existing timeout
-        if (this.copySuccessTimeoutId !== undefined) {
-          window.clearTimeout(this.copySuccessTimeoutId);
-        }
-
-        // Revert icon after 1.5 seconds
-        this.copySuccessTimeoutId = window.setTimeout(() => {
-          this.showCopySuccess.set(false);
-          this.copySuccessTimeoutId = undefined;
-        }, 1500);
-      })
-      .catch(() => {
-        this.snackBar.open('Failed to copy', '', {
-          duration: 2000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
-      });
+    this.copyKey.emit(this.fullKey());
   }
 
   onEdit(): void {

@@ -1,93 +1,72 @@
-@if (isCompactMode()) {
-  <!-- Compact mode: key icon only with full key in tooltip -->
-  <div class="compact-header-wrapper">
-    <mat-icon class="translation-drag-handle translation-drag-handle--compact" cdkDragHandle aria-label="Drag to move translation">drag_indicator</mat-icon>
-    <button
-      class="key-icon-button"
-      type="button"
-      (click)="onCopyKey()"
-      (keydown.enter)="onCopyKey()"
-      [matTooltip]="fullKey()"
-      [attr.aria-label]="'Copy key: ' + fullKey()"
-    >
-      @if (showCopySuccess()) {
-        <mat-icon class="key-icon key-icon--success">check</mat-icon>
-      } @else {
-        <mat-icon class="key-icon">vpn_key</mat-icon>
-      }
-    </button>
-  </div>
-} @else {
-  <!-- Medium/Full mode: full header with actions -->
-  <div class="item-header">
-    <mat-icon class="translation-drag-handle" cdkDragHandle aria-label="Drag to move translation">drag_indicator</mat-icon>
-    <button
-      class="key-chip"
-      type="button"
-      (click)="onCopyKey()"
-      (keydown.enter)="onCopyKey()"
-      [matTooltip]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
-      [attr.aria-label]="'Copy key'"
-    >
-      <span class="key-text" [innerHTML]="(fullKey() | truncateKey) | highlight : searchQuery()"></span>
-      <mat-icon class="copy-icon">content_copy</mat-icon>
-    </button>
+<!-- Full header with drag handle, key chip, tags, rollup and actions -->
+<div class="item-header">
+  <mat-icon class="translation-drag-handle" cdkDragHandle aria-label="Drag to move translation">drag_indicator</mat-icon>
+  <button
+    class="key-chip"
+    type="button"
+    (click)="onCopyKey()"
+    (keydown.enter)="onCopyKey()"
+    [matTooltip]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
+    [attr.aria-label]="'Copy key'"
+  >
+    <span class="key-text" [innerHTML]="(fullKey() | truncateKey) | highlight : searchQuery()"></span>
+    <mat-icon class="copy-icon">content_copy</mat-icon>
+  </button>
 
-    @if (tags().length) {
-      <div class="header-tags">
-        <app-tag-list [tags]="tags()" />
-      </div>
+  @if (tags().length) {
+    <div class="header-tags">
+      <app-tag-list [tags]="tags()" />
+    </div>
+  }
+
+  <div class="header-actions">
+    @if (localeStates().length) {
+      <app-translation-rollup
+        [locales]="localeStates()"
+        [baseLocale]="baseLocale()"
+      />
     }
 
-    <div class="header-actions">
-      @if (localeStates().length) {
-        <app-translation-rollup
-          [locales]="localeStates()"
-          [baseLocale]="baseLocale()"
-        />
-      }
-
-      @if (!hideCommentButton()) {
-        <button
-          class="comment-button"
-          [class.comment-button--active]="showComment()"
-          [class.comment-button--match]="commentHasMatch()"
-          mat-icon-button
-          type="button"
-          [disabled]="!comment()"
-          (click)="onCommentClick($event)"
-          [attr.aria-label]="showComment() ? 'Hide comment' : 'Show comment'"
-        >
-          <mat-icon>{{ commentIcon() }}</mat-icon>
-          @if (commentHasMatch()) {
-            <span class="match-badge"></span>
-          }
-        </button>
-      }
-
+    @if (!hideCommentButton()) {
       <button
+        class="comment-button"
+        [class.comment-button--active]="showComment()"
+        [class.comment-button--match]="commentHasMatch()"
         mat-icon-button
         type="button"
-        [matMenuTriggerFor]="menu"
-        [attr.aria-label]="'More actions'"
+        [disabled]="!comment()"
+        (click)="onCommentClick($event)"
+        [attr.aria-label]="showComment() ? 'Hide comment' : 'Show comment'"
       >
-        <mat-icon>more_vert</mat-icon>
+        <mat-icon>{{ commentIcon() }}</mat-icon>
+        @if (commentHasMatch()) {
+          <span class="match-badge"></span>
+        }
       </button>
+    }
 
-      <mat-menu #menu="matMenu">
-        <button mat-menu-item (click)="onEdit()" aria-label="Edit translation">
-          <mat-icon>edit</mat-icon>
-          <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
-        </button>
-        <button mat-menu-item (click)="onMove()" aria-label="Move translation">
-          <mat-icon>drive_file_move</mat-icon>
-          <span>{{ TOKENS.COMMON.ACTIONS.MOVE | transloco }}</span>
-        </button>
-        <button mat-menu-item (click)="onDelete()" aria-label="Delete translation">
-          <mat-icon>delete</mat-icon>
-          <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
-        </button>
-      </mat-menu>
-    </div>
+    <button
+      mat-icon-button
+      type="button"
+      [matMenuTriggerFor]="menu"
+      [attr.aria-label]="'More actions'"
+    >
+      <mat-icon>more_vert</mat-icon>
+    </button>
+
+    <mat-menu #menu="matMenu">
+      <button mat-menu-item (click)="onEdit()" aria-label="Edit translation">
+        <mat-icon>edit</mat-icon>
+        <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
+      </button>
+      <button mat-menu-item (click)="onMove()" aria-label="Move translation">
+        <mat-icon>drive_file_move</mat-icon>
+        <span>{{ TOKENS.COMMON.ACTIONS.MOVE | transloco }}</span>
+      </button>
+      <button mat-menu-item (click)="onDelete()" aria-label="Delete translation">
+        <mat-icon>delete</mat-icon>
+        <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
+      </button>
+    </mat-menu>
   </div>
-}
+</div>

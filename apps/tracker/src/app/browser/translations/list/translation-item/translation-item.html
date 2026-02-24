@@ -23,45 +23,7 @@
   </span>
 
   @if (currentDensityMode() === 'compact') {
-    <div class="compact-row">
-      <div class="compact-left">
-        <div
-          class="compact-value"
-          [class.compact-value--empty]="!primaryLocaleValue().trim()"
-          [class.compact-value--comment]="showComment()"
-          [title]="showComment() ? '' : (primaryLocaleValue().trim() || 'No translation')"
-        >
-          @if (showComment()) {
-            <span class="comment-text">Comment: <span [innerHTML]="translation().comment | highlight : searchQuery()"></span></span>
-          } @else {
-            <span [innerHTML]="(primaryLocaleValue().trim() || 'No translation') | highlight : searchQuery()"></span>
-          }
-        </div>
-        <app-translation-item-header
-          [fullKey]="fullKey()"
-          [isCompactMode]="true"
-          [searchQuery]="searchQuery()"
-          (copyKey)="copyKey.emit($event)"
-          (editAction)="editTranslation.emit(translation())"
-          (moveAction)="moveTranslation.emit(translation())"
-          (deleteAction)="deleteTranslation.emit(translation())"
-        />
-      </div>
-
-      <app-translation-item-compact-controls
-        [localeStates]="localeStates()"
-        [baseLocale]="baseLocale()"
-        [comment]="translation().comment"
-        [showComment]="showComment()"
-        [tags]="translation().tags ?? []"
-        (commentToggle)="toggleComment()"
-        (editAction)="editTranslation.emit(translation())"
-        (moveAction)="moveTranslation.emit(translation())"
-        (deleteAction)="deleteTranslation.emit(translation())"
-      />
-    </div>
-  } @else if (currentDensityMode() === 'medium' || currentDensityMode() === undefined) {
-    <!-- Medium (default) density layout -->
+    <!-- Compact: 2-row layout -->
     <app-translation-item-header
       [fullKey]="fullKey()"
       [localeStates]="localeStates()"
@@ -77,18 +39,19 @@
       (deleteAction)="deleteTranslation.emit(translation())"
     />
 
-    @if (showComment()) {
-      <p class="comment-text">Comment: <span [innerHTML]="translation().comment | highlight : searchQuery()"></span></p>
-    } @else {
-      <p class="base-value" [innerHTML]="baseValue() | highlight : searchQuery()"></p>
-    }
-
-    <app-translation-item-locales
-      [localeTranslations]="localeTranslations()"
-      [densityMode]="'medium'"
-      [searchQuery]="searchQuery()"
-    />
-  } @else if (currentDensityMode() === 'full') {
+    <div
+      class="compact-value"
+      [class.compact-value--empty]="!primaryLocaleValue().trim() && !showComment()"
+      [class.compact-value--comment]="showComment()"
+      [title]="showComment() ? '' : (primaryLocaleValue().trim() || 'No translation')"
+    >
+      @if (showComment()) {
+        <span class="comment-text">Comment: <span [innerHTML]="translation().comment | highlight : searchQuery()"></span></span>
+      } @else {
+        <span [innerHTML]="(primaryLocaleValue().trim() || 'No translation') | highlight : searchQuery()"></span>
+      }
+    </div>
+  } @else {
     <!-- Full density: expanded details with overflow handling -->
     <app-translation-item-header
       [fullKey]="fullKey()"
@@ -132,4 +95,3 @@
     <div class="drag-placeholder"></div>
   </ng-template>
 </div>
-

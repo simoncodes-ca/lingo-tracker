@@ -61,7 +61,7 @@ describe('TranslationItem', () => {
     // The primaryLocaleValue shows the non-base locale's value ('es' which is empty)
     expect(component.primaryLocaleValue()).toBe('');
     const html = fixture.nativeElement.innerHTML as string;
-    expect(html).toContain('—');
+    expect(html).toContain('No translation');
   });
 
   it('should gracefully handle zero locales selected (compact fallback)', () => {

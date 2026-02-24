@@ -9,7 +9,7 @@ export type LocaleTranslation = {
   status?: string;
 };
 
-type DensityMode = 'compact' | 'medium' | 'full';
+type DensityMode = 'compact' | 'full';
 
 /**
  * Displays locale translations in a grid layout.
@@ -31,7 +31,7 @@ export class TranslationItemLocales {
   localeTranslations = input.required<LocaleTranslation[]>();
 
   /** Density mode affects styling */
-  densityMode = input<DensityMode>('medium');
+  densityMode = input<DensityMode>('full');
 
   /** Expansion state for full mode */
   isExpanded = input<boolean>(false);

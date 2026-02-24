@@ -16,7 +16,6 @@ import type { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-
 import { BrowserStore } from '../../../store/browser.store';
 import { TranslationItemHeader } from './item-header';
 import { TranslationItemLocales } from './item-locales';
-import { TranslationItemCompactControls } from './item-compact-controls';
 import type { LocaleState } from './translation-rollup';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 import type { DragData } from '../../../types/drag-data';
@@ -32,15 +31,7 @@ const LONG_PRESS_THRESHOLD = 500;
   selector: 'app-translation-item',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    MatIconModule,
-    TranslationItemHeader,
-    TranslationItemLocales,
-    TranslationItemCompactControls,
-    HighlightPipe,
-    CdkDrag,
-    CdkDragPlaceholder,
-  ],
+  imports: [MatIconModule, TranslationItemHeader, TranslationItemLocales, HighlightPipe, CdkDrag, CdkDragPlaceholder],
   templateUrl: './translation-item.html',
   styleUrl: './translation-item.scss',
   host: {

@@ -39,45 +39,14 @@
     margin-bottom: var(--spacing-1);
   }
 
-  &[data-density='medium'] {
-    margin-bottom: var(--spacing-3);
-  }
-
   &[data-density='full'] {
     margin-bottom: var(--spacing-3);
   }
 }
 
-/* Medium density specific */
-.item-container[data-density='medium'] {
-  min-height: 88px;
-}
-
 /* Compact mode styles */
 .item-container[data-density='compact'] {
-  padding: 0 8px;
-}
-
-.compact-row {
-  align-items: center;
-  display: grid;
-  gap: var(--spacing-2);
-  grid-template-columns: 1fr auto;
-  height: 44px;
-}
-
-@media (hover: none) and (pointer: coarse) {
-  .compact-row {
-    height: 48px;
-  }
-}
-
-.compact-left {
-  align-items: center;
-  display: flex;
-  flex-direction: row;
-  gap: var(--spacing-2);
-  min-width: 0;
+  padding: 6px 8px;
 }
 
 .compact-value {
@@ -316,8 +285,7 @@ app-tag-list {
 /* Ensure touch targets meet minimum recommended size */
 .item-container button,
 .item-container .icon-button,
-.expand-button,
-.compact-row > button {
+.expand-button {
   min-width: 44px;
   min-height: 44px;
   padding: 6px;
