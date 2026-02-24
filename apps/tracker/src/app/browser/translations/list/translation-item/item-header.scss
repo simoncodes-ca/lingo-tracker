@@ -8,14 +8,17 @@
   display: flex;
   gap: var(--spacing-1);
   height: 40px;
-  justify-content: space-between;
+
+}
+
+.header-spacer {
+  flex: 1;
 }
 
 .header-tags {
   flex-shrink: 1;
-  margin-left: auto;
   margin-right: var(--spacing-2);
-  max-width: 200px;
+  max-width: 400px;
   overflow: hidden;
 }
 
