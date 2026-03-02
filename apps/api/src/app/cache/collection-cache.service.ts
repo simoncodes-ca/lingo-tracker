@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as core from '@simoncodes-ca/core';
 import { extractResourcesRecursively } from '@simoncodes-ca/core';
-import type { ResourceTreeNode } from '@simoncodes-ca/core';
+import type { ResourceTreeNode, ResourceTreeEntry, FolderChild } from '@simoncodes-ca/core';
 
 export enum CacheStatus {
   NOT_STARTED = 'not-started',
@@ -116,6 +116,309 @@ export class CollectionCacheService {
       this.#logger.log(`Clearing cache for collection: ${this.#cachedCollection.collectionName}`);
       this.#cachedCollection = null;
     }
+  }
+
+  /**
+   * Adds a folder to the cached tree without requiring a full re-index.
+   * @param collectionName - The collection name
+   * @param folderName - The name of the new folder
+   * @param parentPath - The parent path (dot-delimited) or undefined for root
+   * @returns true if the folder was added, false if cache wasn't ready or parent not found
+   */
+  addFolderToCache(collectionName: string, folderName: string, parentPath?: string): boolean {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
+      this.#logger.warn(`Cannot add folder to cache: no cache for collection ${collectionName}`);
+      return false;
+    }
+
+    if (this.#cachedCollection.status !== CacheStatus.READY || !this.#cachedCollection.tree) {
+      this.#logger.warn(`Cannot add folder to cache: cache not ready for collection ${collectionName}`);
+      return false;
+    }
+
+    const tree = this.#cachedCollection.tree;
+    const parentSegments = parentPath ? parentPath.split('.') : [];
+    const fullPathSegments = [...parentSegments, folderName];
+
+    // Find the parent node
+    let parentNode: ResourceTreeNode = tree;
+    for (const segment of parentSegments) {
+      const child = parentNode.children.find((c) => c.name === segment);
+      if (!child || !child.tree) {
+        this.#logger.warn(`Cannot add folder to cache: parent path "${parentPath}" not found or not loaded`);
+        return false;
+      }
+      parentNode = child.tree;
+    }
+
+    // Check if folder already exists
+    const existingChild = parentNode.children.find((c) => c.name === folderName);
+    if (existingChild) {
+      this.#logger.log(`Folder "${folderName}" already exists in cache at path "${parentPath || 'root'}"`);
+      return true;
+    }
+
+    // Create the new folder child entry
+    const newFolderChild = {
+      name: folderName,
+      fullPathSegments,
+      loaded: true,
+      tree: {
+        folderPathSegments: fullPathSegments,
+        resources: [],
+        children: [],
+      },
+    };
+
+    // Add to parent's children and sort alphabetically
+    parentNode.children.push(newFolderChild);
+    parentNode.children.sort((a, b) => a.name.localeCompare(b.name));
+
+    this.#logger.log(`Added folder "${folderName}" to cache at path "${parentPath || 'root'}"`);
+    return true;
+  }
+
+  /**
+   * Adds a resource to the cached tree without requiring a full re-index.
+   * @param collectionName - The collection name
+   * @param resourceEntry - The resource entry to add
+   * @param folderPath - The dot-delimited folder path where the resource belongs
+   * @returns true if the resource was added, false if cache wasn't ready or folder not found
+   */
+  addResourceToCache(collectionName: string, resourceEntry: ResourceTreeEntry, folderPath: string): boolean {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
+      this.#logger.warn(`Cannot add resource to cache: no cache for collection ${collectionName}`);
+      return false;
+    }
+
+    if (this.#cachedCollection.status !== CacheStatus.READY || !this.#cachedCollection.tree) {
+      this.#logger.warn(`Cannot add resource to cache: cache not ready for collection ${collectionName}`);
+      return false;
+    }
+
+    const tree = this.#cachedCollection.tree;
+
+    // Navigate to the target folder
+    let targetNode: ResourceTreeNode = tree;
+    if (folderPath) {
+      const pathSegments = folderPath.split('.');
+      for (const segment of pathSegments) {
+        const child = targetNode.children.find((c) => c.name === segment);
+        if (!child || !child.tree) {
+          this.#logger.warn(`Cannot add resource to cache: folder path "${folderPath}" not found or not loaded`);
+          return false;
+        }
+        targetNode = child.tree;
+      }
+    }
+
+    // Check if resource already exists (update) or is new (add)
+    const existingIndex = targetNode.resources.findIndex((r) => r.key === resourceEntry.key);
+    if (existingIndex >= 0) {
+      // Update existing resource
+      targetNode.resources[existingIndex] = resourceEntry;
+      this.#logger.log(`Updated resource "${resourceEntry.key}" in cache at path "${folderPath || 'root'}"`);
+    } else {
+      // Add new resource and sort alphabetically by key
+      targetNode.resources.push(resourceEntry);
+      targetNode.resources.sort((a, b) => a.key.localeCompare(b.key));
+      // Update total keys count
+      this.#cachedCollection.totalKeys++;
+      this.#logger.log(`Added resource "${resourceEntry.key}" to cache at path "${folderPath || 'root'}"`);
+    }
+
+    return true;
+  }
+
+  /**
+   * Removes a folder from the cached tree without requiring a full re-index.
+   * @param collectionName - The collection name
+   * @param folderPath - The dot-delimited path to the folder to remove
+   * @returns true if the folder was removed, false if cache wasn't ready or folder not found
+   */
+  removeFolderFromCache(collectionName: string, folderPath: string): boolean {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
+      this.#logger.warn(`Cannot remove folder from cache: no cache for collection ${collectionName}`);
+      return false;
+    }
+
+    if (this.#cachedCollection.status !== CacheStatus.READY || !this.#cachedCollection.tree) {
+      this.#logger.warn(`Cannot remove folder from cache: cache not ready for collection ${collectionName}`);
+      return false;
+    }
+
+    const tree = this.#cachedCollection.tree;
+    const pathSegments = folderPath.split('.');
+
+    if (pathSegments.length === 0) {
+      this.#logger.warn(`Cannot remove folder from cache: invalid empty path`);
+      return false;
+    }
+
+    // Navigate to the parent of the folder to be removed
+    const folderNameToRemove = pathSegments[pathSegments.length - 1];
+    const parentSegments = pathSegments.slice(0, -1);
+
+    let parentNode: ResourceTreeNode = tree;
+    for (const segment of parentSegments) {
+      const child = parentNode.children.find((c) => c.name === segment);
+      if (!child || !child.tree) {
+        this.#logger.warn(`Cannot remove folder from cache: parent path not found or not loaded`);
+        return false;
+      }
+      parentNode = child.tree;
+    }
+
+    // Find and remove the folder from parent's children
+    const initialChildCount = parentNode.children.length;
+    parentNode.children = parentNode.children.filter((child) => child.name !== folderNameToRemove);
+
+    if (parentNode.children.length === initialChildCount) {
+      this.#logger.warn(`Cannot remove folder from cache: folder "${folderPath}" not found`);
+      return false;
+    }
+
+    this.#logger.log(`Removed folder "${folderPath}" from cache`);
+    return true;
+  }
+
+  /**
+   * Removes a single resource entry from a specific folder in the cached tree
+   * without requiring a full re-index.
+   * @param collectionName - The collection name
+   * @param resourceKey - The entry key of the resource to remove (last segment only)
+   * @param folderPath - The dot-delimited folder path where the resource currently lives
+   * @returns true if the resource was found and removed, false otherwise
+   */
+  removeResourceFromCache(collectionName: string, resourceKey: string, folderPath: string): boolean {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
+      this.#logger.warn(`Cannot remove resource from cache: no cache for collection ${collectionName}`);
+      return false;
+    }
+
+    if (this.#cachedCollection.status !== CacheStatus.READY || !this.#cachedCollection.tree) {
+      this.#logger.warn(`Cannot remove resource from cache: cache not ready for collection ${collectionName}`);
+      return false;
+    }
+
+    const tree = this.#cachedCollection.tree;
+
+    // Navigate to the target folder
+    let targetNode: ResourceTreeNode = tree;
+    if (folderPath) {
+      const pathSegments = folderPath.split('.');
+      for (const segment of pathSegments) {
+        const child = targetNode.children.find((c) => c.name === segment);
+        if (!child || !child.tree) {
+          this.#logger.warn(`Cannot remove resource from cache: folder path "${folderPath}" not found or not loaded`);
+          return false;
+        }
+        targetNode = child.tree;
+      }
+    }
+
+    const initialCount = targetNode.resources.length;
+    targetNode.resources = targetNode.resources.filter((r) => r.key !== resourceKey);
+
+    if (targetNode.resources.length === initialCount) {
+      this.#logger.warn(
+        `Cannot remove resource from cache: resource "${resourceKey}" not found at path "${folderPath || 'root'}"`,
+      );
+      return false;
+    }
+
+    this.#cachedCollection.totalKeys--;
+    this.#logger.log(`Removed resource "${resourceKey}" from cache at path "${folderPath || 'root'}"`);
+    return true;
+  }
+
+  /**
+   * Moves a folder in the cached tree without requiring a full re-index.
+   * Removes the folder from its source location, updates all path references recursively,
+   * and inserts it at the destination location while keeping the cache in READY state.
+   * @param collectionName - The collection name
+   * @param sourceFolderPath - The dot-delimited path to the folder to move
+   * @param destinationFolderPath - The dot-delimited destination path (empty string for root)
+   * @returns true if the folder was moved successfully, false if cache wasn't ready or operation failed
+   */
+  moveFolderInCache(collectionName: string, sourceFolderPath: string, destinationFolderPath: string): boolean {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
+      this.#logger.warn(`Cannot move folder in cache: no cache for collection ${collectionName}`);
+      return false;
+    }
+
+    if (this.#cachedCollection.status !== CacheStatus.READY || !this.#cachedCollection.tree) {
+      this.#logger.warn(`Cannot move folder in cache: cache not ready for collection ${collectionName}`);
+      return false;
+    }
+
+    const tree = this.#cachedCollection.tree;
+    const sourceSegments = sourceFolderPath.split('.');
+    const folderName = sourceSegments[sourceSegments.length - 1];
+    const sourceParentSegments = sourceSegments.slice(0, -1);
+
+    // Find and remove from source parent
+    let sourceParent: ResourceTreeNode = tree;
+    for (const segment of sourceParentSegments) {
+      const child = sourceParent.children.find((c) => c.name === segment);
+      if (!child?.tree) {
+        this.#logger.warn(`Cannot move folder in cache: source parent path not found or not loaded`);
+        return false;
+      }
+      sourceParent = child.tree;
+    }
+
+    const sourceIndex = sourceParent.children.findIndex((c) => c.name === folderName);
+    if (sourceIndex === -1) {
+      this.#logger.warn(`Cannot move folder in cache: source folder "${sourceFolderPath}" not found`);
+      return false;
+    }
+
+    const [movedChild] = sourceParent.children.splice(sourceIndex, 1);
+
+    // Calculate new path prefix
+    const destSegments = destinationFolderPath ? destinationFolderPath.split('.') : [];
+    const newFolderSegments = [...destSegments, folderName];
+
+    // Find destination parent before modifying paths (so we can restore on failure)
+    let destParent: ResourceTreeNode = tree;
+    for (const segment of destSegments) {
+      const child = destParent.children.find((c) => c.name === segment);
+      if (!child?.tree) {
+        // Fallback: restore source if destination not found
+        sourceParent.children.splice(sourceIndex, 0, movedChild);
+        this.#logger.warn(`Cannot move folder in cache: destination path "${destinationFolderPath}" not found`);
+        return false;
+      }
+      destParent = child.tree;
+    }
+
+    // Recursively update paths for all descendants
+    const updatePaths = (child: FolderChild, parentSegments: string[]): void => {
+      const newFullPath = [...parentSegments, child.name];
+      child.fullPathSegments = newFullPath;
+      if (child.tree) {
+        child.tree.folderPathSegments = newFullPath;
+        for (const grandchild of child.tree.children) {
+          updatePaths(grandchild, newFullPath);
+        }
+      }
+    };
+
+    // Update the moved folder's paths
+    movedChild.fullPathSegments = newFolderSegments;
+    if (movedChild.tree) {
+      movedChild.tree.folderPathSegments = newFolderSegments;
+      for (const grandchild of movedChild.tree.children) {
+        updatePaths(grandchild, newFolderSegments);
+      }
+    }
+
+    destParent.children.push(movedChild);
+    destParent.children.sort((a, b) => a.name.localeCompare(b.name));
+
+    this.#logger.log(`Moved folder "${sourceFolderPath}" to "${destinationFolderPath || 'root'}" in cache`);
+    return true;
   }
 
   async indexCollection(collectionName: string, translationsFolder: string, localeCount?: number): Promise<void> {

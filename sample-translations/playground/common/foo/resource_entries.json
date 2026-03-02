@@ -1,0 +1,16 @@
+{
+  "hello": {
+    "source": "Hello World",
+    "fr-ca": "Hello World",
+    "es": "Hello World",
+    "de": "Hello World",
+    "ja": "Hello World"
+  },
+  "Bye": {
+    "source": "Bye",
+    "fr-ca": "Bye",
+    "es": "Bye",
+    "de": "Bye",
+    "ja": "Bye"
+  }
+}

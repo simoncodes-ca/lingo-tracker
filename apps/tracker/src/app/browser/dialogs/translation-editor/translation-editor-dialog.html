@@ -29,9 +29,9 @@
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Translation Key</mat-label>
         <input
+          #keyInput
           matInput
           formControlName="key"
-          placeholder="button_submit"
           required
           autocomplete="off"
         />
@@ -43,18 +43,10 @@
 
       <!-- Folder Picker -->
       <app-folder-picker
-        [selectedPath]="selectedFolderPath()"
-        [rootFolders]="store.rootFolders()"
-        [folderExists]="folderExists()"
-        (folderSelected)="onFolderSelected($event)"
-        (loadFolder)="onLoadFolder($event)"
-      />
-
-      <!-- Similar Resources Warning -->
-      <app-similar-resources-warning
-        [results]="similarResources()"
-        [isLoading]="isSearchingSimilar()"
-        (resourceClicked)="onSimilarResourceClick($event)"
+        [currentPath]="selectedFolderPath()"
+        [rootFolders]="rootFolders()"
+        (folderConfirmed)="onFolderConfirmed($event)"
+        (folderCreated)="onFolderCreated($event)"
       />
 
       <!-- Base Locale Section -->
@@ -68,41 +60,41 @@
         <!-- Base Value -->
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ data.baseLocale.toUpperCase() }} Translation</mat-label>
-          <textarea
+          <input
+            #baseValueInput
             matInput
+            type="text"
             formControlName="baseValue"
             [placeholder]="'Enter ' + data.baseLocale.toUpperCase() + ' translation...'"
             required
-            rows="3"
-            cdkTextareaAutosize
-            cdkAutosizeMinRows="3"
-            cdkAutosizeMaxRows="10"
-          ></textarea>
+            autocomplete="off"
+          />
           @if (form.controls.baseValue.hasError('required') && form.controls.baseValue.touched) {
             <mat-error>Base translation is required</mat-error>
           }
         </mat-form-field>
-        <div class="character-count">
-          {{ baseValueCharacterCount() }} characters
-        </div>
 
         <!-- Comment -->
         <mat-form-field appearance="outline" class="full-width comment-field">
           <mat-label>Comment (Optional)</mat-label>
-          <textarea
+          <input
             matInput
+            type="text"
             formControlName="comment"
             placeholder="Add context for translators..."
-            rows="2"
-            cdkTextareaAutosize
-            cdkAutosizeMinRows="2"
-            cdkAutosizeMaxRows="6"
-          ></textarea>
+            autocomplete="off"
+          />
           <mat-hint>Provide context or instructions for translators</mat-hint>
         </mat-form-field>
-        <div class="character-count">
-          {{ commentCharacterCount() }} characters
-        </div>
+
+        <!-- Similar Translations (moved here, inside the card, after base value) -->
+        <app-similar-translations
+          [results]="similarResources()"
+          [isLoading]="isSearchingSimilar()"
+          [hasSearchQuery]="hasSearchQuery()"
+          [baseLocale]="data.baseLocale"
+          (resourceClicked)="onSimilarResourceClick($event)"
+        />
       </div>
 
       <!-- Other Locales Toggle -->
@@ -141,19 +133,14 @@
 
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>{{ getLocaleDisplayName(localeControl.value.locale) }} Translation</mat-label>
-                  <textarea
+                  <input
                     matInput
+                    type="text"
                     formControlName="value"
                     [placeholder]="'Enter ' + getLocaleDisplayName(localeControl.value.locale) + ' translation...'"
-                    rows="3"
-                    cdkTextareaAutosize
-                    cdkAutosizeMinRows="3"
-                    cdkAutosizeMaxRows="10"
-                  ></textarea>
+                    autocomplete="off"
+                  />
                 </mat-form-field>
-                <div class="character-count">
-                  {{ getLocaleCharacterCount(localeControl.value.locale) }} characters
-                </div>
               </div>
             }
           </div>

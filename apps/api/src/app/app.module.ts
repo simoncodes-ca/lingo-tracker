@@ -7,6 +7,7 @@ import { ConfigService } from './config/config.service';
 import { ConfigController } from './config/config.controller';
 import { CollectionsController } from './collections/collections.controller';
 import { ResourcesController } from './collections/resources/resources.controller';
+import { FoldersController } from './collections/folders/folders.controller';
 import { CollectionCacheService } from './cache/collection-cache.service';
 
 @Module({
@@ -15,7 +16,7 @@ import { CollectionCacheService } from './cache/collection-cache.service';
       rootPath: join(__dirname, '..', 'tracker', 'browser'),
     }),
   ],
-  controllers: [AppController, ConfigController, CollectionsController, ResourcesController],
+  controllers: [AppController, ConfigController, CollectionsController, ResourcesController, FoldersController],
   providers: [AppService, ConfigService, CollectionCacheService],
 })
 export class AppModule {

@@ -44,15 +44,11 @@
       [value]="store.densityMode()"
       (change)="handleDensityChange($event)"
     >
-      <mat-button-toggle value="compact" aria-label="Compact density" [attr.aria-current]="store.densityMode() === 'compact' ? 'true' : null" matTooltip="Compact — single locale, high density, best for scanning">
+      <mat-button-toggle value="compact" aria-label="Compact density" [attr.aria-current]="store.densityMode() === 'compact' ? 'true' : null" matTooltip="Compact — 2-line view, high density">
         <mat-icon>view_compact</mat-icon>
       </mat-button-toggle>
 
-      <mat-button-toggle value="medium" aria-label="Medium density" [attr.aria-current]="store.densityMode() === 'medium' ? 'true' : null" matTooltip="Medium — balanced density with metadata">
-        <mat-icon>view_comfortable</mat-icon>
-      </mat-button-toggle>
-
-      <mat-button-toggle value="full" aria-label="Full density" [attr.aria-current]="store.densityMode() === 'full' ? 'true' : null" matTooltip="Full — detailed view with comments and tags">
+      <mat-button-toggle value="full" aria-label="Full density" [attr.aria-current]="store.densityMode() === 'full' ? 'true' : null" matTooltip="Full — detailed view with comments and all locales">
         <mat-icon>view_day</mat-icon>
       </mat-button-toggle>
     </mat-button-toggle-group>

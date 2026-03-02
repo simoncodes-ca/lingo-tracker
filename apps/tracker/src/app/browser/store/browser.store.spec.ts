@@ -526,7 +526,7 @@ describe('BrowserStore', () => {
     });
 
     it('should update density mode state', () => {
-      expect(store.densityMode()).toBe('medium');
+      expect(store.densityMode()).toBe('compact');
 
       store.setDensityMode('full');
       expect(store.densityMode()).toBe('full');
@@ -720,6 +720,9 @@ describe('BrowserStore', () => {
         locales: ['en', 'es', 'fr', 'de'],
       });
       await waitForSignals();
+      // Switch to full mode so multi-locale tests are not affected by compact auto-selection
+      store.setDensityMode('full');
+      store.clearAllLocales();
     });
 
     it('should initialize with empty selectedLocales', () => {

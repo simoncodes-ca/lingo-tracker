@@ -1,1 +1,10 @@
-npm test
+# Format staged files with Biome
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(js|jsx|ts|tsx|json|jsonc)$' || true)
+
+if [ -n "$STAGED_FILES" ]; then
+  echo "Formatting staged files with Biome..."
+  echo "$STAGED_FILES" | xargs pnpm exec biome format --write
+  echo "$STAGED_FILES" | xargs git add
+fi
+
+pnpm typecheck

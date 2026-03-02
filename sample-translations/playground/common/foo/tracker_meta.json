@@ -1,0 +1,52 @@
+{
+  "hello": {
+    "en": {
+      "checksum": "b10a8db164e0754105b7a99be72e3fe5"
+    },
+    "fr-ca": {
+      "checksum": "b10a8db164e0754105b7a99be72e3fe5",
+      "baseChecksum": "b10a8db164e0754105b7a99be72e3fe5",
+      "status": "new"
+    },
+    "es": {
+      "checksum": "b10a8db164e0754105b7a99be72e3fe5",
+      "baseChecksum": "b10a8db164e0754105b7a99be72e3fe5",
+      "status": "new"
+    },
+    "de": {
+      "checksum": "b10a8db164e0754105b7a99be72e3fe5",
+      "baseChecksum": "b10a8db164e0754105b7a99be72e3fe5",
+      "status": "new"
+    },
+    "ja": {
+      "checksum": "b10a8db164e0754105b7a99be72e3fe5",
+      "baseChecksum": "b10a8db164e0754105b7a99be72e3fe5",
+      "status": "new"
+    }
+  },
+  "Bye": {
+    "en": {
+      "checksum": "b665d826e919381052ec23b9eaec3b62"
+    },
+    "fr-ca": {
+      "checksum": "b665d826e919381052ec23b9eaec3b62",
+      "baseChecksum": "b665d826e919381052ec23b9eaec3b62",
+      "status": "new"
+    },
+    "es": {
+      "checksum": "b665d826e919381052ec23b9eaec3b62",
+      "baseChecksum": "b665d826e919381052ec23b9eaec3b62",
+      "status": "new"
+    },
+    "de": {
+      "checksum": "b665d826e919381052ec23b9eaec3b62",
+      "baseChecksum": "b665d826e919381052ec23b9eaec3b62",
+      "status": "new"
+    },
+    "ja": {
+      "checksum": "b665d826e919381052ec23b9eaec3b62",
+      "baseChecksum": "b665d826e919381052ec23b9eaec3b62",
+      "status": "new"
+    }
+  }
+}

@@ -22,8 +22,19 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
-  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--border-radius-md);
   user-select: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 4px;
+  }
+
+  &:hover .app-title {
+    transform: scale(1.08);
+  }
 
   .logo-icon {
     font-size: 28px;
@@ -33,11 +44,13 @@
   }
 
   .app-title {
-    font-family: 'Inter', sans-serif;
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
     margin: 0;
     color: var(--color-text-primary);
+    display: inline-block;
+    transition: transform 150ms ease-out;
+    transform-origin: left center;
 
     @media (max-width: 768px) {
       font-size: var(--font-size-lg);
@@ -91,4 +104,112 @@
     height: 18px;
     color: var(--color-primary);
   }
+}
+
+// Fade-in animation for collection context entrance
+@keyframes context-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.collection-pipe {
+  flex-shrink: 0;
+  width: 1px;
+  height: 20px;
+  background-color: var(--color-border);
+  margin: 0 var(--spacing-4);
+  animation: context-enter 220ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.collection-context {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-3);
+  animation: context-enter 260ms 40ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.context-separator {
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  line-height: 1;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.collection-name {
+  flex-shrink: 0;
+  max-width: 240px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (max-width: 768px) {
+    max-width: 160px;
+  }
+}
+
+.collection-folder {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-shrink: 0;
+  margin-right: var(--spacing-2);
+  animation: context-enter 260ms 40ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.stat-chip {
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  background: var(--color-primary-alpha-10, rgba(63, 81, 181, 0.1));
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.skeleton-chip {
+  width: 60px;
+  height: 22px;
+  border-radius: var(--border-radius-full);
+  background: linear-gradient(
+    90deg,
+    var(--color-neutral-200) 0%,
+    var(--color-neutral-100) 50%,
+    var(--color-neutral-200) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
 }

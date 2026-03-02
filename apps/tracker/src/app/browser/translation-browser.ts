@@ -1,17 +1,27 @@
-import { Component, ChangeDetectionStrategy, type OnInit, inject, computed, effect } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  type OnInit,
+  inject,
+  computed,
+  effect,
+  signal,
+  viewChild,
+  DestroyRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
+import { ActivatedRoute } from '@angular/router';
+import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
-import { FolderSidebarHeader, FolderTree } from './sidebar';
+import { HeaderContextService } from '../shared/services/header-context.service';
+import { FolderTree } from './sidebar';
 import { TranslationMainHeader } from './translations/header/translation-main-header';
 import { CollectionsStore } from '../collections/store/collections.store';
 import { BrowserStore } from './store/browser.store';
 import { TranslationList } from './translations/list/translation-list';
 import { IndexingOverlay } from './ui/indexing-overlay';
+import type { DragData } from './types/drag-data';
 
 /**
  * Translation Browser component for viewing and managing translations within a collection.
@@ -27,15 +37,16 @@ import { IndexingOverlay } from './ui/indexing-overlay';
   selector: 'app-translation-browser',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(window:keydown.control.shift.n)': 'onCreateFolderShortcut($event)',
+    '(window:keydown.meta.shift.n)': 'onCreateFolderShortcut($event)',
+  },
   imports: [
     CommonModule,
-    MatButtonModule,
-    MatIconModule,
-    MatCardModule,
+    CdkDropListGroup,
     TranslocoModule,
     FolderTree,
     TranslationList,
-    FolderSidebarHeader,
     TranslationMainHeader,
     IndexingOverlay,
   ],
@@ -43,12 +54,19 @@ import { IndexingOverlay } from './ui/indexing-overlay';
   styleUrl: './translation-browser.scss',
 })
 export class TranslationBrowser implements OnInit {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly collectionsStore = inject(CollectionsStore);
+  readonly #route = inject(ActivatedRoute);
+  readonly #collectionsStore = inject(CollectionsStore);
   readonly store = inject(BrowserStore);
+  readonly #headerContext = inject(HeaderContextService);
+  readonly #destroyRef = inject(DestroyRef);
 
   readonly TOKENS = TRACKER_TOKENS;
+
+  /** Reference to the folder tree component */
+  readonly folderTreeRef = viewChild(FolderTree);
+
+  /** Signal tracking the currently dragged item */
+  readonly activeDragData = signal<DragData | null>(null);
 
   /**
    * Computed signal for collection name from the unified store.
@@ -67,7 +85,7 @@ export class TranslationBrowser implements OnInit {
     const name = this.collectionName();
     if (!name) return 'en';
 
-    const collections = this.collectionsStore.collectionEntriesWithLocales();
+    const collections = this.#collectionsStore.collectionEntriesWithLocales();
     const collection = collections.find((c) => c.name === name);
     return collection?.baseLocale || 'en';
   });
@@ -79,7 +97,7 @@ export class TranslationBrowser implements OnInit {
     const name = this.collectionName();
     if (!name) return '';
 
-    const collections = this.collectionsStore.collectionEntriesWithLocales();
+    const collections = this.#collectionsStore.collectionEntriesWithLocales();
     const collection = collections.find((c) => c.name === name);
     return collection?.config.translationsFolder || '';
   });
@@ -87,11 +105,11 @@ export class TranslationBrowser implements OnInit {
   constructor() {
     // Wait for collections to load before initializing browser store
     effect(() => {
-      const config = this.collectionsStore.config();
+      const config = this.#collectionsStore.config();
       if (!config) return;
 
       // Read collection name from route params
-      const name = this.route.snapshot.paramMap.get('collectionName');
+      const name = this.#route.snapshot.paramMap.get('collectionName');
       if (!name) return;
 
       const decodedName = decodeURIComponent(name);
@@ -110,6 +128,24 @@ export class TranslationBrowser implements OnInit {
         baseLocale,
       });
     });
+
+    // Sync collection context to header
+    effect(() => {
+      const name = this.collectionName();
+      if (!name) return;
+
+      this.#headerContext.setCollectionContext({
+        collectionName: name,
+        translationsFolder: this.translationsFolder(),
+        totalKeys: this.store.collectionTotalKeys(),
+        localeCount: this.store.collectionLocaleCount(),
+        statsLoading: this.store.isCacheIndexing(),
+      });
+    });
+
+    this.#destroyRef.onDestroy(() => {
+      this.#headerContext.clearCollectionContext();
+    });
   }
 
   ngOnInit(): void {
@@ -118,9 +154,35 @@ export class TranslationBrowser implements OnInit {
   }
 
   /**
-   * Navigates back to the collections manager.
+   * Handles Ctrl+Shift+N keyboard shortcut to create a new folder.
+   * Creates a folder in the currently selected folder path.
+   * Prevents action when an input element is focused.
    */
-  navigateToCollections(): void {
-    this.router.navigate(['/collections']);
+  onCreateFolderShortcut(event: Event): void {
+    // Don't trigger if user is typing in an input field
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    event.preventDefault();
+    const currentFolderPath = this.store.currentFolderPath();
+    this.store.startAddingFolder(currentFolderPath || null);
+  }
+
+  /**
+   * Handles drag started events from folder tree or translation list.
+   * Sets the active drag data for tracking.
+   */
+  onDragStarted(dragData: DragData): void {
+    this.activeDragData.set(dragData);
+  }
+
+  /**
+   * Handles drag ended events from folder tree or translation list.
+   * Clears the active drag data.
+   */
+  onDragEnded(): void {
+    this.activeDragData.set(null);
   }
 }

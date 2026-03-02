@@ -36,7 +36,7 @@
     padding: var(--spacing-3) var(--spacing-4);
 
     mat-icon {
-      color: var(--color-text-primary);
+      color: var(--color-text-secondary);
     }
 
     .density-toggle {
@@ -53,6 +53,7 @@
         color: var(--color-text-secondary);
 
         mat-icon {
+          color: var(--color-text-secondary);
           font-size: 20px;
         }
 

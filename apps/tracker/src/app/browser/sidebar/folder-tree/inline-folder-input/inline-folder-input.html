@@ -1,0 +1,26 @@
+<div class="inline-folder-input">
+  <div class="input-container">
+    <mat-icon class="folder-icon">create_new_folder</mat-icon>
+
+    <div class="input-wrapper">
+      <input
+        #inputField
+        type="text"
+        class="folder-input"
+        [formControl]="folderNameControl"
+        placeholder="Folder name"
+        (keydown.enter)="onEnterKey()"
+        (keydown.escape)="onEscapeKey()"
+        (blur)="onBlur()"
+        autocomplete="off"
+        spellcheck="false"
+      />
+
+      @if (shouldShowError()) {
+        <div class="error-message">
+          {{ getErrorMessage() }}
+        </div>
+      }
+    </div>
+  </div>
+</div>

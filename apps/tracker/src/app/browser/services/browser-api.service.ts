@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import type { Observable } from 'rxjs';
 import type {
   ResourceTreeDto,
+  TreeStatusResponseDto,
   SearchResultsDto,
   CacheStatusDto,
   CreateResourceDto,
@@ -11,6 +12,14 @@ import type {
   UpdateResourceResponseDto,
   DeleteResourceDto,
   DeleteResourceResponseDto,
+  CreateFolderDto,
+  CreateFolderResponseDto,
+  DeleteFolderDto,
+  DeleteFolderResponseDto,
+  MoveResourceDto,
+  MoveResourceResponseDto,
+  MoveFolderDto,
+  MoveFolderResponseDto,
 } from '@simoncodes-ca/data-transfer';
 
 /**
@@ -43,12 +52,18 @@ export class BrowserApiService {
    * @param includeNested - Whether to include nested resources in the resources array
    * @returns Observable of ResourceTreeDto
    */
-  getResourceTree(collectionName: string, path = '', includeNested = false): Observable<ResourceTreeDto> {
+  getResourceTree(
+    collectionName: string,
+    path = '',
+    includeNested = false,
+  ): Observable<ResourceTreeDto | TreeStatusResponseDto> {
     const encodedName = encodeURIComponent(collectionName);
     const encodedPath = encodeURIComponent(path);
     const params = new HttpParams().set('path', encodedPath).set('includeNested', includeNested.toString());
 
-    return this.#http.get<ResourceTreeDto>(`${this.#baseUrl}/${encodedName}/resources/tree`, { params });
+    return this.#http.get<ResourceTreeDto | TreeStatusResponseDto>(`${this.#baseUrl}/${encodedName}/resources/tree`, {
+      params,
+    });
   }
 
   /**
@@ -103,5 +118,80 @@ export class BrowserApiService {
     return this.#http.request<DeleteResourceResponseDto>('DELETE', `${this.#baseUrl}/${encodedName}/resources`, {
       body: dto,
     });
+  }
+
+  /**
+   * Creates a new folder in a collection.
+   *
+   * @param collectionName - Name of the collection
+   * @param folderName - Name of the folder to create
+   * @param parentPath - Optional parent path where folder should be created
+   * @returns Observable of folder creation response
+   */
+  createFolder(collectionName: string, folderName: string, parentPath?: string): Observable<CreateFolderResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: CreateFolderDto = {
+      folderName,
+      ...(parentPath !== undefined && { parentPath }),
+    };
+    return this.#http.post<CreateFolderResponseDto>(`${this.#baseUrl}/${encodedName}/folders`, dto);
+  }
+
+  /**
+   * Deletes a folder and all its resources from a collection.
+   *
+   * @param collectionName - Name of the collection
+   * @param folderPath - Dot-delimited folder path to delete
+   * @returns Observable of folder deletion response
+   */
+  deleteFolder(collectionName: string, folderPath: string): Observable<DeleteFolderResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: DeleteFolderDto = { folderPath };
+    return this.#http.request<DeleteFolderResponseDto>('DELETE', `${this.#baseUrl}/${encodedName}/folders`, {
+      body: dto,
+    });
+  }
+
+  /**
+   * Moves a translation resource to a different folder.
+   *
+   * @param collectionName - Name of the collection
+   * @param sourceKey - Full key of the resource to move
+   * @param destinationKey - Full destination key (including folder path and entry name)
+   * @returns Observable of move response
+   */
+  moveResource(collectionName: string, sourceKey: string, destinationKey: string): Observable<MoveResourceResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: MoveResourceDto = {
+      moves: [
+        {
+          source: sourceKey,
+          destination: destinationKey,
+        },
+      ],
+    };
+    return this.#http.post<MoveResourceResponseDto>(`${this.#baseUrl}/${encodedName}/resources/move`, dto);
+  }
+
+  /**
+   * Moves a folder and all its contents to a different location.
+   *
+   * @param collectionName - Name of the collection
+   * @param sourceFolderPath - Dot-delimited source folder path
+   * @param destinationFolderPath - Dot-delimited destination folder path
+   * @returns Observable of move response
+   */
+  moveFolder(
+    collectionName: string,
+    sourceFolderPath: string,
+    destinationFolderPath: string,
+  ): Observable<MoveFolderResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: MoveFolderDto = {
+      sourceFolderPath,
+      destinationFolderPath,
+      nestUnderDestination: true,
+    };
+    return this.#http.post<MoveFolderResponseDto>(`${this.#baseUrl}/${encodedName}/folders/move`, dto);
   }
 }

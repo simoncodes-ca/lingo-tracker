@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import type { LingoTrackerConfigDto } from '@simoncodes-ca/data-transfer';
 import { mapConfigToDto } from '../mappers/config.mapper';
-import type { ConfigService } from './config.service';
+import { ConfigService } from './config.service';
 
 @Controller('config')
 export class ConfigController {

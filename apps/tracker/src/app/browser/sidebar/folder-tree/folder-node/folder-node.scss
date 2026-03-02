@@ -14,6 +14,23 @@
   }
 }
 
+.folder-drop-zone {
+  border: 2px solid transparent;
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+
+  &.drop-target-valid {
+    background-color: var(--color-success-subtle, rgba(22, 163, 74, 0.1));
+    border-color: var(--color-success, #16a34a);
+  }
+
+  &.drop-target-invalid {
+    background-color: var(--color-error-subtle, rgba(220, 38, 38, 0.1));
+    border-color: var(--color-error, #dc2626);
+    opacity: 0.5;
+  }
+}
+
 .folder-header {
   display: flex;
   align-items: center;
@@ -74,6 +91,14 @@
     color: var(--color-text-primary);
     flex-shrink: 0;
     transition: opacity 0.15s ease;
+
+    &.folder-drag-handle {
+      cursor: grab;
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
   }
 
   .folder-name {
@@ -93,10 +118,113 @@
     flex-shrink: 0;
     transition: color 0.15s ease;
   }
+
+  .new-chip {
+    animation: fade-in 0.2s ease-out;
+    background-color: var(--color-success-subtle, #dcfce7);
+    border-radius: var(--border-radius-sm);
+    color: var(--color-success, #16a34a);
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-left: auto;
+    padding: 2px 6px;
+    text-transform: uppercase;
+  }
+
+  .delete-button {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    height: 24px;
+    justify-content: center;
+    margin-left: auto;
+    min-height: 24px;
+    min-width: 24px;
+    opacity: 0;
+    padding: 0;
+    transition: opacity 0.15s ease;
+    width: 24px;
+
+    ::ng-deep {
+      .mat-mdc-button-touch-target,
+      .mat-mdc-button-persistent-ripple {
+        height: 24px;
+        width: 24px;
+      }
+
+      .mat-mdc-button-persistent-ripple::before {
+        border-radius: 50%;
+      }
+    }
+
+    mat-icon {
+      color: var(--color-text-secondary);
+      font-size: 18px;
+      height: 18px;
+      line-height: 18px;
+      width: 18px;
+
+      &.spinner {
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-background-muted);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+    }
+  }
+
+  &:hover .delete-button,
+  &.selected .delete-button {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .folder-children {
   margin-left: var(--spacing-4);
   padding-left: var(--spacing-2);
   border-left: 1px solid var(--color-border);
+}
+
+// CDK Drag & Drop Styles
+.cdk-drag-preview {
+  opacity: 0.7;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border-radius: var(--border-radius-sm);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.4;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }

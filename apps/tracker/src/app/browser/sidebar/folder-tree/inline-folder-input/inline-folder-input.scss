@@ -1,0 +1,65 @@
+:host {
+  display: block;
+}
+
+.inline-folder-input {
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+.input-container {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  background-color: var(--color-background-muted);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-2);
+  border: 1px solid var(--color-border);
+  transition: border-color 0.15s ease;
+
+  &:focus-within {
+    border-color: var(--color-primary);
+    background-color: var(--color-background);
+  }
+
+  .folder-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--color-primary);
+    flex-shrink: 0;
+    margin-top: 2px; // Align with input text
+  }
+
+  .input-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+  }
+
+  .folder-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    padding: 0;
+    width: 100%;
+    font-family: inherit;
+
+    &::placeholder {
+      color: var(--color-text-tertiary);
+    }
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .error-message {
+    font-size: var(--font-size-xs);
+    color: var(--color-error, #dc2626);
+    line-height: 1.2;
+    margin-top: var(--spacing-1);
+  }
+}

@@ -24,7 +24,9 @@ import {
   searchResourceTree,
   extractSubtree,
   extractResourcesRecursively,
+  createResourceMetadata,
   type SearchResult,
+  type ResourceTreeEntry,
 } from '@simoncodes-ca/core';
 import type {
   CreateResourceDto,
@@ -36,6 +38,7 @@ import type {
   UpdateResourceDto,
   UpdateResourceResponseDto,
   ResourceTreeDto,
+  ResourceSummaryDto,
   TranslationStatus,
   SearchTranslationsDto,
   SearchResultsDto,
@@ -44,7 +47,7 @@ import type {
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
-import { mapResourceTreeToDto } from '../../mappers/resource-tree.mapper';
+import { mapResourceTreeToDto, mapResourceEntryToSummary } from '../../mappers/resource-tree.mapper';
 import { mapSearchResultsToDto } from '../../mappers/search-result.mapper';
 import { CollectionCacheService, CacheStatus } from '../../cache/collection-cache.service';
 
@@ -107,6 +110,39 @@ export class ResourcesController {
             entriesCreated++;
             hasCreated = true;
           }
+
+          // Add resource to cache instead of clearing it
+          const resolvedKeyParts = result.resolvedKey.split('.');
+          const entryKey = resolvedKeyParts.pop() || '';
+          const folderPath = resolvedKeyParts.join('.');
+
+          // Build translations record (excluding base locale)
+          const translationsRecord: Record<string, string> = {};
+          const translationsArray = translations || [];
+          for (const t of translationsArray) {
+            if (t.locale !== resourceBaseLocale) {
+              translationsRecord[t.locale] = t.value;
+            }
+          }
+
+          // Create metadata for cache entry
+          const metadata = createResourceMetadata({
+            entryKey,
+            baseValue: resource.baseValue,
+            baseLocale: resourceBaseLocale,
+            translations: translationsArray,
+          });
+
+          const cacheEntry: ResourceTreeEntry = {
+            key: entryKey,
+            source: resource.baseValue,
+            translations: translationsRecord,
+            metadata,
+            ...(resource.comment && { comment: resource.comment }),
+            ...(resource.tags && resource.tags.length > 0 && { tags: resource.tags }),
+          };
+
+          this.cacheService.addResourceToCache(decodedCollectionName, cacheEntry, folderPath);
         } catch (error: unknown) {
           // Validation errors (invalid key, etc.) should return 400
           const errorMessage = error instanceof Error ? error.message : '';
@@ -116,11 +152,6 @@ export class ResourcesController {
           // Re-throw other errors to be caught by outer catch
           throw error;
         }
-      }
-
-      // Clear cache after successful resource creation
-      if (hasCreated) {
-        this.cacheService.clearCache();
       }
 
       return {
@@ -288,15 +319,30 @@ export class ResourcesController {
         baseLocale,
       });
 
-      // Clear cache after successful resource update
-      if (result.updated) {
-        this.cacheService.clearCache();
+      let resourceDto: ResourceSummaryDto | undefined;
+
+      if (result.updated && result.entry) {
+        const keyParts = dto.key.split('.');
+        const entryKey = keyParts[keyParts.length - 1];
+        const oldFolderPath = keyParts.slice(0, -1).join('.');
+
+        if (dto.targetFolder !== undefined && dto.targetFolder !== oldFolderPath) {
+          // Resource moved to a different folder — remove from old location, insert at new
+          this.cacheService.removeResourceFromCache(decodedCollectionName, entryKey, oldFolderPath);
+          this.cacheService.addResourceToCache(decodedCollectionName, result.entry, dto.targetFolder ?? '');
+        } else {
+          // In-place edit — upsert in the same folder
+          this.cacheService.addResourceToCache(decodedCollectionName, result.entry, oldFolderPath);
+        }
+
+        resourceDto = mapResourceEntryToSummary(result.entry);
       }
 
       return {
         resolvedKey: result.resolvedKey,
         updated: result.updated,
         message: result.message,
+        resource: resourceDto,
       };
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof HttpException) {

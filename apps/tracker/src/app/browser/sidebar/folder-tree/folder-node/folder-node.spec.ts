@@ -1,5 +1,7 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FolderNode } from './folder-node';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
@@ -11,6 +13,7 @@ describe('FolderNode', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [FolderNode, getTranslocoTestingModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FolderNode);

@@ -30,7 +30,7 @@ $lingo-tracker-light-theme: mat.m2-define-light-theme((
     warn: $lingo-tracker-warn,
   ),
   typography: $lingo-tracker-typography,
-  density: 0,
+  density: -1,
 ));
 
 // Create dark theme
@@ -41,7 +41,7 @@ $lingo-tracker-dark-theme: mat.m2-define-dark-theme((
     warn: $lingo-tracker-warn,
   ),
   typography: $lingo-tracker-typography,
-  density: 0,
+  density: -1,
 ));
 
 // Apply light theme by default

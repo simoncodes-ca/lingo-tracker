@@ -30,6 +30,17 @@
         <mat-icon>account_tree</mat-icon>
       </mat-button-toggle>
     </mat-button-toggle-group>
+    <button
+      mat-icon-button
+      type="button"
+      (click)="onAddFolderButtonClick()"
+      [disabled]="store.isDisabled()"
+      aria-label="Add folder"
+      matTooltip="Add folder (Ctrl+Shift+N)"
+      class="add-folder-button"
+    >
+      <mat-icon>create_new_folder</mat-icon>
+    </button>
   </div>
 
   <!-- Loading State -->
@@ -60,15 +71,34 @@
 
   <!-- Folder Tree -->
   @if (store.filteredFolders().length > 0) {
-    <div class="folder-list" role="tree">
+    <div
+      #folderList
+      class="folder-list"
+      role="tree"
+      (mousemove)="activeDragData() ? onDragMoved($event) : null"
+    >
+      @if (isAddingFolder() && addFolderParentPath() === null) {
+        <app-inline-folder-input
+          [parentPath]="null"
+          (confirm)="onFolderConfirm($event)"
+          (cancel)="onFolderCancel()"
+        />
+      }
       @for (folder of store.filteredFolders(); track folder.fullPath) {
         <app-folder-node
           [folder]="folder"
           [selectedPath]="store.currentFolderPath()"
           [showNestedResources]="showNestedResources()"
           [disabled]="store.isDisabled()"
+          [isDeleting]="store.deletingFolderPath() === folder.fullPath"
+          [activeDragData]="activeDragData()"
           (folderClick)="onFolderClick($event)"
           (loadFolder)="onLoadFolder($event)"
+          (deleteFolder)="onDeleteFolder($event)"
+          (resourceDropped)="onResourceDropped($event)"
+          (folderDropped)="onFolderDropped($event)"
+          (dragStarted)="onDragStarted($event)"
+          (dragEnded)="onDragEnded()"
         />
       }
     </div>

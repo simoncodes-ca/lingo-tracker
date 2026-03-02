@@ -1,31 +1,63 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoModule } from '@jsverse/transloco';
 import { ThemeService, type ThemeMode } from '../shared/services/theme.service';
+import { HeaderContextService } from '../shared/services/header-context.service';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatToolbarModule, MatIconModule, MatButtonModule, MatMenuModule, TranslocoModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    MatToolbarModule,
+    MatIconModule,
+    MatButtonModule,
+    MatMenuModule,
+    MatTooltipModule,
+    TranslocoModule,
+  ],
   templateUrl: './app-header.html',
   styleUrl: './app-header.scss',
 })
 export class AppHeader {
-  readonly themeService = inject(ThemeService);
+  readonly #themeService = inject(ThemeService);
+  readonly #headerContext = inject(HeaderContextService);
 
   readonly TOKENS = TRACKER_TOKENS;
 
+  readonly collectionName = this.#headerContext.collectionName;
+  readonly translationsFolder = this.#headerContext.translationsFolder;
+  readonly totalKeys = this.#headerContext.totalKeys;
+  readonly localeCount = this.#headerContext.localeCount;
+  readonly statsLoading = this.#headerContext.statsLoading;
+  readonly hasCollectionContext = this.#headerContext.hasCollectionContext;
+
+  readonly keysText = computed(() => {
+    const k = this.totalKeys();
+    if (k === null) return '';
+    return k === 1 ? '1 key' : `${k} keys`;
+  });
+
+  readonly localesText = computed(() => {
+    const l = this.localeCount();
+    if (l === null) return '';
+    return l === 1 ? '1 locale' : `${l} locales`;
+  });
+
   setTheme(mode: ThemeMode): void {
-    this.themeService.setTheme(mode);
+    this.#themeService.setTheme(mode);
   }
 
   isThemeActive(mode: ThemeMode): boolean {
-    return this.themeService.themeMode() === mode;
+    return this.#themeService.themeMode() === mode;
   }
 }

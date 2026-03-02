@@ -46,6 +46,9 @@
       class="viewport"
       role="list"
       aria-label="Translation list"
+      cdkDropList
+      [cdkDropListEnterPredicate]="noDropPredicate"
+      [cdkDropListSortingDisabled]="true"
     >
       <div role="presentation">
         <app-translation-item
@@ -54,11 +57,13 @@
           [locales]="displayLocales()"
           [baseLocale]="baseLocale()"
           [folderPath]="store.isSearchMode() ? '' : store.currentFolderPath()"
+          [isRecentlyUpdated]="recentlyUpdatedKey() === translation.key"
           (copyKey)="handleCopyKey($event)"
           (editTranslation)="handleEdit($event)"
-          (moveTranslation)="handleMove($event)"
           (deleteTranslation)="handleDelete($event)"
           (expansionChanged)="handleItemExpansion($event)"
+          (dragStarted)="dragStarted.emit($event)"
+          (dragEnded)="dragEnded.emit()"
         />
       </div>
     </cdk-virtual-scroll-viewport>

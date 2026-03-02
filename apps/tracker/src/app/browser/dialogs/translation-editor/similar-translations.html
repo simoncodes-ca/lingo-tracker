@@ -1,0 +1,57 @@
+<div class="similar-translations-card" [class.has-results]="state() === 'results'">
+  <!-- Header -->
+  <div class="card-header">
+    <mat-icon class="header-icon">content_copy</mat-icon>
+    <h4 class="header-title">Similar Translations</h4>
+    @if (state() === 'loading') {
+      <mat-spinner diameter="16" class="header-spinner"></mat-spinner>
+    }
+  </div>
+
+  <!-- Content -->
+  <div class="card-content">
+    @switch (state()) {
+      @case ('idle') {
+        <p class="state-message idle">
+          Similar translations will appear as you type
+        </p>
+      }
+      @case ('loading') {
+        <p class="state-message loading">
+          Searching for similar translations...
+        </p>
+      }
+      @case ('empty') {
+        <p class="state-message empty">
+          No similar translations found
+        </p>
+      }
+      @case ('results') {
+        <div class="results-list">
+          @for (result of displayedResults(); track result.key) {
+            <button
+              type="button"
+              class="result-item"
+              (click)="onResultClick(result)"
+              title="Click to copy key"
+            >
+              <span class="result-key">{{ result.key }}</span>
+              <span class="result-value">{{ getTranslationValue(result) }}</span>
+            </button>
+          }
+        </div>
+
+        @if (hasMore()) {
+          <button
+            mat-button
+            type="button"
+            class="show-more-button"
+            (click)="showMore()"
+          >
+            Show {{ remainingCount() }} more
+          </button>
+        }
+      }
+    }
+  </div>
+</div>

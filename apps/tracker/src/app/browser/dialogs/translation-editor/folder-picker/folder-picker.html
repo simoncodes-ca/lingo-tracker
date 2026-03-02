@@ -13,69 +13,54 @@
     <mat-icon class="folder-icon">folder</mat-icon>
     <span class="folder-label">Folder:</span>
     <span class="folder-path">{{ displayPath() }}</span>
-
-    @if (!folderExists()) {
-      <mat-chip class="new-folder-chip">
-        <mat-icon class="chip-icon">fiber_new</mat-icon>
-        New Folder
-      </mat-chip>
-    }
-
     <mat-icon class="chevron-icon">{{ chevronIcon() }}</mat-icon>
   </div>
 
   <!-- Expandable Folder Picker Section -->
   @if (isExpanded()) {
-    <div class="folder-picker-content" [@expandCollapse]>
-      <!-- Root Folder Option -->
-      <div class="root-folder-option">
-        <button
-          mat-button
-          class="root-folder-button"
-          (click)="selectRoot()"
-          type="button"
+    <div class="folder-picker-content">
+      @if (!hasRootFolders()) {
+        <!-- Empty State -->
+        <div class="empty-state">
+          <mat-icon class="empty-icon">create_new_folder</mat-icon>
+          <p class="empty-message">No folders yet</p>
+          <button
+            mat-raised-button
+            color="primary"
+            class="create-first-folder-button"
+            (click)="onCreateFirstFolder()"
+            type="button"
+          >
+            <mat-icon>add</mat-icon>
+            Create First Folder
+          </button>
+        </div>
+      } @else {
+        <!-- Folder Tree -->
+        <div
+          class="folder-tree-container"
+          (keydown)="onTreeKeydown($event)"
+          tabindex="0"
+          role="tree"
+          [attr.aria-label]="'Folder tree'"
         >
-          <mat-icon>home</mat-icon>
-          <span>Root Folder</span>
-        </button>
-      </div>
-
-      <!-- Folder Tree -->
-      <div class="folder-tree-container">
-        @if (rootFolders().length > 0) {
           @for (folder of rootFolders(); track folder.fullPath) {
-            <app-folder-node
+            <app-picker-folder-node
               [folder]="folder"
               [selectedPath]="selectedPath()"
-              [showNestedResources]="false"
-              [disabled]="false"
-              (folderClick)="onFolderClick($event)"
-              (loadFolder)="onLoadFolder($event)"
+              [focusedPath]="focusedPath()"
+              [expandedPaths]="expandedPaths()"
+              [isAddingFolder]="isAddingFolder()"
+              [addFolderParentPath]="addFolderParentPath()"
+              (select)="onFolderSelect($event)"
+              (toggleExpand)="onExpandToggle($event)"
+              (addFolder)="onAddFolder($event)"
+              (confirmNewFolder)="onFolderNameConfirmed($event)"
+              (cancelNewFolder)="onFolderNameCancelled()"
             />
           }
-        } @else {
-          <div class="empty-tree-message">
-            <mat-icon>folder_open</mat-icon>
-            <p>No folders available</p>
-          </div>
-        }
-      </div>
-
-      <!-- Custom Folder Input -->
-      <div class="custom-folder-section">
-        <mat-form-field appearance="outline" class="custom-folder-input">
-          <mat-label>Or type a custom folder path</mat-label>
-          <input
-            matInput
-            placeholder="e.g., common.buttons"
-            [value]="customInput()"
-            (input)="onCustomInputChange($event)"
-            (keydown)="onCustomInputKeyDown($event)"
-            autocomplete="off"
-          />
-          <mat-hint>Use dot notation (e.g., common.buttons)</mat-hint>
-        </mat-form-field>
-      </div>
+        </div>
+      }
     </div>
   }
 </div>

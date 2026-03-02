@@ -37,14 +37,6 @@
   display: flex;
   flex-direction: column;
 
-  /**
-   * Ensure sidebar header stays at top
-   * and folder tree scrolls below it
-   */
-  app-folder-sidebar-header {
-    flex-shrink: 0;
-  }
-
   app-folder-tree {
     flex: 1;
     overflow: hidden;

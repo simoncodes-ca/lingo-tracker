@@ -10,19 +10,14 @@
 
   <!-- Browser Content (shown only when cache is ready) -->
   @if (store.isCacheReady()) {
-    <div class="browser-content">
+    <div class="browser-content" cdkDropListGroup>
       <!-- Left Sidebar: Folder Tree -->
       <aside class="folder-sidebar">
-        <app-sidebar-header
-          [collectionName]="collectionName()"
-          [translationsFolder]="translationsFolder()"
-          [totalKeys]="store.collectionTotalKeys()"
-          [localeCount]="store.collectionLocaleCount()"
-          [statsLoading]="store.isCacheIndexing()"
-          (backClick)="navigateToCollections()"
-        />
         <app-folder-tree
           [collectionName]="collectionName()"
+          [activeDragData]="activeDragData()"
+          (dragStarted)="onDragStarted($event)"
+          (dragEnded)="onDragEnded()"
         />
       </aside>
 
@@ -34,6 +29,8 @@
           <app-translation-list
             [collectionName]="collectionName()"
             [baseLocale]="baseLocale()"
+            (dragStarted)="onDragStarted($event)"
+            (dragEnded)="onDragEnded()"
           />
         }
 

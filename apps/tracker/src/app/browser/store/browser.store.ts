@@ -1,7 +1,22 @@
 import { computed, inject, effect } from '@angular/core';
 import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, tap, switchMap, catchError, of, interval, takeWhile, startWith } from 'rxjs';
+import {
+  pipe,
+  tap,
+  switchMap,
+  catchError,
+  of,
+  interval,
+  startWith,
+  takeWhile,
+  type Observable,
+  from,
+  retry,
+  timer,
+} from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import type {
   FolderNodeDto,
   ResourceSummaryDto,
@@ -9,12 +24,119 @@ import type {
   SearchResultsDto,
   CacheStatusType,
   TranslationStatus,
+  CreateFolderResponseDto,
 } from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../services/browser-api.service';
 import { sortTranslations } from '../translations/utils/sort-translations';
+import { extractFolderNameFromPath, extractParentFolderPath, splitResolvedKey } from '../utils/folder-path.utils';
+
+/**
+ * Inserts a new folder into the tree at the specified parent path.
+ * Returns a new array with the folder inserted (immutable update).
+ */
+function insertFolderIntoTree(
+  folders: FolderNodeDto[],
+  newFolder: FolderNodeDto,
+  parentPath: string | null,
+): FolderNodeDto[] {
+  if (!parentPath) {
+    // Insert at root level, maintaining alphabetical order
+    const updated = [...folders, newFolder];
+    updated.sort((a, b) => a.name.localeCompare(b.name));
+    return updated;
+  }
+
+  // Find and update the parent folder
+  const parentSegments = parentPath.split('.');
+
+  const updateChildren = (nodes: FolderNodeDto[], depth: number): FolderNodeDto[] => {
+    return nodes.map((node) => {
+      if (node.name === parentSegments[depth]) {
+        if (depth === parentSegments.length - 1) {
+          // This is the parent - insert the new folder into its children
+          const updatedChildren = [...(node.tree?.children ?? []), newFolder];
+          updatedChildren.sort((a, b) => a.name.localeCompare(b.name));
+          return {
+            ...node,
+            loaded: true,
+            tree: node.tree
+              ? { ...node.tree, children: updatedChildren }
+              : { path: node.fullPath, resources: [], children: updatedChildren },
+          };
+        } else if (node.tree?.children) {
+          // Recurse deeper
+          return {
+            ...node,
+            tree: { ...node.tree, children: updateChildren(node.tree.children, depth + 1) },
+          };
+        }
+      }
+      return node;
+    });
+  };
+
+  return updateChildren(folders, 0);
+}
+
+/**
+ * Removes a folder from the tree by its full path.
+ * Returns a new array with the folder removed (immutable update).
+ */
+function removeFolderFromTree(folders: FolderNodeDto[], pathToRemove: string): FolderNodeDto[] {
+  return folders
+    .filter((folder) => folder.fullPath !== pathToRemove)
+    .map((folder) => {
+      if (folder.tree?.children) {
+        return {
+          ...folder,
+          tree: {
+            ...folder.tree,
+            children: removeFolderFromTree(folder.tree.children, pathToRemove),
+          },
+        };
+      }
+      return folder;
+    });
+}
+
+/**
+ * Finds a folder node in the tree by its full path.
+ * Returns the folder node or null if not found.
+ */
+function findFolderInTree(folders: FolderNodeDto[], fullPath: string): FolderNodeDto | null {
+  for (const folder of folders) {
+    if (folder.fullPath === fullPath) return folder;
+    if (folder.tree?.children) {
+      const found = findFolderInTree(folder.tree.children, fullPath);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Creates a deep copy of a folder with all paths updated to reflect a new parent location.
+ * For example, moving folder "common" (fullPath "common") into "apps" updates:
+ * - "common" -> "apps.common"
+ * - "common.buttons" -> "apps.common.buttons"
+ */
+function rebaseFolderPaths(folder: FolderNodeDto, newParentPath: string): FolderNodeDto {
+  const newFullPath = newParentPath ? `${newParentPath}.${folder.name}` : folder.name;
+  return {
+    ...folder,
+    fullPath: newFullPath,
+    tree: folder.tree
+      ? {
+          ...folder.tree,
+          path: newFullPath,
+          children: folder.tree.children.map((child) => rebaseFolderPaths(child, newFullPath)),
+        }
+      : undefined,
+  };
+}
 
 interface ViewPreferences {
-  densityMode: 'compact' | 'medium' | 'full';
+  densityMode: 'compact' | 'full';
   selectedLocales: string[];
   showNestedResources: boolean;
   compactLocale: string | null;
@@ -39,6 +161,11 @@ interface BrowserState {
   rootFolders: FolderNodeDto[];
   folderTreeFilter: string;
   isFolderTreeLoading: boolean;
+  isAddingFolder: boolean;
+  addFolderParentPath: string | null;
+  newlyCreatedFolderPath: string | null;
+  isDeletingFolder: boolean;
+  deletingFolderPath: string | null;
 
   translations: ResourceSummaryDto[];
   isTranslationsLoading: boolean;
@@ -50,7 +177,7 @@ interface BrowserState {
   isSearchLoading: boolean;
   searchError: string | null;
 
-  densityMode: 'compact' | 'medium' | 'full';
+  densityMode: 'compact' | 'full';
   viewPreferences: Map<string, ViewPreferences>;
   compactLocale: string | null;
   compactLocaleManuallyChanged: boolean;
@@ -76,6 +203,11 @@ const initialState: BrowserState = {
   rootFolders: [],
   folderTreeFilter: '',
   isFolderTreeLoading: false,
+  isAddingFolder: false,
+  addFolderParentPath: null,
+  newlyCreatedFolderPath: null,
+  isDeletingFolder: false,
+  deletingFolderPath: null,
   translations: [],
   isTranslationsLoading: false,
   showNestedResources: true,
@@ -84,7 +216,7 @@ const initialState: BrowserState = {
   searchResults: [],
   isSearchLoading: false,
   searchError: null,
-  densityMode: 'medium',
+  densityMode: 'compact',
   viewPreferences: new Map<string, ViewPreferences>(),
   compactLocale: null,
   compactLocaleManuallyChanged: false,
@@ -300,6 +432,20 @@ export const BrowserStore = signalStore(
         patchState(store, initialState);
       },
 
+      startAddingFolder(parentPath: string | null): void {
+        patchState(store, {
+          isAddingFolder: true,
+          addFolderParentPath: parentPath,
+        });
+      },
+
+      cancelAddingFolder(): void {
+        patchState(store, {
+          isAddingFolder: false,
+          addFolderParentPath: null,
+        });
+      },
+
       selectFolder: rxMethod<string>(
         pipe(
           tap((path) =>
@@ -318,19 +464,20 @@ export const BrowserStore = signalStore(
             }
 
             return api.getResourceTree(collection, path, includeNested).pipe(
-              tap((tree) =>
-                patchState(store, {
-                  translations: tree.resources,
-                  isTranslationsLoading: false,
-                  error: null,
-                }),
-              ),
+              tap((tree) => {
+                if ('resources' in tree) {
+                  patchState(store, {
+                    translations: tree.resources,
+                    isTranslationsLoading: false,
+                    error: null,
+                  });
+                } else {
+                  patchState(store, { isTranslationsLoading: false });
+                }
+              }),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to load translations';
-                patchState(store, {
-                  isTranslationsLoading: false,
-                  error: errorMessage,
-                });
+                patchState(store, { isTranslationsLoading: false, error: errorMessage });
                 return of(null);
               }),
             );
@@ -350,15 +497,23 @@ export const BrowserStore = signalStore(
             }
 
             return api.getResourceTree(collection, '', includeNested).pipe(
-              tap((treeData) =>
-                patchState(store, {
-                  rootFolders: treeData.children,
-                  translations: treeData.resources,
-                  currentFolderPath: '',
-                  isFolderTreeLoading: false,
-                  error: null,
-                }),
-              ),
+              tap((treeData) => {
+                // Check if response is actual tree data (has resources) vs status response (cache indexing)
+                if ('resources' in treeData) {
+                  patchState(store, {
+                    rootFolders: treeData.children,
+                    translations: treeData.resources,
+                    currentFolderPath: '',
+                    isFolderTreeLoading: false,
+                    error: null,
+                  });
+                } else {
+                  // Cache is still indexing - just stop loading
+                  patchState(store, {
+                    isFolderTreeLoading: false,
+                  });
+                }
+              }),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to load folders';
                 patchState(store, {
@@ -385,6 +540,7 @@ export const BrowserStore = signalStore(
 
             return api.getResourceTree(collection, folderPath, includeNested).pipe(
               tap((treeData) => {
+                if (!('resources' in treeData)) return; // cache not ready, skip
                 const updateFolder = (folders: FolderNodeDto[]): FolderNodeDto[] =>
                   folders.map((folder) => {
                     if (folder.fullPath === folderPath) {
@@ -542,13 +698,236 @@ export const BrowserStore = signalStore(
           patchState(store, { searchResults: updatedSearchResults });
         }
       },
+
+      updateTranslationInCache(resource: ResourceSummaryDto): void {
+        const currentTranslations = store.translations();
+        const translationIndex = currentTranslations.findIndex((t) => t.key === resource.key);
+        if (translationIndex !== -1) {
+          const updatedTranslations = [...currentTranslations];
+          updatedTranslations[translationIndex] = resource;
+          patchState(store, { translations: updatedTranslations });
+        }
+
+        if (store.isSearchMode()) {
+          const currentSearchResults = store.searchResults();
+          const searchIndex = currentSearchResults.findIndex((t) => t.key === resource.key);
+          if (searchIndex !== -1) {
+            const updatedSearchResults = [...currentSearchResults];
+            updatedSearchResults[searchIndex] = {
+              ...currentSearchResults[searchIndex], // preserves matchType and any other SearchResultDto fields
+              ...resource, // overlays updated translations, status, comment, tags
+            };
+            patchState(store, { searchResults: updatedSearchResults });
+          }
+        }
+      },
     };
   }),
 
   withMethods((store) => {
     const api = inject(BrowserApiService);
+    const snackBar = inject(MatSnackBar);
+    const dialog = inject(MatDialog);
 
     return {
+      moveResource: rxMethod<{ sourceKey: string; destinationFolderPath: string }>(
+        pipe(
+          tap(() => patchState(store, { isDisabled: true, error: null })),
+          switchMap(({ sourceKey, destinationFolderPath }) => {
+            const collection = store.selectedCollection();
+            if (!collection) {
+              patchState(store, { isDisabled: false });
+              return of(null);
+            }
+
+            const sourceFolderPath = splitResolvedKey(sourceKey).folderPath.join('.');
+
+            // Check if dropping in same folder
+            if (sourceFolderPath === destinationFolderPath) {
+              snackBar.open('Resource is already in this folder', undefined, { duration: 3000 });
+              patchState(store, { isDisabled: false });
+              return of(null);
+            }
+
+            // Extract entry name from source key
+            const entryName = splitResolvedKey(sourceKey).entryKey;
+            const destinationKey = destinationFolderPath ? `${destinationFolderPath}.${entryName}` : entryName;
+
+            // Optimistic update: remove from current translations
+            const currentTranslations = store.translations();
+            const optimisticTranslations = currentTranslations.filter((r) => r.key !== sourceKey);
+            patchState(store, { translations: optimisticTranslations });
+
+            return api.moveResource(collection, sourceKey, destinationKey).pipe(
+              tap(() => {
+                const folderName = destinationFolderPath || 'root';
+                snackBar.open(`Moved "${entryName}" to ${folderName}`, undefined, { duration: 3000 });
+                patchState(store, { isDisabled: false });
+
+                // Reload folder tree and current folder
+                store.loadRootFolders();
+                store.selectFolder(store.currentFolderPath());
+              }),
+              catchError((error: unknown) => {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to move resource';
+
+                // Rollback optimistic update
+                patchState(store, {
+                  translations: currentTranslations,
+                  isDisabled: false,
+                });
+
+                snackBar.open(`Error: ${errorMessage}`, undefined, { duration: 5000 });
+                return of(null);
+              }),
+            );
+          }),
+        ),
+      ),
+
+      moveFolder: rxMethod<{ sourceFolderPath: string; destinationFolderPath: string }>(
+        pipe(
+          tap(() => patchState(store, { error: null })),
+          switchMap(({ sourceFolderPath, destinationFolderPath }) => {
+            const collection = store.selectedCollection();
+            if (!collection) {
+              return of(null);
+            }
+
+            // Check if source folder is the same as destination
+            if (sourceFolderPath === destinationFolderPath) {
+              return of(null);
+            }
+
+            // Check if source and destination are the same
+            const sourceParentPath = extractParentFolderPath(sourceFolderPath);
+            if (sourceParentPath === destinationFolderPath) {
+              snackBar.open('Folder is already at this location', undefined, { duration: 3000 });
+              return of(null);
+            }
+
+            const folderName = extractFolderNameFromPath(sourceFolderPath);
+
+            // Show confirmation dialog
+            return from(import('../../shared/components/confirmation-dialog/confirmation-dialog')).pipe(
+              switchMap((module) => {
+                const dialogRef = dialog.open(module.ConfirmationDialog, {
+                  data: {
+                    title: 'Move Folder',
+                    message: `Move folder "${folderName}" and all its contents to "${destinationFolderPath || 'root'}"?`,
+                    confirmButtonText: 'Move',
+                    actionType: 'standard',
+                  },
+                  width: '400px',
+                });
+
+                return dialogRef.afterClosed();
+              }),
+              switchMap((confirmed) => {
+                if (!confirmed) {
+                  return of(null);
+                }
+
+                // Disable UI during move
+                patchState(store, { isDisabled: true, isDeletingFolder: true });
+
+                // Optimistic update: remove folder from tree
+                const currentFolders = store.rootFolders();
+                const optimisticFolders = removeFolderFromTree(currentFolders, sourceFolderPath);
+                patchState(store, { rootFolders: optimisticFolders });
+
+                return api.moveFolder(collection, sourceFolderPath, destinationFolderPath).pipe(
+                  switchMap(() => {
+                    const destName = destinationFolderPath || 'root';
+                    snackBar.open(`Moved "${folderName}" into ${destName}`, undefined, { duration: 3000 });
+                    patchState(store, { isDisabled: false, isDeletingFolder: false });
+
+                    // Check if destination was loaded before modifying tree
+                    const destWasLoaded = destinationFolderPath
+                      ? (findFolderInTree(store.rootFolders(), destinationFolderPath)?.loaded ?? false)
+                      : true;
+
+                    // Client-side tree update: find the source folder from the pre-optimistic tree,
+                    // rebase its paths, and insert it at the destination
+                    const sourceNode = findFolderInTree(currentFolders, sourceFolderPath);
+                    if (sourceNode) {
+                      const rebasedFolder = rebaseFolderPaths(sourceNode, destinationFolderPath);
+                      const updatedFolders = insertFolderIntoTree(
+                        store.rootFolders(),
+                        rebasedFolder,
+                        destinationFolderPath || null,
+                      );
+                      patchState(store, { rootFolders: updatedFolders });
+
+                      // If destination wasn't loaded, reload its children to get complete data
+                      if (!destWasLoaded && destinationFolderPath) {
+                        store.loadFolderChildren(destinationFolderPath);
+                      }
+                    } else {
+                      // Fallback: reload the entire tree if source node wasn't found
+                      store.loadRootFolders();
+                    }
+
+                    // Calculate the moved folder's new path
+                    const movedFolderPath = destinationFolderPath
+                      ? `${destinationFolderPath}.${folderName}`
+                      : folderName;
+
+                    // Expand destination folder so the moved folder is visible
+                    if (destinationFolderPath) {
+                      const expanded = new Set(store.expandedFolders());
+                      expanded.add(destinationFolderPath);
+                      patchState(store, { expandedFolders: expanded });
+                    }
+
+                    // Load translations directly in this pipe instead of delegating to selectFolder,
+                    // which uses a separate rxMethod subject that can be cancelled by other callers
+                    const includeNested = store.showNestedResources();
+                    patchState(store, {
+                      currentFolderPath: movedFolderPath,
+                      isTranslationsLoading: true,
+                    });
+
+                    return api.getResourceTree(collection, movedFolderPath, includeNested).pipe(
+                      tap((tree) => {
+                        if ('resources' in tree) {
+                          patchState(store, {
+                            translations: tree.resources,
+                            isTranslationsLoading: false,
+                            error: null,
+                          });
+                        } else {
+                          // Cache not ready yet - throw to trigger retry
+                          throw new Error('cache-not-ready');
+                        }
+                      }),
+                      retry({ count: 5, delay: () => timer(1000) }),
+                      catchError(() => {
+                        patchState(store, { isTranslationsLoading: false });
+                        return of(null);
+                      }),
+                    );
+                  }),
+                  catchError((error: unknown) => {
+                    const errorMessage = error instanceof Error ? error.message : 'Failed to move folder';
+
+                    // Rollback optimistic update
+                    patchState(store, {
+                      rootFolders: currentFolders,
+                      isDisabled: false,
+                      isDeletingFolder: false,
+                    });
+
+                    snackBar.open(`Error: ${errorMessage}`, undefined, { duration: 5000 });
+                    return of(null);
+                  }),
+                );
+              }),
+            );
+          }),
+        ),
+      ),
+
       checkCacheStatus: rxMethod<void>(
         pipe(
           switchMap(() => {
@@ -584,6 +963,153 @@ export const BrowserStore = signalStore(
                   cacheStatus: 'error',
                   cacheError: errorMessage,
                   collectionStats: null,
+                });
+                return of(null);
+              }),
+            );
+          }),
+        ),
+      ),
+
+      createFolder: rxMethod<string>(
+        pipe(
+          tap(() => patchState(store, { error: null })),
+          switchMap((folderName) => {
+            const collection = store.selectedCollection();
+            const parentPath = store.addFolderParentPath();
+
+            if (!collection) {
+              patchState(store, {
+                isAddingFolder: false,
+                addFolderParentPath: null,
+              });
+              return of(null);
+            }
+
+            return api.createFolder(collection, folderName, parentPath || undefined).pipe(
+              tap((response) => {
+                // Insert the new folder into the tree locally
+                const currentFolders = store.rootFolders();
+                const updatedFolders = insertFolderIntoTree(currentFolders, response.folder, parentPath || null);
+
+                patchState(store, {
+                  isAddingFolder: false,
+                  addFolderParentPath: null,
+                  rootFolders: updatedFolders,
+                  newlyCreatedFolderPath: response.folder.fullPath,
+                  error: null,
+                });
+
+                // Auto-clear the "new" indicator after 3 seconds
+                setTimeout(() => {
+                  if (store.newlyCreatedFolderPath() === response.folder.fullPath) {
+                    patchState(store, { newlyCreatedFolderPath: null });
+                  }
+                }, 3000);
+              }),
+              catchError((error: unknown) => {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to create folder';
+                patchState(store, {
+                  isAddingFolder: false,
+                  addFolderParentPath: null,
+                  error: errorMessage,
+                });
+                return of(null);
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Creates a folder with explicit parameters.
+       * Unlike createFolder (which reads from store state), this method takes
+       * parentPath as an argument and returns an Observable for direct subscription.
+       * Used by components that manage their own UI state (e.g., FolderPicker).
+       */
+      createFolderAt(folderName: string, parentPath: string | null): Observable<CreateFolderResponseDto | null> {
+        const collection = store.selectedCollection();
+
+        if (!collection) {
+          return of(null);
+        }
+
+        return api.createFolder(collection, folderName, parentPath || undefined).pipe(
+          tap((response) => {
+            // Insert the new folder into the tree locally
+            const currentFolders = store.rootFolders();
+            const updatedFolders = insertFolderIntoTree(currentFolders, response.folder, parentPath);
+
+            patchState(store, {
+              rootFolders: updatedFolders,
+              newlyCreatedFolderPath: response.folder.fullPath,
+              error: null,
+            });
+
+            // Auto-clear the "new" indicator after 3 seconds
+            setTimeout(() => {
+              if (store.newlyCreatedFolderPath() === response.folder.fullPath) {
+                patchState(store, { newlyCreatedFolderPath: null });
+              }
+            }, 3000);
+          }),
+          catchError((error: unknown) => {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to create folder';
+            patchState(store, { error: errorMessage });
+            throw error;
+          }),
+        );
+      },
+
+      deleteFolder: rxMethod<string>(
+        pipe(
+          tap((folderPath) =>
+            patchState(store, {
+              isDeletingFolder: true,
+              deletingFolderPath: folderPath,
+              error: null,
+            }),
+          ),
+          switchMap((folderPath) => {
+            const collection = store.selectedCollection();
+
+            if (!collection) {
+              patchState(store, {
+                isDeletingFolder: false,
+                deletingFolderPath: null,
+              });
+              return of(null);
+            }
+
+            return api.deleteFolder(collection, folderPath).pipe(
+              tap((response) => {
+                if (response.deleted) {
+                  // Remove the folder from the tree
+                  const currentFolders = store.rootFolders();
+                  const updatedFolders = removeFolderFromTree(currentFolders, folderPath);
+
+                  // Compute parent folder path for navigation
+                  const pathSegments = folderPath.split('.');
+                  const parentFolderPath = pathSegments.length > 1 ? pathSegments.slice(0, -1).join('.') : '';
+
+                  patchState(store, {
+                    isDeletingFolder: false,
+                    deletingFolderPath: null,
+                    rootFolders: updatedFolders,
+                    currentFolderPath: parentFolderPath,
+                    error: null,
+                  });
+
+                  // Reload translations for the parent folder
+                  store.selectFolder(parentFolderPath);
+                }
+              }),
+              catchError((error: unknown) => {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to delete folder';
+                patchState(store, {
+                  isDeletingFolder: false,
+                  deletingFolderPath: null,
+                  error: errorMessage,
                 });
                 return of(null);
               }),
@@ -683,7 +1209,8 @@ export const BrowserStore = signalStore(
         });
 
         if (loaded?.densityMode) {
-          const mode = loaded.densityMode;
+          // Migrate legacy 'medium' preference to 'compact'
+          const mode = (loaded.densityMode as string) === 'medium' ? 'compact' : loaded.densityMode;
           const currentSelected = store.selectedLocales();
           let newSelected = currentSelected;
 
@@ -709,13 +1236,10 @@ export const BrowserStore = signalStore(
           });
         }
 
-        const storeWithMethods = store as unknown as {
-          checkCacheStatus(): void;
-        };
-        storeWithMethods.checkCacheStatus();
+        store.checkCacheStatus();
       },
 
-      setDensityMode(mode: 'compact' | 'medium' | 'full'): void {
+      setDensityMode(mode: 'compact' | 'full'): void {
         const currentDensityMode = store.densityMode();
         const currentSelected = store.selectedLocales();
         const wasCompactMode = currentDensityMode === 'compact';
@@ -752,7 +1276,7 @@ export const BrowserStore = signalStore(
             }
           }
         } else if (isLeavingCompactMode) {
-          // Switching FROM compact mode to medium/full
+          // Switching FROM compact mode to full
           if (newCompactLocaleManuallyChanged) {
             // User manually changed locale in compact mode - use that as only selection
             newSelectedLocales = currentSelected;

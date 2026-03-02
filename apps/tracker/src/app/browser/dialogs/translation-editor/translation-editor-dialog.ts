@@ -4,9 +4,12 @@ import {
   inject,
   type OnInit,
   type OnDestroy,
+  type AfterViewInit,
   signal,
   computed,
   HostListener,
+  ViewChild,
+  type ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';
@@ -25,17 +28,19 @@ import type {
   TranslationStatus,
   CreateResourceDto,
   UpdateResourceDto,
+  UpdateResourceResponseDto,
   SearchResultDto,
   FolderNodeDto,
 } from '@simoncodes-ca/data-transfer';
 import { BrowserApiService } from '../../services/browser-api.service';
+import { BrowserStore } from '../../store/browser.store';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
 import type { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
-import { SimilarResourcesWarning } from './similar-resources-warning';
+import { SimilarTranslations } from './similar-translations';
 import { FolderPicker } from './folder-picker/folder-picker';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, catchError, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, takeUntil, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 export interface TranslationEditorDialogData {
@@ -69,6 +74,7 @@ export interface TranslationEditorResult {
   success?: boolean;
   shouldOpenEdit?: boolean;
   existingResourceKey?: string;
+  resource?: ResourceSummaryDto;
 }
 
 @Component({
@@ -89,19 +95,23 @@ export interface TranslationEditorResult {
     MatSelectModule,
     MatProgressSpinnerModule,
     TextFieldModule,
-    SimilarResourcesWarning,
+    SimilarTranslations,
     FolderPicker,
   ],
 })
-export class TranslationEditorDialog implements OnInit, OnDestroy {
+export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit {
   private readonly dialogRef = inject(MatDialogRef<TranslationEditorDialog>);
   private readonly dialog = inject(MatDialog);
   private readonly browserApi = inject(BrowserApiService);
+  private readonly browserStore = inject(BrowserStore);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroy$ = new Subject<void>();
   private readonly baseValueSearch$ = new Subject<string>();
 
   readonly data = inject<TranslationEditorDialogData>(MAT_DIALOG_DATA);
+
+  @ViewChild('keyInput') keyInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('baseValueInput') baseValueInput?: ElementRef<HTMLInputElement>;
 
   #commentConfirmationShown = false;
   #originalBaseValue = '';
@@ -110,6 +120,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
   readonly errorMessage = signal<string | null>(null);
   readonly similarResources = signal<SearchResultDto[]>([]);
   readonly isSearchingSimilar = signal(false);
+  readonly baseValueLength = signal(0);
 
   readonly form = new FormGroup({
     key: new FormControl<string>('', {
@@ -133,16 +144,9 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
   });
 
   readonly showOtherLocales = signal(false);
-  readonly baseValueCharacterCount = signal(0);
-  readonly commentCharacterCount = signal(0);
-  readonly localeCharacterCounts = signal<Record<string, number>>({});
   readonly selectedFolderPath = signal<string>('');
 
-  // Stub for folder picker - store not yet implemented
-  readonly store = {
-    rootFolders: () => [] as FolderNodeDto[],
-  };
-  readonly folderExists = computed(() => true);
+  readonly rootFolders = computed(() => this.browserStore.rootFolders());
 
   readonly otherLocales = computed(() =>
     this.data.availableLocales.filter((locale) => locale !== this.data.baseLocale),
@@ -157,6 +161,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
   );
   readonly saveButtonLabel = computed(() => (this.isEditMode() ? 'Update Translation' : 'Save Translation'));
   readonly displayedFolderPath = computed(() => this.data.folderPath || 'root');
+  readonly hasSearchQuery = computed(() => this.baseValueLength() >= 3);
 
   ngOnInit(): void {
     // Initialize folder path from dialog data
@@ -173,8 +178,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
         comment,
       });
 
-      this.baseValueCharacterCount.set(baseValue.length);
-      this.commentCharacterCount.set(comment.length);
       this.#originalBaseValue = baseValue;
 
       this.#populateOtherLocaleTranslations();
@@ -183,13 +186,22 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       // The folder path is stored in data, not in the form
     }
 
-    this.#setupCharacterCountTracking();
     this.#setupSimilarResourcesSearch();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  ngAfterViewInit(): void {
+    this.dialogRef.afterOpened().subscribe(() => {
+      if (this.isEditMode()) {
+        this.baseValueInput?.nativeElement.focus();
+      } else {
+        this.keyInput?.nativeElement.focus();
+      }
+    });
   }
 
   #initializeOtherLocaleFormControls(): void {
@@ -215,7 +227,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
     }
 
     const translationsArray = this.form.controls.translations;
-    const counts: Record<string, number> = {};
 
     translationsArray.controls.forEach((control) => {
       const locale = control.value.locale;
@@ -226,34 +237,12 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       const status = this.data.resource?.status[locale] || 'new';
 
       control.patchValue({ value, status });
-      counts[locale] = value.length;
-    });
-
-    this.localeCharacterCounts.set(counts);
-  }
-
-  #setupCharacterCountTracking(): void {
-    this.form.controls.baseValue.valueChanges.subscribe((value) => {
-      this.baseValueCharacterCount.set(value.length);
-    });
-
-    this.form.controls.comment.valueChanges.subscribe((value) => {
-      this.commentCharacterCount.set(value.length);
-    });
-
-    this.form.controls.translations.valueChanges.subscribe((translations) => {
-      const counts: Record<string, number> = {};
-      translations.forEach((translation) => {
-        if (translation.locale && translation.value) {
-          counts[translation.locale] = translation.value.length;
-        }
-      });
-      this.localeCharacterCounts.set(counts);
     });
   }
 
   #setupSimilarResourcesSearch(): void {
     this.form.controls.baseValue.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
+      this.baseValueLength.set(value.trim().length);
       const shouldSearch = this.#shouldSearchForSimilar(value);
       if (shouldSearch) {
         this.baseValueSearch$.next(value);
@@ -266,9 +255,9 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
+        tap(() => this.isSearchingSimilar.set(true)),
         switchMap((query) => {
           if (!query || query.trim().length < 3) {
-            this.isSearchingSimilar.set(false);
             return of({
               query: '',
               results: [],
@@ -277,24 +266,27 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
             });
           }
 
-          this.isSearchingSimilar.set(true);
           return this.browserApi.searchTranslations(this.data.collectionName, query, 10).pipe(
-            catchError(() => {
-              this.isSearchingSimilar.set(false);
-              return of({
+            catchError(() =>
+              of({
                 query: '',
                 results: [],
                 totalFound: 0,
                 limited: false,
-              });
-            }),
+              }),
+            ),
           );
         }),
+        tap(() => this.isSearchingSimilar.set(false)),
         takeUntil(this.destroy$),
       )
       .subscribe((searchResults) => {
-        this.isSearchingSimilar.set(false);
-        this.similarResources.set(searchResults.results);
+        // Filter out current resource in edit mode
+        const filteredResults =
+          this.isEditMode() && this.data.resource
+            ? searchResults.results.filter((r) => r.key !== this.#buildOriginalFullKey())
+            : searchResults.results;
+        this.similarResources.set(filteredResults);
       });
   }
 
@@ -330,12 +322,13 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
     this.showOtherLocales.set(!this.showOtherLocales());
   }
 
-  onFolderSelected(folderPath: string): void {
+  onFolderConfirmed(folderPath: string): void {
     this.selectedFolderPath.set(folderPath);
   }
 
-  onLoadFolder(_folderPath: string): void {
-    // Stub - folder loading not yet implemented
+  onFolderCreated(folder: FolderNodeDto): void {
+    // Store's createFolderAt already updated rootFolders, just update selection
+    this.selectedFolderPath.set(folder.fullPath);
   }
 
   onSimilarResourceClick(result: SearchResultDto): void {
@@ -437,7 +430,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
     }
 
     this.browserApi.updateResource(this.data.collectionName, updateDto).subscribe({
-      next: () => {
+      next: (response: UpdateResourceResponseDto) => {
         this.dialogRef.close({
           key: newKey,
           baseValue: formValue.baseValue,
@@ -445,6 +438,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
           folderPath: newFolderPath,
           translations: filledTranslations.length > 0 ? filledTranslations : undefined,
           success: true,
+          resource: response.resource,
         });
       },
       error: (error: unknown) => {
@@ -604,13 +598,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy {
     }
 
     return confirmed === true;
-  }
-
-  getLocaleCharacterCount(locale: string | undefined): number {
-    if (!locale) {
-      return 0;
-    }
-    return this.localeCharacterCounts()[locale] || 0;
   }
 
   getLocaleFormGroup(index: number): FormGroup<{
