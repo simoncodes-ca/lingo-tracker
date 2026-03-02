@@ -51,14 +51,14 @@ export class TranslationItem implements OnDestroy {
   /** Current folder path for constructing full key (empty for search results) */
   folderPath = input<string>('');
 
+  /** When true, briefly flash the item border to indicate it was just updated. */
+  isRecentlyUpdated = input<boolean>(false);
+
   /** Emitted when user requests to copy key to clipboard */
   copyKey = output<string>();
 
   /** Emitted when user selects Edit from context menu */
   editTranslation = output<ResourceSummaryDto>();
-
-  /** Emitted when user selects Move from context menu */
-  moveTranslation = output<ResourceSummaryDto>();
 
   /** Emitted when user selects Delete from context menu */
   deleteTranslation = output<ResourceSummaryDto>();
@@ -233,10 +233,6 @@ export class TranslationItem implements OnDestroy {
         action = () => this.editTranslation.emit(this.translation());
         break;
 
-      case 'm':
-        action = () => this.moveTranslation.emit(this.translation());
-        break;
-
       case 'delete':
       case 'del':
         action = () => this.deleteTranslation.emit(this.translation());
@@ -400,7 +396,6 @@ export class TranslationItem implements OnDestroy {
    * Emits drag data to parent components for tracking.
    */
   onDragStarted(): void {
-    console.log('Drag started:', this.fullKey());
     this.dragStarted.emit(this.dragData());
   }
 
@@ -409,7 +404,6 @@ export class TranslationItem implements OnDestroy {
    * Notifies parent components that drag has ended.
    */
   onDragEnded(): void {
-    console.log('Drag ended:', this.fullKey());
     this.dragEnded.emit();
   }
 }

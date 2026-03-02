@@ -3,6 +3,7 @@ import { calculateChecksum } from './checksum';
 import { validateAndResolvePaths } from '../lib/resource/resource-file-paths';
 import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
 import { updateMetadataForBaseValueChange } from '../lib/resource/metadata-operations';
+import type { ResourceTreeEntry } from '../lib/resource/load-resource-tree';
 
 export interface EditResourceOptions {
   key: string;
@@ -19,6 +20,7 @@ export interface EditResourceResult {
   resolvedKey: string;
   updated: boolean;
   message?: string;
+  entry?: ResourceTreeEntry;
 }
 
 export function editResource(translationsFolder: string, options: EditResourceOptions): EditResourceResult {
@@ -114,7 +116,24 @@ export function editResource(translationsFolder: string, options: EditResourceOp
       data: resourceEntries,
     });
     writeJsonFile({ filePath: paths.trackerMetaPath, data: trackerMeta });
-    return { resolvedKey: paths.resolvedKey, updated: true };
+
+    const translations: Record<string, string> = {};
+    for (const [prop, value] of Object.entries(resourceEntry)) {
+      if (prop !== 'source' && prop !== 'tags' && prop !== 'comment' && typeof value === 'string') {
+        translations[prop] = value;
+      }
+    }
+
+    const entry: ResourceTreeEntry = {
+      key: paths.entryKey,
+      source: resourceEntry.source,
+      translations,
+      metadata: metaEntry,
+      ...(resourceEntry.comment !== undefined && { comment: resourceEntry.comment }),
+      ...(resourceEntry.tags !== undefined && resourceEntry.tags.length > 0 && { tags: resourceEntry.tags }),
+    };
+
+    return { resolvedKey: paths.resolvedKey, updated: true, entry };
   }
 
   return {

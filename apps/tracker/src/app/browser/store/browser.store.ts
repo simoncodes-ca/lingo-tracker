@@ -465,7 +465,6 @@ export const BrowserStore = signalStore(
 
             return api.getResourceTree(collection, path, includeNested).pipe(
               tap((tree) => {
-                // Check if response is actual tree data (has resources) vs status response (cache indexing)
                 if ('resources' in tree) {
                   patchState(store, {
                     translations: tree.resources,
@@ -473,18 +472,12 @@ export const BrowserStore = signalStore(
                     error: null,
                   });
                 } else {
-                  // Cache is still indexing - keep current translations, just stop loading
-                  patchState(store, {
-                    isTranslationsLoading: false,
-                  });
+                  patchState(store, { isTranslationsLoading: false });
                 }
               }),
               catchError((error: unknown) => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to load translations';
-                patchState(store, {
-                  isTranslationsLoading: false,
-                  error: errorMessage,
-                });
+                patchState(store, { isTranslationsLoading: false, error: errorMessage });
                 return of(null);
               }),
             );
@@ -547,6 +540,7 @@ export const BrowserStore = signalStore(
 
             return api.getResourceTree(collection, folderPath, includeNested).pipe(
               tap((treeData) => {
+                if (!('resources' in treeData)) return; // cache not ready, skip
                 const updateFolder = (folders: FolderNodeDto[]): FolderNodeDto[] =>
                   folders.map((folder) => {
                     if (folder.fullPath === folderPath) {
@@ -702,6 +696,29 @@ export const BrowserStore = signalStore(
           const currentSearchResults = store.searchResults();
           const updatedSearchResults = currentSearchResults.filter((resource) => resource.key !== resourceKey);
           patchState(store, { searchResults: updatedSearchResults });
+        }
+      },
+
+      updateTranslationInCache(resource: ResourceSummaryDto): void {
+        const currentTranslations = store.translations();
+        const translationIndex = currentTranslations.findIndex((t) => t.key === resource.key);
+        if (translationIndex !== -1) {
+          const updatedTranslations = [...currentTranslations];
+          updatedTranslations[translationIndex] = resource;
+          patchState(store, { translations: updatedTranslations });
+        }
+
+        if (store.isSearchMode()) {
+          const currentSearchResults = store.searchResults();
+          const searchIndex = currentSearchResults.findIndex((t) => t.key === resource.key);
+          if (searchIndex !== -1) {
+            const updatedSearchResults = [...currentSearchResults];
+            updatedSearchResults[searchIndex] = {
+              ...currentSearchResults[searchIndex], // preserves matchType and any other SearchResultDto fields
+              ...resource, // overlays updated translations, status, comment, tags
+            };
+            patchState(store, { searchResults: updatedSearchResults });
+          }
         }
       },
     };

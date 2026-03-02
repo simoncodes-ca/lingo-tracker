@@ -28,6 +28,7 @@ import type {
   TranslationStatus,
   CreateResourceDto,
   UpdateResourceDto,
+  UpdateResourceResponseDto,
   SearchResultDto,
   FolderNodeDto,
 } from '@simoncodes-ca/data-transfer';
@@ -73,6 +74,7 @@ export interface TranslationEditorResult {
   success?: boolean;
   shouldOpenEdit?: boolean;
   existingResourceKey?: string;
+  resource?: ResourceSummaryDto;
 }
 
 @Component({
@@ -428,7 +430,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     }
 
     this.browserApi.updateResource(this.data.collectionName, updateDto).subscribe({
-      next: () => {
+      next: (response: UpdateResourceResponseDto) => {
         this.dialogRef.close({
           key: newKey,
           baseValue: formValue.baseValue,
@@ -436,6 +438,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
           folderPath: newFolderPath,
           translations: filledTranslations.length > 0 ? filledTranslations : undefined,
           success: true,
+          resource: response.resource,
         });
       },
       error: (error: unknown) => {

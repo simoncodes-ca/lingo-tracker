@@ -1,13 +1,37 @@
 <mat-toolbar class="app-toolbar">
   <div class="toolbar-content">
     <!-- Logo and Title -->
-    <div class="brand">
+    <a class="brand" [routerLink]="['/collections']" aria-label="Go to Collections" matTooltip="Go to Collections">
       <mat-icon class="logo-icon">translate</mat-icon>
       <h1 class="app-title">LingoTracker</h1>
-    </div>
+    </a>
+
+    <!-- Collection context: pipe + name + folder -->
+    @if (hasCollectionContext()) {
+      <div class="collection-pipe" aria-hidden="true"></div>
+
+      <div class="collection-context">
+        <span class="collection-name" [title]="collectionName() ?? ''">{{ collectionName() }}</span>
+        <span class="context-separator" aria-hidden="true">·</span>
+        <span class="collection-folder" [title]="translationsFolder() ?? ''">{{ translationsFolder() }}</span>
+      </div>
+    }
 
     <!-- Spacer -->
     <span class="toolbar-spacer"></span>
+
+    <!-- Stat chips (next to gear) -->
+    @if (hasCollectionContext()) {
+      <div class="header-stats">
+        @if (statsLoading()) {
+          <div class="skeleton-chip" aria-hidden="true"></div>
+          <div class="skeleton-chip" aria-hidden="true"></div>
+        } @else if (totalKeys() !== null) {
+          <span class="stat-chip">{{ keysText() }}</span>
+          <span class="stat-chip">{{ localesText() }}</span>
+        }
+      </div>
+    }
 
     <!-- Theme Switcher -->
     <button
@@ -20,11 +44,7 @@
     </button>
 
     <mat-menu #themeMenu="matMenu">
-      <button
-        mat-menu-item
-        (click)="setTheme('light')"
-        [class.active]="isThemeActive('light')"
-      >
+      <button mat-menu-item (click)="setTheme('light')" [class.active]="isThemeActive('light')">
         <mat-icon>light_mode</mat-icon>
         <span>{{ TOKENS.THEME.LIGHT | transloco }}</span>
         @if (isThemeActive('light')) {
@@ -32,11 +52,7 @@
         }
       </button>
 
-      <button
-        mat-menu-item
-        (click)="setTheme('dark')"
-        [class.active]="isThemeActive('dark')"
-      >
+      <button mat-menu-item (click)="setTheme('dark')" [class.active]="isThemeActive('dark')">
         <mat-icon>dark_mode</mat-icon>
         <span>{{ TOKENS.THEME.DARK | transloco }}</span>
         @if (isThemeActive('dark')) {
@@ -44,11 +60,7 @@
         }
       </button>
 
-      <button
-        mat-menu-item
-        (click)="setTheme('system')"
-        [class.active]="isThemeActive('system')"
-      >
+      <button mat-menu-item (click)="setTheme('system')" [class.active]="isThemeActive('system')">
         <mat-icon>computer</mat-icon>
         <span>{{ TOKENS.THEME.SYSTEM | transloco }}</span>
         @if (isThemeActive('system')) {

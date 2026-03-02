@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import type { Observable } from 'rxjs';
 import type {
   ResourceTreeDto,
+  TreeStatusResponseDto,
   SearchResultsDto,
   CacheStatusDto,
   CreateResourceDto,
@@ -51,12 +52,18 @@ export class BrowserApiService {
    * @param includeNested - Whether to include nested resources in the resources array
    * @returns Observable of ResourceTreeDto
    */
-  getResourceTree(collectionName: string, path = '', includeNested = false): Observable<ResourceTreeDto> {
+  getResourceTree(
+    collectionName: string,
+    path = '',
+    includeNested = false,
+  ): Observable<ResourceTreeDto | TreeStatusResponseDto> {
     const encodedName = encodeURIComponent(collectionName);
     const encodedPath = encodeURIComponent(path);
     const params = new HttpParams().set('path', encodedPath).set('includeNested', includeNested.toString());
 
-    return this.#http.get<ResourceTreeDto>(`${this.#baseUrl}/${encodedName}/resources/tree`, { params });
+    return this.#http.get<ResourceTreeDto | TreeStatusResponseDto>(`${this.#baseUrl}/${encodedName}/resources/tree`, {
+      params,
+    });
   }
 
   /**

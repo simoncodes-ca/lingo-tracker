@@ -1,15 +1,13 @@
-import { Component, ChangeDetectionStrategy, inject, input, computed, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, input, computed, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { CdkDropList } from '@angular/cdk/drag-drop';
-import type { ComponentType } from '@angular/cdk/portal';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogModule, type MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MoveResourceDialog } from '../../dialogs/move-resource';
 import {
   TranslationEditorDialog,
   type TranslationEditorDialogData,
@@ -17,7 +15,7 @@ import {
 } from '../../dialogs/translation-editor';
 import { BrowserStore } from '../../store/browser.store';
 import { TranslationItem } from './translation-item/translation-item';
-import type { ResourceSummaryDto, UpdateResourceDto } from '@simoncodes-ca/data-transfer';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { BrowserApiService } from '../../services/browser-api.service';
@@ -64,6 +62,8 @@ export class TranslationList {
 
   /** Predicate that rejects all drops — this list is a drag source only */
   readonly noDropPredicate = () => false;
+
+  readonly recentlyUpdatedKey = signal<string | null>(null);
 
   /** Default item height for virtual scrolling (pixels). May be overridden by density mode. */
   readonly itemSize = 120;
@@ -153,36 +153,9 @@ export class TranslationList {
       });
   }
 
-  /**
-   * Opens a dialog that receives the resource and collection name as data.
-   * Keeps dialog opening logic DRY across edit/move/delete dialogs.
-   */
-  private openResourceDialog<T>(component: ComponentType<T>, resource: ResourceSummaryDto): MatDialogRef<T> {
-    // Capture the element that triggered the dialog so we can restore focus when the dialog closes.
-    const previousActive = document.activeElement as HTMLElement | null;
-
-    const ref = this.dialog.open(component, {
-      data: { resource, collectionName: this.collectionName() },
-      // Ensure the dialog will autoFocus first focusable element. We'll manually restore focus after close.
-      autoFocus: true,
-      restoreFocus: false,
-    });
-
-    // When dialog closes, restore focus to the previously focused element if possible.
-    ref.afterClosed().subscribe(() => {
-      if (previousActive && typeof previousActive.focus === 'function') {
-        // Use a small timeout to allow Angular Material to finish teardown.
-        setTimeout(() => previousActive.focus(), 0);
-      }
-    });
-
-    return ref;
-  }
-
   /** Handles edit request from translation item. */
   handleEdit(translation: ResourceSummaryDto): void {
     const folderPath = this.store.currentFolderPath();
-    const fullKey = folderPath ? `${folderPath}.${translation.key}` : translation.key;
 
     const dialogData: TranslationEditorDialogData = {
       mode: 'edit',
@@ -202,55 +175,26 @@ export class TranslationList {
     });
 
     dialogRef.afterClosed().subscribe((result: TranslationEditorResult | undefined) => {
-      if (result && !result.success) {
-        // Result returned but not marked as success - user made changes but didn't use create flow
-        this.#handleEditUpdate(fullKey, result);
-      }
-    });
-  }
+      if (!result?.success) return;
 
-  #handleEditUpdate(originalKey: string, result: TranslationEditorResult): void {
-    const updateDto: UpdateResourceDto = {
-      key: originalKey,
-      baseValue: result.baseValue,
-      comment: result.comment,
-    };
+      // No-op edit — server reported nothing changed
+      if (!result.resource) return;
 
-    // Add locale translations if provided
-    if (result.translations && result.translations.length > 0) {
-      updateDto.locales = {};
-      result.translations.forEach((translation) => {
-        if (updateDto.locales) {
-          updateDto.locales[translation.locale] = {
-            value: translation.value,
-          };
-        }
-      });
-    }
-
-    this.browserApi.updateResource(this.collectionName(), updateDto).subscribe({
-      next: () => {
-        this.store.selectFolder(this.store.currentFolderPath());
+      if (result.folderPath !== folderPath) {
+        // Resource moved to a different folder — remove it from the current view
+        this.store.removeResourceFromCache(result.key);
+      } else {
+        // In-place edit — update the item directly in the store
+        this.store.updateTranslationInCache(result.resource);
+        this.recentlyUpdatedKey.set(result.key);
         this.snackBar.open('Translation updated successfully', '', {
           duration: 2000,
           horizontalPosition: 'center',
           verticalPosition: 'bottom',
         });
-      },
-      error: (error: unknown) => {
-        const message = error instanceof Error ? error.message : 'Failed to update translation';
-        this.snackBar.open(message, '', {
-          duration: 4000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
-      },
+        setTimeout(() => this.recentlyUpdatedKey.set(null), 1500);
+      }
     });
-  }
-
-  /** Handles move request from translation item. */
-  handleMove(translation: ResourceSummaryDto): void {
-    this.openResourceDialog(MoveResourceDialog, translation);
   }
 
   /**

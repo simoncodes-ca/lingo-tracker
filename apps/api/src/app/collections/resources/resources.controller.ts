@@ -38,6 +38,7 @@ import type {
   UpdateResourceDto,
   UpdateResourceResponseDto,
   ResourceTreeDto,
+  ResourceSummaryDto,
   TranslationStatus,
   SearchTranslationsDto,
   SearchResultsDto,
@@ -46,7 +47,7 @@ import type {
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
-import { mapResourceTreeToDto } from '../../mappers/resource-tree.mapper';
+import { mapResourceTreeToDto, mapResourceEntryToSummary } from '../../mappers/resource-tree.mapper';
 import { mapSearchResultsToDto } from '../../mappers/search-result.mapper';
 import { CollectionCacheService, CacheStatus } from '../../cache/collection-cache.service';
 
@@ -318,15 +319,30 @@ export class ResourcesController {
         baseLocale,
       });
 
-      // Clear cache after successful resource update
-      if (result.updated) {
-        this.cacheService.clearCache();
+      let resourceDto: ResourceSummaryDto | undefined;
+
+      if (result.updated && result.entry) {
+        const keyParts = dto.key.split('.');
+        const entryKey = keyParts[keyParts.length - 1];
+        const oldFolderPath = keyParts.slice(0, -1).join('.');
+
+        if (dto.targetFolder !== undefined && dto.targetFolder !== oldFolderPath) {
+          // Resource moved to a different folder — remove from old location, insert at new
+          this.cacheService.removeResourceFromCache(decodedCollectionName, entryKey, oldFolderPath);
+          this.cacheService.addResourceToCache(decodedCollectionName, result.entry, dto.targetFolder ?? '');
+        } else {
+          // In-place edit — upsert in the same folder
+          this.cacheService.addResourceToCache(decodedCollectionName, result.entry, oldFolderPath);
+        }
+
+        resourceDto = mapResourceEntryToSummary(result.entry);
       }
 
       return {
         resolvedKey: result.resolvedKey,
         updated: result.updated,
         message: result.message,
+        resource: resourceDto,
       };
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof HttpException) {

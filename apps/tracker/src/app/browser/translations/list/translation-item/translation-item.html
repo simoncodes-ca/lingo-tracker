@@ -4,6 +4,7 @@
   [attr.data-density]="currentDensityMode()"
   [class.expanded]="currentDensityMode() === 'full' && isExpanded()"
   [class.touch-pressed]="isTouchPressed()"
+  [class.recently-updated]="isRecentlyUpdated()"
   (touchstart)="onTouchStart($event)"
   (touchend)="onTouchEnd($event)"
   (keydown)="onKeyDown($event)"
@@ -35,7 +36,6 @@
       (commentToggle)="toggleComment()"
       (copyKey)="copyKey.emit($event)"
       (editAction)="editTranslation.emit(translation())"
-      (moveAction)="moveTranslation.emit(translation())"
       (deleteAction)="deleteTranslation.emit(translation())"
     />
 
@@ -62,7 +62,6 @@
       [searchQuery]="searchQuery()"
       (copyKey)="copyKey.emit($event)"
       (editAction)="editTranslation.emit(translation())"
-      (moveAction)="moveTranslation.emit(translation())"
       (deleteAction)="deleteTranslation.emit(translation())"
     />
 

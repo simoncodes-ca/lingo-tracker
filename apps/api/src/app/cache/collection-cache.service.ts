@@ -283,6 +283,56 @@ export class CollectionCacheService {
   }
 
   /**
+   * Removes a single resource entry from a specific folder in the cached tree
+   * without requiring a full re-index.
+   * @param collectionName - The collection name
+   * @param resourceKey - The entry key of the resource to remove (last segment only)
+   * @param folderPath - The dot-delimited folder path where the resource currently lives
+   * @returns true if the resource was found and removed, false otherwise
+   */
+  removeResourceFromCache(collectionName: string, resourceKey: string, folderPath: string): boolean {
+    if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
+      this.#logger.warn(`Cannot remove resource from cache: no cache for collection ${collectionName}`);
+      return false;
+    }
+
+    if (this.#cachedCollection.status !== CacheStatus.READY || !this.#cachedCollection.tree) {
+      this.#logger.warn(`Cannot remove resource from cache: cache not ready for collection ${collectionName}`);
+      return false;
+    }
+
+    const tree = this.#cachedCollection.tree;
+
+    // Navigate to the target folder
+    let targetNode: ResourceTreeNode = tree;
+    if (folderPath) {
+      const pathSegments = folderPath.split('.');
+      for (const segment of pathSegments) {
+        const child = targetNode.children.find((c) => c.name === segment);
+        if (!child || !child.tree) {
+          this.#logger.warn(`Cannot remove resource from cache: folder path "${folderPath}" not found or not loaded`);
+          return false;
+        }
+        targetNode = child.tree;
+      }
+    }
+
+    const initialCount = targetNode.resources.length;
+    targetNode.resources = targetNode.resources.filter((r) => r.key !== resourceKey);
+
+    if (targetNode.resources.length === initialCount) {
+      this.#logger.warn(
+        `Cannot remove resource from cache: resource "${resourceKey}" not found at path "${folderPath || 'root'}"`,
+      );
+      return false;
+    }
+
+    this.#cachedCollection.totalKeys--;
+    this.#logger.log(`Removed resource "${resourceKey}" from cache at path "${folderPath || 'root'}"`);
+    return true;
+  }
+
+  /**
    * Moves a folder in the cached tree without requiring a full re-index.
    * Removes the folder from its source location, updates all path references recursively,
    * and inserts it at the destination location while keeping the cache in READY state.

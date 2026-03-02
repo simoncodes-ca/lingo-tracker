@@ -14,7 +14,7 @@ export function mapResourceTreeToDto(node: ResourceTreeNode): ResourceTreeDto {
   };
 }
 
-function mapResourceEntryToSummary(entry: ResourceTreeEntry): ResourceSummaryDto {
+export function mapResourceEntryToSummary(entry: ResourceTreeEntry): ResourceSummaryDto {
   // Find base locale (the one without status/baseChecksum in metadata)
   let baseLocale: string | undefined;
   for (const [locale, meta] of Object.entries(entry.metadata)) {

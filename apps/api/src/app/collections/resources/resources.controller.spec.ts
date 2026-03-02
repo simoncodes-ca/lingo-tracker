@@ -33,6 +33,15 @@ jest.mock('../../mappers/resource.mapper', () => ({
 
 // Mock the resource tree mapper
 jest.mock('../../mappers/resource-tree.mapper', () => ({
+  mapResourceEntryToSummary: jest.fn((entry) => ({
+    key: entry.key,
+    translations: { en: entry.source, ...entry.translations },
+    status: Object.fromEntries(
+      Object.entries(entry.metadata).map(([locale, meta]: [string, any]) => [locale, meta.status]),
+    ),
+    comment: entry.comment,
+    tags: entry.tags,
+  })),
   mapResourceTreeToDto: jest.fn((treeNode) => {
     // Simple pass-through mapper for tests that mimics the real mapper
     return {
@@ -105,6 +114,7 @@ describe('ResourcesController', () => {
     indexCollection: jest.fn(),
     clearCache: jest.fn(),
     addResourceToCache: jest.fn().mockReturnValue(true),
+    removeResourceFromCache: jest.fn().mockReturnValue(true),
   };
 
   beforeEach(async () => {

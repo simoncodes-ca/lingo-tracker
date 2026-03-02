@@ -2,22 +2,20 @@ import {
   Component,
   ChangeDetectionStrategy,
   type OnInit,
-  HostListener,
   inject,
   computed,
   effect,
   signal,
   viewChild,
+  DestroyRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCardModule } from '@angular/material/card';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
-import { FolderSidebarHeader, FolderTree } from './sidebar';
+import { HeaderContextService } from '../shared/services/header-context.service';
+import { FolderTree } from './sidebar';
 import { TranslationMainHeader } from './translations/header/translation-main-header';
 import { CollectionsStore } from '../collections/store/collections.store';
 import { BrowserStore } from './store/browser.store';
@@ -39,16 +37,16 @@ import type { DragData } from './types/drag-data';
   selector: 'app-translation-browser',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(window:keydown.control.shift.n)': 'onCreateFolderShortcut($event)',
+    '(window:keydown.meta.shift.n)': 'onCreateFolderShortcut($event)',
+  },
   imports: [
     CommonModule,
     CdkDropListGroup,
-    MatButtonModule,
-    MatIconModule,
-    MatCardModule,
     TranslocoModule,
     FolderTree,
     TranslationList,
-    FolderSidebarHeader,
     TranslationMainHeader,
     IndexingOverlay,
   ],
@@ -56,10 +54,11 @@ import type { DragData } from './types/drag-data';
   styleUrl: './translation-browser.scss',
 })
 export class TranslationBrowser implements OnInit {
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  private readonly collectionsStore = inject(CollectionsStore);
+  readonly #route = inject(ActivatedRoute);
+  readonly #collectionsStore = inject(CollectionsStore);
   readonly store = inject(BrowserStore);
+  readonly #headerContext = inject(HeaderContextService);
+  readonly #destroyRef = inject(DestroyRef);
 
   readonly TOKENS = TRACKER_TOKENS;
 
@@ -86,7 +85,7 @@ export class TranslationBrowser implements OnInit {
     const name = this.collectionName();
     if (!name) return 'en';
 
-    const collections = this.collectionsStore.collectionEntriesWithLocales();
+    const collections = this.#collectionsStore.collectionEntriesWithLocales();
     const collection = collections.find((c) => c.name === name);
     return collection?.baseLocale || 'en';
   });
@@ -98,7 +97,7 @@ export class TranslationBrowser implements OnInit {
     const name = this.collectionName();
     if (!name) return '';
 
-    const collections = this.collectionsStore.collectionEntriesWithLocales();
+    const collections = this.#collectionsStore.collectionEntriesWithLocales();
     const collection = collections.find((c) => c.name === name);
     return collection?.config.translationsFolder || '';
   });
@@ -106,11 +105,11 @@ export class TranslationBrowser implements OnInit {
   constructor() {
     // Wait for collections to load before initializing browser store
     effect(() => {
-      const config = this.collectionsStore.config();
+      const config = this.#collectionsStore.config();
       if (!config) return;
 
       // Read collection name from route params
-      const name = this.route.snapshot.paramMap.get('collectionName');
+      const name = this.#route.snapshot.paramMap.get('collectionName');
       if (!name) return;
 
       const decodedName = decodeURIComponent(name);
@@ -129,6 +128,24 @@ export class TranslationBrowser implements OnInit {
         baseLocale,
       });
     });
+
+    // Sync collection context to header
+    effect(() => {
+      const name = this.collectionName();
+      if (!name) return;
+
+      this.#headerContext.setCollectionContext({
+        collectionName: name,
+        translationsFolder: this.translationsFolder(),
+        totalKeys: this.store.collectionTotalKeys(),
+        localeCount: this.store.collectionLocaleCount(),
+        statsLoading: this.store.isCacheIndexing(),
+      });
+    });
+
+    this.#destroyRef.onDestroy(() => {
+      this.#headerContext.clearCollectionContext();
+    });
   }
 
   ngOnInit(): void {
@@ -137,19 +154,10 @@ export class TranslationBrowser implements OnInit {
   }
 
   /**
-   * Navigates back to the collections manager.
-   */
-  navigateToCollections(): void {
-    this.router.navigate(['/collections']);
-  }
-
-  /**
    * Handles Ctrl+Shift+N keyboard shortcut to create a new folder.
    * Creates a folder in the currently selected folder path.
    * Prevents action when an input element is focused.
    */
-  @HostListener('window:keydown.control.shift.n', ['$event'])
-  @HostListener('window:keydown.meta.shift.n', ['$event'])
   onCreateFolderShortcut(event: Event): void {
     // Don't trigger if user is typing in an input field
     const activeElement = document.activeElement;
@@ -167,7 +175,6 @@ export class TranslationBrowser implements OnInit {
    * Sets the active drag data for tracking.
    */
   onDragStarted(dragData: DragData): void {
-    console.log('Drag started in browser:', dragData);
     this.activeDragData.set(dragData);
   }
 
@@ -176,7 +183,6 @@ export class TranslationBrowser implements OnInit {
    * Clears the active drag data.
    */
   onDragEnded(): void {
-    console.log('Drag ended in browser');
     this.activeDragData.set(null);
   }
 }

@@ -328,6 +328,17 @@ app-tag-list {
   }
 }
 
+@keyframes borderFlash {
+  0%   { border-color: var(--color-border); }
+  25%  { border-color: var(--focus-ring-color); }
+  75%  { border-color: var(--focus-ring-color); }
+  100% { border-color: var(--color-border); }
+}
+
+.item-container.recently-updated {
+  animation: borderFlash 1s ease-in-out;
+}
+
 // CDK Drag & Drop Styles
 .cdk-drag-preview {
   opacity: 0.7;

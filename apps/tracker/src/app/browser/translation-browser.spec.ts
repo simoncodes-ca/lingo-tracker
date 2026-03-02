@@ -5,11 +5,13 @@ import { provideRouter } from '@angular/router';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TranslationBrowser } from './translation-browser';
 import { getTranslocoTestingModule } from '../../testing/transloco-testing.module';
+import { HeaderContextService } from '../shared/services/header-context.service';
 
 describe('TranslationBrowser - Integration', () => {
   let component: TranslationBrowser;
   let fixture: ComponentFixture<TranslationBrowser>;
   let httpMock: HttpTestingController;
+  let headerContext: HeaderContextService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -20,6 +22,7 @@ describe('TranslationBrowser - Integration', () => {
     fixture = TestBed.createComponent(TranslationBrowser);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
+    headerContext = TestBed.inject(HeaderContextService);
   });
 
   it('should create', () => {
@@ -43,8 +46,9 @@ describe('TranslationBrowser - Integration', () => {
 
     fixture.detectChanges();
 
-    const collectionName = fixture.nativeElement.querySelector('.collection-name');
-    expect(collectionName?.textContent).toBe('test-collection');
+    // The collection name is displayed in the app header via HeaderContextService,
+    // not directly in the TranslationBrowser template. Verify the service is updated.
+    expect(headerContext.collectionName()).toBe('test-collection');
   });
 
   it('should trigger add folder when Ctrl+Shift+N is pressed', () => {

@@ -13,7 +13,7 @@ import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 
 /**
  * Header component for translation items displaying the key with copy button
- * and actions menu (edit, move, delete).
+ * and actions menu (edit, delete).
  */
 @Component({
   selector: 'app-translation-item-header',
@@ -71,9 +71,6 @@ export class TranslationItemHeader {
   /** Emitted when user selects Edit from menu */
   editAction = output<void>();
 
-  /** Emitted when user selects Move from menu */
-  moveAction = output<void>();
-
   /** Emitted when user selects Delete from menu */
   deleteAction = output<void>();
 
@@ -102,10 +99,6 @@ export class TranslationItemHeader {
 
   onEdit(): void {
     this.editAction.emit();
-  }
-
-  onMove(): void {
-    this.moveAction.emit();
   }
 
   onDelete(): void {
