@@ -6,4 +6,9 @@ export interface CreateResourceResponseDto {
   entriesCreated: number;
   /** Whether the resource entry was newly created (true) or updated (false) */
   created: boolean;
+  /**
+   * Locales that were skipped during auto-translation because the base value
+   * uses ICU message format, which is not supported by the auto-translator.
+   */
+  skippedLocales?: string[];
 }

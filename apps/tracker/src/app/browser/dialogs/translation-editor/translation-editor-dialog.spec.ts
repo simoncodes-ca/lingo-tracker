@@ -691,6 +691,115 @@ describe('TranslationEditorDialog', () => {
     });
   });
 
+  describe('skippedLocales propagation', () => {
+    it('should include skippedLocales in create result when API returns them', async () => {
+      mockBrowserApi.createResource.mockReturnValue(
+        of({ entriesCreated: 1, created: true, skippedLocales: ['fr', 'de'] }),
+      );
+
+      component.form.controls.key.setValue('test_key');
+      component.form.controls.baseValue.setValue('Test Value');
+      component.form.controls.comment.setValue('Test comment');
+
+      await component.onSubmit();
+
+      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      expect(result.skippedLocales).toEqual(['fr', 'de']);
+    });
+
+    it('should omit skippedLocales from create result when API returns empty array', async () => {
+      mockBrowserApi.createResource.mockReturnValue(
+        of({ entriesCreated: 1, created: true, skippedLocales: [] }),
+      );
+
+      component.form.controls.key.setValue('test_key');
+      component.form.controls.baseValue.setValue('Test Value');
+      component.form.controls.comment.setValue('Test comment');
+
+      await component.onSubmit();
+
+      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      expect(result.skippedLocales).toBeUndefined();
+    });
+
+    it('should omit skippedLocales from create result when API omits the field', async () => {
+      mockBrowserApi.createResource.mockReturnValue(of({ entriesCreated: 1, created: true }));
+
+      component.form.controls.key.setValue('test_key');
+      component.form.controls.baseValue.setValue('Test Value');
+      component.form.controls.comment.setValue('Test comment');
+
+      await component.onSubmit();
+
+      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      expect(result.skippedLocales).toBeUndefined();
+    });
+
+    it('should include skippedLocales in update result when API returns them', async () => {
+      const mockResource: ResourceSummaryDto = {
+        key: 'existing_key',
+        translations: { en: 'Existing Value' },
+        status: {},
+        comment: 'A comment',
+      };
+
+      const editData = createMockData('edit', mockResource);
+      dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
+      mockBrowserApi = {
+        createResource: vi.fn().mockReturnValue(of({})),
+        updateResource: vi.fn().mockReturnValue(
+          of({ resolvedKey: 'common.buttons.existing_key', updated: true, skippedLocales: ['es'] }),
+        ),
+        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+      };
+      mockDialog = {
+        open: vi.fn().mockReturnValue({ afterClosed: () => of(true) }),
+      };
+      mockSnackBar = { open: vi.fn() };
+      await setupTestBed(editData);
+
+      component.form.controls.baseValue.setValue('Updated Value');
+      component.form.controls.comment.setValue('Updated comment');
+
+      await component.onSubmit();
+
+      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      expect(result.skippedLocales).toEqual(['es']);
+    });
+
+    it('should omit skippedLocales from update result when API returns empty array', async () => {
+      const mockResource: ResourceSummaryDto = {
+        key: 'existing_key',
+        translations: { en: 'Existing Value' },
+        status: {},
+        comment: 'A comment',
+      };
+
+      const editData = createMockData('edit', mockResource);
+      dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
+      mockBrowserApi = {
+        createResource: vi.fn().mockReturnValue(of({})),
+        updateResource: vi.fn().mockReturnValue(
+          of({ resolvedKey: 'common.buttons.existing_key', updated: true, skippedLocales: [] }),
+        ),
+        searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+      };
+      mockDialog = {
+        open: vi.fn().mockReturnValue({ afterClosed: () => of(true) }),
+      };
+      mockSnackBar = { open: vi.fn() };
+      await setupTestBed(editData);
+
+      component.form.controls.baseValue.setValue('Updated Value');
+      component.form.controls.comment.setValue('Updated comment');
+
+      await component.onSubmit();
+
+      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      expect(result.skippedLocales).toBeUndefined();
+    });
+  });
+
   describe('Edit Mode API Integration', () => {
     it('should call updateResource API when submitting in edit mode', async () => {
       const mockResource: ResourceSummaryDto = {

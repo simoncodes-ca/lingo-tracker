@@ -14,6 +14,7 @@ LingoTracker streamlines the entire translation workflow by providing intelligen
 - **Enterprise Scalability**: Handles massive resource sets through metadata separation and flexible folder organization
 - **Built-in Validation**: ICU message format validation catches errors before they reach production
 - **Type Safety**: Compile-time translation key validation with full IDE completion support
+- **Auto-Translation**: Machine translation via Google Translate with ICU-aware placeholder protection
 - **CI/CD Integration**: Powerful CLI for automated validation in build pipelines
 - **Format Flexibility**: Import/export support for JSON, XLIFF, and other translation formats
 - **Resource Linking**: Symlink support for sharing resources across projects

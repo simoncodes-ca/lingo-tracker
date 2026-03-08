@@ -696,7 +696,166 @@ describe('extractResourcesRecursively', () => {
     const result = extractResourcesRecursively(rootNode);
     expect(result).toHaveLength(2);
     expect(result.map((r) => r.key)).toContain('k1');
-    expect(result.map((r) => r.key)).toContain('k2');
+    expect(result.map((r) => r.key)).toContain('b.k2');
+  });
+
+  it('should extract resources from root node with empty folderPathSegments', () => {
+    const childNode: ResourceTreeNode = {
+      folderPathSegments: ['forms'],
+      resources: [
+        {
+          key: 'acceptedFormatsX',
+          source: 'v1',
+          translations: {},
+          metadata: { baseChecksum: 'c1', translations: {} },
+        } as ResourceTreeEntry,
+      ],
+      children: [],
+    };
+
+    const rootNode: ResourceTreeNode = {
+      folderPathSegments: [],
+      resources: [
+        {
+          key: 'rootKey',
+          source: 'v0',
+          translations: {},
+          metadata: { baseChecksum: 'c0', translations: {} },
+        } as ResourceTreeEntry,
+      ],
+      children: [
+        {
+          name: 'forms',
+          fullPathSegments: ['forms'],
+          loaded: true,
+          tree: childNode,
+        },
+      ],
+    };
+
+    const result = extractResourcesRecursively(rootNode);
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.key)).toContain('rootKey');
+    expect(result.map((r) => r.key)).toContain('forms.acceptedFormatsX');
+  });
+
+  it('should extract resources from multiple sibling children', () => {
+    const childB: ResourceTreeNode = {
+      folderPathSegments: ['a', 'b'],
+      resources: [
+        {
+          key: 'k2',
+          source: 'v2',
+          translations: {},
+          metadata: { baseChecksum: 'c2', translations: {} },
+        } as ResourceTreeEntry,
+      ],
+      children: [],
+    };
+
+    const childC: ResourceTreeNode = {
+      folderPathSegments: ['a', 'c'],
+      resources: [
+        {
+          key: 'k3',
+          source: 'v3',
+          translations: {},
+          metadata: { baseChecksum: 'c3', translations: {} },
+        } as ResourceTreeEntry,
+      ],
+      children: [],
+    };
+
+    const rootNode: ResourceTreeNode = {
+      folderPathSegments: ['a'],
+      resources: [],
+      children: [
+        { name: 'b', fullPathSegments: ['a', 'b'], loaded: true, tree: childB },
+        { name: 'c', fullPathSegments: ['a', 'c'], loaded: true, tree: childC },
+      ],
+    };
+
+    const result = extractResourcesRecursively(rootNode);
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.key)).toContain('b.k2');
+    expect(result.map((r) => r.key)).toContain('c.k3');
+  });
+
+  it('should prefix keys correctly for grandchild (3-level) nesting', () => {
+    const grandchild: ResourceTreeNode = {
+      folderPathSegments: ['a', 'b', 'c'],
+      resources: [
+        {
+          key: 'k3',
+          source: 'v3',
+          translations: {},
+          metadata: { baseChecksum: 'c3', translations: {} },
+        } as ResourceTreeEntry,
+      ],
+      children: [],
+    };
+
+    const child: ResourceTreeNode = {
+      folderPathSegments: ['a', 'b'],
+      resources: [
+        {
+          key: 'k2',
+          source: 'v2',
+          translations: {},
+          metadata: { baseChecksum: 'c2', translations: {} },
+        } as ResourceTreeEntry,
+      ],
+      children: [
+        { name: 'c', fullPathSegments: ['a', 'b', 'c'], loaded: true, tree: grandchild },
+      ],
+    };
+
+    const rootNode: ResourceTreeNode = {
+      folderPathSegments: ['a'],
+      resources: [],
+      children: [
+        { name: 'b', fullPathSegments: ['a', 'b'], loaded: true, tree: child },
+      ],
+    };
+
+    const result = extractResourcesRecursively(rootNode);
+    expect(result).toHaveLength(2);
+    expect(result.map((r) => r.key)).toContain('b.k2');
+    expect(result.map((r) => r.key)).toContain('b.c.k3');
+  });
+
+  it('should skip children with invalid segment length', () => {
+    const invalidChild: ResourceTreeNode = {
+      folderPathSegments: ['x'],
+      resources: [
+        {
+          key: 'bad',
+          source: 'v',
+          translations: {},
+          metadata: { baseChecksum: 'c', translations: {} },
+        } as ResourceTreeEntry,
+      ],
+      children: [],
+    };
+
+    const rootNode: ResourceTreeNode = {
+      folderPathSegments: ['a'],
+      resources: [
+        {
+          key: 'k1',
+          source: 'v1',
+          translations: {},
+          metadata: { baseChecksum: 'c1', translations: {} },
+        } as ResourceTreeEntry,
+      ],
+      children: [
+        { name: 'x', fullPathSegments: ['x'], loaded: true, tree: invalidChild },
+      ],
+    };
+
+    const result = extractResourcesRecursively(rootNode);
+    expect(result).toHaveLength(1);
+    expect(result[0].key).toBe('k1');
   });
 
   it('should skip unloaded child nodes', () => {

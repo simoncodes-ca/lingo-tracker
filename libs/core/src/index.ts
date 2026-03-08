@@ -1,4 +1,5 @@
 export * from './constants';
+export * from './config/translation-config';
 export * from './config/lingo-tracker-config';
 export * from './config/lingo-tracker-collection';
 export * from './config/bundle-definition';
@@ -20,3 +21,4 @@ export * from './lib/resource';
 export * from './lib/config';
 export * from './lib/errors';
 export * from './lib/folder';
+export * from './lib/translation';

@@ -50,17 +50,40 @@ export function extractSubtree(tree: ResourceTreeNode, path: string): ResourceTr
 /**
  * Recursively extracts all resource entries from a node and all its descendants.
  *
+ * Resource keys are prefixed with the relative folder path from the starting node
+ * so that each key can be used as a fully-qualified key (relative to the starting
+ * node). For example, if the starting node is `forms` and a resource `acceptedFormatsX`
+ * lives in `forms/fileUpload/`, the returned key will be `fileUpload.acceptedFormatsX`.
+ *
+ * Resources directly in the starting node keep their original key (no prefix).
+ *
  * @param node - The starting node to extract resources from
- * @returns Array of all resource entries found in the subtree
+ * @returns Array of all resource entries found in the subtree with relative-path-prefixed keys
  */
 export function extractResourcesRecursively(node: ResourceTreeNode): ResourceTreeEntry[] {
+  const startingSegments = node.folderPathSegments;
   const allResources: ResourceTreeEntry[] = [...node.resources];
   const stack = [...node.children];
 
   while (stack.length > 0) {
     const child = stack.pop();
     if (child?.loaded && child.tree) {
-      allResources.push(...child.tree.resources);
+      const childSegments = child.tree.folderPathSegments;
+
+      // Guard: child segments must extend starting segments
+      if (childSegments.length <= startingSegments.length) {
+        continue;
+      }
+
+      const relativePath = childSegments.slice(startingSegments.length).join('.');
+
+      for (const resource of child.tree.resources) {
+        allResources.push({
+          ...resource,
+          key: relativePath ? `${relativePath}.${resource.key}` : resource.key,
+        });
+      }
+
       stack.push(...child.tree.children);
     }
   }

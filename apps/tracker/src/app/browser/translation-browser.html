@@ -29,6 +29,7 @@
           <app-translation-list
             [collectionName]="collectionName()"
             [baseLocale]="baseLocale()"
+            [translationEnabled]="translationEnabled()"
             (dragStarted)="onDragStarted($event)"
             (dragEnded)="onDragEnded()"
           />

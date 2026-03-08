@@ -5,9 +5,12 @@ import { validateAndResolvePaths } from '../lib/resource/resource-file-paths';
 import { ensureDirectoryExists } from '../lib/file-io/directory-operations';
 import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
 import { createResourceMetadata } from '../lib/resource/metadata-operations';
+import type { TranslationConfig } from '../config/translation-config';
+import { autoTranslateResource } from '../lib/translation/auto-translate-resources';
 
 export interface AddResourceOptions {
   cwd?: string;
+  translationConfig?: TranslationConfig;
 }
 
 export interface AddResourceParams {
@@ -29,22 +32,38 @@ export interface AddResourceParams {
     value: string;
     status: TranslationStatus;
   }>;
+  /**
+   * All configured locales. Required when using auto-translation so the
+   * orchestrator knows which target locales to translate into.
+   */
+  allLocales?: string[];
 }
 
 /**
  * Adds or updates a resource entry in the translations folder.
  * Creates nested folders and files as needed at each level.
+ *
+ * When `options.translationConfig` is provided and enabled, and no explicit
+ * translations are supplied, the base value is automatically translated to all
+ * non-base locales using the configured provider.
+ *
  * @param translationsFolder - Root translations folder path
  * @param params - Resource creation parameters
- * @param options - Additional options (e.g., cwd)
- * @returns Object with the resolved key and status
+ * @param options - Additional options (e.g., cwd, translationConfig)
+ * @returns Object with the resolved key, status, actual translations written to disk,
+ *          and any locales skipped due to ICU format (only present when auto-translation ran)
  */
-export function addResource(
+export async function addResource(
   translationsFolder: string,
   params: AddResourceParams,
   options: AddResourceOptions = {},
-): { resolvedKey: string; created: boolean } {
-  const { cwd = process.cwd() } = options;
+): Promise<{
+  resolvedKey: string;
+  created: boolean;
+  translations: Array<{ locale: string; value: string; status: TranslationStatus }>;
+  skippedLocales?: string[];
+}> {
+  const { cwd = process.cwd(), translationConfig } = options;
   const baseLocale = params.baseLocale || 'en';
 
   // Validate and resolve paths
@@ -80,9 +99,18 @@ export function addResource(
     resourceEntry.tags = params.tags;
   }
 
+  // Resolve translations: prefer explicit translations, fall back to auto-translation, then nothing.
+  const resolveResult = await resolveTranslations({
+    params,
+    baseLocale,
+    translationConfig,
+  });
+
+  const resolvedTranslations = resolveResult?.translations ?? null;
+
   // Add translations (skip base locale - it's in 'source')
-  if (params.translations) {
-    params.translations.forEach(({ locale, value }) => {
+  if (resolvedTranslations) {
+    resolvedTranslations.forEach(({ locale, value }) => {
       // Skip base locale - its value comes from 'source' property
       if (locale !== baseLocale) {
         resourceEntry[locale] = value;
@@ -99,14 +127,71 @@ export function addResource(
     entryKey: paths.entryKey,
     baseValue: params.baseValue,
     baseLocale,
-    translations: params.translations,
+    translations: resolvedTranslations ?? undefined,
   });
 
   // Write files back
   writeJsonFile({ filePath: paths.resourceEntriesPath, data: resourceEntries });
   writeJsonFile({ filePath: paths.trackerMetaPath, data: trackerMeta });
 
-  return { resolvedKey: paths.resolvedKey, created: isNewEntry };
+  return {
+    resolvedKey: paths.resolvedKey,
+    created: isNewEntry,
+    translations: resolvedTranslations ?? [],
+    ...(resolveResult?.skippedLocales !== undefined && { skippedLocales: resolveResult.skippedLocales }),
+  };
+}
+
+interface ResolveTranslationsParams {
+  readonly params: AddResourceParams;
+  readonly baseLocale: string;
+  readonly translationConfig: TranslationConfig | undefined;
+}
+
+interface ResolveTranslationsResult {
+  readonly translations: Array<{ locale: string; value: string; status: TranslationStatus }>;
+  readonly skippedLocales: string[];
+}
+
+/**
+ * Determines which translations to use for the resource entry.
+ *
+ * Priority:
+ * 1. Explicit `params.translations` — used as-is when provided (no `skippedLocales`).
+ * 2. Auto-translation — triggered when `translationConfig` is enabled and
+ *    `params.allLocales` is set (caller must supply target locale list).
+ * 3. No translations — returns `undefined` so the entry is stored without them.
+ */
+async function resolveTranslations(
+  resolveParams: ResolveTranslationsParams,
+): Promise<ResolveTranslationsResult | undefined> {
+  const { params, baseLocale, translationConfig } = resolveParams;
+
+  if (params.translations && params.translations.length > 0) {
+    return { translations: params.translations, skippedLocales: [] };
+  }
+
+  const shouldAutoTranslate = translationConfig?.enabled && params.allLocales && params.allLocales.length > 0;
+  if (!shouldAutoTranslate || !translationConfig || !params.allLocales) {
+    return undefined;
+  }
+
+  const targetLocales = params.allLocales.filter((locale) => locale !== baseLocale);
+  if (targetLocales.length === 0) {
+    return undefined;
+  }
+
+  const autoTranslateResult = await autoTranslateResource({
+    baseValue: params.baseValue,
+    baseLocale,
+    targetLocales,
+    translationConfig,
+  });
+
+  return {
+    translations: autoTranslateResult.translations.map(({ locale, value, status }) => ({ locale, value, status })),
+    skippedLocales: autoTranslateResult.skippedLocales,
+  };
 }
 
 /**

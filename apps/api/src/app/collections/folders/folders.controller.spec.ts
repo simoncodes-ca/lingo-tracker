@@ -87,7 +87,7 @@ describe('FoldersController', () => {
         errors: [],
       };
 
-      (core.moveFolder as jest.Mock).mockReturnValue(mockMoveResult);
+      (core.moveFolder as jest.Mock).mockResolvedValue(mockMoveResult);
 
       const result = await foldersController.move('test-collection', moveFolderDto);
 
@@ -127,7 +127,7 @@ describe('FoldersController', () => {
         errors: [],
       };
 
-      (core.moveFolder as jest.Mock).mockReturnValue(mockMoveResult);
+      (core.moveFolder as jest.Mock).mockResolvedValue(mockMoveResult);
 
       const result = await foldersController.move('test-collection', moveFolderDto);
 
@@ -157,7 +157,7 @@ describe('FoldersController', () => {
         errors: [],
       };
 
-      (core.moveFolder as jest.Mock).mockReturnValue(mockMoveResult);
+      (core.moveFolder as jest.Mock).mockResolvedValue(mockMoveResult);
 
       const result = await foldersController.move('test-collection', moveFolderDto);
 
@@ -219,7 +219,7 @@ describe('FoldersController', () => {
         errors: ['Cannot move folder into its own descendant'],
       };
 
-      (core.moveFolder as jest.Mock).mockReturnValue(mockMoveResult);
+      (core.moveFolder as jest.Mock).mockResolvedValue(mockMoveResult);
 
       await expect(foldersController.move('test-collection', moveFolderDto)).rejects.toThrow(HttpException);
 
@@ -240,7 +240,7 @@ describe('FoldersController', () => {
         errors: ['Invalid source folder path segment "invalid@char"'],
       };
 
-      (core.moveFolder as jest.Mock).mockReturnValue(mockMoveResult);
+      (core.moveFolder as jest.Mock).mockResolvedValue(mockMoveResult);
 
       await expect(foldersController.move('test-collection', moveFolderDto)).rejects.toThrow(HttpException);
     });
@@ -258,7 +258,7 @@ describe('FoldersController', () => {
         errors: [],
       };
 
-      (core.moveFolder as jest.Mock).mockReturnValue(mockMoveResult);
+      (core.moveFolder as jest.Mock).mockResolvedValue(mockMoveResult);
 
       const result = await foldersController.move('test-collection', moveFolderDto);
 
@@ -281,7 +281,7 @@ describe('FoldersController', () => {
         errors: [],
       };
 
-      (core.moveFolder as jest.Mock).mockReturnValue(mockMoveResult);
+      (core.moveFolder as jest.Mock).mockResolvedValue(mockMoveResult);
 
       const result = await foldersController.move('test-collection', moveFolderDto);
 
@@ -304,7 +304,7 @@ describe('FoldersController', () => {
         errors: [],
       };
 
-      (core.moveFolder as jest.Mock).mockReturnValue(mockMoveResult);
+      (core.moveFolder as jest.Mock).mockResolvedValue(mockMoveResult);
 
       await foldersController.move('test%2Dcollection', moveFolderDto);
 

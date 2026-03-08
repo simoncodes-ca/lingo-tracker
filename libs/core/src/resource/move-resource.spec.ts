@@ -108,7 +108,7 @@ describe('Move Resource', () => {
   });
 
   describe('Single Resource Move', () => {
-    it('should move a single resource successfully', () => {
+    it('should move a single resource successfully', async () => {
       // Setup source
       const sourceFolder = join(testDir, 'common', 'buttons');
       mockDirectories.add(sourceFolder);
@@ -120,7 +120,7 @@ describe('Move Resource', () => {
         }),
       );
 
-      const result = moveResource(testDir, {
+      const result = await moveResource(testDir, {
         source: 'common.buttons.ok',
         destination: 'common.actions.ok',
       });
@@ -144,7 +144,7 @@ describe('Move Resource', () => {
       expect(destContent.ok.source).toBe('OK');
     });
 
-    it('should warn and skip if destination exists and override is false', () => {
+    it('should warn and skip if destination exists and override is false', async () => {
       // Setup source
       const sourceFolder = join(testDir, 'a');
       mockDirectories.add(sourceFolder);
@@ -167,7 +167,7 @@ describe('Move Resource', () => {
         }),
       );
 
-      const result = moveResource(testDir, {
+      const result = await moveResource(testDir, {
         source: 'a.key',
         destination: 'b.key',
         override: false,
@@ -184,7 +184,7 @@ describe('Move Resource', () => {
       expect(sourceContent.key).toBeDefined();
     });
 
-    it('should override if destination exists and override is true', () => {
+    it('should override if destination exists and override is true', async () => {
       // Setup source
       const sourceFolder = join(testDir, 'a');
       mockDirectories.add(sourceFolder);
@@ -207,7 +207,7 @@ describe('Move Resource', () => {
         }),
       );
 
-      const result = moveResource(testDir, {
+      const result = await moveResource(testDir, {
         source: 'a.key',
         destination: 'b.key',
         override: true,
@@ -224,7 +224,7 @@ describe('Move Resource', () => {
   });
 
   describe('Wildcard Pattern Move', () => {
-    it('should move multiple resources matching pattern', () => {
+    it('should move multiple resources matching pattern', async () => {
       // Setup: common.buttons.ok, common.buttons.cancel
       const sourceFolder = join(testDir, 'common', 'buttons');
       mockDirectories.add(sourceFolder);
@@ -237,7 +237,7 @@ describe('Move Resource', () => {
         }),
       );
 
-      const result = moveResource(testDir, {
+      const result = await moveResource(testDir, {
         source: 'common.buttons.*',
         destination: 'common.actions',
       });
@@ -257,7 +257,7 @@ describe('Move Resource', () => {
       expect(destContent.cancel).toBeDefined();
     });
 
-    it('should handle nested resources in wildcard', () => {
+    it('should handle nested resources in wildcard', async () => {
       // Setup: common.buttons.ok, common.buttons.sub.item
       const buttonsFolder = join(testDir, 'common', 'buttons');
       mockDirectories.add(buttonsFolder);
@@ -279,7 +279,7 @@ describe('Move Resource', () => {
         }),
       );
 
-      const result = moveResource(testDir, {
+      const result = await moveResource(testDir, {
         source: 'common.buttons.*',
         destination: 'common.actions',
       });
@@ -303,7 +303,7 @@ describe('Move Resource', () => {
     });
   });
   describe('Cross-Collection Move', () => {
-    it('should move resource to a different destination folder', () => {
+    it('should move resource to a different destination folder', async () => {
       // Setup source in collection A
       const collectionAFolder = join(testDir, 'collectionA');
       const sourceFolder = join(collectionAFolder, 'common', 'buttons');
@@ -321,7 +321,7 @@ describe('Move Resource', () => {
       const collectionBFolder = join(testDir, 'collectionB');
       mockDirectories.add(collectionBFolder);
 
-      const result = moveResource(collectionAFolder, {
+      const result = await moveResource(collectionAFolder, {
         source: 'common.buttons.ok',
         destination: 'common.actions.ok',
         destinationTranslationsFolder: collectionBFolder,
@@ -345,7 +345,7 @@ describe('Move Resource', () => {
       expect(destContent.ok.source).toBe('OK');
     });
 
-    it('should move wildcard resources to a different destination folder', () => {
+    it('should move wildcard resources to a different destination folder', async () => {
       // Setup source in collection A
       const collectionAFolder = join(testDir, 'collectionA');
       const sourceFolder = join(collectionAFolder, 'common', 'buttons');
@@ -364,7 +364,7 @@ describe('Move Resource', () => {
       const collectionBFolder = join(testDir, 'collectionB');
       mockDirectories.add(collectionBFolder);
 
-      const result = moveResource(collectionAFolder, {
+      const result = await moveResource(collectionAFolder, {
         source: 'common.buttons.*',
         destination: 'common.actions',
         destinationTranslationsFolder: collectionBFolder,
@@ -386,12 +386,12 @@ describe('Move Resource', () => {
   });
 
   describe('Security', () => {
-    it('should handle invalid characters in pattern during scanning', () => {
+    it('should handle invalid characters in pattern during scanning', async () => {
       // Test with invalid characters that shouldn't be allowed in keys
       const invalidPattern = 'invalid@char*';
       const invalidPath = join(testDir, 'invalid@char');
 
-      const result = moveResource(testDir, {
+      const result = await moveResource(testDir, {
         source: invalidPattern,
         destination: 'dest',
       });

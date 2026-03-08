@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { HttpException, NotFoundException } from '@nestjs/common';
-import type { TranslationStatus, LocaleMetadata } from '@simoncodes-ca/core';
+import { TranslationError, type TranslationStatus, type LocaleMetadata } from '@simoncodes-ca/core';
 import type { ResourceTreeDto } from '@simoncodes-ca/data-transfer';
 import { ResourcesController } from './resources.controller';
 import { ConfigService } from '../../config/config.service';
@@ -17,6 +17,7 @@ jest.mock('@simoncodes-ca/core', () => {
     moveResource: jest.fn(),
     moveResourcesByPattern: jest.fn(),
     editResource: jest.fn(),
+    translateExistingResource: jest.fn(),
     loadResourceTree: jest.fn(),
     extractSubtree: jest.fn(),
     createDefaultTranslations: jest.fn(),
@@ -1354,6 +1355,163 @@ describe('ResourcesController', () => {
           maxResults: 501, // 500 + 1 for limited detection
         }),
       );
+    });
+  });
+
+  describe('translateResource', () => {
+    const mockEntry = {
+      key: 'save',
+      source: 'Save',
+      translations: { 'fr-ca': 'Sauvegarder', es: 'Guardar' },
+      metadata: {
+        en: { checksum: 'base_hash' },
+        'fr-ca': { checksum: 'fr_hash', baseChecksum: 'base_hash', status: 'translated' },
+        es: { checksum: 'es_hash', baseChecksum: 'base_hash', status: 'translated' },
+      },
+    };
+
+    const configWithTranslation = {
+      ...mockConfig,
+      translation: {
+        enabled: true,
+        provider: 'google-translate',
+        apiKeyEnv: 'GOOGLE_TRANSLATE_API_KEY',
+      },
+    };
+
+    it('should return 422 when translation is not enabled for the collection', async () => {
+      // mockConfig has no translation config — auto-translation is disabled
+      await expect(
+        resourcesController.translateResource('test-collection', { key: 'buttons.save' }),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await resourcesController.translateResource('test-collection', { key: 'buttons.save' });
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect((error as HttpException).getStatus()).toBe(422);
+      }
+    });
+
+    it('should return 404 when the collection does not exist', async () => {
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
+
+      await expect(
+        resourcesController.translateResource('unknown-collection', { key: 'buttons.save' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return 404 when the resource does not exist', async () => {
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
+
+      const translateExistingResource = core.translateExistingResource as jest.Mock;
+      translateExistingResource.mockRejectedValue(new Error('Resource not found: buttons.save'));
+
+      await expect(
+        resourcesController.translateResource('test-collection', { key: 'buttons.save' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return 502 when the translation provider throws a TranslationError', async () => {
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
+
+      const translateExistingResource = core.translateExistingResource as jest.Mock;
+      translateExistingResource.mockRejectedValue(
+        new TranslationError('Rate limit exceeded', 'RATE_LIMIT', true),
+      );
+
+      try {
+        await resourcesController.translateResource('test-collection', { key: 'buttons.save' });
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect((error as HttpException).getStatus()).toBe(502);
+      }
+    });
+
+    it('should return a TranslateResourceResponseDto with translated resource on success', async () => {
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
+
+      const translateExistingResource = core.translateExistingResource as jest.Mock;
+      translateExistingResource.mockResolvedValue({
+        translatedCount: 2,
+        skippedLocales: [],
+        entry: mockEntry,
+      });
+
+      const result = await resourcesController.translateResource('test-collection', { key: 'buttons.save' });
+
+      expect(result.translatedCount).toBe(2);
+      expect(result.skippedLocales).toEqual([]);
+      expect(result.resource.key).toBe('save');
+    });
+
+    it('should pass translation config from collection when collection overrides global', async () => {
+      const collectionTranslationConfig = {
+        enabled: true,
+        provider: 'google-translate',
+        apiKeyEnv: 'COLLECTION_API_KEY',
+      };
+      const configWithCollectionTranslation = {
+        ...mockConfig,
+        translation: { enabled: true, provider: 'google-translate', apiKeyEnv: 'GLOBAL_API_KEY' },
+        collections: {
+          'test-collection': {
+            ...mockConfig.collections['test-collection'],
+            translation: collectionTranslationConfig,
+          },
+        },
+      };
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithCollectionTranslation);
+
+      const translateExistingResource = core.translateExistingResource as jest.Mock;
+      translateExistingResource.mockResolvedValue({
+        translatedCount: 1,
+        skippedLocales: [],
+        entry: mockEntry,
+      });
+
+      await resourcesController.translateResource('test-collection', { key: 'buttons.save' });
+
+      expect(translateExistingResource).toHaveBeenCalledWith(
+        expect.objectContaining({
+          translationConfig: collectionTranslationConfig,
+        }),
+      );
+    });
+
+    it('should update the cache after a successful translation', async () => {
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
+
+      const translateExistingResource = core.translateExistingResource as jest.Mock;
+      translateExistingResource.mockResolvedValue({
+        translatedCount: 1,
+        skippedLocales: [],
+        entry: mockEntry,
+      });
+
+      await resourcesController.translateResource('test-collection', { key: 'buttons.save' });
+
+      expect(mockCacheService.addResourceToCache).toHaveBeenCalledWith(
+        'test-collection',
+        mockEntry,
+        'buttons',
+      );
+    });
+
+    it('should include skipped locales in the response', async () => {
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
+
+      const translateExistingResource = core.translateExistingResource as jest.Mock;
+      translateExistingResource.mockResolvedValue({
+        translatedCount: 0,
+        skippedLocales: ['fr-ca', 'es'],
+        entry: mockEntry,
+      });
+
+      const result = await resourcesController.translateResource('test-collection', { key: 'buttons.save' });
+
+      expect(result.translatedCount).toBe(0);
+      expect(result.skippedLocales).toEqual(['fr-ca', 'es']);
     });
   });
 });

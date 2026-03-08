@@ -8,4 +8,7 @@ export type InitOptions = {
   importFolder?: string;
   baseLocale?: string;
   locales?: string[];
+  enableAutoTranslation?: boolean;
+  translationProvider?: string;
+  translationApiKeyEnv?: string;
 };

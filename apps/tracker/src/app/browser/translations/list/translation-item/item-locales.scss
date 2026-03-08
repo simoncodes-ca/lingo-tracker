@@ -8,6 +8,7 @@
   gap: var(--spacing-2) var(--spacing-3);
   grid-template-columns: auto 1fr;
   margin-top: var(--spacing-2);
+  padding-bottom: var(--spacing-4); /* ensures last row clears the fade gradient when scrolled to bottom */
   padding-top: var(--spacing-3);
 }
 
@@ -40,7 +41,7 @@
   width: 16px;
 
   &.status-new {
-    color: #f97316;
+    color: var(--color-warning);
   }
 
   &.status-stale {
@@ -79,7 +80,6 @@
     -webkit-line-clamp: 6;
     display: -webkit-box;
     overflow: hidden;
-    transition: -webkit-line-clamp 200ms;
 
     &.expanded {
       -webkit-line-clamp: unset;

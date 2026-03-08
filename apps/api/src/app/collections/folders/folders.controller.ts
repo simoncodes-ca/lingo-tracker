@@ -179,7 +179,7 @@ export class FoldersController {
       }
 
       // Perform the move
-      const result = moveFolder(translationsFolder, {
+      const result = await moveFolder(translationsFolder, {
         sourceFolderPath: moveFolderDto.sourceFolderPath,
         destinationFolderPath: moveFolderDto.destinationFolderPath,
         override: moveFolderDto.override,

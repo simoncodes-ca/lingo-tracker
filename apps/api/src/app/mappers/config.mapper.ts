@@ -15,5 +15,6 @@ export function mapConfigToDto(config: LingoTrackerConfig): LingoTrackerConfigDt
     baseLocale: config.baseLocale,
     locales: [...config.locales],
     collections: mapConfigCollections(config.collections),
+    translation: config.translation,
   };
 }

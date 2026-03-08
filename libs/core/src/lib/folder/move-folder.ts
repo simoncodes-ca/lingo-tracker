@@ -66,7 +66,7 @@ export interface MoveFolderResult {
  * // Result: { movedCount: 0, foldersDeleted: 0, warnings: [], errors: ['Cannot move...'] }
  * ```
  */
-export function moveFolder(translationsFolder: string, params: MoveFolderParams): MoveFolderResult {
+export async function moveFolder(translationsFolder: string, params: MoveFolderParams): Promise<MoveFolderResult> {
   const {
     sourceFolderPath,
     destinationFolderPath,
@@ -208,7 +208,7 @@ export function moveFolder(translationsFolder: string, params: MoveFolderParams)
         }
       }
 
-      const moveResult: MoveResourceResult = moveResource(translationsFolder, {
+      const moveResult: MoveResourceResult = await moveResource(translationsFolder, {
         source: sourceKey,
         destination: destinationKey,
         override,

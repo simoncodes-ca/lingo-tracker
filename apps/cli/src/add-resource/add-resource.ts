@@ -71,14 +71,18 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
     const tagsArray = parseCommaSeparatedList(answers.tags) || [];
     const baseLocale = collection.config.baseLocale || config.baseLocale;
     const locales = collection.config.locales || config.locales || [];
+    const translationConfig = collection.config.translation ?? config.translation;
 
-    // Build translations: use provided translations or create entries for all non-base locales with base value
+    // Build translations: use provided translations or create entries for all non-base locales with base value.
+    // When auto-translation is configured, skip building default translations here — addResource will handle it.
     const translations =
       answers.translations && answers.translations.length > 0
         ? answers.translations
-        : createDefaultTranslations(locales, baseLocale, answers.value);
+        : translationConfig?.enabled
+          ? undefined
+          : createDefaultTranslations(locales, baseLocale, answers.value);
 
-    const result = addResource(
+    const result = await addResource(
       collection.translationsFolderPath,
       {
         key: answers.key,
@@ -88,8 +92,9 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
         targetFolder: answers.targetFolder || undefined,
         baseLocale,
         translations: translations && translations.length > 0 ? translations : undefined,
+        allLocales: locales,
       },
-      { cwd },
+      { cwd, translationConfig },
     );
 
     ConsoleFormatter.success(`Resource added: ${result.resolvedKey}`);

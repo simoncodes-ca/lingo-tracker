@@ -27,6 +27,7 @@ import type {
   ResourceSummaryDto,
   TranslationStatus,
   CreateResourceDto,
+  CreateResourceResponseDto,
   UpdateResourceDto,
   UpdateResourceResponseDto,
   SearchResultDto,
@@ -75,6 +76,8 @@ export interface TranslationEditorResult {
   shouldOpenEdit?: boolean;
   existingResourceKey?: string;
   resource?: ResourceSummaryDto;
+  /** Locales skipped during auto-translation due to ICU format incompatibility. */
+  skippedLocales?: string[];
 }
 
 @Component({
@@ -439,6 +442,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
           translations: filledTranslations.length > 0 ? filledTranslations : undefined,
           success: true,
           resource: response.resource,
+          skippedLocales: response.skippedLocales?.length ? response.skippedLocales : undefined,
         });
       },
       error: (error: unknown) => {
@@ -471,7 +475,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     };
 
     this.browserApi.createResource(this.data.collectionName, createDto).subscribe({
-      next: () => {
+      next: (response: CreateResourceResponseDto) => {
         this.dialogRef.close({
           key: formValue.key,
           baseValue: formValue.baseValue,
@@ -479,6 +483,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
           folderPath: this.selectedFolderPath(),
           translations: filledTranslations.length > 0 ? filledTranslations : undefined,
           success: true,
+          skippedLocales: response.skippedLocales?.length ? response.skippedLocales : undefined,
         });
       },
       error: (error: unknown) => {

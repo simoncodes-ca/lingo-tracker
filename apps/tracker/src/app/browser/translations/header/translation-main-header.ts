@@ -88,13 +88,32 @@ export class TranslationMainHeader {
     });
 
     dialogRef.afterClosed().subscribe((result: TranslationEditorResult | undefined) => {
-      if (result?.success) {
-        this.store.selectFolder(this.store.currentFolderPath());
-        this.snackBar.open('Translation created successfully', '', {
-          duration: 2000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
+      if (!result?.success) return;
+
+      this.store.selectFolder(this.store.currentFolderPath());
+      this.snackBar.open('Resource created successfully', '', {
+        duration: 2000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom',
+      });
+
+      if (result.skippedLocales?.length) {
+        const locales = result.skippedLocales.join(', ');
+        // Delay slightly longer than the success snackbar duration (2000ms) so the
+        // two messages don't overlap on screen.
+        const SNACKBAR_CHAIN_DELAY_MS = 2200;
+        setTimeout(() => {
+          this.snackBar.open(
+            `Auto-translation skipped for ${locales} (ICU format not supported)`,
+            'Dismiss',
+            {
+              duration: 6000,
+              horizontalPosition: 'center',
+              verticalPosition: 'bottom',
+              panelClass: ['warning-snackbar'],
+            },
+          );
+        }, SNACKBAR_CHAIN_DELAY_MS);
       }
     });
   }

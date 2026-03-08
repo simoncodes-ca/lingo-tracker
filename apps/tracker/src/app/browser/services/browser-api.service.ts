@@ -20,6 +20,8 @@ import type {
   MoveResourceResponseDto,
   MoveFolderDto,
   MoveFolderResponseDto,
+  TranslateResourceDto,
+  TranslateResourceResponseDto,
 } from '@simoncodes-ca/data-transfer';
 
 /**
@@ -193,5 +195,18 @@ export class BrowserApiService {
       nestUnderDestination: true,
     };
     return this.#http.post<MoveFolderResponseDto>(`${this.#baseUrl}/${encodedName}/folders/move`, dto);
+  }
+
+  /**
+   * Auto-translates new and stale locales for a resource using the configured translation provider.
+   *
+   * @param collectionName - Name of the collection containing the resource
+   * @param key - Full dot-delimited key of the resource to translate
+   * @returns Observable of translate response containing the updated resource
+   */
+  translateResource(collectionName: string, key: string): Observable<TranslateResourceResponseDto> {
+    const encodedName = encodeURIComponent(collectionName);
+    const dto: TranslateResourceDto = { key };
+    return this.#http.post<TranslateResourceResponseDto>(`${this.#baseUrl}/${encodedName}/resources/translate`, dto);
   }
 }

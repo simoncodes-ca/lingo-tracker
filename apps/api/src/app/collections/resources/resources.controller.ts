@@ -20,6 +20,8 @@ import {
   deleteResource,
   moveResource,
   editResource,
+  translateExistingResource,
+  TranslationError,
   searchTranslations,
   searchResourceTree,
   extractSubtree,
@@ -44,6 +46,8 @@ import type {
   SearchResultsDto,
   CacheStatusDto,
   TreeStatusResponseDto,
+  TranslateResourceDto,
+  TranslateResourceResponseDto,
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
@@ -59,6 +63,73 @@ export class ResourcesController {
     private readonly configService: ConfigService,
     private readonly cacheService: CollectionCacheService,
   ) {}
+
+  @Post('translate')
+  async translateResource(
+    @Param('collectionName') collectionName: string,
+    @Body() dto: TranslateResourceDto,
+  ): Promise<TranslateResourceResponseDto> {
+    try {
+      const decodedCollectionName = decodeURIComponent(collectionName);
+      const config = this.configService.getConfig();
+
+      if (!config.collections || !config.collections[decodedCollectionName]) {
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
+      }
+
+      const collection = config.collections[decodedCollectionName];
+      const translationConfig = collection.translation ?? config.translation;
+
+      if (!translationConfig?.enabled) {
+        throw new HttpException(
+          'Auto-translation is not enabled for this collection',
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+
+      const translationsFolder = collection.translationsFolder;
+      const baseLocale = collection.baseLocale || config.baseLocale || 'en';
+      const allLocales = collection.locales || config.locales || [];
+
+      const result = await translateExistingResource({
+        key: dto.key,
+        translationsFolder,
+        translationConfig,
+        allLocales,
+        baseLocale,
+        cwd: process.cwd(),
+      });
+
+      this.cacheService.addResourceToCache(decodedCollectionName, result.entry, dto.key.split('.').slice(0, -1).join('.'));
+
+      const resource = mapResourceEntryToSummary(result.entry);
+
+      return {
+        resource,
+        skippedLocales: result.skippedLocales,
+        translatedCount: result.translatedCount,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof HttpException) {
+        throw error;
+      }
+
+      if (error instanceof TranslationError) {
+        throw new HttpException(
+          `Translation provider error: ${error.message}`,
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Error translating resource';
+
+      if (errorMessage.includes('Resource not found')) {
+        throw new NotFoundException(errorMessage);
+      }
+
+      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
   @Post()
   async createResources(
@@ -104,7 +175,7 @@ export class ResourcesController {
             translations,
           });
 
-          const result = addResource(translationsFolder, params);
+          const result = await addResource(translationsFolder, params);
 
           if (result.created) {
             entriesCreated++;
@@ -265,7 +336,7 @@ export class ResourcesController {
           destinationTranslationsFolder = config.collections[destCollectionName].translationsFolder;
         }
 
-        const moveResult = moveResource(translationsFolder, {
+        const moveResult = await moveResource(translationsFolder, {
           source: moveOp.source,
           destination: moveOp.destination,
           override: moveOp.override,
@@ -314,7 +385,7 @@ export class ResourcesController {
       const translationsFolder = collection.translationsFolder;
       const baseLocale = collection.baseLocale || config.baseLocale || 'en';
 
-      const result = editResource(translationsFolder, {
+      const result = await editResource(translationsFolder, {
         ...dto,
         baseLocale,
       });

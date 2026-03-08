@@ -7,6 +7,16 @@
   display: block;
 }
 
+/* Visually hidden but accessible to screen readers */
+.sr-only {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .item-container {
   background-color: var(--color-background-muted);
   border: 1px solid var(--color-border);
@@ -241,45 +251,57 @@ app-tag-list {
 
 /* Full density styles */
 .item-container[data-density='full'] {
-  /* collapsed approximate height */
-  max-height: 170px;
-  overflow: hidden;
+  /* Height is determined by virtual scroll itemSize — no max-height constraint */
   position: relative;
-  transition: max-height 240ms cubic-bezier(.2, .8, .2, 1);
 }
 
-.item-container[data-density='full'] .base-value.full,
-.item-container[data-density='full'] .locale-value.full {
-  /* when collapsed enforce line clamping */
+.item-container[data-density='full'] .base-value.full {
+  /* Clamp base value to 2 lines when collapsed */
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 6; /* approximate clamp to keep within collapsed height */
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  transition: -webkit-line-clamp 200ms;
 }
 
-.item-container[data-density='full'] .base-value.full.expanded,
-.item-container[data-density='full'] .locale-value.full.expanded {
+.item-container[data-density='full'] .base-value.full.expanded {
   -webkit-line-clamp: unset;
   display: block;
 }
 
+/*
+ * Expanded items overlay content below them rather than pushing the virtual
+ * scroll layout. The item itself grows naturally; z-index ensures it paints
+ * above sibling items rendered in the same scroll window.
+ */
 .item-container[data-density='full'].expanded {
-  max-height: 2000px; /* allow full expansion */
+  z-index: 10;
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+/* Comment row: comment left, expand button right, vertically centred */
+.comment-expand-row {
+  align-items: center;
+  display: flex;
+  gap: var(--spacing-2);
+  justify-content: space-between;
+  min-height: 32px;
 }
 
 .expand-button {
-  position: absolute;
-  right: 12px;
-  bottom: 8px;
-  background: var(--color-background-subtle);
+  background: none;
   border: none;
-  padding: 6px;
   border-radius: 6px;
+  color: var(--color-text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  padding: 4px;
+}
+
+.expand-button:hover {
+  background: var(--color-background-subtle);
 }
 
 /* Ensure touch targets meet minimum recommended size */
@@ -292,11 +314,86 @@ app-tag-list {
 }
 
 .expand-button mat-icon {
+  color: var(--color-text-secondary);
   transition: transform 200ms ease;
 }
 
 .expand-button mat-icon.rotated {
   transform: rotate(180deg);
+}
+
+/*
+ * Outer container that establishes the stacking context for the fade overlay.
+ * It is purely a positioning context — no overflow or max-height constraints
+ * here so the inner wrapper can scroll independently.
+ */
+.locale-scroll-container {
+  position: relative;
+}
+
+/*
+ * Inner scroll wrapper: the actual overflow-y scroll region.
+ * In the collapsed state the wrapper is height-constrained so locale rows
+ * scroll within it. In the expanded state the wrapper grows to full content
+ * height with no constraint.
+ */
+.locale-scroll-container.collapsed .locale-scroll-wrapper {
+  max-height: 128px; /* ~4 locale rows × 32px each */
+  overflow-y: auto;
+}
+
+.locale-scroll-wrapper {
+  height: auto;
+  overflow-y: auto;
+
+  /* Hide scrollbar track visually while keeping scrollability */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 4px;
+  }
+}
+
+/*
+ * Invisible sentinel element at the very end of scrollable content.
+ * The IntersectionObserver watches this within the scroll wrapper as root;
+ * when it becomes visible the fade gradient is hidden.
+ */
+.locale-scroll-sentinel {
+  height: 1px;
+  pointer-events: none;
+}
+
+/*
+ * Fade overlay hinting at additional locale rows below the visible area.
+ * Absolutely positioned over the bottom of .locale-scroll-container so it
+ * does NOT scroll with the content — it always sits at the visible bottom edge.
+ * Transitions opacity smoothly so the disappearance is not jarring.
+ */
+.locale-scroll-fade {
+  background: linear-gradient(to bottom, transparent 0%, var(--color-background-muted) 100%);
+  bottom: 0;
+  height: 48px;
+  left: 0;
+  opacity: 1;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  transition: opacity var(--transition-fast);
+
+  &.hidden {
+    opacity: 0;
+  }
 }
 
 .comment-display {

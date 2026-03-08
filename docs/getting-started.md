@@ -250,7 +250,32 @@ Normalization is designed to be safe:
 - **Only Adds/Corrects**: Fills in missing data and fixes incorrect metadata
 - **Dry-Run Available**: Preview all changes before applying
 
+### Configuring Auto-Translation
+
+LingoTracker can automatically translate new resources using machine translation providers such as Google Translate. To enable this, add a `translation` block to your `.lingo-tracker.json`:
+
+```json
+{
+  "translation": {
+    "enabled": true,
+    "provider": "google-translate",
+    "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY"
+  }
+}
+```
+
+Then set the API key in your environment:
+
+```bash
+export GOOGLE_TRANSLATE_API_KEY="your-api-key-here"
+```
+
+Auto-translation handles plain text and simple placeholders (`{name}`, `{{ count }}`). Strings with complex ICU syntax (plural, select, number, date, time) are skipped and left for human translators.
+
+For full details on configuration, ICU handling, and best practices, see the [Auto-Translation Guide](./auto-translation.md).
+
 ### Next Steps
 
 - For managing translation resources and other CLI commands, see the [CLI Reference](./cli.md)
 - For programmatic access via REST API, see the [API Reference](./api.md)
+- For setting up machine translation, see the [Auto-Translation Guide](./auto-translation.md)

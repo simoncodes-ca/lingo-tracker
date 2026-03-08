@@ -61,6 +61,18 @@
         <mat-icon>edit</mat-icon>
         <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
       </button>
+      @if (translationEnabled()) {
+        <!-- Auto-translate menu item: shows spinner while translating -->
+        <button mat-menu-item (click)="onTranslate()" [disabled]="translateDisabled()" aria-label="Translate resource">
+          @if (isTranslating()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            <mat-icon>translate</mat-icon>
+          }
+          <!-- TODO: replace with transloco token once COMMON.ACTIONS.TRANSLATE is added to tracker-resources.ts -->
+          <span>Translate</span>
+        </button>
+      }
       <button mat-menu-item (click)="onDelete()" aria-label="Delete translation">
         <mat-icon>delete</mat-icon>
         <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
