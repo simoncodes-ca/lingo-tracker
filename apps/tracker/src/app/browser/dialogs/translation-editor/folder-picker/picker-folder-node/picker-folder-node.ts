@@ -2,7 +2,9 @@ import { Component, ChangeDetectionStrategy, input, output, computed } from '@an
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslocoPipe } from '@jsverse/transloco';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import { TRACKER_TOKENS } from '../../../../../../i18n-types/tracker-resources';
 import { InlineFolderInput } from '../../../../sidebar/folder-tree/inline-folder-input/inline-folder-input';
 
 /**
@@ -15,11 +17,13 @@ import { InlineFolderInput } from '../../../../sidebar/folder-tree/inline-folder
   selector: 'app-picker-folder-node',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatIconModule, MatButtonModule, InlineFolderInput],
+  imports: [CommonModule, MatIconModule, MatButtonModule, TranslocoPipe, InlineFolderInput],
   templateUrl: './picker-folder-node.html',
   styleUrl: './picker-folder-node.scss',
 })
 export class PickerFolderNode {
+  readonly TOKENS = TRACKER_TOKENS;
+
   /** The folder data to render */
   readonly folder = input.required<FolderNodeDto>();
 

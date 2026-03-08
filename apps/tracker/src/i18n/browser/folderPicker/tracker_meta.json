@@ -1,0 +1,62 @@
+{
+  "folderAriaLabelX": {
+    "en": {
+      "checksum": "473e5bed6b27e71a49a78f4d64ff0ce6"
+    },
+    "es": {
+      "checksum": "1c6cb53b9e64fada2ca5325ff1c21760",
+      "baseChecksum": "473e5bed6b27e71a49a78f4d64ff0ce6",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "afb8670b66d3ca8376387749f424151c",
+      "baseChecksum": "473e5bed6b27e71a49a78f4d64ff0ce6",
+      "status": "translated"
+    }
+  },
+  "collapse": {
+    "en": {
+      "checksum": "2b31634e3cfef1bfdd7d0d2cdfdc3f9d"
+    },
+    "es": {
+      "checksum": "8f6d2234f9a7ac9732f5fd7abe7ca8e4",
+      "baseChecksum": "2b31634e3cfef1bfdd7d0d2cdfdc3f9d",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "0296e4551eb2a71666f3b95299fabc4d",
+      "baseChecksum": "2b31634e3cfef1bfdd7d0d2cdfdc3f9d",
+      "status": "translated"
+    }
+  },
+  "expand": {
+    "en": {
+      "checksum": "8098b34f582537833b36b58273c3545b"
+    },
+    "es": {
+      "checksum": "90f181c7710382980f8d5d8bf3659531",
+      "baseChecksum": "8098b34f582537833b36b58273c3545b",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "0f16886ce9ef9bd31180b466a01600b1",
+      "baseChecksum": "8098b34f582537833b36b58273c3545b",
+      "status": "translated"
+    }
+  },
+  "addSubfolderToX": {
+    "en": {
+      "checksum": "eaed88a598b9d9a658b262bc448b0661"
+    },
+    "es": {
+      "checksum": "edfd6b2d95278f3de029831a8b1fd573",
+      "baseChecksum": "eaed88a598b9d9a658b262bc448b0661",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "98899f3e11cf6020e45e7d0951e3f655",
+      "baseChecksum": "eaed88a598b9d9a658b262bc448b0661",
+      "status": "translated"
+    }
+  }
+}
