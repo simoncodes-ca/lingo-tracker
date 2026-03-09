@@ -2,13 +2,18 @@
   <div class="toolbar-content">
     <!-- Logo and Title -->
     <a class="brand" [routerLink]="['/collections']" aria-label="Go to Collections" matTooltip="Go to Collections">
-      <mat-icon class="logo-icon">translate</mat-icon>
+      <img src="assets/logo-rounded.png" class="logo-icon" alt="LingoTracker logo" />
       <h1 class="app-title">LingoTracker</h1>
     </a>
 
     <!-- Collection context: pipe + name + folder -->
     @if (hasCollectionContext()) {
       <div class="collection-pipe" aria-hidden="true"></div>
+
+      <!-- Back to Collections -->
+      <button mat-icon-button [routerLink]="['/collections']" aria-label="Back to Collections" matTooltip="Back to Collections" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
 
       <div class="collection-context">
         <span class="collection-name" [title]="collectionName() ?? ''">{{ collectionName() }}</span>
