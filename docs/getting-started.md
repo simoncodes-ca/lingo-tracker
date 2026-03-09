@@ -279,3 +279,4 @@ For full details on configuration, ICU handling, and best practices, see the [Au
 - For managing translation resources and other CLI commands, see the [CLI Reference](./cli.md)
 - For programmatic access via REST API, see the [API Reference](./api.md)
 - For setting up machine translation, see the [Auto-Translation Guide](./auto-translation.md)
+- To set up an AI assistant skill for your repo (guides Claude Code and similar tools through the i18n workflow), run `lingo-tracker install-skill` — see [`install-skill`](./cli.md#install-skill) in the CLI Reference

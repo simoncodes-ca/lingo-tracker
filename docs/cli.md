@@ -1273,6 +1273,85 @@ Every export generates an `export-summary.md` file in the output directory conta
 
 ---
 
+## AI Tooling Commands
+
+### install-skill
+
+Generate a customised LingoTracker AI skill for use in another Angular/Transloco repository. The skill guides AI assistants (Claude Code and compatible tools) through the i18n workflow — detecting hardcoded strings, adding resources, bundling, and updating components to use Transloco.
+
+The generated skill is pre-configured with the collection names, bundle names, and token constants of the target repository, so the AI assistant can follow the correct workflow without guessing project-specific details.
+
+**Usage:**
+
+```bash
+lingo-tracker install-skill [options]
+```
+
+**Options:**
+
+- `--collection <spec>` - Collection specification in the format `name:bundle:TokenConstant:tokenFilePath`. Repeatable — pass once per collection
+- `--dir <path>` - Output directory for the skill files (default: `.claude`)
+- `--token-casing <casing>` - Casing style for token keys: `upperCase` or `camelCase` (default: `upperCase`)
+
+**Output:**
+
+Writes two files to `{dir}/skills/lingo-tracker/`:
+
+- `SKILL.md` — the main skill file, customised with the provided collection, bundle, and token values
+- `references/patterns.md` — static Angular/Transloco code pattern reference
+
+**Examples:**
+
+Interactive mode (prompts for AI tool directory, collection details, and token casing):
+```bash
+lingo-tracker install-skill
+```
+
+Interactive mode prompts:
+1. AI tool directory: `.claude` (default) | `.agents` | `.cursor`
+2. Collection details (looping — name, bundle name, token constant, token file path), with an option to add more after each
+3. Token casing: `upperCase` | `camelCase`
+
+Non-interactive mode with a single collection:
+```bash
+lingo-tracker install-skill \
+  --collection trackerResources:tracker:TRACKER_TOKENS:apps/tracker/src/i18n-types/tracker-resources.ts
+```
+
+Non-interactive mode with multiple collections and camelCase tokens:
+```bash
+lingo-tracker install-skill \
+  --collection trackerResources:tracker:TRACKER_TOKENS:apps/tracker/src/i18n-types/tracker-resources.ts \
+  --collection adminResources:admin:ADMIN_TOKENS:apps/admin/src/i18n-types/admin-resources.ts \
+  --token-casing camelCase
+```
+
+Output to a custom directory (e.g. for Cursor):
+```bash
+lingo-tracker install-skill \
+  --collection myApp:main:MY_APP_TOKENS:src/i18n-types/my-app.ts \
+  --dir .cursor
+```
+
+**Collection Specification Format:**
+
+Each `--collection` value is a colon-separated string with four parts:
+
+| Part | Description | Example |
+|------|-------------|---------|
+| `name` | Collection name as registered in `.lingo-tracker.json` | `trackerResources` |
+| `bundle` | Bundle name used with `lingo-tracker bundle --name` | `tracker` |
+| `TokenConstant` | Name of the exported TypeScript token constant | `TRACKER_TOKENS` |
+| `tokenFilePath` | Path to the generated token file (relative to project root) | `apps/tracker/src/i18n-types/tracker-resources.ts` |
+
+**Notes:**
+- Run this command once after setting up LingoTracker in a new repository
+- Commit the generated skill files (`.claude/skills/lingo-tracker/`) to version control so the entire team benefits
+- If you change collection names, bundle names, or token constants, re-run the command to regenerate the skill
+- The `--dir` option should match the AI tool your team uses (`.claude` for Claude Code, `.cursor` for Cursor, etc.)
+
+---
+
 ## Configuration
 
 All commands read from `.lingo-tracker.json` in the project root. This file is created by the `init` command.

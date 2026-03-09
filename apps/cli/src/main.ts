@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import { Command, Option } from 'commander';
 
+function collect(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
+
 const program = new Command();
 
 program
@@ -379,6 +383,17 @@ program
     const raw = parseInt(options.maxResults, 10);
     const maxResults = isNaN(raw) || raw < 1 ? 5 : raw;
     await findSimilarCommand({ ...options, maxResults });
+  });
+
+program
+  .command('install-skill')
+  .description('Generate a lingo-tracker AI skill configured for this repository')
+  .option('--collection <spec>', 'Collection spec: name:bundle:TokenConstant:tokenFilePath (repeatable)', collect, [])
+  .option('--dir <path>', 'Output directory (default: .claude)')
+  .addOption(new Option('--token-casing <casing>', 'Token property key casing').choices(['upperCase', 'camelCase']))
+  .action(async (options) => {
+    const { installSkillCommand } = await import('./commands/install-skill');
+    await installSkillCommand(options);
   });
 
 program.parse();
