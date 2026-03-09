@@ -17,8 +17,7 @@ export interface LoadFullResourceTreeOptions {
  * translation structure, eliminating the need for progressive loading.
  *
  * @param options Configuration options including translations folder path
- * @returns Complete resource tree with all descendants loaded
- * @throws Error if the translations folder does not exist
+ * @returns Complete resource tree with all descendants loaded, or an empty tree if the folder does not exist yet
  */
 export function loadFullResourceTree(options: LoadFullResourceTreeOptions): ResourceTreeNode {
   const { translationsFolder, cwd = process.cwd() } = options;

@@ -3,7 +3,8 @@
   "version": "0.8.0",
   "description": "Effortlessly Track, Validate, and Manage Your Translations.",
   "bin": {
-    "lingo-tracker": "dist/apps/cli/main.js"
+    "lingo-tracker": "dist/apps/cli/main.js",
+    "lingo-tracker-app": "dist/apps/api/main.js"
   },
   "scripts": {
     "build:cli": "nx build cli",
@@ -38,6 +39,7 @@
   "files": [
     "dist/apps/cli",
     "dist/apps/api",
+    "dist/apps/tracker",
     "docs"
   ],
   "license": "MIT",

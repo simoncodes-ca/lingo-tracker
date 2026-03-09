@@ -60,6 +60,10 @@ export function loadResourceTree(options: LoadResourceTreeOptions): ResourceTree
 
   // Check if folder exists
   if (!fs.existsSync(absoluteFolderPath)) {
+    if (pathSegments.length === 0) {
+      // Root translations folder doesn't exist yet (e.g. fresh project) — treat as empty
+      return { folderPathSegments: [], resources: [], children: [] };
+    }
     throw new Error(`Folder not found: ${absoluteFolderPath}`);
   }
 

@@ -10,7 +10,7 @@ const program = new Command();
 program
   .name('lingo-tracker')
   .description('Effortlessly track, validate, and manage your translations')
-  .version('0.1.0');
+  .version('0.8.0');
 
 program
   .command('init')

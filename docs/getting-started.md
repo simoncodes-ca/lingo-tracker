@@ -4,15 +4,45 @@ Lingo Tracker helps you track, validate, and manage translations across projects
 
 ### Install
 
-- Node.js >= 22.16 and pnpm >= 10 are recommended.
-- Add the CLI to your workspace (recommended during development):
+Node.js >= 22.16 is required. Install the CLI as a dev dependency in your project:
 
 ```bash
-pnpm nx build cli && pnpm link --global ./dist/apps/cli
-# Now the `lingo-tracker` command is available globally from your build output
+pnpm add -D @simoncodes-ca/lingo-tracker
+npm install --save-dev @simoncodes-ca/lingo-tracker
+yarn add -D @simoncodes-ca/lingo-tracker
 ```
 
-Or install the built artifact wherever you publish it and ensure `lingo-tracker` is on your PATH.
+Once installed, the use `npx lingo-tracker` command to interact with the CLI.
+
+### Run the Lingo Tracker App
+
+The `lingo-tracker` package ships a built-in API server that hosts the Lingo Tracker web interface. 
+
+### Then start the app server:
+
+```bash
+npx lingo-tracker-app
+```
+
+The server listens on port **3030** by default.
+
+#### Configuring the port
+
+Pass `--port` to override the port:
+
+```bash
+npx lingo-tracker-app --port 4000
+```
+
+Or set the `LINGO_TRACKER_PORT` environment variable. The `--port` flag takes precedence over the environment variable:
+
+```json
+{
+  "scripts": {
+    "lingo-tracker-app": "lingo-tracker-api --port 4000"
+  }
+}
+```
 
 ### Initialize a project
 
@@ -130,7 +160,7 @@ Both commands support fully non‑interactive runs; provide all required flags t
 
 ### Quick checklist
 
-- Install and expose `lingo-tracker` on your PATH
+- Install `lingo-tracker`
 - Run `lingo-tracker init` once in the repo
 - Add more collections with `lingo-tracker add-collection`
 - Commit `.lingo-tracker.json`

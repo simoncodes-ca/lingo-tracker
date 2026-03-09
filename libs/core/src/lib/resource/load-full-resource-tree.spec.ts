@@ -563,13 +563,14 @@ describe('loadFullResourceTree', () => {
   });
 
   describe('error handling', () => {
-    it('should throw error for missing translations folder', () => {
-      expect(() =>
-        loadFullResourceTree({
-          translationsFolder: '/test/nonexistent',
-          cwd: '/',
-        }),
-      ).toThrow('Folder not found');
+    it('should return empty tree for missing translations folder', () => {
+      const result = loadFullResourceTree({
+        translationsFolder: '/test/nonexistent',
+        cwd: '/',
+      });
+      expect(result.folderPathSegments).toEqual([]);
+      expect(result.resources).toEqual([]);
+      expect(result.children).toEqual([]);
     });
 
     it('should handle empty folders gracefully', () => {

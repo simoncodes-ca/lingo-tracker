@@ -60,13 +60,22 @@
   }
 
   <!-- Empty State -->
-  @if (!store.isFolderTreeLoading() && !store.error() && store.filteredFolders().length === 0) {
+  @if (!store.isFolderTreeLoading() && !store.error() && store.filteredFolders().length === 0 && !isAddingFolder()) {
     <div class="empty-state">
       <mat-icon class="empty-icon">folder_off</mat-icon>
       <p class="empty-text">
         {{ (store.folderTreeFilter() ? TOKENS.BROWSER.NOFOLDERSMATCHSEARCH : TOKENS.BROWSER.NOFOLDERSFOUND) | transloco }}
       </p>
     </div>
+  }
+
+  <!-- Root-level inline folder input (shown even when collection is empty) -->
+  @if (isAddingFolder() && addFolderParentPath() === null) {
+    <app-inline-folder-input
+      [parentPath]="null"
+      (confirm)="onFolderConfirm($event)"
+      (cancel)="onFolderCancel()"
+    />
   }
 
   <!-- Folder Tree -->
@@ -77,13 +86,6 @@
       role="tree"
       (mousemove)="activeDragData() ? onDragMoved($event) : null"
     >
-      @if (isAddingFolder() && addFolderParentPath() === null) {
-        <app-inline-folder-input
-          [parentPath]="null"
-          (confirm)="onFolderConfirm($event)"
-          (cancel)="onFolderCancel()"
-        />
-      }
       @for (folder of store.filteredFolders(); track folder.fullPath) {
         <app-folder-node
           [folder]="folder"
