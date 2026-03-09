@@ -86,7 +86,7 @@ export class ResourcesController {
 
       const translationsFolder = collection.translationsFolder;
       const baseLocale = collection.baseLocale || config.baseLocale || 'en';
-      const allLocales = collection.locales || config.locales || [];
+      const allLocales = collection.locales ?? config.locales ?? [];
 
       const result = await translateExistingResource({
         key: dto.key,
@@ -145,7 +145,7 @@ export class ResourcesController {
       const collection = config.collections[decodedCollectionName];
       const translationsFolder = collection.translationsFolder;
       const baseLocale = collection.baseLocale || config.baseLocale || 'en';
-      const locales = collection.locales || config.locales || [];
+      const locales = collection.locales ?? config.locales ?? [];
       const translationConfig = collection.translation ?? config.translation;
 
       // Normalize to array
@@ -391,10 +391,14 @@ export class ResourcesController {
       const collection = config.collections[decodedCollectionName];
       const translationsFolder = collection.translationsFolder;
       const baseLocale = collection.baseLocale || config.baseLocale || 'en';
+      const translationConfig = collection.translation ?? config.translation;
+      const allLocales = collection.locales ?? config.locales ?? [];
 
       const result = await editResource(translationsFolder, {
         ...dto,
         baseLocale,
+        translationConfig,
+        allLocales,
       });
 
       let resourceDto: ResourceSummaryDto | undefined;
@@ -484,7 +488,7 @@ export class ResourcesController {
       // Handle cache states
       if (cacheStatus === CacheStatus.NOT_STARTED || cacheStatus === CacheStatus.ERROR) {
         // Trigger indexing asynchronously (don't await)
-        const locales = collection.locales || config.locales || [];
+        const locales = collection.locales ?? config.locales ?? [];
         this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
           this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);
         });
@@ -610,7 +614,7 @@ export class ResourcesController {
       const collection = config.collections[decodedCollectionName];
       if (cacheStatus === CacheStatus.NOT_STARTED) {
         const translationsFolder = collection.translationsFolder;
-        const locales = collection.locales || config.locales || [];
+        const locales = collection.locales ?? config.locales ?? [];
 
         this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
           this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);

@@ -14,11 +14,11 @@
     "ja": "Bye"
   },
   "userName": {
-    "source": "User Name Required",
-    "fr-ca": "User Name",
-    "es": "User Name",
-    "de": "User Name",
-    "ja": "User Name"
+    "source": "User Name",
+    "fr-ca": "Nom d'utilisateur",
+    "es": "Nombre de usuario",
+    "de": "Benutzername",
+    "ja": "ユーザー名"
   },
   "test3": {
     "source": "Cooking Class",
