@@ -63,7 +63,7 @@
         <app-inline-folder-input
           [parentPath]="folder().fullPath"
           (confirm)="onFolderConfirm($event)"
-          (cancel)="onFolderCancel()"
+          (cancelInput)="onFolderCancel()"
         />
       }
       @for (child of folder().tree!.children; track child.fullPath) {

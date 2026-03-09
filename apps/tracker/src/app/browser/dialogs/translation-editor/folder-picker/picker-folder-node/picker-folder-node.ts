@@ -43,7 +43,7 @@ export class PickerFolderNode {
   readonly addFolderParentPath = input<string | null>(null);
 
   /** Emitted when a folder is selected */
-  readonly select = output<string>();
+  readonly folderSelect = output<string>();
 
   /** Emitted when expand/collapse is toggled */
   readonly toggleExpand = output<string>();

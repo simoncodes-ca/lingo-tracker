@@ -12,5 +12,19 @@
     "es": "Bye",
     "de": "Bye",
     "ja": "Bye"
+  },
+  "userName": {
+    "source": "User Name Required",
+    "fr-ca": "User Name",
+    "es": "User Name",
+    "de": "User Name",
+    "ja": "User Name"
+  },
+  "test3": {
+    "source": "Cooking Class",
+    "fr-ca": "Cours de cuisine",
+    "es": "Clase de cocina",
+    "de": "Kochkurs",
+    "ja": "料理教室"
   }
 }

@@ -1,14 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import {
-  parseCollectionArg,
-  substituteSkillTemplate,
-  generateCollectionsSection,
-  generateCliCommandsSection,
-  readPatternsMdTemplate,
-  getTemplatesDir,
-} from './install-skill';
+import { parseCollectionArg, substituteSkillTemplate, readPatternsMdTemplate, getTemplatesDir } from './install-skill';
 
 // ---------------------------------------------------------------------------
 // parseCollectionArg

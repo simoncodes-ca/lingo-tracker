@@ -1,7 +1,6 @@
 import {
   Component,
   ChangeDetectionStrategy,
-  type OnInit,
   inject,
   computed,
   effect,
@@ -53,7 +52,7 @@ import type { DragData } from './types/drag-data';
   templateUrl: './translation-browser.html',
   styleUrl: './translation-browser.scss',
 })
-export class TranslationBrowser implements OnInit {
+export class TranslationBrowser {
   readonly #route = inject(ActivatedRoute);
   readonly #collectionsStore = inject(CollectionsStore);
   readonly store = inject(BrowserStore);
@@ -162,11 +161,6 @@ export class TranslationBrowser implements OnInit {
     this.#destroyRef.onDestroy(() => {
       this.#headerContext.clearCollectionContext();
     });
-  }
-
-  ngOnInit(): void {
-    // Collections are now loaded in App component
-    // Effect in constructor will initialize browser store when config is available
   }
 
   /**

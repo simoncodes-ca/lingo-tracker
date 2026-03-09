@@ -55,7 +55,7 @@
         <app-inline-folder-input
           [parentPath]="folder().fullPath"
           (confirm)="onFolderConfirm($event)"
-          (cancel)="onFolderCancel()"
+          (cancelInput)="onFolderCancel()"
         />
       }
       @if (folder().tree?.children) {
@@ -67,7 +67,7 @@
             [focusedPath]="focusedPath()"
             [isAddingFolder]="isAddingFolder()"
             [addFolderParentPath]="addFolderParentPath()"
-            (select)="select.emit($event)"
+            (folderSelect)="folderSelect.emit($event)"
             (toggleExpand)="toggleExpand.emit($event)"
             (addFolder)="addFolder.emit($event)"
             (confirmNewFolder)="confirmNewFolder.emit($event)"

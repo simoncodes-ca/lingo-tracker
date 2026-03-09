@@ -81,10 +81,7 @@ export class ResourcesController {
       const translationConfig = collection.translation ?? config.translation;
 
       if (!translationConfig?.enabled) {
-        throw new HttpException(
-          'Auto-translation is not enabled for this collection',
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
+        throw new HttpException('Auto-translation is not enabled for this collection', HttpStatus.UNPROCESSABLE_ENTITY);
       }
 
       const translationsFolder = collection.translationsFolder;
@@ -100,7 +97,11 @@ export class ResourcesController {
         cwd: process.cwd(),
       });
 
-      this.cacheService.addResourceToCache(decodedCollectionName, result.entry, dto.key.split('.').slice(0, -1).join('.'));
+      this.cacheService.addResourceToCache(
+        decodedCollectionName,
+        result.entry,
+        dto.key.split('.').slice(0, -1).join('.'),
+      );
 
       const resource = mapResourceEntryToSummary(result.entry);
 
@@ -115,10 +116,7 @@ export class ResourcesController {
       }
 
       if (error instanceof TranslationError) {
-        throw new HttpException(
-          `Translation provider error: ${error.message}`,
-          HttpStatus.BAD_GATEWAY,
-        );
+        throw new HttpException(`Translation provider error: ${error.message}`, HttpStatus.BAD_GATEWAY);
       }
 
       const errorMessage = error instanceof Error ? error.message : 'Error translating resource';
@@ -148,6 +146,7 @@ export class ResourcesController {
       const translationsFolder = collection.translationsFolder;
       const baseLocale = collection.baseLocale || config.baseLocale || 'en';
       const locales = collection.locales || config.locales || [];
+      const translationConfig = collection.translation ?? config.translation;
 
       // Normalize to array
       const resources = Array.isArray(body) ? body : [body];
@@ -162,20 +161,28 @@ export class ResourcesController {
       for (const resource of resources) {
         try {
           const resourceBaseLocale = resource.baseLocale || baseLocale;
+          const hasExplicitTranslations = resource.translations && resource.translations.length > 0;
+          const canAutoTranslate = translationConfig?.enabled && !hasExplicitTranslations;
 
-          // If no translations provided, create entries for all non-base locales with base value
-          const translations =
-            resource.translations && resource.translations.length > 0
-              ? resource.translations
+          // When auto-translation is enabled and no explicit translations provided,
+          // let addResource handle translation via the configured provider.
+          // Otherwise, fall back to default translations (copies base value with 'new' status).
+          const translations = hasExplicitTranslations
+            ? resource.translations
+            : canAutoTranslate
+              ? undefined
               : createDefaultTranslations(locales, resourceBaseLocale, resource.baseValue);
 
           const params = mapDtoToAddResourceParams({
             ...resource,
             baseLocale: resourceBaseLocale,
             translations,
+            ...(canAutoTranslate && { allLocales: locales }),
           });
 
-          const result = await addResource(translationsFolder, params);
+          const result = canAutoTranslate
+            ? await addResource(translationsFolder, params, { translationConfig })
+            : await addResource(translationsFolder, params);
 
           if (result.created) {
             entriesCreated++;
@@ -187,10 +194,10 @@ export class ResourcesController {
           const entryKey = resolvedKeyParts.pop() || '';
           const folderPath = resolvedKeyParts.join('.');
 
-          // Build translations record (excluding base locale)
+          // Build translations record from actual result (includes auto-translated values)
           const translationsRecord: Record<string, string> = {};
-          const translationsArray = translations || [];
-          for (const t of translationsArray) {
+          const actualTranslations = result.translations?.length > 0 ? result.translations : translations || [];
+          for (const t of actualTranslations) {
             if (t.locale !== resourceBaseLocale) {
               translationsRecord[t.locale] = t.value;
             }
@@ -201,7 +208,7 @@ export class ResourcesController {
             entryKey,
             baseValue: resource.baseValue,
             baseLocale: resourceBaseLocale,
-            translations: translationsArray,
+            translations: actualTranslations,
           });
 
           const cacheEntry: ResourceTreeEntry = {

@@ -31,7 +31,7 @@ export class InlineFolderInput {
   readonly confirm = output<string>();
 
   /** Emitted when user cancels (Escape key or blur) */
-  readonly cancel = output<void>();
+  readonly cancelInput = output<void>();
 
   /** Reference to the input element for auto-focus */
   readonly inputElement = viewChild<ElementRef<HTMLInputElement>>('inputField');
@@ -74,7 +74,7 @@ export class InlineFolderInput {
    * Cancels the folder creation.
    */
   onEscapeKey(): void {
-    this.cancel.emit();
+    this.cancelInput.emit();
   }
 
   /**
@@ -84,7 +84,7 @@ export class InlineFolderInput {
    */
   onBlur(): void {
     if (!this.#confirmed) {
-      this.cancel.emit();
+      this.cancelInput.emit();
     }
   }
 

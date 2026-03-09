@@ -23,7 +23,7 @@ describe('translateExistingResource', () => {
     save: { source: 'Save', 'fr-ca': 'Sauvegarder' },
   };
 
-  const baseTrackerMeta = {
+  const _baseTrackerMeta = {
     save: {
       en: { checksum: 'base_hash' },
       'fr-ca': { checksum: 'fr_hash', baseChecksum: 'base_hash', status: 'translated' },

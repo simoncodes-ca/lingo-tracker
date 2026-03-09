@@ -118,7 +118,7 @@ export function generateCliCommandsSection(collections: CollectionSpec[], tokenC
           .join('\n')}`
       : '';
 
-  const notePrefix = multiCollectionNote ? multiCollectionNote + '\n\n' : '';
+  const notePrefix = multiCollectionNote ? `${multiCollectionNote}\n\n` : '';
   return `${notePrefix}### Add a resource
 \`\`\`bash
 npx lingo-tracker add-resource \\

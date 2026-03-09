@@ -132,7 +132,7 @@ async function promptForMissing(options: InitOptions): Promise<InitAnswers> {
   // The provider and API key questions are conditional on the confirm answer above.
   // prompts supports dynamic `type` — returning falsy skips the question.
   questions.push({
-    type: (_, values) => (values['enableAutoTranslation'] ? 'text' : null),
+    type: (_, values) => (values.enableAutoTranslation ? 'text' : null),
     name: 'translationProvider',
     message: 'Translation provider',
     initial: 'google-translate',
@@ -140,7 +140,7 @@ async function promptForMissing(options: InitOptions): Promise<InitAnswers> {
   });
 
   questions.push({
-    type: (_, values) => (values['enableAutoTranslation'] ? 'text' : null),
+    type: (_, values) => (values.enableAutoTranslation ? 'text' : null),
     name: 'translationApiKeyEnv',
     message: 'Environment variable name for the API key',
     initial: 'GOOGLE_TRANSLATE_API_KEY',
@@ -154,26 +154,27 @@ async function promptForMissing(options: InitOptions): Promise<InitAnswers> {
     operationName: 'Initialization',
   });
 
-  const isAutoTranslationEnabled = Boolean(result['enableAutoTranslation'] ?? options.enableAutoTranslation);
+  const isAutoTranslationEnabled = Boolean(result.enableAutoTranslation ?? options.enableAutoTranslation);
 
   const translation: TranslationConfig | undefined = isAutoTranslationEnabled
     ? {
         enabled: true,
-        provider: (result['translationProvider'] as string | undefined) ?? options.translationProvider ?? 'google-translate',
+        provider:
+          (result.translationProvider as string | undefined) ?? options.translationProvider ?? 'google-translate',
         apiKeyEnv:
-          (result['translationApiKeyEnv'] as string | undefined) ??
+          (result.translationApiKeyEnv as string | undefined) ??
           options.translationApiKeyEnv ??
           'GOOGLE_TRANSLATE_API_KEY',
       }
     : undefined;
 
   return {
-    collectionName: (result['collectionName'] as string) ?? 'default',
-    translationsFolder: result['translationsFolder'] as string,
-    exportFolder: (result['exportFolder'] as string) ?? DEFAULT_CONFIG.exportFolder,
-    importFolder: (result['importFolder'] as string) ?? DEFAULT_CONFIG.importFolder,
-    baseLocale: (result['baseLocale'] as string) ?? DEFAULT_CONFIG.baseLocale,
-    locales: (result['locales'] as string[]) ?? DEFAULT_CONFIG.locales,
+    collectionName: (result.collectionName as string) ?? 'default',
+    translationsFolder: result.translationsFolder as string,
+    exportFolder: (result.exportFolder as string) ?? DEFAULT_CONFIG.exportFolder,
+    importFolder: (result.importFolder as string) ?? DEFAULT_CONFIG.importFolder,
+    baseLocale: (result.baseLocale as string) ?? DEFAULT_CONFIG.baseLocale,
+    locales: (result.locales as string[]) ?? DEFAULT_CONFIG.locales,
     translation,
   };
 }

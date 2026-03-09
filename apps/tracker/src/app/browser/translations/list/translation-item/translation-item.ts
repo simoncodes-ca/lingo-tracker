@@ -1,7 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
-  ElementRef,
+  type ElementRef,
   input,
   output,
   computed,
@@ -414,10 +414,10 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
     const wrapper = this.scrollWrapper()?.nativeElement;
     if (!sentinel || !wrapper) return;
 
-    this.#scrollObserver = new IntersectionObserver(
-      ([entry]) => this.isScrolledToBottom.set(entry.isIntersecting),
-      { root: wrapper, threshold: 0.1 },
-    );
+    this.#scrollObserver = new IntersectionObserver(([entry]) => this.isScrolledToBottom.set(entry.isIntersecting), {
+      root: wrapper,
+      threshold: 0.1,
+    });
     this.#scrollObserver.observe(sentinel);
   }
 

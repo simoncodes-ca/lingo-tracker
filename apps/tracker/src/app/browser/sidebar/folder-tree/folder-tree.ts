@@ -71,7 +71,7 @@ export class FolderTree {
   disabled = input<boolean>(false);
 
   /** Active drag data from parent (may come from translation items) */
-  activeDragDataFromParent = input<DragData | null>(null, { alias: 'activeDragData' });
+  activeDragDataFromParent = input<DragData | null>(null);
 
   /** Emitted when a folder is selected */
   folderSelected = output<string>();

@@ -22,7 +22,7 @@
 </button>
 
 <mat-menu #statusMenu="matMenu" class="status-filter-menu">
-  <div class="menu-header" (click)="$event.stopPropagation()">
+  <div class="menu-header" tabindex="0" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()">
     <button
       mat-button
       class="action-button"

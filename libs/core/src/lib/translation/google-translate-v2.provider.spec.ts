@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GoogleTranslateV2Provider } from './google-translate-v2.provider';
-import { TranslationError } from './translation-provider';
 import type { TranslateRequest } from './translation-provider';
 
 // ---------------------------------------------------------------------------
@@ -67,9 +66,7 @@ describe('GoogleTranslateV2Provider', () => {
 
     describe('single translation', () => {
       it('returns the translated text from Google with provider name', async () => {
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-          makeSuccessResponse([{ translatedText: 'Hola' }]),
-        );
+        vi.spyOn(globalThis, 'fetch').mockResolvedValue(makeSuccessResponse([{ translatedText: 'Hola' }]));
 
         const results = await provider.translate([makeRequest({ text: 'Hello', targetLocale: 'es' })]);
 
@@ -90,9 +87,9 @@ describe('GoogleTranslateV2Provider', () => {
       });
 
       it('sends the correct request body to the Google API', async () => {
-        const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-          makeSuccessResponse([{ translatedText: 'Hola' }]),
-        );
+        const fetchSpy = vi
+          .spyOn(globalThis, 'fetch')
+          .mockResolvedValue(makeSuccessResponse([{ translatedText: 'Hola' }]));
 
         await provider.translate([makeRequest({ text: 'Hello', sourceLocale: 'en', targetLocale: 'es' })]);
 
@@ -111,7 +108,8 @@ describe('GoogleTranslateV2Provider', () => {
 
     describe('batch translation — multiple target locales', () => {
       it('preserves result order across different target locales', async () => {
-        const fetchSpy = vi.spyOn(globalThis, 'fetch')
+        const fetchSpy = vi
+          .spyOn(globalThis, 'fetch')
           .mockResolvedValueOnce(makeSuccessResponse([{ translatedText: 'Hola' }]))
           .mockResolvedValueOnce(makeSuccessResponse([{ translatedText: 'Bonjour' }]));
 
@@ -129,12 +127,9 @@ describe('GoogleTranslateV2Provider', () => {
       });
 
       it('sends all texts for a single target locale in one API call', async () => {
-        const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-          makeSuccessResponse([
-            { translatedText: 'Hola' },
-            { translatedText: 'Adiós' },
-          ]),
-        );
+        const fetchSpy = vi
+          .spyOn(globalThis, 'fetch')
+          .mockResolvedValue(makeSuccessResponse([{ translatedText: 'Hola' }, { translatedText: 'Adiós' }]));
 
         const requests: TranslateRequest[] = [
           makeRequest({ text: 'Hello', targetLocale: 'es' }),
@@ -154,20 +149,14 @@ describe('GoogleTranslateV2Provider', () => {
 
       it('interleaves results correctly when requests alternate between target locales', async () => {
         vi.spyOn(globalThis, 'fetch')
-          .mockResolvedValueOnce(makeSuccessResponse([
-            { translatedText: 'Hola' },
-            { translatedText: 'Mundo' },
-          ]))
-          .mockResolvedValueOnce(makeSuccessResponse([
-            { translatedText: 'Bonjour' },
-            { translatedText: 'Monde' },
-          ]));
+          .mockResolvedValueOnce(makeSuccessResponse([{ translatedText: 'Hola' }, { translatedText: 'Mundo' }]))
+          .mockResolvedValueOnce(makeSuccessResponse([{ translatedText: 'Bonjour' }, { translatedText: 'Monde' }]));
 
         const requests: TranslateRequest[] = [
-          makeRequest({ text: 'Hello', targetLocale: 'es' }),   // index 0 → 'Hola'
-          makeRequest({ text: 'Hello', targetLocale: 'fr' }),   // index 1 → 'Bonjour'
-          makeRequest({ text: 'World', targetLocale: 'es' }),   // index 2 → 'Mundo'
-          makeRequest({ text: 'World', targetLocale: 'fr' }),   // index 3 → 'Monde'
+          makeRequest({ text: 'Hello', targetLocale: 'es' }), // index 0 → 'Hola'
+          makeRequest({ text: 'Hello', targetLocale: 'fr' }), // index 1 → 'Bonjour'
+          makeRequest({ text: 'World', targetLocale: 'es' }), // index 2 → 'Mundo'
+          makeRequest({ text: 'World', targetLocale: 'fr' }), // index 3 → 'Monde'
         ];
 
         const results = await provider.translate(requests);
@@ -181,7 +170,8 @@ describe('GoogleTranslateV2Provider', () => {
 
     describe('chunking — more than 128 strings per target locale', () => {
       it('splits 130 requests for the same target locale into two API calls', async () => {
-        const fetchSpy = vi.spyOn(globalThis, 'fetch')
+        const fetchSpy = vi
+          .spyOn(globalThis, 'fetch')
           .mockResolvedValueOnce(
             makeSuccessResponse(Array.from({ length: 128 }, (_, i) => ({ translatedText: `translated-${i}` }))),
           )
@@ -189,9 +179,7 @@ describe('GoogleTranslateV2Provider', () => {
             makeSuccessResponse(Array.from({ length: 2 }, (_, i) => ({ translatedText: `translated-${128 + i}` }))),
           );
 
-        const requests = Array.from({ length: 130 }, (_, i) =>
-          makeRequest({ text: `text-${i}`, targetLocale: 'es' }),
-        );
+        const requests = Array.from({ length: 130 }, (_, i) => makeRequest({ text: `text-${i}`, targetLocale: 'es' }));
 
         const results = await provider.translate(requests);
 
@@ -204,17 +192,14 @@ describe('GoogleTranslateV2Provider', () => {
       });
 
       it('sends exactly 128 texts in the first chunk', async () => {
-        const fetchSpy = vi.spyOn(globalThis, 'fetch')
+        const fetchSpy = vi
+          .spyOn(globalThis, 'fetch')
           .mockResolvedValueOnce(
             makeSuccessResponse(Array.from({ length: 128 }, (_, i) => ({ translatedText: `t-${i}` }))),
           )
-          .mockResolvedValueOnce(
-            makeSuccessResponse([{ translatedText: 't-128' }]),
-          );
+          .mockResolvedValueOnce(makeSuccessResponse([{ translatedText: 't-128' }]));
 
-        const requests = Array.from({ length: 129 }, (_, i) =>
-          makeRequest({ text: `text-${i}`, targetLocale: 'de' }),
-        );
+        const requests = Array.from({ length: 129 }, (_, i) => makeRequest({ text: `text-${i}`, targetLocale: 'de' }));
 
         await provider.translate(requests);
 

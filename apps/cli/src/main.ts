@@ -381,7 +381,7 @@ program
   .action(async (options) => {
     const { findSimilarCommand } = await import('./commands/find-similar');
     const raw = parseInt(options.maxResults, 10);
-    const maxResults = isNaN(raw) || raw < 1 ? 5 : raw;
+    const maxResults = Number.isNaN(raw) || raw < 1 ? 5 : raw;
     await findSimilarCommand({ ...options, maxResults });
   });
 

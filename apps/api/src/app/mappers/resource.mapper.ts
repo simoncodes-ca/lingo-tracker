@@ -1,7 +1,7 @@
 import type { AddResourceParams } from '@simoncodes-ca/core';
 import type { CreateResourceDto } from '@simoncodes-ca/data-transfer';
 
-export function mapDtoToAddResourceParams(dto: CreateResourceDto): AddResourceParams {
+export function mapDtoToAddResourceParams(dto: CreateResourceDto & { allLocales?: string[] }): AddResourceParams {
   return {
     key: dto.key,
     baseValue: dto.baseValue,
@@ -10,5 +10,6 @@ export function mapDtoToAddResourceParams(dto: CreateResourceDto): AddResourcePa
     targetFolder: dto.targetFolder,
     baseLocale: dto.baseLocale,
     translations: dto.translations,
+    allLocales: dto.allLocales,
   };
 }

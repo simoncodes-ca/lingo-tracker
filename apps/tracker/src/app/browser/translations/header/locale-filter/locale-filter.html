@@ -13,7 +13,7 @@
 
 <mat-menu #localeMenu="matMenu" class="locale-filter-menu">
   @if (multiSelect()) {
-    <div class="menu-header" (click)="$event.stopPropagation()">
+    <div class="menu-header" tabindex="0" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()">
       <button
         mat-button
         class="action-button"

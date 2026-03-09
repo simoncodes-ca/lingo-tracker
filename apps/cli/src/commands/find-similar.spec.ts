@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { findSimilarCommand, type FindSimilarOptions } from './find-similar';
+import { findSimilarCommand } from './find-similar';
 
 vi.mock('@simoncodes-ca/core', () => ({
   searchTranslations: vi.fn(),

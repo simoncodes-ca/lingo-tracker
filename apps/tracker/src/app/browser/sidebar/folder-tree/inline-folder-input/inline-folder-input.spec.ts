@@ -71,7 +71,7 @@ describe('InlineFolderInput', () => {
 
   it('should emit cancel event on Escape key', () => {
     const cancelSpy = vi.fn();
-    component.cancel.subscribe(cancelSpy);
+    component.cancelInput.subscribe(cancelSpy);
 
     component.onEscapeKey();
 
@@ -80,7 +80,7 @@ describe('InlineFolderInput', () => {
 
   it('should emit cancel event on blur', () => {
     const cancelSpy = vi.fn();
-    component.cancel.subscribe(cancelSpy);
+    component.cancelInput.subscribe(cancelSpy);
 
     component.onBlur();
 

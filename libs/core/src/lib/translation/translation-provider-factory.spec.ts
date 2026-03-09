@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createTranslationProvider } from './translation-provider-factory';
 import { GoogleTranslateV2Provider } from './google-translate-v2.provider';
-import { TranslationError } from './translation-provider';
 
 describe('createTranslationProvider', () => {
   describe('google-translate', () => {
