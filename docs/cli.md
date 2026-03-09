@@ -573,6 +573,7 @@ lingo-tracker bundle [options]
 
 - `--name <names>` - Bundle name(s) to generate (comma-separated). If not specified, generates all configured bundles
 - `--locale <locales>` - Specific locale(s) to generate (comma-separated). If not specified, generates all locales
+- `--token-casing <casing>` - Casing style for generated type token keys: `upperCase` or `camelCase`. Overrides any `tokenCasing` set in the config file. Default: `upperCase`
 - `--verbose` - Show detailed output including all warnings
 
 **What Bundle Generation Does:**
@@ -625,6 +626,11 @@ Combined options:
 lingo-tracker bundle --name core --locale en,fr --verbose
 ```
 
+Override token casing for generated types:
+```bash
+lingo-tracker bundle --token-casing camelCase
+```
+
 **Output:**
 
 Normal output (default):
@@ -669,6 +675,7 @@ Bundles are configured in `.lingo-tracker.json`:
 
 ```json
 {
+  "tokenCasing": "upperCase",
   "bundles": {
     "main": {
       "bundleName": "{locale}",
@@ -678,6 +685,7 @@ Bundles are configured in `.lingo-tracker.json`:
     "admin": {
       "bundleName": "admin-{locale}",
       "dist": "./dist/admin/i18n",
+      "tokenCasing": "camelCase",
       "collections": [
         {
           "name": "Admin",
@@ -711,6 +719,7 @@ Bundles are configured in `.lingo-tracker.json`:
 
 - `bundleName` - Output filename pattern (use `{locale}` placeholder for locale substitution)
 - `dist` - Output directory path (relative to project root)
+- `tokenCasing` (optional) - Casing style for generated type token keys: `"upperCase"` (default) or `"camelCase"`. When set on a bundle, overrides the global `tokenCasing`. See [Bundle Type Generation](./features/bundle-type-generation.md) for details
 - `collections` - Either `"All"` or array of collection definitions
   - `name` - Collection name from config
   - `bundledKeyPrefix` (optional) - Prefix to add to all keys from this collection
@@ -1196,6 +1205,7 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
   "importFolder": "dist/lingo-import",
   "baseLocale": "en",
   "locales": ["en", "fr-ca", "es"],
+  "tokenCasing": "upperCase",
   "collections": {
     "Main": {
       "translationsFolder": "apps/web/src/assets/i18n"
@@ -1208,8 +1218,9 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
 }
 ```
 
-- **Global fields** (`exportFolder`, `importFolder`, `baseLocale`, `locales`) apply to all collections by default
+- **Global fields** (`exportFolder`, `importFolder`, `baseLocale`, `locales`, `tokenCasing`) apply to all collections and bundles by default
 - **Per-collection fields** can override global settings for specific collections
+- **`tokenCasing`** (optional) - Controls the casing style for generated type token keys. Accepts `"upperCase"` (default, SCREAMING_SNAKE_CASE) or `"camelCase"`. Can be set globally or per-bundle. See [Bundle Type Generation](./features/bundle-type-generation.md) for details. Precedence: CLI flag `--token-casing` > per-bundle config > global config > default (`"upperCase"`)
 
 ---
 

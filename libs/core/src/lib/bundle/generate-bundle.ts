@@ -4,7 +4,12 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { BundleDefinition, CollectionBundleDefinition, EntrySelectionRule } from '../../config/bundle-definition';
+import type {
+  BundleDefinition,
+  CollectionBundleDefinition,
+  EntrySelectionRule,
+  TokenCasing,
+} from '../../config/bundle-definition';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { loadCollectionResources, type FlatResource } from './resource-loader';
 import { matchesPattern } from './pattern-matcher';
@@ -17,6 +22,8 @@ export interface GenerateBundleParams {
   readonly bundleDefinition: BundleDefinition;
   readonly config: LingoTrackerConfig;
   readonly locales?: string[];
+  /** CLI-level override for token casing. Takes precedence over all config values. */
+  readonly tokenCasing?: TokenCasing;
 }
 
 export interface GenerateBundleResult {
@@ -34,9 +41,13 @@ export interface GenerateBundleResult {
  * @returns Result with count of files generated and any warnings
  */
 export async function generateBundle(params: GenerateBundleParams): Promise<GenerateBundleResult> {
-  const { bundleKey, bundleDefinition, config, locales } = params;
+  const { bundleKey, bundleDefinition, config, locales, tokenCasing: tokenCasingOverride } = params;
   const warnings: string[] = [];
   const localesProcessed: string[] = [];
+
+  // Resolve token casing: CLI override → bundle config → global config → default
+  const resolvedTokenCasing: TokenCasing =
+    tokenCasingOverride ?? bundleDefinition.tokenCasing ?? config.tokenCasing ?? 'upperCase';
 
   const targetLocales = locales ?? config.locales;
   let filesGenerated = 0;
@@ -62,7 +73,7 @@ export async function generateBundle(params: GenerateBundleParams): Promise<Gene
   let typeGenerationResult: GenerateTypesResult | undefined;
   if (bundleDefinition.typeDist) {
     try {
-      typeGenerationResult = await generateBundleTypes(bundleKey, config);
+      typeGenerationResult = await generateBundleTypes(bundleKey, config, resolvedTokenCasing);
       if (typeGenerationResult.fileGenerated) {
         // We don't increment filesGenerated here as it tracks bundle JSON files
         // But we could add a note to warnings or a new field if needed

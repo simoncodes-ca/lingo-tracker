@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 
 const program = new Command();
 
@@ -125,6 +125,7 @@ program
   .option('--name <names>', 'Bundle name(s) - single name or comma-separated (e.g., core,admin)')
   .option('--locale <locales>', 'Locale(s) to generate - comma-separated (e.g., en,fr)')
   .option('--verbose', 'Show detailed output including warnings')
+  .addOption(new Option('--token-casing <casing>', 'Token property key casing').choices(['upperCase', 'camelCase']))
   .action(async (options) => {
     const { bundleCommand } = await import('./commands/bundle');
     await bundleCommand(options);

@@ -96,6 +96,16 @@ describe('generateBundleTypes', () => {
     });
   });
 
+  it('should generate camelCase property names when tokenCasing is camelCase', async () => {
+    vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'file-upload', value: 'Upload' }]);
+
+    await generateBundleTypes('main', mockConfig, 'camelCase');
+
+    expect(fs.writeFileSync).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('fileUpload'), 'utf-8');
+    const writtenContent = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+    expect(writtenContent).not.toContain('FILE_UPLOAD');
+  });
+
   it('should apply key prefixes if configured', async () => {
     const configWithPrefix: LingoTrackerConfig = {
       ...mockConfig,

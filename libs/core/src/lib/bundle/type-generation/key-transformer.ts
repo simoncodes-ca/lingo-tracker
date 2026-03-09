@@ -13,23 +13,27 @@ export function bundleKeyToConstantName(bundleKey: string): string {
 
 /**
  * Converts a translation key segment to a valid TypeScript property name.
- * Format: SCREAMING_SNAKE_CASE
  *
- * Rules:
- * - Replaces hyphens with underscores
- * - Converts entire segment to uppercase (no camelCase detection)
- * - Preserves numeric segments as-is
- * - Preserves leading/trailing underscores
- * - Allows reserved words
+ * When casing is 'upperCase' (default):
+ * - Format: SCREAMING_SNAKE_CASE
+ * - Replaces hyphens with underscores, uppercases the whole segment
+ * - "buttons" -> "BUTTONS", "file-upload" -> "FILE_UPLOAD"
  *
- * Examples:
- * - "buttons" -> "BUTTONS"
- * - "file-upload" -> "FILE_UPLOAD"
- * - "someKey" -> "SOMEKEY"
- * - "404" -> "404"
- * - "_internal" -> "_INTERNAL"
+ * When casing is 'camelCase':
+ * - Splits on hyphens; first word stays lowercase, subsequent words are capitalised
+ * - "buttons" -> "buttons", "file-upload" -> "fileUpload"
+ * - Non-hyphenated input is returned as-is: "someKey" -> "someKey"
  */
-export function segmentToPropertyName(segment: string): string {
+export function segmentToPropertyName(segment: string, casing: 'upperCase' | 'camelCase' = 'upperCase'): string {
+  if (casing === 'camelCase') {
+    const parts = segment.split('-').filter((part) => part.length > 0);
+    return parts
+      .map((part, index) =>
+        index === 0 ? part.toLowerCase() : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+      )
+      .join('');
+  }
+
   return segment.replace(/-/g, '_').toUpperCase();
 }
 

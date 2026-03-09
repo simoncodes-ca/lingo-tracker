@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { LingoTrackerConfig } from '../../../config/lingo-tracker-config';
+import type { TokenCasing } from '../../../config/bundle-definition';
 import { loadCollectionResources } from '../resource-loader';
 import { matchesPattern } from '../pattern-matcher';
 import { matchesTags } from '../tag-filter';
@@ -10,19 +11,23 @@ import { bundleKeyToConstantName } from './key-transformer';
 
 export interface GenerateTypesResult {
   bundleKey: string;
-  typeDist: string | null;
+  typeDist: string | undefined;
   keysCount: number;
   fileGenerated: boolean;
   skippedReason?: 'no-typeDist' | 'empty-bundle';
 }
 
-export async function generateBundleTypes(bundleKey: string, config: LingoTrackerConfig): Promise<GenerateTypesResult> {
+export async function generateBundleTypes(
+  bundleKey: string,
+  config: LingoTrackerConfig,
+  tokenCasing: TokenCasing = 'upperCase',
+): Promise<GenerateTypesResult> {
   const bundleDef = config.bundles?.[bundleKey];
 
   if (!bundleDef || !bundleDef.typeDist) {
     return {
       bundleKey,
-      typeDist: null,
+      typeDist: undefined,
       keysCount: 0,
       fileGenerated: false,
       skippedReason: 'no-typeDist',
@@ -99,7 +104,7 @@ export async function generateBundleTypes(bundleKey: string, config: LingoTracke
   }
 
   // Generate content
-  const hierarchy = buildTypeHierarchy(sortedKeys);
+  const hierarchy = buildTypeHierarchy(sortedKeys, tokenCasing);
   const constantName = bundleKeyToConstantName(bundleKey);
   const fileContent = `${generateFileHeader(bundleKey)}\n\n${serializeHierarchy(hierarchy, constantName)}`;
 
