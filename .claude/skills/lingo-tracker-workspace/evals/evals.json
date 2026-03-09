@@ -1,0 +1,98 @@
+{
+  "skill_name": "lingo-tracker",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The collections list component has these hardcoded strings in its template: a button that says 'Add Collection', a heading that says 'Your Collections', and an empty state message 'No collections yet. Create one to get started.' Extract them all into translation resources and update the component to use Transloco.",
+      "expected_output": "Runs build:cli, adds 3 resources via add-resource CLI with appropriate keys under collections.*, runs bundle, updates template with TRACKER_TOKENS and TranslocoPipe",
+      "assertions": [
+        {
+          "id": "a1",
+          "text": "Runs ensure-cli.sh script (or checks dist/apps/cli/main.js exists) before running any npx lingo-tracker command"
+        },
+        { "id": "a2", "text": "Uses add-resource CLI with --collection trackerResources for each string" },
+        { "id": "a3", "text": "Runs bundle --name tracker after adding resources" },
+        { "id": "a4", "text": "Updates template to use TRACKER_TOKENS with | transloco pipe" },
+        { "id": "a5", "text": "Imports TranslocoPipe in the component" }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Add a success toast notification that says 'Translation verified successfully' shown when the user verifies a translation entry in the browser component.",
+      "expected_output": "Detects the toast message needs translating, adds resource under browser.toast.verifiedSuccess (or similar), runs bundle, injects TranslocoService, calls transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.VERIFIED_SUCCESS) in the verify action method",
+      "assertions": [
+        { "id": "b1", "text": "Adds a translation resource for the toast message text" },
+        { "id": "b2", "text": "Uses a key under browser.* domain" },
+        { "id": "b3", "text": "Runs bundle after adding resource" },
+        { "id": "b4", "text": "Uses TranslocoService (not pipe) for imperative translation in TypeScript" },
+        { "id": "b5", "text": "Does NOT hardcode the string in the component TypeScript" }
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I want to add a snackbar message 'Collection renamed successfully' to the rename collection flow.",
+      "expected_output": "Recognises the message needs a translation resource even though translation is not mentioned, adds resource under collections.toast.renamedSuccess, runs bundle, uses TranslocoService imperatively",
+      "assertions": [
+        {
+          "id": "c1",
+          "text": "Adds a translation resource for the snackbar text without user needing to explicitly ask"
+        },
+        { "id": "c2", "text": "Key is under collections.* domain with a toast sub-key" },
+        { "id": "c3", "text": "Runs bundle to regenerate tokens" },
+        { "id": "c4", "text": "Uses TRACKER_TOKENS constant rather than a raw string key" }
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "In the data tab, add a placeholder text 'Search by key or value...' to the search input field.",
+      "expected_output": "Recognises placeholder is translatable, adds resource under data.search.placeholderX or data.searchPlaceholder, runs bundle, uses [placeholder] binding with transloco pipe",
+      "assertions": [
+        { "id": "d1", "text": "Adds a translation resource for the placeholder string" },
+        { "id": "d2", "text": "Key is under browser.* domain (e.g. browser.searchTranslations)" },
+        { "id": "d3", "text": "Runs bundle after adding resource" },
+        { "id": "d4", "text": "Uses [placeholder] attribute binding with | transloco pipe in template" }
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Add a Cancel button to the resource deletion confirmation dialog in the browser component.",
+      "expected_output": "Runs find-similar.sh with 'Cancel', finds common.actions.cancel (or equivalent) with high similarity, reuses the existing key — does NOT call add-resource. Updates template to use the existing TRACKER_TOKENS constant for cancel.",
+      "assertions": [
+        {
+          "id": "e1",
+          "text": "Runs find-similar.sh (or npx lingo-tracker find-similar) before deciding to add a resource"
+        },
+        {
+          "id": "e2",
+          "text": "The find-similar output includes an existing key for 'Cancel' (e.g. common.actions.cancel) with high similarity"
+        },
+        { "id": "e3", "text": "Does NOT call add-resource for 'Cancel' — reuses the existing key" },
+        { "id": "e4", "text": "Updates the template to use the existing TRACKER_TOKENS token for the cancel action" }
+      ],
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "Add a button labelled 'Cancel pending import' to the import dialog in the data component.",
+      "expected_output": "Runs find-similar.sh with 'Cancel pending import', finds common.actions.cancel but determines it is too context-specific for reuse, calls add-resource with a new key like data.importDialog.cancelPendingImport, runs bundle, updates template.",
+      "assertions": [
+        { "id": "f1", "text": "Runs find-similar.sh (or npx lingo-tracker find-similar) before adding the resource" },
+        {
+          "id": "f2",
+          "text": "Correctly determines the match is not suitable for reuse (different meaning / context-specific)"
+        },
+        {
+          "id": "f2b",
+          "text": "Agent explicitly recognises that the full string 'Cancel pending import' is distinct from the generic 'Cancel' label before deciding to create a new entry"
+        },
+        { "id": "f3", "text": "Calls add-resource with a new key under data.* or importDialog.* domain" },
+        { "id": "f4", "text": "Runs bundle after adding the new resource" }
+      ],
+      "files": []
+    }
+  ]
+}

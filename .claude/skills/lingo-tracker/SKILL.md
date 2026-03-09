@@ -13,24 +13,58 @@ Use this skill when the user wants to:
 
 ## Workflow Overview
 
-The full i18n workflow is a 4-step process:
+The full i18n workflow is a 5-step process:
 
 1. **Detect** hardcoded strings in templates and TypeScript
-2. **Create resources** via CLI (`npx lingo-tracker add-resource --collection trackerResources ...`)
-3. **Regenerate bundle** via CLI (`npx lingo-tracker bundle --name tracker`)
-4. **Update code** to use typed token constants with Transloco pipes/service
+2. **Check for similar values** before creating a new resource
+3. **Create resources** via CLI (`npx lingo-tracker add-resource --collection trackerResources ...`) — only if no suitable existing key was found
+4. **Regenerate bundle** via CLI (`npx lingo-tracker bundle --name tracker`)
+5. **Update code** to use typed token constants with Transloco pipes/service
 
 Always use non-interactive CLI mode — pass all values as `--flags`. Never rely on interactive prompts.
 
+## File Reading — Stay Focused
+
+Read only what the specific task requires:
+
+- **For a component task**: read only that component's `.ts` and `.html` files
+- **Do not** explore broadly or read sibling components unless the task explicitly involves them
+- **Do not** read `.lingo-tracker.json` — the collection name (`trackerResources`) and bundle name (`tracker`) are already in this file
+- **Do not** read `tracker-resources.ts` proactively — only read it after running `bundle` when you need the generated token names
+
 ## Prerequisites
 
-Before running any `npx lingo-tracker` command, ensure the CLI is built:
+Before running any `npx lingo-tracker` command, ensure the CLI is built. Use the bundled script — it skips the build if already compiled:
 
 ```bash
-pnpm run build:cli
+bash .claude/skills/lingo-tracker/scripts/ensure-cli.sh
 ```
 
-The binary is defined in `package.json` (`"bin": { "lingo-tracker": "dist/apps/cli/main.js" }`), so `npx lingo-tracker` only works after building.
+The script checks for `dist/apps/cli/main.js`. If it exists, it exits immediately (no rebuild). If missing, it runs `pnpm run build:cli`.
+
+Do NOT run `pnpm run build:cli` directly — always use `ensure-cli.sh` to avoid unnecessary builds.
+
+## Step 2 — Check for Similar Values
+
+Before calling `add-resource` for any detected string, run:
+
+```bash
+bash .claude/skills/lingo-tracker/scripts/find-similar.sh "<the string value>"
+```
+
+**If the command returns any results, evaluate each match** (the tool already filters to ≥ 80% similarity):
+
+- **Reuse the existing key if**:
+  - The stored value is identical or nearly identical (≥ 95% similarity)
+  - The existing key is a generic action label under `common.actions.*` or `common.*` (e.g. `common.actions.cancel`, `common.actions.save`)
+  - The meaning is the same even if phrasing differs slightly
+
+- **Create a new entry (call add-resource) if**:
+  - The existing key belongs to a different domain and has context-specific meaning
+  - The match is only partial and the wording serves a distinct purpose
+  - The command outputs "No similar values found" (no results returned)
+
+When reusing, use the existing key directly in the code — do not call `add-resource`.
 
 ## Default Collection & Bundle
 
@@ -38,8 +72,6 @@ The binary is defined in `package.json` (`"bin": { "lingo-tracker": "dist/apps/c
 - **Bundle**: `tracker` (outputs to `apps/tracker/src/assets/i18n`, tokens at `apps/tracker/src/i18n-types/tracker-resources.ts`)
 - **Base locale**: `en`
 - **Token constant**: `TRACKER_TOKENS` (exported from `apps/tracker/src/i18n-types/tracker-resources.ts`)
-
-Full config is in `.lingo-tracker.json` at the repo root.
 
 ## Detecting Hardcoded Strings
 
@@ -65,6 +97,8 @@ Keys use **camelCase dot-delimited segments**: `domain.subdomain.entryKey`
 - **Tags**: Use only 1 tag — the top-level domain from the key (e.g., key `browser.similarTranslations.title` → tag `browser`)
 
 ## CLI Commands Reference
+
+**Never directly edit `resource_entries.json`, `tracker_meta.json`, or any JSON bundle files.** Always use the CLI commands below — they handle checksums, metadata, and validation automatically. Direct edits will corrupt metadata and bypass validation.
 
 All commands use the `npx lingo-tracker` prefix.
 
@@ -106,95 +140,10 @@ npx lingo-tracker normalize --collection trackerResources
 npx lingo-tracker validate --collection trackerResources
 ```
 
-## Template Patterns
+## Code Patterns
 
-Use the `transloco` pipe with typed token constants:
+For template and TypeScript patterns (pipe usage, component setup, imperative translation, TranslocoPipe vs TranslocoModule), read:
 
-```html
-<!-- Simple text -->
-{{ TOKENS.DOMAIN.KEY | transloco }}
+`.claude/skills/lingo-tracker/references/patterns.md`
 
-<!-- With interpolation parameters -->
-{{ TOKENS.DOMAIN.KEY_X | transloco : { param: value } }}
-
-<!-- Attribute binding -->
-[attr.aria-label]="TOKENS.DOMAIN.KEY | transloco"
-
-<!-- Placeholder -->
-[placeholder]="TOKENS.DOMAIN.KEY | transloco"
-
-<!-- Conditional -->
-{{ (condition ? TOKENS.A : TOKENS.B) | transloco }}
-```
-
-## TypeScript Patterns
-
-### Component setup
-
-```typescript
-import { TranslocoPipe } from '@jsverse/transloco';
-import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
-
-@Component({
-  standalone: true,
-  imports: [TranslocoPipe, /* ... */],
-  // ...
-})
-export class MyComponent {
-  readonly TOKENS = TRACKER_TOKENS;
-}
-```
-
-The token constant name matches what's exported from the generated `typeDist` file (e.g., `TRACKER_TOKENS`). Check the generated file to confirm.
-
-### Imperative translation (snackbars, dialogs, dynamic strings)
-
-```typescript
-import { TranslocoService } from '@jsverse/transloco';
-import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
-
-export class MyComponent {
-  private readonly transloco = inject(TranslocoService);
-
-  doSomething(): void {
-    const message = this.transloco.translate(TRACKER_TOKENS.DOMAIN.KEY);
-    // With params:
-    const messageWithParam = this.transloco.translate(TRACKER_TOKENS.DOMAIN.KEY_X, { name: value });
-  }
-}
-```
-
-### Using TranslocoModule vs TranslocoPipe
-
-- **Templates with `| transloco` pipe**: Import `TranslocoPipe` (preferred) or `TranslocoModule`
-- **Imperative only (no pipe in template)**: Just inject `TranslocoService` — no module import needed
-
-## Common Scenarios
-
-### New component with translations
-1. Identify all user-visible strings
-2. Choose keys following naming conventions
-3. Run `add-resource` for each string
-4. Run `bundle` to regenerate tokens
-5. Set up component with `TOKENS` and `TranslocoPipe`
-6. Replace strings in template with `{{ TOKENS.X.Y | transloco }}`
-
-### Extracting hardcoded strings from existing component
-1. Read the template and TypeScript files
-2. List all hardcoded user-visible strings
-3. Check existing tokens — reuse `common.actions.*` where applicable
-4. Run `add-resource` for new keys only
-5. Run `bundle` to regenerate tokens
-6. Update template and TypeScript to use tokens
-
-### Adding interpolation parameters
-1. Use `X` suffix in the key name
-2. Include `{{ paramName }}` in the `--value` text (ICU format)
-3. After bundle, pass params: `TOKENS.KEY_X | transloco : { paramName: value }`
-
-## Reference Files
-
-- `.lingo-tracker.json` — Project configuration (collections, bundles, locales)
-- `apps/tracker/src/i18n-types/tracker-resources.ts` — Generated token constants example
-- `apps/tracker/src/app/collections/collections-manager.ts` — TypeScript TranslocoService usage patterns
-- `apps/tracker/src/app/shared/components/confirmation-dialog/confirmation-dialog.ts` — Imperative translation with params
+Read this only when you need to write or update Angular code — not upfront.

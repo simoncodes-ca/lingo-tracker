@@ -11,7 +11,10 @@ import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { of, throwError } from 'rxjs';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 
 describe('TranslationEditorDialog', () => {
   let component: TranslationEditorDialog;
@@ -37,8 +40,10 @@ describe('TranslationEditorDialog', () => {
   const setupTestBed = async (data: TranslationEditorDialogData) => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [TranslationEditorDialog, BrowserAnimationsModule],
+      imports: [TranslationEditorDialog, BrowserAnimationsModule, getTranslocoTestingModule()],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: MatDialog, useValue: mockDialog },
         { provide: BrowserApiService, useValue: mockBrowserApi },
@@ -89,8 +94,8 @@ describe('TranslationEditorDialog', () => {
     });
 
     it('should display create mode title and subtitle', () => {
-      expect(component.dialogTitle()).toBe('Create Translation');
-      expect(component.dialogSubtitle()).toBe('Add a new translation entry to your collection');
+      expect(component.dialogTitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CREATETITLE);
+      expect(component.dialogSubtitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CREATESUBTITLE);
     });
 
     it('should display edit mode title and subtitle', async () => {
@@ -101,8 +106,8 @@ describe('TranslationEditorDialog', () => {
       });
       await setupTestBed(editData);
 
-      expect(component.dialogTitle()).toBe('Edit Translation');
-      expect(component.dialogSubtitle()).toBe('Update translation values and metadata');
+      expect(component.dialogTitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.EDITTITLE);
+      expect(component.dialogSubtitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.EDITSUBTITLE);
     });
 
     it('should display correct folder path', () => {
@@ -165,13 +170,13 @@ describe('TranslationEditorDialog', () => {
     it('should return correct error message for required key', () => {
       component.form.controls.key.setValue('');
       component.form.controls.key.markAsTouched();
-      expect(component.getKeyErrorMessage()).toBe('Translation key is required');
+      expect(component.getKeyErrorMessage()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.KEYREQUIRED);
     });
 
     it('should return correct error message for invalid pattern', () => {
       component.form.controls.key.setValue('test.key');
       component.form.controls.key.markAsTouched();
-      expect(component.getKeyErrorMessage()).toBe('Only letters, numbers, underscores, and hyphens allowed');
+      expect(component.getKeyErrorMessage()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.KEYPATTERNERROR);
     });
   });
 
@@ -481,11 +486,11 @@ describe('TranslationEditorDialog', () => {
       const editData = createMockData('edit', mockResource);
       await setupTestBed(editData);
 
-      expect(component.saveButtonLabel()).toBe('Update Translation');
+      expect(component.saveButtonLabel()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.UPDATEBUTTON);
     });
 
     it('should display correct save button label in create mode', () => {
-      expect(component.saveButtonLabel()).toBe('Save Translation');
+      expect(component.saveButtonLabel()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.SAVEBUTTON);
     });
 
     it('should pre-populate other locale translations in edit mode', async () => {
@@ -708,9 +713,7 @@ describe('TranslationEditorDialog', () => {
     });
 
     it('should omit skippedLocales from create result when API returns empty array', async () => {
-      mockBrowserApi.createResource.mockReturnValue(
-        of({ entriesCreated: 1, created: true, skippedLocales: [] }),
-      );
+      mockBrowserApi.createResource.mockReturnValue(of({ entriesCreated: 1, created: true, skippedLocales: [] }));
 
       component.form.controls.key.setValue('test_key');
       component.form.controls.baseValue.setValue('Test Value');
@@ -747,9 +750,9 @@ describe('TranslationEditorDialog', () => {
       dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
-        updateResource: vi.fn().mockReturnValue(
-          of({ resolvedKey: 'common.buttons.existing_key', updated: true, skippedLocales: ['es'] }),
-        ),
+        updateResource: vi
+          .fn()
+          .mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true, skippedLocales: ['es'] })),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {
@@ -779,9 +782,9 @@ describe('TranslationEditorDialog', () => {
       dialogRef = { close: vi.fn(), afterOpened: vi.fn().mockReturnValue(of(undefined)) };
       mockBrowserApi = {
         createResource: vi.fn().mockReturnValue(of({})),
-        updateResource: vi.fn().mockReturnValue(
-          of({ resolvedKey: 'common.buttons.existing_key', updated: true, skippedLocales: [] }),
-        ),
+        updateResource: vi
+          .fn()
+          .mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true, skippedLocales: [] })),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
       mockDialog = {

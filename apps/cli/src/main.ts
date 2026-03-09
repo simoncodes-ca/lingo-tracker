@@ -368,4 +368,17 @@ Notes:
     await validateCommand({ allowTranslated: options.allowTranslated });
   });
 
+program
+  .command('find-similar')
+  .description('Find existing translation resources with similar base locale values')
+  .option('--collection <name>', 'Name of the collection to search')
+  .option('--value <text>', 'Base locale text to search for similar values')
+  .option('--max-results <n>', 'Maximum number of results to return (default: 5)', '5')
+  .action(async (options) => {
+    const { findSimilarCommand } = await import('./commands/find-similar');
+    const raw = parseInt(options.maxResults, 10);
+    const maxResults = isNaN(raw) || raw < 1 ? 5 : raw;
+    await findSimilarCommand({ ...options, maxResults });
+  });
+
 program.parse();

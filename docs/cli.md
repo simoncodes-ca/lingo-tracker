@@ -45,6 +45,9 @@ lingo-tracker init [options]
 - `--importFolder <path>` - Input folder for imports (default: `dist/lingo-import`)
 - `--baseLocale <locale>` - Base/authoring locale (default: `en`)
 - `--locales <locales...>` - Space-separated list of supported locales (e.g., `en fr-ca es de`)
+- `--enableAutoTranslation` - Enable automatic translation via an external provider
+- `--translationProvider <provider>` - Translation provider to use (default: `google-translate`). Required when `--enableAutoTranslation` is set
+- `--translationApiKeyEnv <envVar>` - Name of the environment variable holding the provider API key (default: `GOOGLE_TRANSLATE_API_KEY`). Required when `--enableAutoTranslation` is set
 
 **Examples:**
 
@@ -64,10 +67,23 @@ lingo-tracker init \
   --locales en fr-ca es de
 ```
 
+Non-interactive mode with auto-translation enabled:
+```bash
+lingo-tracker init \
+  --collectionName Main \
+  --translationsFolder apps/web/src/assets/i18n \
+  --baseLocale en \
+  --locales en fr-ca es de \
+  --enableAutoTranslation \
+  --translationProvider google-translate \
+  --translationApiKeyEnv GOOGLE_TRANSLATE_API_KEY
+```
+
 **Notes:**
 - Run this command once in your project root to create `.lingo-tracker.json`
 - Creates the initial configuration with one collection
 - Commit `.lingo-tracker.json` to version control
+- When `--enableAutoTranslation` is set, the `translation` block is written to `.lingo-tracker.json` and new/edited resources are automatically translated via the configured provider
 
 ---
 
@@ -754,6 +770,70 @@ When multiple collections contribute the same key:
 - Base locale translations use the `source` property; other locales use their locale key
 - Warnings include empty bundles, missing collections, and missing translations
 - For detailed examples and integration guides, see [Bundling Guide](./guides/bundling.md)
+
+---
+
+## Search Commands
+
+### find-similar
+
+Find existing translation resources whose base locale value is similar to a given string. Useful for detecting duplicate or near-duplicate translations before adding a new resource.
+
+**Usage:**
+
+```bash
+lingo-tracker find-similar [options]
+```
+
+**Options:**
+
+- `--collection <name>` - Collection to search (required)
+- `--value <text>` - Base locale text to compare against (required)
+- `--max-results <n>` - Maximum number of results to return (default: `5`)
+
+**Examples:**
+
+Find resources similar to "Save":
+```bash
+lingo-tracker find-similar \
+  --collection Main \
+  --value "Save"
+```
+
+Limit results:
+```bash
+lingo-tracker find-similar \
+  --collection Main \
+  --value "Are you sure you want to delete this item?" \
+  --max-results 3
+```
+
+**Output:**
+
+When matches are found:
+```
+Similar values found for "Save":
+  buttons.save → "Save" (similarity: 100%)
+  buttons.saveAndClose → "Save and Close" (similarity: 89%)
+```
+
+When no matches meet the similarity threshold:
+```
+No similar values found for "Save draft".
+```
+
+**How It Works:**
+
+1. Runs a broad substring pre-filter via `searchTranslations` (up to 50 candidates)
+2. Scores each candidate using normalised Levenshtein distance (case-insensitive)
+3. Keeps only results with a similarity score ≥ 80%
+4. Returns top N results sorted by score descending
+
+**Notes:**
+- Only the base locale value is compared (not translations)
+- Only `exact-value` and `partial-value` match types are considered; key-based matches are excluded
+- Similarity threshold is fixed at 80% — results below this are not shown
+- Non-interactive only; does not prompt for missing options
 
 ---
 
