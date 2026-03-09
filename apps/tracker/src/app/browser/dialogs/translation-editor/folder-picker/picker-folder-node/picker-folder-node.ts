@@ -93,7 +93,7 @@ export class PickerFolderNode {
    */
   onFolderClick(): void {
     const folderPath = this.folder().fullPath;
-    this.select.emit(folderPath);
+    this.folderSelect.emit(folderPath);
     if (this.hasChildren()) {
       this.toggleExpand.emit(folderPath);
     }
