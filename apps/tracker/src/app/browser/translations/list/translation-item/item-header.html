@@ -1,13 +1,13 @@
 <!-- Full header with drag handle, key chip, tags, rollup and actions -->
 <div class="item-header">
-  <mat-icon class="translation-drag-handle" cdkDragHandle aria-label="Drag to move translation">drag_indicator</mat-icon>
+  <mat-icon class="translation-drag-handle" cdkDragHandle [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.DRAGTOMOVEARIALABEL | transloco">drag_indicator</mat-icon>
   <button
     class="key-chip"
     type="button"
     (click)="onCopyKey()"
     (keydown.enter)="onCopyKey()"
     [matTooltip]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
-    [attr.aria-label]="'Copy key'"
+    [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.COPYKEYARIALABEL | transloco"
   >
     <span class="key-text" [innerHTML]="(fullKey() | truncateKey) | highlight : searchQuery()"></span>
     <mat-icon class="copy-icon">content_copy</mat-icon>
@@ -38,7 +38,7 @@
         type="button"
         [disabled]="!comment()"
         (click)="onCommentClick($event)"
-        [attr.aria-label]="showComment() ? 'Hide comment' : 'Show comment'"
+        [attr.aria-label]="(showComment() ? TOKENS.BROWSER.TRANSLATIONITEM.HIDECOMMENTARIALABEL : TOKENS.BROWSER.TRANSLATIONITEM.SHOWCOMMENTARIALABEL) | transloco"
       >
         <mat-icon>{{ commentIcon() }}</mat-icon>
         @if (commentHasMatch()) {
@@ -51,17 +51,28 @@
       mat-icon-button
       type="button"
       [matMenuTriggerFor]="menu"
-      [attr.aria-label]="'More actions'"
+      [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.MOREACTIONSARIALABEL | transloco"
     >
       <mat-icon>more_vert</mat-icon>
     </button>
 
     <mat-menu #menu="matMenu">
-      <button mat-menu-item (click)="onEdit()" aria-label="Edit translation">
+      <button mat-menu-item (click)="onEdit()" [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.EDITARIALABEL | transloco">
         <mat-icon>edit</mat-icon>
         <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
       </button>
-      <button mat-menu-item (click)="onDelete()" aria-label="Delete translation">
+      @if (translationEnabled()) {
+        <!-- Auto-translate menu item: shows spinner while translating -->
+        <button mat-menu-item (click)="onTranslate()" [disabled]="translateDisabled()" [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.TRANSLATEARIALABEL | transloco">
+          @if (isTranslating()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            <mat-icon>translate</mat-icon>
+          }
+          <span>{{ TOKENS.COMMON.ACTIONS.TRANSLATE | transloco }}</span>
+        </button>
+      }
+      <button mat-menu-item (click)="onDelete()" [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.DELETEARIALABEL | transloco">
         <mat-icon>delete</mat-icon>
         <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
       </button>

@@ -1,9 +1,11 @@
 import { Component, ChangeDetectionStrategy, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import type { SearchResultDto } from '@simoncodes-ca/data-transfer';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 
 type ComponentState = 'idle' | 'loading' | 'empty' | 'results';
 
@@ -13,9 +15,11 @@ type ComponentState = 'idle' | 'loading' | 'empty' | 'results';
   templateUrl: './similar-translations.html',
   styleUrls: ['./similar-translations.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, TranslocoPipe, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
 })
 export class SimilarTranslations {
+  readonly TOKENS = TRACKER_TOKENS;
+
   // Inputs
   results = input.required<SearchResultDto[]>();
   isLoading = input<boolean>(false);

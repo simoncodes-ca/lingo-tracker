@@ -3,6 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconButton } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
@@ -24,6 +25,7 @@ import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
     MatMenuModule,
     MatTooltipModule,
     MatIconButton,
+    MatProgressSpinnerModule,
     CdkDragHandle,
     TranslocoPipe,
     TruncateKeyPipe,
@@ -62,6 +64,15 @@ export class TranslationItemHeader {
   /** Hide the comment toggle button (used in full mode where comment is shown inline) */
   hideCommentButton = input<boolean>(false);
 
+  /** Whether auto-translation is enabled for this collection */
+  translationEnabled = input<boolean>(false);
+
+  /** Whether the translate action is disabled (no translatable locales or translation in progress) */
+  translateDisabled = input<boolean>(false);
+
+  /** Whether a translation is currently in progress for this item */
+  isTranslating = input<boolean>(false);
+
   /** Emitted when user clicks copy key button */
   copyKey = output<string>();
 
@@ -73,6 +84,9 @@ export class TranslationItemHeader {
 
   /** Emitted when user selects Delete from menu */
   deleteAction = output<void>();
+
+  /** Emitted when user selects Translate from menu */
+  translateAction = output<void>();
 
   readonly TOKENS = TRACKER_TOKENS;
 
@@ -103,6 +117,10 @@ export class TranslationItemHeader {
 
   onDelete(): void {
     this.deleteAction.emit();
+  }
+
+  onTranslate(): void {
+    this.translateAction.emit();
   }
 
   onCommentClick(event: MouseEvent): void {

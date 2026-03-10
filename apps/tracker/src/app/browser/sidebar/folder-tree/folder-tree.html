@@ -5,7 +5,7 @@
       [placeholder]="(TOKENS.BROWSER.FILTERFOLDERS | transloco)"
       [value]="store.folderTreeFilter()"
       [disabled]="store.isDisabled()"
-      [ariaLabel]="'Filter folders'"
+      [ariaLabel]="TOKENS.BROWSER.FOLDERTREE.FILTERFOLDERSARIALABEL | transloco"
       (valueChange)="onSearchChange($event)"
     />
     <mat-button-toggle-group
@@ -17,15 +17,15 @@
     >
       <mat-button-toggle
         value="current"
-        matTooltip="Show only current folder"
-        aria-label="Show only current folder"
+        [matTooltip]="TOKENS.BROWSER.FOLDERTREE.SHOWCURRENTFOLDERTOOLTIP | transloco"
+        [attr.aria-label]="TOKENS.BROWSER.FOLDERTREE.SHOWCURRENTFOLDERTOOLTIP | transloco"
       >
         <mat-icon>folder</mat-icon>
       </mat-button-toggle>
       <mat-button-toggle
         value="nested"
-        matTooltip="Show all nested resources"
-        aria-label="Show all nested resources"
+        [matTooltip]="TOKENS.BROWSER.FOLDERTREE.SHOWNESTEDRESOURCESTOOLTIP | transloco"
+        [attr.aria-label]="TOKENS.BROWSER.FOLDERTREE.SHOWNESTEDRESOURCESTOOLTIP | transloco"
       >
         <mat-icon>account_tree</mat-icon>
       </mat-button-toggle>
@@ -35,8 +35,8 @@
       type="button"
       (click)="onAddFolderButtonClick()"
       [disabled]="store.isDisabled()"
-      aria-label="Add folder"
-      matTooltip="Add folder (Ctrl+Shift+N)"
+      [attr.aria-label]="TOKENS.BROWSER.FOLDERTREE.ADDFOLDERARIALABEL | transloco"
+      [matTooltip]="TOKENS.BROWSER.FOLDERTREE.ADDFOLDERTOOLTIP | transloco"
       class="add-folder-button"
     >
       <mat-icon>create_new_folder</mat-icon>
@@ -60,13 +60,22 @@
   }
 
   <!-- Empty State -->
-  @if (!store.isFolderTreeLoading() && !store.error() && store.filteredFolders().length === 0) {
+  @if (!store.isFolderTreeLoading() && !store.error() && store.filteredFolders().length === 0 && !isAddingFolder()) {
     <div class="empty-state">
       <mat-icon class="empty-icon">folder_off</mat-icon>
       <p class="empty-text">
         {{ (store.folderTreeFilter() ? TOKENS.BROWSER.NOFOLDERSMATCHSEARCH : TOKENS.BROWSER.NOFOLDERSFOUND) | transloco }}
       </p>
     </div>
+  }
+
+  <!-- Root-level inline folder input (shown even when collection is empty) -->
+  @if (isAddingFolder() && addFolderParentPath() === null) {
+    <app-inline-folder-input
+      [parentPath]="null"
+      (confirm)="onFolderConfirm($event)"
+      (cancelInput)="onFolderCancel()"
+    />
   }
 
   <!-- Folder Tree -->
@@ -77,13 +86,6 @@
       role="tree"
       (mousemove)="activeDragData() ? onDragMoved($event) : null"
     >
-      @if (isAddingFolder() && addFolderParentPath() === null) {
-        <app-inline-folder-input
-          [parentPath]="null"
-          (confirm)="onFolderConfirm($event)"
-          (cancel)="onFolderCancel()"
-        />
-      }
       @for (folder of store.filteredFolders(); track folder.fullPath) {
         <app-folder-node
           [folder]="folder"

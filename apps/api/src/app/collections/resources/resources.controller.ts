@@ -20,6 +20,8 @@ import {
   deleteResource,
   moveResource,
   editResource,
+  translateExistingResource,
+  TranslationError,
   searchTranslations,
   searchResourceTree,
   extractSubtree,
@@ -44,6 +46,8 @@ import type {
   SearchResultsDto,
   CacheStatusDto,
   TreeStatusResponseDto,
+  TranslateResourceDto,
+  TranslateResourceResponseDto,
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
@@ -59,6 +63,71 @@ export class ResourcesController {
     private readonly configService: ConfigService,
     private readonly cacheService: CollectionCacheService,
   ) {}
+
+  @Post('translate')
+  async translateResource(
+    @Param('collectionName') collectionName: string,
+    @Body() dto: TranslateResourceDto,
+  ): Promise<TranslateResourceResponseDto> {
+    try {
+      const decodedCollectionName = decodeURIComponent(collectionName);
+      const config = this.configService.getConfig();
+
+      if (!config.collections || !config.collections[decodedCollectionName]) {
+        throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
+      }
+
+      const collection = config.collections[decodedCollectionName];
+      const translationConfig = collection.translation ?? config.translation;
+
+      if (!translationConfig?.enabled) {
+        throw new HttpException('Auto-translation is not enabled for this collection', HttpStatus.UNPROCESSABLE_ENTITY);
+      }
+
+      const translationsFolder = collection.translationsFolder;
+      const baseLocale = collection.baseLocale || config.baseLocale || 'en';
+      const allLocales = collection.locales ?? config.locales ?? [];
+
+      const result = await translateExistingResource({
+        key: dto.key,
+        translationsFolder,
+        translationConfig,
+        allLocales,
+        baseLocale,
+        cwd: process.cwd(),
+      });
+
+      this.cacheService.addResourceToCache(
+        decodedCollectionName,
+        result.entry,
+        dto.key.split('.').slice(0, -1).join('.'),
+      );
+
+      const resource = mapResourceEntryToSummary(result.entry);
+
+      return {
+        resource,
+        skippedLocales: result.skippedLocales,
+        translatedCount: result.translatedCount,
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException || error instanceof HttpException) {
+        throw error;
+      }
+
+      if (error instanceof TranslationError) {
+        throw new HttpException(`Translation provider error: ${error.message}`, HttpStatus.BAD_GATEWAY);
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Error translating resource';
+
+      if (errorMessage.includes('Resource not found')) {
+        throw new NotFoundException(errorMessage);
+      }
+
+      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
   @Post()
   async createResources(
@@ -76,7 +145,8 @@ export class ResourcesController {
       const collection = config.collections[decodedCollectionName];
       const translationsFolder = collection.translationsFolder;
       const baseLocale = collection.baseLocale || config.baseLocale || 'en';
-      const locales = collection.locales || config.locales || [];
+      const locales = collection.locales ?? config.locales ?? [];
+      const translationConfig = collection.translation ?? config.translation;
 
       // Normalize to array
       const resources = Array.isArray(body) ? body : [body];
@@ -91,20 +161,28 @@ export class ResourcesController {
       for (const resource of resources) {
         try {
           const resourceBaseLocale = resource.baseLocale || baseLocale;
+          const hasExplicitTranslations = resource.translations && resource.translations.length > 0;
+          const canAutoTranslate = translationConfig?.enabled && !hasExplicitTranslations;
 
-          // If no translations provided, create entries for all non-base locales with base value
-          const translations =
-            resource.translations && resource.translations.length > 0
-              ? resource.translations
+          // When auto-translation is enabled and no explicit translations provided,
+          // let addResource handle translation via the configured provider.
+          // Otherwise, fall back to default translations (copies base value with 'new' status).
+          const translations = hasExplicitTranslations
+            ? resource.translations
+            : canAutoTranslate
+              ? undefined
               : createDefaultTranslations(locales, resourceBaseLocale, resource.baseValue);
 
           const params = mapDtoToAddResourceParams({
             ...resource,
             baseLocale: resourceBaseLocale,
             translations,
+            ...(canAutoTranslate && { allLocales: locales }),
           });
 
-          const result = addResource(translationsFolder, params);
+          const result = canAutoTranslate
+            ? await addResource(translationsFolder, params, { translationConfig })
+            : await addResource(translationsFolder, params);
 
           if (result.created) {
             entriesCreated++;
@@ -116,10 +194,10 @@ export class ResourcesController {
           const entryKey = resolvedKeyParts.pop() || '';
           const folderPath = resolvedKeyParts.join('.');
 
-          // Build translations record (excluding base locale)
+          // Build translations record from actual result (includes auto-translated values)
           const translationsRecord: Record<string, string> = {};
-          const translationsArray = translations || [];
-          for (const t of translationsArray) {
+          const actualTranslations = result.translations?.length > 0 ? result.translations : translations || [];
+          for (const t of actualTranslations) {
             if (t.locale !== resourceBaseLocale) {
               translationsRecord[t.locale] = t.value;
             }
@@ -130,7 +208,7 @@ export class ResourcesController {
             entryKey,
             baseValue: resource.baseValue,
             baseLocale: resourceBaseLocale,
-            translations: translationsArray,
+            translations: actualTranslations,
           });
 
           const cacheEntry: ResourceTreeEntry = {
@@ -265,7 +343,7 @@ export class ResourcesController {
           destinationTranslationsFolder = config.collections[destCollectionName].translationsFolder;
         }
 
-        const moveResult = moveResource(translationsFolder, {
+        const moveResult = await moveResource(translationsFolder, {
           source: moveOp.source,
           destination: moveOp.destination,
           override: moveOp.override,
@@ -313,10 +391,14 @@ export class ResourcesController {
       const collection = config.collections[decodedCollectionName];
       const translationsFolder = collection.translationsFolder;
       const baseLocale = collection.baseLocale || config.baseLocale || 'en';
+      const translationConfig = collection.translation ?? config.translation;
+      const allLocales = collection.locales ?? config.locales ?? [];
 
-      const result = editResource(translationsFolder, {
+      const result = await editResource(translationsFolder, {
         ...dto,
         baseLocale,
+        translationConfig,
+        allLocales,
       });
 
       let resourceDto: ResourceSummaryDto | undefined;
@@ -406,7 +488,7 @@ export class ResourcesController {
       // Handle cache states
       if (cacheStatus === CacheStatus.NOT_STARTED || cacheStatus === CacheStatus.ERROR) {
         // Trigger indexing asynchronously (don't await)
-        const locales = collection.locales || config.locales || [];
+        const locales = collection.locales ?? config.locales ?? [];
         this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
           this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);
         });
@@ -532,7 +614,7 @@ export class ResourcesController {
       const collection = config.collections[decodedCollectionName];
       if (cacheStatus === CacheStatus.NOT_STARTED) {
         const translationsFolder = collection.translationsFolder;
-        const locales = collection.locales || config.locales || [];
+        const locales = collection.locales ?? config.locales ?? [];
 
         this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
           this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);

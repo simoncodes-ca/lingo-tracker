@@ -3,7 +3,9 @@ import { signalStore, withState, withComputed, withMethods, patchState } from '@
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, tap, switchMap, catchError, of } from 'rxjs';
 import { inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { CollectionsApiService } from '../services/collections-api.service';
+import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
 import type {
   LingoTrackerCollectionDto,
   LingoTrackerConfigDto,
@@ -93,6 +95,7 @@ export const CollectionsStore = signalStore(
   })),
   withMethods((store) => {
     const api = inject(CollectionsApiService);
+    const transloco = inject(TranslocoService);
 
     return {
       /**
@@ -111,7 +114,10 @@ export const CollectionsStore = signalStore(
                 });
               }),
               catchError((error: unknown) => {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to load collections';
+                const errorMessage =
+                  error instanceof Error
+                    ? error.message
+                    : transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.LOADFAILED);
                 patchState(store, {
                   isLoading: false,
                   error: errorMessage,
@@ -143,7 +149,10 @@ export const CollectionsStore = signalStore(
                 });
               }),
               catchError((error: unknown) => {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to create collection';
+                const errorMessage =
+                  error instanceof Error
+                    ? error.message
+                    : transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.CREATEFAILED);
                 patchState(store, {
                   isLoading: false,
                   error: errorMessage,
@@ -183,7 +192,10 @@ export const CollectionsStore = signalStore(
                 });
               }),
               catchError((error: unknown) => {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to update collection';
+                const errorMessage =
+                  error instanceof Error
+                    ? error.message
+                    : transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.UPDATEFAILED);
                 patchState(store, {
                   isLoading: false,
                   error: errorMessage,
@@ -215,7 +227,10 @@ export const CollectionsStore = signalStore(
                 });
               }),
               catchError((error: unknown) => {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to delete collection';
+                const errorMessage =
+                  error instanceof Error
+                    ? error.message
+                    : transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.DELETEFAILED);
                 patchState(store, {
                   isLoading: false,
                   error: errorMessage,

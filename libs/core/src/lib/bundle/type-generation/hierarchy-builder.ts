@@ -1,4 +1,5 @@
 import { segmentToPropertyName, splitKeyIntoSegments } from './key-transformer';
+import type { TokenCasing } from '../../../config/bundle-definition';
 
 export interface TypeHierarchyNode {
   children: Record<string, TypeHierarchyNode>;
@@ -8,7 +9,7 @@ export interface TypeHierarchyNode {
 /**
  * Builds a nested object structure from a flat list of translation keys.
  *
- * Example:
+ * Example (upperCase casing):
  * Input: ["common.buttons.ok", "common.buttons.cancel"]
  * Output:
  * {
@@ -26,7 +27,7 @@ export interface TypeHierarchyNode {
  *   }
  * }
  */
-export function buildTypeHierarchy(keys: string[]): TypeHierarchyNode {
+export function buildTypeHierarchy(keys: string[], casing: TokenCasing = 'upperCase'): TypeHierarchyNode {
   const root: TypeHierarchyNode = { children: {} };
 
   for (const key of keys) {
@@ -35,7 +36,7 @@ export function buildTypeHierarchy(keys: string[]): TypeHierarchyNode {
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
-      const propertyName = segmentToPropertyName(segment);
+      const propertyName = segmentToPropertyName(segment, casing);
 
       if (!currentNode.children[propertyName]) {
         currentNode.children[propertyName] = { children: {} };

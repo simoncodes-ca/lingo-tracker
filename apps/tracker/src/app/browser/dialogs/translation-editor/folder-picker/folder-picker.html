@@ -4,14 +4,14 @@
     class="folder-header"
     (click)="toggleExpanded()"
     [attr.aria-expanded]="isExpanded()"
-    [attr.aria-label]="'Folder selector, currently: ' + displayPath()"
+    [attr.aria-label]="TOKENS.BROWSER.FOLDERPICKER.SELECTORARIALABELX | transloco : { path: displayPath() }"
     role="button"
     tabindex="0"
     (keydown.enter)="toggleExpanded()"
     (keydown.space)="toggleExpanded()"
   >
     <mat-icon class="folder-icon">folder</mat-icon>
-    <span class="folder-label">Folder:</span>
+    <span class="folder-label">{{ TOKENS.BROWSER.FOLDERPICKER.FOLDERLABEL | transloco }}</span>
     <span class="folder-path">{{ displayPath() }}</span>
     <mat-icon class="chevron-icon">{{ chevronIcon() }}</mat-icon>
   </div>
@@ -23,7 +23,7 @@
         <!-- Empty State -->
         <div class="empty-state">
           <mat-icon class="empty-icon">create_new_folder</mat-icon>
-          <p class="empty-message">No folders yet</p>
+          <p class="empty-message">{{ TOKENS.BROWSER.FOLDERPICKER.NOFOLDERSYET | transloco }}</p>
           <button
             mat-raised-button
             color="primary"
@@ -32,7 +32,7 @@
             type="button"
           >
             <mat-icon>add</mat-icon>
-            Create First Folder
+            {{ TOKENS.BROWSER.FOLDERPICKER.CREATEFIRSTFOLDER | transloco }}
           </button>
         </div>
       } @else {
@@ -42,7 +42,7 @@
           (keydown)="onTreeKeydown($event)"
           tabindex="0"
           role="tree"
-          [attr.aria-label]="'Folder tree'"
+          [attr.aria-label]="TOKENS.BROWSER.FOLDERPICKER.TREEARIALABEL | transloco"
         >
           @for (folder of rootFolders(); track folder.fullPath) {
             <app-picker-folder-node
@@ -52,7 +52,7 @@
               [expandedPaths]="expandedPaths()"
               [isAddingFolder]="isAddingFolder()"
               [addFolderParentPath]="addFolderParentPath()"
-              (select)="onFolderSelect($event)"
+              (folderSelect)="onFolderSelect($event)"
               (toggleExpand)="onExpandToggle($event)"
               (addFolder)="onAddFolder($event)"
               (confirmNewFolder)="onFolderNameConfirmed($event)"

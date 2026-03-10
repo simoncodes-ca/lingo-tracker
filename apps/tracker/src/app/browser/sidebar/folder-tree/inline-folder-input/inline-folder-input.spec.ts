@@ -2,6 +2,7 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InlineFolderInput } from './inline-folder-input';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
 
 describe('InlineFolderInput', () => {
   let component: InlineFolderInput;
@@ -9,7 +10,7 @@ describe('InlineFolderInput', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [InlineFolderInput],
+      imports: [InlineFolderInput, getTranslocoTestingModule()],
       providers: [provideNoopAnimations()],
     }).compileComponents();
 
@@ -71,7 +72,7 @@ describe('InlineFolderInput', () => {
 
   it('should emit cancel event on Escape key', () => {
     const cancelSpy = vi.fn();
-    component.cancel.subscribe(cancelSpy);
+    component.cancelInput.subscribe(cancelSpy);
 
     component.onEscapeKey();
 
@@ -80,25 +81,25 @@ describe('InlineFolderInput', () => {
 
   it('should emit cancel event on blur', () => {
     const cancelSpy = vi.fn();
-    component.cancel.subscribe(cancelSpy);
+    component.cancelInput.subscribe(cancelSpy);
 
     component.onBlur();
 
     expect(cancelSpy).toHaveBeenCalled();
   });
 
-  it('should return required error message', () => {
+  it('should return required error message token key', () => {
     component.folderNameControl.setValue('');
     component.folderNameControl.markAsTouched();
 
-    expect(component.getErrorMessage()).toBe('Folder name is required');
+    expect(component.getErrorMessage()).toBe('browser.folderInput.nameRequired');
   });
 
-  it('should return pattern error message', () => {
+  it('should return pattern error message token key', () => {
     component.folderNameControl.setValue('invalid folder');
     component.folderNameControl.markAsTouched();
 
-    expect(component.getErrorMessage()).toBe('Only letters, numbers, dashes, and underscores allowed');
+    expect(component.getErrorMessage()).toBe('browser.folderInput.namePatternError');
   });
 
   it('should show error only after user interaction', () => {

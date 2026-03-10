@@ -1,12 +1,15 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  type ElementRef,
   input,
   output,
   computed,
   effect,
   inject,
   signal,
+  viewChild,
+  type AfterViewInit,
   type OnDestroy,
   type EffectRef,
 } from '@angular/core';
@@ -14,6 +17,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { CdkDrag, CdkDragPlaceholder } from '@angular/cdk/drag-drop';
 import type { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
 import { BrowserStore } from '../../../store/browser.store';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { TranslationItemHeader } from './item-header';
 import { TranslationItemLocales } from './item-locales';
 import type { LocaleState } from './translation-rollup';
@@ -31,14 +36,22 @@ const LONG_PRESS_THRESHOLD = 500;
   selector: 'app-translation-item',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, TranslationItemHeader, TranslationItemLocales, HighlightPipe, CdkDrag, CdkDragPlaceholder],
+  imports: [
+    MatIconModule,
+    TranslationItemHeader,
+    TranslationItemLocales,
+    HighlightPipe,
+    CdkDrag,
+    CdkDragPlaceholder,
+    TranslocoPipe,
+  ],
   templateUrl: './translation-item.html',
   styleUrl: './translation-item.scss',
   host: {
     class: 'translation-item',
   },
 })
-export class TranslationItem implements OnDestroy {
+export class TranslationItem implements AfterViewInit, OnDestroy {
   /** Translation data */
   translation = input.required<ResourceSummaryDto>();
 
@@ -54,6 +67,12 @@ export class TranslationItem implements OnDestroy {
   /** When true, briefly flash the item border to indicate it was just updated. */
   isRecentlyUpdated = input<boolean>(false);
 
+  /** Whether auto-translation is enabled for this collection */
+  translationEnabled = input<boolean>(false);
+
+  /** Whether this specific item is currently being translated */
+  isTranslating = input<boolean>(false);
+
   /** Emitted when user requests to copy key to clipboard */
   copyKey = output<string>();
 
@@ -63,19 +82,40 @@ export class TranslationItem implements OnDestroy {
   /** Emitted when user selects Delete from context menu */
   deleteTranslation = output<ResourceSummaryDto>();
 
+  /** Emitted when user selects Translate from context menu */
+  translateTranslation = output<ResourceSummaryDto>();
+
   /** Emitted when drag starts on this item */
   dragStarted = output<DragData>();
 
   /** Emitted when drag ends on this item */
   dragEnded = output<void>();
 
-  private readonly store = inject(BrowserStore);
+  readonly #store = inject(BrowserStore);
+  readonly #transloco = inject(TranslocoService);
+  readonly TOKENS = TRACKER_TOKENS;
+
+  /** Reference to the scrollable wrapper element (used as IntersectionObserver root). */
+  private readonly scrollWrapper = viewChild<ElementRef<HTMLElement>>('scrollWrapper');
+
+  /** Reference to the invisible sentinel element observed to detect scroll-to-bottom. */
+  private readonly scrollSentinel = viewChild<ElementRef<HTMLElement>>('scrollSentinel');
+
+  /**
+   * True when the user has scrolled far enough that the sentinel (placed at the
+   * bottom of the scrollable content) is visible within the scroll viewport.
+   * Used to hide the fade gradient when no more content is hidden below.
+   */
+  readonly isScrolledToBottom = signal(false);
+
+  /** Active IntersectionObserver instance — cleaned up on destroy or when conditions change. */
+  #scrollObserver: IntersectionObserver | undefined;
 
   /** Current search query from the store */
-  readonly searchQuery = computed(() => this.store.searchQuery());
+  readonly searchQuery = computed(() => this.#store.searchQuery());
 
   // Timestamp when touch started (ms since epoch)
-  private touchStartTs = 0;
+  #touchStartTs = 0;
 
   /** Signal used to show visual feedback during touch (long-press) */
   readonly isTouchPressed = signal(false);
@@ -97,7 +137,16 @@ export class TranslationItem implements OnDestroy {
     return this.translation().translations[base] || '';
   });
 
-  /** Locale translations excluding base locale */
+  /** Priority order for translation status sorting (lower = higher priority / shown first) */
+  readonly #STATUS_SORT_PRIORITY: Record<string, number> = {
+    stale: 0,
+    new: 1,
+    translated: 2,
+    verified: 3,
+    missing: 4,
+  };
+
+  /** Locale translations excluding base locale, sorted by status priority then locale code */
   readonly localeTranslations = computed(() => {
     const trans = this.translation();
     const base = this.baseLocale();
@@ -109,11 +158,17 @@ export class TranslationItem implements OnDestroy {
         locale,
         value: trans.translations[locale] || '',
         status: trans.status ? trans.status[locale] : undefined,
-      }));
+      }))
+      .sort((a, b) => {
+        const priorityA = a.status ? (this.#STATUS_SORT_PRIORITY[a.status] ?? 4) : 4;
+        const priorityB = b.status ? (this.#STATUS_SORT_PRIORITY[b.status] ?? 4) : 4;
+        if (priorityA !== priorityB) return priorityA - priorityB;
+        return a.locale.localeCompare(b.locale);
+      });
   });
 
   /** Current density mode (reads from BrowserStore) */
-  readonly currentDensityMode = computed(() => this.store.densityMode());
+  readonly currentDensityMode = computed(() => this.#store.densityMode());
 
   /** Selected locale for compact mode: the first locale from the locales() input */
   readonly primaryLocale = computed(() => {
@@ -185,15 +240,20 @@ export class TranslationItem implements OnDestroy {
   /** Toggles the expanded state for full density mode */
   toggleExpansion(): void {
     this.isExpanded.update((v) => !v);
-    // Emit the new state for parent to react (virtual-scroll viewport adjustments)
-    try {
-      this.expansionChanged.emit({
-        key: this.translation().key,
-        expanded: this.isExpanded(),
-      });
-    } catch (_e) {
-      // Defensive: emitting can fail during teardown; swallow errors to avoid runtime exceptions
-      // This ensures graceful degradation if parent isn't listening.
+    this.expansionChanged.emit({
+      key: this.translation().key,
+      expanded: this.isExpanded(),
+    });
+
+    // The fade and sentinel are only rendered when collapsed, so synchronise the
+    // observer with the new expansion state after Angular has updated the DOM.
+    this.#teardownScrollObserver();
+    this.isScrolledToBottom.set(false);
+
+    if (!this.isExpanded()) {
+      // Re-enter collapsed state: set up observer on the next microtask so the
+      // sentinel element has been rendered by Angular's change detection.
+      Promise.resolve().then(() => this.#setupScrollObserver());
     }
   }
 
@@ -202,15 +262,33 @@ export class TranslationItem implements OnDestroy {
     this.showComment.update((v) => !v);
   }
 
+  // Double-click handler ---------------------------------------------------
+  /**
+   * Opens the edit dialog when the item is double-clicked.
+   * Ignores double-clicks originating from interactive elements (buttons, inputs,
+   * anchors, selects) so that action-menu interactions are not accidentally
+   * treated as edit requests.
+   */
+  onDoubleClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    const isInteractiveElement = target.closest('button, input, textarea, select, a, [role="button"]') !== null;
+
+    if (isInteractiveElement) {
+      return;
+    }
+
+    this.editTranslation.emit(this.translation());
+  }
+
   // Touch handlers ---------------------------------------------------------
   onTouchStart(_ev?: TouchEvent): void {
-    this.touchStartTs = Date.now();
+    this.#touchStartTs = Date.now();
     this.isTouchPressed.set(true);
   }
 
   onTouchEnd(_ev?: TouchEvent): void {
-    const duration = Date.now() - this.touchStartTs;
-    this.touchStartTs = 0;
+    const duration = Date.now() - this.#touchStartTs;
+    this.#touchStartTs = 0;
     this.isTouchPressed.set(false);
 
     // Long press -> open edit
@@ -253,7 +331,7 @@ export class TranslationItem implements OnDestroy {
    * Computes counts of each status and total known statuses.
    * Used by rollupStatus and statusBreakdown to avoid duplicated logic.
    */
-  private readonly statusCounts = computed(() => {
+  readonly #statusCounts = computed(() => {
     const statusMap = this.translation().status || {};
 
     const counts: Record<'stale' | 'new' | 'translated' | 'verified', number> = {
@@ -276,6 +354,19 @@ export class TranslationItem implements OnDestroy {
   });
 
   /**
+   * Returns true when at least one non-base locale has a 'new' or 'stale' status,
+   * indicating there is work for the auto-translator to do.
+   * The base locale is excluded because its status does not represent a translation gap.
+   */
+  readonly hasTranslatableLocales = computed(() => {
+    const statusMap = this.translation().status || {};
+    const base = this.baseLocale();
+    return Object.entries(statusMap)
+      .filter(([locale]) => locale !== base)
+      .some(([, status]) => status === 'new' || status === 'stale');
+  });
+
+  /**
    * Locale states for the rollup component.
    * Transforms status map into LocaleState[] format.
    */
@@ -292,13 +383,13 @@ export class TranslationItem implements OnDestroy {
   });
 
   // Cleanup callback for effects created in this component (if any).
-  private densityEffectCleanup: EffectRef | undefined;
+  #densityEffectCleanup: EffectRef | undefined;
 
   constructor() {
     // Keep a lightweight effect that listens to density mode changes so we can
     // reset transient touch UI state when density changes. Store the cleanup
     // function and run it on destroy.
-    this.densityEffectCleanup = effect(() => {
+    this.#densityEffectCleanup = effect(() => {
       // Access the value so the effect subscribes to changes.
       const _mode = this.currentDensityMode();
       // Defensive: clear any transient touch pressed visual when mode changes.
@@ -308,15 +399,44 @@ export class TranslationItem implements OnDestroy {
     });
   }
 
+  ngAfterViewInit(): void {
+    this.#setupScrollObserver();
+  }
+
   ngOnDestroy(): void {
-    if (this.densityEffectCleanup) {
-      try {
-        this.densityEffectCleanup?.destroy();
-      } catch (_e) {
-        // ignore errors during teardown
-      }
-      this.densityEffectCleanup = undefined;
-    }
+    this.#teardownScrollObserver();
+    this.#densityEffectCleanup?.destroy();
+    this.#densityEffectCleanup = undefined;
+  }
+
+  /**
+   * Creates the IntersectionObserver that watches the sentinel element inside
+   * the scroll wrapper. The observer is only created when there are more than
+   * 4 locale translations and the item is collapsed — conditions where the fade
+   * gradient is actually rendered.
+   *
+   * The scroll wrapper element is used as the root so intersection is measured
+   * against the scrollable viewport rather than the document viewport.
+   */
+  #setupScrollObserver(): void {
+    const shouldObserve = this.localeTranslations().length >= 4 && !this.isExpanded();
+    if (!shouldObserve) return;
+
+    const sentinel = this.scrollSentinel()?.nativeElement;
+    const wrapper = this.scrollWrapper()?.nativeElement;
+    if (!sentinel || !wrapper) return;
+
+    this.#scrollObserver = new IntersectionObserver(([entry]) => this.isScrolledToBottom.set(entry.isIntersecting), {
+      root: wrapper,
+      threshold: 0.1,
+    });
+    this.#scrollObserver.observe(sentinel);
+  }
+
+  /** Disconnects and discards the active IntersectionObserver. */
+  #teardownScrollObserver(): void {
+    this.#scrollObserver?.disconnect();
+    this.#scrollObserver = undefined;
   }
 
   /** Returns a stable id for the rollup status element. */
@@ -349,7 +469,7 @@ export class TranslationItem implements OnDestroy {
    * Disabled during search mode or when store is disabled.
    */
   readonly isDragDisabled = computed(() => {
-    return Boolean(this.searchQuery()) || this.store.isDisabled();
+    return Boolean(this.searchQuery()) || this.#store.isDisabled();
   });
 
   /**
@@ -357,9 +477,9 @@ export class TranslationItem implements OnDestroy {
    * Example: "2 stale, 3 verified, 1 new"
    */
   readonly statusBreakdown = computed(() => {
-    const { counts, total } = this.statusCounts();
+    const { counts, total } = this.#statusCounts();
 
-    if (total === 0) return 'No statuses';
+    if (total === 0) return this.#transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONITEM.NOSTATUSES);
 
     const order: Array<keyof typeof counts> = ['stale', 'new', 'translated', 'verified'];
     const parts: string[] = [];
@@ -377,7 +497,7 @@ export class TranslationItem implements OnDestroy {
    * Returns tuple: [status, count]
    */
   readonly rollupStatus = computed(() => {
-    const { counts, total } = this.statusCounts();
+    const { counts, total } = this.#statusCounts();
 
     if (total === 0) return ['new', 0] as const;
 

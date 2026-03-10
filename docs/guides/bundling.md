@@ -107,11 +107,15 @@ Each file contains hierarchical JSON with all translations for that locale.
     "cli-reference-name": {
       "bundleName": "output-filename-pattern",
       "dist": "./output/directory",
+      "typeDist": "./optional/path/to/generated-tokens.ts",
+      "tokenCasing": "upperCase",
       "collections": "All or array of collection definitions"
     }
   }
 }
 ```
+
+The `tokenCasing` property is optional (default: `"upperCase"`) and controls the casing of keys in generated type files. Accepts `"upperCase"` (SCREAMING_SNAKE_CASE) or `"camelCase"`. Can also be set globally at the root of `.lingo-tracker.json` or overridden via the `--token-casing` CLI flag. See [Bundle Type Generation](../features/bundle-type-generation.md) for details.
 
 ### Simple Bundle (All Collections)
 
@@ -808,6 +812,11 @@ Different bundles for different environments:
 Generate specific bundle:
 ```bash
 lingo-tracker bundle --name production
+```
+
+Override token casing from the CLI:
+```bash
+lingo-tracker bundle --name core --token-casing camelCase
 ```
 
 ### Multi-Tenant Applications

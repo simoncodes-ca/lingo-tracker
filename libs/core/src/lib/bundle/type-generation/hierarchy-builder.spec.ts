@@ -58,6 +58,22 @@ describe('Hierarchy Builder', () => {
       });
     });
 
+    it('should build hierarchy using camelCase property names', () => {
+      const keys = ['common.file-upload', 'common.buttons.ok'];
+      const result = buildTypeHierarchy(keys, 'camelCase');
+
+      expect(result.children['common']).toBeDefined();
+      expect(result.children['common'].children['fileUpload']).toEqual({
+        children: {},
+        value: 'common.file-upload',
+      });
+      expect(result.children['common'].children['buttons']).toBeDefined();
+      expect(result.children['common'].children['buttons'].children['ok']).toEqual({
+        children: {},
+        value: 'common.buttons.ok',
+      });
+    });
+
     it('should handle keys that are prefixes of other keys (mixed node)', () => {
       // This is the case where we have 'common' and 'common.title'
       // 'common' is a leaf value but also a parent

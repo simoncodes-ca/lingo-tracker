@@ -61,5 +61,82 @@
     "source": "Clear Search",
     "es": "Limpiar Búsqueda",
     "fr-ca": "Effacer la Recherche"
+  },
+  "noFolderSelected": {
+    "source": "No resource folder selected",
+    "comment": "Breadcrumb empty state when no folder is selected",
+    "tags": ["browser"],
+    "es": "No se seleccionó ninguna carpeta de recursos",
+    "fr-ca": "Aucun dossier de ressources sélectionné"
+  },
+  "addTranslationButton": {
+    "source": "Add Translation",
+    "comment": "Button text to add a new translation",
+    "tags": ["browser"],
+    "es": "Añadir traducción",
+    "fr-ca": "Ajouter une traduction"
+  },
+  "sortAscending": {
+    "source": "Sort ascending",
+    "comment": "Aria-label for sort ascending button",
+    "tags": ["browser"],
+    "es": "Ordenar ascendentemente",
+    "fr-ca": "Trier en ordre croissant"
+  },
+  "sortDescending": {
+    "source": "Sort descending",
+    "comment": "Aria-label for sort descending button",
+    "tags": ["browser"],
+    "es": "Ordenar descendentemente",
+    "fr-ca": "Trier par ordre décroissant"
+  },
+  "sortAscendingTooltip": {
+    "source": "Sort ascending (A→Z)",
+    "comment": "Tooltip for sort ascending button",
+    "tags": ["browser"],
+    "es": "Ordenar ascendentemente (A→Z)",
+    "fr-ca": "Trier par ordre croissant (A→Z)"
+  },
+  "sortDescendingTooltip": {
+    "source": "Sort descending (Z→A)",
+    "comment": "Tooltip for sort descending button",
+    "tags": ["browser"],
+    "es": "Ordenar descendentemente (Z→A)",
+    "fr-ca": "Trier par ordre décroissant (Z→A)"
+  },
+  "selectFolderFirst": {
+    "source": "Select a folder first",
+    "comment": "Tooltip shown on Add Translation button when no folder is selected",
+    "tags": ["browser"],
+    "es": "Seleccione una carpeta primero",
+    "fr-ca": "Sélectionnez d'abord un dossier"
+  },
+  "addNewTranslationTooltip": {
+    "source": "Add a new translation",
+    "comment": "Tooltip shown on Add Translation button when a folder is selected",
+    "tags": ["browser"],
+    "es": "Añadir una nueva traducción",
+    "fr-ca": "Ajouter une nouvelle traduction"
+  },
+  "noTranslation": {
+    "source": "No translation",
+    "comment": "Placeholder when a translation value is empty",
+    "tags": ["browser"],
+    "es": "Sin traducción",
+    "fr-ca": "Aucune traduction"
+  },
+  "commentPrefix": {
+    "source": "Comment:",
+    "comment": "Label prefix before a comment text",
+    "tags": ["browser"],
+    "es": "Comentario:",
+    "fr-ca": "Commentaire:"
+  },
+  "toggleExpansion": {
+    "source": "Toggle expansion",
+    "comment": "Aria-label for the expand/collapse button on a translation item",
+    "tags": ["browser"],
+    "es": "Activar o desactivar la expansión",
+    "fr-ca": "Basculer l'extension"
   }
 }

@@ -49,6 +49,49 @@ describe('Key Transformer', () => {
     });
   });
 
+  describe('segmentToPropertyName (camelCase)', () => {
+    it('should return a single word lowercased', () => {
+      expect(segmentToPropertyName('buttons', 'camelCase')).toBe('buttons');
+    });
+
+    it('should convert hyphenated segment to camelCase', () => {
+      expect(segmentToPropertyName('file-upload', 'camelCase')).toBe('fileUpload');
+    });
+
+    it('should convert multiple hyphens to camelCase', () => {
+      expect(segmentToPropertyName('file-upload-button', 'camelCase')).toBe('fileUploadButton');
+    });
+
+    it('should normalize mixed-case input to camelCase', () => {
+      expect(segmentToPropertyName('FILE-upload', 'camelCase')).toBe('fileUpload');
+    });
+
+    it('should lowercase a non-hyphenated already-camelCase input', () => {
+      // No hyphens → split produces ['fileUpload'] → first part lowercased → 'fileupload'
+      expect(segmentToPropertyName('fileUpload', 'camelCase')).toBe('fileupload');
+    });
+
+    it('should filter empty parts from double hyphens', () => {
+      expect(segmentToPropertyName('file--upload', 'camelCase')).toBe('fileUpload');
+    });
+
+    it('should filter leading hyphen and return remaining word', () => {
+      expect(segmentToPropertyName('-upload', 'camelCase')).toBe('upload');
+    });
+
+    it('should filter trailing hyphen and return preceding word', () => {
+      expect(segmentToPropertyName('upload-', 'camelCase')).toBe('upload');
+    });
+
+    it('should return a single character lowercased', () => {
+      expect(segmentToPropertyName('a', 'camelCase')).toBe('a');
+    });
+
+    it('should return numeric segment unchanged', () => {
+      expect(segmentToPropertyName('404', 'camelCase')).toBe('404');
+    });
+  });
+
   describe('splitKeyIntoSegments', () => {
     it('should split simple dot-delimited key', () => {
       expect(splitKeyIntoSegments('common.buttons.ok')).toEqual(['common', 'buttons', 'ok']);

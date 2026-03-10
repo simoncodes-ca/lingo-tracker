@@ -28,5 +28,20 @@
       "baseChecksum": "611307b7abf62c8f6ffc374701393f29",
       "status": "new"
     }
+  },
+  "moreActionsAriaLabel": {
+    "en": {
+      "checksum": "4f46bf6697514d7744218c4a5184b8b0"
+    },
+    "es": {
+      "checksum": "6fdfb9ac210cfc9dd9d95b447eb5a671",
+      "baseChecksum": "4f46bf6697514d7744218c4a5184b8b0",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "7178ecf6f4ecbdfbfae955ae5d30452c",
+      "baseChecksum": "4f46bf6697514d7744218c4a5184b8b0",
+      "status": "translated"
+    }
   }
 }

@@ -4,7 +4,7 @@
       <mat-icon class="breadcrumb-icon">folder</mat-icon>
       <span class="breadcrumb-path">{{ path }}</span>
     } @else {
-      <span class="breadcrumb-empty">No resource folder selected</span>
+      <span class="breadcrumb-empty">{{ TOKENS.BROWSER.NOFOLDERSELECTED | transloco }}</span>
     }
   </div>
 
@@ -19,8 +19,8 @@
       type="button"
       class="sort-direction-toggle"
       (click)="handleSortDirectionToggle()"
-      [attr.aria-label]="store.sortDirection() === 'asc' ? 'Sort ascending' : 'Sort descending'"
-      [matTooltip]="store.sortDirection() === 'asc' ? 'Sort ascending (A→Z)' : 'Sort descending (Z→A)'"
+      [attr.aria-label]="(store.sortDirection() === 'asc' ? TOKENS.BROWSER.SORTASCENDING : TOKENS.BROWSER.SORTDESCENDING) | transloco"
+      [matTooltip]="(store.sortDirection() === 'asc' ? TOKENS.BROWSER.SORTASCENDINGTOOLTIP : TOKENS.BROWSER.SORTDESCENDINGTOOLTIP) | transloco"
     >
       <mat-icon>{{ store.sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
     </button>
@@ -30,25 +30,25 @@
       color="primary"
       (click)="handleAddTranslation()"
       [disabled]="store.isDisabled() || !store.currentFolderPath()"
-      [matTooltip]="!store.currentFolderPath() ? 'Select a folder first' : 'Add a new translation'"
-      aria-label="Add translation"
+      [matTooltip]="(!store.currentFolderPath() ? TOKENS.BROWSER.SELECTFOLDERFIRST : TOKENS.BROWSER.ADDNEWTRANSLATIONTOOLTIP) | transloco"
+      [attr.aria-label]="TOKENS.BROWSER.ADDTRANSLATIONBUTTON | transloco"
     >
       <mat-icon>add</mat-icon>
-      <span>Add Translation</span>
+      <span>{{ TOKENS.BROWSER.ADDTRANSLATIONBUTTON | transloco }}</span>
     </button>
 
     <mat-button-toggle-group
       class="density-toggle"
       name="density"
-      aria-label="Density mode"
+      [attr.aria-label]="TOKENS.BROWSER.DENSITY.MODEARIALABEL | transloco"
       [value]="store.densityMode()"
       (change)="handleDensityChange($event)"
     >
-      <mat-button-toggle value="compact" aria-label="Compact density" [attr.aria-current]="store.densityMode() === 'compact' ? 'true' : null" matTooltip="Compact — 2-line view, high density">
+      <mat-button-toggle value="compact" [attr.aria-label]="TOKENS.BROWSER.DENSITY.COMPACTARIALABEL | transloco" [attr.aria-current]="store.densityMode() === 'compact' ? 'true' : null" [matTooltip]="TOKENS.BROWSER.DENSITY.COMPACTTOOLTIP | transloco">
         <mat-icon>view_compact</mat-icon>
       </mat-button-toggle>
 
-      <mat-button-toggle value="full" aria-label="Full density" [attr.aria-current]="store.densityMode() === 'full' ? 'true' : null" matTooltip="Full — detailed view with comments and all locales">
+      <mat-button-toggle value="full" [attr.aria-label]="TOKENS.BROWSER.DENSITY.FULLARIALABEL | transloco" [attr.aria-current]="store.densityMode() === 'full' ? 'true' : null" [matTooltip]="TOKENS.BROWSER.DENSITY.FULLTOOLTIP | transloco">
         <mat-icon>view_day</mat-icon>
       </mat-button-toggle>
     </mat-button-toggle-group>

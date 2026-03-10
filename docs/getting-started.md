@@ -4,15 +4,45 @@ Lingo Tracker helps you track, validate, and manage translations across projects
 
 ### Install
 
-- Node.js >= 22.16 and pnpm >= 10 are recommended.
-- Add the CLI to your workspace (recommended during development):
+Node.js >= 22.16 is required. Install the CLI as a dev dependency in your project:
 
 ```bash
-pnpm nx build cli && pnpm link --global ./dist/apps/cli
-# Now the `lingo-tracker` command is available globally from your build output
+pnpm add -D @simoncodes-ca/lingo-tracker
+npm install --save-dev @simoncodes-ca/lingo-tracker
+yarn add -D @simoncodes-ca/lingo-tracker
 ```
 
-Or install the built artifact wherever you publish it and ensure `lingo-tracker` is on your PATH.
+Once installed, the use `npx lingo-tracker` command to interact with the CLI.
+
+### Run the Lingo Tracker App
+
+The `lingo-tracker` package ships a built-in API server that hosts the Lingo Tracker web interface. 
+
+### Then start the app server:
+
+```bash
+npx lingo-tracker-app
+```
+
+The server listens on port **3030** by default.
+
+#### Configuring the port
+
+Pass `--port` to override the port:
+
+```bash
+npx lingo-tracker-app --port 4000
+```
+
+Or set the `LINGO_TRACKER_PORT` environment variable. The `--port` flag takes precedence over the environment variable:
+
+```json
+{
+  "scripts": {
+    "lingo-tracker-app": "lingo-tracker-api --port 4000"
+  }
+}
+```
 
 ### Initialize a project
 
@@ -130,7 +160,7 @@ Both commands support fully non‑interactive runs; provide all required flags t
 
 ### Quick checklist
 
-- Install and expose `lingo-tracker` on your PATH
+- Install `lingo-tracker`
 - Run `lingo-tracker init` once in the repo
 - Add more collections with `lingo-tracker add-collection`
 - Commit `.lingo-tracker.json`
@@ -250,7 +280,33 @@ Normalization is designed to be safe:
 - **Only Adds/Corrects**: Fills in missing data and fixes incorrect metadata
 - **Dry-Run Available**: Preview all changes before applying
 
+### Configuring Auto-Translation
+
+LingoTracker can automatically translate new resources using machine translation providers such as Google Translate. To enable this, add a `translation` block to your `.lingo-tracker.json`:
+
+```json
+{
+  "translation": {
+    "enabled": true,
+    "provider": "google-translate",
+    "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY"
+  }
+}
+```
+
+Then set the API key in your environment:
+
+```bash
+export GOOGLE_TRANSLATE_API_KEY="your-api-key-here"
+```
+
+Auto-translation handles plain text and simple placeholders (`{name}`, `{{ count }}`). Strings with complex ICU syntax (plural, select, number, date, time) are skipped and left for human translators.
+
+For full details on configuration, ICU handling, and best practices, see the [Auto-Translation Guide](./auto-translation.md).
+
 ### Next Steps
 
 - For managing translation resources and other CLI commands, see the [CLI Reference](./cli.md)
 - For programmatic access via REST API, see the [API Reference](./api.md)
+- For setting up machine translation, see the [Auto-Translation Guide](./auto-translation.md)
+- To set up an AI assistant skill for your repo (guides Claude Code and similar tools through the i18n workflow), run `lingo-tracker install-skill` — see [`install-skill`](./cli.md#install-skill) in the CLI Reference

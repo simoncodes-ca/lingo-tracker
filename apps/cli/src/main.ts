@@ -1,12 +1,16 @@
 #!/usr/bin/env node
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
+
+function collect(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
 
 const program = new Command();
 
 program
   .name('lingo-tracker')
   .description('Effortlessly track, validate, and manage your translations')
-  .version('0.1.0');
+  .version('0.8.0');
 
 program
   .command('init')
@@ -125,6 +129,7 @@ program
   .option('--name <names>', 'Bundle name(s) - single name or comma-separated (e.g., core,admin)')
   .option('--locale <locales>', 'Locale(s) to generate - comma-separated (e.g., en,fr)')
   .option('--verbose', 'Show detailed output including warnings')
+  .addOption(new Option('--token-casing <casing>', 'Token property key casing').choices(['upperCase', 'camelCase']))
   .action(async (options) => {
     const { bundleCommand } = await import('./commands/bundle');
     await bundleCommand(options);
@@ -365,6 +370,30 @@ Notes:
   .action(async (options) => {
     const { validateCommand } = await import('./commands/validate');
     await validateCommand({ allowTranslated: options.allowTranslated });
+  });
+
+program
+  .command('find-similar')
+  .description('Find existing translation resources with similar base locale values')
+  .option('--collection <name>', 'Name of the collection to search')
+  .option('--value <text>', 'Base locale text to search for similar values')
+  .option('--max-results <n>', 'Maximum number of results to return (default: 5)', '5')
+  .action(async (options) => {
+    const { findSimilarCommand } = await import('./commands/find-similar');
+    const raw = parseInt(options.maxResults, 10);
+    const maxResults = Number.isNaN(raw) || raw < 1 ? 5 : raw;
+    await findSimilarCommand({ ...options, maxResults });
+  });
+
+program
+  .command('install-skill')
+  .description('Generate a lingo-tracker AI skill configured for this repository')
+  .option('--collection <spec>', 'Collection spec: name:bundle:TokenConstant:tokenFilePath (repeatable)', collect, [])
+  .option('--dir <path>', 'Output directory (default: .claude)')
+  .addOption(new Option('--token-casing <casing>', 'Token property key casing').choices(['upperCase', 'camelCase']))
+  .action(async (options) => {
+    const { installSkillCommand } = await import('./commands/install-skill');
+    await installSkillCommand(options);
   });
 
 program.parse();

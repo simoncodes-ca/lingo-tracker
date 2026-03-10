@@ -44,6 +44,14 @@ pnpm run serve:api     # API server (default port 3030)
 pnpm run serve:tracker # Angular dev server
 ```
 
+### Translations / i18n
+
+Use the `/lingo-tracker` skill for detecting hardcoded strings, creating translation resources, and updating components to use Transloco. It handles the full workflow: detect → add-resource → bundle → update code.
+
+### Browser / UI Testing
+
+Use the `/playwright-cli` skill for browser automation, UI testing, screenshots, and interacting with the running Tracker UI. Do NOT use the Playwright MCP plugin or invoke Playwright directly.
+
 ### Other Commands
 
 ```bash

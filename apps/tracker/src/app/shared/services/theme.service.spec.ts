@@ -256,7 +256,7 @@ describe('ThemeService', () => {
 
   describe('LocalStorage Error Handling', () => {
     it('should handle localStorage getItem errors gracefully', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
       window.localStorage.getItem = vi.fn(() => {
         throw new Error('Storage error');
       });
@@ -269,7 +269,7 @@ describe('ThemeService', () => {
     });
 
     it('should handle localStorage setItem errors gracefully', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
       window.localStorage.setItem = vi.fn(() => {
         throw new Error('Storage error');
       });

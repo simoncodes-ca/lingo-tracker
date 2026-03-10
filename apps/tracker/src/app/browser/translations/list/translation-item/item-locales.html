@@ -9,7 +9,7 @@
         <mat-icon [class]="'status-icon status-' + lt.status">
           {{ getStatusIcon(lt.status) }}
         </mat-icon>
-        <span class="status-chip">{{ getStatusLabel(lt.status) }}</span>
+        <span class="status-chip">{{ getStatusLabel(lt.status) | transloco }}</span>
         <span class="locale-separator">:</span>
       </div>
       <div

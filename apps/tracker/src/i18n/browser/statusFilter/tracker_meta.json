@@ -1,0 +1,32 @@
+{
+  "needsWork": {
+    "en": {
+      "checksum": "82198ade859bc9f4034a6dd31276d473"
+    },
+    "es": {
+      "checksum": "80220dbff8569e64b7041360ade48d8e",
+      "baseChecksum": "82198ade859bc9f4034a6dd31276d473",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "3c388b094f2f1d561d99a41462f02279",
+      "baseChecksum": "82198ade859bc9f4034a6dd31276d473",
+      "status": "translated"
+    }
+  },
+  "ariaLabelX": {
+    "en": {
+      "checksum": "dae9b86c4a9710ce0da801e65751954d"
+    },
+    "es": {
+      "checksum": "ea40ee2ecad70b2859450126c6922cc3",
+      "baseChecksum": "dae9b86c4a9710ce0da801e65751954d",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "ba99ae2f5ef8f8da0cf7140ab17fc4ee",
+      "baseChecksum": "dae9b86c4a9710ce0da801e65751954d",
+      "status": "translated"
+    }
+  }
+}

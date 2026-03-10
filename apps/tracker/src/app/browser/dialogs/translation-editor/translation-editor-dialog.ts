@@ -27,6 +27,7 @@ import type {
   ResourceSummaryDto,
   TranslationStatus,
   CreateResourceDto,
+  CreateResourceResponseDto,
   UpdateResourceDto,
   UpdateResourceResponseDto,
   SearchResultDto,
@@ -37,6 +38,8 @@ import { BrowserStore } from '../../store/browser.store';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
 import type { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { SimilarTranslations } from './similar-translations';
 import { FolderPicker } from './folder-picker/folder-picker';
 import { Subject } from 'rxjs';
@@ -75,6 +78,8 @@ export interface TranslationEditorResult {
   shouldOpenEdit?: boolean;
   existingResourceKey?: string;
   resource?: ResourceSummaryDto;
+  /** Locales skipped during auto-translation due to ICU format incompatibility. */
+  skippedLocales?: string[];
 }
 
 @Component({
@@ -97,6 +102,7 @@ export interface TranslationEditorResult {
     TextFieldModule,
     SimilarTranslations,
     FolderPicker,
+    TranslocoPipe,
   ],
 })
 export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit {
@@ -105,10 +111,12 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   private readonly browserApi = inject(BrowserApiService);
   private readonly browserStore = inject(BrowserStore);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly transloco = inject(TranslocoService);
   private readonly destroy$ = new Subject<void>();
   private readonly baseValueSearch$ = new Subject<string>();
 
   readonly data = inject<TranslationEditorDialogData>(MAT_DIALOG_DATA);
+  readonly TOKENS = TRACKER_TOKENS;
 
   @ViewChild('keyInput') keyInput?: ElementRef<HTMLInputElement>;
   @ViewChild('baseValueInput') baseValueInput?: ElementRef<HTMLInputElement>;
@@ -155,11 +163,21 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   readonly translationStatusOptions: TranslationStatus[] = ['new', 'translated', 'stale', 'verified'];
 
   readonly isEditMode = computed(() => this.data.mode === 'edit');
-  readonly dialogTitle = computed(() => (this.isEditMode() ? 'Edit Translation' : 'Create Translation'));
-  readonly dialogSubtitle = computed(() =>
-    this.isEditMode() ? 'Update translation values and metadata' : 'Add a new translation entry to your collection',
+  readonly dialogTitle = computed(() =>
+    this.isEditMode()
+      ? TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.EDITTITLE
+      : TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CREATETITLE,
   );
-  readonly saveButtonLabel = computed(() => (this.isEditMode() ? 'Update Translation' : 'Save Translation'));
+  readonly dialogSubtitle = computed(() =>
+    this.isEditMode()
+      ? TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.EDITSUBTITLE
+      : TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CREATESUBTITLE,
+  );
+  readonly saveButtonLabel = computed(() =>
+    this.isEditMode()
+      ? TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.UPDATEBUTTON
+      : TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.SAVEBUTTON,
+  );
   readonly displayedFolderPath = computed(() => this.data.folderPath || 'root');
   readonly hasSearchQuery = computed(() => this.baseValueLength() >= 3);
 
@@ -333,12 +351,14 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
 
   onSimilarResourceClick(result: SearchResultDto): void {
     const fullKey = result.key;
-    this.#copyToClipboard(fullKey, 'Similar resource key copied');
+    this.#copyToClipboard(fullKey, this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.KEYCOPIED));
   }
 
   #copyToClipboard(text: string, successMessage: string): void {
+    const failedMessage = this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.COPYFAILED);
+
     if (!navigator.clipboard?.writeText) {
-      this.snackBar.open('Failed to copy', '', {
+      this.snackBar.open(failedMessage, '', {
         duration: 2000,
         panelClass: ['error-snackbar'],
       });
@@ -355,7 +375,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
         });
       })
       .catch(() => {
-        this.snackBar.open('Failed to copy', '', {
+        this.snackBar.open(failedMessage, '', {
           duration: 2000,
           panelClass: ['error-snackbar'],
         });
@@ -387,7 +407,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
 
   #handleEditSubmit(formValue: TranslationFormValue, commentValue: string): void {
     if (!this.data.resource) {
-      this.errorMessage.set('Cannot update: resource data is missing');
+      this.errorMessage.set(this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.ERROR.MISSINGRESOURCE));
       return;
     }
 
@@ -404,7 +424,9 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
 
     if (hasKeyChanged) {
       this.isSubmitting.set(false);
-      this.errorMessage.set('Key renaming is not yet supported. Please use the same key or create a new resource.');
+      this.errorMessage.set(
+        this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.ERROR.KEYRENAMINGNOTSUPPORTED),
+      );
       return;
     }
 
@@ -439,6 +461,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
           translations: filledTranslations.length > 0 ? filledTranslations : undefined,
           success: true,
           resource: response.resource,
+          skippedLocales: response.skippedLocales?.length ? response.skippedLocales : undefined,
         });
       },
       error: (error: unknown) => {
@@ -471,7 +494,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     };
 
     this.browserApi.createResource(this.data.collectionName, createDto).subscribe({
-      next: () => {
+      next: (response: CreateResourceResponseDto) => {
         this.dialogRef.close({
           key: formValue.key,
           baseValue: formValue.baseValue,
@@ -479,6 +502,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
           folderPath: this.selectedFolderPath(),
           translations: filledTranslations.length > 0 ? filledTranslations : undefined,
           success: true,
+          skippedLocales: response.skippedLocales?.length ? response.skippedLocales : undefined,
         });
       },
       error: (error: unknown) => {
@@ -516,44 +540,60 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
       }
 
       if (error.status === 400) {
-        const message = error.error?.message || error.message || 'Invalid request';
+        const message =
+          error.error?.message ||
+          error.message ||
+          this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.ERROR.INVALIDREQUEST);
         this.errorMessage.set(message);
         return;
       }
 
-      this.errorMessage.set(error.error?.message || error.message || 'Failed to create translation');
+      this.errorMessage.set(
+        error.error?.message ||
+          error.message ||
+          this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.ERROR.CREATEFAILED),
+      );
       return;
     }
 
-    this.errorMessage.set('An unexpected error occurred');
+    this.errorMessage.set(this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.ERROR.UNEXPECTED));
   }
 
   #handleUpdateError(error: unknown): void {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 404) {
-        this.errorMessage.set('Resource not found. It may have been deleted.');
+        this.errorMessage.set(this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.ERROR.NOTFOUND));
         return;
       }
 
       if (error.status === 400) {
-        const message = error.error?.message || error.message || 'Invalid request';
+        const message =
+          error.error?.message ||
+          error.message ||
+          this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.ERROR.INVALIDREQUEST);
         this.errorMessage.set(message);
         return;
       }
 
-      this.errorMessage.set(error.error?.message || error.message || 'Failed to update translation');
+      this.errorMessage.set(
+        error.error?.message ||
+          error.message ||
+          this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.ERROR.UPDATEFAILED),
+      );
       return;
     }
 
-    this.errorMessage.set('An unexpected error occurred');
+    this.errorMessage.set(this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.ERROR.UNEXPECTED));
   }
 
   #showKeyConflictDialog(existingKey: string): void {
     const dialogData: ConfirmationDialogData = {
-      title: 'Translation Key Already Exists',
-      message: `The translation key "${existingKey}" already exists in this collection. Would you like to edit the existing translation or choose a different key?`,
-      confirmButtonText: 'Edit Existing',
-      cancelButtonText: 'Choose Different Key',
+      title: this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CONFLICT.TITLE),
+      message: this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CONFLICT.MESSAGEX, {
+        key: existingKey,
+      }),
+      confirmButtonText: this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CONFLICT.EDITEXISTING),
+      cancelButtonText: this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CONFLICT.CHOOSEDIFFERENTKEY),
     };
 
     const dialogRef = this.dialog.open<ConfirmationDialog, ConfirmationDialogData, boolean>(ConfirmationDialog, {
@@ -579,10 +619,10 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     this.#commentConfirmationShown = true;
 
     const confirmationDialogData: ConfirmationDialogData = {
-      title: 'No Comment Added',
-      message: 'Comments help other translators understand context. Are you sure you want to save without a comment?',
-      confirmButtonText: 'Save Anyway',
-      cancelButtonText: 'Add Comment',
+      title: this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTCONFIRM.TITLE),
+      message: this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTCONFIRM.MESSAGE),
+      confirmButtonText: this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTCONFIRM.SAVEANYWAY),
+      cancelButtonText: this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTCONFIRM.ADDCOMMENT),
     };
 
     const confirmationDialogRef = this.dialog.open(ConfirmationDialog, {
@@ -620,11 +660,11 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     const keyControl = this.form.controls.key;
 
     if (keyControl.hasError('required')) {
-      return 'Translation key is required';
+      return TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.KEYREQUIRED;
     }
 
     if (keyControl.hasError('pattern')) {
-      return 'Only letters, numbers, underscores, and hyphens allowed';
+      return TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.KEYPATTERNERROR;
     }
 
     return '';

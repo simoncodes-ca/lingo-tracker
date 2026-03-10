@@ -22,5 +22,33 @@
     "comment": "Generic error message for failed operations",
     "es": "Ocurrió un error. Por favor, inténtalo de nuevo.",
     "fr-ca": "Une erreur s'est produite. Veuillez réessayer."
+  },
+  "loadFailed": {
+    "source": "Failed to load collections",
+    "comment": "Error toast when loading collections fails",
+    "tags": ["collections"],
+    "es": "No se pudieron cargar las colecciones",
+    "fr-ca": "Échec du chargement des collections"
+  },
+  "createFailed": {
+    "source": "Failed to create collection",
+    "comment": "Error toast when creating a collection fails",
+    "tags": ["collections"],
+    "es": "No se pudo crear la colección",
+    "fr-ca": "Impossible de créer la collection"
+  },
+  "updateFailed": {
+    "source": "Failed to update collection",
+    "comment": "Error toast when updating a collection fails",
+    "tags": ["collections"],
+    "es": "No se pudo actualizar la colección",
+    "fr-ca": "Échec de la mise à jour de la collection"
+  },
+  "deleteFailed": {
+    "source": "Failed to delete collection",
+    "comment": "Error toast when deleting a collection fails",
+    "tags": ["collections"],
+    "es": "No se pudo eliminar la colección",
+    "fr-ca": "Échec de la suppression de la collection"
   }
 }

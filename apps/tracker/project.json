@@ -26,7 +26,8 @@
             "output": "/assets/"
           }
         ],
-        "styles": ["apps/tracker/src/styles.scss"]
+        "styles": ["apps/tracker/src/styles.scss"],
+        "allowedCommonJsDependencies": ["@messageformat/core"]
       },
       "configurations": {
         "production": {

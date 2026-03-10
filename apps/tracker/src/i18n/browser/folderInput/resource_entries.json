@@ -1,0 +1,23 @@
+{
+  "placeholder": {
+    "source": "Folder name",
+    "comment": "Placeholder text in the inline folder name input field",
+    "tags": ["browser"],
+    "es": "Nombre de la carpeta",
+    "fr-ca": "Nom du dossier"
+  },
+  "nameRequired": {
+    "source": "Folder name is required",
+    "comment": "Validation error when folder name input is empty",
+    "tags": ["browser"],
+    "es": "El nombre de la carpeta es obligatorio",
+    "fr-ca": "Le nom du dossier est requis."
+  },
+  "namePatternError": {
+    "source": "Only letters, numbers, dashes, and underscores allowed",
+    "comment": "Validation error when folder name contains invalid characters",
+    "tags": ["browser"],
+    "es": "Solo se permiten letras, números, guiones y guiones bajos.",
+    "fr-ca": "Seules les lettres, les chiffres, les tirets et les traits de soulignement sont autorisés."
+  }
+}

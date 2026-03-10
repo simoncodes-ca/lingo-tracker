@@ -41,7 +41,7 @@ export async function moveResourceCommand(options: MoveResourceOptions): Promise
   }
 
   try {
-    const result = moveResource(sourceCollection.translationsFolderPath, {
+    const result = await moveResource(sourceCollection.translationsFolderPath, {
       source: answers.source,
       destination: answers.dest,
       override: options.override,

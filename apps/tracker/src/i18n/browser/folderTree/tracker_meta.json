@@ -1,0 +1,77 @@
+{
+  "filterFoldersAriaLabel": {
+    "en": {
+      "checksum": "8aad8def5c9f4c9233fafc03317b3755"
+    },
+    "es": {
+      "checksum": "1f1abbdd2f82763e8dda6539ebb89374",
+      "baseChecksum": "8aad8def5c9f4c9233fafc03317b3755",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "155631a10eacdcd6d715db7ed8c28196",
+      "baseChecksum": "8aad8def5c9f4c9233fafc03317b3755",
+      "status": "translated"
+    }
+  },
+  "showCurrentFolderTooltip": {
+    "en": {
+      "checksum": "8bb8f6d2cca4c79060a585c3066b12dd"
+    },
+    "es": {
+      "checksum": "1a5651091ede3e9bb2f6c86fd510324a",
+      "baseChecksum": "8bb8f6d2cca4c79060a585c3066b12dd",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "de031154ace17104f7b3f283dfe398df",
+      "baseChecksum": "8bb8f6d2cca4c79060a585c3066b12dd",
+      "status": "translated"
+    }
+  },
+  "showNestedResourcesTooltip": {
+    "en": {
+      "checksum": "ef700afb7c85765e3b5122911e9461f7"
+    },
+    "es": {
+      "checksum": "f23b54b4401a71b60439a62aef6d3940",
+      "baseChecksum": "ef700afb7c85765e3b5122911e9461f7",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "6d3f087cfbe8ddfbb48108e78bcd06d9",
+      "baseChecksum": "ef700afb7c85765e3b5122911e9461f7",
+      "status": "translated"
+    }
+  },
+  "addFolderAriaLabel": {
+    "en": {
+      "checksum": "b60bc90c77f58812129670659f977dbe"
+    },
+    "es": {
+      "checksum": "3fc0edee79503e71030f490839e88196",
+      "baseChecksum": "b60bc90c77f58812129670659f977dbe",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "72b188201ce2984052b2d7c8b9945c60",
+      "baseChecksum": "b60bc90c77f58812129670659f977dbe",
+      "status": "translated"
+    }
+  },
+  "addFolderTooltip": {
+    "en": {
+      "checksum": "79e6232f92f3cc7bd3d268f4ec3c9e95"
+    },
+    "es": {
+      "checksum": "b1f44f0d1c38e44822e30b29f900cca1",
+      "baseChecksum": "79e6232f92f3cc7bd3d268f4ec3c9e95",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "f92b21768583c08ddfde329bbe1b7d03",
+      "baseChecksum": "79e6232f92f3cc7bd3d268f4ec3c9e95",
+      "status": "translated"
+    }
+  }
+}

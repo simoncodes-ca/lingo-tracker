@@ -37,10 +37,9 @@
   }
 
   .logo-icon {
-    font-size: 28px;
-    width: 28px;
-    height: 28px;
-    color: var(--color-primary);
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
   }
 
   .app-title {
@@ -55,6 +54,17 @@
     @media (max-width: 768px) {
       font-size: var(--font-size-lg);
     }
+  }
+}
+
+.back-button {
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  margin-left: -4px;
+  margin-right: var(--spacing-2);
+
+  &:hover {
+    color: var(--color-text-secondary);
   }
 }
 

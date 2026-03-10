@@ -17,6 +17,8 @@ import {
 } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
+import { TranslocoService } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
 import type {
   FolderNodeDto,
   ResourceSummaryDto,
@@ -728,6 +730,7 @@ export const BrowserStore = signalStore(
     const api = inject(BrowserApiService);
     const snackBar = inject(MatSnackBar);
     const dialog = inject(MatDialog);
+    const transloco = inject(TranslocoService);
 
     return {
       moveResource: rxMethod<{ sourceKey: string; destinationFolderPath: string }>(
@@ -744,7 +747,9 @@ export const BrowserStore = signalStore(
 
             // Check if dropping in same folder
             if (sourceFolderPath === destinationFolderPath) {
-              snackBar.open('Resource is already in this folder', undefined, { duration: 3000 });
+              snackBar.open(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCEALREADYINFOLDER), undefined, {
+                duration: 3000,
+              });
               patchState(store, { isDisabled: false });
               return of(null);
             }
@@ -761,7 +766,14 @@ export const BrowserStore = signalStore(
             return api.moveResource(collection, sourceKey, destinationKey).pipe(
               tap(() => {
                 const folderName = destinationFolderPath || 'root';
-                snackBar.open(`Moved "${entryName}" to ${folderName}`, undefined, { duration: 3000 });
+                snackBar.open(
+                  transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCEMOVEDX, {
+                    name: entryName,
+                    folder: folderName,
+                  }),
+                  undefined,
+                  { duration: 3000 },
+                );
                 patchState(store, { isDisabled: false });
 
                 // Reload folder tree and current folder
@@ -769,7 +781,10 @@ export const BrowserStore = signalStore(
                 store.selectFolder(store.currentFolderPath());
               }),
               catchError((error: unknown) => {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to move resource';
+                const errorMessage =
+                  error instanceof Error
+                    ? error.message
+                    : transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.MOVERESOURCEFAILED);
 
                 // Rollback optimistic update
                 patchState(store, {
@@ -777,7 +792,7 @@ export const BrowserStore = signalStore(
                   isDisabled: false,
                 });
 
-                snackBar.open(`Error: ${errorMessage}`, undefined, { duration: 5000 });
+                snackBar.open(errorMessage, undefined, { duration: 5000 });
                 return of(null);
               }),
             );
@@ -802,7 +817,9 @@ export const BrowserStore = signalStore(
             // Check if source and destination are the same
             const sourceParentPath = extractParentFolderPath(sourceFolderPath);
             if (sourceParentPath === destinationFolderPath) {
-              snackBar.open('Folder is already at this location', undefined, { duration: 3000 });
+              snackBar.open(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.FOLDERALREADYATLOCATION), undefined, {
+                duration: 3000,
+              });
               return of(null);
             }
 
@@ -813,9 +830,12 @@ export const BrowserStore = signalStore(
               switchMap((module) => {
                 const dialogRef = dialog.open(module.ConfirmationDialog, {
                   data: {
-                    title: 'Move Folder',
-                    message: `Move folder "${folderName}" and all its contents to "${destinationFolderPath || 'root'}"?`,
-                    confirmButtonText: 'Move',
+                    title: transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.MOVEFOLDER.TITLE),
+                    message: transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.MOVEFOLDER.MESSAGEX, {
+                      name: folderName,
+                      dest: destinationFolderPath || 'root',
+                    }),
+                    confirmButtonText: transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.MOVE),
                     actionType: 'standard',
                   },
                   width: '400px',
@@ -839,7 +859,14 @@ export const BrowserStore = signalStore(
                 return api.moveFolder(collection, sourceFolderPath, destinationFolderPath).pipe(
                   switchMap(() => {
                     const destName = destinationFolderPath || 'root';
-                    snackBar.open(`Moved "${folderName}" into ${destName}`, undefined, { duration: 3000 });
+                    snackBar.open(
+                      transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.FOLDERMOVEDX, {
+                        name: folderName,
+                        dest: destName,
+                      }),
+                      undefined,
+                      { duration: 3000 },
+                    );
                     patchState(store, { isDisabled: false, isDeletingFolder: false });
 
                     // Check if destination was loaded before modifying tree
@@ -909,7 +936,10 @@ export const BrowserStore = signalStore(
                     );
                   }),
                   catchError((error: unknown) => {
-                    const errorMessage = error instanceof Error ? error.message : 'Failed to move folder';
+                    const errorMessage =
+                      error instanceof Error
+                        ? error.message
+                        : transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.MOVEFOLDERFAILED);
 
                     // Rollback optimistic update
                     patchState(store, {
@@ -918,7 +948,7 @@ export const BrowserStore = signalStore(
                       isDeletingFolder: false,
                     });
 
-                    snackBar.open(`Error: ${errorMessage}`, undefined, { duration: 5000 });
+                    snackBar.open(errorMessage, undefined, { duration: 5000 });
                     return of(null);
                   }),
                 );

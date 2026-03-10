@@ -5,6 +5,7 @@ import { IndexingOverlay } from './indexing-overlay.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
 
 describe('IndexingOverlay', () => {
   let component: IndexingOverlay;
@@ -12,7 +13,7 @@ describe('IndexingOverlay', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [IndexingOverlay, MatProgressSpinnerModule, MatCardModule, MatButtonModule],
+      imports: [IndexingOverlay, MatProgressSpinnerModule, MatCardModule, MatButtonModule, getTranslocoTestingModule()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(IndexingOverlay);

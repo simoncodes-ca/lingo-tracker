@@ -19,3 +19,6 @@ export * from './lib/search-translations.dto';
 export * from './lib/search-result.dto';
 export * from './lib/cache-status.dto';
 export * from './lib/tree-status-response.dto';
+export * from './lib/translation-config.dto';
+export * from './lib/translate-resource.dto';
+export * from './lib/translate-resource-response.dto';

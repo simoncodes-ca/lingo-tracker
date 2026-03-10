@@ -8,7 +8,7 @@
     (keydown)="onKeydown($event)"
     [attr.role]="'treeitem'"
     [attr.tabindex]="isFocused() ? 0 : -1"
-    [attr.aria-label]="'Folder ' + folder().name"
+    [attr.aria-label]="TOKENS.BROWSER.FOLDERPICKER.FOLDERARIALABELX | transloco : { name: folder().name }"
     [attr.aria-selected]="isSelected()"
     [attr.aria-expanded]="hasChildren() ? isExpanded() : null"
   >
@@ -18,7 +18,7 @@
         mat-icon-button
         class="expand-button"
         (click)="onExpandClick($event)"
-        [attr.aria-label]="isExpanded() ? 'Collapse' : 'Expand'"
+        [attr.aria-label]="(isExpanded() ? TOKENS.BROWSER.FOLDERPICKER.COLLAPSE : TOKENS.BROWSER.FOLDERPICKER.EXPAND) | transloco"
       >
         <mat-icon>{{ expandIcon() }}</mat-icon>
       </button>
@@ -42,7 +42,7 @@
       mat-icon-button
       class="add-button"
       (click)="onAddFolderClick($event)"
-      [attr.aria-label]="'Add subfolder to ' + folder().name"
+      [attr.aria-label]="TOKENS.BROWSER.FOLDERPICKER.ADDSUBFOLDERTOX | transloco : { name: folder().name }"
     >
       <mat-icon>add</mat-icon>
     </button>
@@ -55,7 +55,7 @@
         <app-inline-folder-input
           [parentPath]="folder().fullPath"
           (confirm)="onFolderConfirm($event)"
-          (cancel)="onFolderCancel()"
+          (cancelInput)="onFolderCancel()"
         />
       }
       @if (folder().tree?.children) {
@@ -67,7 +67,7 @@
             [focusedPath]="focusedPath()"
             [isAddingFolder]="isAddingFolder()"
             [addFolderParentPath]="addFolderParentPath()"
-            (select)="select.emit($event)"
+            (folderSelect)="folderSelect.emit($event)"
             (toggleExpand)="toggleExpand.emit($event)"
             (addFolder)="addFolder.emit($event)"
             (confirmNewFolder)="confirmNewFolder.emit($event)"

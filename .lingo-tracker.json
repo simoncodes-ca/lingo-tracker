@@ -46,6 +46,11 @@
       ]
     }
   },
+  "translation": {
+    "enabled": true,
+    "provider": "google-translate",
+    "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY"
+  },
   "bundles": {
     "main": {
       "bundleName": "{locale}",

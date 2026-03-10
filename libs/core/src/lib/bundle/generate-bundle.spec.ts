@@ -494,7 +494,10 @@ describe('generate-bundle', () => {
       };
 
       vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-      (generateBundleTypes as any).mockResolvedValue({
+      vi.mocked(generateBundleTypes).mockResolvedValue({
+        bundleKey: 'main',
+        typeDist: 'src/generated/types.ts',
+        keysCount: 1,
         fileGenerated: true,
       });
 
@@ -507,7 +510,7 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(generateBundleTypes).toHaveBeenCalledWith('main', mockConfig);
+      expect(generateBundleTypes).toHaveBeenCalledWith('main', mockConfig, 'upperCase');
     });
 
     it('should not invoke type generation when typeDist is missing', async () => {
@@ -518,7 +521,7 @@ describe('generate-bundle', () => {
       };
 
       vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-      (generateBundleTypes as any).mockClear();
+      vi.mocked(generateBundleTypes).mockClear();
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -541,7 +544,7 @@ describe('generate-bundle', () => {
       };
 
       vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-      (generateBundleTypes as any).mockRejectedValue(new Error('Type gen failed'));
+      vi.mocked(generateBundleTypes).mockRejectedValue(new Error('Type gen failed'));
 
       const params: GenerateBundleParams = {
         bundleKey: 'main',
@@ -553,6 +556,75 @@ describe('generate-bundle', () => {
       const result = await generateBundle(params);
 
       expect(result.warnings).toContain("Type generation failed for 'main': Type gen failed");
+    });
+
+    describe('tokenCasing precedence', () => {
+      const bundleDefinition: BundleDefinition = {
+        bundleName: '{locale}',
+        dist: '/dist/bundles',
+        collections: 'All',
+        typeDist: 'src/generated/types.ts',
+      };
+
+      beforeEach(() => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
+        vi.mocked(generateBundleTypes).mockResolvedValue({
+          bundleKey: 'main',
+          typeDist: 'src/generated/types.ts',
+          keysCount: 1,
+          fileGenerated: true,
+        });
+      });
+
+      it('should use CLI tokenCasing override when provided', async () => {
+        const params: GenerateBundleParams = {
+          bundleKey: 'main',
+          bundleDefinition,
+          config: mockConfig,
+          locales: ['en'],
+          tokenCasing: 'camelCase',
+        };
+
+        await generateBundle(params);
+
+        expect(vi.mocked(generateBundleTypes)).toHaveBeenCalledWith('main', mockConfig, 'camelCase');
+      });
+
+      it('should use bundle-level tokenCasing when no CLI override is given', async () => {
+        const bundleDefWithCasing: BundleDefinition = {
+          ...bundleDefinition,
+          tokenCasing: 'camelCase',
+        };
+
+        const params: GenerateBundleParams = {
+          bundleKey: 'main',
+          bundleDefinition: bundleDefWithCasing,
+          config: mockConfig,
+          locales: ['en'],
+        };
+
+        await generateBundle(params);
+
+        expect(vi.mocked(generateBundleTypes)).toHaveBeenCalledWith('main', mockConfig, 'camelCase');
+      });
+
+      it('should use global config tokenCasing when no CLI or bundle-level override is given', async () => {
+        const configWithCasing: LingoTrackerConfig = {
+          ...mockConfig,
+          tokenCasing: 'camelCase',
+        };
+
+        const params: GenerateBundleParams = {
+          bundleKey: 'main',
+          bundleDefinition,
+          config: configWithCasing,
+          locales: ['en'],
+        };
+
+        await generateBundle(params);
+
+        expect(vi.mocked(generateBundleTypes)).toHaveBeenCalledWith('main', configWithCasing, 'camelCase');
+      });
     });
   });
 });

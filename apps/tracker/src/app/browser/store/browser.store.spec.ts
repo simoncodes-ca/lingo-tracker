@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { BrowserStore } from './browser.store';
 import { BrowserApiService } from '../services/browser-api.service';
 import type { ResourceTreeDto, CacheStatusDto } from '@simoncodes-ca/data-transfer';
+import { getTranslocoTestingModule } from '../../../testing/transloco-testing.module';
 
 /**
  * Helper to wait for async signal updates from rxMethod.
@@ -55,7 +56,7 @@ describe('BrowserStore', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [HttpClientTestingModule, getTranslocoTestingModule()],
       providers: [BrowserStore, BrowserApiService],
     });
 

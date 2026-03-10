@@ -15,7 +15,7 @@
       <aside class="folder-sidebar">
         <app-folder-tree
           [collectionName]="collectionName()"
-          [activeDragData]="activeDragData()"
+          [activeDragDataFromParent]="activeDragData()"
           (dragStarted)="onDragStarted($event)"
           (dragEnded)="onDragEnded()"
         />
@@ -29,6 +29,7 @@
           <app-translation-list
             [collectionName]="collectionName()"
             [baseLocale]="baseLocale()"
+            [translationEnabled]="translationEnabled()"
             (dragStarted)="onDragStarted($event)"
             (dragEnded)="onDragEnded()"
           />

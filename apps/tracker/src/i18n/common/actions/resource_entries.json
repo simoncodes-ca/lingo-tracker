@@ -54,5 +54,40 @@
     "tags": ["common"],
     "es": "Mover",
     "fr-ca": "Déplacer"
+  },
+  "translate": {
+    "source": "Translate",
+    "comment": "Action button to auto-translate a resource",
+    "tags": ["common"],
+    "es": "Traducir",
+    "fr-ca": "Traduire"
+  },
+  "selectAll": {
+    "source": "Select All",
+    "comment": "Button to select all items in a list or filter",
+    "tags": ["common"],
+    "es": "Seleccionar todo",
+    "fr-ca": "Sélectionner tout"
+  },
+  "clearAll": {
+    "source": "Clear All",
+    "comment": "Button to clear all selections in a list or filter",
+    "tags": ["common"],
+    "es": "Borrar todo",
+    "fr-ca": "Effacer tout"
+  },
+  "close": {
+    "source": "Close",
+    "comment": "Button to close a dialog or dismiss a notification",
+    "tags": ["common"],
+    "es": "Cerca",
+    "fr-ca": "Fermer"
+  },
+  "dismiss": {
+    "source": "Dismiss",
+    "comment": "Button to dismiss a notification or snackbar",
+    "tags": ["common"],
+    "es": "Despedir",
+    "fr-ca": "Rejeter"
   }
 }

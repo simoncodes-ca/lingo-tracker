@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { LocaleFilter } from './locale-filter';
 import { BrowserStore } from '../../../store/browser.store';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
 
 describe('LocaleFilter', () => {
   let component: LocaleFilter;
@@ -24,7 +25,7 @@ describe('LocaleFilter', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [LocaleFilter, NoopAnimationsModule],
+      imports: [LocaleFilter, NoopAnimationsModule, getTranslocoTestingModule()],
       providers: [{ provide: BrowserStore, useValue: mockStore }],
     }).compileComponents();
 

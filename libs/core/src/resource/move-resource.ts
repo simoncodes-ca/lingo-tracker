@@ -24,7 +24,7 @@ export interface MoveResourceResult {
  * Moves resources from source to destination.
  * Supports single key move and wildcard pattern move (ending with *).
  */
-export function moveResource(translationsFolder: string, params: MoveResourceParams): MoveResourceResult {
+export async function moveResource(translationsFolder: string, params: MoveResourceParams): Promise<MoveResourceResult> {
   const { source, destination, override = false, destinationTranslationsFolder } = params;
   const targetFolder = destinationTranslationsFolder || translationsFolder;
 
@@ -35,13 +35,13 @@ export function moveResource(translationsFolder: string, params: MoveResourcePar
   }
 }
 
-function moveSingleResource(
+async function moveSingleResource(
   sourceTranslationsFolder: string,
   sourceKey: string,
   destinationKey: string,
   override: boolean,
   destinationTranslationsFolder: string,
-): MoveResourceResult {
+): Promise<MoveResourceResult> {
   const result: MoveResourceResult = {
     movedCount: 0,
     warnings: [],
@@ -102,7 +102,7 @@ function moveSingleResource(
     }
   }
 
-  // 3. Perform Move
+  // 3. Perform Move — carry existing translations without triggering auto-translation
   const translations: Array<{
     locale: string;
     value: string;
@@ -120,7 +120,7 @@ function moveSingleResource(
   });
 
   try {
-    addResource(destinationTranslationsFolder, {
+    await addResource(destinationTranslationsFolder, {
       key: destinationKey,
       baseValue: sourceData.source,
       comment: sourceData.comment,
@@ -148,13 +148,13 @@ function moveSingleResource(
   return result;
 }
 
-function moveResourcesByPattern(
+async function moveResourcesByPattern(
   sourceTranslationsFolder: string,
   pattern: string,
   destinationKey: string,
   override: boolean,
   destinationTranslationsFolder: string,
-): MoveResourceResult {
+): Promise<MoveResourceResult> {
   const result: MoveResourceResult = {
     movedCount: 0,
     warnings: [],
@@ -212,12 +212,12 @@ function moveResourcesByPattern(
     return result;
   }
 
-  // Move each key
+  // Move each key sequentially so errors are captured per-key
   for (const sourceKey of keysToMove) {
     const suffix = sourceKey.slice(cleanPrefix.length + 1); // +1 for dot
     const newKey = `${destinationKey}.${suffix}`;
 
-    const singleResult = moveSingleResource(
+    const singleResult = await moveSingleResource(
       sourceTranslationsFolder,
       sourceKey,
       newKey,

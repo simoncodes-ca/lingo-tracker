@@ -69,7 +69,7 @@
                 mat-icon-button
                 type="button"
                 [matMenuTriggerFor]="menu"
-                [attr.aria-label]="'More actions'"
+                [attr.aria-label]="TOKENS.COLLECTIONS.CARD.MOREACTIONSARIALABEL | transloco"
                 (click)="$event.stopPropagation()"
               >
                 <mat-icon>more_vert</mat-icon>

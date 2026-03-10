@@ -75,8 +75,15 @@ export async function editResourceCommand(options: EditResourceOptions): Promise
     ConsoleFormatter.warning('Both --locale and --localeValue must be provided to update a translation.');
   }
 
+  const translationConfig = collection.config.translation ?? config.translation;
+  const allLocales = collection.config.locales ?? config.locales ?? [];
+
   try {
-    const result = editResource(collection.translationsFolderPath, editOptions);
+    const result = await editResource(collection.translationsFolderPath, {
+      ...editOptions,
+      translationConfig,
+      allLocales,
+    });
 
     if (result.updated) {
       ConsoleFormatter.success(`Resource "${result.resolvedKey}" updated successfully.`);

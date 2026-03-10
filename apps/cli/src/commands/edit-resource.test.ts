@@ -40,7 +40,7 @@ describe('editResourceCommand', () => {
   it('should update a resource successfully', async () => {
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
-    mockEditResource.mockReturnValue({
+    mockEditResource.mockResolvedValue({
       resolvedKey: 'apps.common.buttons.ok',
       updated: true,
     });
@@ -66,7 +66,7 @@ describe('editResourceCommand', () => {
   it('should handle no changes detected', async () => {
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
-    mockEditResource.mockReturnValue({
+    mockEditResource.mockResolvedValue({
       resolvedKey: 'apps.common.buttons.ok',
       updated: false,
       message: 'No changes detected',
@@ -86,7 +86,7 @@ describe('editResourceCommand', () => {
   it('should update comment and tags', async () => {
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
-    mockEditResource.mockReturnValue({
+    mockEditResource.mockResolvedValue({
       resolvedKey: 'apps.common.buttons.ok',
       updated: true,
     });
@@ -112,7 +112,7 @@ describe('editResourceCommand', () => {
   it('should update locale value', async () => {
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
-    mockEditResource.mockReturnValue({
+    mockEditResource.mockResolvedValue({
       resolvedKey: 'apps.common.buttons.ok',
       updated: true,
     });
@@ -194,7 +194,7 @@ describe('editResourceCommand', () => {
   it('should prompt for baseValue if not provided', async () => {
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
-    mockEditResource.mockReturnValue({
+    mockEditResource.mockResolvedValue({
       resolvedKey: 'apps.common.buttons.ok',
       updated: true,
     });

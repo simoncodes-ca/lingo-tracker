@@ -3,6 +3,16 @@
  */
 
 /**
+ * Controls the casing of generated TypeScript token property keys.
+ * - 'upperCase': SCREAMING_SNAKE_CASE (e.g. FILE_UPLOAD) — default, fully backward compatible
+ * - 'camelCase': camelCase (e.g. fileUpload)
+ *
+ * Note: The const name (e.g. TRACKER_TOKENS) and type name (e.g. TrackerTokens)
+ * are always SCREAMING_SNAKE_CASE and PascalCase respectively, regardless of this setting.
+ */
+export type TokenCasing = 'upperCase' | 'camelCase';
+
+/**
  * Pattern and tag-based rule for selecting which entries to include in a bundle
  */
 export interface EntrySelectionRule {
@@ -109,4 +119,14 @@ export interface BundleDefinition {
    * Example: "./src/generated/common-tokens.ts"
    */
   typeDist?: string;
+
+  /**
+   * Casing for generated token property keys.
+   * Overrides the global tokenCasing setting when specified.
+   * Defaults to the global setting, which itself defaults to 'upperCase'.
+   *
+   * Example with 'camelCase': { fileUpload: 'file-upload' }
+   * Example with 'upperCase': { FILE_UPLOAD: 'file-upload' }
+   */
+  tokenCasing?: TokenCasing;
 }

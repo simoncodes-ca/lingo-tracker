@@ -1,0 +1,17 @@
+{
+  "skipToMainContent": {
+    "en": {
+      "checksum": "cc367b544fab23df0ddaf982fb1445b5"
+    },
+    "es": {
+      "checksum": "b2640f303143f6238cbbe0a626d23b11",
+      "baseChecksum": "cc367b544fab23df0ddaf982fb1445b5",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "1b832d4bc3ea43f017b16032aff04f57",
+      "baseChecksum": "cc367b544fab23df0ddaf982fb1445b5",
+      "status": "translated"
+    }
+  }
+}

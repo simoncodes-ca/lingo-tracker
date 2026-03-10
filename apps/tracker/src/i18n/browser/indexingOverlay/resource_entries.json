@@ -1,0 +1,23 @@
+{
+  "message": {
+    "source": "Indexing collection...",
+    "comment": "Message shown while the collection cache is being built",
+    "tags": ["browser"],
+    "es": "Colección de indexación...",
+    "fr-ca": "Collection d'indexation..."
+  },
+  "errorTitle": {
+    "source": "Indexing Failed",
+    "comment": "Title of the error card shown when indexing fails",
+    "tags": ["browser"],
+    "es": "Error de indexación",
+    "fr-ca": "L'indexation a échoué"
+  },
+  "defaultError": {
+    "source": "An error occurred while indexing the collection.",
+    "comment": "Default error message shown in the indexing overlay when no specific error is available",
+    "tags": ["browser"],
+    "es": "Se produjo un error al indexar la colección.",
+    "fr-ca": "Une erreur s'est produite lors de l'indexation de la collection."
+  }
+}

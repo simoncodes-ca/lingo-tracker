@@ -5,14 +5,29 @@
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import express from 'express';
+import { join } from 'path';
 
 const GLOBAL_PREFIX = 'api';
 const DEFAULT_PORT = 3030;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const server = express();
+
+  // Serve Angular static files and SPA fallback before NestJS routes
+  const clientPath = join(__dirname, '..', 'tracker', 'browser');
+  server.use(express.static(clientPath));
+  server.get('{*splat}', (req, res, next) => {
+    if (req.url.startsWith(`/${GLOBAL_PREFIX}`)) {
+      return next();
+    }
+    res.sendFile('index.html', { root: clientPath });
+  });
+
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
   app.enableCors({
     origin: '*',
@@ -30,7 +45,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(GLOBAL_PREFIX, app, document);
 
-  const port = process.env.LINGO_TRACKER_PORT || DEFAULT_PORT;
+  const portArgIndex = process.argv.indexOf('--port');
+  const portArgValue = portArgIndex !== -1 ? process.argv[portArgIndex + 1] : undefined;
+  const port = portArgValue || process.env.LINGO_TRACKER_PORT || DEFAULT_PORT;
   await app.listen(port);
   Logger.log(`🚀 Application is running on: http://localhost:${port}/${GLOBAL_PREFIX}`);
 }

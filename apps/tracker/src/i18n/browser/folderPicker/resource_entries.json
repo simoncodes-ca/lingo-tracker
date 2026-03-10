@@ -1,0 +1,86 @@
+{
+  "folderAriaLabelX": {
+    "source": "Folder {{ name }}",
+    "comment": "Aria-label for a folder node in the picker tree",
+    "tags": ["browser"],
+    "es": "Carpeta {{ name }}",
+    "fr-ca": "Dossier {{ name }}"
+  },
+  "collapse": {
+    "source": "Collapse",
+    "comment": "Aria-label for collapse button on a folder tree node",
+    "tags": ["browser"],
+    "es": "Colapsar",
+    "fr-ca": "Effondrement"
+  },
+  "expand": {
+    "source": "Expand",
+    "comment": "Aria-label for expand button on a folder tree node",
+    "tags": ["browser"],
+    "es": "Expandir",
+    "fr-ca": "Élargir"
+  },
+  "addSubfolderToX": {
+    "source": "Add subfolder to {{ name }}",
+    "comment": "Aria-label for add subfolder button on a folder node",
+    "tags": ["browser"],
+    "es": "Agregar subcarpeta a {{ name }}",
+    "fr-ca": "Ajouter un sous-dossier à {{ name }}"
+  },
+  "folderLabel": {
+    "source": "Folder:",
+    "comment": "Label prefix for the selected folder path in the folder picker",
+    "tags": ["browser"],
+    "es": "Carpeta:",
+    "fr-ca": "Dossier :"
+  },
+  "noFoldersYet": {
+    "source": "No folders yet",
+    "comment": "Empty state message in folder picker when there are no folders",
+    "tags": ["browser"],
+    "es": "No hay carpetas todavía",
+    "fr-ca": "Aucun dossier pour le moment"
+  },
+  "createFirstFolder": {
+    "source": "Create First Folder",
+    "comment": "Button text to create the first folder when there are none",
+    "tags": ["browser"],
+    "es": "Crear la primera carpeta",
+    "fr-ca": "Créer le premier dossier"
+  },
+  "folderCreated": {
+    "source": "Folder created successfully",
+    "comment": "Snackbar message after creating a folder",
+    "tags": ["browser"],
+    "es": "Carpeta creada exitosamente",
+    "fr-ca": "Dossier créé avec succès"
+  },
+  "folderAlreadyExists": {
+    "source": "Folder already exists",
+    "comment": "Snackbar message when trying to create a folder that already exists",
+    "tags": ["browser"],
+    "es": "La carpeta ya existe",
+    "fr-ca": "Le dossier existe déjà."
+  },
+  "createFolderFailed": {
+    "source": "Failed to create folder",
+    "comment": "Snackbar error message when folder creation fails",
+    "tags": ["browser"],
+    "es": "No se pudo crear la carpeta",
+    "fr-ca": "Impossible de créer le dossier"
+  },
+  "selectorAriaLabelX": {
+    "source": "Folder selector, currently: { path }",
+    "comment": "Aria-label for the folder picker header button. { path } is the currently selected folder path",
+    "tags": ["browser"],
+    "es": "Selector de carpeta, actualmente: { ruta }",
+    "fr-ca": "Sélecteur de dossier, présentement : { chemin }"
+  },
+  "treeAriaLabel": {
+    "source": "Folder tree",
+    "comment": "Aria-label for the folder tree container in the folder picker",
+    "tags": ["browser"],
+    "es": "Árbol de carpetas",
+    "fr-ca": "Arborescence des dossiers"
+  }
+}

@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { TranslocoService } from '@jsverse/transloco';
 import { TranslationSearch } from './translation-search/translation-search';
 import { BrowserStore } from '../../store/browser.store';
 import {
@@ -15,6 +16,8 @@ import {
 } from '../../dialogs/translation-editor';
 import { LocaleFilter } from './locale-filter/locale-filter';
 import { StatusFilter } from './status-filter/status-filter';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { TranslocoPipe } from '@jsverse/transloco';
 
 type DensityMode = 'compact' | 'full';
 
@@ -35,6 +38,7 @@ type DensityMode = 'compact' | 'full';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    TranslocoPipe,
   ],
   templateUrl: './translation-main-header.html',
   styleUrl: './translation-main-header.scss',
@@ -43,6 +47,8 @@ export class TranslationMainHeader {
   readonly store = inject(BrowserStore);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly transloco = inject(TranslocoService);
+  readonly TOKENS = TRACKER_TOKENS;
 
   readonly formattedFolderPath = computed(() => {
     const folderPath = this.store.currentFolderPath();
@@ -88,13 +94,32 @@ export class TranslationMainHeader {
     });
 
     dialogRef.afterClosed().subscribe((result: TranslationEditorResult | undefined) => {
-      if (result?.success) {
-        this.store.selectFolder(this.store.currentFolderPath());
-        this.snackBar.open('Translation created successfully', '', {
-          duration: 2000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
+      if (!result?.success) return;
+
+      this.store.selectFolder(this.store.currentFolderPath());
+      this.snackBar.open(this.transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCECREATED), '', {
+        duration: 2000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom',
+      });
+
+      if (result.skippedLocales?.length) {
+        const locales = result.skippedLocales.join(', ');
+        // Delay slightly longer than the success snackbar duration (2000ms) so the
+        // two messages don't overlap on screen.
+        const SNACKBAR_CHAIN_DELAY_MS = 2200;
+        setTimeout(() => {
+          this.snackBar.open(
+            this.transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.AUTOTRANSLATIONSKIPPEDX, { locales }),
+            this.transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DISMISS),
+            {
+              duration: 6000,
+              horizontalPosition: 'center',
+              verticalPosition: 'bottom',
+              panelClass: ['warning-snackbar'],
+            },
+          );
+        }, SNACKBAR_CHAIN_DELAY_MS);
       }
     });
   }

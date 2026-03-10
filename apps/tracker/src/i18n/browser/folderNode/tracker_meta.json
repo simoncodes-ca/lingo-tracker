@@ -1,0 +1,62 @@
+{
+  "newChip": {
+    "en": {
+      "checksum": "03c2e7e41ffc181a4e84080b4710e81e"
+    },
+    "es": {
+      "checksum": "73fa04be34aef055a1c1706edd6daba9",
+      "baseChecksum": "03c2e7e41ffc181a4e84080b4710e81e",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "9ea17b10f506b881fed906aab0a50f8d",
+      "baseChecksum": "03c2e7e41ffc181a4e84080b4710e81e",
+      "status": "translated"
+    }
+  },
+  "folderAriaLabelX": {
+    "en": {
+      "checksum": "2807ee06f9cee829069ff722e0076f63"
+    },
+    "es": {
+      "checksum": "c3fa7316902bf055a1e503dc6ef598ff",
+      "baseChecksum": "2807ee06f9cee829069ff722e0076f63",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "aaf5400b2f5e2d034201e563be05efd9",
+      "baseChecksum": "2807ee06f9cee829069ff722e0076f63",
+      "status": "translated"
+    }
+  },
+  "dragToMoveFolderAriaLabel": {
+    "en": {
+      "checksum": "621cc4d814e3af59119d9cd80bf87908"
+    },
+    "es": {
+      "checksum": "36ef01184883f9cbe35ed8e1482c21c8",
+      "baseChecksum": "621cc4d814e3af59119d9cd80bf87908",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "99ddcde95a1ca2801821826f38b538b4",
+      "baseChecksum": "621cc4d814e3af59119d9cd80bf87908",
+      "status": "translated"
+    }
+  },
+  "deleteFolderAriaLabelX": {
+    "en": {
+      "checksum": "fa3c80ac936464dfdfec9ddb30c5278b"
+    },
+    "es": {
+      "checksum": "7ef23897809944b3a62659679103a9f8",
+      "baseChecksum": "fa3c80ac936464dfdfec9ddb30c5278b",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "1b45ccc834ef6f20800df6bb073ab938",
+      "baseChecksum": "fa3c80ac936464dfdfec9ddb30c5278b",
+      "status": "translated"
+    }
+  }
+}

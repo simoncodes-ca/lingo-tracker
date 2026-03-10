@@ -20,11 +20,14 @@ To enable type generation, add the `typeDist` property to your bundle definition
       "bundleName": "common.{locale}",
       "dist": "./dist/i18n",
       "collections": "All",
-      "typeDist": "./src/generated/common-tokens.ts"
+      "typeDist": "./src/generated/common-tokens.ts",
+      "tokenCasing": "upperCase"
     }
   }
 }
 ```
+
+The `tokenCasing` property is optional and defaults to `"upperCase"`. It can also be set at the global level (root of `.lingo-tracker.json`) to apply to all bundles. Per-bundle settings override the global value.
 
 ## Usage
 
@@ -37,7 +40,11 @@ lingo-tracker bundle
 
 ### Output
 
-Generated files export a constant object with the structure of your translation keys, converted to `SCREAMING_SNAKE_CASE`.
+Generated files export a constant object with the structure of your translation keys. The casing of the keys depends on the `tokenCasing` setting.
+
+### `upperCase` (default)
+
+Keys are converted to `SCREAMING_SNAKE_CASE`.
 
 **Example Translation Key**: `common.buttons.ok`
 
@@ -63,11 +70,54 @@ import { COMMON_TOKENS } from '@/generated/common-tokens';
 const key = COMMON_TOKENS.BUTTONS.OK; // "common.buttons.ok"
 ```
 
+### `camelCase`
+
+Keys are converted to `camelCase`. Note that the const name remains `SCREAMING_SNAKE_CASE` (`COMMON_TOKENS`) and the type name remains PascalCase (`CommonTokens`); only the nested key segments use camelCase.
+
+**Example Translation Key**: `common.buttons.ok`
+
+**Generated TypeScript**:
+
+```typescript
+// src/generated/common-tokens.ts
+export const COMMON_TOKENS = {
+  buttons: {
+    ok: 'common.buttons.ok',
+  },
+} as const;
+
+export type CommonTokens = typeof COMMON_TOKENS;
+```
+
+**More Examples**:
+
+| Translation Key | `upperCase` (default) | `camelCase` |
+|---|---|---|
+| `file-upload` | `FILE_UPLOAD` | `fileUpload` |
+| `common.buttons.ok` | `COMMON.BUTTONS.OK` | `common.buttons.ok` |
+
+To use camelCase, set `tokenCasing` in your bundle config or pass `--token-casing camelCase` to the `bundle` CLI command:
+
+```bash
+lingo-tracker bundle --token-casing camelCase
+```
+
+## Token Casing Precedence
+
+The `tokenCasing` value is resolved in the following order (first match wins):
+
+1. CLI flag: `--token-casing <casing>`
+2. Per-bundle config: `tokenCasing` inside the bundle definition
+3. Global config: `tokenCasing` at the root of `.lingo-tracker.json`
+4. Default: `"upperCase"`
+
 ## Naming Conventions
 
-- **Bundle Keys**: Converted to `SCREAMING_SNAKE_CASE` with `_TOKENS` suffix (e.g., `common` -> `COMMON_TOKENS`).
-- **Key Segments**: Converted to `SCREAMING_SNAKE_CASE` (e.g., `buttons` -> `BUTTONS`, `file-upload` -> `FILE_UPLOAD`).
-- **Numeric Segments**: Preserved as-is (e.g., `steps.1.title` -> `STEPS.1.TITLE`).
+- **Const Name**: Always `SCREAMING_SNAKE_CASE` with `_TOKENS` suffix (e.g., `common` -> `COMMON_TOKENS`), regardless of `tokenCasing`.
+- **Type Name**: Always PascalCase (e.g., `common` -> `CommonTokens`), regardless of `tokenCasing`.
+- **Key Segments (upperCase)**: Converted to `SCREAMING_SNAKE_CASE` (e.g., `buttons` -> `BUTTONS`, `file-upload` -> `FILE_UPLOAD`).
+- **Key Segments (camelCase)**: Converted to `camelCase` (e.g., `buttons` -> `buttons`, `file-upload` -> `fileUpload`).
+- **Numeric Segments**: Preserved as-is (e.g., `steps.1.title` -> `STEPS.1.TITLE` or `steps.1.title`).
 
 ## Integration
 

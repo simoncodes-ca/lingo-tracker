@@ -1,5 +1,5 @@
 import prompts from 'prompts';
-import type { LingoTrackerConfig } from '@simoncodes-ca/core';
+import type { LingoTrackerConfig, TokenCasing } from '@simoncodes-ca/core';
 import { generateBundle } from '@simoncodes-ca/core';
 import { loadConfiguration, parseCommaSeparatedList, ConsoleFormatter } from '../utils';
 
@@ -7,6 +7,8 @@ export interface BundleOptions {
   name?: string;
   locale?: string;
   verbose?: boolean;
+  /** CLI-level override for token casing. Takes precedence over all config file values. */
+  tokenCasing?: TokenCasing;
 }
 
 interface BundleGenerationResult {
@@ -73,6 +75,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
         bundleDefinition,
         config,
         locales: localeFilter,
+        tokenCasing: options.tokenCasing,
       });
 
       bundleResults.push({

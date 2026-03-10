@@ -1,7 +1,6 @@
 import {
   Component,
   ChangeDetectionStrategy,
-  type OnInit,
   inject,
   computed,
   effect,
@@ -53,7 +52,7 @@ import type { DragData } from './types/drag-data';
   templateUrl: './translation-browser.html',
   styleUrl: './translation-browser.scss',
 })
-export class TranslationBrowser implements OnInit {
+export class TranslationBrowser {
   readonly #route = inject(ActivatedRoute);
   readonly #collectionsStore = inject(CollectionsStore);
   readonly store = inject(BrowserStore);
@@ -102,6 +101,22 @@ export class TranslationBrowser implements OnInit {
     return collection?.config.translationsFolder || '';
   });
 
+  /**
+   * Computed signal that reflects whether auto-translation is enabled for the current collection.
+   * Collection-level config takes precedence over global config.
+   */
+  readonly translationEnabled = computed(() => {
+    const name = this.collectionName();
+    if (!name) return false;
+
+    const globalConfig = this.#collectionsStore.config();
+    const collections = this.#collectionsStore.collectionEntriesWithLocales();
+    const collection = collections.find((c) => c.name === name);
+
+    const translationConfig = collection?.config.translation ?? globalConfig?.translation;
+    return translationConfig?.enabled === true;
+  });
+
   constructor() {
     // Wait for collections to load before initializing browser store
     effect(() => {
@@ -146,11 +161,6 @@ export class TranslationBrowser implements OnInit {
     this.#destroyRef.onDestroy(() => {
       this.#headerContext.clearCollectionContext();
     });
-  }
-
-  ngOnInit(): void {
-    // Collections are now loaded in App component
-    // Effect in constructor will initialize browser store when config is available
   }
 
   /**

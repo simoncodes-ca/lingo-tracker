@@ -8,6 +8,7 @@ import { provideRouter, withPreloading, PreloadAllModules } from '@angular/route
 import { appRoutes } from './app.routes';
 import { provideHttpClient } from '@angular/common/http';
 import { provideTransloco } from '@jsverse/transloco';
+import { provideTranslocoMessageformat } from '@jsverse/transloco-messageformat';
 import { TranslocoHttpLoader } from './shared/services/transloco-loader';
 
 export const appConfig: ApplicationConfig = {
@@ -18,12 +19,13 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideTransloco({
       config: {
-        availableLangs: ['en'],
+        availableLangs: ['en', 'es', 'fr-ca'],
         defaultLang: 'en',
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),
       },
       loader: TranslocoHttpLoader,
     }),
+    provideTranslocoMessageformat(),
   ],
 };

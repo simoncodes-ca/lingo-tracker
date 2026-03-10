@@ -4,6 +4,8 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 
 /**
  * Inline input component for creating new folders in the folder tree.
@@ -19,11 +21,12 @@ import { MatIconModule } from '@angular/material/icon';
   selector: 'app-inline-folder-input',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule, TranslocoPipe],
   templateUrl: './inline-folder-input.html',
   styleUrl: './inline-folder-input.scss',
 })
 export class InlineFolderInput {
+  readonly TOKENS = TRACKER_TOKENS;
   /** The parent folder path (null for root level) */
   readonly parentPath = input<string | null>(null);
 
@@ -31,7 +34,7 @@ export class InlineFolderInput {
   readonly confirm = output<string>();
 
   /** Emitted when user cancels (Escape key or blur) */
-  readonly cancel = output<void>();
+  readonly cancelInput = output<void>();
 
   /** Reference to the input element for auto-focus */
   readonly inputElement = viewChild<ElementRef<HTMLInputElement>>('inputField');
@@ -74,7 +77,7 @@ export class InlineFolderInput {
    * Cancels the folder creation.
    */
   onEscapeKey(): void {
-    this.cancel.emit();
+    this.cancelInput.emit();
   }
 
   /**
@@ -84,7 +87,7 @@ export class InlineFolderInput {
    */
   onBlur(): void {
     if (!this.#confirmed) {
-      this.cancel.emit();
+      this.cancelInput.emit();
     }
   }
 
@@ -93,10 +96,10 @@ export class InlineFolderInput {
    */
   getErrorMessage(): string {
     if (this.folderNameControl.hasError('required')) {
-      return 'Folder name is required';
+      return TRACKER_TOKENS.BROWSER.FOLDERINPUT.NAMEREQUIRED;
     }
     if (this.folderNameControl.hasError('pattern')) {
-      return 'Only letters, numbers, dashes, and underscores allowed';
+      return TRACKER_TOKENS.BROWSER.FOLDERINPUT.NAMEPATTERNERROR;
     }
     return '';
   }

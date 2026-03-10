@@ -2,7 +2,7 @@
   <!-- Header -->
   <div class="card-header">
     <mat-icon class="header-icon">content_copy</mat-icon>
-    <h4 class="header-title">Similar Translations</h4>
+    <h4 class="header-title">{{ TOKENS.BROWSER.SIMILARTRANSLATIONS.TITLE | transloco }}</h4>
     @if (state() === 'loading') {
       <mat-spinner diameter="16" class="header-spinner"></mat-spinner>
     }
@@ -13,17 +13,17 @@
     @switch (state()) {
       @case ('idle') {
         <p class="state-message idle">
-          Similar translations will appear as you type
+          {{ TOKENS.BROWSER.SIMILARTRANSLATIONS.IDLE | transloco }}
         </p>
       }
       @case ('loading') {
         <p class="state-message loading">
-          Searching for similar translations...
+          {{ TOKENS.BROWSER.SIMILARTRANSLATIONS.LOADING | transloco }}
         </p>
       }
       @case ('empty') {
         <p class="state-message empty">
-          No similar translations found
+          {{ TOKENS.BROWSER.SIMILARTRANSLATIONS.EMPTY | transloco }}
         </p>
       }
       @case ('results') {
@@ -33,7 +33,7 @@
               type="button"
               class="result-item"
               (click)="onResultClick(result)"
-              title="Click to copy key"
+              [title]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
             >
               <span class="result-key">{{ result.key }}</span>
               <span class="result-value">{{ getTranslationValue(result) }}</span>
@@ -48,7 +48,7 @@
             class="show-more-button"
             (click)="showMore()"
           >
-            Show {{ remainingCount() }} more
+            {{ TOKENS.BROWSER.SIMILARTRANSLATIONS.SHOWMOREX | transloco : { count: remainingCount() } }}
           </button>
         }
       }

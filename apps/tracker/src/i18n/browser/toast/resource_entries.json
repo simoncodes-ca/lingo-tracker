@@ -1,0 +1,128 @@
+{
+  "copiedToClipboard": {
+    "source": "Copied to clipboard",
+    "comment": "Snackbar message after copying a key to clipboard",
+    "tags": ["browser"],
+    "es": "Copiado al portapapeles",
+    "fr-ca": "Copié dans le presse-papiers"
+  },
+  "copyFailed": {
+    "source": "Failed to copy",
+    "comment": "Snackbar error message when clipboard copy fails",
+    "tags": ["browser"],
+    "es": "No se pudo copiar",
+    "fr-ca": "Échec de la copie"
+  },
+  "resourceDeleted": {
+    "source": "Resource deleted successfully",
+    "comment": "Snackbar message after successfully deleting a resource",
+    "tags": ["browser"],
+    "es": "Recurso eliminado exitosamente",
+    "fr-ca": "Ressource supprimée avec succès"
+  },
+  "deleteFailed": {
+    "source": "Failed to delete resource",
+    "comment": "Snackbar error message when resource deletion fails",
+    "tags": ["browser"],
+    "es": "No se pudo eliminar el recurso",
+    "fr-ca": "Échec de la suppression de la ressource"
+  },
+  "translateFailed": {
+    "source": "Failed to auto-translate resource",
+    "comment": "Snackbar error message when auto-translation fails",
+    "tags": ["browser"],
+    "es": "No se pudo traducir automáticamente el recurso",
+    "fr-ca": "Échec de la traduction automatique de la ressource"
+  },
+  "translationUpdated": {
+    "source": "Translation updated successfully",
+    "comment": "Snackbar message after successfully updating a translation",
+    "tags": ["browser"],
+    "es": "Traducción actualizada exitosamente",
+    "fr-ca": "Traduction mise à jour avec succès"
+  },
+  "localeTranslated": {
+    "source": "1 locale translated successfully",
+    "comment": "Snackbar message when exactly 1 locale was auto-translated",
+    "tags": ["browser"],
+    "es": "1 configuración regional traducida correctamente",
+    "fr-ca": "1 langue traduite avec succès"
+  },
+  "localesTranslatedX": {
+    "source": "{{count}} locales translated successfully",
+    "comment": "Snackbar message when multiple locales were auto-translated",
+    "tags": ["browser"],
+    "es": "{{count}} locales traducidos correctamente",
+    "fr-ca": "{{count}} Les paramètres régionaux ont été traduits avec succès"
+  },
+  "allLocalesUpToDate": {
+    "source": "All locales are already up to date",
+    "comment": "Snackbar message when auto-translate finds nothing to update",
+    "tags": ["browser"],
+    "es": "Todas las configuraciones regionales ya están actualizadas",
+    "fr-ca": "Tous les emplacements sont déjà à jour."
+  },
+  "skippedLocalesX": {
+    "source": "Skipped locales (ICU format): {{locales}}",
+    "comment": "Snackbar warning when some locales were skipped because they use ICU format",
+    "tags": ["browser"],
+    "es": "Configuraciones regionales omitidas (formato ICU): {{locales}}",
+    "fr-ca": "Paramètres régionaux ignorés (format ICU) : {{locales}}"
+  },
+  "resourceCreated": {
+    "source": "Resource created successfully",
+    "comment": "Snackbar message after successfully creating a new resource",
+    "tags": ["browser"],
+    "es": "Recurso creado exitosamente",
+    "fr-ca": "Ressource créée avec succès"
+  },
+  "autoTranslationSkippedX": {
+    "source": "Auto-translation skipped for {{locales}} (ICU format not supported)",
+    "comment": "Snackbar warning when auto-translation was skipped for some locales due to ICU format",
+    "tags": ["browser"],
+    "es": "Se omitió la traducción automática para {{locales}} (formato ICU no compatible)",
+    "fr-ca": "Traduction automatique ignorée pour {{locales}} (format ICU non pris en charge)"
+  },
+  "resourceAlreadyInFolder": {
+    "source": "Resource is already in this folder",
+    "comment": "Snackbar message when user drops a resource onto its current folder",
+    "tags": ["browser"],
+    "es": "El recurso ya está en esta carpeta",
+    "fr-ca": "La ressource se trouve déjà dans ce dossier."
+  },
+  "resourceMovedX": {
+    "source": "Moved \"{{name}}\" to {{folder}}",
+    "comment": "Snackbar message after moving a resource to a different folder",
+    "tags": ["browser"],
+    "es": "Se movió \"{{name}}\" a {{folder}}",
+    "fr-ca": "Déplacé « {{name}} » vers {{folder}}"
+  },
+  "folderAlreadyAtLocation": {
+    "source": "Folder is already at this location",
+    "comment": "Snackbar message when user drops a folder onto its current parent location",
+    "tags": ["browser"],
+    "es": "La carpeta ya está en esta ubicación",
+    "fr-ca": "Le dossier est déjà à cet emplacement."
+  },
+  "folderMovedX": {
+    "source": "Moved \"{{name}}\" into {{dest}}",
+    "comment": "Snackbar message after successfully moving a folder",
+    "tags": ["browser"],
+    "es": "Se movió \"{{name}}\" a {{dest}}",
+    "fr-ca": "Déplacé « {{name}} » dans {{dest}}"
+  },
+  "moveResourceFailed": {
+    "source": "Failed to move resource",
+    "comment": "Snackbar error message when moving a resource fails",
+    "tags": ["browser"],
+    "es": "No se pudo mover el recurso",
+    "fr-ca": "Échec du déplacement de la ressource"
+  },
+  "moveFolderFailed": {
+    "source": "Failed to move folder",
+    "comment": "Snackbar error message when moving a folder fails",
+    "tags": ["browser"],
+    "es": "No se pudo mover la carpeta",
+    "fr-ca": "Impossible de déplacer le dossier"
+  }
+}

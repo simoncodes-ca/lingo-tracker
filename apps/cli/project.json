@@ -16,7 +16,14 @@
         "bundle": true,
         "main": "apps/cli/src/main.ts",
         "tsConfig": "apps/cli/tsconfig.app.json",
-        "assets": ["apps/cli/src/assets"],
+        "assets": [
+          "apps/cli/src/assets",
+          {
+            "input": "apps/cli/src/commands/install-skill-templates",
+            "glob": "**/*",
+            "output": "install-skill-templates"
+          }
+        ],
         "generatePackageJson": true,
         "skipTypeCheck": true,
         "esbuildOptions": {

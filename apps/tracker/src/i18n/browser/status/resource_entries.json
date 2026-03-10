@@ -1,0 +1,30 @@
+{
+  "new": {
+    "source": "New",
+    "comment": "Translation status label: new, not yet translated",
+    "tags": ["browser"],
+    "es": "Nuevo",
+    "fr-ca": "Nouveau"
+  },
+  "stale": {
+    "source": "Stale",
+    "comment": "Translation status label: source has changed and translation is outdated",
+    "tags": ["browser"],
+    "es": "Duro",
+    "fr-ca": "Vicié"
+  },
+  "translated": {
+    "source": "Translated",
+    "comment": "Translation status label: translated but not yet verified",
+    "tags": ["browser"],
+    "es": "Traducido",
+    "fr-ca": "Traduit"
+  },
+  "verified": {
+    "source": "Verified",
+    "comment": "Translation status label: reviewed and approved",
+    "tags": ["browser"],
+    "es": "Verificado",
+    "fr-ca": "Vérifié"
+  }
+}

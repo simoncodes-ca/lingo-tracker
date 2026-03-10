@@ -24,7 +24,7 @@ import { InlineFolderInput } from './inline-folder-input/inline-folder-input';
 import { BrowserStore } from '../../store/browser.store';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { SearchInput } from '../../../shared/components/search-input';
 import { MatIconModule } from '@angular/material/icon';
 import type { DragData } from '../../types/drag-data';
@@ -63,6 +63,7 @@ export class FolderTree {
   readonly store = inject(BrowserStore);
   readonly dialog = inject(MatDialog);
   readonly TOKENS = TRACKER_TOKENS;
+  readonly #transloco = inject(TranslocoService);
 
   /** Name of the collection to browse */
   collectionName = input.required<string>();
@@ -71,7 +72,7 @@ export class FolderTree {
   disabled = input<boolean>(false);
 
   /** Active drag data from parent (may come from translation items) */
-  activeDragDataFromParent = input<DragData | null>(null, { alias: 'activeDragData' });
+  activeDragDataFromParent = input<DragData | null>(null);
 
   /** Emitted when a folder is selected */
   folderSelected = output<string>();
@@ -190,9 +191,9 @@ export class FolderTree {
     import('../../../shared/components/confirmation-dialog/confirmation-dialog').then((m) => {
       const dialogRef = this.dialog.open(m.ConfirmationDialog, {
         data: {
-          title: 'Delete Folder',
-          message: `Delete "${folderName}" and all its contents?`,
-          confirmButtonText: 'Delete',
+          title: this.#transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETEFOLDER.TITLE),
+          message: this.#transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETEFOLDER.MESSAGEX, { name: folderName }),
+          confirmButtonText: this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DELETE),
           actionType: 'destructive',
         },
         width: '400px',
