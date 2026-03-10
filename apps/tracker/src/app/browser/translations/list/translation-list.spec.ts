@@ -295,11 +295,7 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
     // overrideProvider ensures our mock supersedes the module-level MatDialog instance.
     await TestBed.configureTestingModule({
       imports: [TranslationList, getTranslocoTestingModule()],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: snackBarSpy },
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatSnackBar, useValue: snackBarSpy }],
     })
       .overrideProvider(MatDialog, { useValue: mockDialog })
       .compileComponents();
@@ -505,11 +501,7 @@ describe('TranslationList - handleTranslate', () => {
     expect(component.translatingKeys().has('btn_save')).toBe(false);
 
     // Error message from the thrown Error is displayed
-    expect(snackBarSpy.open).toHaveBeenCalledWith(
-      'Network failure',
-      '',
-      expect.objectContaining({ duration: 4000 }),
-    );
+    expect(snackBarSpy.open).toHaveBeenCalledWith('Network failure', '', expect.objectContaining({ duration: 4000 }));
   });
 
   it('should show ICU warning snackbar when skippedLocales is non-empty', () => {

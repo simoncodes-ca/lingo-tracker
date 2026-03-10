@@ -1,4 +1,9 @@
-export type { TranslateRequest, TranslateResult, ProviderCapabilities, TranslationProvider } from './translation-provider';
+export type {
+  TranslateRequest,
+  TranslateResult,
+  ProviderCapabilities,
+  TranslationProvider,
+} from './translation-provider';
 export { TranslationError } from './translation-provider';
 export { GoogleTranslateV2Provider } from './google-translate-v2.provider';
 export { createTranslationProvider } from './translation-provider-factory';

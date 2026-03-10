@@ -33,7 +33,18 @@
     "format:write": "pnpm exec biome format --write apps libs scripts types",
     "lingo-tracker": "node dist/apps/cli/main.js"
   },
-  "keywords": [],
+  "keywords": [
+    "translation",
+    "i18n",
+    "internationalization",
+    "localization",
+    "l10n",
+    "transloco",
+    "translation-management",
+    "icu",
+    "cli",
+    "angular"
+  ],
   "author": "Simon Nodel",
   "private": true,
   "files": [

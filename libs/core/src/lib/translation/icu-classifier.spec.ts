@@ -99,15 +99,11 @@ describe('classifyICUContent', () => {
     });
 
     it("classifies a mix of a simple double-brace placeholder and a plural block as 'complex-icu'", () => {
-      expect(
-        classifyICUContent('Hello {{ name }}, {count, plural, one {# item} other {# items}}'),
-      ).toBe('complex-icu');
+      expect(classifyICUContent('Hello {{ name }}, {count, plural, one {# item} other {# items}}')).toBe('complex-icu');
     });
 
     it("classifies a mix of a simple single-brace placeholder and a plural block as 'complex-icu'", () => {
-      expect(
-        classifyICUContent('{name} has {count, plural, one {# message} other {# messages}}'),
-      ).toBe('complex-icu');
+      expect(classifyICUContent('{name} has {count, plural, one {# message} other {# messages}}')).toBe('complex-icu');
     });
 
     it("classifies a standalone plural block with no surrounding text as 'complex-icu'", () => {

@@ -43,10 +43,13 @@ describe('autoTranslateResource', () => {
       getCapabilities: vi.fn(),
     });
 
-    vi.mocked(TranslationOrchestrator).mockImplementation(() => ({
-      translateText: mockTranslateText,
-      translateBatch: vi.fn(),
-    }) as unknown as TranslationOrchestrator);
+    vi.mocked(TranslationOrchestrator).mockImplementation(
+      () =>
+        ({
+          translateText: mockTranslateText,
+          translateBatch: vi.fn(),
+        }) as unknown as TranslationOrchestrator,
+    );
 
     process.env.GOOGLE_TRANSLATE_API_KEY = 'test-api-key';
   });
@@ -150,9 +153,7 @@ describe('autoTranslateResource', () => {
     // detected ICU content for that locale). Uses a plain-text baseValue to
     // reflect a realistic scenario where the orchestrator's ICU detection
     // determines the skip, not the equality of the returned value.
-    mockTranslateText
-      .mockResolvedValueOnce(translated('Hallo'))
-      .mockResolvedValueOnce(skipped('Hello'));
+    mockTranslateText.mockResolvedValueOnce(translated('Hallo')).mockResolvedValueOnce(skipped('Hello'));
 
     const result = await autoTranslateResource({
       baseValue: 'Hello',

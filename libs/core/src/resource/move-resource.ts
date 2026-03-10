@@ -24,7 +24,10 @@ export interface MoveResourceResult {
  * Moves resources from source to destination.
  * Supports single key move and wildcard pattern move (ending with *).
  */
-export async function moveResource(translationsFolder: string, params: MoveResourceParams): Promise<MoveResourceResult> {
+export async function moveResource(
+  translationsFolder: string,
+  params: MoveResourceParams,
+): Promise<MoveResourceResult> {
   const { source, destination, override = false, destinationTranslationsFolder } = params;
   const targetFolder = destinationTranslationsFolder || translationsFolder;
 
