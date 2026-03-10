@@ -64,6 +64,7 @@
     "@angular/platform-browser": "~20.2.0",
     "@angular/router": "~20.2.0",
     "@jsverse/transloco": "^8.0.2",
+    "@jsverse/transloco-messageformat": "^8.2.1",
     "@module-federation/enhanced": "^0.21.1",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
@@ -71,14 +72,14 @@
     "@nestjs/serve-static": "^5.0.3",
     "@nestjs/swagger": "^11.2.0",
     "@ngrx/signals": "^20.0.1",
+    "commander": "^14.0.1",
     "express": "^5.2.1",
+    "prompts": "^2.4.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "~7.8.0",
     "tslib": "^2.8.1",
     "xliff": "^6.2.2",
-    "zone.js": "~0.15.0",
-    "commander": "^14.0.1",
-    "prompts": "^2.4.2"
+    "zone.js": "~0.15.0"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "~1.19.1",

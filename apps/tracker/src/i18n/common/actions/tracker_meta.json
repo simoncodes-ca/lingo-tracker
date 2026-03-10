@@ -133,5 +133,80 @@
       "baseChecksum": "6bc362dbf494c61ea117fe3c71ca48a5",
       "status": "new"
     }
+  },
+  "translate": {
+    "en": {
+      "checksum": "deccbe4e9083c3b5f7cd2632722765bb"
+    },
+    "es": {
+      "checksum": "1e11ae44cac08db1f2866828b8ac2012",
+      "baseChecksum": "deccbe4e9083c3b5f7cd2632722765bb",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "608b1b1fed86319b97f5c65b0fda9b5d",
+      "baseChecksum": "deccbe4e9083c3b5f7cd2632722765bb",
+      "status": "translated"
+    }
+  },
+  "selectAll": {
+    "en": {
+      "checksum": "45e96c0a422ce8a1a6ec1bd5eb9625c6"
+    },
+    "es": {
+      "checksum": "2f3873dcc4e56be1825c0099b04045df",
+      "baseChecksum": "45e96c0a422ce8a1a6ec1bd5eb9625c6",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "444c87852bd465ff516372130cdbab62",
+      "baseChecksum": "45e96c0a422ce8a1a6ec1bd5eb9625c6",
+      "status": "translated"
+    }
+  },
+  "clearAll": {
+    "en": {
+      "checksum": "e77fef0167598bb39846637ac3915f4e"
+    },
+    "es": {
+      "checksum": "de89f8caba6e6e2d2c3d26c35b677166",
+      "baseChecksum": "e77fef0167598bb39846637ac3915f4e",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "d34c9c47ced7d0d930e781495194fa3c",
+      "baseChecksum": "e77fef0167598bb39846637ac3915f4e",
+      "status": "translated"
+    }
+  },
+  "close": {
+    "en": {
+      "checksum": "d3d2e617335f08df83599665eef8a418"
+    },
+    "es": {
+      "checksum": "fe1f086f22b631ca6bbd2ee5c4795469",
+      "baseChecksum": "d3d2e617335f08df83599665eef8a418",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "7d206237f9912ea010005db2c20b60ce",
+      "baseChecksum": "d3d2e617335f08df83599665eef8a418",
+      "status": "translated"
+    }
+  },
+  "dismiss": {
+    "en": {
+      "checksum": "c8a59e7135a20b362f9c768b09454fdb"
+    },
+    "es": {
+      "checksum": "620ab8d760ac0c020cc49705e5ba236c",
+      "baseChecksum": "c8a59e7135a20b362f9c768b09454fdb",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "9757a390d15b48413b06d6469d8b36cd",
+      "baseChecksum": "c8a59e7135a20b362f9c768b09454fdb",
+      "status": "translated"
+    }
   }
 }

@@ -1,0 +1,42 @@
+{
+  "goToCollections": {
+    "en": {
+      "checksum": "e7926ae5bb733a6f509ed9e6d7e88245"
+    },
+    "es": {
+      "checksum": "d4c0517a4083d1c19dd2de05e96d0187",
+      "baseChecksum": "e7926ae5bb733a6f509ed9e6d7e88245",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "bd6e679d65eb7508feac07a4a808906b",
+      "baseChecksum": "e7926ae5bb733a6f509ed9e6d7e88245",
+      "status": "translated"
+    }
+  },
+  "backToCollections": {
+    "en": {
+      "checksum": "874fb8d79eb8715b9892cb64fbb77160"
+    },
+    "es": {
+      "checksum": "6ab01561e30663b75513e6729f1b1bc0",
+      "baseChecksum": "874fb8d79eb8715b9892cb64fbb77160",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "73586b8c21ceaebfb82eeaaf5378439c",
+      "baseChecksum": "874fb8d79eb8715b9892cb64fbb77160",
+      "status": "translated"
+    }
+  },
+  "keysCountX": {
+    "en": {
+      "checksum": "0bcf613f33867f9005c12fff49e775bc"
+    }
+  },
+  "localesCountX": {
+    "en": {
+      "checksum": "86b90c9bd6d2c40ebf923d1c06fee2d7"
+    }
+  }
+}

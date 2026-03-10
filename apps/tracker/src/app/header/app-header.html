@@ -1,7 +1,7 @@
 <mat-toolbar class="app-toolbar">
   <div class="toolbar-content">
     <!-- Logo and Title -->
-    <a class="brand" [routerLink]="['/collections']" aria-label="Go to Collections" matTooltip="Go to Collections">
+    <a class="brand" [routerLink]="['/collections']" [attr.aria-label]="TOKENS.HEADER.GOTOCOLLECTIONS | transloco" [matTooltip]="TOKENS.HEADER.GOTOCOLLECTIONS | transloco">
       <img src="assets/logo-rounded.png" class="logo-icon" alt="LingoTracker logo" />
       <h1 class="app-title">LingoTracker</h1>
     </a>
@@ -11,7 +11,7 @@
       <div class="collection-pipe" aria-hidden="true"></div>
 
       <!-- Back to Collections -->
-      <button mat-icon-button [routerLink]="['/collections']" aria-label="Back to Collections" matTooltip="Back to Collections" class="back-button">
+      <button mat-icon-button [routerLink]="['/collections']" [attr.aria-label]="TOKENS.HEADER.BACKTOCOLLECTIONS | transloco" [matTooltip]="TOKENS.HEADER.BACKTOCOLLECTIONS | transloco" class="back-button">
         <mat-icon>arrow_back</mat-icon>
       </button>
 

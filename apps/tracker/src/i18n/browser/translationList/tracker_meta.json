@@ -1,0 +1,17 @@
+{
+  "ariaLabel": {
+    "en": {
+      "checksum": "d96ae1865ec25b9e1707839a47d5d52e"
+    },
+    "es": {
+      "checksum": "3ec3d027a22b5fd57964f6f1bdb1771c",
+      "baseChecksum": "d96ae1865ec25b9e1707839a47d5d52e",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "ccdfbdc83b7ed690c123b9cb9787dfc2",
+      "baseChecksum": "d96ae1865ec25b9e1707839a47d5d52e",
+      "status": "translated"
+    }
+  }
+}

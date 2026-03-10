@@ -45,7 +45,7 @@
       [itemSize]="currentItemSize()"
       class="viewport"
       role="list"
-      aria-label="Translation list"
+      [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONLIST.ARIALABEL | transloco"
       cdkDropList
       [cdkDropListEnterPredicate]="noDropPredicate"
       [cdkDropListSortingDisabled]="true"

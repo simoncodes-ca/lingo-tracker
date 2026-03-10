@@ -58,5 +58,125 @@
       "baseChecksum": "eaed88a598b9d9a658b262bc448b0661",
       "status": "translated"
     }
+  },
+  "folderLabel": {
+    "en": {
+      "checksum": "5416b7cf9e33d63d7a7484a75e977dfa"
+    },
+    "es": {
+      "checksum": "e3914149115f58c4f578b8faacaa9459",
+      "baseChecksum": "5416b7cf9e33d63d7a7484a75e977dfa",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "c836c1633a42ce6abf860a6770e3fe9e",
+      "baseChecksum": "5416b7cf9e33d63d7a7484a75e977dfa",
+      "status": "translated"
+    }
+  },
+  "noFoldersYet": {
+    "en": {
+      "checksum": "9beedeb24025c057f2fd58a2e80153ec"
+    },
+    "es": {
+      "checksum": "47418fc922d14d584d53384cba7d5c2c",
+      "baseChecksum": "9beedeb24025c057f2fd58a2e80153ec",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "cd295ee735fe0fd2a8702978f20719f3",
+      "baseChecksum": "9beedeb24025c057f2fd58a2e80153ec",
+      "status": "translated"
+    }
+  },
+  "createFirstFolder": {
+    "en": {
+      "checksum": "07883be3c67d32d56eb1e86891f130ca"
+    },
+    "es": {
+      "checksum": "c52fcecfe5fd15856743ececf9385870",
+      "baseChecksum": "07883be3c67d32d56eb1e86891f130ca",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "6dbbbf38d3d3d6ce8cc6eb844d606427",
+      "baseChecksum": "07883be3c67d32d56eb1e86891f130ca",
+      "status": "translated"
+    }
+  },
+  "folderCreated": {
+    "en": {
+      "checksum": "a849da990cd1a54faca8b4923561fc60"
+    },
+    "es": {
+      "checksum": "86948708e3adfc07d4e8fe923ab1c912",
+      "baseChecksum": "a849da990cd1a54faca8b4923561fc60",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "163f36c9e2f540d418bcfdb38974dfc0",
+      "baseChecksum": "a849da990cd1a54faca8b4923561fc60",
+      "status": "translated"
+    }
+  },
+  "folderAlreadyExists": {
+    "en": {
+      "checksum": "8f0c6e690f8fc7b4930fa26eea038fe6"
+    },
+    "es": {
+      "checksum": "195195c0ddc78cf6c0d7bb57d5a3d29e",
+      "baseChecksum": "8f0c6e690f8fc7b4930fa26eea038fe6",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "7644a84d1884b115c717bf5e59b5072b",
+      "baseChecksum": "8f0c6e690f8fc7b4930fa26eea038fe6",
+      "status": "translated"
+    }
+  },
+  "createFolderFailed": {
+    "en": {
+      "checksum": "398dff483997d01292f5848d5f78e409"
+    },
+    "es": {
+      "checksum": "d9c23854c7a57fcf9485341984105791",
+      "baseChecksum": "398dff483997d01292f5848d5f78e409",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "3a8006f316f0b8e692ca464c5c728c70",
+      "baseChecksum": "398dff483997d01292f5848d5f78e409",
+      "status": "translated"
+    }
+  },
+  "selectorAriaLabelX": {
+    "en": {
+      "checksum": "b25b6c575d57b6fd62e0b80e20fe9c16"
+    },
+    "es": {
+      "checksum": "b11af281684aee0925985fc7d9cae889",
+      "baseChecksum": "b25b6c575d57b6fd62e0b80e20fe9c16",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "944c1bba8a4b6cdb6d462fa4cd6cab58",
+      "baseChecksum": "b25b6c575d57b6fd62e0b80e20fe9c16",
+      "status": "translated"
+    }
+  },
+  "treeAriaLabel": {
+    "en": {
+      "checksum": "3b3f435ac41d9af09975ca8fd7d9a957"
+    },
+    "es": {
+      "checksum": "cc2cb0978bb6314eb3263f2692beef04",
+      "baseChecksum": "3b3f435ac41d9af09975ca8fd7d9a957",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "0046b816158dd1dd70458ce6b0b0dd9e",
+      "baseChecksum": "3b3f435ac41d9af09975ca8fd7d9a957",
+      "status": "translated"
+    }
   }
 }

@@ -6,6 +6,8 @@ import { MatMenuModule, type MatMenu } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioModule } from '@angular/material/radio';
 import { BrowserStore } from '../../../store/browser.store';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 
 /**
  * LocaleFilter component provides a dropdown for filtering
@@ -25,7 +27,15 @@ import { BrowserStore } from '../../../store/browser.store';
   selector: 'app-locale-filter',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatMenuModule, MatCheckboxModule, MatRadioModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
+    MatCheckboxModule,
+    MatRadioModule,
+    TranslocoPipe,
+  ],
   templateUrl: './locale-filter.html',
   styleUrl: './locale-filter.scss',
 })
@@ -33,6 +43,7 @@ export class LocaleFilter {
   readonly multiSelect = input(true);
   readonly store = inject(BrowserStore);
   readonly localeMenu = viewChild.required<MatMenu>('localeMenu');
+  readonly TOKENS = TRACKER_TOKENS;
 
   /**
    * Computes the list of locales to display in the dropdown.

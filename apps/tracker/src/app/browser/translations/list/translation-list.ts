@@ -1,4 +1,14 @@
-import { Component, ChangeDetectionStrategy, inject, input, computed, output, signal, DestroyRef, viewChild } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  input,
+  computed,
+  output,
+  signal,
+  DestroyRef,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
@@ -17,7 +27,7 @@ import {
 import { BrowserStore } from '../../store/browser.store';
 import { TranslationItem } from './translation-item/translation-item';
 import type { ResourceSummaryDto, TranslateResourceResponseDto } from '@simoncodes-ca/data-transfer';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
@@ -49,13 +59,7 @@ export class TranslationList {
   readonly #dialog = inject(MatDialog);
   readonly #browserApi = inject(BrowserApiService);
   readonly #destroyRef = inject(DestroyRef);
-
-  // Snack messages centralized for clarity
-  readonly #SNACK_COPY_OK = 'Copied to clipboard';
-  readonly #SNACK_COPY_FAIL = 'Failed to copy';
-  readonly #SNACK_DELETE_SUCCESS = 'Resource deleted successfully';
-  readonly #SNACK_DELETE_FAIL = 'Failed to delete resource';
-  readonly #SNACK_TRANSLATE_FAIL = 'Failed to auto-translate resource';
+  readonly #transloco = inject(TranslocoService);
 
   /** Collection name to load translations from */
   collectionName = input.required<string>();
@@ -156,7 +160,7 @@ export class TranslationList {
    */
   handleCopyKey(key: string): void {
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
-      this.#snackBar.open(this.#SNACK_COPY_FAIL, '', {
+      this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED), '', {
         duration: 2000,
         horizontalPosition: 'center',
         verticalPosition: 'bottom',
@@ -168,14 +172,14 @@ export class TranslationList {
     navigator.clipboard
       .writeText(key)
       .then(() => {
-        this.#snackBar.open(this.#SNACK_COPY_OK, '', {
+        this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD), '', {
           duration: 2000,
           horizontalPosition: 'center',
           verticalPosition: 'bottom',
         });
       })
       .catch(() => {
-        this.#snackBar.open(this.#SNACK_COPY_FAIL, '', {
+        this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED), '', {
           duration: 2000,
           horizontalPosition: 'center',
           verticalPosition: 'bottom',
@@ -221,7 +225,7 @@ export class TranslationList {
         // In-place edit — update the item directly in the store
         this.store.updateTranslationInCache(result.resource);
         this.recentlyUpdatedKey.set(cacheKey);
-        this.#snackBar.open('Translation updated successfully', '', {
+        this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.TRANSLATIONUPDATED), '', {
           duration: 2000,
           horizontalPosition: 'center',
           verticalPosition: 'bottom',
@@ -239,10 +243,10 @@ export class TranslationList {
     const fullKey = this.#resolveFullKey(translation.key);
 
     const dialogData: ConfirmationDialogData = {
-      title: 'Delete Resource',
-      message: `Are you sure you want to delete the resource "${fullKey}"? This action cannot be undone.`,
-      confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel',
+      title: this.#transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETERESOURCE.TITLE),
+      message: this.#transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETERESOURCE.MESSAGEX, { key: fullKey }),
+      confirmButtonText: this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DELETE),
+      cancelButtonText: this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.CANCEL),
       actionType: 'destructive',
     };
 
@@ -284,8 +288,10 @@ export class TranslationList {
           if (translatedCount > 0) {
             const successMessage =
               translatedCount === 1
-                ? '1 locale translated successfully'
-                : `${translatedCount} locales translated successfully`;
+                ? this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.LOCALETRANSLATED)
+                : this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.LOCALESTRANSLATEDX, {
+                    count: translatedCount,
+                  });
 
             this.#snackBar.open(successMessage, '', {
               duration: 3000,
@@ -293,7 +299,7 @@ export class TranslationList {
               verticalPosition: 'bottom',
             });
           } else if (skippedLocales.length === 0) {
-            this.#snackBar.open('All locales are already up to date', '', {
+            this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.ALLLOCALESUPTODATE), '', {
               duration: 3000,
               horizontalPosition: 'center',
               verticalPosition: 'bottom',
@@ -302,17 +308,24 @@ export class TranslationList {
 
           if (skippedLocales.length > 0) {
             const skippedList = skippedLocales.join(', ');
-            this.#snackBar.open(`Skipped locales (ICU format): ${skippedList}`, 'Dismiss', {
-              duration: 5000,
-              horizontalPosition: 'center',
-              verticalPosition: 'bottom',
-            });
+            this.#snackBar.open(
+              this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, { locales: skippedList }),
+              this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DISMISS),
+              {
+                duration: 5000,
+                horizontalPosition: 'center',
+                verticalPosition: 'bottom',
+              },
+            );
           }
         },
         error: (error: unknown) => {
           this.#removeTranslatingKey(translation.key);
 
-          const message = error instanceof Error ? error.message : this.#SNACK_TRANSLATE_FAIL;
+          const message =
+            error instanceof Error
+              ? error.message
+              : this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.TRANSLATEFAILED);
           this.#snackBar.open(message, '', {
             duration: 4000,
             horizontalPosition: 'center',
@@ -429,13 +442,13 @@ export class TranslationList {
         next: (response) => {
           if (response.entriesDeleted > 0) {
             this.store.removeResourceFromCache(displayKey);
-            this.#snackBar.open(this.#SNACK_DELETE_SUCCESS, '', {
+            this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCEDELETED), '', {
               duration: 2000,
               horizontalPosition: 'center',
               verticalPosition: 'bottom',
             });
           } else {
-            this.#snackBar.open(this.#SNACK_DELETE_FAIL, '', {
+            this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.DELETEFAILED), '', {
               duration: 4000,
               horizontalPosition: 'center',
               verticalPosition: 'bottom',
@@ -443,7 +456,10 @@ export class TranslationList {
           }
         },
         error: (error: unknown) => {
-          const message = error instanceof Error ? error.message : this.#SNACK_DELETE_FAIL;
+          const message =
+            error instanceof Error
+              ? error.message
+              : this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.DELETEFAILED);
           this.#snackBar.open(message, '', {
             duration: 4000,
             horizontalPosition: 'center',

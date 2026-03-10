@@ -1,0 +1,32 @@
+{
+  "title": {
+    "en": {
+      "checksum": "991e322cd8225c369a963bb60b0a9688"
+    },
+    "es": {
+      "checksum": "7ddbafee6525c82eac6f2b0994f6c39c",
+      "baseChecksum": "991e322cd8225c369a963bb60b0a9688",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "7710100989dd0487c8751db81bca3901",
+      "baseChecksum": "991e322cd8225c369a963bb60b0a9688",
+      "status": "translated"
+    }
+  },
+  "messageX": {
+    "en": {
+      "checksum": "b0684f64ae75dfbeb2020fc22b01065a"
+    },
+    "es": {
+      "checksum": "a7b4861cbcd314d3007d628e3cdb324d",
+      "baseChecksum": "b0684f64ae75dfbeb2020fc22b01065a",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "e4d61d557dd7404c6a6c4ec07028ce57",
+      "baseChecksum": "b0684f64ae75dfbeb2020fc22b01065a",
+      "status": "translated"
+    }
+  }
+}

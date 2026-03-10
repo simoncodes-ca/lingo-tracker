@@ -17,6 +17,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { CdkDrag, CdkDragPlaceholder } from '@angular/cdk/drag-drop';
 import type { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
 import { BrowserStore } from '../../../store/browser.store';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { TranslationItemHeader } from './item-header';
 import { TranslationItemLocales } from './item-locales';
 import type { LocaleState } from './translation-rollup';
@@ -34,7 +36,15 @@ const LONG_PRESS_THRESHOLD = 500;
   selector: 'app-translation-item',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, TranslationItemHeader, TranslationItemLocales, HighlightPipe, CdkDrag, CdkDragPlaceholder],
+  imports: [
+    MatIconModule,
+    TranslationItemHeader,
+    TranslationItemLocales,
+    HighlightPipe,
+    CdkDrag,
+    CdkDragPlaceholder,
+    TranslocoPipe,
+  ],
   templateUrl: './translation-item.html',
   styleUrl: './translation-item.scss',
   host: {
@@ -82,6 +92,8 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
   dragEnded = output<void>();
 
   readonly #store = inject(BrowserStore);
+  readonly #transloco = inject(TranslocoService);
+  readonly TOKENS = TRACKER_TOKENS;
 
   /** Reference to the scrollable wrapper element (used as IntersectionObserver root). */
   private readonly scrollWrapper = viewChild<ElementRef<HTMLElement>>('scrollWrapper');
@@ -467,7 +479,7 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
   readonly statusBreakdown = computed(() => {
     const { counts, total } = this.#statusCounts();
 
-    if (total === 0) return 'No statuses';
+    if (total === 0) return this.#transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONITEM.NOSTATUSES);
 
     const order: Array<keyof typeof counts> = ['stale', 'new', 'translated', 'verified'];
     const parts: string[] = [];

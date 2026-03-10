@@ -1,0 +1,77 @@
+{
+  "madeBy": {
+    "en": {
+      "checksum": "228e177a7df025238b894f2ae0026f34"
+    },
+    "es": {
+      "checksum": "f180649f48ab5d7fdce3da21b62fb5a5",
+      "baseChecksum": "228e177a7df025238b894f2ae0026f34",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "3b5b0ef2d1ba39310908b2533bfad938",
+      "baseChecksum": "228e177a7df025238b894f2ae0026f34",
+      "status": "translated"
+    }
+  },
+  "githubTitle": {
+    "en": {
+      "checksum": "cf08730d37f83da9e97ca3262bf7072d"
+    },
+    "es": {
+      "checksum": "a9d5c87f3f17025bcf881fd36b3c8335",
+      "baseChecksum": "cf08730d37f83da9e97ca3262bf7072d",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "6dec98956e678475c578da6924a7b582",
+      "baseChecksum": "cf08730d37f83da9e97ca3262bf7072d",
+      "status": "translated"
+    }
+  },
+  "githubLabel": {
+    "en": {
+      "checksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c"
+    },
+    "es": {
+      "checksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "baseChecksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "baseChecksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "status": "new"
+    }
+  },
+  "issuesTitle": {
+    "en": {
+      "checksum": "0c6d9ab23098fd3e876c216fe1ca7ffc"
+    },
+    "es": {
+      "checksum": "fd1724d44a6ac834f122a7c88bf5b1c5",
+      "baseChecksum": "0c6d9ab23098fd3e876c216fe1ca7ffc",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "5238d59077988c93ae554981b20fc64e",
+      "baseChecksum": "0c6d9ab23098fd3e876c216fe1ca7ffc",
+      "status": "translated"
+    }
+  },
+  "issuesLabel": {
+    "en": {
+      "checksum": "80b768b15c3693e345a436b9dc0ea36f"
+    },
+    "es": {
+      "checksum": "04397605709edd061c7c160de6f7d99c",
+      "baseChecksum": "80b768b15c3693e345a436b9dc0ea36f",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "e040a699fc6d0d5808cfdaf3d1fa7146",
+      "baseChecksum": "80b768b15c3693e345a436b9dc0ea36f",
+      "status": "translated"
+    }
+  }
+}

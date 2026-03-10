@@ -1,0 +1,16 @@
+{
+  "title": {
+    "source": "Move Folder",
+    "comment": "Title of the confirmation dialog when moving a folder",
+    "tags": ["browser"],
+    "es": "Mover carpeta",
+    "fr-ca": "Déplacer le dossier"
+  },
+  "messageX": {
+    "source": "Move folder \"{{name}}\" and all its contents to \"{{dest}}\"?",
+    "comment": "Confirmation message when moving a folder, interpolated with folder name and destination",
+    "tags": ["browser"],
+    "es": "¿Mover la carpeta \"{{name}}\" y todo su contenido a \"{{dest}}\"?",
+    "fr-ca": "Déplacer le dossier \"{{name}}\" et tout son contenu vers \"{{dest}}\" ?"
+  }
+}

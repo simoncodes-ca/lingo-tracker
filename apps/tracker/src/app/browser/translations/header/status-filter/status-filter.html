@@ -3,7 +3,7 @@
   [matMenuTriggerFor]="statusMenu"
   data-testid="status-filter-trigger"
   class="status-filter-trigger"
-  [attr.aria-label]="'Filter by status. Currently showing: ' + store.statusFilterText()"
+  [attr.aria-label]="TOKENS.BROWSER.STATUSFILTER.ARIALABELX | transloco : { text: store.statusFilterText() }"
   aria-haspopup="true"
 >
   <mat-icon class="filter-icon">filter_list</mat-icon>
@@ -14,7 +14,7 @@
         [class.status-indicator--active]="isStatusSelected(status)"
         [class.status-indicator--inactive]="!isStatusSelected(status) && !store.isShowingAllStatuses()"
         [style.color]="statusConfig[status].color"
-        [attr.aria-label]="statusConfig[status].label + (isStatusSelected(status) ? ' selected' : '')"
+        [attr.aria-label]="(statusConfig[status].label | transloco) + (isStatusSelected(status) ? ' selected' : '')"
       >{{ statusConfig[status].icon }}</mat-icon>
     }
   </span>
@@ -29,7 +29,7 @@
       (click)="selectNeedsWork()"
       data-testid="select-needs-work"
     >
-      Needs Work
+      {{ TOKENS.BROWSER.STATUSFILTER.NEEDSWORK | transloco }}
     </button>
     <button
       mat-button
@@ -37,7 +37,7 @@
       (click)="clearAll()"
       data-testid="clear-all"
     >
-      Clear All
+      {{ TOKENS.COMMON.ACTIONS.CLEARALL | transloco }}
     </button>
   </div>
 
@@ -62,7 +62,7 @@
         class="status-icon"
         [style.color]="statusConfig[status].color"
       >{{ statusConfig[status].icon }}</mat-icon>
-      <span class="status-label">{{ statusConfig[status].label }}</span>
+      <span class="status-label">{{ statusConfig[status].label | transloco }}</span>
     </button>
   }
 </mat-menu>

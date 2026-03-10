@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { ThemeService, type ThemeMode } from '../shared/services/theme.service';
 import { HeaderContextService } from '../shared/services/header-context.service';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
@@ -31,6 +31,7 @@ import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 export class AppHeader {
   readonly #themeService = inject(ThemeService);
   readonly #headerContext = inject(HeaderContextService);
+  readonly #transloco = inject(TranslocoService);
 
   readonly TOKENS = TRACKER_TOKENS;
 
@@ -44,13 +45,13 @@ export class AppHeader {
   readonly keysText = computed(() => {
     const k = this.totalKeys();
     if (k === null) return '';
-    return k === 1 ? '1 key' : `${k} keys`;
+    return this.#transloco.translate(TRACKER_TOKENS.HEADER.KEYSCOUNTX, { count: k });
   });
 
   readonly localesText = computed(() => {
     const l = this.localeCount();
     if (l === null) return '';
-    return l === 1 ? '1 locale' : `${l} locales`;
+    return this.#transloco.translate(TRACKER_TOKENS.HEADER.LOCALESCOUNTX, { count: l });
   });
 
   setTheme(mode: ThemeMode): void {

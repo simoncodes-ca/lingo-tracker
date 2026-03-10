@@ -47,12 +47,12 @@
       class="compact-value"
       [class.compact-value--empty]="!primaryLocaleValue().trim() && !showComment()"
       [class.compact-value--comment]="showComment()"
-      [title]="showComment() ? '' : (primaryLocaleValue().trim() || 'No translation')"
+      [title]="showComment() ? '' : (primaryLocaleValue().trim() || (TOKENS.BROWSER.NOTRANSLATION | transloco))"
     >
       @if (showComment()) {
-        <span class="comment-text">Comment: <span [innerHTML]="translation().comment | highlight : searchQuery()"></span></span>
+        <span class="comment-text">{{ TOKENS.BROWSER.COMMENTPREFIX | transloco }} <span [innerHTML]="translation().comment | highlight : searchQuery()"></span></span>
       } @else {
-        <span [innerHTML]="(primaryLocaleValue().trim() || 'No translation') | highlight : searchQuery()"></span>
+        <span [innerHTML]="(primaryLocaleValue().trim() || (TOKENS.BROWSER.NOTRANSLATION | transloco)) | highlight : searchQuery()"></span>
       }
     </div>
   } @else {
@@ -78,7 +78,7 @@
 
     <!-- Comment row: comment text left, expand toggle right -->
     <div class="comment-expand-row">
-      <p class="comment-text full">Comment: <span [innerHTML]="(translation().comment || '-') | highlight : searchQuery()"></span></p>
+      <p class="comment-text full">{{ TOKENS.BROWSER.COMMENTPREFIX | transloco }} <span [innerHTML]="(translation().comment || '-') | highlight : searchQuery()"></span></p>
 
       @if (needsExpansion()) {
         <button
@@ -86,7 +86,7 @@
           type="button"
           (click)="toggleExpansion()"
           [attr.aria-expanded]="isExpanded()"
-          aria-label="Toggle expansion"
+          [attr.aria-label]="TOKENS.BROWSER.TOGGLEEXPANSION | transloco"
         >
           <mat-icon [class.rotated]="isExpanded()">expand_more</mat-icon>
         </button>

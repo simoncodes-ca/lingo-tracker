@@ -6,6 +6,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { BrowserStore } from '../../../store/browser.store';
 import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 
 /**
  * StatusFilter component provides a dropdown for filtering
@@ -25,23 +27,24 @@ import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
   selector: 'app-status-filter',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatButtonModule, MatIconModule, MatMenuModule, MatCheckboxModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatMenuModule, MatCheckboxModule, TranslocoPipe],
   templateUrl: './status-filter.html',
   styleUrl: './status-filter.scss',
 })
 export class StatusFilter {
   readonly store = inject(BrowserStore);
+  readonly TOKENS = TRACKER_TOKENS;
 
   readonly statusConfig: Record<TranslationStatus, { label: string; icon: string; color: string }> = {
-    new: { label: 'New', icon: 'add_circle', color: '#f97316' },
-    stale: { label: 'Stale', icon: 'warning', color: 'var(--color-warning)' },
+    new: { label: TRACKER_TOKENS.BROWSER.STATUS.NEW, icon: 'add_circle', color: '#f97316' },
+    stale: { label: TRACKER_TOKENS.BROWSER.STATUS.STALE, icon: 'warning', color: 'var(--color-warning)' },
     translated: {
-      label: 'Translated',
+      label: TRACKER_TOKENS.BROWSER.STATUS.TRANSLATED,
       icon: 'language',
       color: 'var(--color-info)',
     },
     verified: {
-      label: 'Verified',
+      label: TRACKER_TOKENS.BROWSER.STATUS.VERIFIED,
       icon: 'check_circle',
       color: 'var(--color-success)',
     },

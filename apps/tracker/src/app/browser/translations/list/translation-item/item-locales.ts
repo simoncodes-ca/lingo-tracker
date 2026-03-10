@@ -2,6 +2,8 @@ import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 
 export type LocaleTranslation = {
   locale: string;
@@ -19,7 +21,7 @@ type DensityMode = 'compact' | 'full';
   selector: 'app-translation-item-locales',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatIconModule, HighlightPipe],
+  imports: [CommonModule, MatIconModule, HighlightPipe, TranslocoPipe],
   templateUrl: './item-locales.html',
   styleUrl: './item-locales.scss',
   host: {
@@ -57,13 +59,13 @@ export class TranslationItemLocales {
   getStatusLabel(status: string | undefined): string {
     switch (status) {
       case 'verified':
-        return 'Verified';
+        return TRACKER_TOKENS.BROWSER.STATUS.VERIFIED;
       case 'translated':
-        return 'Translated';
+        return TRACKER_TOKENS.BROWSER.STATUS.TRANSLATED;
       case 'stale':
-        return 'Stale';
+        return TRACKER_TOKENS.BROWSER.STATUS.STALE;
       case 'new':
-        return 'New';
+        return TRACKER_TOKENS.BROWSER.STATUS.NEW;
       default:
         return '';
     }

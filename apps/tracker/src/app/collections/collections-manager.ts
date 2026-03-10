@@ -152,7 +152,7 @@ export class CollectionsManager {
    * Shows an error toast notification.
    */
   private showErrorToast(message: string): void {
-    this.snackBar.open(message, 'Close', {
+    this.snackBar.open(message, this.transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.CLOSE), {
       duration: 4000,
       horizontalPosition: 'center',
       verticalPosition: 'bottom',

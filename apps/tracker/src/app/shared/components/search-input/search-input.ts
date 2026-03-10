@@ -6,6 +6,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 
 /**
  * Reusable search input component with loading and clear functionality.
@@ -39,11 +41,14 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatIconModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    TranslocoPipe,
   ],
   templateUrl: './search-input.html',
   styleUrl: './search-input.scss',
 })
 export class SearchInput {
+  readonly TOKENS = TRACKER_TOKENS;
+
   /** Placeholder text for the input field */
   placeholder = input<string>('Search...');
 

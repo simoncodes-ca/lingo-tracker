@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FolderPicker } from './folder-picker';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { BrowserStore } from '../../../store/browser.store';
+import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
 
 describe('FolderPicker', () => {
   let component: FolderPicker;
@@ -41,7 +42,7 @@ describe('FolderPicker', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FolderPicker, BrowserAnimationsModule],
+      imports: [FolderPicker, BrowserAnimationsModule, getTranslocoTestingModule()],
       providers: [
         {
           provide: MatSnackBar,

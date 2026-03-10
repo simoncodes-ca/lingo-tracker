@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 
 /**
  * Overlay component displayed during collection cache indexing.
@@ -16,11 +18,12 @@ import { MatButtonModule } from '@angular/material/button';
   selector: 'app-indexing-overlay',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, MatProgressSpinnerModule, MatCardModule, MatButtonModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatCardModule, MatButtonModule, TranslocoPipe],
   templateUrl: './indexing-overlay.component.html',
   styleUrl: './indexing-overlay.component.scss',
 })
 export class IndexingOverlay {
+  readonly TOKENS = TRACKER_TOKENS;
   /** Cache status determines which UI to display */
   cacheStatus = input<'not-started' | 'indexing' | 'ready' | 'error' | null>(null);
 

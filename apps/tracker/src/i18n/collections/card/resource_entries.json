@@ -12,5 +12,12 @@
     "tags": ["card", "collection"],
     "es": "Eliminar colección",
     "fr-ca": "Supprimer la collection"
+  },
+  "moreActionsAriaLabel": {
+    "source": "More actions for collection",
+    "comment": "Aria label for the more actions button on a collection card",
+    "tags": ["collections"],
+    "es": "Más acciones para la recolección",
+    "fr-ca": "Plus d'actions pour la collecte"
   }
 }

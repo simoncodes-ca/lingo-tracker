@@ -2,7 +2,7 @@
   [placeholder]="(TOKENS.BROWSER.SEARCHTRANSLATIONS | transloco)"
   [value]="searchValue()"
   [isLoading]="store.isSearchLoading()"
-  [ariaLabel]="'Search translations'"
+  [ariaLabel]="TOKENS.BROWSER.TRANSLATIONSEARCH.ARIALABEL | transloco"
   (valueChange)="onSearchChange($event)"
   (cleared)="onClearSearch()"
 />

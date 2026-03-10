@@ -3,7 +3,7 @@
   [matMenuTriggerFor]="localeMenu"
   data-testid="locale-filter-trigger"
   class="locale-filter-trigger"
-  [attr.aria-label]="'Filter locales. Currently showing: ' + store.localeFilterText()"
+  [attr.aria-label]="TOKENS.BROWSER.LOCALEFILTER.ARIALABELX | transloco : { text: store.localeFilterText() }"
   aria-haspopup="true"
 >
   <mat-icon class="filter-icon">filter_list</mat-icon>
@@ -20,7 +20,7 @@
         (click)="selectAll()"
         data-testid="select-all"
       >
-        Select All
+        {{ TOKENS.COMMON.ACTIONS.SELECTALL | transloco }}
       </button>
       <button
         mat-button
@@ -28,7 +28,7 @@
         (click)="clearAll()"
         data-testid="clear-all"
       >
-        Clear All
+        {{ TOKENS.COMMON.ACTIONS.CLEARALL | transloco }}
       </button>
     </div>
 

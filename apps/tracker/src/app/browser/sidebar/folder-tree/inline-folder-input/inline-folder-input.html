@@ -8,7 +8,7 @@
         type="text"
         class="folder-input"
         [formControl]="folderNameControl"
-        placeholder="Folder name"
+        [placeholder]="TOKENS.BROWSER.FOLDERINPUT.PLACEHOLDER | transloco"
         (keydown.enter)="onEnterKey()"
         (keydown.escape)="onEscapeKey()"
         (blur)="onBlur()"
@@ -18,7 +18,7 @@
 
       @if (shouldShowError()) {
         <div class="error-message">
-          {{ getErrorMessage() }}
+          {{ getErrorMessage() | transloco }}
         </div>
       }
     </div>

@@ -1,0 +1,37 @@
+{
+  "compactTooltip": {
+    "source": "Compact — 2-line view, high density",
+    "comment": "Tooltip for compact density mode toggle button",
+    "tags": ["browser"],
+    "es": "Compacto: vista de 2 líneas, alta densidad",
+    "fr-ca": "Compact — affichage sur 2 lignes, haute densité"
+  },
+  "fullTooltip": {
+    "source": "Full — detailed view with comments and all locales",
+    "comment": "Tooltip for full density mode toggle button",
+    "tags": ["browser"],
+    "es": "Completo: vista detallada con comentarios y todas las configuraciones regionales",
+    "fr-ca": "Vue complète et détaillée avec commentaires et toutes les langues"
+  },
+  "modeAriaLabel": {
+    "source": "Density mode",
+    "comment": "Aria-label for the density mode button toggle group in the translation header",
+    "tags": ["browser"],
+    "es": "Modo de densidad",
+    "fr-ca": "Mode de densité"
+  },
+  "compactAriaLabel": {
+    "source": "Compact density",
+    "comment": "Aria-label for the compact density toggle button",
+    "tags": ["browser"],
+    "es": "Densidad compacta",
+    "fr-ca": "Densité compacte"
+  },
+  "fullAriaLabel": {
+    "source": "Full density",
+    "comment": "Aria-label for the full density toggle button",
+    "tags": ["browser"],
+    "es": "Densidad completa",
+    "fr-ca": "Densité maximale"
+  }
+}
