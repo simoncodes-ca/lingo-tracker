@@ -1,4 +1,9 @@
-import type { TranslateRequest, TranslateResult, ProviderCapabilities, TranslationProvider } from './translation-provider';
+import type {
+  TranslateRequest,
+  TranslateResult,
+  ProviderCapabilities,
+  TranslationProvider,
+} from './translation-provider';
 import { TranslationError } from './translation-provider';
 
 const GOOGLE_TRANSLATE_API_URL = 'https://translation.googleapis.com/language/translate/v2';
@@ -69,25 +74,16 @@ function chunkArray<T>(items: T[], size: number): T[][] {
  * Google's v2 API uses HTTP status codes and an optional `errors[].reason`
  * field to distinguish rate-limit errors from outright auth failures.
  */
-function mapGoogleErrorToTranslationError(
-  httpStatus: number,
-  errorBody: GoogleErrorResponse,
-): TranslationError {
+function mapGoogleErrorToTranslationError(httpStatus: number, errorBody: GoogleErrorResponse): TranslationError {
   const googleMessage = errorBody.error?.message ?? 'Unknown Google Translate error';
   const firstReason = errorBody.error?.errors?.[0]?.reason;
 
   if (httpStatus === 400) {
-    return new TranslationError(
-      `Invalid translation request: ${googleMessage}`,
-      'INVALID_REQUEST',
-      false,
-      firstReason,
-    );
+    return new TranslationError(`Invalid translation request: ${googleMessage}`, 'INVALID_REQUEST', false, firstReason);
   }
 
   if (httpStatus === 403) {
-    const isRateLimit =
-      firstReason === 'dailyLimitExceeded' || firstReason === 'rateLimitExceeded';
+    const isRateLimit = firstReason === 'dailyLimitExceeded' || firstReason === 'rateLimitExceeded';
 
     if (isRateLimit) {
       return new TranslationError(
@@ -107,12 +103,7 @@ function mapGoogleErrorToTranslationError(
   }
 
   if (httpStatus === 500 || httpStatus === 503) {
-    return new TranslationError(
-      `Google Translate server error: ${googleMessage}`,
-      'SERVER_ERROR',
-      true,
-      firstReason,
-    );
+    return new TranslationError(`Google Translate server error: ${googleMessage}`, 'SERVER_ERROR', true, firstReason);
   }
 
   return new TranslationError(

@@ -44,7 +44,10 @@ export interface EditResourceResult {
  * @param options - Edit options including the resource key and fields to update
  * @returns Result object indicating what changed
  */
-export async function editResource(translationsFolder: string, options: EditResourceOptions): Promise<EditResourceResult> {
+export async function editResource(
+  translationsFolder: string,
+  options: EditResourceOptions,
+): Promise<EditResourceResult> {
   const { cwd = process.cwd(), baseLocale = 'en' } = options;
 
   const paths = validateAndResolvePaths({

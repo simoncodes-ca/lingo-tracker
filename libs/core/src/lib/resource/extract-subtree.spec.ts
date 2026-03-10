@@ -805,17 +805,13 @@ describe('extractResourcesRecursively', () => {
           metadata: { baseChecksum: 'c2', translations: {} },
         } as ResourceTreeEntry,
       ],
-      children: [
-        { name: 'c', fullPathSegments: ['a', 'b', 'c'], loaded: true, tree: grandchild },
-      ],
+      children: [{ name: 'c', fullPathSegments: ['a', 'b', 'c'], loaded: true, tree: grandchild }],
     };
 
     const rootNode: ResourceTreeNode = {
       folderPathSegments: ['a'],
       resources: [],
-      children: [
-        { name: 'b', fullPathSegments: ['a', 'b'], loaded: true, tree: child },
-      ],
+      children: [{ name: 'b', fullPathSegments: ['a', 'b'], loaded: true, tree: child }],
     };
 
     const result = extractResourcesRecursively(rootNode);
@@ -848,9 +844,7 @@ describe('extractResourcesRecursively', () => {
           metadata: { baseChecksum: 'c1', translations: {} },
         } as ResourceTreeEntry,
       ],
-      children: [
-        { name: 'x', fullPathSegments: ['x'], loaded: true, tree: invalidChild },
-      ],
+      children: [{ name: 'x', fullPathSegments: ['x'], loaded: true, tree: invalidChild }],
     };
 
     const result = extractResourcesRecursively(rootNode);
