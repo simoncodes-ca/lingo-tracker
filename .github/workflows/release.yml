@@ -13,23 +13,30 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
-      
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10
-          run_install: false
-      
+
       - name: Install dependencies
-        run: pnpm install
-      
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Test
+        run: pnpm run test
+
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run release 
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm run release
