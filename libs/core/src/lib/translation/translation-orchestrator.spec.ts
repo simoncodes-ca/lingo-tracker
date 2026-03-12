@@ -66,9 +66,7 @@ describe('TranslationOrchestrator', () => {
       const result = await orchestrator.translateText('', 'en', 'de');
 
       expect(result).toEqual({ kind: 'translated', value: '' });
-      expect(provider.translate).toHaveBeenCalledWith([
-        { text: '', sourceLocale: 'en', targetLocale: 'de' },
-      ]);
+      expect(provider.translate).toHaveBeenCalledWith([{ text: '', sourceLocale: 'en', targetLocale: 'de' }]);
     });
   });
 
@@ -150,9 +148,7 @@ describe('TranslationOrchestrator', () => {
     it('restores multiple placeholders after translation', async () => {
       provider.translate.mockImplementation(async (requests: TranslateRequest[]) => {
         // Translate the surrounding text while preserving spans.
-        const translated = requests[0].text
-          .replace('File', 'Datei')
-          .replace('is newer than', 'ist neuer als');
+        const translated = requests[0].text.replace('File', 'Datei').replace('is newer than', 'ist neuer als');
         return [makeResult(translated)];
       });
 
@@ -227,9 +223,7 @@ describe('TranslationOrchestrator', () => {
 
   describe('translateBatch', () => {
     it('returns translations in the same order as the input items', async () => {
-      provider.translate
-        .mockResolvedValueOnce([makeResult('Hallo')])
-        .mockResolvedValueOnce([makeResult('Tschüss')]);
+      provider.translate.mockResolvedValueOnce([makeResult('Hallo')]).mockResolvedValueOnce([makeResult('Tschüss')]);
 
       const results = await orchestrator.translateBatch([
         { text: 'Hello', sourceLocale: 'en', targetLocale: 'de' },
@@ -255,9 +249,7 @@ describe('TranslationOrchestrator', () => {
 
     it('returns kind: translated-with-placeholders for simple-placeholder items', async () => {
       // Provider echoes text back unchanged (markers survive).
-      provider.translate.mockImplementation(async (requests: TranslateRequest[]) => [
-        makeResult(requests[0].text),
-      ]);
+      provider.translate.mockImplementation(async (requests: TranslateRequest[]) => [makeResult(requests[0].text)]);
 
       const results = await orchestrator.translateBatch([
         { text: 'Hello {name}', sourceLocale: 'en', targetLocale: 'de' },
@@ -275,9 +267,7 @@ describe('TranslationOrchestrator', () => {
 
     it('processes items sequentially and stops on first failure', async () => {
       const providerError = new TranslationError('fail', 'SERVER_ERROR', true);
-      provider.translate
-        .mockResolvedValueOnce([makeResult('Hallo')])
-        .mockRejectedValueOnce(providerError);
+      provider.translate.mockResolvedValueOnce([makeResult('Hallo')]).mockRejectedValueOnce(providerError);
 
       await expect(
         orchestrator.translateBatch([

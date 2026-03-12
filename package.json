@@ -33,19 +33,41 @@
     "format:write": "pnpm exec biome format --write apps libs scripts types",
     "lingo-tracker": "node dist/apps/cli/main.js"
   },
-  "keywords": [],
+  "keywords": [
+    "translation",
+    "i18n",
+    "internationalization",
+    "localization",
+    "l10n",
+    "transloco",
+    "translation-management",
+    "icu",
+    "cli",
+    "angular"
+  ],
   "author": "Simon Nodel",
-  "private": true,
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simoncodes-ca/lingo-tracker.git"
+  },
+  "homepage": "https://github.com/simoncodes-ca/lingo-tracker#readme",
+  "bugs": {
+    "url": "https://github.com/simoncodes-ca/lingo-tracker/issues"
+  },
   "files": [
     "dist/apps/cli",
     "dist/apps/api",
     "dist/apps/tracker",
     "docs"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "packageManager": "pnpm@10.27.0",
   "engines": {
-    "node": ">=22.16.0",
+    "node": ">=20",
     "pnpm": ">=10"
   },
   "config": {

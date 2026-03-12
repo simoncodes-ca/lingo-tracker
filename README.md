@@ -3,6 +3,8 @@
 
 Welcome to LingoTracker, the ultimate companion to the excellent [Transloco](https://github.com/jsverse/transloco) library! LingoTracker is designed for anyone looking to efficiently manage translation resources.
 
+> **Note:** LingoTracker is fully functional and currently being validated in an enterprise application. The core interfaces and API are stable and not expected to change, but additional features and polish are on the way. Stay tuned for a full release soon!
+
 ## Why Is LingoTracker Awesome?
 ### Metadata Aware
 With LingoTracker, you can effortlessly track which resources need translation and identify stale entries. For instance, if a value in your base language changes, all corresponding locale values are automatically marked as stale. This prevents drift in meaning across all languages and ensures consistency in your translations.
@@ -35,13 +37,33 @@ Import and export your resource data in various formats, including JSON and XLIF
 You can easily link resources from different projects or shared resources using symlinks. This feature enhances collaboration and streamlines your workflow.
 
 ## Get Started
-Check the [documentation](link-to-docs) for detailed usage instructions, setup configurations, and tips to maximize your experience with LingoTracker.
+
+### Installation
+
+```bash
+npm install -g @simoncodes-ca/lingo-tracker
+```
+
+### Quick Start
+
+```bash
+# Initialize LingoTracker in your project
+lingo-tracker init
+
+# Add a translation collection
+lingo-tracker add-collection
+
+# Add a resource
+lingo-tracker add-resource
+```
+
+Check the [documentation](docs/) for detailed usage instructions, setup configurations, and tips to maximize your experience with LingoTracker.
 
 ## Contributing
-We welcome contributions! Please read our [contributing guidelines](link-to-contrib-guidelines) for more information.
+We welcome contributions! Please read our [contributing guidelines](CONTRIBUTING.md) for more information.
 
 ## License
-LingoTracker is licensed under the [MIT License](link-to-license).
+LingoTracker is licensed under the [MIT License](LICENSE).
 
 ---
 Join us today and redefine the way you manage translations with LingoTracker!

@@ -1381,9 +1381,9 @@ describe('ResourcesController', () => {
 
     it('should return 422 when translation is not enabled for the collection', async () => {
       // mockConfig has no translation config — auto-translation is disabled
-      await expect(
-        resourcesController.translateResource('test-collection', { key: 'buttons.save' }),
-      ).rejects.toThrow(HttpException);
+      await expect(resourcesController.translateResource('test-collection', { key: 'buttons.save' })).rejects.toThrow(
+        HttpException,
+      );
 
       try {
         await resourcesController.translateResource('test-collection', { key: 'buttons.save' });
@@ -1407,18 +1407,16 @@ describe('ResourcesController', () => {
       const translateExistingResource = core.translateExistingResource as jest.Mock;
       translateExistingResource.mockRejectedValue(new Error('Resource not found: buttons.save'));
 
-      await expect(
-        resourcesController.translateResource('test-collection', { key: 'buttons.save' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(resourcesController.translateResource('test-collection', { key: 'buttons.save' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should return 502 when the translation provider throws a TranslationError', async () => {
       (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
 
       const translateExistingResource = core.translateExistingResource as jest.Mock;
-      translateExistingResource.mockRejectedValue(
-        new TranslationError('Rate limit exceeded', 'RATE_LIMIT', true),
-      );
+      translateExistingResource.mockRejectedValue(new TranslationError('Rate limit exceeded', 'RATE_LIMIT', true));
 
       try {
         await resourcesController.translateResource('test-collection', { key: 'buttons.save' });
@@ -1491,11 +1489,7 @@ describe('ResourcesController', () => {
 
       await resourcesController.translateResource('test-collection', { key: 'buttons.save' });
 
-      expect(mockCacheService.addResourceToCache).toHaveBeenCalledWith(
-        'test-collection',
-        mockEntry,
-        'buttons',
-      );
+      expect(mockCacheService.addResourceToCache).toHaveBeenCalledWith('test-collection', mockEntry, 'buttons');
     });
 
     it('should include skipped locales in the response', async () => {
