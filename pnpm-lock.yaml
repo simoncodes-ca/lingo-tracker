@@ -38,9 +38,9 @@ importers:
       '@jsverse/transloco-messageformat':
         specifier: ^8.2.1
         version: 8.2.1(@angular/core@20.2.4(@angular/compiler@20.2.4)(rxjs@7.8.2)(zone.js@0.15.1))(@jsverse/transloco@8.0.2(@angular/core@20.2.4(@angular/compiler@20.2.4)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)(typescript@5.9.2))(@jsverse/utils@1.0.0-beta.5)(rxjs@7.8.2)
-      '@module-federation/enhanced':
-        specifier: ^0.21.1
-        version: 0.21.1(@rspack/core@1.5.7(@swc/helpers@0.5.17))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2)(webpack@5.101.3)
+      '@jsverse/utils':
+        specifier: 1.0.0-beta.5
+        version: 1.0.0-beta.5
       '@nestjs/common':
         specifier: ^11.0.0
         version: 11.1.6(reflect-metadata@0.1.14)(rxjs@7.8.2)
