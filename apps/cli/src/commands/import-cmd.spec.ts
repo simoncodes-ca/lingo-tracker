@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { importCommand, type ImportCommandOptions } from './import-cmd';
 import * as path from 'path';
+import * as fs from 'fs';
 
 vi.mock('fs');
 vi.mock('path');
@@ -21,14 +22,16 @@ vi.mock('@simoncodes-ca/core', () => ({
 vi.mock('../utils', () => ({
   loadConfiguration: vi.fn(),
   isInteractiveTerminal: vi.fn(() => false),
+  promptForCollection: vi.fn(),
+  resolveCollection: vi.fn(),
   ConsoleFormatter: {
-    error: vi.fn((message: string) => console.log(`❌ ${message}`)),
-    success: vi.fn((message: string) => console.log(`✅ ${message}`)),
-    warning: vi.fn((message: string) => console.log(`⚠️  ${message}`)),
-    info: vi.fn((message: string) => console.log(`ℹ️  ${message}`)),
-    progress: vi.fn((message: string) => console.log(`🔄 ${message}`)),
+    error: vi.fn((message: string) => console.log(`[error] ${message}`)),
+    success: vi.fn((message: string) => console.log(`[success] ${message}`)),
+    warning: vi.fn((message: string) => console.log(`[warning] ${message}`)),
+    info: vi.fn((message: string) => console.log(`[info] ${message}`)),
+    progress: vi.fn((message: string) => console.log(`[progress] ${message}`)),
     section: vi.fn((title: string) => {
-      console.log(`\n📊 ${title}`);
+      console.log(`\n[section] ${title}`);
       console.log('─'.repeat(50));
     }),
     indent: vi.fn((message: string, level = 1) => {
@@ -41,17 +44,42 @@ vi.mock('../utils', () => ({
     }),
   },
   ErrorMessages: {
-    OPERATION_CANCELLED: vi.fn((op: string) => `❌ ${op} cancelled.`),
-    MISSING_OPTION: vi.fn((opt: string) => `❌ Missing required option: --${opt}`),
+    OPERATION_CANCELLED: vi.fn((op: string) => `${op} cancelled.`),
+    MISSING_OPTION: vi.fn((opt: string) => `Missing required option: --${opt}`),
   },
 }));
 
 // Import the mocked functions
 import { importFromJson, importFromXliff, detectImportFormat } from '@simoncodes-ca/core';
 import prompts from 'prompts';
-import { loadConfiguration } from '../utils';
+import { loadConfiguration, promptForCollection, resolveCollection, ConsoleFormatter } from '../utils';
 
 describe('import-cmd', () => {
+  const baseConfig = {
+    exportFolder: 'dist/lingo-export',
+    importFolder: 'dist/lingo-import',
+    baseLocale: 'en',
+    locales: ['en', 'es', 'fr'],
+    collections: {
+      default: {
+        translationsFolder: 'src/translations',
+      },
+    },
+  };
+
+  const baseImportResult = {
+    resourcesImported: 10,
+    resourcesCreated: 0,
+    resourcesUpdated: 10,
+    resourcesSkipped: 0,
+    resourcesFailed: 0,
+    statusTransitions: [],
+    filesModified: [],
+    warnings: [],
+    errors: [],
+    changes: [],
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -61,39 +89,30 @@ describe('import-cmd', () => {
 
     // Mock process.cwd
     vi.spyOn(process, 'cwd').mockReturnValue('/test/project');
+
+    // Explicitly configure fs mocks so their behaviour is intentional, not accidental.
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
+
+    // Default configuration returned by loadConfiguration for all tests.
+    vi.mocked(loadConfiguration).mockReturnValue({
+      config: baseConfig,
+      configPath: '/test/project/.lingo-tracker.json',
+      cwd: '/test/project',
+    });
+
+    // Default collection mocks — most tests use a single 'default' collection
+    vi.mocked(promptForCollection).mockResolvedValue('default');
+    vi.mocked(resolveCollection).mockReturnValue({
+      name: 'default',
+      config: { translationsFolder: 'src/translations' },
+      translationsFolderPath: '/test/project/src/translations',
+    });
   });
 
   describe('Configuration Loading', () => {
     it('should load configuration from .lingo-tracker.json', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es', 'fr'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
-      vi.mocked(importFromJson).mockReturnValue({
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
-      });
+      vi.mocked(importFromJson).mockReturnValue(baseImportResult);
 
       const options: ImportCommandOptions = {
         source: '/test/import.json',
@@ -103,10 +122,10 @@ describe('import-cmd', () => {
 
       await importCommand(options);
 
-      expect(loadConfiguration).toHaveBeenCalled();
+      expect(loadConfiguration).toHaveBeenCalledWith({ exitOnError: false });
     });
 
-    it('should exit with error if config file not found', async () => {
+    it('should return early when loadConfiguration returns null', async () => {
       vi.mocked(loadConfiguration).mockReturnValue(null);
 
       const options: ImportCommandOptions = {
@@ -117,55 +136,17 @@ describe('import-cmd', () => {
 
       await importCommand(options);
 
-      expect(loadConfiguration).toHaveBeenCalled();
-    });
-
-    it('should exit with error if config file is malformed', async () => {
-      vi.mocked(loadConfiguration).mockReturnValue(null);
-
-      const options: ImportCommandOptions = {
-        source: '/test/import.json',
-        locale: 'es',
-        format: 'json',
-      };
-
-      await importCommand(options);
-
-      expect(loadConfiguration).toHaveBeenCalled();
+      expect(importFromJson).not.toHaveBeenCalled();
     });
   });
 
   describe('Format Auto-Detection', () => {
     it('should auto-detect XLIFF format from .xliff extension', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
       vi.mocked(detectImportFormat).mockReturnValue('xliff');
       vi.mocked(importFromXliff).mockResolvedValue({
+        ...baseImportResult,
         resourcesImported: 5,
-        resourcesCreated: 0,
         resourcesUpdated: 5,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
       });
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
@@ -182,35 +163,11 @@ describe('import-cmd', () => {
     });
 
     it('should auto-detect JSON format from .json extension', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
       vi.mocked(detectImportFormat).mockReturnValue('json');
       vi.mocked(importFromJson).mockReturnValue({
+        ...baseImportResult,
         resourcesImported: 5,
-        resourcesCreated: 0,
         resourcesUpdated: 5,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
       });
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
@@ -226,30 +183,9 @@ describe('import-cmd', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Detected format: json'));
     });
 
-    it('should exit with error if format detection fails', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
+    it('should return early with error if format detection fails', async () => {
       vi.mocked(detectImportFormat).mockImplementation(() => {
         throw new Error('Cannot auto-detect format from .txt extension');
-      });
-      vi.spyOn(console, 'log').mockImplementation(() => undefined);
-      vi.spyOn(process, 'exit').mockImplementation((code) => {
-        throw new Error(`Process exit: ${code}`);
       });
 
       const options: ImportCommandOptions = {
@@ -257,44 +193,16 @@ describe('import-cmd', () => {
         locale: 'es',
       };
 
-      await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Cannot auto-detect format'));
+      await importCommand(options);
+
+      expect(ConsoleFormatter.error).toHaveBeenCalledWith('Cannot auto-detect format from .txt extension');
+      expect(importFromJson).not.toHaveBeenCalled();
     });
   });
 
   describe('Import Execution', () => {
     it('should call importFromJson for JSON format', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      const importResult = {
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
-      vi.mocked(importFromJson).mockReturnValue(importResult);
+      vi.mocked(importFromJson).mockReturnValue(baseImportResult);
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
@@ -316,37 +224,7 @@ describe('import-cmd', () => {
     });
 
     it('should call importFromXliff for XLIFF format', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      const importResult = {
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
-      vi.mocked(importFromXliff).mockResolvedValue(importResult);
+      vi.mocked(importFromXliff).mockResolvedValue(baseImportResult);
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
@@ -367,30 +245,9 @@ describe('import-cmd', () => {
       );
     });
 
-    it('should exit with error if import fails', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
+    it('should return early with error if import fails', async () => {
       vi.mocked(importFromJson).mockImplementation(() => {
         throw new Error('Source file not found');
-      });
-      vi.spyOn(console, 'log').mockImplementation(() => undefined);
-      vi.spyOn(process, 'exit').mockImplementation((code) => {
-        throw new Error(`Process exit: ${code}`);
       });
 
       const options: ImportCommandOptions = {
@@ -399,155 +256,17 @@ describe('import-cmd', () => {
         format: 'json',
       };
 
-      await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Import failed: Source file not found'));
-    });
-  });
-
-  describe('TTY Detection', () => {
-    it('should detect TTY mode when stdin and stdout are TTY', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
-      vi.mocked(importFromJson).mockReturnValue({
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
-      });
-      vi.spyOn(console, 'log').mockImplementation(() => undefined);
-
-      // Mock prompts to return strategy when prompted
-      vi.mocked(prompts).mockResolvedValue({ strategy: 'translation-service' });
-
-      // Mock TTY
-      Object.defineProperty(process.stdin, 'isTTY', {
-        value: true,
-        configurable: true,
-      });
-      Object.defineProperty(process.stdout, 'isTTY', {
-        value: true,
-        configurable: true,
-      });
-
-      const options: ImportCommandOptions = {
-        source: '/test/import.json',
-        locale: 'es',
-        format: 'json',
-      };
-
       await importCommand(options);
 
-      // In TTY mode, prompts would be used if options are missing
-      // Since all required options are provided, no prompts expected
-      expect(importFromJson).toHaveBeenCalled();
-    });
-
-    it('should detect non-TTY mode when stdin is not TTY', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
-      vi.mocked(importFromJson).mockReturnValue({
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
-      });
-      vi.spyOn(console, 'log').mockImplementation(() => undefined);
-
-      // Mock non-TTY
-      Object.defineProperty(process.stdin, 'isTTY', {
-        value: false,
-        configurable: true,
-      });
-      Object.defineProperty(process.stdout, 'isTTY', {
-        value: true,
-        configurable: true,
-      });
-
-      const options: ImportCommandOptions = {
-        source: '/test/import.json',
-        locale: 'es',
-        format: 'json',
-      };
-
-      await importCommand(options);
-
-      // In non-TTY mode, no prompts should be used
-      expect(importFromJson).toHaveBeenCalled();
+      expect(ConsoleFormatter.error).toHaveBeenCalledWith('Import failed: Source file not found');
     });
   });
 
   describe('Result Display', () => {
     it('should display success message for successful import', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
       vi.mocked(importFromJson).mockReturnValue({
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
+        ...baseImportResult,
         filesModified: ['file1.json', 'file2.json'],
-        warnings: [],
-        errors: [],
-        changes: [],
       });
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
@@ -563,34 +282,9 @@ describe('import-cmd', () => {
     });
 
     it('should display warnings for import with warnings', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
       vi.mocked(importFromJson).mockReturnValue({
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
+        ...baseImportResult,
         warnings: ['Warning 1', 'Warning 2'],
-        errors: [],
-        changes: [],
       });
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
@@ -607,34 +301,11 @@ describe('import-cmd', () => {
     });
 
     it('should exit with code 1 for import with errors', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
       vi.mocked(importFromJson).mockReturnValue({
-        resourcesImported: 10,
-        resourcesCreated: 0,
+        ...baseImportResult,
         resourcesUpdated: 8,
-        resourcesSkipped: 0,
         resourcesFailed: 2,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
         errors: ['Error 1', 'Error 2'],
-        changes: [],
       });
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
       vi.spyOn(process, 'exit').mockImplementation((code) => {
@@ -651,36 +322,28 @@ describe('import-cmd', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Errors (2)'));
     });
 
-    it('should display dry-run message', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
+    it('should exit with code 1 when only errors array is non-empty', async () => {
+      vi.mocked(importFromJson).mockReturnValue({
+        ...baseImportResult,
+        resourcesFailed: 0,
+        errors: ['some error'],
+      });
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      vi.spyOn(process, 'exit').mockImplementation((code) => {
+        throw new Error(`Process exit: ${code}`);
+      });
+
+      const options: ImportCommandOptions = {
+        source: '/test/import.json',
+        locale: 'es',
+        format: 'json',
       };
 
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
-      vi.mocked(importFromJson).mockReturnValue({
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
-      });
+      await expect(importCommand(options)).rejects.toThrow('Process exit: 1');
+    });
+
+    it('should display dry-run message', async () => {
+      vi.mocked(importFromJson).mockReturnValue(baseImportResult);
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
@@ -699,38 +362,26 @@ describe('import-cmd', () => {
 
   describe('Collection Handling', () => {
     it('should use collection-specific translations folder', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-          admin: {
-            translationsFolder: 'src/admin-translations',
+      vi.mocked(loadConfiguration).mockReturnValue({
+        config: {
+          ...baseConfig,
+          collections: {
+            ...baseConfig.collections,
+            admin: {
+              translationsFolder: 'src/admin-translations',
+            },
           },
         },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
         configPath: '/test/project/.lingo-tracker.json',
         cwd: '/test/project',
       });
-      vi.mocked(importFromJson).mockReturnValue({
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
+      vi.mocked(promptForCollection).mockResolvedValue('admin');
+      vi.mocked(resolveCollection).mockReturnValue({
+        name: 'admin',
+        config: { translationsFolder: 'src/admin-translations' },
+        translationsFolderPath: '/test/project/src/admin-translations',
       });
+      vi.mocked(importFromJson).mockReturnValue(baseImportResult);
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
@@ -745,36 +396,8 @@ describe('import-cmd', () => {
       expect(importFromJson).toHaveBeenCalledWith('/test/project/src/admin-translations', expect.any(Object));
     });
 
-    it('should fall back to global translations folder if collection not configured', async () => {
-      const config = {
-        exportFolder: 'dist/lingo-export',
-        importFolder: 'dist/lingo-import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        collections: {
-          default: {
-            translationsFolder: 'src/translations',
-          },
-        },
-      };
-
-      vi.mocked(loadConfiguration).mockReturnValue({
-        config,
-        configPath: '/test/project/.lingo-tracker.json',
-        cwd: '/test/project',
-      });
-      vi.mocked(importFromJson).mockReturnValue({
-        resourcesImported: 10,
-        resourcesCreated: 0,
-        resourcesUpdated: 10,
-        resourcesSkipped: 0,
-        resourcesFailed: 0,
-        statusTransitions: [],
-        filesModified: [],
-        warnings: [],
-        errors: [],
-        changes: [],
-      });
+    it('should use the auto-selected collection translations folder when no collection option is given', async () => {
+      vi.mocked(importFromJson).mockReturnValue(baseImportResult);
       vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
       const options: ImportCommandOptions = {
@@ -786,6 +409,51 @@ describe('import-cmd', () => {
       await importCommand(options);
 
       expect(importFromJson).toHaveBeenCalledWith('/test/project/src/translations', expect.any(Object));
+    });
+
+    it('should propagate errors thrown by promptForCollection', async () => {
+      vi.mocked(promptForCollection).mockRejectedValue(new Error('Missing required option: --collection'));
+
+      await expect(importCommand({ source: '/test/import.json', locale: 'es', format: 'json' })).rejects.toThrow(
+        'Missing required option: --collection',
+      );
+      expect(importFromJson).not.toHaveBeenCalled();
+    });
+
+    it('should return early without error when promptForCollection returns null', async () => {
+      vi.mocked(promptForCollection).mockResolvedValue(null);
+
+      await importCommand({ source: '/test/import.json', locale: 'es', format: 'json' });
+
+      expect(importFromJson).not.toHaveBeenCalled();
+    });
+
+    it('should return early when resolveCollection returns null', async () => {
+      vi.mocked(resolveCollection).mockReturnValue(null);
+
+      await importCommand({ source: '/test/import.json', locale: 'es', format: 'json' });
+
+      expect(importFromJson).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Non-TTY missing required options', () => {
+    it('should call ConsoleFormatter.error and not import when --source is missing in non-TTY mode', async () => {
+      await importCommand({ locale: 'es', format: 'json' });
+
+      expect(ConsoleFormatter.error).toHaveBeenCalledWith(
+        'Source file is required. Use --source or run in interactive mode.',
+      );
+      expect(importFromJson).not.toHaveBeenCalled();
+    });
+
+    it('should call ConsoleFormatter.error and not import when --locale is missing in non-TTY mode', async () => {
+      await importCommand({ source: '/test/import.json', format: 'json' });
+
+      expect(ConsoleFormatter.error).toHaveBeenCalledWith(
+        'Target locale is required. Use --locale or run in interactive mode.',
+      );
+      expect(importFromJson).not.toHaveBeenCalled();
     });
   });
 });
