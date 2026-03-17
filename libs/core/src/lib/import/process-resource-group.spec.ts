@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { processResourceGroup } from './process-resource-group';
+import { calculateChecksum } from '../../resource/checksum';
 import type { ResourceGroup } from './resource-grouping';
 
 describe('process-resource-group', () => {
@@ -251,6 +252,42 @@ describe('process-resource-group', () => {
       expect(changes[0].type).toBe('updated');
       expect(changes[0].oldStatus).toBe('translated');
       expect(changes[0].newStatus).toBe('translated');
+    });
+
+    it('should preserve existing status when value does not change with update strategy', () => {
+      const group: ResourceGroup = {
+        folderPath,
+        entryResourcePath,
+        entryMetaPath,
+        resources: [
+          {
+            resource: {
+              key: 'common.buttons.ok',
+              value: 'Bien', // Same as existing
+            },
+            entryKey: 'ok',
+          },
+        ],
+      };
+
+      const filesModified = new Set<string>();
+      const warnings: string[] = [];
+
+      const changes = processResourceGroup(
+        group,
+        'es',
+        'en',
+        { source: 'test.json', locale: 'es', strategy: 'update' },
+        false,
+        false,
+        filesModified,
+        warnings,
+      );
+
+      expect(changes).toHaveLength(1);
+      expect(changes[0].type).toBe('updated');
+      expect(changes[0].newStatus).toBe('translated');
+      expect(filesModified.size).toBe(0);
     });
 
     it('should set status to verified for verification strategy', () => {
@@ -505,6 +542,517 @@ describe('process-resource-group', () => {
     });
   });
 
+  describe('migration strategy - source status', () => {
+    function writeExistingOkResource(): void {
+      mkdirSync(folderPath, { recursive: true });
+      writeFileSync(
+        entryResourcePath,
+        JSON.stringify({
+          ok: { source: 'OK', es: 'Bien' },
+        }),
+      );
+      writeFileSync(
+        entryMetaPath,
+        JSON.stringify({
+          ok: {
+            en: { checksum: 'base-checksum' },
+            es: {
+              checksum: 'old-checksum',
+              baseChecksum: 'base-checksum',
+              status: 'translated',
+            },
+          },
+        }),
+      );
+    }
+
+    describe('new resources', () => {
+      it('should use source status when present', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Aceptar',
+                baseValue: 'OK',
+                status: 'verified',
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'migration', createMissing: true },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('created');
+        expect(changes[0].newStatus).toBe('verified');
+
+        const meta = JSON.parse(readFileSync(entryMetaPath, 'utf8'));
+        expect(meta.ok.es.status).toBe('verified');
+      });
+
+      it('should fall back to translated when source status is missing', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Aceptar',
+                baseValue: 'OK',
+                // No status
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'migration', createMissing: true },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('created');
+        expect(changes[0].newStatus).toBe('translated');
+
+        const meta = JSON.parse(readFileSync(entryMetaPath, 'utf8'));
+        expect(meta.ok.es.status).toBe('translated');
+      });
+
+      it('should ignore source status when preserveStatus is false', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Aceptar',
+                baseValue: 'OK',
+                status: 'verified',
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          {
+            source: 'test.json',
+            locale: 'es',
+            strategy: 'migration',
+            createMissing: true,
+            preserveStatus: false,
+          },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('created');
+        expect(changes[0].newStatus).toBe('translated');
+
+        const meta = JSON.parse(readFileSync(entryMetaPath, 'utf8'));
+        expect(meta.ok.es.status).toBe('translated');
+      });
+    });
+
+    describe('existing resources with value change', () => {
+      beforeEach(() => {
+        writeExistingOkResource();
+      });
+
+      it('should use source status when present', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Aceptar', // Changed from 'Bien'
+                status: 'verified',
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'migration' },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('value-changed');
+        expect(changes[0].newStatus).toBe('verified');
+      });
+
+      it('should fall back to translated when source status is missing', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Aceptar', // Changed from 'Bien'
+                // No status
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'migration' },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('value-changed');
+        expect(changes[0].newStatus).toBe('translated');
+      });
+
+      it('should ignore source status when preserveStatus is false', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Aceptar', // Changed from 'Bien'
+                status: 'verified',
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'migration', preserveStatus: false },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('value-changed');
+        expect(changes[0].newStatus).toBe('translated');
+      });
+    });
+
+    describe('existing resources with unchanged value', () => {
+      beforeEach(() => {
+        writeExistingOkResource();
+      });
+
+      it('should use source status when present', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Bien', // Same as existing
+                status: 'verified',
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'migration' },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('updated');
+        expect(changes[0].oldStatus).toBe('translated');
+        expect(changes[0].newStatus).toBe('verified');
+
+        expect(filesModified.size).toBeGreaterThan(0);
+
+        // Verify metadata file was updated with the resolved status
+        const meta = JSON.parse(readFileSync(entryMetaPath, 'utf8'));
+        expect(meta.ok.es.status).toBe('verified');
+      });
+
+      it('should preserve existing status when source status is missing', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Bien', // Same as existing
+                // No status
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'migration' },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('updated');
+        expect(changes[0].oldStatus).toBe('translated');
+        expect(changes[0].newStatus).toBe('translated');
+        expect(filesModified.size).toBe(0);
+
+        const meta = JSON.parse(readFileSync(entryMetaPath, 'utf8'));
+        expect(meta.ok.es.status).toBe('translated');
+      });
+
+      it('should ignore source status when preserveStatus is false', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Bien', // Same as existing
+                status: 'verified',
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'migration', preserveStatus: false },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('updated');
+        expect(changes[0].oldStatus).toBe('translated');
+        expect(changes[0].newStatus).toBe('translated');
+        expect(filesModified.size).toBe(0);
+      });
+    });
+
+    describe('other strategies unaffected', () => {
+      beforeEach(() => {
+        writeExistingOkResource();
+      });
+
+      it('should not use source status for translation-service strategy when preserveStatus is undefined', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Aceptar', // Changed from 'Bien'
+                status: 'verified',
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'translation-service' },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('value-changed');
+        expect(changes[0].newStatus).toBe('translated');
+      });
+
+      it('should use source status for translation-service strategy when preserveStatus is true', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Aceptar', // Changed from 'Bien'
+                status: 'verified',
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'translation-service', preserveStatus: true },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].type).toBe('value-changed');
+        expect(changes[0].newStatus).toBe('verified');
+      });
+
+      it('should use source status for translation-service when preserveStatus is true and value unchanged', () => {
+        const group: ResourceGroup = {
+          folderPath,
+          entryResourcePath,
+          entryMetaPath,
+          resources: [
+            {
+              resource: {
+                key: 'common.buttons.ok',
+                value: 'Bien', // Same as existing
+                status: 'verified',
+              },
+              entryKey: 'ok',
+            },
+          ],
+        };
+
+        const filesModified = new Set<string>();
+        const warnings: string[] = [];
+
+        const changes = processResourceGroup(
+          group,
+          'es',
+          'en',
+          { source: 'test.json', locale: 'es', strategy: 'translation-service', preserveStatus: true },
+          false,
+          false,
+          filesModified,
+          warnings,
+        );
+
+        expect(changes).toHaveLength(1);
+        expect(changes[0].newStatus).toBe('verified');
+
+        const meta = JSON.parse(readFileSync(entryMetaPath, 'utf8'));
+        expect(meta.ok.es.status).toBe('verified');
+      });
+    });
+  });
+
   describe('base locale imports', () => {
     it('should create new resource in base locale when isBaseLocaleImport is true', () => {
       const group: ResourceGroup = {
@@ -691,6 +1239,66 @@ describe('process-resource-group', () => {
       const entries = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
       expect(entries.ok.comment).toBe('New comment');
       expect(entries.ok.tags).toEqual(['new', 'tags']);
+    });
+
+    it('should not write files when base locale comment and tags are unchanged', () => {
+      // Write a resource that already has the comment and tags we are about to import.
+      // The stored checksum must match the real MD5 of 'Hello' so the checksum guard
+      // does not trigger a spurious write.
+      mkdirSync(folderPath, { recursive: true });
+      writeFileSync(
+        entryResourcePath,
+        JSON.stringify({
+          greeting: { source: 'Hello', comment: 'greeting', tags: ['ui'] },
+        }),
+      );
+      writeFileSync(
+        entryMetaPath,
+        JSON.stringify({
+          greeting: {
+            en: { checksum: calculateChecksum('Hello') },
+          },
+        }),
+      );
+
+      const group: ResourceGroup = {
+        folderPath,
+        entryResourcePath,
+        entryMetaPath,
+        resources: [
+          {
+            resource: {
+              key: 'common.buttons.greeting',
+              value: 'Hello',
+              comment: 'greeting',
+              tags: ['ui'],
+            },
+            entryKey: 'greeting',
+          },
+        ],
+      };
+
+      const filesModified = new Set<string>();
+      const warnings: string[] = [];
+
+      processResourceGroup(
+        group,
+        'en',
+        'en',
+        {
+          source: 'test.json',
+          locale: 'en',
+          strategy: 'migration',
+          updateComments: true,
+          updateTags: true,
+        },
+        false,
+        true, // isBaseLocaleImport
+        filesModified,
+        warnings,
+      );
+
+      expect(filesModified.size).toBe(0);
     });
   });
 });
