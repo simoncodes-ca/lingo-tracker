@@ -4,6 +4,9 @@ import {
   hasICUPlaceholders,
   autoFixICUPlaceholders,
   validateICUSyntax,
+  hasTranslocoPlaceholders,
+  extractTranslocoPlaceholders,
+  autoFixTranslocoPlaceholders,
 } from './icu-auto-fixer';
 
 describe('icu-auto-fixer', () => {
@@ -424,6 +427,235 @@ describe('icu-auto-fixer', () => {
         expect(result.wasFixed).toBe(true);
         expect(result.value).toBe('Hola    {name}    mundo');
       });
+    });
+  });
+
+  describe('hasICUPlaceholders — Transloco exclusion', () => {
+    it('should return false for a Transloco double-brace pattern', () => {
+      expect(hasICUPlaceholders('Create {{ itemName }}?')).toBe(false);
+      expect(hasICUPlaceholders('Hello {{ name }}')).toBe(false);
+      expect(hasICUPlaceholders('{{ count }} items selected')).toBe(false);
+    });
+
+    it('should return true for a single-brace ICU pattern', () => {
+      expect(hasICUPlaceholders('Create {itemName}?')).toBe(true);
+      expect(hasICUPlaceholders('Hello {name}')).toBe(true);
+    });
+
+    it('should return false for plain text with no braces', () => {
+      expect(hasICUPlaceholders('No placeholders here')).toBe(false);
+    });
+
+    it('should return false for empty double-brace {{}}', () => {
+      expect(hasICUPlaceholders('text {{}}')).toBe(false);
+    });
+  });
+
+  describe('hasTranslocoPlaceholders', () => {
+    it('should detect single Transloco placeholder', () => {
+      expect(hasTranslocoPlaceholders('Create {{ itemName }}?')).toBe(true);
+    });
+
+    it('should detect multiple Transloco placeholders', () => {
+      expect(hasTranslocoPlaceholders('Hello {{ firstName }} {{ lastName }}')).toBe(true);
+    });
+
+    it('should detect placeholder with no spaces inside braces', () => {
+      expect(hasTranslocoPlaceholders('{{count}} items')).toBe(true);
+    });
+
+    it('should return false for ICU single-brace patterns', () => {
+      expect(hasTranslocoPlaceholders('Hello {name}')).toBe(false);
+    });
+
+    it('should return false for plain text', () => {
+      expect(hasTranslocoPlaceholders('No placeholders')).toBe(false);
+    });
+
+    it('should return false for empty string', () => {
+      expect(hasTranslocoPlaceholders('')).toBe(false);
+    });
+  });
+
+  describe('extractTranslocoPlaceholders', () => {
+    it('should extract a single placeholder with surrounding text', () => {
+      const result = extractTranslocoPlaceholders('Create {{ itemName }}?');
+
+      expect(result.success).toBe(true);
+      expect(result.placeholders).toHaveLength(1);
+      expect(result.placeholders[0].name).toBe('itemName');
+      expect(result.placeholders[0].fullText).toBe('{{ itemName }}');
+      expect(result.placeholders[0].startPosition).toBe(7);
+      expect(result.placeholders[0].endPosition).toBe(21);
+      expect(result.textSegments).toEqual(['Create ', '?']);
+    });
+
+    it('should extract multiple placeholders', () => {
+      const result = extractTranslocoPlaceholders('Hello {{ firstName }} {{ lastName }}');
+
+      expect(result.success).toBe(true);
+      expect(result.placeholders).toHaveLength(2);
+      expect(result.placeholders[0].name).toBe('firstName');
+      expect(result.placeholders[1].name).toBe('lastName');
+      expect(result.textSegments).toEqual(['Hello ', ' ', '']);
+    });
+
+    it('should extract placeholder at start', () => {
+      const result = extractTranslocoPlaceholders('{{ count }} items selected');
+
+      expect(result.success).toBe(true);
+      expect(result.placeholders[0].name).toBe('count');
+      expect(result.textSegments[0]).toBe('');
+      expect(result.textSegments[1]).toBe(' items selected');
+    });
+
+    it('should extract placeholder at end', () => {
+      const result = extractTranslocoPlaceholders('Welcome, {{ name }}');
+
+      expect(result.success).toBe(true);
+      expect(result.placeholders[0].name).toBe('name');
+      expect(result.textSegments).toEqual(['Welcome, ', '']);
+    });
+
+    it('should return empty arrays for plain text', () => {
+      const result = extractTranslocoPlaceholders('No placeholders');
+
+      expect(result.success).toBe(true);
+      expect(result.placeholders).toHaveLength(0);
+      expect(result.textSegments).toEqual(['No placeholders']);
+    });
+
+    it('should handle placeholder without spaces inside braces', () => {
+      const result = extractTranslocoPlaceholders('{{count}} items');
+
+      expect(result.success).toBe(true);
+      expect(result.placeholders[0].name).toBe('count');
+    });
+  });
+
+  describe('autoFixTranslocoPlaceholders', () => {
+    describe('no fix needed', () => {
+      it('should return unchanged when base has no Transloco placeholders', () => {
+        const result = autoFixTranslocoPlaceholders('Hello world', 'Hola mundo');
+
+        expect(result.wasFixed).toBe(false);
+        expect(result.value).toBe('Hola mundo');
+      });
+
+      it('should return unchanged when placeholders already match', () => {
+        const result = autoFixTranslocoPlaceholders('Create {{ itemName }}?', 'Créer {{ itemName }} ?');
+
+        expect(result.wasFixed).toBe(false);
+        expect(result.value).toBe('Créer {{ itemName }} ?');
+      });
+
+      it('should return unchanged when multiple placeholders already match', () => {
+        const result = autoFixTranslocoPlaceholders(
+          'Hello {{ firstName }} {{ lastName }}',
+          'Hola {{ firstName }} {{ lastName }}',
+        );
+
+        expect(result.wasFixed).toBe(false);
+        expect(result.value).toBe('Hola {{ firstName }} {{ lastName }}');
+      });
+
+      it('should not fix when spacing differs but names match', () => {
+        const result = autoFixTranslocoPlaceholders('Hello {{ name }}', 'Hola {{name}}');
+        expect(result.wasFixed).toBe(false);
+        expect(result.value).toBe('Hola {{name}}');
+      });
+    });
+
+    describe('renamed placeholders', () => {
+      it('should fix a single renamed placeholder', () => {
+        const result = autoFixTranslocoPlaceholders('Create {{ itemName }}?', 'Créer {{ nomElement }} ?');
+
+        expect(result.wasFixed).toBe(true);
+        expect(result.value).toBe('Créer {{ itemName }} ?');
+        expect(result.originalPlaceholders).toEqual(['{{ nomElement }}']);
+        expect(result.fixedPlaceholders).toEqual(['{{ itemName }}']);
+      });
+
+      it('should fix multiple renamed placeholders', () => {
+        const result = autoFixTranslocoPlaceholders(
+          'Hello {{ firstName }} {{ lastName }}',
+          'Hola {{ nombre }} {{ apellido }}',
+        );
+
+        expect(result.wasFixed).toBe(true);
+        expect(result.value).toBe('Hola {{ firstName }} {{ lastName }}');
+        expect(result.originalPlaceholders).toHaveLength(2);
+        expect(result.fixedPlaceholders).toHaveLength(2);
+      });
+
+      it('should preserve translated text segments while replacing placeholder names', () => {
+        const result = autoFixTranslocoPlaceholders(
+          'You have {{ count }} unread messages',
+          'Sie haben {{ anzahl }} ungelesene Nachrichten',
+        );
+
+        expect(result.wasFixed).toBe(true);
+        expect(result.value).toBe('Sie haben {{ count }} ungelesene Nachrichten');
+      });
+    });
+
+    describe('missing placeholders', () => {
+      it('should append a single missing placeholder at the end', () => {
+        const result = autoFixTranslocoPlaceholders('Hello {{ name }}', 'Hola');
+
+        expect(result.wasFixed).toBe(true);
+        expect(result.value).toContain('{{ name }}');
+        expect(result.description).toContain('Inserted missing placeholder');
+      });
+
+      it('should error when multiple placeholders are missing', () => {
+        const result = autoFixTranslocoPlaceholders('Hello {{ firstName }} {{ lastName }}', 'Hola');
+
+        expect(result.wasFixed).toBe(false);
+        expect(result.error).toContain('missing 2 placeholders');
+      });
+
+      it('should error when translation has fewer placeholders than base', () => {
+        const result = autoFixTranslocoPlaceholders('Hello {{ firstName }} {{ lastName }}', 'Hola {{ nombre }}');
+
+        expect(result.wasFixed).toBe(false);
+        expect(result.error).toBeDefined();
+      });
+    });
+
+    describe('count mismatch', () => {
+      it('should error when translation has extra placeholders', () => {
+        const result = autoFixTranslocoPlaceholders('Hello {{ name }}', 'Hola {{ name }} {{ extra }}');
+
+        expect(result.wasFixed).toBe(false);
+        expect(result.error).toContain('extra placeholders');
+      });
+    });
+  });
+
+  describe('autoFixICUPlaceholders — Transloco pass-through', () => {
+    it('should not error on Transloco values when base has no ICU placeholders', () => {
+      // "Create {{ itemName }}?" has no ICU single-braces, so autoFixICUPlaceholders
+      // should treat it as having no placeholders and return as-is.
+      const result = autoFixICUPlaceholders('Create {{ itemName }}?', 'Créer {{ nomElement }} ?');
+
+      expect(result.wasFixed).toBe(false);
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe('Créer {{ nomElement }} ?');
+    });
+
+    it('should not error on plain Transloco value with no ICU braces', () => {
+      const result = autoFixICUPlaceholders('{{ count }} items', '{{ anzahl }} Elemente');
+
+      expect(result.wasFixed).toBe(false);
+      expect(result.error).toBeUndefined();
+    });
+
+    it('should pass through Transloco values via the hasTranslocoPlaceholders guard', () => {
+      const result = autoFixICUPlaceholders('Create {{ itemName }}?', 'إنشاء {{ itemName }}؟');
+      expect(result.wasFixed).toBe(false);
+      expect(result.error).toBeUndefined();
+      expect(result.value).toBe('إنشاء {{ itemName }}؟');
     });
   });
 });

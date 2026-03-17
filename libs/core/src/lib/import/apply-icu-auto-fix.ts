@@ -1,5 +1,10 @@
 import type { ImportedResource, ICUAutoFix, ICUAutoFixError } from './types';
-import { autoFixICUPlaceholders, hasICUPlaceholders } from './icu-auto-fixer';
+import {
+  autoFixICUPlaceholders,
+  hasICUPlaceholders,
+  autoFixTranslocoPlaceholders,
+  hasTranslocoPlaceholders,
+} from './icu-auto-fixer';
 
 /**
  * Configuration for applying ICU auto-fixes to imported resources
@@ -7,8 +12,18 @@ import { autoFixICUPlaceholders, hasICUPlaceholders } from './icu-auto-fixer';
 interface ApplyICUAutoFixConfig {
   /** The imported resource to potentially auto-fix */
   resource: ImportedResource;
-  /** Base locale value (source of truth for placeholders) */
-  baseValue?: string;
+  /**
+   * Base locale value loaded from the stored resource file on disk.
+   * This is the reliable source of truth used for both ICU and Transloco auto-fixing.
+   */
+  storedBaseValue?: string;
+  /**
+   * Base locale value supplied inside the import JSON itself (rich-format `baseValue` field).
+   * Used only as a fallback for ICU auto-fixing. NOT used for Transloco auto-fixing because
+   * import files from migration workflows may contain unresolved Transloco reference strings
+   * (e.g., `{{greeting}}`) in this field, which must not be mistaken for runtime parameters.
+   */
+  importedBaseValue?: string;
   /** Verbose logging enabled */
   verbose?: boolean;
   /** Progress callback */
@@ -43,7 +58,7 @@ interface ApplyICUAutoFixResult {
  * ```typescript
  * const result = applyICUAutoFixToResource({
  *   resource: { key: 'greeting', value: 'Hola {nombre}' },
- *   baseValue: 'Hello {name}'
+ *   storedBaseValue: 'Hello {name}'
  * });
  *
  * if (result.autoFix) {
@@ -53,9 +68,60 @@ interface ApplyICUAutoFixResult {
  * ```
  */
 export function applyICUAutoFixToResource(config: ApplyICUAutoFixConfig): ApplyICUAutoFixResult {
-  const { resource, baseValue, verbose, onProgress } = config;
+  const { resource, storedBaseValue, importedBaseValue, verbose, onProgress } = config;
 
-  if (!baseValue || !hasICUPlaceholders(baseValue)) {
+  // Transloco `{{ varName }}` and ICU `{name}` are mutually exclusive.
+  // Transloco auto-fix only uses the stored base value — the imported baseValue field
+  // may contain unresolved reference strings (e.g., `{{greeting}}` in migration imports)
+  // that must not be treated as runtime parameter placeholders.
+  if (storedBaseValue && hasTranslocoPlaceholders(storedBaseValue)) {
+    if (verbose && onProgress) {
+      onProgress(`  Checking Transloco placeholders for ${resource.key}...`);
+    }
+
+    const translocoResult = autoFixTranslocoPlaceholders(storedBaseValue, resource.value);
+
+    if (translocoResult.error) {
+      if (verbose && onProgress) {
+        onProgress(`  ❌ Transloco auto-fix failed for ${resource.key}: ${translocoResult.error}`);
+      }
+
+      return {
+        resource,
+        autoFixError: {
+          key: resource.key,
+          error: translocoResult.error,
+          originalValue: resource.value,
+        },
+      };
+    }
+
+    if (translocoResult.wasFixed) {
+      if (verbose && onProgress) {
+        onProgress(`  ✓ Auto-fixed Transloco placeholders for ${resource.key}: ${translocoResult.description}`);
+      }
+
+      return {
+        resource: { ...resource, value: translocoResult.value },
+        autoFix: {
+          key: resource.key,
+          originalValue: resource.value,
+          fixedValue: translocoResult.value,
+          description: translocoResult.description || '',
+          originalPlaceholders: translocoResult.originalPlaceholders || [],
+          fixedPlaceholders: translocoResult.fixedPlaceholders || [],
+        },
+      };
+    }
+
+    // Placeholders already match — no fix needed
+    return { resource };
+  }
+
+  // ICU auto-fix uses stored base value first, falling back to the imported baseValue field.
+  const icuBaseValue = storedBaseValue ?? importedBaseValue;
+
+  if (!icuBaseValue || !hasICUPlaceholders(icuBaseValue)) {
     return { resource };
   }
 
@@ -64,7 +130,7 @@ export function applyICUAutoFixToResource(config: ApplyICUAutoFixConfig): ApplyI
   }
 
   // Attempt auto-fix
-  const autoFixResult = autoFixICUPlaceholders(baseValue, resource.value);
+  const autoFixResult = autoFixICUPlaceholders(icuBaseValue, resource.value);
 
   // Handle auto-fix error
   if (autoFixResult.error) {
@@ -152,15 +218,14 @@ export function applyICUAutoFixToResources(params: {
   const fixedResources: ImportedResource[] = [];
 
   if (verbose && onProgress) {
-    onProgress('\nChecking for ICU placeholder issues...');
+    onProgress('\nChecking for placeholder issues...');
   }
 
   for (const resource of resources) {
-    const baseValue = getBaseValue(resource.key) || resource.baseValue;
-
     const result = applyICUAutoFixToResource({
       resource,
-      baseValue,
+      storedBaseValue: getBaseValue(resource.key),
+      importedBaseValue: resource.baseValue,
       verbose,
       onProgress,
     });
@@ -178,7 +243,7 @@ export function applyICUAutoFixToResources(params: {
 
   if (verbose && onProgress) {
     if (autoFixes.length > 0) {
-      onProgress(`\n✓ Auto-fixed ${autoFixes.length} translation(s) with modified ICU placeholders`);
+      onProgress(`\n✓ Auto-fixed ${autoFixes.length} translation(s) with modified placeholders`);
     }
     if (autoFixErrors.length > 0) {
       onProgress(`\n❌ Failed to auto-fix ${autoFixErrors.length} translation(s) - manual correction required`);
