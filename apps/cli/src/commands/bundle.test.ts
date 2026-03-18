@@ -7,10 +7,13 @@ import * as utils from '../utils';
 vi.mock('node:fs');
 vi.mock('prompts');
 
-vi.mock('@simoncodes-ca/core', () => ({
-  CONFIG_FILENAME: '.lingo-tracker.json',
-  generateBundle: vi.fn(),
-}));
+vi.mock('@simoncodes-ca/core', async () => {
+  const actual = await vi.importActual<typeof import('@simoncodes-ca/core')>('@simoncodes-ca/core');
+  return {
+    ...actual,
+    generateBundle: vi.fn(),
+  };
+});
 
 vi.mock('../utils', async () => {
   const actual = await vi.importActual('../utils');
@@ -305,7 +308,7 @@ describe('bundleCommand', () => {
         localesProcessed: ['en'],
         typeGenerationResult: {
           bundleKey: 'core',
-          typeDist: 'src/generated/core-tokens.ts',
+          typeDistFile: 'src/generated/core-tokens.ts',
           keysCount: 100,
           fileGenerated: true,
         },
@@ -324,7 +327,7 @@ describe('bundleCommand', () => {
         localesProcessed: ['en'],
         typeGenerationResult: {
           bundleKey: 'core',
-          typeDist: null,
+          typeDistFile: undefined,
           keysCount: 0,
           fileGenerated: false,
           skippedReason: 'empty-bundle',
@@ -333,7 +336,27 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (empty-bundle)');
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (bundle has no keys)');
+    });
+
+    it('should display type generation skipped (not-configured reason from result)', async () => {
+      mockGenerateBundle.mockReturnValue({
+        bundleKey: 'core',
+        filesGenerated: 3,
+        warnings: [],
+        localesProcessed: ['en'],
+        typeGenerationResult: {
+          bundleKey: 'core',
+          typeDistFile: undefined,
+          keysCount: 0,
+          fileGenerated: false,
+          skippedReason: 'not-configured',
+        },
+      });
+
+      await bundleCommand({ name: 'core' });
+
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (no typeDistFile configured)');
     });
 
     it('should display type generation skipped (no config)', async () => {
@@ -347,7 +370,7 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (no typeDist configured)');
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (no typeDistFile configured)');
     });
   });
 

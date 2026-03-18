@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { LingoTrackerConfig } from '../../../config/lingo-tracker-config';
-import type { TokenCasing } from '../../../config/bundle-definition';
+import { hasTypeDistConfigured, type TokenCasing } from '../../../config/bundle-definition';
 import { loadCollectionResources } from '../resource-loader';
 import { matchesPattern } from '../pattern-matcher';
 import { matchesTags } from '../tag-filter';
@@ -11,10 +11,11 @@ import { bundleKeyToConstantName } from './key-transformer';
 
 export interface GenerateTypesResult {
   bundleKey: string;
-  typeDist: string | undefined;
+  typeDistFile: string | undefined;
   keysCount: number;
   fileGenerated: boolean;
-  skippedReason?: 'no-typeDist' | 'empty-bundle';
+  skippedReason?: 'not-configured' | 'empty-bundle';
+  errorReason?: string;
 }
 
 export async function generateBundleTypes(
@@ -24,13 +25,50 @@ export async function generateBundleTypes(
 ): Promise<GenerateTypesResult> {
   const bundleDef = config.bundles?.[bundleKey];
 
-  if (!bundleDef || !bundleDef.typeDist) {
+  // Support deprecated 'typeDist' property — read the legacy value without mutating the config object
+  const legacyTypeDist = (bundleDef as unknown as Record<string, unknown>)?.['typeDist'];
+  const resolvedTypeDistFile =
+    bundleDef?.typeDistFile ?? (typeof legacyTypeDist === 'string' ? legacyTypeDist : undefined);
+
+  if (bundleDef && typeof legacyTypeDist === 'string' && !bundleDef.typeDistFile) {
+    console.warn(
+      `Warning: Bundle '${bundleKey}': 'typeDist' is deprecated and will be removed in the next major version. Please rename to 'typeDistFile' in your .lingo-tracker.json config.`,
+    );
+  }
+
+  if (!bundleDef || !hasTypeDistConfigured(bundleDef) || !resolvedTypeDistFile) {
     return {
       bundleKey,
-      typeDist: undefined,
+      typeDistFile: undefined,
       keysCount: 0,
       fileGenerated: false,
-      skippedReason: 'no-typeDist',
+      skippedReason: 'not-configured',
+    };
+  }
+
+  // Validate: typeDistFile must end with .ts (checked before resolving to an absolute path
+  // so the error message reflects the value as configured, not the resolved path)
+  if (!resolvedTypeDistFile.endsWith('.ts')) {
+    return {
+      bundleKey,
+      typeDistFile: resolvedTypeDistFile,
+      keysCount: 0,
+      fileGenerated: false,
+      errorReason: `typeDistFile must end with a .ts extension (e.g. './src/types/tokens.ts'), but got: ${resolvedTypeDistFile}`,
+    };
+  }
+
+  // resolvedTypeDistFile is narrowed to string by the guard above
+  const outputPath = path.resolve(resolvedTypeDistFile);
+
+  // Validate: typeDistFile must not point to an existing directory
+  if (fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()) {
+    return {
+      bundleKey,
+      typeDistFile: resolvedTypeDistFile,
+      keysCount: 0,
+      fileGenerated: false,
+      errorReason: `typeDistFile must be a file path (e.g. './src/types/tokens.ts'), but '${resolvedTypeDistFile}' resolves to a directory at: ${outputPath}`,
     };
   }
 
@@ -96,7 +134,7 @@ export async function generateBundleTypes(
     console.warn(`Warning: Bundle '${bundleKey}' is empty. Skipping type generation.`);
     return {
       bundleKey,
-      typeDist: bundleDef.typeDist,
+      typeDistFile: resolvedTypeDistFile,
       keysCount: 0,
       fileGenerated: false,
       skippedReason: 'empty-bundle',
@@ -108,11 +146,6 @@ export async function generateBundleTypes(
   const constantName = bundleKeyToConstantName(bundleKey);
   const fileContent = `${generateFileHeader(bundleKey)}\n\n${serializeHierarchy(hierarchy, constantName)}`;
 
-  // Resolve output path
-  // If typeDist is relative, resolve it relative to the config file location (which we don't have directly here,
-  // but usually we assume CWD or we'd need the config path passed in.
-  // For now, we'll resolve relative to CWD as is standard for CLI tools)
-  const outputPath = path.resolve(bundleDef.typeDist);
   const outputDir = path.dirname(outputPath);
 
   // Ensure directory exists
@@ -125,7 +158,7 @@ export async function generateBundleTypes(
 
   return {
     bundleKey,
-    typeDist: outputPath,
+    typeDistFile: outputPath,
     keysCount: sortedKeys.length,
     fileGenerated: true,
   };

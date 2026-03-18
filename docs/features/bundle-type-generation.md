@@ -11,7 +11,7 @@ LingoTracker can automatically generate TypeScript type definitions for your tra
 
 ## Configuration
 
-To enable type generation, add the `typeDist` property to your bundle definition in `.lingo-tracker.json`. This property specifies the output path for the generated TypeScript file.
+To enable type generation, add the `typeDistFile` property to your bundle definition in `.lingo-tracker.json`. This property specifies the output file path for the generated TypeScript file. The path must end with `.ts` and must point to a file, not a directory.
 
 ```json
 {
@@ -20,7 +20,7 @@ To enable type generation, add the `typeDist` property to your bundle definition
       "bundleName": "common.{locale}",
       "dist": "./dist/i18n",
       "collections": "All",
-      "typeDist": "./src/generated/common-tokens.ts",
+      "typeDistFile": "./src/generated/common-tokens.ts",
       "tokenCasing": "upperCase"
     }
   }
@@ -31,7 +31,7 @@ The `tokenCasing` property is optional and defaults to `"upperCase"`. It can als
 
 ## Usage
 
-Type generation is automatically triggered when you run the `bundle` command for any bundle that has `typeDist` configured.
+Type generation is automatically triggered when you run the `bundle` command for any bundle that has `typeDistFile` configured.
 
 ```bash
 # Generate bundles and types
@@ -118,6 +118,28 @@ The `tokenCasing` value is resolved in the following order (first match wins):
 - **Key Segments (upperCase)**: Converted to `SCREAMING_SNAKE_CASE` (e.g., `buttons` -> `BUTTONS`, `file-upload` -> `FILE_UPLOAD`).
 - **Key Segments (camelCase)**: Converted to `camelCase` (e.g., `buttons` -> `buttons`, `file-upload` -> `fileUpload`).
 - **Numeric Segments**: Preserved as-is (e.g., `steps.1.title` -> `STEPS.1.TITLE` or `steps.1.title`).
+
+## Migration from `typeDist`
+
+> **Deprecation Notice**: The `typeDist` configuration property has been renamed to `typeDistFile` to clarify that the value must be a file path (ending with `.ts`), not a directory.
+
+- The old `typeDist` name is still accepted but will produce a deprecation warning at runtime.
+- Users should update their `.lingo-tracker.json` to use `typeDistFile` instead of `typeDist`.
+- The `typeDistFile` value must end with `.ts` and must be a file path, not a directory path.
+
+**Before**:
+```json
+{
+  "typeDist": "./src/generated/common-tokens.ts"
+}
+```
+
+**After**:
+```json
+{
+  "typeDistFile": "./src/generated/common-tokens.ts"
+}
+```
 
 ## Integration
 

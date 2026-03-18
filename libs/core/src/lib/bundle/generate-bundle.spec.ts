@@ -485,18 +485,19 @@ describe('generate-bundle', () => {
       // Should be valid JSON
       expect(() => JSON.parse(writtenJson)).not.toThrow();
     });
-    it('should invoke type generation when typeDist is configured', async () => {
+
+    it('should invoke type generation when typeDistFile is configured', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
         collections: 'All',
-        typeDist: 'src/generated/types.ts',
+        typeDistFile: 'src/generated/types.ts',
       };
 
       vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
       vi.mocked(generateBundleTypes).mockResolvedValue({
         bundleKey: 'main',
-        typeDist: 'src/generated/types.ts',
+        typeDistFile: 'src/generated/types.ts',
         keysCount: 1,
         fileGenerated: true,
       });
@@ -513,7 +514,7 @@ describe('generate-bundle', () => {
       expect(generateBundleTypes).toHaveBeenCalledWith('main', mockConfig, 'upperCase');
     });
 
-    it('should not invoke type generation when typeDist is missing', async () => {
+    it('should not invoke type generation when typeDistFile is missing', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -535,12 +536,73 @@ describe('generate-bundle', () => {
       expect(generateBundleTypes).not.toHaveBeenCalled();
     });
 
+    it('should invoke type generation when the deprecated typeDist key is present', async () => {
+      const bundleDefinition = {
+        bundleName: '{locale}',
+        dist: '/dist/bundles',
+        collections: 'All' as const,
+        // Simulating a user config that still uses the old key name
+        ...({ typeDist: 'src/generated/types.ts' } as unknown as object),
+      } as BundleDefinition;
+
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
+      vi.mocked(generateBundleTypes).mockResolvedValue({
+        bundleKey: 'main',
+        typeDistFile: 'src/generated/types.ts',
+        keysCount: 1,
+        fileGenerated: true,
+      });
+
+      const params: GenerateBundleParams = {
+        bundleKey: 'main',
+        bundleDefinition,
+        config: mockConfig,
+        locales: ['en'],
+      };
+
+      await generateBundle(params);
+
+      expect(generateBundleTypes).toHaveBeenCalledWith('main', mockConfig, 'upperCase');
+    });
+
+    it('should use typeDistFile and not emit a deprecation warning when both typeDist and typeDistFile are present', async () => {
+      const bundleDefinition = {
+        bundleName: '{locale}',
+        dist: '/dist/bundles',
+        collections: 'All' as const,
+        typeDistFile: 'src/generated/types.ts',
+        // Simulating a partially-migrated config that still has the old key alongside the new one
+        ...({ typeDist: 'src/generated/old-types.ts' } as unknown as object),
+      } as BundleDefinition;
+
+      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
+      vi.mocked(generateBundleTypes).mockResolvedValue({
+        bundleKey: 'main',
+        typeDistFile: 'src/generated/types.ts',
+        keysCount: 1,
+        fileGenerated: true,
+      });
+
+      const params: GenerateBundleParams = {
+        bundleKey: 'main',
+        bundleDefinition,
+        config: mockConfig,
+        locales: ['en'],
+      };
+
+      await generateBundle(params);
+
+      // generateBundleTypes is mocked here so no real deprecation logic runs.
+      // The no-warn behaviour for the both-keys-present scenario is verified in generate-types.spec.ts.
+      expect(generateBundleTypes).toHaveBeenCalledWith('main', mockConfig, 'upperCase');
+    });
+
     it('should capture type generation errors in warnings', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
         collections: 'All',
-        typeDist: 'src/generated/types.ts',
+        typeDistFile: 'src/generated/types.ts',
       };
 
       vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
@@ -563,14 +625,14 @@ describe('generate-bundle', () => {
         bundleName: '{locale}',
         dist: '/dist/bundles',
         collections: 'All',
-        typeDist: 'src/generated/types.ts',
+        typeDistFile: 'src/generated/types.ts',
       };
 
       beforeEach(() => {
         vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
         vi.mocked(generateBundleTypes).mockResolvedValue({
           bundleKey: 'main',
-          typeDist: 'src/generated/types.ts',
+          typeDistFile: 'src/generated/types.ts',
           keysCount: 1,
           fileGenerated: true,
         });

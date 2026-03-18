@@ -4,11 +4,12 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type {
-  BundleDefinition,
-  CollectionBundleDefinition,
-  EntrySelectionRule,
-  TokenCasing,
+import {
+  hasTypeDistConfigured,
+  type BundleDefinition,
+  type CollectionBundleDefinition,
+  type EntrySelectionRule,
+  type TokenCasing,
 } from '../../config/bundle-definition';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { loadCollectionResources, type FlatResource } from './resource-loader';
@@ -71,7 +72,7 @@ export async function generateBundle(params: GenerateBundleParams): Promise<Gene
 
   // Generate types if configured
   let typeGenerationResult: GenerateTypesResult | undefined;
-  if (bundleDefinition.typeDist) {
+  if (hasTypeDistConfigured(bundleDefinition)) {
     try {
       typeGenerationResult = await generateBundleTypes(bundleKey, config, resolvedTokenCasing);
       if (typeGenerationResult.fileGenerated) {
@@ -194,13 +195,6 @@ function matchesAnyRule(resource: FlatResource, rules: EntrySelectionRule[]): bo
  */
 function getBundleOutputPath(bundleDefinition: BundleDefinition, locale: string): string {
   const fileName = bundleDefinition.bundleName.replace('{locale}', locale);
-
-  // Handle subdirectory pattern (e.g., "{locale}/main")
-  if (fileName.includes('/')) {
-    return path.join(bundleDefinition.dist, `${fileName}.json`);
-  }
-
-  // Standard file pattern
   return path.join(bundleDefinition.dist, `${fileName}.json`);
 }
 

@@ -1,6 +1,6 @@
 import prompts from 'prompts';
 import type { LingoTrackerConfig, TokenCasing } from '@simoncodes-ca/core';
-import { generateBundle } from '@simoncodes-ca/core';
+import { generateBundle, hasTypeDistConfigured } from '@simoncodes-ca/core';
 import { loadConfiguration, parseCommaSeparatedList, ConsoleFormatter } from '../utils';
 
 export interface BundleOptions {
@@ -91,16 +91,25 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
       if (result.typeGenerationResult) {
         if (result.typeGenerationResult.fileGenerated) {
           ConsoleFormatter.indent(
-            `└─ Types: ${result.typeGenerationResult.typeDist} (${result.typeGenerationResult.keysCount} keys)`,
+            `└─ Types: ${result.typeGenerationResult.typeDistFile} (${result.typeGenerationResult.keysCount} keys)`,
           );
+        } else if (result.typeGenerationResult.errorReason) {
+          ConsoleFormatter.indent(`└─ Types: Error (${result.typeGenerationResult.errorReason})`);
         } else if (result.typeGenerationResult.skippedReason) {
-          ConsoleFormatter.indent(`└─ Types: Skipped (${result.typeGenerationResult.skippedReason})`);
+          const skippedReasonMessages: Record<string, string> = {
+            'empty-bundle': 'bundle has no keys',
+            'not-configured': 'no typeDistFile configured',
+          };
+          const skippedMessage =
+            skippedReasonMessages[result.typeGenerationResult.skippedReason] ??
+            result.typeGenerationResult.skippedReason;
+          ConsoleFormatter.indent(`└─ Types: Skipped (${skippedMessage})`);
         }
-      } else if (bundleDefinition.typeDist) {
+      } else if (hasTypeDistConfigured(bundleDefinition)) {
         // Should have result if configured, but just in case
         ConsoleFormatter.indent(`└─ Types: Failed (No result returned)`);
       } else {
-        ConsoleFormatter.indent(`└─ Types: Skipped (no typeDist configured)`);
+        ConsoleFormatter.indent(`└─ Types: Skipped (no typeDistFile configured)`);
       }
 
       if (result.warnings.length > 0) {

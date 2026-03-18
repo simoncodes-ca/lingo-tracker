@@ -107,7 +107,7 @@ Each file contains hierarchical JSON with all translations for that locale.
     "cli-reference-name": {
       "bundleName": "output-filename-pattern",
       "dist": "./output/directory",
-      "typeDist": "./optional/path/to/generated-tokens.ts",
+      "typeDistFile": "./optional/path/to/generated-tokens.ts",
       "tokenCasing": "upperCase",
       "collections": "All or array of collection definitions"
     }
