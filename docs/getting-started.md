@@ -54,25 +54,45 @@ lingo-tracker init
 
 If you run it interactively, you will be prompted for missing values. In non‑interactive environments, pass the required options.
 
-- Required when non‑interactive: `--collectionName`, `--translationsFolder`
+- Required when non‑interactive: `--collection-name`, `--translations-folder`
 - All options:
-  - `--collectionName <name>`: Name of the initial collection key (e.g., "Main").
-  - `--translationsFolder <path>`: Path to the translations directory for this collection.
-  - `--exportFolder <path>`: Output folder for exports. Default: `dist/lingo-export`.
-  - `--importFolder <path>`: Input folder for imports. Default: `dist/lingo-import`.
-  - `--baseLocale <locale>`: Base/authoring locale. Default: `en`.
+  - `--collection-name <name>`: Name of the initial collection key (e.g., "Main").
+  - `--translations-folder <path>`: Path to the translations directory for this collection.
+  - `--export-folder <path>`: Output folder for exports. Default: `dist/lingo-export`.
+  - `--import-folder <path>`: Input folder for imports. Default: `dist/lingo-import`.
+  - `--base-locale <locale>`: Base/authoring locale. Default: `en`.
   - `--locales <locales...>`: Supported locales list. Example: `en fr-ca es de`.
+  - `--setup-bundle <true|false>`: Customize the default bundle configuration.
+  - `--bundle-dist <path>`: Bundle output directory. Default: `./src/assets/i18n`.
+  - `--bundle-name <pattern>`: Bundle name pattern. Default: `{locale}`.
+  - `--token-casing <casing>`: Token key casing (`upperCase` or `camelCase`).
+  - `--type-dist-file <path>`: Path for generated TypeScript type definitions.
+  - `--token-constant-name <name>`: Custom name for the generated TypeScript constant.
 
 Example (CI-safe, no prompts):
 
 ```bash
 lingo-tracker init \
-  --collectionName Main \
-  --translationsFolder apps/web/src/assets/i18n \
-  --exportFolder dist/lingo-export \
-  --importFolder dist/lingo-import \
-  --baseLocale en \
+  --collection-name Main \
+  --translations-folder apps/web/src/assets/i18n \
+  --export-folder dist/lingo-export \
+  --import-folder dist/lingo-import \
+  --base-locale en \
   --locales en fr-ca es de
+```
+
+Example with bundle customization:
+
+```bash
+lingo-tracker init \
+  --collection-name Main \
+  --translations-folder apps/web/src/assets/i18n \
+  --base-locale en \
+  --locales en fr-ca es de \
+  --setup-bundle true \
+  --bundle-dist ./src/assets/i18n \
+  --token-casing camelCase \
+  --type-dist-file ./src/generated/tokens.ts
 ```
 
 ### The configuration file
@@ -91,12 +111,20 @@ Initialization writes a JSON config named `.lingo-tracker.json` at your project 
     "Main": {
       "translationsFolder": "apps/web/src/assets/i18n"
     }
+  },
+  "bundles": {
+    "main": {
+      "bundleName": "{locale}",
+      "dist": "./src/assets/i18n",
+      "collections": "All"
+    }
   }
 }
 ```
 
 - Global fields (`exportFolder`, `importFolder`, `baseLocale`, `locales`) apply to all collections by default.
 - Each collection requires `translationsFolder`. A collection may override any global field locally if needed.
+- A default `bundles` section is always created during init. If you customize the bundle, additional fields like `typeDistFile`, `tokenCasing`, and `tokenConstantName` may be present. See the [Bundle Generation Guide](./guides/bundling.md) for details.
 
 Collection shape:
 
@@ -118,13 +146,13 @@ Use `add-collection` to register more translation sources within the same repo. 
 lingo-tracker add-collection
 ```
 
-- Required when non‑interactive: `--collectionName`, `--translationsFolder`
+- Required when non‑interactive: `--collection-name`, `--translations-folder`
 - All options (same meanings as `init`):
-  - `--collectionName <name>`
-  - `--translationsFolder <path>`
-  - `--exportFolder <path>`
-  - `--importFolder <path>`
-  - `--baseLocale <locale>`
+  - `--collection-name <name>`
+  - `--translations-folder <path>`
+  - `--export-folder <path>`
+  - `--import-folder <path>`
+  - `--base-locale <locale>`
   - `--locales <locales...>`
 
 Examples:
@@ -133,17 +161,17 @@ Examples:
 
 ```bash
 lingo-tracker add-collection \
-  --collectionName Admin \
-  --translationsFolder apps/admin/src/assets/i18n
+  --collection-name Admin \
+  --translations-folder apps/admin/src/assets/i18n
 ```
 
 - Override per-collection settings (only differences are saved under the collection):
 
 ```bash
 lingo-tracker add-collection \
-  --collectionName Mobile \
-  --translationsFolder apps/mobile/src/i18n \
-  --baseLocale en-GB
+  --collection-name Mobile \
+  --translations-folder apps/mobile/src/i18n \
+  --base-locale en-GB
 ```
 
 Notes:
@@ -155,8 +183,8 @@ Notes:
 Both commands support fully non‑interactive runs; provide all required flags to avoid prompts. The CLI auto‑detects TTY and will throw if a required option is missing in non‑interactive mode.
 
 - Required flags in CI:
-  - `init`: `--collectionName`, `--translationsFolder` (others optional)
-  - `add-collection`: `--collectionName`, `--translationsFolder`
+  - `init`: `--collection-name`, `--translations-folder` (others optional)
+  - `add-collection`: `--collection-name`, `--translations-folder`
 
 ### Quick checklist
 

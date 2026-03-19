@@ -39,15 +39,27 @@ lingo-tracker init [options]
 
 **Options:**
 
-- `--collectionName <name>` - Name of the initial collection key, e.g., "Main" (required in non-interactive mode)
-- `--translationsFolder <path>` - Path to the translations directory for this collection (required in non-interactive mode)
-- `--exportFolder <path>` - Output folder for exports (default: `dist/lingo-export`)
-- `--importFolder <path>` - Input folder for imports (default: `dist/lingo-import`)
-- `--baseLocale <locale>` - Base/authoring locale (default: `en`)
+- `--collection-name <name>` - Name of the initial collection key, e.g., "Main" (required in non-interactive mode)
+- `--translations-folder <path>` - Path to the translations directory for this collection (required in non-interactive mode)
+- `--export-folder <path>` - Output folder for exports (default: `dist/lingo-export`)
+- `--import-folder <path>` - Input folder for imports (default: `dist/lingo-import`)
+- `--base-locale <locale>` - Base/authoring locale (default: `en`)
 - `--locales <locales...>` - Space-separated list of supported locales (e.g., `en fr-ca es de`)
-- `--enableAutoTranslation` - Enable automatic translation via an external provider
-- `--translationProvider <provider>` - Translation provider to use (default: `google-translate`). Required when `--enableAutoTranslation` is set
-- `--translationApiKeyEnv <envVar>` - Name of the environment variable holding the provider API key (default: `GOOGLE_TRANSLATE_API_KEY`). Required when `--enableAutoTranslation` is set
+
+**Bundle options:**
+
+- `--setup-bundle <true|false>` - Customize bundle configuration (default: prompted interactively). When omitted and any bundle flag is provided, automatically inferred as `true`
+- `--bundle-dist <path>` - Bundle output directory (default: `./src/assets/i18n`)
+- `--bundle-name <pattern>` - Bundle name pattern (default: `{locale}`)
+- `--token-casing <casing>` - Token property key casing: `upperCase` or `camelCase`
+- `--type-dist-file <path>` - Path for generated TypeScript type definitions file (default: `./src/generated/tokens.ts`)
+- `--token-constant-name <name>` - Custom name for the generated TypeScript constant (auto-derived from bundle key when omitted)
+
+**Auto-translation options:**
+
+- `--enable-auto-translation` - Enable automatic translation via an external provider
+- `--translation-provider <provider>` - Translation provider to use (default: `google-translate`). Required when `--enable-auto-translation` is set
+- `--translation-api-key-env <envVar>` - Name of the environment variable holding the provider API key (default: `GOOGLE_TRANSLATE_API_KEY`). Required when `--enable-auto-translation` is set
 
 **Examples:**
 
@@ -59,31 +71,47 @@ lingo-tracker init
 Non-interactive mode (CI-safe, all required options provided):
 ```bash
 lingo-tracker init \
-  --collectionName Main \
-  --translationsFolder apps/web/src/assets/i18n \
-  --exportFolder dist/lingo-export \
-  --importFolder dist/lingo-import \
-  --baseLocale en \
+  --collection-name Main \
+  --translations-folder apps/web/src/assets/i18n \
+  --export-folder dist/lingo-export \
+  --import-folder dist/lingo-import \
+  --base-locale en \
   --locales en fr-ca es de
+```
+
+Non-interactive mode with bundle configuration:
+```bash
+lingo-tracker init \
+  --collection-name Main \
+  --translations-folder apps/web/src/assets/i18n \
+  --base-locale en \
+  --locales en fr-ca es de \
+  --setup-bundle true \
+  --bundle-dist ./src/assets/i18n \
+  --bundle-name "{locale}" \
+  --token-casing camelCase \
+  --type-dist-file ./src/generated/tokens.ts
 ```
 
 Non-interactive mode with auto-translation enabled:
 ```bash
 lingo-tracker init \
-  --collectionName Main \
-  --translationsFolder apps/web/src/assets/i18n \
-  --baseLocale en \
+  --collection-name Main \
+  --translations-folder apps/web/src/assets/i18n \
+  --base-locale en \
   --locales en fr-ca es de \
-  --enableAutoTranslation \
-  --translationProvider google-translate \
-  --translationApiKeyEnv GOOGLE_TRANSLATE_API_KEY
+  --enable-auto-translation \
+  --translation-provider google-translate \
+  --translation-api-key-env GOOGLE_TRANSLATE_API_KEY
 ```
 
 **Notes:**
 - Run this command once in your project root to create `.lingo-tracker.json`
-- Creates the initial configuration with one collection
+- Creates the initial configuration with one collection and a default bundle
+- In interactive mode, you will be prompted to customize the bundle configuration (dist path, name pattern, token casing, type generation)
+- If you decline bundle customization, a default bundle is still created with `dist: ./src/assets/i18n`, `bundleName: {locale}`, and `collections: All`
 - Commit `.lingo-tracker.json` to version control
-- When `--enableAutoTranslation` is set, the `translation` block is written to `.lingo-tracker.json` and new/edited resources are automatically translated via the configured provider
+- When `--enable-auto-translation` is set, the `translation` block is written to `.lingo-tracker.json` and new/edited resources are automatically translated via the configured provider
 
 ---
 
