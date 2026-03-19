@@ -9,6 +9,12 @@ export interface BundleOptions {
   verbose?: boolean;
   /** CLI-level override for token casing. Takes precedence over all config file values. */
   tokenCasing?: TokenCasing;
+  /**
+   * CLI-level override for the generated TypeScript constant name.
+   * Takes precedence over `tokenConstantName` in the bundle config.
+   * Only valid when a single bundle is targeted.
+   */
+  tokenConstantName?: string;
 }
 
 interface BundleGenerationResult {
@@ -40,6 +46,17 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
     bundlesToProcess.push(...Object.keys(config.bundles));
   } else if (answers.names && answers.names.length > 0) {
     bundlesToProcess.push(...answers.names);
+  }
+
+  // --token-constant-name is only valid for a single bundle
+  if (options.tokenConstantName && bundlesToProcess.length === 0) {
+    ConsoleFormatter.error('No bundles selected. --token-constant-name requires a single bundle to be targeted.');
+    return;
+  }
+
+  if (options.tokenConstantName && bundlesToProcess.length > 1) {
+    ConsoleFormatter.error('Cannot use --token-constant-name with multiple bundles. Please target a single bundle.');
+    return;
   }
 
   // Parse locale filter if provided
@@ -76,6 +93,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
         config,
         locales: localeFilter,
         tokenCasing: options.tokenCasing,
+        tokenConstantName: options.tokenConstantName,
       });
 
       bundleResults.push({

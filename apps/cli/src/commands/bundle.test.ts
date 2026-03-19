@@ -374,6 +374,65 @@ describe('bundleCommand', () => {
     });
   });
 
+  describe('--token-constant-name option', () => {
+    it('should pass tokenConstantName to generateBundle when --token-constant-name is provided', async () => {
+      await bundleCommand({ name: 'core', tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(mockGenerateBundle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bundleKey: 'core',
+          tokenConstantName: 'MY_CUSTOM_TOKENS',
+        }),
+      );
+    });
+
+    it('should error when --token-constant-name is used with multiple bundles via --name', async () => {
+      await bundleCommand({ name: 'core,admin', tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot use --token-constant-name with multiple bundles'),
+      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Please target a single bundle'));
+      expect(mockGenerateBundle).not.toHaveBeenCalled();
+    });
+
+    it('should error when --token-constant-name is used in non-TTY mode (all bundles)', async () => {
+      // In non-TTY mode with no --name, all bundles are processed
+      await bundleCommand({ tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot use --token-constant-name with multiple bundles'),
+      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Please target a single bundle'));
+      expect(mockGenerateBundle).not.toHaveBeenCalled();
+    });
+
+    it('should error when --token-constant-name is set but no bundles are selected', async () => {
+      // Provide a non-empty --name so the promptForMissing name-parsing branch is entered,
+      // but mock parseCommaSeparatedList to return an empty array so bundlesToProcess
+      // stays empty (length === 0) and the zero-bundle guard fires.
+      vi.mocked(utils.parseCommaSeparatedList).mockReturnValueOnce([]);
+
+      await bundleCommand({ name: 'nonexistent', tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No bundles selected'));
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('--token-constant-name requires a single bundle to be targeted'),
+      );
+      expect(mockGenerateBundle).not.toHaveBeenCalled();
+    });
+
+    it('should not pass tokenConstantName when not provided', async () => {
+      await bundleCommand({ name: 'core' });
+
+      expect(mockGenerateBundle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tokenConstantName: undefined,
+        }),
+      );
+    });
+  });
+
   describe('error handling', () => {
     it('should handle generateBundle errors and continue', async () => {
       mockGenerateBundle
@@ -458,6 +517,19 @@ describe('bundleCommand', () => {
           bundleKey: 'core',
         }),
       );
+    });
+
+    it('should error when "All bundles" is selected and --token-constant-name is set', async () => {
+      vi.mocked(prompts).mockResolvedValue({
+        bundleOrAll: '__ALL__',
+      });
+
+      await bundleCommand({ tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot use --token-constant-name with multiple bundles'),
+      );
+      expect(mockGenerateBundle).not.toHaveBeenCalled();
     });
 
     it('should handle prompt cancellation', async () => {

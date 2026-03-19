@@ -7,7 +7,7 @@ import { matchesPattern } from '../pattern-matcher';
 import { matchesTags } from '../tag-filter';
 import { buildTypeHierarchy, serializeHierarchy } from './hierarchy-builder';
 import { generateFileHeader } from './file-header';
-import { bundleKeyToConstantName } from './key-transformer';
+import { bundleKeyToConstantName, constantNameToTypeName, validateJavaScriptIdentifier } from './key-transformer';
 
 export interface GenerateTypesResult {
   bundleKey: string;
@@ -22,6 +22,7 @@ export async function generateBundleTypes(
   bundleKey: string,
   config: LingoTrackerConfig,
   tokenCasing: TokenCasing = 'upperCase',
+  tokenConstantName?: string,
 ): Promise<GenerateTypesResult> {
   const bundleDef = config.bundles?.[bundleKey];
 
@@ -141,10 +142,25 @@ export async function generateBundleTypes(
     };
   }
 
+  // Resolve constant name: explicit override (from CLI or bundle config) → derive from bundle key
+  const nameOverride = tokenConstantName ?? bundleDef.tokenConstantName;
+  if (nameOverride) {
+    const validationError = validateJavaScriptIdentifier(nameOverride);
+    if (validationError) {
+      return {
+        bundleKey,
+        typeDistFile: resolvedTypeDistFile,
+        keysCount: 0,
+        fileGenerated: false,
+        errorReason: `Invalid tokenConstantName for bundle '${bundleKey}': ${validationError}`,
+      };
+    }
+  }
+  const resolvedConstantName = nameOverride ?? bundleKeyToConstantName(bundleKey);
+
   // Generate content
   const hierarchy = buildTypeHierarchy(sortedKeys, tokenCasing);
-  const constantName = bundleKeyToConstantName(bundleKey);
-  const fileContent = `${generateFileHeader(bundleKey)}\n\n${serializeHierarchy(hierarchy, constantName)}`;
+  const fileContent = `${generateFileHeader(bundleKey)}\n\n${serializeHierarchy(hierarchy, resolvedConstantName)}`;
 
   const outputDir = path.dirname(outputPath);
 

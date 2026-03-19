@@ -173,6 +173,130 @@ describe('generateBundleTypes', () => {
     });
   });
 
+  describe('tokenConstantName', () => {
+    it('should use the provided tokenConstantName parameter as the constant name', async () => {
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', mockConfig, 'upperCase', 'MY_CUSTOM_TOKENS');
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export const MY_CUSTOM_TOKENS'),
+        'utf-8',
+      );
+    });
+
+    it('should derive PascalCase type name from a custom SCREAMING_SNAKE constant name', async () => {
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', mockConfig, 'upperCase', 'MY_CUSTOM_TOKENS');
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export type MyCustomTokens = typeof MY_CUSTOM_TOKENS'),
+        'utf-8',
+      );
+    });
+
+    it('should derive PascalCase type name from a camelCase constant name', async () => {
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', mockConfig, 'upperCase', 'myCustomTokens');
+
+      const writtenContent = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+      expect(writtenContent).toContain('export const myCustomTokens');
+      expect(writtenContent).toContain('export type MyCustomTokens = typeof myCustomTokens');
+    });
+
+    it('should use tokenConstantName from bundle config when no param is provided', async () => {
+      const configWithConstantName = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All' as const,
+            typeDistFile: 'src/generated/main-tokens.ts',
+            tokenConstantName: 'APP_TOKENS',
+          },
+        },
+      };
+
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', configWithConstantName);
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export const APP_TOKENS'),
+        'utf-8',
+      );
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export type AppTokens = typeof APP_TOKENS'),
+        'utf-8',
+      );
+    });
+
+    it('should prefer the tokenConstantName param over the bundle config value', async () => {
+      const configWithConstantName = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All' as const,
+            typeDistFile: 'src/generated/main-tokens.ts',
+            tokenConstantName: 'CONFIG_TOKENS',
+          },
+        },
+      };
+
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', configWithConstantName, 'upperCase', 'CLI_OVERRIDE_TOKENS');
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export const CLI_OVERRIDE_TOKENS'),
+        'utf-8',
+      );
+    });
+
+    it('should return an error result when tokenConstantName is an invalid JavaScript identifier', async () => {
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      const result = await generateBundleTypes('main', mockConfig, 'upperCase', 'my-bad-name');
+
+      expect(result.fileGenerated).toBe(false);
+      expect(result.errorReason).toMatch(/Invalid tokenConstantName/);
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('should return an error result when bundle config tokenConstantName is an invalid JavaScript identifier', async () => {
+      const configWithBadConstantName = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All' as const,
+            typeDistFile: 'src/generated/main-tokens.ts',
+            tokenConstantName: '1bad',
+          },
+        },
+      };
+
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      const result = await generateBundleTypes('main', configWithBadConstantName);
+
+      expect(result.fileGenerated).toBe(false);
+      expect(result.errorReason).toMatch(/Invalid tokenConstantName/);
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+  });
+
   describe('backwards compatibility', () => {
     it('should return not-configured and not throw when typeDist holds a non-string value', async () => {
       const configWithNullTypeDist: LingoTrackerConfig = {

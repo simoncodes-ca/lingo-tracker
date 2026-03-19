@@ -25,6 +25,12 @@ export interface GenerateBundleParams {
   readonly locales?: string[];
   /** CLI-level override for token casing. Takes precedence over all config values. */
   readonly tokenCasing?: TokenCasing;
+  /**
+   * CLI-level override for the generated TypeScript constant name.
+   * Takes precedence over `bundleDefinition.tokenConstantName`.
+   * Must be a valid JavaScript identifier.
+   */
+  readonly tokenConstantName?: string;
 }
 
 export interface GenerateBundleResult {
@@ -42,7 +48,7 @@ export interface GenerateBundleResult {
  * @returns Result with count of files generated and any warnings
  */
 export async function generateBundle(params: GenerateBundleParams): Promise<GenerateBundleResult> {
-  const { bundleKey, bundleDefinition, config, locales, tokenCasing: tokenCasingOverride } = params;
+  const { bundleKey, bundleDefinition, config, locales, tokenCasing: tokenCasingOverride, tokenConstantName } = params;
   const warnings: string[] = [];
   const localesProcessed: string[] = [];
 
@@ -74,7 +80,7 @@ export async function generateBundle(params: GenerateBundleParams): Promise<Gene
   let typeGenerationResult: GenerateTypesResult | undefined;
   if (hasTypeDistConfigured(bundleDefinition)) {
     try {
-      typeGenerationResult = await generateBundleTypes(bundleKey, config, resolvedTokenCasing);
+      typeGenerationResult = await generateBundleTypes(bundleKey, config, resolvedTokenCasing, tokenConstantName);
       if (typeGenerationResult.fileGenerated) {
         // We don't increment filesGenerated here as it tracks bundle JSON files
         // But we could add a note to warnings or a new field if needed

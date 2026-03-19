@@ -111,10 +111,57 @@ The `tokenCasing` value is resolved in the following order (first match wins):
 3. Global config: `tokenCasing` at the root of `.lingo-tracker.json`
 4. Default: `"upperCase"`
 
+## Custom Constant Name
+
+By default, the generated constant name is derived from the bundle key (e.g., `common` → `COMMON_TOKENS`). You can override this with the `tokenConstantName` property in your bundle definition.
+
+The value must be a valid JavaScript identifier. Any casing is accepted — the type name is always auto-derived as PascalCase from whatever you provide.
+
+```json
+{
+  "bundles": {
+    "common": {
+      "bundleName": "common.{locale}",
+      "dist": "./dist/i18n",
+      "collections": "All",
+      "typeDistFile": "./src/generated/common-tokens.ts",
+      "tokenConstantName": "MY_KEYS"
+    }
+  }
+}
+```
+
+**Generated output:**
+
+```typescript
+export const MY_KEYS = {
+  BUTTONS: {
+    OK: 'common.buttons.ok',
+  },
+} as const;
+
+export type MyKeys = typeof MY_KEYS;
+```
+
+**Derivation examples:**
+
+| `tokenConstantName` | Constant | Type |
+|---|---|---|
+| `MY_KEYS` | `MY_KEYS` | `MyKeys` |
+| `myKeys` | `myKeys` | `MyKeys` |
+| `MyKeys` | `MyKeys` | `MyKeys` |
+| `APP_TRANSLATION_TOKENS` | `APP_TRANSLATION_TOKENS` | `AppTranslationTokens` |
+
+You can also override at the CLI level with `--token-constant-name`. This flag only works when targeting a single bundle:
+
+```bash
+lingo-tracker bundle --name common --token-constant-name MY_KEYS
+```
+
 ## Naming Conventions
 
-- **Const Name**: Always `SCREAMING_SNAKE_CASE` with `_TOKENS` suffix (e.g., `common` -> `COMMON_TOKENS`), regardless of `tokenCasing`.
-- **Type Name**: Always PascalCase (e.g., `common` -> `CommonTokens`), regardless of `tokenCasing`.
+- **Const Name**: By default, `SCREAMING_SNAKE_CASE` with `_TOKENS` suffix (e.g., `common` -> `COMMON_TOKENS`). Can be overridden with `tokenConstantName`.
+- **Type Name**: Always PascalCase, derived from the constant name (e.g., `COMMON_TOKENS` -> `CommonTokens`).
 - **Key Segments (upperCase)**: Converted to `SCREAMING_SNAKE_CASE` (e.g., `buttons` -> `BUTTONS`, `file-upload` -> `FILE_UPLOAD`).
 - **Key Segments (camelCase)**: Converted to `camelCase` (e.g., `buttons` -> `buttons`, `file-upload` -> `fileUpload`).
 - **Numeric Segments**: Preserved as-is (e.g., `steps.1.title` -> `STEPS.1.TITLE` or `steps.1.title`).

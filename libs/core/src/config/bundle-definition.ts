@@ -130,6 +130,22 @@ export interface BundleDefinition {
    * Example with 'upperCase': { FILE_UPLOAD: 'file-upload' }
    */
   tokenCasing?: TokenCasing;
+
+  /**
+   * Custom name for the generated TypeScript constant in the type distribution file.
+   * Must be a valid JavaScript identifier (e.g. `MY_KEYS`, `myKeys`, `MyKeys`).
+   * When omitted, the constant name is derived from the bundle key
+   * (e.g. bundle key `main` → `MAIN_TOKENS`).
+   *
+   * The TypeScript type is always PascalCase derived from this value
+   * (e.g. `MY_KEYS` → `MyKeys`, `myKeys` → `MyKeys`).
+   *
+   * This is a per-bundle override — there is no global equivalent.
+   *
+   * Example: `"APP_TRANSLATION_TOKENS"` generates
+   * `export const APP_TRANSLATION_TOKENS = ...` and `export type AppTranslationTokens = ...`
+   */
+  tokenConstantName?: string;
 }
 
 /**

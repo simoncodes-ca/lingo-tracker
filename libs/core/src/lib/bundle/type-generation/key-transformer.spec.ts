@@ -1,4 +1,10 @@
-import { bundleKeyToConstantName, segmentToPropertyName, splitKeyIntoSegments } from './key-transformer';
+import {
+  bundleKeyToConstantName,
+  constantNameToTypeName,
+  segmentToPropertyName,
+  splitKeyIntoSegments,
+  validateJavaScriptIdentifier,
+} from './key-transformer';
 
 describe('Key Transformer', () => {
   describe('bundleKeyToConstantName', () => {
@@ -89,6 +95,112 @@ describe('Key Transformer', () => {
 
     it('should return numeric segment unchanged', () => {
       expect(segmentToPropertyName('404', 'camelCase')).toBe('404');
+    });
+  });
+
+  describe('constantNameToTypeName', () => {
+    it('should convert SCREAMING_SNAKE_CASE to PascalCase', () => {
+      expect(constantNameToTypeName('MY_KEYS')).toBe('MyKeys');
+    });
+
+    it('should convert multi-word SCREAMING_SNAKE_CASE to PascalCase', () => {
+      expect(constantNameToTypeName('MY_APP_TOKENS')).toBe('MyAppTokens');
+    });
+
+    it('should convert snake_case to PascalCase', () => {
+      expect(constantNameToTypeName('my_translation_keys')).toBe('MyTranslationKeys');
+    });
+
+    it('should convert camelCase by capitalising the first letter only', () => {
+      expect(constantNameToTypeName('myKeys')).toBe('MyKeys');
+    });
+
+    it('should leave PascalCase unchanged', () => {
+      expect(constantNameToTypeName('MyKeys')).toBe('MyKeys');
+    });
+
+    it('should title-case a single all-uppercase word with no underscores', () => {
+      expect(constantNameToTypeName('TOKENS')).toBe('Tokens');
+    });
+
+    it('should title-case other single all-uppercase words', () => {
+      expect(constantNameToTypeName('DEBUG')).toBe('Debug');
+      expect(constantNameToTypeName('ADMIN')).toBe('Admin');
+      expect(constantNameToTypeName('KEYS')).toBe('Keys');
+    });
+
+    it('should handle leading/trailing underscores gracefully by ignoring empty segments', () => {
+      expect(constantNameToTypeName('_INTERNAL_')).toBe('Internal');
+    });
+
+    it('should capitalise the character after a leading $ in camelCase input', () => {
+      expect(constantNameToTypeName('$myTokens')).toBe('$MyTokens');
+    });
+
+    it('should capitalise the character after a leading $ in all-lowercase input', () => {
+      expect(constantNameToTypeName('$tokens')).toBe('$Tokens');
+    });
+
+    it('should leave a $ prefix followed by already-uppercase letter unchanged', () => {
+      expect(constantNameToTypeName('$MyTokens')).toBe('$MyTokens');
+    });
+  });
+
+  describe('validateJavaScriptIdentifier', () => {
+    it('should return undefined for a valid SCREAMING_SNAKE_CASE identifier', () => {
+      expect(validateJavaScriptIdentifier('MY_TOKENS')).toBeUndefined();
+    });
+
+    it('should return undefined for a valid camelCase identifier', () => {
+      expect(validateJavaScriptIdentifier('myTokens')).toBeUndefined();
+    });
+
+    it('should return undefined for a valid PascalCase identifier', () => {
+      expect(validateJavaScriptIdentifier('MyTokens')).toBeUndefined();
+    });
+
+    it('should return undefined for an identifier starting with underscore', () => {
+      expect(validateJavaScriptIdentifier('_tokens')).toBeUndefined();
+    });
+
+    it('should return undefined for an identifier starting with dollar sign', () => {
+      expect(validateJavaScriptIdentifier('$tokens')).toBeUndefined();
+    });
+
+    it('should return an error for an empty string', () => {
+      expect(validateJavaScriptIdentifier('')).toMatch(/must not be empty/);
+    });
+
+    it('should return an error for an identifier starting with a digit', () => {
+      expect(validateJavaScriptIdentifier('1bad')).toMatch(/must start with a letter/);
+    });
+
+    it('should return an error for an identifier containing a hyphen', () => {
+      expect(validateJavaScriptIdentifier('my-key')).toMatch(/may only contain/);
+    });
+
+    it('should return an error for an identifier containing a space', () => {
+      expect(validateJavaScriptIdentifier('my key')).toMatch(/may only contain/);
+    });
+
+    it('should return an error for a JS reserved word', () => {
+      expect(validateJavaScriptIdentifier('class')).toMatch(/reserved word/);
+    });
+
+    it('should return an error for the reserved word "const"', () => {
+      expect(validateJavaScriptIdentifier('const')).toMatch(/reserved word/);
+    });
+
+    it('should return an error for the TypeScript keyword "async"', () => {
+      expect(validateJavaScriptIdentifier('async')).toMatch(/reserved word/);
+    });
+
+    it('should return an error for the TypeScript keyword "type"', () => {
+      expect(validateJavaScriptIdentifier('type')).toMatch(/reserved word/);
+    });
+
+    it('should return an error for the TypeScript keyword "declare"', () => {
+      expect(validateJavaScriptIdentifier('declare')).toMatch(/reserved word/);
     });
   });
 

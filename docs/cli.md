@@ -590,6 +590,7 @@ lingo-tracker bundle [options]
 - `--name <names>` - Bundle name(s) to generate (comma-separated). If not specified, generates all configured bundles
 - `--locale <locales>` - Specific locale(s) to generate (comma-separated). If not specified, generates all locales
 - `--token-casing <casing>` - Casing style for generated type token keys: `upperCase` or `camelCase`. Overrides any `tokenCasing` set in the config file. Default: `upperCase`
+- `--token-constant-name <name>` - Custom name for the generated TypeScript constant. Must be a valid JavaScript identifier. Only works when targeting a single bundle (via `--name`). Overrides `tokenConstantName` in the bundle config
 - `--verbose` - Show detailed output including all warnings
 
 **What Bundle Generation Does:**
@@ -645,6 +646,11 @@ lingo-tracker bundle --name core --locale en,fr --verbose
 Override token casing for generated types:
 ```bash
 lingo-tracker bundle --token-casing camelCase
+```
+
+Custom constant name for a single bundle:
+```bash
+lingo-tracker bundle --name core --token-constant-name MY_KEYS
 ```
 
 **Output:**
@@ -736,6 +742,7 @@ Bundles are configured in `.lingo-tracker.json`:
 - `bundleName` - Output filename pattern (use `{locale}` placeholder for locale substitution)
 - `dist` - Output directory path (relative to project root)
 - `tokenCasing` (optional) - Casing style for generated type token keys: `"upperCase"` (default) or `"camelCase"`. When set on a bundle, overrides the global `tokenCasing`. See [Bundle Type Generation](./features/bundle-type-generation.md) for details
+- `tokenConstantName` (optional) - Custom name for the generated TypeScript constant. Must be a valid JavaScript identifier. When omitted, derived from the bundle key (e.g., `common` → `COMMON_TOKENS`). See [Bundle Type Generation](./features/bundle-type-generation.md) for details
 - `collections` - Either `"All"` or array of collection definitions
   - `name` - Collection name from config
   - `bundledKeyPrefix` (optional) - Prefix to add to all keys from this collection

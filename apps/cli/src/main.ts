@@ -130,6 +130,10 @@ program
   .option('--locale <locales>', 'Locale(s) to generate - comma-separated (e.g., en,fr)')
   .option('--verbose', 'Show detailed output including warnings')
   .addOption(new Option('--token-casing <casing>', 'Token property key casing').choices(['upperCase', 'camelCase']))
+  .option(
+    '--token-constant-name <name>',
+    'Custom name for the generated TypeScript constant (single bundle only, e.g. MY_TOKENS)',
+  )
   .action(async (options) => {
     const { bundleCommand } = await import('./commands/bundle');
     await bundleCommand(options);
