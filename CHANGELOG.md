@@ -1,3 +1,24 @@
+# [0.9.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.8.0...v0.9.0) (2026-03-19)
+
+
+### Bug Fixes
+
+* **api:** attempt to fix .bin entry to allow for direct invocation of lingo-tracker-app ([af796d9](https://github.com/simoncodes-ca/lingo-tracker/commit/af796d9463351ce8e75031516008b002fefe171b))
+* **cli:** require collection name in import command to prevent unexpected folder imports ([fae78ef](https://github.com/simoncodes-ca/lingo-tracker/commit/fae78ef98465ba5cabe2af731663a68723456dc3))
+* **core:** preserve original casing in camelCase token generation ([ffe0b47](https://github.com/simoncodes-ca/lingo-tracker/commit/ffe0b47ed7309cd900122064a6460102157a3ab3))
+* **core:** support Transloco {{ }} placeholder syntax in import ([69d25a0](https://github.com/simoncodes-ca/lingo-tracker/commit/69d25a022fa15f0147accc25a1f37846d2f34cde))
+* **repo:** fix some installation warnings ([100f1cb](https://github.com/simoncodes-ca/lingo-tracker/commit/100f1cb66a3d23f6085c07fe3d270cb5113463ea))
+* **repo:** resolve 25 Dependabot security alerts via pnpm overrides ([9189eff](https://github.com/simoncodes-ca/lingo-tracker/commit/9189eff466033bb31cecd436ee6066992f87fab1))
+* resolve lint issues across cli and core libraries ([1404e98](https://github.com/simoncodes-ca/lingo-tracker/commit/1404e9889f0f03d4e3e94fae697655d0f5f62699))
+
+
+### Features
+
+* **cli:** add bundle setup prompts to init command ([356f710](https://github.com/simoncodes-ca/lingo-tracker/commit/356f710760c20105a29023cecb15844b2c22ee8f))
+* **core:** add optional tokenConstantName for custom bundle type constant names ([882ea1a](https://github.com/simoncodes-ca/lingo-tracker/commit/882ea1a8dac58afd92a11c737e62bd08094f338b))
+* **core:** rename typeDist to typeDistFile with validation and deprecation support ([c87c239](https://github.com/simoncodes-ca/lingo-tracker/commit/c87c2390eeab9b91d5f7074390dbfed2619ca79b))
+* **core:** respect source status in migration import strategy ([6f91d6e](https://github.com/simoncodes-ca/lingo-tracker/commit/6f91d6e92870b25f61c9b2c4fa477ab9e7b8ca15))
+
 # [0.8.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.7.0...v0.8.0) (2026-03-12)
 
 
