@@ -312,7 +312,7 @@ async function promptForMissing(options: InitOptions): Promise<InitAnswers> {
  */
 function resolveSetupBundle(promptValues: Record<string, unknown>, options: InitOptions): boolean {
   if ('setupBundle' in promptValues) {
-    return Boolean(promptValues['setupBundle']);
+    return Boolean(promptValues.setupBundle);
   }
   return Boolean(options.setupBundle);
 }

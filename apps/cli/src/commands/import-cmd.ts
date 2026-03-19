@@ -133,9 +133,9 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
   console.log('');
 
   // Performance logging for verbose mode
-  const startTime = finalOptions.verbose ? Date.now() : undefined;
+  const startTime = finalOptions.verbose ? Date.now() : 0;
   if (finalOptions.verbose) {
-    console.log(`Started at: ${new Date(startTime!).toLocaleTimeString()}`);
+    console.log(`Started at: ${new Date(startTime).toLocaleTimeString()}`);
   }
 
   let result: ImportResult;
@@ -153,7 +153,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
   // Log elapsed time in verbose mode
   if (finalOptions.verbose) {
     const endTime = Date.now();
-    const elapsedMilliseconds = endTime - startTime!;
+    const elapsedMilliseconds = endTime - startTime;
     const elapsedSeconds = (elapsedMilliseconds / 1000).toFixed(2);
     console.log(`\nCompleted at: ${new Date(endTime).toLocaleTimeString()}`);
     console.log(`Elapsed time: ${elapsedSeconds}s (${elapsedMilliseconds}ms)`);

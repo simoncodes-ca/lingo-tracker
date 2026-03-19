@@ -20,7 +20,10 @@ import type { ResourceGroup } from './resource-grouping';
  * The check on `resource.status` ensures we only override when the source data actually
  * carries a status value — missing status fields fall through to strategy defaults.
  */
-function shouldUseSourceStatus(options: ImportOptions, resource: ImportedResource): boolean {
+function shouldUseSourceStatus(
+  options: ImportOptions,
+  resource: ImportedResource,
+): resource is ImportedResource & { status: TranslationStatus } {
   if (!resource.status) {
     return false;
   }
@@ -246,7 +249,7 @@ export function processResourceGroup(
 
       // Create target locale metadata
       const createdStatus: TranslationStatus = shouldUseSourceStatus(options, resource)
-        ? resource.status!
+        ? resource.status
         : 'translated';
 
       trackerMeta[entryKey][locale] = {
@@ -408,7 +411,7 @@ export function processResourceGroup(
       // it supplies a new value.
       if (options.strategy === 'translation-service') {
         const resolvedStatus: TranslationStatus = shouldUseSourceStatus(options, resource)
-          ? resource.status!
+          ? resource.status
           : oldStatus || 'translated';
 
         if (resolvedStatus !== oldStatus) {
@@ -442,7 +445,7 @@ export function processResourceGroup(
       // Migration: prefer the status carried in the imported data when `shouldUseSourceStatus`
       // is satisfied, otherwise fall back to preserving the existing status.
       const resolvedStatus: TranslationStatus = shouldUseSourceStatus(options, resource)
-        ? resource.status!
+        ? resource.status
         : oldStatus || 'translated';
 
       if (resolvedStatus !== oldStatus) {
@@ -513,7 +516,7 @@ export function processResourceGroup(
     let newStatus: TranslationStatus;
     if (shouldUseSourceStatus(options, resource)) {
       // Use status from imported data when preserve-status is active or strategy is migration
-      newStatus = resource.status!;
+      newStatus = resource.status;
     } else {
       // Strategy-specific status determination
       switch (options.strategy) {

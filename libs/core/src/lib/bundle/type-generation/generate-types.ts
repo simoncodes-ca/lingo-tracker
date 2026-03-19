@@ -7,7 +7,7 @@ import { matchesPattern } from '../pattern-matcher';
 import { matchesTags } from '../tag-filter';
 import { buildTypeHierarchy, serializeHierarchy } from './hierarchy-builder';
 import { generateFileHeader } from './file-header';
-import { bundleKeyToConstantName, constantNameToTypeName, validateJavaScriptIdentifier } from './key-transformer';
+import { bundleKeyToConstantName, validateJavaScriptIdentifier } from './key-transformer';
 
 export interface GenerateTypesResult {
   bundleKey: string;

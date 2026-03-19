@@ -146,7 +146,7 @@ export function constantNameToTypeName(constantName: string): string {
   if (constantName.startsWith('$')) {
     const withoutPrefix = constantName.slice(1);
     const pascalRemainder = withoutPrefix.charAt(0).toUpperCase() + withoutPrefix.slice(1);
-    return '$' + pascalRemainder;
+    return `$${pascalRemainder}`;
   }
 
   // No underscores and mixed/lower case: treat as camelCase or PascalCase —

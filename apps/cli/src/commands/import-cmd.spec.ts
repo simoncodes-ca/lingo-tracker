@@ -51,7 +51,6 @@ vi.mock('../utils', () => ({
 
 // Import the mocked functions
 import { importFromJson, importFromXliff, detectImportFormat } from '@simoncodes-ca/core';
-import prompts from 'prompts';
 import { loadConfiguration, promptForCollection, resolveCollection, ConsoleFormatter } from '../utils';
 
 describe('import-cmd', () => {

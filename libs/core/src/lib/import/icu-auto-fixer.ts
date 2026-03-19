@@ -396,9 +396,9 @@ export function extractTranslocoPlaceholders(value: string): TranslocoPlaceholde
 
   const pattern = /\{\{\s*(\w+)\s*\}\}/g;
   let lastIndex = 0;
-  let match: RegExpExecArray | null;
+  let match: RegExpExecArray | null = pattern.exec(value);
 
-  while ((match = pattern.exec(value)) !== null) {
+  while (match !== null) {
     // Text segment before this placeholder
     textSegments.push(value.substring(lastIndex, match.index));
 
@@ -410,6 +410,7 @@ export function extractTranslocoPlaceholders(value: string): TranslocoPlaceholde
     });
 
     lastIndex = match.index + match[0].length;
+    match = pattern.exec(value);
   }
 
   // Trailing text segment after the last placeholder
