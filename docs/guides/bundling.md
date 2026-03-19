@@ -107,7 +107,8 @@ Each file contains hierarchical JSON with all translations for that locale.
     "cli-reference-name": {
       "bundleName": "output-filename-pattern",
       "dist": "./output/directory",
-      "typeDist": "./optional/path/to/generated-tokens.ts",
+      "typeDistFile": "./optional/path/to/generated-tokens.ts",
+      "tokenConstantName": "OPTIONAL_CUSTOM_NAME",
       "tokenCasing": "upperCase",
       "collections": "All or array of collection definitions"
     }
@@ -115,7 +116,11 @@ Each file contains hierarchical JSON with all translations for that locale.
 }
 ```
 
-The `tokenCasing` property is optional (default: `"upperCase"`) and controls the casing of keys in generated type files. Accepts `"upperCase"` (SCREAMING_SNAKE_CASE) or `"camelCase"`. Can also be set globally at the root of `.lingo-tracker.json` or overridden via the `--token-casing` CLI flag. See [Bundle Type Generation](../features/bundle-type-generation.md) for details.
+The `tokenCasing` property is optional (default: `"upperCase"`) and controls the casing of keys in generated type files. Accepts `"upperCase"` (SCREAMING_SNAKE_CASE) or `"camelCase"`. Can also be set globally at the root of `.lingo-tracker.json` or overridden via the `--token-casing` CLI flag.
+
+The `tokenConstantName` property is optional and allows you to customize the name of the generated TypeScript constant. Must be a valid JavaScript identifier. When omitted, the name is derived from the bundle key (e.g., `main` → `MAIN_TOKENS`). Can also be overridden via the `--token-constant-name` CLI flag (single bundle only).
+
+See [Bundle Type Generation](../features/bundle-type-generation.md) for details.
 
 ### Simple Bundle (All Collections)
 

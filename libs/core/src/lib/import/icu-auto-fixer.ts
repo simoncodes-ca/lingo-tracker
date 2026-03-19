@@ -280,6 +280,8 @@ function splitPlaceholderParts(text: string): string[] {
  * Checks if a value contains any ICU placeholders.
  *
  * Quick check without full parsing. Used to skip auto-fix when not needed.
+ * Returns false for values that only contain Transloco-style double-brace patterns
+ * (e.g., `{{ varName }}`), since those are mutually exclusive with ICU syntax.
  *
  * @param value - The message string to check
  * @returns true if value appears to contain ICU placeholders
@@ -289,6 +291,7 @@ function splitPlaceholderParts(text: string): string[] {
  * hasICUPlaceholders("Hello {name}"); // true
  * hasICUPlaceholders("Hello world"); // false
  * hasICUPlaceholders("Price: {price, number, currency}"); // true
+ * hasICUPlaceholders("Create {{ itemName }}?"); // false — Transloco, not ICU
  * ```
  */
 export function hasICUPlaceholders(value: string): boolean {
@@ -305,11 +308,236 @@ export function hasICUPlaceholders(value: string): boolean {
     }
 
     if (!inEscapedSection && char === '{') {
+      // Skip {{ — this is Transloco syntax, not ICU.
+      // Note: {{}} (empty double-brace) is also skipped here, which is correct
+      // since it's neither valid Transloco nor valid ICU.
+      if (value[i + 1] === '{') {
+        i++; // skip the second `{`
+        continue;
+      }
+
+      // Single brace: this is an ICU placeholder.
       return true;
     }
   }
 
   return false;
+}
+
+/**
+ * Represents a single Transloco-style `{{ varName }}` placeholder extracted from a string.
+ */
+export interface TranslocoPlaceholder {
+  /** The full placeholder text as it appears in the string (e.g., `"{{ itemName }}"`) */
+  readonly fullText: string;
+  /** The variable name inside the braces (e.g., `"itemName"`) */
+  readonly name: string;
+  /** Start position in the original string */
+  readonly startPosition: number;
+  /** End position (exclusive) in the original string */
+  readonly endPosition: number;
+}
+
+/**
+ * Result of extracting Transloco placeholders from a string.
+ */
+export interface TranslocoPlaceholderExtractionResult {
+  /** Extracted placeholders in order of appearance */
+  readonly placeholders: TranslocoPlaceholder[];
+  /** Text segments between (and around) placeholders */
+  readonly textSegments: string[];
+  /** Always true — the pattern is unambiguous */
+  readonly success: boolean;
+  /** Error message if extraction failed */
+  readonly error?: string;
+}
+
+/**
+ * Checks if a value contains Transloco-style double-brace placeholders.
+ *
+ * Pattern: `{{ varName }}` (with optional spaces inside braces).
+ * Transloco and ICU are mutually exclusive — a value uses either `{{ }}` or `{ }`, never both.
+ *
+ * @param value - The string to check
+ * @returns true if any `{{ varName }}` patterns are present
+ *
+ * @example
+ * ```typescript
+ * hasTranslocoPlaceholders("Create {{ itemName }}?"); // true
+ * hasTranslocoPlaceholders("Hello {name}"); // false
+ * hasTranslocoPlaceholders("Hello world"); // false
+ * ```
+ */
+export function hasTranslocoPlaceholders(value: string): boolean {
+  return /\{\{\s*\w+\s*\}\}/.test(value);
+}
+
+/**
+ * Extracts all Transloco-style `{{ varName }}` placeholders from a string,
+ * along with the text segments between them.
+ *
+ * @param value - The string to extract placeholders from
+ * @returns Extraction result with placeholders and interleaved text segments
+ *
+ * @example
+ * ```typescript
+ * extractTranslocoPlaceholders("Create {{ itemName }}?");
+ * // Returns:
+ * // {
+ * //   placeholders: [{ name: "itemName", fullText: "{{ itemName }}", startPosition: 7, endPosition: 21 }],
+ * //   textSegments: ["Create ", "?"],
+ * //   success: true
+ * // }
+ * ```
+ */
+export function extractTranslocoPlaceholders(value: string): TranslocoPlaceholderExtractionResult {
+  const placeholders: TranslocoPlaceholder[] = [];
+  const textSegments: string[] = [];
+
+  const pattern = /\{\{\s*(\w+)\s*\}\}/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null = pattern.exec(value);
+
+  while (match !== null) {
+    // Text segment before this placeholder
+    textSegments.push(value.substring(lastIndex, match.index));
+
+    placeholders.push({
+      fullText: match[0],
+      name: match[1],
+      startPosition: match.index,
+      endPosition: match.index + match[0].length,
+    });
+
+    lastIndex = match.index + match[0].length;
+    match = pattern.exec(value);
+  }
+
+  // Trailing text segment after the last placeholder
+  textSegments.push(value.substring(lastIndex));
+
+  return { placeholders, textSegments, success: true };
+}
+
+/**
+ * Auto-fixes Transloco placeholders in a translation to match those in the base value.
+ *
+ * Mirrors the behaviour of `autoFixICUPlaceholders` but for `{{ varName }}` patterns.
+ * The fix strategies are:
+ * - Placeholders already match → return as-is (wasFixed: false)
+ * - Translation is missing all placeholders → append them from base
+ * - Translation has same count but different names → replace names with base names
+ * - Translation has extra placeholders → error (cannot safely fix)
+ * - Translation has fewer placeholders than base (and count mismatch) → error
+ *
+ * @param baseValue - The base-locale value (source of truth for placeholder names)
+ * @param translationValue - The imported translation value (may have wrong or missing placeholders)
+ * @returns Auto-fix result describing what was changed (or why it failed)
+ *
+ * @example
+ * ```typescript
+ * // Renamed placeholder
+ * autoFixTranslocoPlaceholders("Create {{ itemName }}?", "Créer {{ nomElement }} ?");
+ * // { wasFixed: true, value: "Créer {{ itemName }} ?", description: "Replaced placeholders: ..." }
+ *
+ * // Missing placeholder
+ * autoFixTranslocoPlaceholders("Hello {{ name }}", "Hola");
+ * // { wasFixed: true, value: "Hola {{ name }}", description: "Inserted missing placeholder ..." }
+ * ```
+ */
+export function autoFixTranslocoPlaceholders(baseValue: string, translationValue: string): ICUAutoFixResult {
+  if (!hasTranslocoPlaceholders(baseValue)) {
+    return { wasFixed: false, value: translationValue };
+  }
+
+  const baseExtraction = extractTranslocoPlaceholders(baseValue);
+  const basePlaceholders = baseExtraction.placeholders;
+
+  const translationHasPlaceholders = hasTranslocoPlaceholders(translationValue);
+
+  // Translation is missing all Transloco placeholders → append single one as safe default
+  if (!translationHasPlaceholders) {
+    if (basePlaceholders.length === 1) {
+      const fixedValue = `${translationValue} ${basePlaceholders[0].fullText}`.trim();
+      return {
+        wasFixed: true,
+        value: fixedValue,
+        description: `Inserted missing placeholder ${basePlaceholders[0].fullText}`,
+        originalPlaceholders: [],
+        fixedPlaceholders: [basePlaceholders[0].fullText],
+      };
+    }
+
+    return {
+      wasFixed: false,
+      value: translationValue,
+      error: `Translation is missing ${basePlaceholders.length} placeholders from base value. Cannot safely auto-fix.`,
+    };
+  }
+
+  const translationExtraction = extractTranslocoPlaceholders(translationValue);
+  const translationPlaceholders = translationExtraction.placeholders;
+
+  // Check if they already match by name
+  const namesMatch =
+    basePlaceholders.length === translationPlaceholders.length &&
+    basePlaceholders.every((bp, i) => bp.name === translationPlaceholders[i].name);
+
+  if (namesMatch) {
+    return { wasFixed: false, value: translationValue };
+  }
+
+  // Count mismatch — cannot safely fix
+  if (basePlaceholders.length !== translationPlaceholders.length) {
+    if (basePlaceholders.length < translationPlaceholders.length) {
+      return {
+        wasFixed: false,
+        value: translationValue,
+        error: `Translation has ${translationPlaceholders.length} placeholders but base has ${basePlaceholders.length}. Cannot safely auto-fix extra placeholders.`,
+      };
+    }
+
+    return {
+      wasFixed: false,
+      value: translationValue,
+      error: `Translation has ${translationPlaceholders.length} placeholders but base has ${basePlaceholders.length}. Cannot safely auto-fix missing placeholders.`,
+    };
+  }
+
+  // Same count, different names — replace positionally using text segments from translation
+  const translationSegments = translationExtraction.textSegments;
+  const originalPlaceholderNames: string[] = [];
+  const fixedPlaceholderNames: string[] = [];
+  let fixedValue = '';
+
+  for (let i = 0; i < basePlaceholders.length; i++) {
+    fixedValue += translationSegments[i];
+
+    const translationPlaceholder = translationPlaceholders[i];
+    const basePlaceholder = basePlaceholders[i];
+
+    if (translationPlaceholder.name !== basePlaceholder.name) {
+      originalPlaceholderNames.push(translationPlaceholder.fullText);
+      fixedPlaceholderNames.push(basePlaceholder.fullText);
+      fixedValue += basePlaceholder.fullText;
+    } else {
+      // Name already matches — keep original text (preserves spacing style)
+      fixedValue += translationPlaceholder.fullText;
+    }
+  }
+
+  // Append trailing text segment
+  fixedValue += translationSegments[translationSegments.length - 1];
+
+  const changes = originalPlaceholderNames.map((orig, idx) => `${orig} → ${fixedPlaceholderNames[idx]}`).join(', ');
+
+  return {
+    wasFixed: originalPlaceholderNames.length > 0,
+    value: fixedValue,
+    description: `Replaced placeholders: ${changes}`,
+    originalPlaceholders: originalPlaceholderNames,
+    fixedPlaceholders: fixedPlaceholderNames,
+  };
 }
 
 /**
@@ -347,6 +575,14 @@ export function hasICUPlaceholders(value: string): boolean {
 export function autoFixICUPlaceholders(baseValue: string, translationValue: string): ICUAutoFixResult {
   // Skip if base has no placeholders
   if (!hasICUPlaceholders(baseValue)) {
+    return {
+      wasFixed: false,
+      value: translationValue,
+    };
+  }
+
+  // Skip if base uses Transloco double-brace syntax (mutually exclusive with ICU)
+  if (hasTranslocoPlaceholders(baseValue)) {
     return {
       wasFixed: false,
       value: translationValue,

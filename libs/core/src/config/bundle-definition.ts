@@ -113,12 +113,13 @@ export interface BundleDefinition {
   collections: 'All' | CollectionBundleDefinition[];
 
   /**
-   * Optional output path for generated TypeScript type definitions
-   * If specified, a .ts file containing type constants will be generated
-   * Can be absolute or relative to project root
+   * Optional output file path for generated TypeScript type definitions.
+   * Must be a file path ending in `.ts` (e.g. `./src/generated/tokens.ts`).
+   * If specified, a .ts file containing type constants will be generated.
+   * Can be absolute or relative to project root.
    * Example: "./src/generated/common-tokens.ts"
    */
-  typeDist?: string;
+  typeDistFile?: string;
 
   /**
    * Casing for generated token property keys.
@@ -129,4 +130,30 @@ export interface BundleDefinition {
    * Example with 'upperCase': { FILE_UPLOAD: 'file-upload' }
    */
   tokenCasing?: TokenCasing;
+
+  /**
+   * Custom name for the generated TypeScript constant in the type distribution file.
+   * Must be a valid JavaScript identifier (e.g. `MY_KEYS`, `myKeys`, `MyKeys`).
+   * When omitted, the constant name is derived from the bundle key
+   * (e.g. bundle key `main` → `MAIN_TOKENS`).
+   *
+   * The TypeScript type is always PascalCase derived from this value
+   * (e.g. `MY_KEYS` → `MyKeys`, `myKeys` → `MyKeys`).
+   *
+   * This is a per-bundle override — there is no global equivalent.
+   *
+   * Example: `"APP_TRANSLATION_TOKENS"` generates
+   * `export const APP_TRANSLATION_TOKENS = ...` and `export type AppTranslationTokens = ...`
+   */
+  tokenConstantName?: string;
+}
+
+/**
+ * Checks whether type generation is configured for a bundle definition.
+ * Supports both the current `typeDistFile` and the deprecated `typeDist` property.
+ */
+export function hasTypeDistConfigured(bundleDef: BundleDefinition): boolean {
+  return !!(
+    bundleDef.typeDistFile || typeof (bundleDef as unknown as Record<string, unknown>)['typeDist'] === 'string'
+  );
 }

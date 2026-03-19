@@ -90,7 +90,7 @@ ${formatList(result.errors)}
   // ICU Auto-Fixes
   if (result.icuAutoFixes && result.icuAutoFixes.length > 0) {
     summary += `
-## ICU Auto-Fixes
+## Placeholder Auto-Fixes
 
 ${formatICUAutoFixes(result.icuAutoFixes, isDryRun)}
 `;
@@ -99,7 +99,7 @@ ${formatICUAutoFixes(result.icuAutoFixes, isDryRun)}
   // ICU Auto-Fix Errors
   if (result.icuAutoFixErrors && result.icuAutoFixErrors.length > 0) {
     summary += `
-## ICU Auto-Fix Errors
+## Placeholder Auto-Fix Errors
 
 ${formatICUAutoFixErrors(result.icuAutoFixErrors)}
 `;

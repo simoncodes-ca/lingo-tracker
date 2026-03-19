@@ -4,11 +4,12 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type {
-  BundleDefinition,
-  CollectionBundleDefinition,
-  EntrySelectionRule,
-  TokenCasing,
+import {
+  hasTypeDistConfigured,
+  type BundleDefinition,
+  type CollectionBundleDefinition,
+  type EntrySelectionRule,
+  type TokenCasing,
 } from '../../config/bundle-definition';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { loadCollectionResources, type FlatResource } from './resource-loader';
@@ -24,6 +25,12 @@ export interface GenerateBundleParams {
   readonly locales?: string[];
   /** CLI-level override for token casing. Takes precedence over all config values. */
   readonly tokenCasing?: TokenCasing;
+  /**
+   * CLI-level override for the generated TypeScript constant name.
+   * Takes precedence over `bundleDefinition.tokenConstantName`.
+   * Must be a valid JavaScript identifier.
+   */
+  readonly tokenConstantName?: string;
 }
 
 export interface GenerateBundleResult {
@@ -41,7 +48,7 @@ export interface GenerateBundleResult {
  * @returns Result with count of files generated and any warnings
  */
 export async function generateBundle(params: GenerateBundleParams): Promise<GenerateBundleResult> {
-  const { bundleKey, bundleDefinition, config, locales, tokenCasing: tokenCasingOverride } = params;
+  const { bundleKey, bundleDefinition, config, locales, tokenCasing: tokenCasingOverride, tokenConstantName } = params;
   const warnings: string[] = [];
   const localesProcessed: string[] = [];
 
@@ -71,9 +78,9 @@ export async function generateBundle(params: GenerateBundleParams): Promise<Gene
 
   // Generate types if configured
   let typeGenerationResult: GenerateTypesResult | undefined;
-  if (bundleDefinition.typeDist) {
+  if (hasTypeDistConfigured(bundleDefinition)) {
     try {
-      typeGenerationResult = await generateBundleTypes(bundleKey, config, resolvedTokenCasing);
+      typeGenerationResult = await generateBundleTypes(bundleKey, config, resolvedTokenCasing, tokenConstantName);
       if (typeGenerationResult.fileGenerated) {
         // We don't increment filesGenerated here as it tracks bundle JSON files
         // But we could add a note to warnings or a new field if needed
@@ -194,13 +201,6 @@ function matchesAnyRule(resource: FlatResource, rules: EntrySelectionRule[]): bo
  */
 function getBundleOutputPath(bundleDefinition: BundleDefinition, locale: string): string {
   const fileName = bundleDefinition.bundleName.replace('{locale}', locale);
-
-  // Handle subdirectory pattern (e.g., "{locale}/main")
-  if (fileName.includes('/')) {
-    return path.join(bundleDefinition.dist, `${fileName}.json`);
-  }
-
-  // Standard file pattern
   return path.join(bundleDefinition.dist, `${fileName}.json`);
 }
 

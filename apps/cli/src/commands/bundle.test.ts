@@ -7,10 +7,13 @@ import * as utils from '../utils';
 vi.mock('node:fs');
 vi.mock('prompts');
 
-vi.mock('@simoncodes-ca/core', () => ({
-  CONFIG_FILENAME: '.lingo-tracker.json',
-  generateBundle: vi.fn(),
-}));
+vi.mock('@simoncodes-ca/core', async () => {
+  const actual = await vi.importActual<typeof import('@simoncodes-ca/core')>('@simoncodes-ca/core');
+  return {
+    ...actual,
+    generateBundle: vi.fn(),
+  };
+});
 
 vi.mock('../utils', async () => {
   const actual = await vi.importActual('../utils');
@@ -305,7 +308,7 @@ describe('bundleCommand', () => {
         localesProcessed: ['en'],
         typeGenerationResult: {
           bundleKey: 'core',
-          typeDist: 'src/generated/core-tokens.ts',
+          typeDistFile: 'src/generated/core-tokens.ts',
           keysCount: 100,
           fileGenerated: true,
         },
@@ -324,7 +327,7 @@ describe('bundleCommand', () => {
         localesProcessed: ['en'],
         typeGenerationResult: {
           bundleKey: 'core',
-          typeDist: null,
+          typeDistFile: undefined,
           keysCount: 0,
           fileGenerated: false,
           skippedReason: 'empty-bundle',
@@ -333,7 +336,27 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (empty-bundle)');
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (bundle has no keys)');
+    });
+
+    it('should display type generation skipped (not-configured reason from result)', async () => {
+      mockGenerateBundle.mockReturnValue({
+        bundleKey: 'core',
+        filesGenerated: 3,
+        warnings: [],
+        localesProcessed: ['en'],
+        typeGenerationResult: {
+          bundleKey: 'core',
+          typeDistFile: undefined,
+          keysCount: 0,
+          fileGenerated: false,
+          skippedReason: 'not-configured',
+        },
+      });
+
+      await bundleCommand({ name: 'core' });
+
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (no typeDistFile configured)');
     });
 
     it('should display type generation skipped (no config)', async () => {
@@ -347,7 +370,66 @@ describe('bundleCommand', () => {
 
       await bundleCommand({ name: 'core' });
 
-      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (no typeDist configured)');
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Skipped (no typeDistFile configured)');
+    });
+  });
+
+  describe('--token-constant-name option', () => {
+    it('should pass tokenConstantName to generateBundle when --token-constant-name is provided', async () => {
+      await bundleCommand({ name: 'core', tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(mockGenerateBundle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bundleKey: 'core',
+          tokenConstantName: 'MY_CUSTOM_TOKENS',
+        }),
+      );
+    });
+
+    it('should error when --token-constant-name is used with multiple bundles via --name', async () => {
+      await bundleCommand({ name: 'core,admin', tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot use --token-constant-name with multiple bundles'),
+      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Please target a single bundle'));
+      expect(mockGenerateBundle).not.toHaveBeenCalled();
+    });
+
+    it('should error when --token-constant-name is used in non-TTY mode (all bundles)', async () => {
+      // In non-TTY mode with no --name, all bundles are processed
+      await bundleCommand({ tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot use --token-constant-name with multiple bundles'),
+      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Please target a single bundle'));
+      expect(mockGenerateBundle).not.toHaveBeenCalled();
+    });
+
+    it('should error when --token-constant-name is set but no bundles are selected', async () => {
+      // Provide a non-empty --name so the promptForMissing name-parsing branch is entered,
+      // but mock parseCommaSeparatedList to return an empty array so bundlesToProcess
+      // stays empty (length === 0) and the zero-bundle guard fires.
+      vi.mocked(utils.parseCommaSeparatedList).mockReturnValueOnce([]);
+
+      await bundleCommand({ name: 'nonexistent', tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No bundles selected'));
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('--token-constant-name requires a single bundle to be targeted'),
+      );
+      expect(mockGenerateBundle).not.toHaveBeenCalled();
+    });
+
+    it('should not pass tokenConstantName when not provided', async () => {
+      await bundleCommand({ name: 'core' });
+
+      expect(mockGenerateBundle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tokenConstantName: undefined,
+        }),
+      );
     });
   });
 
@@ -435,6 +517,19 @@ describe('bundleCommand', () => {
           bundleKey: 'core',
         }),
       );
+    });
+
+    it('should error when "All bundles" is selected and --token-constant-name is set', async () => {
+      vi.mocked(prompts).mockResolvedValue({
+        bundleOrAll: '__ALL__',
+      });
+
+      await bundleCommand({ tokenConstantName: 'MY_CUSTOM_TOKENS' });
+
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot use --token-constant-name with multiple bundles'),
+      );
+      expect(mockGenerateBundle).not.toHaveBeenCalled();
     });
 
     it('should handle prompt cancellation', async () => {

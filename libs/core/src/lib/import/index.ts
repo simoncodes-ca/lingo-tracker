@@ -72,8 +72,15 @@ export {
   hasICUPlaceholders,
   autoFixICUPlaceholders,
   validateICUSyntax,
+  hasTranslocoPlaceholders,
+  extractTranslocoPlaceholders,
+  autoFixTranslocoPlaceholders,
 } from './icu-auto-fixer';
-export type { ICUAutoFixResult } from './icu-auto-fixer';
+export type {
+  ICUAutoFixResult,
+  TranslocoPlaceholder,
+  TranslocoPlaceholderExtractionResult,
+} from './icu-auto-fixer';
 
 export {
   applyICUAutoFixToResource,

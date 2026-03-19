@@ -74,6 +74,19 @@ describe('Hierarchy Builder', () => {
       });
     });
 
+    it('should preserve mixed-case non-hyphenated segments in camelCase mode', () => {
+      const keys = ['common.agGrid'];
+      const result = buildTypeHierarchy(keys, 'camelCase');
+
+      // 'agGrid' has no hyphens so it must be returned as-is — not lowercased or uppercased
+      expect(result.children['common'].children['agGrid']).toEqual({
+        children: {},
+        value: 'common.agGrid',
+      });
+      expect(result.children['common'].children['aggrid']).toBeUndefined();
+      expect(result.children['common'].children['AGGRID']).toBeUndefined();
+    });
+
     it('should handle keys that are prefixes of other keys (mixed node)', () => {
       // This is the case where we have 'common' and 'common.title'
       // 'common' is a leaf value but also a parent

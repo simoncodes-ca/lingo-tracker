@@ -45,4 +45,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
-*   **Bundle Type Generation:** Added support for generating TypeScript type definitions for translation bundles. This provides compile-time type safety and autocomplete for translation keys. Configure via `typeDist` in `.lingo-tracker.json`.
+*   **Bundle Type Generation:** Added support for generating TypeScript type definitions for translation bundles. This provides compile-time type safety and autocomplete for translation keys. Configure via `typeDistFile` (formerly `typeDist`) in `.lingo-tracker.json`.

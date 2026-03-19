@@ -1,4 +1,5 @@
 const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
+const { BannerPlugin } = require('webpack');
 const { join } = require('path');
 
 module.exports = {
@@ -9,6 +10,7 @@ module.exports = {
     }),
   },
   plugins: [
+    new BannerPlugin({ banner: '#!/usr/bin/env node', raw: true }),
     new NxAppWebpackPlugin({
       target: 'node',
       compiler: 'tsc',
