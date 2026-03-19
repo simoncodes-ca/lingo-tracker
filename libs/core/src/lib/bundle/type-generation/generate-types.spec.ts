@@ -107,6 +107,17 @@ describe('generateBundleTypes', () => {
     expect(writtenContent).not.toContain('FILE_UPLOAD');
   });
 
+  it('should preserve non-hyphenated mixed-case keys in camelCase mode', async () => {
+    vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'agGrid', value: 'AG Grid' }]);
+
+    await generateBundleTypes('main', mockConfig, 'camelCase');
+
+    const writtenContent = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+    expect(writtenContent).toContain("agGrid: 'agGrid'");
+    expect(writtenContent).not.toContain('aggrid');
+    expect(writtenContent).not.toContain('AGGRID');
+  });
+
   it('should apply key prefixes if configured', async () => {
     const configWithPrefix: LingoTrackerConfig = {
       ...mockConfig,

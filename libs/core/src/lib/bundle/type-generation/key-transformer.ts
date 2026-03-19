@@ -173,21 +173,25 @@ export function bundleKeyToConstantName(bundleKey: string): string {
  * When casing is 'upperCase' (default):
  * - Format: SCREAMING_SNAKE_CASE
  * - Replaces hyphens with underscores, uppercases the whole segment
- * - "buttons" -> "BUTTONS", "file-upload" -> "FILE_UPLOAD"
+ * - "buttons" -> "BUTTONS", "BUTTONS" -> "BUTTONS", "file-upload" -> "FILE_UPLOAD"
  *
  * When casing is 'camelCase':
- * - Splits on hyphens; first word stays lowercase, subsequent words are capitalised
- * - "buttons" -> "buttons", "file-upload" -> "fileUpload"
- * - Non-hyphenated input is returned as-is: "someKey" -> "someKey"
+ * - If the segment contains no hyphens, it is returned as-is to preserve
+ *   the original casing: "agGrid" -> "agGrid", "addToLabel" -> "addToLabel"
+ * - If the segment contains hyphens, hyphens are removed and only the first
+ *   character of each subsequent part is uppercased; the tail of each part
+ *   and the entire first part keep their original casing:
+ *   "my-component" -> "myComponent", "my-XMLParser" -> "myXMLParser",
+ *   "FILE-upload"  -> "FILEUpload"  (first part casing preserved as-is)
  */
 export function segmentToPropertyName(segment: string, casing: 'upperCase' | 'camelCase' = 'upperCase'): string {
   if (casing === 'camelCase') {
+    if (!segment.includes('-')) {
+      return segment;
+    }
+
     const parts = segment.split('-').filter((part) => part.length > 0);
-    return parts
-      .map((part, index) =>
-        index === 0 ? part.toLowerCase() : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
-      )
-      .join('');
+    return parts.map((part, index) => (index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1))).join('');
   }
 
   return segment.replace(/-/g, '_').toUpperCase();

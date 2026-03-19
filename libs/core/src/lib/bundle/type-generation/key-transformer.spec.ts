@@ -53,11 +53,20 @@ describe('Key Transformer', () => {
       expect(segmentToPropertyName('class')).toBe('CLASS');
       expect(segmentToPropertyName('function')).toBe('FUNCTION');
     });
+
+    it('should return empty string unchanged', () => {
+      expect(segmentToPropertyName('')).toBe('');
+    });
   });
 
   describe('segmentToPropertyName (camelCase)', () => {
-    it('should return a single word lowercased', () => {
+    it('should return non-hyphenated segments as-is to preserve original casing', () => {
       expect(segmentToPropertyName('buttons', 'camelCase')).toBe('buttons');
+      expect(segmentToPropertyName('fileUpload', 'camelCase')).toBe('fileUpload');
+      expect(segmentToPropertyName('agGrid', 'camelCase')).toBe('agGrid');
+      expect(segmentToPropertyName('addToLabel', 'camelCase')).toBe('addToLabel');
+      expect(segmentToPropertyName('BUTTONS', 'camelCase')).toBe('BUTTONS');
+      expect(segmentToPropertyName('_internal', 'camelCase')).toBe('_internal');
     });
 
     it('should convert hyphenated segment to camelCase', () => {
@@ -68,17 +77,17 @@ describe('Key Transformer', () => {
       expect(segmentToPropertyName('file-upload-button', 'camelCase')).toBe('fileUploadButton');
     });
 
-    it('should normalize mixed-case input to camelCase', () => {
-      expect(segmentToPropertyName('FILE-upload', 'camelCase')).toBe('fileUpload');
-    });
-
-    it('should lowercase a non-hyphenated already-camelCase input', () => {
-      // No hyphens → split produces ['fileUpload'] → first part lowercased → 'fileupload'
-      expect(segmentToPropertyName('fileUpload', 'camelCase')).toBe('fileupload');
+    it('should preserve casing of all parts when segment has hyphens', () => {
+      // First part keeps original casing; subsequent parts have first letter uppercased, tail preserved
+      expect(segmentToPropertyName('FILE-upload', 'camelCase')).toBe('FILEUpload');
     });
 
     it('should filter empty parts from double hyphens', () => {
       expect(segmentToPropertyName('file--upload', 'camelCase')).toBe('fileUpload');
+    });
+
+    it('should return empty string for a hyphen-only segment', () => {
+      expect(segmentToPropertyName('-', 'camelCase')).toBe('');
     });
 
     it('should filter leading hyphen and return remaining word', () => {
@@ -89,12 +98,29 @@ describe('Key Transformer', () => {
       expect(segmentToPropertyName('upload-', 'camelCase')).toBe('upload');
     });
 
-    it('should return a single character lowercased', () => {
+    it('should return a single character as-is', () => {
       expect(segmentToPropertyName('a', 'camelCase')).toBe('a');
+    });
+
+    it('should handle single-character parts produced by a hyphenated segment', () => {
+      expect(segmentToPropertyName('a-b', 'camelCase')).toBe('aB');
     });
 
     it('should return numeric segment unchanged', () => {
       expect(segmentToPropertyName('404', 'camelCase')).toBe('404');
+    });
+
+    it('should preserve mixed-case tail in subsequent hyphen parts', () => {
+      expect(segmentToPropertyName('my-XMLParser', 'camelCase')).toBe('myXMLParser');
+    });
+
+    it('should uppercase only the first char of a subsequent part that starts lowercase', () => {
+      // 'xmlParser' starts with lowercase 'x' → uppercased to 'X', tail 'mlParser' preserved
+      expect(segmentToPropertyName('my-xmlParser', 'camelCase')).toBe('myXmlParser');
+    });
+
+    it('should return empty string unchanged', () => {
+      expect(segmentToPropertyName('', 'camelCase')).toBe('');
     });
   });
 
