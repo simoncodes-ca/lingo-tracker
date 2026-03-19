@@ -28,13 +28,13 @@ describe('generateBundleTypes', () => {
         bundleName: 'main',
         dist: 'dist/i18n',
         collections: 'All',
-        typeDist: 'src/generated/main-tokens.ts',
+        typeDistFile: 'src/generated/main-tokens.ts',
       },
       legacy: {
         bundleName: 'legacy',
         dist: 'dist/i18n',
         collections: 'All',
-        // No typeDist
+        // No typeDistFile
       },
     },
   };
@@ -44,13 +44,14 @@ describe('generateBundleTypes', () => {
     vi.mocked(path.resolve).mockImplementation((p) => `/abs/${p}`);
     vi.mocked(path.dirname).mockReturnValue('/abs/src/generated');
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => false } as ReturnType<typeof fs.statSync>);
   });
 
-  it('should skip generation if typeDist is not configured', async () => {
+  it('should skip generation if typeDistFile is not configured', async () => {
     const result = await generateBundleTypes('legacy', mockConfig);
 
     expect(result.fileGenerated).toBe(false);
-    expect(result.skippedReason).toBe('no-typeDist');
+    expect(result.skippedReason).toBe('not-configured');
     expect(fs.writeFileSync).not.toHaveBeenCalled();
   });
 
@@ -106,6 +107,17 @@ describe('generateBundleTypes', () => {
     expect(writtenContent).not.toContain('FILE_UPLOAD');
   });
 
+  it('should preserve non-hyphenated mixed-case keys in camelCase mode', async () => {
+    vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'agGrid', value: 'AG Grid' }]);
+
+    await generateBundleTypes('main', mockConfig, 'camelCase');
+
+    const writtenContent = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+    expect(writtenContent).toContain("agGrid: 'agGrid'");
+    expect(writtenContent).not.toContain('aggrid');
+    expect(writtenContent).not.toContain('AGGRID');
+  });
+
   it('should apply key prefixes if configured', async () => {
     const configWithPrefix: LingoTrackerConfig = {
       ...mockConfig,
@@ -113,7 +125,7 @@ describe('generateBundleTypes', () => {
         prefixed: {
           bundleName: 'prefixed',
           dist: 'dist',
-          typeDist: 'types.ts',
+          typeDistFile: 'types.ts',
           collections: [
             {
               name: 'common',
@@ -135,5 +147,246 @@ describe('generateBundleTypes', () => {
       expect.stringContaining("OK: 'shared.ok'"),
       'utf-8',
     );
+  });
+
+  describe('validation', () => {
+    it('should return an error when typeDistFile points to an existing directory', async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.statSync).mockReturnValue({ isDirectory: () => true } as ReturnType<typeof fs.statSync>);
+
+      const result = await generateBundleTypes('main', mockConfig);
+
+      expect(result.fileGenerated).toBe(false);
+      expect(result.errorReason).toMatch(/typeDistFile must be a file path/);
+      expect(result.errorReason).toMatch(/resolves to a directory at/);
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('should return an error when typeDistFile does not end with .ts', async () => {
+      const configWithBadExtension: LingoTrackerConfig = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All',
+            typeDistFile: 'src/generated/main-tokens.js',
+          },
+        },
+      };
+
+      const result = await generateBundleTypes('main', configWithBadExtension);
+
+      expect(result.fileGenerated).toBe(false);
+      expect(result.errorReason).toMatch(/typeDistFile must end with a \.ts extension/);
+      expect(result.errorReason).toContain('src/generated/main-tokens.js');
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('tokenConstantName', () => {
+    it('should use the provided tokenConstantName parameter as the constant name', async () => {
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', mockConfig, 'upperCase', 'MY_CUSTOM_TOKENS');
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export const MY_CUSTOM_TOKENS'),
+        'utf-8',
+      );
+    });
+
+    it('should derive PascalCase type name from a custom SCREAMING_SNAKE constant name', async () => {
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', mockConfig, 'upperCase', 'MY_CUSTOM_TOKENS');
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export type MyCustomTokens = typeof MY_CUSTOM_TOKENS'),
+        'utf-8',
+      );
+    });
+
+    it('should derive PascalCase type name from a camelCase constant name', async () => {
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', mockConfig, 'upperCase', 'myCustomTokens');
+
+      const writtenContent = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+      expect(writtenContent).toContain('export const myCustomTokens');
+      expect(writtenContent).toContain('export type MyCustomTokens = typeof myCustomTokens');
+    });
+
+    it('should use tokenConstantName from bundle config when no param is provided', async () => {
+      const configWithConstantName = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All' as const,
+            typeDistFile: 'src/generated/main-tokens.ts',
+            tokenConstantName: 'APP_TOKENS',
+          },
+        },
+      };
+
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', configWithConstantName);
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export const APP_TOKENS'),
+        'utf-8',
+      );
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export type AppTokens = typeof APP_TOKENS'),
+        'utf-8',
+      );
+    });
+
+    it('should prefer the tokenConstantName param over the bundle config value', async () => {
+      const configWithConstantName = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All' as const,
+            typeDistFile: 'src/generated/main-tokens.ts',
+            tokenConstantName: 'CONFIG_TOKENS',
+          },
+        },
+      };
+
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      await generateBundleTypes('main', configWithConstantName, 'upperCase', 'CLI_OVERRIDE_TOKENS');
+
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('export const CLI_OVERRIDE_TOKENS'),
+        'utf-8',
+      );
+    });
+
+    it('should return an error result when tokenConstantName is an invalid JavaScript identifier', async () => {
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      const result = await generateBundleTypes('main', mockConfig, 'upperCase', 'my-bad-name');
+
+      expect(result.fileGenerated).toBe(false);
+      expect(result.errorReason).toMatch(/Invalid tokenConstantName/);
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+
+    it('should return an error result when bundle config tokenConstantName is an invalid JavaScript identifier', async () => {
+      const configWithBadConstantName = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All' as const,
+            typeDistFile: 'src/generated/main-tokens.ts',
+            tokenConstantName: '1bad',
+          },
+        },
+      };
+
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      const result = await generateBundleTypes('main', configWithBadConstantName);
+
+      expect(result.fileGenerated).toBe(false);
+      expect(result.errorReason).toMatch(/Invalid tokenConstantName/);
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('backwards compatibility', () => {
+    it('should return not-configured and not throw when typeDist holds a non-string value', async () => {
+      const configWithNullTypeDist: LingoTrackerConfig = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All',
+            ...({ typeDist: null } as unknown as object),
+          },
+        },
+      };
+
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await generateBundleTypes('main', configWithNullTypeDist);
+
+      expect(result.fileGenerated).toBe(false);
+      expect(result.skippedReason).toBe('not-configured');
+      expect(fs.writeFileSync).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should use typeDistFile and not emit a deprecation warning when both typeDist and typeDistFile are present', async () => {
+      const configWithBothKeys: LingoTrackerConfig = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All',
+            typeDistFile: 'src/generated/main-tokens.ts',
+            ...({ typeDist: 'src/generated/old-tokens.ts' } as unknown as object),
+          },
+        },
+      };
+
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await generateBundleTypes('main', configWithBothKeys);
+
+      expect(result.fileGenerated).toBe(true);
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(fs.writeFileSync).toHaveBeenCalledWith('/abs/src/generated/main-tokens.ts', expect.any(String), 'utf-8');
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should support the deprecated typeDist property and emit a deprecation warning', async () => {
+      const configWithDeprecatedKey: LingoTrackerConfig = {
+        ...mockConfig,
+        bundles: {
+          main: {
+            bundleName: 'main',
+            dist: 'dist/i18n',
+            collections: 'All',
+            // Simulating a user config that still uses the old key name
+            ...({ typeDist: 'src/generated/main-tokens.ts' } as unknown as object),
+          },
+        },
+      };
+
+      vi.mocked(resourceLoader.loadCollectionResources).mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await generateBundleTypes('main', configWithDeprecatedKey);
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("Bundle 'main'"));
+      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("'typeDist' is deprecated"));
+      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("'typeDistFile'"));
+      expect(result.fileGenerated).toBe(true);
+
+      consoleWarnSpy.mockRestore();
+    });
   });
 });

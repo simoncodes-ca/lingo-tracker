@@ -25,7 +25,7 @@ describe('apply-icu-auto-fix', () => {
 
       const result = applyICUAutoFixToResource({
         resource,
-        baseValue: 'Hello world',
+        storedBaseValue: 'Hello world',
       });
 
       expect(result.resource).toEqual(resource);
@@ -41,7 +41,7 @@ describe('apply-icu-auto-fix', () => {
 
       const result = applyICUAutoFixToResource({
         resource,
-        baseValue: 'Hello {name}',
+        storedBaseValue: 'Hello {name}',
       });
 
       expect(result.resource).toEqual(resource);
@@ -57,7 +57,7 @@ describe('apply-icu-auto-fix', () => {
 
       const result = applyICUAutoFixToResource({
         resource,
-        baseValue: 'Hello {name}',
+        storedBaseValue: 'Hello {name}',
       });
 
       expect(result.resource.value).toBe('Hola {name}');
@@ -77,7 +77,7 @@ describe('apply-icu-auto-fix', () => {
 
       const result = applyICUAutoFixToResource({
         resource,
-        baseValue: 'Hello {firstName} {lastName}',
+        storedBaseValue: 'Hello {firstName} {lastName}',
       });
 
       expect(result.resource.value).toBe('Hola {firstName} {lastName}');
@@ -94,7 +94,7 @@ describe('apply-icu-auto-fix', () => {
 
       const result = applyICUAutoFixToResource({
         resource,
-        baseValue: '{count, plural, one {# item} other {# items}}',
+        storedBaseValue: '{count, plural, one {# item} other {# items}}',
       });
 
       expect(result.resource.value).toBe('{count, plural, one {# elemento} other {# elementos}}');
@@ -110,7 +110,7 @@ describe('apply-icu-auto-fix', () => {
 
       const result = applyICUAutoFixToResource({
         resource,
-        baseValue: 'Hello {name}',
+        storedBaseValue: 'Hello {name}',
       });
 
       expect(result.resource).toEqual(resource); // Original unchanged
@@ -129,7 +129,7 @@ describe('apply-icu-auto-fix', () => {
 
       const result = applyICUAutoFixToResource({
         resource,
-        baseValue: 'Hello {name}',
+        storedBaseValue: 'Hello {name}',
       });
 
       expect(result.resource).toEqual(resource); // Original unchanged
@@ -148,7 +148,7 @@ describe('apply-icu-auto-fix', () => {
 
       applyICUAutoFixToResource({
         resource,
-        baseValue: 'Hello {name}',
+        storedBaseValue: 'Hello {name}',
         verbose: true,
         onProgress: (msg) => progressMessages.push(msg),
       });
@@ -283,6 +283,52 @@ describe('apply-icu-auto-fix', () => {
       expect(result.resources[0].comment).toBe('Test comment');
       expect(result.resources[0].tags).toEqual(['ui', 'common']);
       expect(result.resources[0].status).toBe('translated');
+    });
+  });
+
+  describe('Transloco placeholder handling', () => {
+    it('should not fix when Transloco placeholders already match', () => {
+      const result = applyICUAutoFixToResource({
+        storedBaseValue: 'Create {{ name }}?',
+        importedBaseValue: undefined,
+        resource: {
+          key: 'test.key',
+          value: 'Créer {{ name }}?',
+          locale: 'fr',
+        },
+      });
+      expect(result.resource.value).toBe('Créer {{ name }}?');
+      expect(result.autoFix).toBeUndefined();
+      expect(result.autoFixError).toBeUndefined();
+    });
+
+    it('should fix renamed Transloco placeholders', () => {
+      const result = applyICUAutoFixToResource({
+        storedBaseValue: 'Create {{ name }}?',
+        importedBaseValue: undefined,
+        resource: {
+          key: 'test.key',
+          value: 'Créer {{ nom }}?',
+          locale: 'fr',
+        },
+      });
+      expect(result.resource.value).toBe('Créer {{ name }}?');
+      expect(result.autoFix).toBeDefined();
+    });
+
+    it('should not trigger Transloco path from importedBaseValue alone', () => {
+      const result = applyICUAutoFixToResource({
+        storedBaseValue: undefined,
+        importedBaseValue: '{{greeting}}',
+        resource: {
+          key: 'test.key',
+          value: 'Hola',
+          locale: 'es',
+        },
+      });
+      expect(result.autoFix).toBeUndefined();
+      expect(result.autoFixError).toBeUndefined();
+      expect(result.resource.value).toBe('Hola');
     });
   });
 });

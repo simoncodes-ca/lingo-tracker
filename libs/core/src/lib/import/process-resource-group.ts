@@ -1,12 +1,39 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
-import type { ImportOptions, ImportChange } from './types';
+import type { ImportOptions, ImportChange, ImportedResource } from './types';
 import type { ResourceEntries, ResourceEntry } from '../../resource/resource-entry';
 import type { TrackerMetadata } from '../../resource/tracker-metadata';
 import { calculateChecksum } from '../../resource/checksum';
 import type { LocaleMetadata } from '../../resource/locale-metadata';
 import type { TranslationStatus } from '../../resource/translation-status';
 import type { ResourceGroup } from './resource-grouping';
+
+/**
+ * Returns true when the imported resource's status field should be used as the resulting
+ * translation status, rather than the strategy's default status.
+ *
+ * This is the case when:
+ * - `preserveStatus` is explicitly `true` (all strategies, existing behaviour), OR
+ * - the strategy is `'migration'` and `preserveStatus` has not been explicitly disabled
+ *   (i.e. is `undefined`), which is the new default-on behaviour for migration imports.
+ *
+ * The check on `resource.status` ensures we only override when the source data actually
+ * carries a status value — missing status fields fall through to strategy defaults.
+ */
+function shouldUseSourceStatus(
+  options: ImportOptions,
+  resource: ImportedResource,
+): resource is ImportedResource & { status: TranslationStatus } {
+  if (!resource.status) {
+    return false;
+  }
+
+  if (options.preserveStatus === true) {
+    return true;
+  }
+
+  return options.strategy === 'migration' && options.preserveStatus !== false;
+}
 
 /**
  * Processes a group of resources that belong to the same folder.
@@ -24,7 +51,9 @@ import type { ResourceGroup } from './resource-grouping';
  * 4. **Strategy-Specific Status Handling**:
  *    - `verification`: Sets status to 'verified' (even for unchanged values)
  *    - `update`: Preserves existing status
- *    - `translation-service`/`migration`: Sets status to 'translated'
+ *    - `translation-service`: Sets status to 'translated'
+ *    - `migration`: Uses source status when present and `preserveStatus` is not `false`,
+ *      otherwise defaults to 'translated'
  * 5. **Metadata Updates**: Updates comment and tags when corresponding flags are enabled.
  * 6. **Checksum Calculation**: Computes checksums for change tracking and stale detection.
  * 7. **File Writing**: Atomically writes both resource_entries.json and tracker_meta.json
@@ -90,6 +119,7 @@ export function processResourceGroup(
   warnings: string[],
 ): ImportChange[] {
   const changes: ImportChange[] = [];
+  let dataModified = false;
 
   // Load existing data once for the folder
   const exists = existsSync(group.entryResourcePath) && existsSync(group.entryMetaPath);
@@ -150,6 +180,7 @@ export function processResourceGroup(
         }
 
         resourceEntries[entryKey] = newEntry;
+        dataModified = true;
 
         // Create base locale metadata (checksum only, no status or baseChecksum)
         const sourceChecksum = calculateChecksum(resource.value);
@@ -201,6 +232,7 @@ export function processResourceGroup(
       }
 
       resourceEntries[entryKey] = newEntry;
+      dataModified = true;
 
       // Create metadata for new resource
       const newChecksum = calculateChecksum(resource.value);
@@ -216,10 +248,14 @@ export function processResourceGroup(
       };
 
       // Create target locale metadata
+      const createdStatus: TranslationStatus = shouldUseSourceStatus(options, resource)
+        ? resource.status
+        : 'translated';
+
       trackerMeta[entryKey][locale] = {
         checksum: newChecksum,
         baseChecksum,
-        status: 'translated',
+        status: createdStatus,
       };
 
       changes.push({
@@ -228,7 +264,7 @@ export function processResourceGroup(
         oldValue: '',
         newValue: resource.value,
         oldStatus: undefined,
-        newStatus: 'translated',
+        newStatus: createdStatus,
       });
 
       continue;
@@ -248,23 +284,32 @@ export function processResourceGroup(
       // Update the source value if changed
       if (valueChanged) {
         entry.source = resource.value;
+        dataModified = true;
       }
 
       // Update comment if flag is set and comment is provided
       if (options.updateComments && resource.comment !== undefined) {
         if (resource.comment) {
-          entry.comment = resource.comment;
-        } else {
+          if (entry.comment !== resource.comment) {
+            entry.comment = resource.comment;
+            dataModified = true;
+          }
+        } else if (entry.comment !== undefined) {
           delete entry.comment;
+          dataModified = true;
         }
       }
 
       // Update tags if flag is set and tags are provided
       if (options.updateTags && resource.tags !== undefined) {
         if (resource.tags.length > 0) {
-          entry.tags = resource.tags;
-        } else {
+          if (JSON.stringify([...(entry.tags ?? [])].sort()) !== JSON.stringify([...(resource.tags ?? [])].sort())) {
+            entry.tags = resource.tags;
+            dataModified = true;
+          }
+        } else if (entry.tags !== undefined) {
           delete entry.tags;
+          dataModified = true;
         }
       }
 
@@ -275,9 +320,11 @@ export function processResourceGroup(
         trackerMeta[entryKey] = {};
       }
 
-      trackerMeta[entryKey][baseLocale] = {
-        checksum: newChecksum,
-      };
+      const existingBaseChecksum = trackerMeta[entryKey][baseLocale]?.checksum;
+      if (existingBaseChecksum !== newChecksum) {
+        trackerMeta[entryKey][baseLocale] = { checksum: newChecksum };
+        dataModified = true;
+      }
 
       changes.push({
         key: resource.key,
@@ -309,7 +356,10 @@ export function processResourceGroup(
     // Check if value changed
     const valueChanged = oldValue !== resource.value;
 
-    // Strategy-specific handling for unchanged values
+    // Strategy-specific handling for unchanged values.
+    // `oldValue !== ''` distinguishes a genuinely unchanged existing value from a first-time
+    // locale write: when `entry[locale]` is undefined, `oldValue` resolves to `''`, which
+    // means first-time writes correctly fall through to the value-changed path below.
     if (!valueChanged && oldValue !== '') {
       // Verification strategy: set to verified without updating checksum
       if (options.strategy === 'verification') {
@@ -329,6 +379,7 @@ export function processResourceGroup(
         } else {
           trackerMeta[entryKey][locale].status = verifiedStatus;
         }
+        dataModified = true;
 
         changes.push({
           key: resource.key,
@@ -354,38 +405,104 @@ export function processResourceGroup(
         continue;
       }
 
-      // Translation-service and migration: set to translated
+      // Translation-service: value is unchanged. When `preserveStatus` is explicitly set to
+      // `true` and the source data carries a status, honour it (same as the value-changed path).
+      // Otherwise, leave the status as-is — the translation service only changes status when
+      // it supplies a new value.
+      if (options.strategy === 'translation-service') {
+        const resolvedStatus: TranslationStatus = shouldUseSourceStatus(options, resource)
+          ? resource.status
+          : oldStatus || 'translated';
+
+        if (resolvedStatus !== oldStatus) {
+          if (!trackerMeta[entryKey]) {
+            trackerMeta[entryKey] = {};
+          }
+
+          if (!trackerMeta[entryKey][locale]) {
+            trackerMeta[entryKey][locale] = {
+              checksum: entryMeta?.[locale]?.checksum || calculateChecksum(oldValue),
+              baseChecksum: entryMeta?.[baseLocale]?.checksum || calculateChecksum(entry.source),
+              status: resolvedStatus,
+            };
+          } else {
+            trackerMeta[entryKey][locale].status = resolvedStatus;
+          }
+          dataModified = true;
+        }
+
+        changes.push({
+          key: resource.key,
+          type: 'updated',
+          oldValue,
+          newValue: resource.value,
+          oldStatus,
+          newStatus: resolvedStatus,
+        });
+        continue;
+      }
+
+      // Migration: prefer the status carried in the imported data when `shouldUseSourceStatus`
+      // is satisfied, otherwise fall back to preserving the existing status.
+      const resolvedStatus: TranslationStatus = shouldUseSourceStatus(options, resource)
+        ? resource.status
+        : oldStatus || 'translated';
+
+      if (resolvedStatus !== oldStatus) {
+        if (!trackerMeta[entryKey]) {
+          trackerMeta[entryKey] = {};
+        }
+
+        if (!trackerMeta[entryKey][locale]) {
+          trackerMeta[entryKey][locale] = {
+            checksum: entryMeta?.[locale]?.checksum || calculateChecksum(oldValue),
+            baseChecksum: entryMeta?.[baseLocale]?.checksum || calculateChecksum(entry.source),
+            status: resolvedStatus,
+          };
+        } else {
+          trackerMeta[entryKey][locale].status = resolvedStatus;
+        }
+        dataModified = true;
+      }
+
       changes.push({
         key: resource.key,
         type: 'updated',
         oldValue,
         newValue: resource.value,
         oldStatus,
-        newStatus: oldStatus || 'translated',
+        newStatus: resolvedStatus,
       });
       continue;
     }
 
     // Update the value
     entry[locale] = resource.value;
+    dataModified = true;
 
     // Update comment if flag is set and comment is provided
     if (options.updateComments && resource.comment !== undefined) {
       if (resource.comment) {
-        entry.comment = resource.comment;
-      } else {
-        // Empty comment means remove it
+        if (entry.comment !== resource.comment) {
+          entry.comment = resource.comment;
+          dataModified = true;
+        }
+      } else if (entry.comment !== undefined) {
         delete entry.comment;
+        dataModified = true;
       }
     }
 
     // Update tags if flag is set and tags are provided
     if (options.updateTags && resource.tags !== undefined) {
       if (resource.tags.length > 0) {
-        entry.tags = resource.tags;
-      } else {
-        // Empty tags array means remove tags
+        if (JSON.stringify([...(entry.tags ?? [])].sort()) !== JSON.stringify([...(resource.tags ?? [])].sort())) {
+          entry.tags = resource.tags;
+          dataModified = true;
+        }
+      } else if (entry.tags !== undefined) {
         delete entry.tags;
+        dataModified = true;
       }
     }
 
@@ -397,8 +514,8 @@ export function processResourceGroup(
 
     // Determine status based on strategy
     let newStatus: TranslationStatus;
-    if (options.preserveStatus && resource.status) {
-      // Use status from import if preserve-status flag is set
+    if (shouldUseSourceStatus(options, resource)) {
+      // Use status from imported data when preserve-status is active or strategy is migration
       newStatus = resource.status;
     } else {
       // Strategy-specific status determination
@@ -412,7 +529,7 @@ export function processResourceGroup(
           newStatus = oldStatus || 'translated';
           break;
         default:
-          // Translation-service and migration: set to translated
+          // Translation-service and migration (no source status): set to translated
           newStatus = 'translated';
           break;
       }
@@ -441,10 +558,10 @@ export function processResourceGroup(
     });
   }
 
-  // Write files once for the entire group
-  const hasChanges = changes.some((c) => c.type === 'updated' || c.type === 'value-changed' || c.type === 'created');
-
-  if (!dryRun && hasChanges) {
+  // Write files once for the entire group, but only when in-memory state was actually mutated.
+  // Logging an 'updated' change (e.g. update strategy with unchanged value) does not imply a
+  // disk write is needed — `dataModified` is the authoritative signal for that.
+  if (!dryRun && dataModified) {
     // Ensure folder exists (important for created resources)
     const folderPath = dirname(group.entryResourcePath);
     if (!existsSync(folderPath)) {

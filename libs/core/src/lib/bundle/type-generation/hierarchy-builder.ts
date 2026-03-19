@@ -1,4 +1,4 @@
-import { segmentToPropertyName, splitKeyIntoSegments } from './key-transformer';
+import { segmentToPropertyName, splitKeyIntoSegments, constantNameToTypeName } from './key-transformer';
 import type { TokenCasing } from '../../../config/bundle-definition';
 
 export interface TypeHierarchyNode {
@@ -75,13 +75,10 @@ export function serializeHierarchy(node: TypeHierarchyNode, constantName: string
   lines.push(`} as const;`);
   lines.push('');
 
-  // Generate the type definition
-  // Convert CONSTANT_NAME to PascalCase for the type name
-  // e.g. COMMON_TOKENS -> CommonTokens
-  const typeName = constantName
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join('');
+  // Derive PascalCase type name from the constant name.
+  // Handles SCREAMING_SNAKE_CASE, camelCase, PascalCase, and snake_case inputs.
+  // e.g. COMMON_TOKENS → CommonTokens, myKeys → MyKeys
+  const typeName = constantNameToTypeName(constantName);
 
   lines.push(`export type ${typeName} = typeof ${constantName};`);
 

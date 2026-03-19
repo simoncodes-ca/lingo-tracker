@@ -15,12 +15,25 @@ program
 program
   .command('init')
   .description('Initialize Lingo Tracker in the current project')
-  .option('--collectionName <name>', 'Name for the translation collection')
-  .option('--translationsFolder <path>')
-  .option('--exportFolder <path>', 'dist/lingo-export')
-  .option('--importFolder <path>', 'dist/lingo-import')
-  .option('--baseLocale <locale>', 'en')
+  .option('--collection-name <name>', 'Name for the translation collection')
+  .option('--translations-folder <path>')
+  .option('--export-folder <path>', 'dist/lingo-export')
+  .option('--import-folder <path>', 'dist/lingo-import')
+  .option('--base-locale <locale>', 'en')
   .option('--locales <locales...>', 'supported locales')
+  .option('--setup-bundle <bool>', 'Setup bundle configuration during init (true/false)', (val) => {
+    if (val === 'true') return true;
+    if (val === 'false') return false;
+    throw new Error(`--setup-bundle must be "true" or "false", got "${val}"`);
+  })
+  .option('--bundle-dist <path>', 'Bundle output directory')
+  .option('--bundle-name <pattern>', 'Bundle name pattern (e.g. {locale})')
+  .addOption(new Option('--token-casing <casing>', 'Token property key casing').choices(['upperCase', 'camelCase']))
+  .option('--type-dist-file <path>', 'Path for generated TypeScript type definitions file')
+  .option('--token-constant-name <name>', 'Custom name for the generated TypeScript constant')
+  .option('--enable-auto-translation', 'Enable automatic translation')
+  .option('--translation-provider <provider>', 'Translation provider (e.g., google-translate)')
+  .option('--translation-api-key-env <envVar>', 'Environment variable name for the translation API key')
   .action(async (options) => {
     const { initCommand } = await import('./init/init');
     await initCommand(options);
@@ -29,11 +42,11 @@ program
 program
   .command('add-collection')
   .description('Add a new translation collection to the project')
-  .option('--collectionName <name>', 'Name for the translation collection')
-  .option('--translationsFolder <path>')
-  .option('--exportFolder <path>', 'dist/lingo-export')
-  .option('--importFolder <path>', 'dist/lingo-import')
-  .option('--baseLocale <locale>', 'en')
+  .option('--collection-name <name>', 'Name for the translation collection')
+  .option('--translations-folder <path>')
+  .option('--export-folder <path>', 'dist/lingo-export')
+  .option('--import-folder <path>', 'dist/lingo-import')
+  .option('--base-locale <locale>', 'en')
   .option('--locales <locales...>', 'supported locales')
   .action(async (options) => {
     const { addCollectionCommand } = await import('./add-collection/add-collection');
@@ -43,7 +56,7 @@ program
 program
   .command('delete-collection')
   .description('Delete a translation collection from the project')
-  .option('--collectionName <name>', 'Name of the collection to delete')
+  .option('--collection-name <name>', 'Name of the collection to delete')
   .action(async (options) => {
     const { deleteCollectionCommand } = await import('./delete-collection/delete-collection');
     await deleteCollectionCommand(options);
@@ -57,7 +70,7 @@ program
   .option('--value <value>', 'Base value (source text)')
   .option('--comment <comment>', 'Optional context for translators')
   .option('--tags <tags>', 'Optional tags (comma-separated)')
-  .option('--targetFolder <folder>', 'Optional target folder (dot-delimited)')
+  .option('--target-folder <folder>', 'Optional target folder (dot-delimited)')
   .option(
     '--translations <json>',
     'Optional translations as JSON array, e.g., \'[{"locale":"es","value":"Aplicar","status":"translated"}]\'',
@@ -76,12 +89,12 @@ program
   .description('Edit an existing translation resource')
   .option('--collection <name>', 'Name of the collection')
   .option('--key <key>', 'Resource key (dot-delimited)')
-  .option('--baseValue <value>', 'New base value (source text)')
+  .option('--base-value <value>', 'New base value (source text)')
   .option('--comment <comment>', 'New comment')
   .option('--tags <tags>', 'New tags (comma-separated)')
-  .option('--targetFolder <folder>', 'New target folder (dot-delimited)')
-  .option('--locale <locale>', 'Locale to update (requires --localeValue)')
-  .option('--localeValue <value>', 'New value for the specified locale')
+  .option('--target-folder <folder>', 'New target folder (dot-delimited)')
+  .option('--locale <locale>', 'Locale to update (requires --locale-value)')
+  .option('--locale-value <value>', 'New value for the specified locale')
   .action(async (options) => {
     const { editResourceCommand } = await import('./commands/edit-resource');
     await editResourceCommand(options);
@@ -130,6 +143,10 @@ program
   .option('--locale <locales>', 'Locale(s) to generate - comma-separated (e.g., en,fr)')
   .option('--verbose', 'Show detailed output including warnings')
   .addOption(new Option('--token-casing <casing>', 'Token property key casing').choices(['upperCase', 'camelCase']))
+  .option(
+    '--token-constant-name <name>',
+    'Custom name for the generated TypeScript constant (single bundle only, e.g. MY_TOKENS)',
+  )
   .action(async (options) => {
     const { bundleCommand } = await import('./commands/bundle');
     await bundleCommand(options);
