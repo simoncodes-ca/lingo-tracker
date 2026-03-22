@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, DestroyRef, inject, computed, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -65,24 +65,6 @@ export class TranslationMainHeader {
       if (this.#snackbarChainTimeout) clearTimeout(this.#snackbarChainTimeout);
     });
   }
-
-  readonly formattedFolderPath = computed<string | undefined>(() => {
-    const folderPath = this.store.currentFolderPath();
-
-    if (!folderPath) {
-      return undefined;
-    }
-
-    const segments = folderPath.split('.');
-    const maxVisibleSegments = 3;
-
-    if (segments.length <= maxVisibleSegments) {
-      return segments.join(' / ');
-    }
-
-    const visibleSegments = segments.slice(-maxVisibleSegments);
-    return `... / ${visibleSegments.join(' / ')}`;
-  });
 
   handleDensityToggle(): void {
     if (this.#densityFlipMidTimeout) clearTimeout(this.#densityFlipMidTimeout);

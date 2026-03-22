@@ -1,13 +1,4 @@
 <div class="translation-main-header">
-  <div class="breadcrumb-row">
-    @if (formattedFolderPath(); as path) {
-      <mat-icon class="breadcrumb-icon">folder</mat-icon>
-      <span class="breadcrumb-path">{{ path }}</span>
-    } @else {
-      <span class="breadcrumb-empty">{{ TOKENS.BROWSER.NOFOLDERSELECTED | transloco }}</span>
-    }
-  </div>
-
   <div class="header-content">
     <app-translation-search />
 
