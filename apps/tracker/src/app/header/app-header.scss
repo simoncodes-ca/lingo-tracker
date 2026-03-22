@@ -101,6 +101,7 @@
 
 .theme-button {
   color: var(--color-text-secondary);
+  margin-left: var(--spacing-4);
 
   &:hover {
     color: var(--color-text-primary);
@@ -167,6 +168,10 @@
   background-color: var(--color-border);
   margin: 0 var(--spacing-4);
   animation: context-enter 220ms cubic-bezier(0.4, 0, 0.2, 1) both;
+
+  &--static {
+    animation: none;
+  }
 }
 
 .collection-context {

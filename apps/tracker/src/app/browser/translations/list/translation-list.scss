@@ -5,8 +5,7 @@
 }
 
 .loading-container,
-.error-container,
-.empty-state {
+.error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,32 +16,46 @@
   color: var(--color-text-secondary);
 }
 
-.info-card {
-  max-width: 500px;
-  background-color: var(--color-background-muted);
-  border: 1px solid var(--color-border);
-  border-left: 4px solid var(--color-info);
+.empty-state {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  padding: var(--spacing-6);
+  /* Extra bottom padding pushes card into the upper third of the panel */
+  padding-bottom: var(--spacing-24);
 
-  .info-content {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-3);
+  &__card {
+    background-color: var(--color-background-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    max-width: 420px;
+    text-align: center;
+    width: 100%;
 
-    .info-icon {
-      color: var(--color-info);
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-      flex-shrink: 0;
-    }
-
-    p {
-      margin: 0;
-      color: var(--color-text-primary);
-      font-size: var(--font-size-base);
+    mat-card-content {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-4);
+      padding: var(--spacing-10) var(--spacing-8);
     }
   }
+
+  &__icon {
+    color: var(--color-text-primary);
+    font-size: var(--spacing-12);
+    height: var(--spacing-12);
+    width: var(--spacing-12);
+  }
+
+  &__text {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+    margin: 0;
+  }
 }
+
 
 .search-info {
   background-color: var(--color-info-subtle);
@@ -57,9 +70,9 @@
 
   mat-icon {
     color: var(--color-info);
-    font-size: 20px;
-    height: 20px;
-    width: 20px;
+    font-size: var(--spacing-5);
+    height: var(--spacing-5);
+    width: var(--spacing-5);
   }
 
   span {

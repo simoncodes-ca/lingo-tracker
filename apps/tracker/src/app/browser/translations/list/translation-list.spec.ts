@@ -200,6 +200,53 @@ describe('TranslationList - Loading and Error States', () => {
     const errorContainer = fixture.nativeElement.querySelector('.error-container');
     expect(errorContainer).toBeTruthy();
   });
+
+  it('should display "select a folder" empty state when no folder is selected', () => {
+    fixture.componentRef.setInput('collectionName', 'test');
+    fixture.detectChanges();
+
+    const emptyState = fixture.nativeElement.querySelector('.empty-state');
+    const icon = fixture.nativeElement.querySelector('.empty-state__icon');
+    const text = fixture.nativeElement.querySelector('.empty-state__text');
+
+    expect(emptyState).toBeTruthy();
+    expect(icon?.textContent).toContain('folder_open');
+    expect(text?.textContent).toContain('Select a folder first');
+  });
+
+  it('should display "no translations found" empty state when folder is selected but empty', async () => {
+    const store = TestBed.inject(BrowserStore);
+    const httpMock = TestBed.inject(HttpTestingController);
+
+    fixture.componentRef.setInput('collectionName', 'test');
+    fixture.detectChanges();
+
+    store.setSelectedCollection({
+      collectionName: 'test',
+      locales: ['en'],
+    });
+
+    const cacheReq = httpMock.expectOne('/api/collections/test/resources/cache/status');
+    cacheReq.flush({ status: 'ready', error: null });
+
+    const rootReq = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
+    rootReq.flush({ path: '', resources: [], children: [] });
+
+    store.selectFolder('empty-folder');
+
+    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=empty-folder&includeNested=true');
+    req.flush({ path: 'empty-folder', resources: [], children: [] });
+
+    fixture.detectChanges();
+
+    const emptyState = fixture.nativeElement.querySelector('.empty-state');
+    const icon = fixture.nativeElement.querySelector('.empty-state__icon');
+    const text = fixture.nativeElement.querySelector('.empty-state__text');
+
+    expect(emptyState).toBeTruthy();
+    expect(icon?.textContent).toContain('translate');
+    expect(text?.textContent).toContain('No translations found in this folder.');
+  });
 });
 
 describe('TranslationList - Virtual Scrolling', () => {
@@ -239,9 +286,15 @@ describe('TranslationList - Virtual Scrolling', () => {
     cacheReq.flush({ status: 'ready', error: null });
 
     // Second request for root folders
-    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
-    req.flush({
-      path: '',
+    const rootReq = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
+    rootReq.flush({ path: '', resources: [], children: [] });
+
+    // Select a folder so the viewport renders (empty path shows "select folder" state)
+    store.selectFolder('test-folder');
+
+    const folderReq = httpMock.expectOne('/api/collections/test/resources/tree?path=test-folder&includeNested=true');
+    folderReq.flush({
+      path: 'test-folder',
       resources: [
         { key: 'key1', translations: { en: 'Value 1' }, status: {} },
         { key: 'key2', translations: { en: 'Value 2' }, status: {} },
