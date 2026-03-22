@@ -191,4 +191,52 @@ describe('TranslationMainHeader', () => {
       expect(selectFolderSpy).toHaveBeenCalled();
     });
   });
+
+  describe('handleDensityToggle — toggle animation', () => {
+    it('should immediately set isDensityToggleFlipping to true', () => {
+      component.handleDensityToggle();
+
+      expect(component.isDensityToggleFlipping()).toBe(true);
+    });
+
+    it('should call store.setDensityMode with the opposite mode at the 125ms midpoint', async () => {
+      const store = TestBed.inject(BrowserStore);
+      const setDensityModeSpy = vi.spyOn(store, 'setDensityMode');
+
+      // Initial density mode defaults to 'compact', so next mode should be 'full'
+      component.handleDensityToggle();
+
+      expect(setDensityModeSpy).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(125);
+
+      expect(setDensityModeSpy).toHaveBeenCalledWith('full');
+    });
+
+    it('should reset isDensityToggleFlipping to false after 250ms', async () => {
+      component.handleDensityToggle();
+
+      await vi.advanceTimersByTimeAsync(250);
+
+      expect(component.isDensityToggleFlipping()).toBe(false);
+    });
+
+    it('should pass only the second call value to the store on rapid double-click', async () => {
+      const store = TestBed.inject(BrowserStore);
+      const setDensityModeSpy = vi.spyOn(store, 'setDensityMode');
+
+      // First call (compact → full), cancelled before midpoint
+      component.handleDensityToggle();
+      await vi.advanceTimersByTimeAsync(50);
+
+      // Second call while first is still pending — store.densityMode() is still 'compact'
+      // so next mode is again 'full', but this also cancels the first mid-timeout
+      component.handleDensityToggle();
+      await vi.advanceTimersByTimeAsync(125);
+
+      // Only the second call's scheduled timeout should have fired
+      expect(setDensityModeSpy).toHaveBeenCalledTimes(1);
+      expect(setDensityModeSpy).toHaveBeenCalledWith('full');
+    });
+  });
 });

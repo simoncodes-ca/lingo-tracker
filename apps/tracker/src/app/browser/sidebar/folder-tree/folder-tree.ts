@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  DestroyRef,
   inject,
   input,
   output,
@@ -12,7 +13,6 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
@@ -24,11 +24,16 @@ import { InlineFolderInput } from './inline-folder-input/inline-folder-input';
 import { BrowserStore } from '../../store/browser.store';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
-import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { SearchInput } from '../../../shared/components/search-input';
 import { MatIconModule } from '@angular/material/icon';
 import type { DragData } from '../../types/drag-data';
 import { extractFolderNameFromPath } from '../../utils/folder-path.utils';
+
+const NESTED_ANIMATION_DURATION_MS = 250;
+const SCROLL_EDGE_THRESHOLD_PX = 50;
+const SCROLL_SPEED_PX = 15;
+const SCROLL_INTERVAL_MS = 50;
 
 /**
  * FolderTree component for hierarchical folder navigation.
@@ -49,11 +54,10 @@ import { extractFolderNameFromPath } from '../../utils/folder-path.utils';
     MatIconModule,
     MatProgressSpinnerModule,
     MatButtonModule,
-    MatButtonToggleModule,
     MatTooltipModule,
     FolderNode,
     InlineFolderInput,
-    TranslocoModule,
+    TranslocoPipe,
     SearchInput,
   ],
   templateUrl: './folder-tree.html',
@@ -61,18 +65,18 @@ import { extractFolderNameFromPath } from '../../utils/folder-path.utils';
 })
 export class FolderTree {
   readonly store = inject(BrowserStore);
-  readonly dialog = inject(MatDialog);
+  readonly #dialog = inject(MatDialog);
   readonly TOKENS = TRACKER_TOKENS;
   readonly #transloco = inject(TranslocoService);
 
   /** Name of the collection to browse */
-  collectionName = input.required<string>();
+  readonly collectionName = input.required<string>();
 
   /** Whether the tree is disabled (e.g., during translation search) */
-  disabled = input<boolean>(false);
+  readonly disabled = input<boolean>(false);
 
   /** Active drag data from parent (may come from translation items) */
-  activeDragDataFromParent = input<DragData | null>(null);
+  readonly activeDragDataFromParent = input<DragData | null>(null);
 
   /** Emitted when a folder is selected */
   folderSelected = output<string>();
@@ -85,6 +89,12 @@ export class FolderTree {
 
   /** Signal exposing nested resources visibility from store */
   readonly showNestedResources = this.store.showNestedResources;
+
+  /** Drives the icon flip animation — true for one animation frame when toggled */
+  readonly isNestedToggleFlipping = signal(false);
+
+  #nestedFlipMidTimeout: ReturnType<typeof setTimeout> | undefined;
+  #nestedFlipEndTimeout: ReturnType<typeof setTimeout> | undefined;
 
   /** Signal exposing whether a folder is being added */
   readonly isAddingFolder = this.store.isAddingFolder;
@@ -106,10 +116,15 @@ export class FolderTree {
   });
 
   /** Auto-scroll interval handle */
-  #autoScrollInterval: ReturnType<typeof setInterval> | null = null;
+  #autoScrollInterval: ReturnType<typeof setInterval> | undefined;
+
+  /** Direction currently being auto-scrolled */
+  #autoScrollDirection: 'up' | 'down' | undefined;
 
   /** Last recorded mouse Y position */
   #lastMouseY = 0;
+
+  readonly #destroyRef = inject(DestroyRef);
 
   constructor() {
     // Sync disabled state to store
@@ -120,6 +135,12 @@ export class FolderTree {
     // Debounce search input
     this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed()).subscribe((value) => {
       this.store.setFolderTreeFilter(value);
+    });
+
+    this.#destroyRef.onDestroy(() => {
+      if (this.#nestedFlipMidTimeout) clearTimeout(this.#nestedFlipMidTimeout);
+      if (this.#nestedFlipEndTimeout) clearTimeout(this.#nestedFlipEndTimeout);
+      this.#stopAutoScroll();
     });
   }
 
@@ -149,11 +170,25 @@ export class FolderTree {
   }
 
   /**
-   * Sets the nested resources visibility state.
-   * Calls the store method to update the value and reload the current folder.
+   * Sets the nested resources visibility state and triggers the icon flip animation.
+   * The store update (icon swap) is deferred to the 90° midpoint of the animation
+   * when the element is edge-on and invisible, so the new icon is never seen rotating.
    */
   setNestedResources(value: boolean): void {
-    this.store.setNestedResources(value);
+    if (this.#nestedFlipMidTimeout) clearTimeout(this.#nestedFlipMidTimeout);
+    if (this.#nestedFlipEndTimeout) clearTimeout(this.#nestedFlipEndTimeout);
+
+    this.isNestedToggleFlipping.set(true);
+
+    this.#nestedFlipMidTimeout = setTimeout(() => {
+      this.store.setNestedResources(value);
+      this.#nestedFlipMidTimeout = undefined;
+    }, NESTED_ANIMATION_DURATION_MS / 2);
+
+    this.#nestedFlipEndTimeout = setTimeout(() => {
+      this.isNestedToggleFlipping.set(false);
+      this.#nestedFlipEndTimeout = undefined;
+    }, NESTED_ANIMATION_DURATION_MS);
   }
 
   /**
@@ -189,7 +224,7 @@ export class FolderTree {
     const folderName = extractFolderNameFromPath(folderPath);
 
     import('../../../shared/components/confirmation-dialog/confirmation-dialog').then((m) => {
-      const dialogRef = this.dialog.open(m.ConfirmationDialog, {
+      const dialogRef = this.#dialog.open(m.ConfirmationDialog, {
         data: {
           title: this.#transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETEFOLDER.TITLE),
           message: this.#transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETEFOLDER.MESSAGEX, { name: folderName }),
@@ -279,19 +314,17 @@ export class FolderTree {
     if (!folderList) return;
 
     const rect = folderList.getBoundingClientRect();
-    const scrollThreshold = 50; // pixels from edge to trigger scroll
-
     const distanceFromTop = this.#lastMouseY - rect.top;
     const distanceFromBottom = rect.bottom - this.#lastMouseY;
 
     // Check if near top edge
-    if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
+    if (distanceFromTop < SCROLL_EDGE_THRESHOLD_PX && distanceFromTop > 0) {
       this.#startAutoScroll('up');
       return;
     }
 
     // Check if near bottom edge
-    if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
+    if (distanceFromBottom < SCROLL_EDGE_THRESHOLD_PX && distanceFromBottom > 0) {
       this.#startAutoScroll('down');
       return;
     }
@@ -302,14 +335,14 @@ export class FolderTree {
 
   /**
    * Starts auto-scrolling in the specified direction.
+   * If already scrolling in the same direction, this is a no-op.
+   * If scrolling in the opposite direction, the existing interval is stopped first.
    */
   #startAutoScroll(direction: 'up' | 'down'): void {
-    // Don't start if already scrolling in this direction
-    if (this.#autoScrollInterval) return;
+    if (this.#autoScrollDirection === direction) return;
+    if (this.#autoScrollInterval) this.#stopAutoScroll();
 
-    const scrollSpeed = 15; // pixels per interval
-    const scrollInterval = 50; // milliseconds
-
+    this.#autoScrollDirection = direction;
     this.#autoScrollInterval = setInterval(() => {
       const folderList = this.folderListRef()?.nativeElement;
       if (!folderList) {
@@ -317,18 +350,19 @@ export class FolderTree {
         return;
       }
 
-      const scrollAmount = direction === 'up' ? -scrollSpeed : scrollSpeed;
+      const scrollAmount = direction === 'up' ? -SCROLL_SPEED_PX : SCROLL_SPEED_PX;
       folderList.scrollBy({ top: scrollAmount, behavior: 'auto' });
-    }, scrollInterval);
+    }, SCROLL_INTERVAL_MS);
   }
 
   /**
-   * Stops auto-scrolling.
+   * Stops auto-scrolling and resets direction tracking.
    */
   #stopAutoScroll(): void {
     if (this.#autoScrollInterval) {
       clearInterval(this.#autoScrollInterval);
-      this.#autoScrollInterval = null;
+      this.#autoScrollInterval = undefined;
     }
+    this.#autoScrollDirection = undefined;
   }
 }

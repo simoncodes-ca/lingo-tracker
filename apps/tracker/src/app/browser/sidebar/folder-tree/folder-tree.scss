@@ -1,3 +1,5 @@
+@use '../../../shared/toggle-animation' as *;
+
 :host {
   display: block;
   height: 100%;
@@ -27,41 +29,12 @@
   }
 }
 
-.nested-toggle-group {
-  --mat-button-toggle-height: 40px;
-
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
-  margin-left: auto;
-
-  mat-icon {
-    color: var(--color-text-secondary);
-  }
+.nested-resources-toggle {
+  @extend %toolbar-icon-button;
 }
 
 .add-folder-button {
-  flex-shrink: 0;
-  height: 40px;
-  width: 40px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  background-color: var(--color-surface);
-  color: var(--color-text-secondary);
-  transition: all 150ms ease-in-out;
-
-  &:hover:not(:disabled) {
-    background-color: var(--color-surface-hover);
-    border-color: var(--color-border-strong);
-  }
-
-  &:active:not(:disabled) {
-    background-color: var(--color-surface-active);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  @extend %toolbar-icon-button;
 }
 
 .loading-container {
