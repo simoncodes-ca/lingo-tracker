@@ -9,6 +9,10 @@
     height: 56px;
     padding: 0 var(--spacing-4);
   }
+
+  [data-theme='dark'] & {
+    background-color: #18181b;
+  }
 }
 
 .toolbar-content {
@@ -40,6 +44,16 @@
     width: 50px;
     height: 50px;
     object-fit: contain;
+    border-radius: 20%;
+  }
+
+  .logo-dark {
+    display: none;
+  }
+
+  :host-context([data-theme='dark']) & {
+    .logo-light { display: none; }
+    .logo-dark { display: block; }
   }
 
   .app-title {
