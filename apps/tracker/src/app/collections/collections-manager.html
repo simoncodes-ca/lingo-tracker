@@ -1,136 +1,134 @@
-<div class="collections-manager" role="main">
-  <!-- Page Header -->
-  <header class="page-header">
-    <div class="header-content">
-      <div class="header-text">
-        <h1 class="header-title">{{ TOKENS.COLLECTIONS.TITLE | transloco }}</h1>
+<!-- Page Header -->
+<header class="page-header">
+  <div class="header-content">
+    <div class="header-text">
+      <h1 class="header-title">{{ TOKENS.COLLECTIONS.TITLE | transloco }}</h1>
+    </div>
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      class="add-btn"
+      (click)="openCreateDialog()"
+      [disabled]="store.isLoading()"
+    >
+      <mat-icon>add</mat-icon>
+      {{ TOKENS.COLLECTIONS.ADDBUTTON | transloco }}
+    </button>
+  </div>
+  <div class="header-rule" aria-hidden="true"></div>
+</header>
+
+<!-- Loading State -->
+@if (store.isLoading()) {
+  <div class="loading-container" aria-live="polite" aria-busy="true">
+    <div class="loader-orb">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+    <p>{{ TOKENS.DATA.LOADING | transloco }}</p>
+  </div>
+}
+
+<!-- Error State -->
+@if (store.error() && !store.isLoading()) {
+  <div class="error-container" role="alert" aria-live="assertive">
+    <div class="error-icon-wrap">
+      <mat-icon>error_outline</mat-icon>
+    </div>
+    <p>{{ store.error() }}</p>
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      (click)="store.loadCollections()"
+    >
+      {{ TOKENS.COMMON.ACTIONS.RETRY | transloco }}
+    </button>
+  </div>
+}
+
+<!-- Empty State -->
+@if (!store.hasCollections() && !store.isLoading() && !store.error()) {
+  <div class="empty-state">
+    <div class="empty-visual" aria-hidden="true">
+      <div class="empty-rings">
+        <div class="ring ring--1"></div>
+        <div class="ring ring--2"></div>
+        <div class="ring ring--3"></div>
       </div>
-      <button
-        mat-raised-button
-        color="primary"
-        type="button"
-        class="add-btn"
-        (click)="openCreateDialog()"
-        [disabled]="store.isLoading()"
+      <mat-icon class="empty-icon">translate</mat-icon>
+    </div>
+    <p class="empty-message">{{ TOKENS.COLLECTIONS.EMPTYSTATE.MESSAGE | transloco }}</p>
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      class="add-btn"
+      (click)="openCreateDialog()"
+    >
+      {{ TOKENS.COLLECTIONS.EMPTYSTATE.CTA | transloco }}
+    </button>
+  </div>
+}
+
+<!-- Collections Grid -->
+@if (store.hasCollections() && !store.isLoading()) {
+  <div class="collections-grid">
+    @for (item of store.collectionEntriesWithLocales(); track item.name; let i = $index) {
+      <div
+        class="collection-card"
+        [style.--card-index]="i"
+        tabindex="0"
+        (click)="navigateToBrowser(item.name)"
+        (keydown.enter)="navigateToBrowser(item.name)"
+        (keydown.space)="navigateToBrowser(item.name)"
       >
-        <mat-icon>add</mat-icon>
-        {{ TOKENS.COLLECTIONS.ADDBUTTON | transloco }}
-      </button>
-    </div>
-    <div class="header-rule" aria-hidden="true"></div>
-  </header>
-
-  <!-- Loading State -->
-  @if (store.isLoading()) {
-    <div class="loading-container" aria-live="polite" aria-busy="true">
-      <div class="loader-orb">
-        <mat-spinner diameter="40"></mat-spinner>
-      </div>
-      <p>{{ TOKENS.DATA.LOADING | transloco }}</p>
-    </div>
-  }
-
-  <!-- Error State -->
-  @if (store.error() && !store.isLoading()) {
-    <div class="error-container" role="alert" aria-live="assertive">
-      <div class="error-icon-wrap">
-        <mat-icon>error_outline</mat-icon>
-      </div>
-      <p>{{ store.error() }}</p>
-      <button
-        mat-raised-button
-        color="primary"
-        type="button"
-        (click)="store.loadCollections()"
-      >
-        {{ TOKENS.COMMON.ACTIONS.RETRY | transloco }}
-      </button>
-    </div>
-  }
-
-  <!-- Empty State -->
-  @if (!store.hasCollections() && !store.isLoading() && !store.error()) {
-    <div class="empty-state">
-      <div class="empty-visual" aria-hidden="true">
-        <div class="empty-rings">
-          <div class="ring ring--1"></div>
-          <div class="ring ring--2"></div>
-          <div class="ring ring--3"></div>
-        </div>
-        <mat-icon class="empty-icon">translate</mat-icon>
-      </div>
-      <p class="empty-message">{{ TOKENS.COLLECTIONS.EMPTYSTATE.MESSAGE | transloco }}</p>
-      <button
-        mat-raised-button
-        color="primary"
-        type="button"
-        class="add-btn"
-        (click)="openCreateDialog()"
-      >
-        {{ TOKENS.COLLECTIONS.EMPTYSTATE.CTA | transloco }}
-      </button>
-    </div>
-  }
-
-  <!-- Collections Grid -->
-  @if (store.hasCollections() && !store.isLoading()) {
-    <div class="collections-grid">
-      @for (item of store.collectionEntriesWithLocales(); track item.name; let i = $index) {
-        <div
-          class="collection-card"
-          [style.--card-index]="i"
-          tabindex="0"
-          (click)="navigateToBrowser(item.name)"
-          (keydown.enter)="navigateToBrowser(item.name)"
-          (keydown.space)="navigateToBrowser(item.name)"
-        >
-          <div class="card-accent" aria-hidden="true"></div>
-          <div class="card-inner">
-            <div class="card-header">
-              <div class="card-title">
-                <div class="card-icon-wrap">
-                  <mat-icon>folder</mat-icon>
-                </div>
-                <h3 class="collection-name">{{ item.name }}</h3>
+        <div class="card-accent" aria-hidden="true"></div>
+        <div class="card-inner">
+          <div class="card-header">
+            <div class="card-title">
+              <div class="card-icon-wrap">
+                <mat-icon>folder</mat-icon>
               </div>
-              <div class="card-actions">
-                <button
-                  mat-icon-button
-                  type="button"
-                  [matMenuTriggerFor]="menu"
-                  [attr.aria-label]="TOKENS.COLLECTIONS.CARD.MOREACTIONSARIALABEL | transloco"
-                  (click)="$event.stopPropagation()"
-                >
-                  <mat-icon>more_vert</mat-icon>
+              <h3 class="collection-name">{{ item.name }}</h3>
+            </div>
+            <div class="card-actions">
+              <button
+                mat-icon-button
+                type="button"
+                [matMenuTriggerFor]="menu"
+                [attr.aria-label]="TOKENS.COLLECTIONS.CARD.MOREACTIONSARIALABEL | transloco"
+                (click)="$event.stopPropagation()"
+              >
+                <mat-icon>more_vert</mat-icon>
+              </button>
+
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="openEditDialog(item.name)">
+                  <mat-icon>edit</mat-icon>
+                  <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
                 </button>
-
-                <mat-menu #menu="matMenu">
-                  <button mat-menu-item (click)="openEditDialog(item.name)">
-                    <mat-icon>edit</mat-icon>
-                    <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
-                  </button>
-                  <button mat-menu-item (click)="openDeleteDialog(item.name)">
-                    <mat-icon>delete</mat-icon>
-                    <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
-                  </button>
-                </mat-menu>
-              </div>
-            </div>
-            <div class="card-content">
-              <p class="folder-path">
-                <mat-icon class="path-icon">subdirectory_arrow_right</mat-icon>
-                {{ item.config.translationsFolder }}
-              </p>
-              <div class="card-locales">
-                <app-tag-list [tags]="item.locales" />
-              </div>
-            </div>
-            <div class="card-arrow" aria-hidden="true">
-              <mat-icon>arrow_forward</mat-icon>
+                <button mat-menu-item (click)="openDeleteDialog(item.name)">
+                  <mat-icon>delete</mat-icon>
+                  <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
+                </button>
+              </mat-menu>
             </div>
           </div>
+          <div class="card-content">
+            <p class="folder-path">
+              <mat-icon class="path-icon">subdirectory_arrow_right</mat-icon>
+              {{ item.config.translationsFolder }}
+            </p>
+            <div class="card-locales">
+              <app-tag-list [tags]="item.locales" />
+            </div>
+          </div>
+          <div class="card-arrow" aria-hidden="true">
+            <mat-icon>arrow_forward</mat-icon>
+          </div>
         </div>
-      }
-    </div>
-  }
-</div>
+      </div>
+    }
+  </div>
+}

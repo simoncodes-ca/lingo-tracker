@@ -13,7 +13,7 @@
   padding: var(--spacing-2) var(--spacing-3);
   cursor: pointer;
   border-radius: var(--border-radius-sm);
-  transition: background-color 0.15s ease;
+  transition: background-color var(--transition-fast);
   user-select: none;
   position: relative;
 
@@ -64,18 +64,6 @@
     padding: 0;
     flex-shrink: 0;
 
-    ::ng-deep {
-      .mat-mdc-button-touch-target,
-      .mat-mdc-button-persistent-ripple {
-        height: 24px;
-        width: 24px;
-      }
-
-      .mat-mdc-button-persistent-ripple::before {
-        border-radius: 50%;
-      }
-    }
-
     mat-icon {
       font-size: 20px;
       width: 20px;
@@ -99,7 +87,7 @@
     height: 20px;
     color: var(--color-text-secondary);
     flex-shrink: 0;
-    transition: color 0.15s ease;
+    transition: color var(--transition-fast);
   }
 
   // Folder name
@@ -110,7 +98,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    transition: color 0.15s ease, font-weight 0.15s ease;
+    transition: color var(--transition-fast);
   }
 
   // Checkmark icon for selected state
@@ -132,19 +120,7 @@
     flex-shrink: 0;
     margin-left: auto;
     opacity: 0;
-    transition: opacity 0.15s ease;
-
-    ::ng-deep {
-      .mat-mdc-button-touch-target,
-      .mat-mdc-button-persistent-ripple {
-        height: 24px;
-        width: 24px;
-      }
-
-      .mat-mdc-button-persistent-ripple::before {
-        border-radius: 50%;
-      }
-    }
+    transition: opacity var(--transition-fast);
 
     mat-icon {
       font-size: 18px;
@@ -169,4 +145,20 @@
   margin-left: var(--spacing-4);
   padding-left: var(--spacing-2);
   border-left: 1px solid var(--color-border);
+}
+
+// Deep-piercing overrides for Material button internals, scoped to :host
+:host ::ng-deep .folder-row {
+  .expand-button,
+  .add-button {
+    .mat-mdc-button-touch-target,
+    .mat-mdc-button-persistent-ripple {
+      height: 24px;
+      width: 24px;
+    }
+
+    .mat-mdc-button-persistent-ripple::before {
+      border-radius: 50%;
+    }
+  }
 }

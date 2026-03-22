@@ -23,6 +23,19 @@
   padding: var(--spacing-3);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
+  position: relative;
+
+  // Subtle watercolor wash behind sidebar header
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    background:
+      radial-gradient(ellipse 180px 50px at 30% 50%, var(--wc-sage) 0%, transparent 70%),
+      radial-gradient(ellipse 140px 40px at 70% 50%, var(--wc-amber) 0%, transparent 70%);
+    pointer-events: none;
+  }
 
   app-search-input {
     width: 100%;
@@ -117,7 +130,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--color-border);
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
 
     &:hover {
       background: var(--color-border-strong);

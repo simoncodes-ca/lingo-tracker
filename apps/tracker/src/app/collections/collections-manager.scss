@@ -1,9 +1,6 @@
 // =============================================================================
-// Collections Manager — "Luminous Depth" Design
+// Collections Manager — Watercolor / Misty Mountain Design
 // =============================================================================
-
-// Card accent hue rotation: each card shifts 40deg for a prismatic spectrum
-$card-hue-step: 40deg;
 
 :host {
   display: block;
@@ -11,7 +8,9 @@ $card-hue-step: 40deg;
   margin: 0 auto;
   padding: var(--spacing-8) var(--spacing-6);
   position: relative;
+  min-height: 100%;
 }
+
 
 // ---------------------------------------------------------------------------
 // Page header
@@ -37,28 +36,29 @@ $card-hue-step: 40deg;
 }
 
 .header-title {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-family: var(--font-family-body);
+  color: var(--color-text-primary);
+  font-size: clamp(2.5rem, 6vw, 4rem);
   font-weight: var(--font-weight-bold);
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  letter-spacing: -0.01em;
+  line-height: var(--line-height-display);
   margin: 0;
 }
 
 .header-rule {
   background: linear-gradient(
     90deg,
-    var(--color-primary) 0%,
-    var(--color-secondary) 50%,
+    var(--wc-coral) 0%,
+    var(--wc-amber) 25%,
+    var(--wc-sky) 50%,
+    var(--wc-lavender) 75%,
     transparent 100%
   );
   border-radius: var(--border-radius-full);
   height: 3px;
   margin-top: var(--spacing-4);
   width: 100%;
+  opacity: 0.6;
 }
 
 .add-btn {
@@ -68,12 +68,14 @@ $card-hue-step: 40deg;
   padding: var(--spacing-2) var(--spacing-6) !important;
   transition: box-shadow var(--transition-normal), transform var(--transition-normal) !important;
 
-  mat-icon {
+  mat-icon,
+  .mat-icon {
     margin-right: var(--spacing-1);
+    color: currentColor !important;
   }
 
   &:hover:not([disabled]) {
-    box-shadow: 0 4px 20px color-mix(in srgb, var(--color-primary) 40%, transparent) !important;
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--color-primary) 30%, transparent) !important;
     transform: translateY(-1px);
   }
 }
@@ -188,7 +190,7 @@ $card-hue-step: 40deg;
 }
 
 .ring {
-  border: 2px solid var(--color-primary);
+  border: 2px solid var(--wc-coral);
   border-radius: 50%;
   left: 50%;
   position: absolute;
@@ -196,24 +198,26 @@ $card-hue-step: 40deg;
   transform: translate(-50%, -50%);
 
   &--1 {
+    --ring-opacity: 0.3;
     animation: ring-pulse 3s ease-in-out infinite;
     height: 80px;
-    opacity: 0.3;
     width: 80px;
   }
 
   &--2 {
+    --ring-opacity: 0.15;
     animation: ring-pulse 3s ease-in-out 0.5s infinite;
     height: 120px;
-    opacity: 0.15;
     width: 120px;
+    border-color: var(--wc-sky);
   }
 
   &--3 {
+    --ring-opacity: 0.07;
     animation: ring-pulse 3s ease-in-out 1s infinite;
     height: 160px;
-    opacity: 0.07;
     width: 160px;
+    border-color: var(--wc-lavender);
   }
 }
 
@@ -224,7 +228,8 @@ $card-hue-step: 40deg;
 
 .empty-message {
   color: var(--color-text-secondary);
-  font-size: var(--font-size-lg);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-2xl);
   margin: 0;
   max-width: 400px;
   text-align: center;
@@ -253,13 +258,9 @@ $card-hue-step: 40deg;
 }
 
 // ---------------------------------------------------------------------------
-// Collection card
+// Collection card — watercolor style
 // ---------------------------------------------------------------------------
 .collection-card {
-  --_hue: calc(200deg + var(--card-index, 0) * #{$card-hue-step});
-  --_accent: hsl(var(--_hue) 70% 55%);
-  --_accent-dim: hsl(var(--_hue) 60% 40%);
-  --_accent-glow: hsl(var(--_hue) 80% 60% / 0.15);
 
   animation: card-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   animation-delay: calc(var(--card-index, 0) * 60ms);
@@ -271,7 +272,7 @@ $card-hue-step: 40deg;
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
 
   &:hover {
-    box-shadow: 0 8px 32px var(--_accent-glow), var(--shadow-lg);
+    box-shadow: var(--shadow-lg);
     transform: translateY(-4px);
 
     .card-accent {
@@ -284,17 +285,17 @@ $card-hue-step: 40deg;
     }
 
     .card-icon-wrap {
-      background: var(--_accent);
+      background: var(--color-primary);
       border-color: transparent;
 
       mat-icon {
-        color: #fff;
+        color: var(--color-text-inverse);
       }
     }
   }
 
   &:focus-visible {
-    outline: 2px solid var(--_accent);
+    outline: 2px solid var(--color-primary);
   }
 }
 
@@ -306,7 +307,7 @@ $card-hue-step: 40deg;
 }
 
 .card-accent {
-  background: linear-gradient(135deg, var(--_accent), var(--_accent-dim));
+  background: var(--color-primary);
   border-radius: var(--border-radius-xl);
   inset: 0;
   opacity: 0;
@@ -327,7 +328,7 @@ $card-hue-step: 40deg;
 
 .card-inner {
   backdrop-filter: blur(12px);
-  background: color-mix(in srgb, var(--color-background) 85%, transparent);
+  background: color-mix(in srgb, var(--color-background) 88%, transparent);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-xl);
   display: flex;
@@ -337,9 +338,10 @@ $card-hue-step: 40deg;
   position: relative;
   transition: border-color var(--transition-normal), background var(--transition-normal);
   z-index: 1;
+  overflow: hidden;
 
   .collection-card:hover & {
-    border-color: color-mix(in srgb, var(--_accent) 30%, var(--color-border));
+    border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
   }
 }
 
@@ -349,6 +351,8 @@ $card-hue-step: 40deg;
   gap: var(--spacing-1);
   justify-content: space-between;
   margin-bottom: var(--spacing-3);
+  position: relative;
+  z-index: 1;
 }
 
 .card-title {
@@ -361,8 +365,8 @@ $card-hue-step: 40deg;
 
 .card-icon-wrap {
   align-items: center;
-  background: color-mix(in srgb, var(--_accent) 12%, transparent);
-  border: 1.5px solid color-mix(in srgb, var(--_accent) 25%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
   border-radius: var(--border-radius-lg);
   display: flex;
   flex-shrink: 0;
@@ -372,7 +376,7 @@ $card-hue-step: 40deg;
   width: 40px;
 
   mat-icon {
-    color: var(--_accent);
+    color: var(--color-primary);
     font-size: 20px;
     height: 20px;
     transition: color var(--transition-normal);
@@ -383,24 +387,29 @@ $card-hue-step: 40deg;
 .collection-name {
   color: var(--color-text-primary);
   flex: 1;
-  font-size: var(--font-size-xl);
+  font-family: var(--font-family-body);
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
   font-weight: var(--font-weight-bold);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   line-height: var(--line-height-tight);
   margin: 0;
   word-break: break-word;
+  position: relative;
+  z-index: 1;
 }
 
 .card-actions {
   flex-shrink: 0;
   margin: calc(-1 * var(--spacing-1)) calc(-1 * var(--spacing-2)) 0 0;
+  position: relative;
+  z-index: 1;
 
   button {
-    opacity: 0.5;
-    transition: opacity var(--transition-fast) !important;
+    color: var(--color-text-tertiary) !important;
+    transition: color var(--transition-fast) !important;
 
     &:hover {
-      opacity: 1;
+      color: var(--color-text-secondary) !important;
     }
   }
 }
@@ -410,16 +419,19 @@ $card-hue-step: 40deg;
   flex: 1;
   flex-direction: column;
   gap: var(--spacing-3);
+  position: relative;
+  z-index: 1;
 }
 
 .folder-path {
   align-items: center;
   color: var(--color-text-tertiary);
   display: flex;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
   gap: var(--spacing-1);
   margin: 0;
+  padding-top: var(--spacing-2);
   word-break: break-all;
 
   .path-icon {
@@ -434,6 +446,8 @@ $card-hue-step: 40deg;
 
 .card-locales {
   margin-top: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .card-arrow {
@@ -448,7 +462,7 @@ $card-hue-step: 40deg;
   z-index: 2;
 
   mat-icon {
-    color: var(--_accent);
+    color: var(--color-primary);
     font-size: 18px;
     height: 18px;
     width: 18px;
@@ -465,6 +479,18 @@ $card-hue-step: 40deg;
 
   .card-accent::after {
     background: var(--color-background);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :host-context(:root:not([data-theme='light']):not([data-theme='dark'])) {
+    .card-inner {
+      background: color-mix(in srgb, var(--color-background) 70%, transparent);
+    }
+
+    .card-accent::after {
+      background: var(--color-background);
+    }
   }
 }
 

@@ -58,13 +58,13 @@
 }
 
 .status-chip {
-  background-color: var(--color-background-subtle);
-  border-radius: 999px;
-  color: var(--color-text-secondary);
+  background-color: var(--color-background-muted);
+  border-radius: var(--border-radius-full);
+  color: var(--color-text-primary);
   flex-shrink: 0;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  padding: 2px 8px;
+  padding: 2px var(--spacing-2);
   min-width: 80px;
 }
 
@@ -72,7 +72,7 @@
   align-self: center;
   color: var(--color-text-secondary);
   flex: 1;
-  font-family: var(--font-mono, 'Roboto Mono', monospace);
+  font-family: var(--font-family-mono);
   font-size: var(--font-size-sm);
 
   &.full {

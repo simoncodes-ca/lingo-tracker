@@ -19,36 +19,75 @@ body {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background);
+
+  // Watercolor paper grain texture overlay
+  &::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: var(--wc-paper-grain);
+    pointer-events: none;
+    z-index: 1;
+  }
 }
 
 code,
 pre {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-family-mono);
 }
 
 // Focus visible styles for keyboard navigation
 *:focus-visible {
-  outline: 2px solid var(--focus-ring-color, #2563eb);
+  outline: 2px solid var(--focus-ring-color);
   outline-offset: 2px;
 }
 
 // Search term highlighting
 mark.search-highlight {
-  background-color: var(--color-highlight, #fef08a);
-  color: var(--color-highlight-text, #18181b);
+  background-color: var(--color-highlight);
+  color: var(--color-highlight-text);
   padding: 0 2px;
-  border-radius: var(--border-radius-md, 0.375rem);
-  font-weight: var(--font-weight-medium, 500);
+  border-radius: var(--border-radius-md);
+  font-weight: var(--font-weight-medium);
   text-decoration: none;
+}
+
+// Translation editor dialog container styling
+// Placed globally because Angular CDK appends dialogs outside the component host.
+.mat-mdc-dialog-container:has(app-translation-editor-dialog) {
+  padding: 0;
+  border-top: 3px solid var(--color-primary);
+  box-shadow: var(--shadow-lg);
 }
 
 // Make overlay backdrops slightly darker
 .cdk-overlay-backdrop,
 .cdk-overlay-dark-backdrop {
-  background: rgba(0, 0, 0, 0.4) !important;
+  background: color-mix(in srgb, var(--color-neutral-900) 40%, transparent) !important;
+}
+
+// Ensure Material menus use theme colors in dark mode
+[data-theme='dark'] .mat-mdc-menu-panel {
+  background: var(--color-background-muted) !important;
+  color: var(--color-text-primary) !important;
+
+  .mat-mdc-menu-item {
+    color: var(--color-text-primary) !important;
+
+    .mat-icon {
+      color: var(--color-text-secondary) !important;
+    }
+  }
+}
+
+// Ensure mat-icon inside raised buttons matches the button text color
+.mat-mdc-raised-button .mat-icon,
+.mat-mdc-raised-button mat-icon {
+  color: currentColor !important;
 }
 
 // Translation rollup overlay animation

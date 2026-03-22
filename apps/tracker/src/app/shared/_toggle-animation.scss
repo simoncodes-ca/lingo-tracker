@@ -38,17 +38,17 @@
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-sm);
-  background-color: var(--color-surface);
+  background-color: var(--color-background);
   color: var(--color-text-secondary);
-  transition: all 150ms ease-in-out;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 
   &:hover:not(:disabled) {
-    background-color: var(--color-surface-hover);
+    background-color: var(--color-background-muted);
     border-color: var(--color-border-strong);
   }
 
   &:active:not(:disabled) {
-    background-color: var(--color-surface-active);
+    background-color: var(--color-background-subtle);
   }
 
   &:disabled {

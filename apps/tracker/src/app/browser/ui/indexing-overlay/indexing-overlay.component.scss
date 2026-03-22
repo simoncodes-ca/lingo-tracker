@@ -8,7 +8,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -26,27 +26,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
 }
 
 .indexing-message {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   text-align: center;
+  color: var(--color-text-primary);
 }
 
 .error-title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-medium);
   text-align: center;
-  color: var(--mat-error);
+  color: var(--color-error);
 }
 
 .error-message {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   text-align: center;
-  color: var(--mat-text-secondary);
+  color: var(--color-text-secondary);
 }

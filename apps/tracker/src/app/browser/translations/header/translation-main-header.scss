@@ -12,6 +12,19 @@
     align-items: center;
     gap: var(--spacing-3);
     padding: var(--spacing-3) var(--spacing-4);
+    position: relative;
+
+    // Faint watercolor wash
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.05;
+      background:
+        radial-gradient(ellipse 200px 60px at 80% 50%, var(--wc-sky) 0%, transparent 70%),
+        radial-gradient(ellipse 150px 50px at 20% 50%, var(--wc-lavender) 0%, transparent 70%);
+      pointer-events: none;
+    }
 
     mat-icon {
       color: var(--color-text-secondary);

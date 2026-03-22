@@ -39,6 +39,7 @@ import { TagList } from '../shared/tag-list/tag-list.component';
   ],
   templateUrl: './collections-manager.html',
   styleUrl: './collections-manager.scss',
+  host: { role: 'main' },
 })
 export class CollectionsManager {
   readonly store = inject(CollectionsStore);

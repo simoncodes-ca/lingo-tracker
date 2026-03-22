@@ -1,9 +1,9 @@
 .status-filter-trigger {
   align-items: center;
   display: flex;
-  font-size: 14px;
-  gap: 4px;
-  padding: 8px 12px;
+  font-size: var(--font-size-sm);
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-3);
 
   .filter-icon {
     font-size: 18px;
@@ -31,7 +31,7 @@
   .arrow-icon {
     font-size: 20px;
     height: 20px;
-    margin-left: 4px;
+    margin-left: var(--spacing-1);
     width: 20px;
   }
 }
@@ -40,13 +40,13 @@
   .menu-header {
     display: flex;
     justify-content: space-between;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--mat-divider-color, rgba(0, 0, 0, 0.12));
-    gap: 8px;
+    padding: var(--spacing-2) var(--spacing-3);
+    border-bottom: 1px solid var(--mat-divider-color, var(--color-border));
+    gap: var(--spacing-2);
 
     .action-button {
-      font-size: 12px;
-      padding: 4px 8px;
+      font-size: var(--font-size-xs);
+      padding: var(--spacing-1) var(--spacing-2);
       min-width: auto;
     }
   }
@@ -54,7 +54,7 @@
   .status-option {
     align-items: center;
     display: flex;
-    gap: 8px;
+    gap: var(--spacing-2);
 
     .status-checkbox {
       flex-shrink: 0;

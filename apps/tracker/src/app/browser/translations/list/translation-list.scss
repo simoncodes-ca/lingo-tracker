@@ -65,7 +65,7 @@
   span {
     color: var(--color-text-primary);
     flex: 1;
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
   }
 
   button {
@@ -78,16 +78,16 @@
   height: 100%;
   background-color: var(--color-background);
   box-sizing: border-box;
+}
 
-  /**
-   * Virtual scroll content wrapper styling:
-   * - Padding on all sides creates a contained scrollable area
-   * - Left/right padding provides margin for the cards
-   * - Top/bottom padding provides spacing before first and after last items
-   * - Using box-sizing: border-box ensures padding doesn't add to width
-   */
-  ::ng-deep .cdk-virtual-scroll-content-wrapper {
-    padding: var(--spacing-4) var(--spacing-6);
-    box-sizing: border-box;
-  }
+/**
+ * Virtual scroll content wrapper styling:
+ * - Padding on all sides creates a contained scrollable area
+ * - Left/right padding provides margin for the cards
+ * - Top/bottom padding provides spacing before first and after last items
+ * - Using box-sizing: border-box ensures padding doesn't add to width
+ */
+:host ::ng-deep .viewport .cdk-virtual-scroll-content-wrapper {
+  padding: var(--spacing-4) var(--spacing-6);
+  box-sizing: border-box;
 }

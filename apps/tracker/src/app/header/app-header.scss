@@ -4,14 +4,19 @@
   border-bottom: 1px solid var(--color-border);
   height: 64px;
   padding: 0 var(--spacing-6);
-
   @media (max-width: 768px) {
     height: 56px;
     padding: 0 var(--spacing-4);
   }
 
   [data-theme='dark'] & {
-    background-color: #18181b;
+    background-color: var(--color-background-subtle);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :host-context(:root:not([data-theme='light']):not([data-theme='dark'])) & {
+      background-color: var(--color-background-subtle);
+    }
   }
 }
 
@@ -56,17 +61,25 @@
     .logo-dark { display: block; }
   }
 
+  @media (prefers-color-scheme: dark) {
+    :host-context(:root:not([data-theme='light']):not([data-theme='dark'])) & {
+      .logo-light { display: none; }
+      .logo-dark { display: block; }
+    }
+  }
+
   .app-title {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-family-brush);
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    font-weight: var(--font-weight-bold);
     margin: 0;
     color: var(--color-text-primary);
     display: inline-block;
-    transition: transform 150ms ease-out;
+    transition: transform var(--transition-fast);
     transform-origin: left center;
 
     @media (max-width: 768px) {
-      font-size: var(--font-size-lg);
+      font-size: var(--font-size-xl);
     }
   }
 }
@@ -74,7 +87,7 @@
 .back-button {
   color: var(--color-text-tertiary);
   flex-shrink: 0;
-  margin-left: -4px;
+  margin-left: calc(-1 * var(--spacing-1));
   margin-right: var(--spacing-2);
 
   &:hover {
@@ -95,11 +108,11 @@
 }
 
 // Theme menu styles
-::ng-deep .mat-mdc-menu-panel {
+:host ::ng-deep .mat-mdc-menu-panel {
   min-width: 180px;
 }
 
-::ng-deep .mat-mdc-menu-item {
+:host ::ng-deep .mat-mdc-menu-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-3);
@@ -179,7 +192,7 @@
 .collection-name {
   flex-shrink: 0;
   max-width: 240px;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   white-space: nowrap;
@@ -194,7 +207,7 @@
 .collection-folder {
   flex: 1 1 0;
   min-width: 0;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
   white-space: nowrap;
   overflow: hidden;
@@ -218,9 +231,9 @@
   padding: var(--spacing-1) var(--spacing-3);
   border-radius: var(--border-radius-full);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  background: var(--color-primary-alpha-10, rgba(63, 81, 181, 0.1));
-  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  background: color-mix(in srgb, var(--wc-sky) 25%, transparent);
+  color: var(--color-text-primary);
   white-space: nowrap;
 }
 
