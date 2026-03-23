@@ -31,6 +31,7 @@ import type {
 import { BrowserApiService } from '../services/browser-api.service';
 import { sortTranslations } from '../translations/utils/sort-translations';
 import { extractFolderNameFromPath, extractParentFolderPath, splitResolvedKey } from '../utils/folder-path.utils';
+import type { DensityMode } from '../types/density-mode';
 
 /**
  * Inserts a new folder into the tree at the specified parent path.
@@ -138,7 +139,7 @@ function rebaseFolderPaths(folder: FolderNodeDto, newParentPath: string): Folder
 }
 
 interface ViewPreferences {
-  densityMode: 'compact' | 'full';
+  densityMode: DensityMode;
   selectedLocales: string[];
   showNestedResources: boolean;
   compactLocale: string | null;
@@ -179,7 +180,7 @@ interface BrowserState {
   isSearchLoading: boolean;
   searchError: string | null;
 
-  densityMode: 'compact' | 'full';
+  densityMode: DensityMode;
   viewPreferences: Map<string, ViewPreferences>;
   compactLocale: string | null;
   compactLocaleManuallyChanged: boolean;
@@ -1269,7 +1270,7 @@ export const BrowserStore = signalStore(
         store.checkCacheStatus();
       },
 
-      setDensityMode(mode: 'compact' | 'full'): void {
+      setDensityMode(mode: DensityMode): void {
         const currentDensityMode = store.densityMode();
         const currentSelected = store.selectedLocales();
         const wasCompactMode = currentDensityMode === 'compact';

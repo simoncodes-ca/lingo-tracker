@@ -20,6 +20,7 @@ interface CollectionNormalizeResult {
   collectionName: string;
   entriesProcessed: number;
   localesAdded: number;
+  valuesConverted: number;
   filesCreated: number;
   filesUpdated: number;
   foldersRemoved: number;
@@ -31,6 +32,7 @@ interface NormalizeCommandResult {
     collectionsProcessed: number;
     entriesProcessed: number;
     localesAdded: number;
+    valuesConverted: number;
     filesCreated: number;
     filesUpdated: number;
     foldersRemoved: number;
@@ -92,6 +94,7 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
         collectionName,
         entriesProcessed: result.entriesProcessed,
         localesAdded: result.localesAdded,
+        valuesConverted: result.valuesConverted,
         filesCreated: result.filesCreated,
         filesUpdated: result.filesUpdated,
         foldersRemoved: result.foldersRemoved,
@@ -100,6 +103,7 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
       if (!options.json) {
         ConsoleFormatter.indent(`✅ Entries processed: ${result.entriesProcessed}`);
         ConsoleFormatter.indent(`✅ Locales added: ${result.localesAdded}`);
+        ConsoleFormatter.indent(`✅ Values converted to ICU: ${result.valuesConverted}`);
         ConsoleFormatter.indent(`✅ Files created: ${result.filesCreated}`);
         ConsoleFormatter.indent(`✅ Files updated: ${result.filesUpdated}`);
         ConsoleFormatter.indent(`✅ Folders removed: ${result.foldersRemoved}`);
@@ -117,6 +121,7 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
       ...aggregateNumericFields(collectionResults, [
         'entriesProcessed',
         'localesAdded',
+        'valuesConverted',
         'filesCreated',
         'filesUpdated',
         'foldersRemoved',
@@ -136,6 +141,7 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
       ...aggregateNumericFields(collectionResults, [
         'entriesProcessed',
         'localesAdded',
+        'valuesConverted',
         'filesCreated',
         'filesUpdated',
         'foldersRemoved',
@@ -146,6 +152,7 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
     ConsoleFormatter.section(`Summary (${totals.collectionsProcessed} collections)`);
     ConsoleFormatter.keyValue('Total entries processed', totals.entriesProcessed);
     ConsoleFormatter.keyValue('Total locales added', totals.localesAdded);
+    ConsoleFormatter.keyValue('Total values converted to ICU', totals.valuesConverted);
     ConsoleFormatter.keyValue('Total files created', totals.filesCreated);
     ConsoleFormatter.keyValue('Total files updated', totals.filesUpdated);
     ConsoleFormatter.keyValue('Total folders removed', totals.foldersRemoved);

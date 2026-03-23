@@ -28,18 +28,18 @@
     "fr-ca": "Base"
   },
   "localeTranslationX": {
-    "source": "{{ locale }} Translation",
+    "source": "{locale} Translation",
     "comment": "Label for locale translation input field, locale is uppercased locale code",
     "tags": ["browser"],
-    "es": "{{ locale }} Traducción",
-    "fr-ca": "{{ locale }} Traduction"
+    "es": "{locale} Traducción",
+    "fr-ca": "{locale} Traduction"
   },
   "enterTranslationX": {
-    "source": "Enter {{ locale }} translation...",
+    "source": "Enter {locale} translation...",
     "comment": "Placeholder for locale translation input field",
     "tags": ["browser"],
-    "es": "Ingrese la traducción de {{ locale }}...",
-    "fr-ca": "Entrez la traduction {{ locale }}..."
+    "es": "Ingrese la traducción de {locale}...",
+    "fr-ca": "Entrez la traduction {locale}..."
   },
   "baseValueRequired": {
     "source": "Base translation is required",
@@ -70,11 +70,11 @@
     "fr-ca": "Fournir un contexte ou des instructions aux traducteurs"
   },
   "otherLocalesToggleX": {
-    "source": "Add translations for other locales ({{ count }} available)",
+    "source": "Add translations for other locales ({count} available)",
     "comment": "Toggle label showing number of additional locales",
     "tags": ["browser"],
-    "es": "Agregar traducciones para otras configuraciones regionales ({{ count }} disponible)",
-    "fr-ca": "Ajouter des traductions pour d'autres langues ({{ count }} disponibles)"
+    "es": "Agregar traducciones para otras configuraciones regionales ({count} disponible)",
+    "fr-ca": "Ajouter des traductions pour d'autres langues ({count} disponibles)"
   },
   "status": {
     "source": "Status",

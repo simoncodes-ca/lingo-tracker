@@ -380,6 +380,117 @@ describe('Normalize Entry', () => {
       expect(result.changes.localesAdded).toBe(2);
     });
 
+    it('should convert Transloco syntax in source value to ICU format', () => {
+      const resourceEntry: ResourceEntry = {
+        source: 'Hello {{ name }}!',
+        'fr-ca': 'Bonjour {{ name }} !',
+      };
+
+      const metadata: ResourceEntryMetadata = {
+        en: { checksum: calculateChecksum('Hello {{ name }}!') },
+        'fr-ca': {
+          checksum: calculateChecksum('Bonjour {{ name }} !'),
+          baseChecksum: calculateChecksum('Hello {{ name }}!'),
+          status: 'translated',
+        },
+      };
+
+      const params: NormalizeEntryParams = {
+        entryKey: 'greeting',
+        resourceEntry,
+        metadata,
+        baseLocale,
+        locales,
+      };
+
+      const result = normalizeEntry(params);
+
+      expect(result.resourceEntry.source).toBe('Hello {name}!');
+      expect(result.resourceEntry['fr-ca']).toBe('Bonjour {name} !');
+      expect(result.changes.valuesConverted).toBe(2);
+    });
+
+    it('should count only values that actually changed in valuesConverted', () => {
+      const resourceEntry: ResourceEntry = {
+        source: 'Cancel', // No Transloco syntax — no conversion needed
+        'fr-ca': 'Annuler {{ count }}', // Has Transloco syntax
+      };
+
+      const metadata: ResourceEntryMetadata = {
+        en: { checksum: calculateChecksum('Cancel') },
+        'fr-ca': {
+          checksum: calculateChecksum('Annuler {{ count }}'),
+          baseChecksum: calculateChecksum('Cancel'),
+          status: 'translated',
+        },
+      };
+
+      const params: NormalizeEntryParams = {
+        entryKey: 'cancel',
+        resourceEntry,
+        metadata,
+        baseLocale,
+        locales,
+      };
+
+      const result = normalizeEntry(params);
+
+      expect(result.resourceEntry.source).toBe('Cancel');
+      expect(result.resourceEntry['fr-ca']).toBe('Annuler {count}');
+      expect(result.changes.valuesConverted).toBe(1);
+    });
+
+    it('should return valuesConverted of 0 when no Transloco syntax is present', () => {
+      const resourceEntry: ResourceEntry = {
+        source: 'Cancel',
+        'fr-ca': 'Annuler',
+      };
+
+      const metadata: ResourceEntryMetadata = {
+        en: { checksum: calculateChecksum('Cancel') },
+        'fr-ca': {
+          checksum: calculateChecksum('Annuler'),
+          baseChecksum: calculateChecksum('Cancel'),
+          status: 'translated',
+        },
+      };
+
+      const params: NormalizeEntryParams = {
+        entryKey: 'cancel',
+        resourceEntry,
+        metadata,
+        baseLocale,
+        locales,
+      };
+
+      const result = normalizeEntry(params);
+
+      expect(result.changes.valuesConverted).toBe(0);
+    });
+
+    it('should recompute checksums against ICU-converted values', () => {
+      const translocoSource = 'Hello {{ name }}!';
+      const icuSource = 'Hello {name}!';
+
+      const resourceEntry: ResourceEntry = {
+        source: translocoSource,
+      };
+
+      const metadata: ResourceEntryMetadata = {};
+
+      const params: NormalizeEntryParams = {
+        entryKey: 'greeting',
+        resourceEntry,
+        metadata,
+        baseLocale,
+        locales,
+      };
+
+      const result = normalizeEntry(params);
+
+      expect(result.metadata[baseLocale].checksum).toBe(calculateChecksum(icuSource));
+    });
+
     it('should handle multiple locales being added simultaneously', () => {
       const resourceEntry: ResourceEntry = {
         source: 'Submit',

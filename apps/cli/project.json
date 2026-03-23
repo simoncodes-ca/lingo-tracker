@@ -26,22 +26,13 @@
         ],
         "generatePackageJson": true,
         "skipTypeCheck": true,
-        "esbuildOptions": {
-          "sourcemap": true,
-          "outExtension": {
-            ".js": ".js"
-          }
-        }
+        "esbuildConfig": "apps/cli/esbuild.config.js",
+        "sourcemap": true
       },
       "configurations": {
         "development": {},
         "production": {
-          "esbuildOptions": {
-            "sourcemap": false,
-            "outExtension": {
-              ".js": ".js"
-            }
-          }
+          "sourcemap": false
         }
       }
     },

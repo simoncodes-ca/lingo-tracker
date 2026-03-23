@@ -430,11 +430,16 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
       return;
     }
 
-    const filledTranslations = formValue.translations.filter((translation) => translation.value.trim().length > 0);
+    const filledTranslations = formValue.translations.filter((translation) => {
+      const hasValue = translation.value.trim().length > 0;
+      const originalStatus = this.data.resource?.status[translation.locale] ?? 'new';
+      const hasStatusChange = translation.status !== originalStatus;
+      return hasValue || hasStatusChange;
+    });
 
-    const locales: Record<string, { value: string }> = {};
+    const locales: Record<string, { value: string; status: TranslationStatus }> = {};
     filledTranslations.forEach((translation) => {
-      locales[translation.locale] = { value: translation.value };
+      locales[translation.locale] = { value: translation.value, status: translation.status };
     });
 
     const updateDto: UpdateResourceDto = {

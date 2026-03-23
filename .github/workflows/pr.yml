@@ -33,7 +33,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate tracker i18n types
-        run: pnpm nx build cli && node dist/apps/cli/main.js bundle --name tracker
+        run: pnpm nx build cli && node dist/apps/cli/main.cjs bundle --name tracker
 
       - name: Lint
         run: pnpm run lint

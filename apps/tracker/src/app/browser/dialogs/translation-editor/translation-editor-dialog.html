@@ -1,9 +1,7 @@
-<div role="dialog" [attr.aria-labelledby]="'dialog-title'" class="dialog-wrapper">
+<div role="dialog" [attr.aria-labelledby]="'dialog-title'">
   <div class="dialog-header">
-    <div class="dialog-header-content">
-      <h2 id="dialog-title" class="mat-dialog-title">{{ dialogTitle() | transloco }}</h2>
-      <p class="dialog-subtitle">{{ dialogSubtitle() | transloco }}</p>
-    </div>
+    <h2 id="dialog-title" class="dialog-title">{{ dialogTitle() | transloco }}</h2>
+    <p class="dialog-subtitle">{{ dialogSubtitle() | transloco }}</p>
 
     <button
       mat-icon-button
@@ -113,7 +111,7 @@
         @if (showOtherLocales()) {
           <div class="other-locales-section">
             @for (localeControl of form.controls.translations.controls; track localeControl.value.locale; let i = $index) {
-              <div class="locale-card other-locale-card" [formGroup]="getLocaleFormGroup(i)">
+              <div class="locale-card" [formGroup]="getLocaleFormGroup(i)">
                 <div class="locale-card-header">
                   <mat-icon class="locale-icon">translate</mat-icon>
                   <h3 class="locale-title">{{ getLocaleDisplayName(localeControl.value.locale) }}</h3>

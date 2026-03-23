@@ -1,3 +1,5 @@
+@use '../../../shared/toggle-animation' as *;
+
 :host {
   display: block;
   height: 100%;
@@ -21,47 +23,31 @@
   padding: var(--spacing-3);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
+  position: relative;
+
+  // Subtle watercolor wash behind sidebar header
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.05;
+    background:
+      radial-gradient(ellipse 180px 50px at 30% 50%, var(--wc-sage) 0%, transparent 70%),
+      radial-gradient(ellipse 140px 40px at 70% 50%, var(--wc-amber) 0%, transparent 70%);
+    pointer-events: none;
+  }
 
   app-search-input {
     width: 100%;
   }
 }
 
-.nested-toggle-group {
-  --mat-button-toggle-height: 40px;
-
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
-  margin-left: auto;
-
-  mat-icon {
-    color: var(--color-text-secondary);
-  }
+.nested-resources-toggle {
+  @extend %toolbar-icon-button;
 }
 
 .add-folder-button {
-  flex-shrink: 0;
-  height: 40px;
-  width: 40px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
-  background-color: var(--color-surface);
-  color: var(--color-text-secondary);
-  transition: all 150ms ease-in-out;
-
-  &:hover:not(:disabled) {
-    background-color: var(--color-surface-hover);
-    border-color: var(--color-border-strong);
-  }
-
-  &:active:not(:disabled) {
-    background-color: var(--color-surface-active);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  @extend %toolbar-icon-button;
 }
 
 .loading-container {
@@ -144,7 +130,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--color-border);
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
 
     &:hover {
       background: var(--color-border-strong);

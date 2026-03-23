@@ -3,6 +3,7 @@ import type { ResourceEntry } from '../../resource/resource-entry';
 import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
 import type { TranslationStatus } from '../../resource/translation-status';
 import type { LocaleMetadata } from '../../resource/locale-metadata';
+import { translocoToICU } from '../format/transloco-to-icu';
 
 export interface NormalizeEntryParams {
   readonly entryKey: string;
@@ -19,6 +20,7 @@ export interface NormalizeEntryResult {
     readonly localesAdded: number;
     readonly checksumsUpdated: number;
     readonly statusesChanged: number;
+    readonly valuesConverted: number;
   };
 }
 
@@ -240,7 +242,28 @@ export function normalizeEntry(params: NormalizeEntryParams): NormalizeEntryResu
     delete normalizedEntry[baseLocale];
   }
 
-  const baseValue = resourceEntry.source;
+  // Convert Transloco interpolation syntax ({{ var }}) to ICU format ({var})
+  let valuesConverted = 0;
+
+  const icuSource = translocoToICU(normalizedEntry.source);
+  if (icuSource !== normalizedEntry.source) {
+    normalizedEntry.source = icuSource;
+    valuesConverted++;
+  }
+
+  const nonValueKeys = new Set(['source', 'comment', 'tags']);
+  for (const key of Object.keys(normalizedEntry)) {
+    if (!nonValueKeys.has(key) && typeof normalizedEntry[key] === 'string') {
+      const original = normalizedEntry[key] as string;
+      const converted = translocoToICU(original);
+      if (converted !== original) {
+        normalizedEntry[key] = converted;
+        valuesConverted++;
+      }
+    }
+  }
+
+  const baseValue = normalizedEntry.source;
   const currentBaseChecksum = calculateChecksum(baseValue);
   const previousBaseChecksum = metadata[baseLocale]?.checksum;
   const baseValueChanged = !!previousBaseChecksum && previousBaseChecksum !== currentBaseChecksum;
@@ -270,6 +293,7 @@ export function normalizeEntry(params: NormalizeEntryParams): NormalizeEntryResu
       localesAdded: localeChanges.localesAdded,
       checksumsUpdated: baseChecksumsUpdated + localeChanges.checksumsUpdated,
       statusesChanged: localeChanges.statusesChanged,
+      valuesConverted,
     },
   };
 }

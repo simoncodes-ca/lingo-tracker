@@ -1,13 +1,4 @@
 <div class="translation-main-header">
-  <div class="breadcrumb-row">
-    @if (formattedFolderPath(); as path) {
-      <mat-icon class="breadcrumb-icon">folder</mat-icon>
-      <span class="breadcrumb-path">{{ path }}</span>
-    } @else {
-      <span class="breadcrumb-empty">{{ TOKENS.BROWSER.NOFOLDERSELECTED | transloco }}</span>
-    }
-  </div>
-
   <div class="header-content">
     <app-translation-search />
 
@@ -16,11 +7,13 @@
     <app-status-filter />
 
     <button
+      mat-icon-button
       type="button"
       class="sort-direction-toggle"
       (click)="handleSortDirectionToggle()"
-      [attr.aria-label]="(store.sortDirection() === 'asc' ? TOKENS.BROWSER.SORTASCENDING : TOKENS.BROWSER.SORTDESCENDING) | transloco"
-      [matTooltip]="(store.sortDirection() === 'asc' ? TOKENS.BROWSER.SORTASCENDINGTOOLTIP : TOKENS.BROWSER.SORTDESCENDINGTOOLTIP) | transloco"
+      [attr.aria-label]="(store.sortDirection() === 'asc' ? TOKENS.BROWSER.SORTDESCENDING : TOKENS.BROWSER.SORTASCENDING) | transloco"
+      [attr.aria-pressed]="store.sortDirection() === 'desc'"
+      [matTooltip]="(store.sortDirection() === 'asc' ? TOKENS.BROWSER.SORTDESCENDINGTOOLTIP : TOKENS.BROWSER.SORTASCENDINGTOOLTIP) | transloco"
     >
       <mat-icon>{{ store.sortDirection() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
     </button>
@@ -37,20 +30,16 @@
       <span>{{ TOKENS.BROWSER.ADDTRANSLATIONBUTTON | transloco }}</span>
     </button>
 
-    <mat-button-toggle-group
+    <button
+      mat-icon-button
+      type="button"
       class="density-toggle"
-      name="density"
-      [attr.aria-label]="TOKENS.BROWSER.DENSITY.MODEARIALABEL | transloco"
-      [value]="store.densityMode()"
-      (change)="handleDensityChange($event)"
+      [matTooltip]="(store.densityMode() === 'compact' ? TOKENS.BROWSER.DENSITY.FULLTOOLTIP : TOKENS.BROWSER.DENSITY.COMPACTTOOLTIP) | transloco"
+      [attr.aria-label]="(store.densityMode() === 'compact' ? TOKENS.BROWSER.DENSITY.FULLTOOLTIP : TOKENS.BROWSER.DENSITY.COMPACTTOOLTIP) | transloco"
+      [attr.aria-pressed]="store.densityMode() === 'compact'"
+      (click)="handleDensityToggle()"
     >
-      <mat-button-toggle value="compact" [attr.aria-label]="TOKENS.BROWSER.DENSITY.COMPACTARIALABEL | transloco" [attr.aria-current]="store.densityMode() === 'compact' ? 'true' : null" [matTooltip]="TOKENS.BROWSER.DENSITY.COMPACTTOOLTIP | transloco">
-        <mat-icon>view_compact</mat-icon>
-      </mat-button-toggle>
-
-      <mat-button-toggle value="full" [attr.aria-label]="TOKENS.BROWSER.DENSITY.FULLARIALABEL | transloco" [attr.aria-current]="store.densityMode() === 'full' ? 'true' : null" [matTooltip]="TOKENS.BROWSER.DENSITY.FULLTOOLTIP | transloco">
-        <mat-icon>view_day</mat-icon>
-      </mat-button-toggle>
-    </mat-button-toggle-group>
+      <mat-icon [class.icon-flip]="isDensityToggleFlipping()">{{ store.densityMode() === 'compact' ? 'view_compact' : 'view_day' }}</mat-icon>
+    </button>
   </div>
 </div>

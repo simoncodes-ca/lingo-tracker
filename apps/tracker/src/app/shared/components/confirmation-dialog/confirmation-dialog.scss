@@ -9,7 +9,7 @@ mat-dialog-content {
 
   p {
     margin: 0;
-    line-height: 1.6;
+    line-height: var(--line-height-normal);
     color: var(--color-text-primary);
     font-size: var(--font-size-base);
   }

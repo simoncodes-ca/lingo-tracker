@@ -1,0 +1,26 @@
+<button
+  mat-icon-button
+  [matMenuTriggerFor]="localeMenu"
+  class="locale-button"
+  [attr.aria-label]="TOKENS.LOCALE.CURRENTLANGUAGE | transloco: { language: currentDisplayName() }"
+>
+  <mat-icon>language</mat-icon>
+  <span class="locale-code">{{ currentLocale().toUpperCase() }}</span>
+</button>
+
+<mat-menu #localeMenu="matMenu" [attr.aria-label]="TOKENS.LOCALE.SELECTLANGUAGE | transloco">
+  @for (locale of availableLocales; track locale.code) {
+    <button
+      mat-menu-item
+      role="menuitemradio"
+      [attr.aria-checked]="isActive(locale.code)"
+      [class.active]="isActive(locale.code)"
+      (click)="setLocale(locale.code)"
+    >
+      <span>{{ locale.code.toUpperCase() }} – {{ locale.displayName }}</span>
+      @if (isActive(locale.code)) {
+        <mat-icon class="check-icon">check</mat-icon>
+      }
+    </button>
+  }
+</mat-menu>

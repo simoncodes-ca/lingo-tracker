@@ -7,11 +7,11 @@
     "fr-ca": "La clé de traduction existe déjà."
   },
   "messageX": {
-    "source": "The translation key \"{{ key }}\" already exists in this collection. Would you like to edit the existing translation or choose a different key?",
+    "source": "The translation key \"{key}\" already exists in this collection. Would you like to edit the existing translation or choose a different key?",
     "comment": "Conflict dialog message with the conflicting key name",
     "tags": ["browser"],
-    "es": "La clave de traducción \"{{ key }}\" ya existe en esta colección. ¿Desea editar la traducción existente o elegir una clave diferente?",
-    "fr-ca": "La clé de traduction « {{ key }} » existe déjà dans cette collection. Souhaitez-vous modifier la traduction existante ou choisir une autre clé ?"
+    "es": "La clave de traducción \"{key}\" ya existe en esta colección. ¿Desea editar la traducción existente o elegir una clave diferente?",
+    "fr-ca": "La clé de traduction « {key} » existe déjà dans cette collection. Souhaitez-vous modifier la traduction existante ou choisir une autre clé ?"
   },
   "editExisting": {
     "source": "Edit Existing",

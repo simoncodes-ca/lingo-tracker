@@ -1,15 +1,6 @@
 // Responsive breakpoints
 // Mobile-first approach: min-width media queries
 
-:root {
-  // Breakpoint values
-  --breakpoint-sm: 640px;   // Small devices (landscape phones)
-  --breakpoint-md: 768px;   // Medium devices (tablets)
-  --breakpoint-lg: 1024px;  // Large devices (desktops)
-  --breakpoint-xl: 1280px;  // Extra large devices (large desktops)
-  --breakpoint-xxl: 1536px; // 2X Extra large devices
-}
-
 // Breakpoint mixins for use in SCSS
 @mixin sm {
   @media (min-width: 640px) {
@@ -66,7 +57,7 @@
   }
 }
 
-// Utility classes for responsive visibility
+// Responsive visibility utilities — kept as a shared kit for future use.
 .hide-on-mobile {
   @include md-max {
     display: none !important;

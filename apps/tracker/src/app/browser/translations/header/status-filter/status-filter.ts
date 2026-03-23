@@ -36,7 +36,7 @@ export class StatusFilter {
   readonly TOKENS = TRACKER_TOKENS;
 
   readonly statusConfig: Record<TranslationStatus, { label: string; icon: string; color: string }> = {
-    new: { label: TRACKER_TOKENS.BROWSER.STATUS.NEW, icon: 'add_circle', color: '#f97316' },
+    new: { label: TRACKER_TOKENS.BROWSER.STATUS.NEW, icon: 'add_circle', color: 'var(--color-warning)' },
     stale: { label: TRACKER_TOKENS.BROWSER.STATUS.STALE, icon: 'warning', color: 'var(--color-warning)' },
     translated: {
       label: TRACKER_TOKENS.BROWSER.STATUS.TRANSLATED,

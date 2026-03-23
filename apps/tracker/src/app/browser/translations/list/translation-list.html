@@ -27,48 +27,55 @@
     </div>
   }
 
-  @if (!store.isLoading() && !store.error() && store.sortedTranslations().length === 0) {
-    <div class="empty-state">
-      <mat-card class="info-card">
-        <mat-card-content>
-          <div class="info-content">
-            <mat-icon class="info-icon">info</mat-icon>
-            <p>{{ TOKENS.BROWSER.NOTRANSLATIONSFOUNDINFOLDER | transloco}}</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  }
-
-  @if (!store.isLoading() && !store.error() && store.sortedTranslations().length > 0) {
-    <cdk-virtual-scroll-viewport
-      [itemSize]="currentItemSize()"
-      class="viewport"
-      role="list"
-      [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONLIST.ARIALABEL | transloco"
-      cdkDropList
-      [cdkDropListEnterPredicate]="noDropPredicate"
-      [cdkDropListSortingDisabled]="true"
-    >
-      <div role="presentation">
-        <app-translation-item
-          *cdkVirtualFor="let translation of store.sortedTranslations(); trackBy: trackByKey"
-          [translation]="translation"
-          [locales]="displayLocales()"
-          [baseLocale]="baseLocale()"
-          [folderPath]="store.isSearchMode() ? '' : store.currentFolderPath()"
-          [isRecentlyUpdated]="recentlyUpdatedKey() === translation.key"
-          [translationEnabled]="translationEnabled()"
-          [isTranslating]="translatingKeys().has(translation.key)"
-          (copyKey)="handleCopyKey($event)"
-          (editTranslation)="handleEdit($event)"
-          (deleteTranslation)="handleDelete($event)"
-          (translateTranslation)="handleTranslate($event)"
-          (expansionChanged)="handleItemExpansion($event)"
-          (dragStarted)="dragStarted.emit($event)"
-          (dragEnded)="dragEnded.emit()"
-        />
+  @if (!store.isLoading() && !store.error()) {
+    @if (!store.currentFolderPath()) {
+      <div class="empty-state">
+        <mat-card class="empty-state__card">
+          <mat-card-content>
+            <mat-icon class="empty-state__icon">folder_open</mat-icon>
+            <p class="empty-state__text">{{ TOKENS.BROWSER.SELECTFOLDERFIRST | transloco }}</p>
+          </mat-card-content>
+        </mat-card>
       </div>
-    </cdk-virtual-scroll-viewport>
+    } @else if (store.sortedTranslations().length === 0) {
+      <div class="empty-state">
+        <mat-card class="empty-state__card">
+          <mat-card-content>
+            <mat-icon class="empty-state__icon">translate</mat-icon>
+            <p class="empty-state__text">{{ TOKENS.BROWSER.NOTRANSLATIONSFOUNDINFOLDER | transloco }}</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    } @else {
+      <cdk-virtual-scroll-viewport
+        [itemSize]="currentItemSize()"
+        class="viewport"
+        role="list"
+        [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONLIST.ARIALABEL | transloco"
+        cdkDropList
+        [cdkDropListEnterPredicate]="noDropPredicate"
+        [cdkDropListSortingDisabled]="true"
+      >
+        <div role="presentation">
+          <app-translation-item
+            *cdkVirtualFor="let translation of store.sortedTranslations(); trackBy: trackByKey"
+            [translation]="translation"
+            [locales]="displayLocales()"
+            [baseLocale]="baseLocale()"
+            [folderPath]="store.isSearchMode() ? '' : store.currentFolderPath()"
+            [isRecentlyUpdated]="recentlyUpdatedKey() === translation.key"
+            [translationEnabled]="translationEnabled()"
+            [isTranslating]="translatingKeys().has(translation.key)"
+            (copyKey)="handleCopyKey($event)"
+            (editTranslation)="handleEdit($event)"
+            (deleteTranslation)="handleDelete($event)"
+            (translateTranslation)="handleTranslate($event)"
+            (expansionChanged)="handleItemExpansion($event)"
+            (dragStarted)="dragStarted.emit($event)"
+            (dragEnded)="dragEnded.emit()"
+          />
+        </div>
+      </cdk-virtual-scroll-viewport>
+    }
   }
 </div>

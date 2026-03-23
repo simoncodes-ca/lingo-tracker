@@ -6,9 +6,9 @@
     "fr-ca": "Supprimer la Collection"
   },
   "message": {
-    "source": "Are you sure you want to delete {{name}}?",
+    "source": "Are you sure you want to delete {name}?",
     "comment": "Confirmation message with collection name placeholder",
-    "es": "¿Estás seguro de que deseas eliminar {{name}}?",
-    "fr-ca": "Êtes-vous sûr de vouloir supprimer {{name}}?"
+    "es": "¿Estás seguro de que deseas eliminar {name}?",
+    "fr-ca": "Êtes-vous sûr de vouloir supprimer {name}?"
   }
 }

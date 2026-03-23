@@ -7,6 +7,7 @@ import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/
 import { createResourceMetadata } from '../lib/resource/metadata-operations';
 import type { TranslationConfig } from '../config/translation-config';
 import { autoTranslateResource } from '../lib/translation/auto-translate-resources';
+import { translocoToICU } from '../lib/format/transloco-to-icu';
 
 export interface AddResourceOptions {
   cwd?: string;
@@ -86,9 +87,10 @@ export async function addResource(
   // Load or create resource entries
   const resourceEntries = readResourceEntries(paths.resourceEntriesPath, {});
 
-  // Build resource entry
+  // Build resource entry — normalize values to ICU format before storing
+  const normalizedBaseValue = translocoToICU(params.baseValue);
   const resourceEntry: ResourceEntry = {
-    source: params.baseValue,
+    source: normalizedBaseValue,
   };
 
   if (params.comment) {
@@ -100,34 +102,43 @@ export async function addResource(
   }
 
   // Resolve translations: prefer explicit translations, fall back to auto-translation, then nothing.
+  // Pass the ICU-normalized base value so the translation provider receives the stored form,
+  // not the raw Transloco-style input from the caller.
   const resolveResult = await resolveTranslations({
     params,
+    normalizedBaseValue,
     baseLocale,
     translationConfig,
   });
 
   const resolvedTranslations = resolveResult?.translations ?? null;
 
-  // Add translations (skip base locale - it's in 'source')
+  // Add translations (skip base locale - it's in 'source') — normalize values to ICU format
   if (resolvedTranslations) {
     resolvedTranslations.forEach(({ locale, value }) => {
       // Skip base locale - its value comes from 'source' property
       if (locale !== baseLocale) {
-        resourceEntry[locale] = value;
+        resourceEntry[locale] = translocoToICU(value);
       }
     });
   }
 
   resourceEntries[paths.entryKey] = resourceEntry;
 
-  // Create metadata
+  // Create metadata — use the already-normalized base value for checksum consistency
   const trackerMeta = readTrackerMetadata(paths.trackerMetaPath, {});
+
+  const normalizedTranslations = resolvedTranslations?.map(({ locale, value, status }) => ({
+    locale,
+    value: translocoToICU(value),
+    status,
+  }));
 
   trackerMeta[paths.entryKey] = createResourceMetadata({
     entryKey: paths.entryKey,
-    baseValue: params.baseValue,
+    baseValue: normalizedBaseValue,
     baseLocale,
-    translations: resolvedTranslations ?? undefined,
+    translations: normalizedTranslations ?? undefined,
   });
 
   // Write files back
@@ -137,13 +148,15 @@ export async function addResource(
   return {
     resolvedKey: paths.resolvedKey,
     created: isNewEntry,
-    translations: resolvedTranslations ?? [],
+    translations: normalizedTranslations ?? [],
     ...(resolveResult?.skippedLocales !== undefined && { skippedLocales: resolveResult.skippedLocales }),
   };
 }
 
 interface ResolveTranslationsParams {
   readonly params: AddResourceParams;
+  /** ICU-normalized form of the base value — this is what gets stored and what the translation provider should receive. */
+  readonly normalizedBaseValue: string;
   readonly baseLocale: string;
   readonly translationConfig: TranslationConfig | undefined;
 }
@@ -165,7 +178,7 @@ interface ResolveTranslationsResult {
 async function resolveTranslations(
   resolveParams: ResolveTranslationsParams,
 ): Promise<ResolveTranslationsResult | undefined> {
-  const { params, baseLocale, translationConfig } = resolveParams;
+  const { params, normalizedBaseValue, baseLocale, translationConfig } = resolveParams;
 
   if (params.translations && params.translations.length > 0) {
     return { translations: params.translations, skippedLocales: [] };
@@ -182,7 +195,7 @@ async function resolveTranslations(
   }
 
   const autoTranslateResult = await autoTranslateResource({
-    baseValue: params.baseValue,
+    baseValue: normalizedBaseValue,
     baseLocale,
     targetLocales,
     translationConfig,

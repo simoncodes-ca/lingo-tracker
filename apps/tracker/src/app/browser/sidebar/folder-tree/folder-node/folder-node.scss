@@ -7,8 +7,7 @@
     opacity: 0.5;
     cursor: not-allowed;
 
-    .folder-header,
-    .load-button {
+    .folder-header {
       pointer-events: none;
     }
   }
@@ -17,16 +16,16 @@
 .folder-drop-zone {
   border: 2px solid transparent;
   border-radius: var(--border-radius-sm);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
 
   &.drop-target-valid {
-    background-color: var(--color-success-subtle, rgba(22, 163, 74, 0.1));
-    border-color: var(--color-success, #16a34a);
+    background-color: color-mix(in srgb, var(--color-success) 12%, transparent);
+    border-color: var(--color-success);
   }
 
   &.drop-target-invalid {
-    background-color: var(--color-error-subtle, rgba(220, 38, 38, 0.1));
-    border-color: var(--color-error, #dc2626);
+    background-color: color-mix(in srgb, var(--color-error) 12%, transparent);
+    border-color: var(--color-error);
     opacity: 0.5;
   }
 }
@@ -38,7 +37,7 @@
   padding: var(--spacing-2) var(--spacing-3);
   cursor: pointer;
   border-radius: var(--border-radius-sm);
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
   user-select: none;
 
   &:hover:not(.selected) {
@@ -51,6 +50,12 @@
 
     .folder-icon {
       color: var(--color-primary);
+    }
+  }
+
+  &.descendant-selected {
+    .folder-icon {
+      color: color-mix(in srgb, var(--color-primary) 80%, var(--color-background));
     }
   }
 
@@ -73,10 +78,7 @@
         color: var(--color-text-secondary);
       }
 
-      .load-hint {
-        color: var(--color-primary);
-      }
-    }
+}
   }
 
   &:focus {
@@ -90,7 +92,7 @@
     height: 20px;
     color: var(--color-text-primary);
     flex-shrink: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast);
 
     &.folder-drag-handle {
       cursor: grab;
@@ -110,26 +112,17 @@
     white-space: nowrap;
   }
 
-  .load-hint {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-tertiary);
-    font-style: italic;
-    margin-left: auto;
-    flex-shrink: 0;
-    transition: color 0.15s ease;
-  }
-
   .new-chip {
     animation: fade-in 0.2s ease-out;
-    background-color: var(--color-success-subtle, #dcfce7);
+    background-color: color-mix(in srgb, var(--color-success) 12%, transparent);
     border-radius: var(--border-radius-sm);
-    color: var(--color-success, #16a34a);
+    color: var(--color-success);
     flex-shrink: 0;
-    font-size: 10px;
-    font-weight: 600;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
     letter-spacing: 0.02em;
     margin-left: auto;
-    padding: 2px 6px;
+    padding: 2px var(--spacing-2);
     text-transform: uppercase;
   }
 
@@ -144,20 +137,8 @@
     min-width: 24px;
     opacity: 0;
     padding: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--transition-fast);
     width: 24px;
-
-    ::ng-deep {
-      .mat-mdc-button-touch-target,
-      .mat-mdc-button-persistent-ripple {
-        height: 24px;
-        width: 24px;
-      }
-
-      .mat-mdc-button-persistent-ripple::before {
-        border-radius: 50%;
-      }
-    }
 
     mat-icon {
       color: var(--color-text-secondary);
@@ -208,6 +189,18 @@
   }
 }
 
+:host ::ng-deep .folder-header .delete-button {
+  .mat-mdc-button-touch-target,
+  .mat-mdc-button-persistent-ripple {
+    height: 24px;
+    width: 24px;
+  }
+
+  .mat-mdc-button-persistent-ripple::before {
+    border-radius: 50%;
+  }
+}
+
 .folder-children {
   margin-left: var(--spacing-4);
   padding-left: var(--spacing-2);
@@ -217,7 +210,7 @@
 // CDK Drag & Drop Styles
 .cdk-drag-preview {
   opacity: 0.7;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 15px color-mix(in srgb, var(--color-neutral-900) 30%, transparent);
   border-radius: var(--border-radius-sm);
 }
 

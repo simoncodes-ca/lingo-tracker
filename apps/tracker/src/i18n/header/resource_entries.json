@@ -14,13 +14,17 @@
     "fr-ca": "Retour aux collections"
   },
   "keysCountX": {
-    "source": "{ count, plural, =1 {1 key} other {{{ count }} keys} }",
+    "source": "{ count, plural, =1 {1 key} other {{count} keys} }",
     "comment": "Pluralized count of translation keys shown in the app header stats",
-    "tags": ["header"]
+    "tags": ["header"],
+    "es": "{ count, plural, =1 {1 key} other {{count} keys} }",
+    "fr-ca": "{ count, plural, =1 {1 key} other {{count} keys} }"
   },
   "localesCountX": {
-    "source": "{ count, plural, =1 {1 locale} other {{{ count }} locales} }",
+    "source": "{ count, plural, =1 {1 locale} other {{count} locales} }",
     "comment": "Pluralized count of locales shown in the app header stats",
-    "tags": ["header"]
+    "tags": ["header"],
+    "es": "{ count, plural, =1 {1 locale} other {{count} locales} }",
+    "fr-ca": "{ count, plural, =1 {1 locale} other {{count} locales} }"
   }
 }

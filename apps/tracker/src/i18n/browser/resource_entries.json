@@ -9,7 +9,7 @@
     "source": "Filter folders...",
     "comment": "Placeholder text in a filter input that filters a list of folders",
     "es": "Filtrar carpetas...",
-    "fr-ca": "Filtrer les dossiers..."
+    "fr-ca": "Dossiers de filtrage..."
   },
   "loadingFolders": {
     "source": "Loading folders...",
@@ -18,7 +18,7 @@
   },
   "noFoldersMatchSearch": {
     "source": "No folders match your search",
-    "es": "Ninguna carpeta coincide con tu búsqueda",
+    "es": "No se encontraron carpetas que coincidan con su búsqueda.",
     "fr-ca": "Aucun dossier ne correspond à votre recherche"
   },
   "noFoldersFound": {
@@ -29,7 +29,7 @@
   "clickToLoad": {
     "source": "click to load",
     "comment": "Message shown to user on a hierarchy item that is not loaded yet from the backend",
-    "es": "clic para cargar",
+    "es": "Haz clic para cargar",
     "fr-ca": "cliquer pour charger"
   },
   "loadingCollectionConfiguration": {
@@ -49,18 +49,18 @@
   },
   "searchTranslations": {
     "source": "Search (min 3 characters)...",
-    "es": "Buscar (mín 3 caracteres)...",
-    "fr-ca": "Rechercher (min 3 caractères)..."
+    "es": "Buscar (mínimo 3 caracteres)...",
+    "fr-ca": "Recherche (3 caractères minimum)..."
   },
   "showingSearchResultsForX": {
-    "source": "Showing search results for \"{{ query }}\"",
-    "es": "Mostrando resultados de búsqueda para \"{{ query }}\"",
-    "fr-ca": "Affichage des résultats de recherche pour « {{ query }} »"
+    "source": "Showing search results for \"{query}\"",
+    "es": "Mostrando resultados de búsqueda para \"{query}\"",
+    "fr-ca": "Affichage des résultats de recherche pour \"{query}\""
   },
   "clearSearch": {
     "source": "Clear Search",
-    "es": "Limpiar Búsqueda",
-    "fr-ca": "Effacer la Recherche"
+    "es": "Búsqueda clara",
+    "fr-ca": "Effacer la recherche"
   },
   "noFolderSelected": {
     "source": "No resource folder selected",

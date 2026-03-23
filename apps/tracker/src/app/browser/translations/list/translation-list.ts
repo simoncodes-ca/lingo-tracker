@@ -222,15 +222,32 @@ export class TranslationList {
         // Resource moved to a different folder — remove it from the current view
         this.store.removeResourceFromCache(cacheKey);
       } else {
-        // In-place edit — update the item directly in the store
-        this.store.updateTranslationInCache(result.resource);
-        this.recentlyUpdatedKey.set(cacheKey);
+        // In-place edit — update the item directly in the store.
+        // The API returns the bare entry key (e.g. "add") but the store indexes
+        // items by their relative path key (e.g. "buttons.add"), so we restore
+        // the original store key before updating.
+        const storeResource = { ...result.resource, key: translation.key };
+        this.store.updateTranslationInCache(storeResource);
+        this.recentlyUpdatedKey.set(translation.key);
         this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.TRANSLATIONUPDATED), '', {
           duration: 2000,
           horizontalPosition: 'center',
           verticalPosition: 'bottom',
         });
         setTimeout(() => this.recentlyUpdatedKey.set(undefined), 1500);
+
+        if (result.skippedLocales && result.skippedLocales.length > 0) {
+          const skippedList = result.skippedLocales.join(', ');
+          this.#snackBar.open(
+            this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, { locales: skippedList }),
+            this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DISMISS),
+            {
+              duration: 5000,
+              horizontalPosition: 'center',
+              verticalPosition: 'bottom',
+            },
+          );
+        }
       }
     });
   }
@@ -279,7 +296,11 @@ export class TranslationList {
         next: (response: TranslateResourceResponseDto) => {
           this.#removeTranslatingKey(translation.key);
 
-          this.store.updateTranslationInCache(response.resource);
+          // The API returns the bare entry key (e.g. "add") but the store indexes
+          // items by their relative path key (e.g. "buttons.add"), so we restore
+          // the original store key before updating.
+          const storeResource = { ...response.resource, key: translation.key };
+          this.store.updateTranslationInCache(storeResource);
           this.recentlyUpdatedKey.set(translation.key);
           setTimeout(() => this.recentlyUpdatedKey.set(undefined), 1500);
 

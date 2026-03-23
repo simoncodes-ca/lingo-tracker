@@ -11,6 +11,8 @@ import {
   type EntrySelectionRule,
   type TokenCasing,
 } from '../../config/bundle-definition';
+import { icuToTransloco } from '../format/icu-to-transloco';
+import { validateICUSyntax } from '../import/icu-auto-fixer';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { loadCollectionResources, type FlatResource } from './resource-loader';
 import { matchesPattern } from './pattern-matcher';
@@ -31,6 +33,11 @@ export interface GenerateBundleParams {
    * Must be a valid JavaScript identifier.
    */
   readonly tokenConstantName?: string;
+  /**
+   * CLI-level override for ICU to Transloco transformation.
+   * Takes precedence over bundle config and global config.
+   */
+  readonly transformICUToTransloco?: boolean;
 }
 
 export interface GenerateBundleResult {
@@ -48,7 +55,15 @@ export interface GenerateBundleResult {
  * @returns Result with count of files generated and any warnings
  */
 export async function generateBundle(params: GenerateBundleParams): Promise<GenerateBundleResult> {
-  const { bundleKey, bundleDefinition, config, locales, tokenCasing: tokenCasingOverride, tokenConstantName } = params;
+  const {
+    bundleKey,
+    bundleDefinition,
+    config,
+    locales,
+    tokenCasing: tokenCasingOverride,
+    tokenConstantName,
+    transformICUToTransloco: transformICUToTranslocoOverride,
+  } = params;
   const warnings: string[] = [];
   const localesProcessed: string[] = [];
 
@@ -56,11 +71,18 @@ export async function generateBundle(params: GenerateBundleParams): Promise<Gene
   const resolvedTokenCasing: TokenCasing =
     tokenCasingOverride ?? bundleDefinition.tokenCasing ?? config.tokenCasing ?? 'upperCase';
 
+  // Resolve ICU transformation: CLI override → bundle config → global config → default (true)
+  const resolvedTransformICUToTransloco: boolean =
+    transformICUToTranslocoOverride ??
+    bundleDefinition.transformICUToTransloco ??
+    config.transformICUToTransloco ??
+    true;
+
   const targetLocales = locales ?? config.locales;
   let filesGenerated = 0;
 
   for (const locale of targetLocales) {
-    const bundleData = collectBundleData(bundleDefinition, config, locale, warnings);
+    const bundleData = collectBundleData(bundleDefinition, config, locale, warnings, resolvedTransformICUToTransloco);
 
     if (Object.keys(bundleData).length === 0) {
       warnings.push(`Bundle '${bundleKey}' for locale '${locale}' is empty`);
@@ -111,6 +133,7 @@ function collectBundleData(
   config: LingoTrackerConfig,
   locale: string,
   warnings: string[],
+  transformICUToTransloco: boolean,
 ): Record<string, string> {
   const bundleData: Record<string, string> = {};
 
@@ -122,7 +145,15 @@ function collectBundleData(
         name: collectionName,
         entriesSelectionRules: 'All',
       };
-      processCollection(collectionBundleDef, collectionConfig.translationsFolder, locale, baseLocale, bundleData);
+      processCollection(
+        collectionBundleDef,
+        collectionConfig.translationsFolder,
+        locale,
+        baseLocale,
+        bundleData,
+        transformICUToTransloco,
+        warnings,
+      );
     }
   } else {
     for (const collectionBundleDef of bundleDefinition.collections) {
@@ -133,7 +164,15 @@ function collectBundleData(
         continue;
       }
 
-      processCollection(collectionBundleDef, collectionConfig.translationsFolder, locale, baseLocale, bundleData);
+      processCollection(
+        collectionBundleDef,
+        collectionConfig.translationsFolder,
+        locale,
+        baseLocale,
+        bundleData,
+        transformICUToTransloco,
+        warnings,
+      );
     }
   }
 
@@ -149,6 +188,8 @@ function processCollection(
   locale: string,
   baseLocale: string,
   bundleData: Record<string, string>,
+  transformICUToTransloco: boolean,
+  warnings: string[],
 ): void {
   const resources = loadCollectionResources(translationsFolder, locale, baseLocale);
   const filteredResources = filterResources(resources, collectionDef);
@@ -159,15 +200,23 @@ function processCollection(
       ? `${collectionDef.bundledKeyPrefix}.${resource.key}`
       : resource.key;
 
+    let finalValue = resource.value;
+    if (transformICUToTransloco) {
+      if (resource.value.includes('{') && !validateICUSyntax(resource.value)) {
+        warnings.push(`Key '${resource.key}': value has malformed ICU syntax and was included as-is`);
+      }
+      finalValue = icuToTransloco(resource.value);
+    }
+
     if (finalKey in bundleData) {
       if (mergeStrategy === 'override') {
-        bundleData[finalKey] = resource.value;
+        bundleData[finalKey] = finalValue;
       }
       // merge (default) - keep existing (first wins)
       // Skip to next resource since key already exists
     } else {
       // New key - add it
-      bundleData[finalKey] = resource.value;
+      bundleData[finalKey] = finalValue;
     }
   }
 }

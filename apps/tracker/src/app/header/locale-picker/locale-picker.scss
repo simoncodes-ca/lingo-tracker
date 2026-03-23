@@ -1,0 +1,17 @@
+.locale-button {
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  margin-right: var(--spacing-2);
+
+  &:hover {
+    color: var(--color-text-primary);
+  }
+
+  .locale-code {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1;
+  }
+}

@@ -1,17 +1,17 @@
 {
   "folderAriaLabelX": {
     "en": {
-      "checksum": "473e5bed6b27e71a49a78f4d64ff0ce6"
+      "checksum": "16708b0cacde01471507891eb88bcf2b"
     },
     "es": {
-      "checksum": "1c6cb53b9e64fada2ca5325ff1c21760",
-      "baseChecksum": "473e5bed6b27e71a49a78f4d64ff0ce6",
-      "status": "translated"
+      "checksum": "919d3629485e94ca4c13bf8ca40183e6",
+      "baseChecksum": "16708b0cacde01471507891eb88bcf2b",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "afb8670b66d3ca8376387749f424151c",
-      "baseChecksum": "473e5bed6b27e71a49a78f4d64ff0ce6",
-      "status": "translated"
+      "checksum": "579125b969a55e9f1429775d20e2faa5",
+      "baseChecksum": "16708b0cacde01471507891eb88bcf2b",
+      "status": "stale"
     }
   },
   "collapse": {
@@ -46,17 +46,17 @@
   },
   "addSubfolderToX": {
     "en": {
-      "checksum": "eaed88a598b9d9a658b262bc448b0661"
+      "checksum": "aa85d08e5c2011ca6a07c0db14c82de2"
     },
     "es": {
-      "checksum": "edfd6b2d95278f3de029831a8b1fd573",
-      "baseChecksum": "eaed88a598b9d9a658b262bc448b0661",
-      "status": "translated"
+      "checksum": "25077cf7679a114b0de5e0a0a9f3a64e",
+      "baseChecksum": "aa85d08e5c2011ca6a07c0db14c82de2",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "98899f3e11cf6020e45e7d0951e3f655",
-      "baseChecksum": "eaed88a598b9d9a658b262bc448b0661",
-      "status": "translated"
+      "checksum": "7a3c0707dbd14091260a5aca97d25f02",
+      "baseChecksum": "aa85d08e5c2011ca6a07c0db14c82de2",
+      "status": "stale"
     }
   },
   "folderLabel": {

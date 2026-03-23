@@ -61,12 +61,17 @@
   },
   "showMoreX": {
     "en": {
-      "checksum": "6268b6f36f3b74c705c73f4c6747bf4f"
+      "checksum": "b39ae93853f9b177650ca742f758312d"
     },
     "es": {
-      "checksum": "3eaeb631e61a578ccd71a2497872e39f",
-      "baseChecksum": "6268b6f36f3b74c705c73f4c6747bf4f",
-      "status": "translated"
+      "checksum": "551047ecf45228306f8abf35ab6abd06",
+      "baseChecksum": "b39ae93853f9b177650ca742f758312d",
+      "status": "stale"
+    },
+    "fr-ca": {
+      "checksum": "b39ae93853f9b177650ca742f758312d",
+      "baseChecksum": "b39ae93853f9b177650ca742f758312d",
+      "status": "new"
     }
   }
 }

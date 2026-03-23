@@ -146,6 +146,16 @@ export interface BundleDefinition {
    * `export const APP_TRANSLATION_TOKENS = ...` and `export type AppTranslationTokens = ...`
    */
   tokenConstantName?: string;
+
+  /**
+   * Whether to convert ICU format values to Transloco format in the bundle output.
+   * When true, simple ICU placeholders like {name} are converted to {{ name }}.
+   * Complex ICU patterns (plural, select, etc.) are left as-is.
+   *
+   * Overrides the global transformICUToTransloco setting when specified.
+   * Default: true
+   */
+  transformICUToTransloco?: boolean;
 }
 
 /**

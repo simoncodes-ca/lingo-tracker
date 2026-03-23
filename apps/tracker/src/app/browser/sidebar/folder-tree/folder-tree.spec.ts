@@ -116,4 +116,64 @@ describe('FolderTree', () => {
 
     vi.useRealTimers();
   });
+
+  describe('setNestedResources — toggle animation', () => {
+    beforeEach(() => {
+      createComponent();
+      fixture.componentRef.setInput('collectionName', 'my-collection');
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should immediately set isNestedToggleFlipping to true', () => {
+      component.setNestedResources(true);
+
+      expect(component.isNestedToggleFlipping()).toBe(true);
+    });
+
+    it('should NOT call store.setNestedResources immediately', () => {
+      const storeSpy = vi.spyOn(component.store, 'setNestedResources');
+
+      component.setNestedResources(true);
+
+      expect(storeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call store.setNestedResources with the correct value at the 125ms midpoint', async () => {
+      const storeSpy = vi.spyOn(component.store, 'setNestedResources');
+
+      component.setNestedResources(true);
+
+      await vi.advanceTimersByTimeAsync(125);
+
+      expect(storeSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should reset isNestedToggleFlipping to false after 250ms', async () => {
+      component.setNestedResources(true);
+
+      await vi.advanceTimersByTimeAsync(250);
+
+      expect(component.isNestedToggleFlipping()).toBe(false);
+    });
+
+    it('should pass only the second call value to the store on rapid double-click', async () => {
+      const storeSpy = vi.spyOn(component.store, 'setNestedResources');
+
+      // First call — before midpoint, second call cancels it
+      component.setNestedResources(true);
+      await vi.advanceTimersByTimeAsync(50);
+
+      // Second call overrides the pending mid-timeout
+      component.setNestedResources(false);
+      await vi.advanceTimersByTimeAsync(125);
+
+      // Only the second call's value should reach the store
+      expect(storeSpy).toHaveBeenCalledTimes(1);
+      expect(storeSpy).toHaveBeenCalledWith(false);
+    });
+  });
 });

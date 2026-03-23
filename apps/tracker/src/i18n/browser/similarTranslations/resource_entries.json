@@ -28,9 +28,10 @@
     "fr-ca": "Aucune traduction semblable trouvée"
   },
   "showMoreX": {
-    "source": "Show {{ count }} more",
+    "source": "Show {count} more",
     "comment": "Button to show remaining similar translation results, count is the number of hidden results",
     "tags": ["browser"],
-    "es": "Mostrar {{ count }} más"
+    "es": "Mostrar {count} más",
+    "fr-ca": "Show {count} more"
   }
 }
