@@ -157,6 +157,7 @@ export class ResourcesController {
 
       let entriesCreated = 0;
       let hasCreated = false;
+      const allSkippedLocales: string[] = [];
 
       for (const resource of resources) {
         try {
@@ -187,6 +188,10 @@ export class ResourcesController {
           if (result.created) {
             entriesCreated++;
             hasCreated = true;
+          }
+
+          if (result.skippedLocales?.length) {
+            allSkippedLocales.push(...result.skippedLocales);
           }
 
           // Add resource to cache instead of clearing it
@@ -232,9 +237,12 @@ export class ResourcesController {
         }
       }
 
+      const uniqueSkippedLocales = [...new Set(allSkippedLocales)];
+
       return {
         entriesCreated,
         created: hasCreated,
+        ...(uniqueSkippedLocales.length > 0 && { skippedLocales: uniqueSkippedLocales }),
       };
     } catch (error: unknown) {
       if (error instanceof HttpException) {
@@ -425,6 +433,7 @@ export class ResourcesController {
         updated: result.updated,
         message: result.message,
         resource: resourceDto,
+        skippedLocales: result.skippedLocales,
       };
     } catch (error: unknown) {
       if (error instanceof NotFoundException || error instanceof HttpException) {

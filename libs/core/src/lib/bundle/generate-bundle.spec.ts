@@ -9,8 +9,10 @@ import * as resourceLoader from './resource-loader';
 vi.mock('fs');
 vi.mock('./resource-loader');
 vi.mock('./type-generation/generate-types');
+vi.mock('../format/icu-to-transloco');
 
 import { generateBundleTypes } from './type-generation/generate-types';
+import * as icuToTranslocoModule from '../format/icu-to-transloco';
 
 describe('generate-bundle', () => {
   let mockConfig: LingoTrackerConfig;
@@ -37,6 +39,10 @@ describe('generate-bundle', () => {
     vi.spyOn(fs, 'existsSync').mockReturnValue(true);
     vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
     vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+
+    // Default icuToTransloco to a pass-through so existing tests are unaffected.
+    // Individual describe blocks that test the transformation behaviour override this.
+    vi.spyOn(icuToTranslocoModule, 'icuToTransloco').mockImplementation((value) => value);
   });
 
   afterEach(() => {
@@ -715,6 +721,130 @@ describe('generate-bundle', () => {
         await generateBundle(params);
 
         expect(vi.mocked(generateBundleTypes)).toHaveBeenCalledWith('main', configWithCasing, 'camelCase', undefined);
+      });
+    });
+
+    describe('transformICUToTransloco', () => {
+      const bundleDefinition: BundleDefinition = {
+        bundleName: '{locale}',
+        dist: '/dist/bundles',
+        collections: 'All',
+      };
+
+      beforeEach(() => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+          { key: 'greeting', value: 'Hello {name}' },
+        ]);
+        vi.spyOn(icuToTranslocoModule, 'icuToTransloco').mockImplementation((value) =>
+          value.replace(/\{(\w+)\}/g, '{{ $1 }}'),
+        );
+      });
+
+      it('should transform ICU values to Transloco format when transformICUToTransloco is true', async () => {
+        const params: GenerateBundleParams = {
+          bundleKey: 'main',
+          bundleDefinition,
+          config: mockConfig,
+          locales: ['en'],
+          transformICUToTransloco: true,
+        };
+
+        await generateBundle(params);
+
+        expect(icuToTranslocoModule.icuToTransloco).toHaveBeenCalledWith('Hello {name}');
+        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+        const writtenData = JSON.parse(writeCall[1] as string);
+        expect(writtenData.greeting).toBe('Hello {{ name }}');
+      });
+
+      it('should preserve ICU values when transformICUToTransloco is false', async () => {
+        const params: GenerateBundleParams = {
+          bundleKey: 'main',
+          bundleDefinition,
+          config: mockConfig,
+          locales: ['en'],
+          transformICUToTransloco: false,
+        };
+
+        await generateBundle(params);
+
+        expect(icuToTranslocoModule.icuToTransloco).not.toHaveBeenCalled();
+        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+        const writtenData = JSON.parse(writeCall[1] as string);
+        expect(writtenData.greeting).toBe('Hello {name}');
+      });
+
+      it('should default transformICUToTransloco to true when not specified', async () => {
+        const params: GenerateBundleParams = {
+          bundleKey: 'main',
+          bundleDefinition,
+          config: mockConfig,
+          locales: ['en'],
+          // transformICUToTransloco not set — should default to true
+        };
+
+        await generateBundle(params);
+
+        expect(icuToTranslocoModule.icuToTransloco).toHaveBeenCalledWith('Hello {name}');
+      });
+
+      it('should use bundle-level transformICUToTransloco when no CLI override is given', async () => {
+        const bundleDefWithFlag: BundleDefinition = {
+          ...bundleDefinition,
+          transformICUToTransloco: false,
+        };
+
+        const params: GenerateBundleParams = {
+          bundleKey: 'main',
+          bundleDefinition: bundleDefWithFlag,
+          config: mockConfig,
+          locales: ['en'],
+        };
+
+        await generateBundle(params);
+
+        expect(icuToTranslocoModule.icuToTransloco).not.toHaveBeenCalled();
+      });
+
+      it('should use global config transformICUToTransloco when no CLI or bundle-level override is given', async () => {
+        const configWithFlag: LingoTrackerConfig = {
+          ...mockConfig,
+          transformICUToTransloco: false,
+        };
+
+        const params: GenerateBundleParams = {
+          bundleKey: 'main',
+          bundleDefinition,
+          config: configWithFlag,
+          locales: ['en'],
+        };
+
+        await generateBundle(params);
+
+        expect(icuToTranslocoModule.icuToTransloco).not.toHaveBeenCalled();
+      });
+
+      it('should let CLI override take precedence over bundle and global config', async () => {
+        const bundleDefWithFlag: BundleDefinition = {
+          ...bundleDefinition,
+          transformICUToTransloco: false,
+        };
+        const configWithFlag: LingoTrackerConfig = {
+          ...mockConfig,
+          transformICUToTransloco: false,
+        };
+
+        const params: GenerateBundleParams = {
+          bundleKey: 'main',
+          bundleDefinition: bundleDefWithFlag,
+          config: configWithFlag,
+          locales: ['en'],
+          transformICUToTransloco: true, // CLI override wins
+        };
+
+        await generateBundle(params);
+
+        expect(icuToTranslocoModule.icuToTransloco).toHaveBeenCalledWith('Hello {name}');
       });
     });
   });

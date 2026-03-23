@@ -53,9 +53,9 @@
     "fr-ca": "Recherche (3 caractères minimum)..."
   },
   "showingSearchResultsForX": {
-    "source": "Showing search results for \"{{ query }}\"",
-    "es": "Mostrando resultados de búsqueda para \"{{ query }}\"",
-    "fr-ca": "Affichage des résultats de recherche pour \"{{ query }}\""
+    "source": "Showing search results for \"{query}\"",
+    "es": "Mostrando resultados de búsqueda para \"{query}\"",
+    "fr-ca": "Affichage des résultats de recherche pour \"{query}\""
   },
   "clearSearch": {
     "source": "Clear Search",

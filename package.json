@@ -3,13 +3,13 @@
   "version": "0.9.0",
   "description": "Effortlessly Track, Validate, and Manage Your Translations.",
   "bin": {
-    "lingo-tracker": "dist/apps/cli/main.js",
+    "lingo-tracker": "dist/apps/cli/main.cjs",
     "lingo-tracker-app": "dist/apps/api/main.js"
   },
   "scripts": {
     "build:cli": "nx build cli",
     "build:api": "nx build api",
-    "prebuild:tracker": "node dist/apps/cli/main.js bundle --name tracker",
+    "prebuild:tracker": "node dist/apps/cli/main.cjs bundle --name tracker",
     "build:tracker": "nx build tracker",
     "build": "pnpm run build:cli && pnpm run build:api && pnpm run build:tracker",
     "serve:api": "nx serve api",
@@ -31,7 +31,7 @@
     "format": "pnpm exec biome format --write apps libs scripts types",
     "format:check": "pnpm exec biome format apps libs scripts types",
     "format:write": "pnpm exec biome format --write apps libs scripts types",
-    "lingo-tracker": "node dist/apps/cli/main.js"
+    "lingo-tracker": "node dist/apps/cli/main.cjs"
   },
   "keywords": [
     "translation",

@@ -7,10 +7,10 @@
     "fr-ca": "Supprimer la ressource"
   },
   "messageX": {
-    "source": "Are you sure you want to delete the resource \"{{key}}\"? This action cannot be undone.",
+    "source": "Are you sure you want to delete the resource \"{key}\"? This action cannot be undone.",
     "comment": "Confirmation message when deleting a resource, interpolated with the resource key",
     "tags": ["browser"],
-    "es": "¿Seguro que desea eliminar el recurso \"{{key}}\"? Esta acción no se puede deshacer.",
-    "fr-ca": "Êtes-vous certain de vouloir supprimer la ressource « {{key}} » ? Cette action est irréversible."
+    "es": "¿Seguro que desea eliminar el recurso \"{key}\"? Esta acción no se puede deshacer.",
+    "fr-ca": "Êtes-vous certain de vouloir supprimer la ressource « {key} » ? Cette action est irréversible."
   }
 }

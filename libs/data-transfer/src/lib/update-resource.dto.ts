@@ -1,5 +1,8 @@
+import type { TranslationStatus } from './translation-status';
+
 export interface LocaleUpdateDto {
   value: string;
+  status: TranslationStatus;
 }
 
 export interface UpdateResourceDto {

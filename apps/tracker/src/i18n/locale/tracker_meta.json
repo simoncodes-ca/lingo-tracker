@@ -1,0 +1,32 @@
+{
+  "currentLanguage": {
+    "en": {
+      "checksum": "9b2dd4a78521838f059925216f4bf4c6"
+    },
+    "es": {
+      "checksum": "edf729d5d46ed712f5de4800c1598928",
+      "baseChecksum": "9b2dd4a78521838f059925216f4bf4c6",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "4f2162f0ff303cdc0003e23b2a584b53",
+      "baseChecksum": "9b2dd4a78521838f059925216f4bf4c6",
+      "status": "translated"
+    }
+  },
+  "selectLanguage": {
+    "en": {
+      "checksum": "653777801f96237326d65205bc9129e3"
+    },
+    "es": {
+      "checksum": "c90ff5580c52057484a4002000bccd8a",
+      "baseChecksum": "653777801f96237326d65205bc9129e3",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "232df4332952b6a2c6cf987ece661e60",
+      "baseChecksum": "653777801f96237326d65205bc9129e3",
+      "status": "translated"
+    }
+  }
+}

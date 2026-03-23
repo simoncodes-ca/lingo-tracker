@@ -121,7 +121,7 @@ describe('editResource', () => {
     expect(updatedResources.save.tags).toEqual(['ui', 'action']);
   });
 
-  it('should update locale value and set status to translated', async () => {
+  it('should default status to "translated" when no status is supplied', async () => {
     const initialResources = {
       save: { source: 'Save', 'fr-ca': 'Sauvegarder' },
     };
@@ -159,6 +159,188 @@ describe('editResource', () => {
     expect(updatedMeta.save['fr-ca'].checksum).not.toBe('old_fr_hash');
   });
 
+  it('should persist caller-supplied status', async () => {
+    const initialResources = {
+      save: { source: 'Save', 'fr-ca': 'Sauvegarder' },
+    };
+    const initialMeta = {
+      save: {
+        en: { checksum: 'base_hash' },
+        'fr-ca': {
+          checksum: 'old_fr_hash',
+          baseChecksum: 'base_hash',
+          status: 'stale',
+        },
+      },
+    };
+
+    vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
+      return '{}';
+    });
+
+    const result = await editResource(translationsFolder, {
+      key: 'buttons.save',
+      locales: { 'fr-ca': { value: 'Enregistrer', status: 'verified' } },
+      cwd,
+    });
+
+    expect(result.updated).toBe(true);
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const updatedMeta = JSON.parse(writeCall[1][1] as string);
+    expect(updatedMeta.save['fr-ca'].status).toBe('verified');
+  });
+
+  it('should update status when only status changes', async () => {
+    const initialResources = {
+      save: { source: 'Save', 'fr-ca': 'Sauvegarder' },
+    };
+    const initialMeta = {
+      save: {
+        en: { checksum: 'base_hash' },
+        'fr-ca': {
+          checksum: 'existing_fr_hash',
+          baseChecksum: 'base_hash',
+          status: 'translated',
+        },
+      },
+    };
+
+    vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
+      return '{}';
+    });
+
+    const result = await editResource(translationsFolder, {
+      key: 'buttons.save',
+      locales: { 'fr-ca': { value: 'Sauvegarder', status: 'verified' } },
+      cwd,
+    });
+
+    expect(result.updated).toBe(true);
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const updatedMeta = JSON.parse(writeCall[1][1] as string);
+    expect(updatedMeta.save['fr-ca'].status).toBe('verified');
+  });
+
+  it('should convert Transloco syntax to ICU format when updating base value', async () => {
+    const initialResources = {
+      save: { source: 'Save' },
+    };
+    const initialMeta = {
+      save: { en: { checksum: 'abc' } },
+    };
+
+    vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
+      return '{}';
+    });
+
+    await editResource(translationsFolder, {
+      key: 'buttons.save',
+      baseValue: 'Hello {{ name }}',
+      cwd,
+    });
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const updatedResources = JSON.parse(writeCall[0][1] as string);
+    expect(updatedResources.save.source).toBe('Hello {name}');
+  });
+
+  it('should convert Transloco syntax to ICU format when updating a locale translation', async () => {
+    const initialResources = {
+      save: { source: 'Save', 'fr-ca': 'Sauvegarder' },
+    };
+    const initialMeta = {
+      save: {
+        en: { checksum: 'base_hash' },
+        'fr-ca': {
+          checksum: 'old_fr_hash',
+          baseChecksum: 'base_hash',
+          status: 'stale',
+        },
+      },
+    };
+
+    vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
+      return '{}';
+    });
+
+    await editResource(translationsFolder, {
+      key: 'buttons.save',
+      locales: { 'fr-ca': { value: 'Bonjour {{ name }}' } },
+      cwd,
+    });
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const updatedResources = JSON.parse(writeCall[0][1] as string);
+    expect(updatedResources.save['fr-ca']).toBe('Bonjour {name}');
+  });
+
+  it('should preserve already-ICU-formatted baseValue unchanged', async () => {
+    const initialResources = {
+      save: { source: 'Save' },
+    };
+    const initialMeta = {
+      save: { en: { checksum: 'abc' } },
+    };
+
+    vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
+      return '{}';
+    });
+
+    await editResource(translationsFolder, {
+      key: 'buttons.save',
+      baseValue: 'Hello {name}',
+      cwd,
+    });
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const updatedResources = JSON.parse(writeCall[0][1] as string);
+    expect(updatedResources.save.source).toBe('Hello {name}');
+  });
+
+  it('should preserve already-ICU-formatted locale value unchanged', async () => {
+    const initialResources = {
+      save: { source: 'Save', 'fr-ca': 'Sauvegarder' },
+    };
+    const initialMeta = {
+      save: {
+        en: { checksum: 'base_hash' },
+        'fr-ca': {
+          checksum: 'old_fr_hash',
+          baseChecksum: 'base_hash',
+          status: 'stale',
+        },
+      },
+    };
+
+    vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
+      return '{}';
+    });
+
+    await editResource(translationsFolder, {
+      key: 'buttons.save',
+      locales: { 'fr-ca': { value: 'Bonjour {name}' } },
+      cwd,
+    });
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
+    const updatedResources = JSON.parse(writeCall[0][1] as string);
+    expect(updatedResources.save['fr-ca']).toBe('Bonjour {name}');
+  });
+
   it('should not auto-translate when translationConfig is disabled', async () => {
     const initialResources = {
       save: { source: 'Save', 'fr-ca': 'Sauvegarder' },
@@ -190,6 +372,47 @@ describe('editResource', () => {
     const writeCall = vi.mocked(fs.writeFileSync).mock.calls;
     const updatedMeta = JSON.parse(writeCall[1][1] as string);
     expect(updatedMeta.save['fr-ca'].status).toBe('stale');
+  });
+
+  it('should normalize Transloco syntax returned by auto-translation provider to ICU format', async () => {
+    const initialResources = {
+      save: { source: 'Save', 'fr-ca': 'Sauvegarder' },
+    };
+    const initialMeta = {
+      save: {
+        en: { checksum: 'old_base_hash' },
+        'fr-ca': { checksum: 'fr_hash', baseChecksum: 'old_base_hash', status: 'translated' },
+      },
+    };
+
+    vi.mocked(fs.readFileSync).mockImplementation((path: SafeAny) => {
+      if ((path as string).includes(RESOURCE_ENTRIES_FILENAME)) return JSON.stringify(initialResources);
+      if ((path as string).includes(TRACKER_META_FILENAME)) return JSON.stringify(initialMeta);
+      return '{}';
+    });
+
+    // Provider returns Transloco-style {{ }} — storage contract requires ICU {}.
+    vi.mocked(autoTranslateResource).mockResolvedValue({
+      translations: [{ locale: 'fr-ca', value: 'Bonjour {{ name }}', status: 'translated' }],
+      skippedLocales: [],
+    });
+
+    await editResource(translationsFolder, {
+      key: 'buttons.save',
+      baseValue: 'Hello {name}',
+      cwd,
+      translationConfig: { enabled: true, provider: 'google-translate', apiKeyEnv: 'GOOGLE_API_KEY' },
+      allLocales: ['en', 'fr-ca'],
+    });
+
+    const writeCalls = vi.mocked(fs.writeFileSync).mock.calls;
+    const lastResourcesWrite = JSON.parse(writeCalls[writeCalls.length - 2][1] as string);
+    expect(lastResourcesWrite.save['fr-ca']).toBe('Bonjour {name}');
+
+    // Checksum must be computed from the normalized ICU value, not the raw provider output.
+    const lastMetaWrite = JSON.parse(writeCalls[writeCalls.length - 1][1] as string);
+    const { calculateChecksum } = await import('./checksum');
+    expect(lastMetaWrite.save['fr-ca'].checksum).toBe(calculateChecksum('Bonjour {name}'));
   });
 
   it('should auto-translate and write translated values when translationConfig is enabled and base value changes', async () => {

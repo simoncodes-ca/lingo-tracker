@@ -1,10 +1,10 @@
 {
   "folderAriaLabelX": {
-    "source": "Folder {{ name }}",
+    "source": "Folder {name}",
     "comment": "Aria-label for a folder node in the picker tree",
     "tags": ["browser"],
-    "es": "Carpeta {{ name }}",
-    "fr-ca": "Dossier {{ name }}"
+    "es": "Carpeta {name}",
+    "fr-ca": "Dossier {name}"
   },
   "collapse": {
     "source": "Collapse",
@@ -21,11 +21,11 @@
     "fr-ca": "Élargir"
   },
   "addSubfolderToX": {
-    "source": "Add subfolder to {{ name }}",
+    "source": "Add subfolder to {name}",
     "comment": "Aria-label for add subfolder button on a folder node",
     "tags": ["browser"],
-    "es": "Agregar subcarpeta a {{ name }}",
-    "fr-ca": "Ajouter un sous-dossier à {{ name }}"
+    "es": "Agregar subcarpeta a {name}",
+    "fr-ca": "Ajouter un sous-dossier à {name}"
   },
   "folderLabel": {
     "source": "Folder:",

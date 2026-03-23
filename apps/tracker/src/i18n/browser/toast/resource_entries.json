@@ -49,11 +49,11 @@
     "fr-ca": "1 langue traduite avec succès"
   },
   "localesTranslatedX": {
-    "source": "{{count}} locales translated successfully",
+    "source": "{count} locales translated successfully",
     "comment": "Snackbar message when multiple locales were auto-translated",
     "tags": ["browser"],
-    "es": "{{count}} locales traducidos correctamente",
-    "fr-ca": "{{count}} Les paramètres régionaux ont été traduits avec succès"
+    "es": "{count} locales traducidos correctamente",
+    "fr-ca": "{count} Les paramètres régionaux ont été traduits avec succès"
   },
   "allLocalesUpToDate": {
     "source": "All locales are already up to date",
@@ -63,11 +63,11 @@
     "fr-ca": "Tous les emplacements sont déjà à jour."
   },
   "skippedLocalesX": {
-    "source": "Skipped locales (ICU format): {{locales}}",
+    "source": "Skipped locales (ICU format): {locales}",
     "comment": "Snackbar warning when some locales were skipped because they use ICU format",
     "tags": ["browser"],
-    "es": "Configuraciones regionales omitidas (formato ICU): {{locales}}",
-    "fr-ca": "Paramètres régionaux ignorés (format ICU) : {{locales}}"
+    "es": "Configuraciones regionales omitidas (formato ICU): {locales}",
+    "fr-ca": "Paramètres régionaux ignorés (format ICU) : {locales}"
   },
   "resourceCreated": {
     "source": "Resource created successfully",
@@ -77,11 +77,11 @@
     "fr-ca": "Ressource créée avec succès"
   },
   "autoTranslationSkippedX": {
-    "source": "Auto-translation skipped for {{locales}} (ICU format not supported)",
+    "source": "Auto-translation skipped for {locales} (ICU format not supported)",
     "comment": "Snackbar warning when auto-translation was skipped for some locales due to ICU format",
     "tags": ["browser"],
-    "es": "Se omitió la traducción automática para {{locales}} (formato ICU no compatible)",
-    "fr-ca": "Traduction automatique ignorée pour {{locales}} (format ICU non pris en charge)"
+    "es": "Se omitió la traducción automática para {locales} (formato ICU no compatible)",
+    "fr-ca": "Traduction automatique ignorée pour {locales} (format ICU non pris en charge)"
   },
   "resourceAlreadyInFolder": {
     "source": "Resource is already in this folder",
@@ -91,11 +91,11 @@
     "fr-ca": "La ressource se trouve déjà dans ce dossier."
   },
   "resourceMovedX": {
-    "source": "Moved \"{{name}}\" to {{folder}}",
+    "source": "Moved \"{name}\" to {folder}",
     "comment": "Snackbar message after moving a resource to a different folder",
     "tags": ["browser"],
-    "es": "Se movió \"{{name}}\" a {{folder}}",
-    "fr-ca": "Déplacé « {{name}} » vers {{folder}}"
+    "es": "Se movió \"{name}\" a {folder}",
+    "fr-ca": "Déplacé « {name} » vers {folder}"
   },
   "folderAlreadyAtLocation": {
     "source": "Folder is already at this location",
@@ -105,11 +105,11 @@
     "fr-ca": "Le dossier est déjà à cet emplacement."
   },
   "folderMovedX": {
-    "source": "Moved \"{{name}}\" into {{dest}}",
+    "source": "Moved \"{name}\" into {dest}",
     "comment": "Snackbar message after successfully moving a folder",
     "tags": ["browser"],
-    "es": "Se movió \"{{name}}\" a {{dest}}",
-    "fr-ca": "Déplacé « {{name}} » dans {{dest}}"
+    "es": "Se movió \"{name}\" a {dest}",
+    "fr-ca": "Déplacé « {name} » dans {dest}"
   },
   "moveResourceFailed": {
     "source": "Failed to move resource",

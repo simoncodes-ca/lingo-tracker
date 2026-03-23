@@ -16,17 +16,17 @@
   },
   "messageX": {
     "en": {
-      "checksum": "7520bcf59e85008251576b7e8aa9fd4a"
+      "checksum": "b7778a68166ffe0dab524997ad6b3bfd"
     },
     "es": {
-      "checksum": "6d616640ae87de5c54d178d0bafc9e70",
-      "baseChecksum": "7520bcf59e85008251576b7e8aa9fd4a",
-      "status": "translated"
+      "checksum": "b11ee00ed7063e0f99f4745ffab79cbb",
+      "baseChecksum": "b7778a68166ffe0dab524997ad6b3bfd",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "5e736adebac1b9fc73e1adaeac16a62e",
-      "baseChecksum": "7520bcf59e85008251576b7e8aa9fd4a",
-      "status": "translated"
+      "checksum": "8f741688880541fe5c8fc950c9006d6f",
+      "baseChecksum": "b7778a68166ffe0dab524997ad6b3bfd",
+      "status": "stale"
     }
   }
 }

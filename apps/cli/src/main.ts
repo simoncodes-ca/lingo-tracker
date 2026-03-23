@@ -147,6 +147,7 @@ program
     '--token-constant-name <name>',
     'Custom name for the generated TypeScript constant (single bundle only, e.g. MY_TOKENS)',
   )
+  .option('--no-transform-icu-to-transloco', 'Disable ICU to Transloco format conversion in bundle output')
   .action(async (options) => {
     const { bundleCommand } = await import('./commands/bundle');
     await bundleCommand(options);
