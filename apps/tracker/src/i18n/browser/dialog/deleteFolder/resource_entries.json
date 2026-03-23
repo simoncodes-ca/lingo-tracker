@@ -7,10 +7,10 @@
     "fr-ca": "Supprimer le dossier"
   },
   "messageX": {
-    "source": "Delete \"{{name}}\" and all its contents?",
+    "source": "Delete \"{name}\" and all its contents?",
     "comment": "Confirmation message when deleting a folder, interpolated with the folder name",
     "tags": ["browser"],
-    "es": "¿Eliminar \"{{name}}\" y todo su contenido?",
-    "fr-ca": "Supprimer \"{{name}}\" et tout son contenu ?"
+    "es": "¿Eliminar \"{name}\" y todo su contenido?",
+    "fr-ca": "Supprimer \"{name}\" et tout son contenu ?"
   }
 }

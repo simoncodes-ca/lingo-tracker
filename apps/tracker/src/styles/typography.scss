@@ -1,8 +1,10 @@
-// Typography utilities for consistent text styling
+// Design-system utility classes — kept as a shared kit for future use.
+// Typography utilities — Watercolor edition
+// All text uses Nunito; Grechen Fuemen reserved for the LingoTracker brand title only
 
-// Heading styles
+// Heading styles — brush stroke font
 .heading-1 {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight);
@@ -10,7 +12,7 @@
 }
 
 .heading-2 {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight);
@@ -18,7 +20,7 @@
 }
 
 .heading-3 {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
@@ -26,7 +28,7 @@
 }
 
 .heading-4 {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-normal);
@@ -34,7 +36,7 @@
 }
 
 .heading-5 {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-normal);
@@ -42,7 +44,7 @@
 }
 
 .heading-6 {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-normal);
@@ -51,7 +53,7 @@
 
 // Body text styles
 .body-large {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-relaxed);
@@ -59,7 +61,7 @@
 }
 
 .body-normal {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-normal);
@@ -67,7 +69,7 @@
 }
 
 .body-small {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-normal);
@@ -75,7 +77,7 @@
 }
 
 .body-xs {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-family-body);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-normal);
@@ -118,7 +120,7 @@
 
 // Code/monospace styles
 .code-inline {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-family-mono);
   font-size: 0.875em;
   font-weight: var(--font-weight-medium);
   padding: 0.125rem 0.375rem;
@@ -128,7 +130,7 @@
 }
 
 .code-block {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-family-mono);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-relaxed);

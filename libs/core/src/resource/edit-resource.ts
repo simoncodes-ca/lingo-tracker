@@ -6,6 +6,10 @@ import { updateMetadataForBaseValueChange } from '../lib/resource/metadata-opera
 import type { ResourceTreeEntry } from '../lib/resource/load-resource-tree';
 import type { TranslationConfig } from '../config/translation-config';
 import { autoTranslateResource } from '../lib/translation/auto-translate-resources';
+import type { TranslationStatus } from './translation-status';
+import type { ResourceEntry } from './resource-entry';
+import type { ResourceEntryMetadata } from './resource-entry-metadata';
+import { translocoToICU } from '../lib/format/transloco-to-icu';
 
 export interface EditResourceOptions {
   key: string;
@@ -13,7 +17,7 @@ export interface EditResourceOptions {
   baseValue?: string;
   comment?: string;
   tags?: string[];
-  locales?: Record<string, { value: string }>;
+  locales?: Record<string, { value: string; status?: TranslationStatus }>;
   baseLocale?: string;
   cwd?: string;
   translationConfig?: TranslationConfig;
@@ -73,13 +77,15 @@ export async function editResource(
   let hasChanges = false;
   let baseValueDidChange = false;
 
-  // 1. Update Base Value
-  if (options.baseValue !== undefined && options.baseValue !== resourceEntry.source) {
-    resourceEntry.source = options.baseValue;
+  // 1. Update Base Value — normalize to ICU format before comparing and storing
+  const normalizedBaseValue = options.baseValue !== undefined ? translocoToICU(options.baseValue) : undefined;
+
+  if (normalizedBaseValue !== undefined && normalizedBaseValue !== resourceEntry.source) {
+    resourceEntry.source = normalizedBaseValue;
 
     metaEntry = updateMetadataForBaseValueChange({
       metadata: metaEntry,
-      newBaseValue: options.baseValue,
+      newBaseValue: normalizedBaseValue,
       baseLocale,
     });
 
@@ -111,25 +117,33 @@ export async function editResource(
   if (options.locales) {
     const currentBaseChecksum = metaEntry[baseLocale]?.checksum;
 
-    Object.entries(options.locales).forEach(([locale, { value }]) => {
+    Object.entries(options.locales).forEach(([locale, { value, status }]) => {
       if (locale === baseLocale) return; // Base value handled separately
 
+      const normalizedLocaleValue = translocoToICU(value);
       const currentValue = resourceEntry[locale];
-      if (value !== currentValue) {
-        resourceEntry[locale] = value;
-        const newChecksum = calculateChecksum(value);
+      const resolvedStatus = status ?? 'translated';
+      const valueChanged = normalizedLocaleValue !== currentValue;
+      const statusChanged = metaEntry[locale]?.status !== resolvedStatus;
+
+      if (valueChanged) {
+        resourceEntry[locale] = normalizedLocaleValue;
+        const newChecksum = calculateChecksum(normalizedLocaleValue);
 
         if (!metaEntry[locale]) {
           metaEntry[locale] = {
             checksum: newChecksum,
             baseChecksum: currentBaseChecksum,
-            status: 'translated',
+            status: resolvedStatus,
           };
         } else {
           metaEntry[locale].checksum = newChecksum;
           metaEntry[locale].baseChecksum = currentBaseChecksum;
-          metaEntry[locale].status = 'translated';
+          metaEntry[locale].status = resolvedStatus;
         }
+        hasChanges = true;
+      } else if (statusChanged && metaEntry[locale]) {
+        metaEntry[locale].status = resolvedStatus;
         hasChanges = true;
       }
     });
@@ -151,11 +165,11 @@ export async function editResource(
   // 5. Auto-translate when base value changed and translation is configured
   let autoTranslateSkippedLocales: string[] | undefined;
 
-  if (baseValueDidChange && options.baseValue !== undefined) {
+  if (baseValueDidChange && normalizedBaseValue !== undefined) {
     const updatedEntry = await applyAutoTranslationsAfterBaseValueChange({
       resourceEntry,
       metaEntry,
-      baseValue: options.baseValue,
+      baseValue: normalizedBaseValue,
       baseLocale,
       allLocales: options.allLocales,
       translationConfig: options.translationConfig,
@@ -199,8 +213,8 @@ export async function editResource(
 }
 
 interface ApplyAutoTranslationsParams {
-  readonly resourceEntry: Record<string, unknown>;
-  readonly metaEntry: Record<string, unknown>;
+  resourceEntry: ResourceEntry;
+  metaEntry: ResourceEntryMetadata;
   readonly baseValue: string;
   readonly baseLocale: string;
   readonly allLocales: string[] | undefined;
@@ -247,12 +261,12 @@ async function applyAutoTranslationsAfterBaseValueChange(
   const newBaseChecksum = calculateChecksum(baseValue);
 
   for (const { locale, value } of autoTranslateResult.translations) {
-    resourceEntry[locale] = value;
-    const translationChecksum = calculateChecksum(value);
+    const normalizedValue = translocoToICU(value);
+    resourceEntry[locale] = normalizedValue;
+    const translationChecksum = calculateChecksum(normalizedValue);
 
-    const existingMeta = metaEntry[locale] as Record<string, unknown> | undefined;
-    (metaEntry as Record<string, unknown>)[locale] = {
-      ...existingMeta,
+    metaEntry[locale] = {
+      ...metaEntry[locale],
       checksum: translationChecksum,
       baseChecksum: newBaseChecksum,
       status: 'translated',

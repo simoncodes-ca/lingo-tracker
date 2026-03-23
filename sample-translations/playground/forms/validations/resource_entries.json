@@ -2,11 +2,7 @@
   "requiredField": {
     "source": "Required field",
     "comment": "An error message shown when user interacts with a required form control but does not provide a value",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
+    "tags": ["ui", "forms", "validations"],
     "de": "Pflichtfeld",
     "es": "Campo obligatorio",
     "fr-fr": "Champ requis",
@@ -16,11 +12,7 @@
   "selectedValueNotFound": {
     "source": "Selected value not found in the list items",
     "comment": "An error message shown when dropdown/combobox/radioButton form control selected value is not found in dataSource",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
+    "tags": ["ui", "forms", "validations"],
     "de": "Der markierte Wert wurde nicht in den Listeneinträgen gefunden",
     "es": "No se encontró el valor seleccionado en los elementos de la lista",
     "fr-fr": "La valeur sélectionnée ne figure pas dans la liste",
@@ -30,11 +22,7 @@
   "hexColor": {
     "source": "Invalid hex color",
     "comment": "An error message shown when a form control has an incorrectly formatted hex value",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
+    "tags": ["ui", "forms", "validations"],
     "de": "Ungültige Hexadezimal-Farbe",
     "es": "Color hexadecimal no válido",
     "fr-fr": "Code hexadécimal de couleur non valide",
@@ -44,11 +32,7 @@
   "date": {
     "source": "Invalid date",
     "comment": "An error message shown when a form control has an invalid date",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
+    "tags": ["ui", "forms", "validations"],
     "de": "Ungültiges Datum",
     "es": "Fecha no válida",
     "fr-fr": "Date non valide",
@@ -56,55 +40,39 @@
     "fr-ca": "Invalid date"
   },
   "maxDecimalPlaces": {
-    "source": "Value must not have more than {{ validationValue }} decimals",
+    "source": "Value must not have more than {validationValue} decimals",
     "comment": "An error message shown when a form control value has more decimal places than a allowed threshold value. {{ validationValue }} = number of decimals; do not translate it.",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
-    "de": "Der Wert darf nicht mehr als {{ validationValue }} Dezimalstellen haben",
-    "es": "El valor no debe tener más de {{ validationValue }} decimales",
-    "fr-fr": "La valeur ne doit pas contenir plus de {{ validationValue }} décimales",
-    "ja": "値の小数点以下の桁数は {{ validationValue }} 桁を超えることはできません。",
-    "fr-ca": "Value must not have more than {{ validationValue }} decimals"
+    "tags": ["ui", "forms", "validations"],
+    "de": "Der Wert darf nicht mehr als {validationValue} Dezimalstellen haben",
+    "es": "El valor no debe tener más de {validationValue} decimales",
+    "fr-fr": "La valeur ne doit pas contenir plus de {validationValue} décimales",
+    "ja": "値の小数点以下の桁数は {validationValue} 桁を超えることはできません。",
+    "fr-ca": "Value must not have more than {validationValue} decimals"
   },
   "maxCharacters": {
-    "source": "Max {{ validationValue }} characters",
+    "source": "Max {validationValue} characters",
     "comment": "An error message shown below a form control when text length is greater than allowed threshold value (validationValue is the threshold value)",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
-    "de": "Max. {{ validationValue }} Zeichen",
-    "es": "Máximo de {{ validationValue }} caracteres",
-    "fr-fr": "Le nombre maximum est de {{ validationValue }} caractères",
-    "ja": "最大 {{ validationValue }} 文字",
-    "fr-ca": "Max {{ validationValue }} characters"
+    "tags": ["ui", "forms", "validations"],
+    "de": "Max. {validationValue} Zeichen",
+    "es": "Máximo de {validationValue} caracteres",
+    "fr-fr": "Le nombre maximum est de {validationValue} caractères",
+    "ja": "最大 {validationValue} 文字",
+    "fr-ca": "Max {validationValue} characters"
   },
   "minCharacters": {
-    "source": "Min {{ validationValue }} characters",
+    "source": "Min {validationValue} characters",
     "comment": "An error message shown when a text length entered in a form control does not meet required threshold (validationValue is the threshold value)",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
-    "de": "Min. {{ validationValue }} Zeichen",
-    "es": "Mínimo de {{ validationValue }} caracteres",
-    "fr-fr": "Le nombre minimum est de {{ validationValue }} caractères",
-    "ja": "最小 {{ validationValue }} 文字",
-    "fr-ca": "Min {{ validationValue }} characters"
+    "tags": ["ui", "forms", "validations"],
+    "de": "Min. {validationValue} Zeichen",
+    "es": "Mínimo de {validationValue} caracteres",
+    "fr-fr": "Le nombre minimum est de {validationValue} caractères",
+    "ja": "最小 {validationValue} 文字",
+    "fr-ca": "Min {validationValue} characters"
   },
   "invalidEmail": {
     "source": "Invalid email address",
     "comment": "An error message shown when a form control value does not match expected email format",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
+    "tags": ["ui", "forms", "validations"],
     "de": "Ungültige E-Mail-Adresse",
     "es": "Dirección de correo electrónico no válida",
     "fr-fr": "Adresse email non valide",
@@ -114,11 +82,7 @@
   "invalidUrl": {
     "source": "Invalid URL format",
     "comment": "An error message shown when a form control value does not match expected url format",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
+    "tags": ["ui", "forms", "validations"],
     "de": "Ungültiges URL-Format",
     "es": "Formato de URL no válido",
     "fr-fr": "Format d’URL non valide",
@@ -128,11 +92,7 @@
   "number": {
     "source": "Invalid number",
     "comment": "An error message shown when a number form control has a non-numeric value",
-    "tags": [
-      "ui",
-      "forms",
-      "validations"
-    ],
+    "tags": ["ui", "forms", "validations"],
     "de": "Invalid number",
     "es": "Invalid number",
     "fr-fr": "Invalid number",

@@ -20,4 +20,11 @@ export interface LingoTrackerConfig {
    * Defaults to 'upperCase' (SCREAMING_SNAKE_CASE) for full backward compatibility.
    */
   tokenCasing?: TokenCasing;
+
+  /**
+   * Global default for whether to convert ICU format to Transloco format in bundle output.
+   * Can be overridden per bundle via BundleDefinition.transformICUToTransloco.
+   * Default: true
+   */
+  transformICUToTransloco?: boolean;
 }

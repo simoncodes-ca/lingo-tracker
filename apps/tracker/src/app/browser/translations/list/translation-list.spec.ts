@@ -11,6 +11,8 @@ import type { TranslationEditorResult } from '../../dialogs/translation-editor';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
 import { of, throwError } from 'rxjs';
 import { BrowserApiService } from '../../services/browser-api.service';
+import { TranslocoService } from '@jsverse/transloco';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 
 describe('TranslationList', () => {
   let component: TranslationList;
@@ -200,6 +202,53 @@ describe('TranslationList - Loading and Error States', () => {
     const errorContainer = fixture.nativeElement.querySelector('.error-container');
     expect(errorContainer).toBeTruthy();
   });
+
+  it('should display "select a folder" empty state when no folder is selected', () => {
+    fixture.componentRef.setInput('collectionName', 'test');
+    fixture.detectChanges();
+
+    const emptyState = fixture.nativeElement.querySelector('.empty-state');
+    const icon = fixture.nativeElement.querySelector('.empty-state__icon');
+    const text = fixture.nativeElement.querySelector('.empty-state__text');
+
+    expect(emptyState).toBeTruthy();
+    expect(icon?.textContent).toContain('folder_open');
+    expect(text?.textContent).toContain('Select a folder first');
+  });
+
+  it('should display "no translations found" empty state when folder is selected but empty', async () => {
+    const store = TestBed.inject(BrowserStore);
+    const httpMock = TestBed.inject(HttpTestingController);
+
+    fixture.componentRef.setInput('collectionName', 'test');
+    fixture.detectChanges();
+
+    store.setSelectedCollection({
+      collectionName: 'test',
+      locales: ['en'],
+    });
+
+    const cacheReq = httpMock.expectOne('/api/collections/test/resources/cache/status');
+    cacheReq.flush({ status: 'ready', error: null });
+
+    const rootReq = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
+    rootReq.flush({ path: '', resources: [], children: [] });
+
+    store.selectFolder('empty-folder');
+
+    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=empty-folder&includeNested=true');
+    req.flush({ path: 'empty-folder', resources: [], children: [] });
+
+    fixture.detectChanges();
+
+    const emptyState = fixture.nativeElement.querySelector('.empty-state');
+    const icon = fixture.nativeElement.querySelector('.empty-state__icon');
+    const text = fixture.nativeElement.querySelector('.empty-state__text');
+
+    expect(emptyState).toBeTruthy();
+    expect(icon?.textContent).toContain('translate');
+    expect(text?.textContent).toContain('No translations found in this folder.');
+  });
 });
 
 describe('TranslationList - Virtual Scrolling', () => {
@@ -239,9 +288,15 @@ describe('TranslationList - Virtual Scrolling', () => {
     cacheReq.flush({ status: 'ready', error: null });
 
     // Second request for root folders
-    const req = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
-    req.flush({
-      path: '',
+    const rootReq = httpMock.expectOne('/api/collections/test/resources/tree?path=&includeNested=true');
+    rootReq.flush({ path: '', resources: [], children: [] });
+
+    // Select a folder so the viewport renders (empty path shows "select folder" state)
+    store.selectFolder('test-folder');
+
+    const folderReq = httpMock.expectOne('/api/collections/test/resources/tree?path=test-folder&includeNested=true');
+    folderReq.flush({
+      path: 'test-folder',
       resources: [
         { key: 'key1', translations: { en: 'Value 1' }, status: {} },
         { key: 'key2', translations: { en: 'Value 2' }, status: {} },
@@ -310,7 +365,7 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
     vi.useRealTimers();
   });
 
-  it('should not show warning snackbar for skippedLocales in edit (handled by translate action)', async () => {
+  it('should show warning snackbar when edit result contains skippedLocales', async () => {
     vi.useFakeTimers();
 
     const result: TranslationEditorResult = {
@@ -326,11 +381,13 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
     component.handleEdit(mockResource);
     await vi.advanceTimersByTimeAsync(2200);
 
-    // Edit flow no longer shows ICU warning — that is handled by the translate action
-    const warningCalls = snackBarSpy.open.mock.calls.filter(
-      (args: unknown[]) => typeof args[0] === 'string' && (args[0] as string).includes('ICU format'),
-    );
-    expect(warningCalls).toHaveLength(0);
+    const transloco = TestBed.inject(TranslocoService);
+    const expectedSkippedMessage = transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, {
+      locales: 'fr, de',
+    });
+
+    const warningCalls = snackBarSpy.open.mock.calls.filter((args: unknown[]) => args[0] === expectedSkippedMessage);
+    expect(warningCalls).toHaveLength(1);
   });
 
   it('should not show warning snackbar when skippedLocales is empty or absent', async () => {
@@ -365,6 +422,92 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
     component.handleEdit(mockResource);
 
     expect(snackBarSpy.open).not.toHaveBeenCalled();
+  });
+
+  it('should update the store cache when the edit result contains skippedLocales', () => {
+    const store = TestBed.inject(BrowserStore);
+    const updateCacheSpy = vi.spyOn(store, 'updateTranslationInCache');
+
+    const result: TranslationEditorResult = {
+      key: 'test_key',
+      baseValue: 'Test Value',
+      folderPath: '',
+      success: true,
+      resource: mockResource,
+      skippedLocales: ['fr', 'de'],
+    };
+    mockDialogRef.afterClosed.mockReturnValue(of(result));
+
+    component.handleEdit(mockResource);
+
+    expect(updateCacheSpy).toHaveBeenCalledWith({ ...mockResource, key: mockResource.key });
+  });
+});
+
+describe('TranslationList - handleEdit key rewrite', () => {
+  let component: TranslationList;
+  let fixture: ComponentFixture<TranslationList>;
+  let snackBarSpy: { open: ReturnType<typeof vi.fn> };
+  let mockDialogRef: { afterClosed: ReturnType<typeof vi.fn> };
+  let mockDialog: { open: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    snackBarSpy = { open: vi.fn() };
+    mockDialogRef = { afterClosed: vi.fn() };
+    mockDialog = { open: vi.fn().mockReturnValue(mockDialogRef) };
+
+    await TestBed.configureTestingModule({
+      imports: [TranslationList, getTranslocoTestingModule()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatSnackBar, useValue: snackBarSpy }],
+    })
+      .overrideProvider(MatDialog, { useValue: mockDialog })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(TranslationList);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('collectionName', 'test-collection');
+    fixture.detectChanges();
+  });
+
+  it('should rewrite key to the store key when calling updateTranslationInCache on edit success', () => {
+    const store = TestBed.inject(BrowserStore);
+    const updateCacheSpy = vi.spyOn(store, 'updateTranslationInCache');
+
+    // Activate search mode so the store key contains the full path ("buttons.save")
+    // while the API returns only the bare entry key ("save").
+    store.setSearchQuery('buttons');
+
+    // The store-level resource uses the full-path key as it appears in search results.
+    const storeResource: ResourceSummaryDto = {
+      key: 'buttons.save',
+      translations: { en: 'Save', fr: '' },
+      status: { fr: 'new' },
+    };
+
+    // The dialog returns the bare entry key that the API echoes back.
+    const apiResource: ResourceSummaryDto = {
+      key: 'save',
+      translations: { en: 'Save', fr: 'Enregistrer' },
+      status: { fr: 'translated' },
+    };
+
+    const result: TranslationEditorResult = {
+      key: 'save',
+      baseValue: 'Save',
+      // folderPath matches what #resolveEffectiveFolderPath returns for "buttons.save"
+      // in search mode (all segments except the last), so no move occurs.
+      folderPath: 'buttons',
+      success: true,
+      resource: apiResource,
+      skippedLocales: [],
+    };
+    mockDialogRef.afterClosed.mockReturnValue(of(result));
+
+    component.handleEdit(storeResource);
+
+    // updateTranslationInCache must be called with the full-path key that the
+    // store uses ("buttons.save"), not the bare API key ("save").
+    expect(updateCacheSpy).toHaveBeenCalledWith({ ...apiResource, key: storeResource.key });
   });
 });
 
@@ -426,8 +569,11 @@ describe('TranslationList - handleTranslate', () => {
     status: { fr: 'new' },
   };
 
+  // The API returns only the bare entry key ("save"), not the relative-path key
+  // ("btn_save") that the store uses. The component must rewrite it before
+  // passing the resource to updateTranslationInCache.
   const mockUpdatedResource: ResourceSummaryDto = {
-    key: 'btn_save',
+    key: 'save',
     translations: { en: 'Save', fr: 'Enregistrer' },
     status: { fr: 'translated' },
   };
@@ -481,8 +627,9 @@ describe('TranslationList - handleTranslate', () => {
     // The key is removed synchronously from translatingKeys after the observable emits
     expect(component.translatingKeys().has('btn_save')).toBe(false);
 
-    // Store was updated with the new resource
-    expect(updateCacheSpy).toHaveBeenCalledWith(mockUpdatedResource);
+    // Store was updated with the key rewritten from the bare API key ("save")
+    // back to the relative-path key that the store indexes by ("btn_save").
+    expect(updateCacheSpy).toHaveBeenCalledWith({ ...mockUpdatedResource, key: mockResource.key });
 
     // Success snackbar shown
     expect(snackBarSpy.open).toHaveBeenCalledWith(
@@ -515,10 +662,12 @@ describe('TranslationList - handleTranslate', () => {
 
     component.handleTranslate(mockResource);
 
-    const icuWarningCalls = snackBarSpy.open.mock.calls.filter(
-      (args: unknown[]) => typeof args[0] === 'string' && (args[0] as string).includes('ICU format'),
-    );
+    const transloco = TestBed.inject(TranslocoService);
+    const expectedSkippedMessage = transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, {
+      locales: 'fr, de',
+    });
+
+    const icuWarningCalls = snackBarSpy.open.mock.calls.filter((args: unknown[]) => args[0] === expectedSkippedMessage);
     expect(icuWarningCalls).toHaveLength(1);
-    expect(icuWarningCalls[0][0]).toContain('fr, de');
   });
 });

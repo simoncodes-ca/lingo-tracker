@@ -15,6 +15,8 @@ export interface BundleOptions {
    * Only valid when a single bundle is targeted.
    */
   tokenConstantName?: string;
+  /** CLI-level override for ICU to Transloco transformation. */
+  transformICUToTransloco?: boolean;
 }
 
 interface BundleGenerationResult {
@@ -94,6 +96,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
         locales: localeFilter,
         tokenCasing: options.tokenCasing,
         tokenConstantName: options.tokenConstantName,
+        transformICUToTransloco: options.transformICUToTransloco,
       });
 
       bundleResults.push({

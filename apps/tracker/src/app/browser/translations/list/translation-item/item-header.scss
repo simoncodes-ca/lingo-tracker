@@ -29,31 +29,20 @@
   gap: var(--spacing-1);
 }
 
-.rollup-badge {
-  align-items: center;
-  background: var(--color-background-subtle);
-  border-radius: 999px;
-  color: var(--color-text-secondary);
-  display: flex;
-  font-size: var(--font-size-xs);
-  gap: 6px;
-  padding: 4px 8px;
-}
-
 .key-chip {
   align-items: center;
   background: var(--color-neutral-200);
   border: none;
-  border-radius: 16px;
+  border-radius: var(--border-radius-full);
   color: var(--color-text-primary);
   cursor: pointer;
   display: inline-flex;
-  font-family: var(--font-mono, 'Roboto Mono', monospace);
-  font-size: 0.85em;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   gap: var(--spacing-1);
   height: auto;
-  padding: 6px 14px;
+  padding: var(--spacing-2) var(--spacing-3);
   text-align: left;
   transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
 

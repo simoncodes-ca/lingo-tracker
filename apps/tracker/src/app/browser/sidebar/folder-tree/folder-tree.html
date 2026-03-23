@@ -8,28 +8,18 @@
       [ariaLabel]="TOKENS.BROWSER.FOLDERTREE.FILTERFOLDERSARIALABEL | transloco"
       (valueChange)="onSearchChange($event)"
     />
-    <mat-button-toggle-group
-      [value]="showNestedResources() ? 'nested' : 'current'"
-      (change)="setNestedResources($event.value === 'nested')"
+    <button
+      mat-icon-button
+      type="button"
+      class="nested-resources-toggle"
       [disabled]="store.isDisabled()"
-      class="nested-toggle-group"
-      aria-label="Resource display mode"
+      [matTooltip]="(showNestedResources() ? TOKENS.BROWSER.FOLDERTREE.SHOWCURRENTFOLDERTOOLTIP : TOKENS.BROWSER.FOLDERTREE.SHOWNESTEDRESOURCESTOOLTIP) | transloco"
+      [attr.aria-label]="(showNestedResources() ? TOKENS.BROWSER.FOLDERTREE.SHOWCURRENTFOLDERTOOLTIP : TOKENS.BROWSER.FOLDERTREE.SHOWNESTEDRESOURCESTOOLTIP) | transloco"
+      [attr.aria-pressed]="showNestedResources()"
+      (click)="setNestedResources(!showNestedResources())"
     >
-      <mat-button-toggle
-        value="current"
-        [matTooltip]="TOKENS.BROWSER.FOLDERTREE.SHOWCURRENTFOLDERTOOLTIP | transloco"
-        [attr.aria-label]="TOKENS.BROWSER.FOLDERTREE.SHOWCURRENTFOLDERTOOLTIP | transloco"
-      >
-        <mat-icon>folder</mat-icon>
-      </mat-button-toggle>
-      <mat-button-toggle
-        value="nested"
-        [matTooltip]="TOKENS.BROWSER.FOLDERTREE.SHOWNESTEDRESOURCESTOOLTIP | transloco"
-        [attr.aria-label]="TOKENS.BROWSER.FOLDERTREE.SHOWNESTEDRESOURCESTOOLTIP | transloco"
-      >
-        <mat-icon>account_tree</mat-icon>
-      </mat-button-toggle>
-    </mat-button-toggle-group>
+      <mat-icon [class.icon-flip]="isNestedToggleFlipping()">{{ showNestedResources() ? 'account_tree' : 'folder' }}</mat-icon>
+    </button>
     <button
       mat-icon-button
       type="button"
@@ -54,7 +44,7 @@
   <!-- Error State -->
   @if (store.error() && !store.isFolderTreeLoading()) {
     <div class="error-container" role="alert" aria-live="assertive">
-      <mat-icon color="warn">error</mat-icon>
+      <mat-icon>error</mat-icon>
       <p class="error-text">{{ store.error() }}</p>
     </div>
   }

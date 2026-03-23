@@ -61,32 +61,32 @@
   },
   "localeTranslationX": {
     "en": {
-      "checksum": "6ada371e5889b18036a0dbc72a9e3d26"
+      "checksum": "06c8a0c2ef0476880f67ff4230e593b4"
     },
     "es": {
-      "checksum": "932df6ee0c91184a093cb109048a3389",
-      "baseChecksum": "6ada371e5889b18036a0dbc72a9e3d26",
-      "status": "translated"
+      "checksum": "7176235182e5be91a4467522f42f133f",
+      "baseChecksum": "06c8a0c2ef0476880f67ff4230e593b4",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "c3ef9317713c2387ebb692902a100d5a",
-      "baseChecksum": "6ada371e5889b18036a0dbc72a9e3d26",
-      "status": "translated"
+      "checksum": "6d2fd9fc703c835e836365104ce929c6",
+      "baseChecksum": "06c8a0c2ef0476880f67ff4230e593b4",
+      "status": "stale"
     }
   },
   "enterTranslationX": {
     "en": {
-      "checksum": "1fcd3b743615f744f25d951bc79de376"
+      "checksum": "831af3e4fbd2ef1d6685bb25b9373509"
     },
     "es": {
-      "checksum": "6de20b15cd3c2f6188c3c2d871df0ddf",
-      "baseChecksum": "1fcd3b743615f744f25d951bc79de376",
-      "status": "translated"
+      "checksum": "540fe84a67c579689be50e6a1e055ad4",
+      "baseChecksum": "831af3e4fbd2ef1d6685bb25b9373509",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "f926f7745ce740e8f089775ef7275f95",
-      "baseChecksum": "1fcd3b743615f744f25d951bc79de376",
-      "status": "translated"
+      "checksum": "9e1e2e4cd501aeb8196a6b20217bfd1d",
+      "baseChecksum": "831af3e4fbd2ef1d6685bb25b9373509",
+      "status": "stale"
     }
   },
   "baseValueRequired": {
@@ -151,17 +151,17 @@
   },
   "otherLocalesToggleX": {
     "en": {
-      "checksum": "07e83501eff500d6652da135e2a0d2e9"
+      "checksum": "bf32152e1d3fd4d222bf92e179a25a7e"
     },
     "es": {
-      "checksum": "b82fd2d8a2c281a30a92b110c397b488",
-      "baseChecksum": "07e83501eff500d6652da135e2a0d2e9",
-      "status": "translated"
+      "checksum": "03ad033f462d8ad15108f23415c69f39",
+      "baseChecksum": "bf32152e1d3fd4d222bf92e179a25a7e",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "16f3dbd69a28f234e3429492a9561141",
-      "baseChecksum": "07e83501eff500d6652da135e2a0d2e9",
-      "status": "translated"
+      "checksum": "bc079033bb772e8a21525f9064bd47b7",
+      "baseChecksum": "bf32152e1d3fd4d222bf92e179a25a7e",
+      "status": "stale"
     }
   },
   "status": {

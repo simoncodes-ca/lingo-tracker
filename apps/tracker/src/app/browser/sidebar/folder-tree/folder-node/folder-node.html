@@ -19,6 +19,7 @@
     <div
       class="folder-header"
       [class.selected]="isSelected()"
+      [class.descendant-selected]="!isSelected() && showNestedResources() && isDescendantOfSelected()"
       [class.unloaded]="!folder().loaded"
       (click)="onFolderClick()"
       [attr.role]="disabled() ? 'presentation' : 'treeitem'"

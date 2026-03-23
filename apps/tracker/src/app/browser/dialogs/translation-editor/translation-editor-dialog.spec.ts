@@ -875,7 +875,7 @@ describe('TranslationEditorDialog', () => {
         'test-collection',
         expect.objectContaining({
           locales: {
-            fr: { value: 'Nouvelle valeur' },
+            fr: { value: 'Nouvelle valeur', status: 'translated' },
           },
         }),
       );

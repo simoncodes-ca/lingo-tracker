@@ -4,14 +4,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
+import type { DensityMode } from '../../../types/density-mode';
 
 export type LocaleTranslation = {
   locale: string;
   value: string;
   status?: string;
 };
-
-type DensityMode = 'compact' | 'full';
 
 /**
  * Displays locale translations in a grid layout.

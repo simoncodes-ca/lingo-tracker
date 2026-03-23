@@ -1,195 +1,166 @@
 // CSS Custom Properties for Theming
-// These tokens provide a consistent design system across light and dark themes
+// Watercolor-inspired palette drawn from vibrant brush-stroke pigments
 
 // Light theme tokens
 [data-theme='light'],
 :root {
-  // Colors - Primary (Blue)
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-active: #1e40af;
-  --color-primary-subtle: #eff6ff;
+  // Colors - Primary (Warm Coral / Vermillion)
+  --color-primary: #d4726a;
+  --color-primary-hover: #c25d55;
+  --color-primary-active: #b04a42;
+  --color-primary-subtle: #fdf2f1;
 
-  // Colors - Secondary (Sky)
-  --color-secondary: #0ea5e9;
-  --color-secondary-hover: #0284c7;
-  --color-secondary-active: #0369a1;
-  --color-secondary-subtle: #f0f9ff;
+  // Colors - Secondary (Deep Sky Blue)
+  --color-secondary: #4a7fb5;
+  --color-secondary-hover: #3a6a9e;
+  --color-secondary-active: #2d5888;
+  --color-secondary-subtle: #eef5fb;
 
-  // Colors - Neutral (Zinc)
-  --color-neutral-50: #fafafa;
-  --color-neutral-100: #f4f4f5;
-  --color-neutral-200: #e4e4e7;
-  --color-neutral-300: #d4d4d8;
-  --color-neutral-400: #a1a1aa;
-  --color-neutral-500: #71717a;
-  --color-neutral-600: #52525b;
-  --color-neutral-700: #3f3f46;
-  --color-neutral-800: #27272a;
-  --color-neutral-900: #18181b;
+  // Colors - Neutral (Warm Parchment scale)
+  --color-neutral-50: #faf8f5;
+  --color-neutral-100: #f3efe9;
+  --color-neutral-200: #e5dfd7;
+  --color-neutral-300: #d4cdc3;
+  --color-neutral-400: #a89f93;
+  --color-neutral-500: #7d7569;
+  --color-neutral-600: #5a534a;
+  --color-neutral-700: #433d36;
+  --color-neutral-800: #2e2923;
+  --color-neutral-900: #1c1814;
 
   // Semantic colors
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #3b82f6;
-  --color-info-subtle: #dbeafe;
+  --color-success: #6da67e;
+  --color-warning: #d9a441;
+  --color-error: #c95e5e;
+  --color-info: #5a8db8;
+  --color-info-subtle: #e6f0f8;
 
-  // Background colors
-  --color-background: #ffffff;
-  --color-background-subtle: #f9fafb;
-  --color-background-muted: #f3f4f6;
+  // Watercolor accent palette (for splashes & decorative elements)
+  --wc-coral: #e8847c;
+  --wc-amber: #e8a838;
+  --wc-sky: #7bafde;
+  --wc-lavender: #b892cc;
+  --wc-sage: #8db580;
+  --wc-deep-blue: #4a7fb5;
+  --wc-rose: #d4726a;
+
+  // Background colors — warm paper tones
+  --color-background: #faf8f5;
+  --color-background-subtle: #f5f1eb;
+  --color-background-muted: #ede8e0;
 
   // Text colors
-  --color-text-primary: #18181b;
-  --color-text-secondary: #52525b;
-  --color-text-tertiary: #a1a1aa;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: #2e2923;
+  --color-text-secondary: #5a534a;
+  --color-text-tertiary: #a89f93;
+  --color-text-inverse: #faf8f5;
 
-  // Border colors
-  --color-border: #e4e4e7;
-  --color-border-subtle: #f4f4f5;
-  --color-border-strong: #d4d4d8;
+  // Border colors — warm
+  --color-border: #e5dfd7;
+  --color-border-subtle: #f0ebe4;
+  --color-border-strong: #d4cdc3;
 
   // Focus ring
-  --focus-ring-color: #2563eb;
+  --focus-ring-color: #4a7fb5;
 
   // Highlight colors for search term highlighting
-  --color-highlight: #fef08a;        // Yellow-200 background
-  --color-highlight-text: #18181b;   // Primary text for contrast
+  --color-highlight: #fde8a0;
+  --color-highlight-text: #2e2923;
 
-  // Shadows
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  // Shadows — warm-tinted
+  --shadow-sm: 0 1px 3px 0 rgb(44 36 28 / 0.06);
+  --shadow-md: 0 4px 8px -1px rgb(44 36 28 / 0.08), 0 2px 4px -2px rgb(44 36 28 / 0.06);
+  --shadow-lg: 0 10px 20px -3px rgb(44 36 28 / 0.1), 0 4px 8px -4px rgb(44 36 28 / 0.08);
+  --shadow-xl: 0 20px 30px -5px rgb(44 36 28 / 0.12), 0 8px 12px -6px rgb(44 36 28 / 0.08);
+
+  // Watercolor-specific
+  --wc-paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
 }
 
-// Dark theme tokens
+// Shared mixin for all dark theme token values
+@mixin dark-theme-tokens {
+  // Colors - Primary (Warm Coral — brightened for dark)
+  --color-primary: #e8847c;
+  --color-primary-hover: #f0a09a;
+  --color-primary-active: #d4726a;
+  --color-primary-subtle: #3d2220;
+
+  // Colors - Secondary (Sky Blue — brightened)
+  --color-secondary: #7bafde;
+  --color-secondary-hover: #9dc4e8;
+  --color-secondary-active: #5a8db8;
+  --color-secondary-subtle: #1a2d40;
+
+  // Colors - Neutral (Warm dark scale)
+  --color-neutral-50: #1c1814;
+  --color-neutral-100: #2e2923;
+  --color-neutral-200: #433d36;
+  --color-neutral-300: #5a534a;
+  --color-neutral-400: #7d7569;
+  --color-neutral-500: #a89f93;
+  --color-neutral-600: #d4cdc3;
+  --color-neutral-700: #e5dfd7;
+  --color-neutral-800: #f3efe9;
+  --color-neutral-900: #faf8f5;
+
+  // Semantic colors — dark mode
+  --color-success: #7dbb8f;
+  --color-warning: #e4b454;
+  --color-error: #d97878;
+  --color-info: #7bafde;
+  --color-info-subtle: #1a2d40;
+
+  // Watercolor accents — slightly brighter for dark
+  --wc-coral: #f0a09a;
+  --wc-amber: #f0bc5e;
+  --wc-sky: #9dc4e8;
+  --wc-lavender: #cbaade;
+  --wc-sage: #a3c898;
+  --wc-deep-blue: #7bafde;
+  --wc-rose: #e8847c;
+
+  // Background colors — warm dark
+  --color-background: #141210;
+  --color-background-subtle: #1c1814;
+  --color-background-muted: #2e2923;
+
+  // Text colors
+  --color-text-primary: #f3efe9;
+  --color-text-secondary: #d4cdc3;
+  --color-text-tertiary: #7d7569;
+  --color-text-inverse: #1c1814;
+
+  // Border colors
+  --color-border: #433d36;
+  --color-border-subtle: #2e2923;
+  --color-border-strong: #5a534a;
+
+  // Focus ring
+  --focus-ring-color: #7bafde;
+
+  // Highlight colors
+  --color-highlight: #5c3d10;
+  --color-highlight-text: #fde8a0;
+
+  // Shadows — darker
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.25);
+  --shadow-md: 0 4px 8px -1px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.25);
+  --shadow-lg: 0 10px 20px -3px rgb(0 0 0 / 0.35), 0 4px 8px -4px rgb(0 0 0 / 0.25);
+  --shadow-xl: 0 20px 30px -5px rgb(0 0 0 / 0.4), 0 8px 12px -6px rgb(0 0 0 / 0.3);
+
+  // Paper grain — lighter for dark mode
+  --wc-paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+// Dark theme tokens — explicit user preference
 [data-theme='dark'] {
-  // Colors - Primary (Blue) - slightly adjusted for dark mode
-  --color-primary: #3b82f6;
-  --color-primary-hover: #60a5fa;
-  --color-primary-active: #2563eb;
-  --color-primary-subtle: #1e3a8a;
-
-  // Colors - Secondary (Sky) - slightly adjusted for dark mode
-  --color-secondary: #38bdf8;
-  --color-secondary-hover: #7dd3fc;
-  --color-secondary-active: #0ea5e9;
-  --color-secondary-subtle: #0c4a6e;
-
-  // Colors - Neutral (Zinc) - inverted for dark mode
-  --color-neutral-50: #18181b;
-  --color-neutral-100: #27272a;
-  --color-neutral-200: #3f3f46;
-  --color-neutral-300: #52525b;
-  --color-neutral-400: #71717a;
-  --color-neutral-500: #a1a1aa;
-  --color-neutral-600: #d4d4d8;
-  --color-neutral-700: #e4e4e7;
-  --color-neutral-800: #f4f4f5;
-  --color-neutral-900: #fafafa;
-
-  // Semantic colors - adjusted for dark mode
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-error: #f87171;
-  --color-info: #60a5fa;
-  --color-info-subtle: #1e3a5f;
-
-  // Background colors
-  --color-background: #09090b;
-  --color-background-subtle: #18181b;
-  --color-background-muted: #27272a;
-
-  // Text colors
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #d4d4d8;
-  --color-text-tertiary: #71717a;
-  --color-text-inverse: #18181b;
-
-  // Border colors
-  --color-border: #3f3f46;
-  --color-border-subtle: #27272a;
-  --color-border-strong: #52525b;
-
-  // Focus ring
-  --focus-ring-color: #3b82f6;
-
-  // Highlight colors for search term highlighting
-  --color-highlight: #78350f;        // Amber-900 background for dark theme
-  --color-highlight-text: #fef3c7;   // Amber-100 text for contrast
-
-  // Shadows - more subtle in dark mode
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+  @include dark-theme-tokens;
 }
 
-// System theme support - follows OS preference
+// System theme support — follows OS preference
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']):not([data-theme='dark']) {
-    // Colors - Primary (Blue) - slightly adjusted for dark mode
-    --color-primary: #3b82f6;
-    --color-primary-hover: #60a5fa;
-    --color-primary-active: #2563eb;
-    --color-primary-subtle: #1e3a8a;
-
-    // Colors - Secondary (Sky) - slightly adjusted for dark mode
-    --color-secondary: #38bdf8;
-    --color-secondary-hover: #7dd3fc;
-    --color-secondary-active: #0ea5e9;
-    --color-secondary-subtle: #0c4a6e;
-
-    // Colors - Neutral (Zinc) - inverted for dark mode
-    --color-neutral-50: #18181b;
-    --color-neutral-100: #27272a;
-    --color-neutral-200: #3f3f46;
-    --color-neutral-300: #52525b;
-    --color-neutral-400: #71717a;
-    --color-neutral-500: #a1a1aa;
-    --color-neutral-600: #d4d4d8;
-    --color-neutral-700: #e4e4e7;
-    --color-neutral-800: #f4f4f5;
-    --color-neutral-900: #fafafa;
-
-    // Semantic colors - adjusted for dark mode
-    --color-success: #34d399;
-    --color-warning: #fbbf24;
-    --color-error: #f87171;
-    --color-info: #60a5fa;
-    --color-info-subtle: #1e3a5f;
-
-    // Background colors
-    --color-background: #09090b;
-    --color-background-subtle: #18181b;
-    --color-background-muted: #27272a;
-
-    // Text colors
-    --color-text-primary: #fafafa;
-    --color-text-secondary: #d4d4d8;
-    --color-text-tertiary: #71717a;
-    --color-text-inverse: #18181b;
-
-    // Border colors
-    --color-border: #3f3f46;
-    --color-border-subtle: #27272a;
-    --color-border-strong: #52525b;
-
-    // Focus ring
-    --focus-ring-color: #3b82f6;
-
-    // Highlight colors for search term highlighting
-    --color-highlight: #78350f;        // Amber-900 background for dark theme
-    --color-highlight-text: #fef3c7;   // Amber-100 text for contrast
-
-    // Shadows - more subtle in dark mode
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+    @include dark-theme-tokens;
   }
 }
 
@@ -226,8 +197,15 @@
   --font-weight-bold: 700;
 
   --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
+  --line-height-display: 1.1;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
+
+  // Decorative font for headings
+  --font-family-brush: 'Grechen Fuemen', cursive;
+  --font-family-body: 'Nunito', sans-serif;
+  --font-family-mono: 'IBM Plex Mono', monospace;
 }
 
 // Border radius

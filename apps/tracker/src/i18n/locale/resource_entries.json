@@ -1,0 +1,16 @@
+{
+  "currentLanguage": {
+    "source": "Current language: {language}",
+    "comment": "Aria-label for the locale picker button showing the current language",
+    "tags": ["locale"],
+    "es": "Idioma actual: {language}",
+    "fr-ca": "Langue actuelle : {language}"
+  },
+  "selectLanguage": {
+    "source": "Select language",
+    "comment": "Aria-label for the locale selection dropdown menu",
+    "tags": ["locale"],
+    "es": "Seleccionar idioma",
+    "fr-ca": "Choisir la langue"
+  }
+}

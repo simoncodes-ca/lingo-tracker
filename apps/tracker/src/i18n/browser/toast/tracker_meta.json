@@ -106,17 +106,17 @@
   },
   "localesTranslatedX": {
     "en": {
-      "checksum": "2581c65aa2def97dbadd5f86c23bca55"
+      "checksum": "5b843fe3323928bdd2c3412679c86ff7"
     },
     "es": {
-      "checksum": "0661d2994f294ea52893349125f89349",
-      "baseChecksum": "2581c65aa2def97dbadd5f86c23bca55",
-      "status": "translated"
+      "checksum": "e2e0e6ab08194c15b1e6189b26990114",
+      "baseChecksum": "5b843fe3323928bdd2c3412679c86ff7",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "803206f4ecbe48515c8abf7a8e35ab51",
-      "baseChecksum": "2581c65aa2def97dbadd5f86c23bca55",
-      "status": "translated"
+      "checksum": "4f6287f9046e691e34937001de08903a",
+      "baseChecksum": "5b843fe3323928bdd2c3412679c86ff7",
+      "status": "stale"
     }
   },
   "allLocalesUpToDate": {
@@ -136,17 +136,17 @@
   },
   "skippedLocalesX": {
     "en": {
-      "checksum": "04a21308741a37c9e6d53a0a1cb4ca60"
+      "checksum": "12a69e024b35f9a21939d29f767e0821"
     },
     "es": {
-      "checksum": "daf7dbb5c21e668f7707c4c9cd96a05e",
-      "baseChecksum": "04a21308741a37c9e6d53a0a1cb4ca60",
-      "status": "translated"
+      "checksum": "209a9bed3db9d0c05c5fb139088343d2",
+      "baseChecksum": "12a69e024b35f9a21939d29f767e0821",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "2dbc131db1f072a909d99d61a594b091",
-      "baseChecksum": "04a21308741a37c9e6d53a0a1cb4ca60",
-      "status": "translated"
+      "checksum": "3e2002568171f1bdc4522b46ec7ec405",
+      "baseChecksum": "12a69e024b35f9a21939d29f767e0821",
+      "status": "stale"
     }
   },
   "resourceCreated": {
@@ -166,17 +166,17 @@
   },
   "autoTranslationSkippedX": {
     "en": {
-      "checksum": "9aea84014c2c9f685a1f9cdd2870ecda"
+      "checksum": "760c64588bcdc219130e6209f46db428"
     },
     "es": {
-      "checksum": "a5c4c15117b7c0ddbea26e7381ba648e",
-      "baseChecksum": "9aea84014c2c9f685a1f9cdd2870ecda",
-      "status": "translated"
+      "checksum": "2f1343d30ab317a540a8a4b47e90817c",
+      "baseChecksum": "760c64588bcdc219130e6209f46db428",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "76450c3c22485619467f47fb25c985f4",
-      "baseChecksum": "9aea84014c2c9f685a1f9cdd2870ecda",
-      "status": "translated"
+      "checksum": "cefd9cff1fd03bfbdd9c599dc415fcde",
+      "baseChecksum": "760c64588bcdc219130e6209f46db428",
+      "status": "stale"
     }
   },
   "resourceAlreadyInFolder": {
@@ -196,17 +196,17 @@
   },
   "resourceMovedX": {
     "en": {
-      "checksum": "0f250f28bcbeb1c82456a7a4c954d725"
+      "checksum": "ce40eefa32c87be1fc1a51d276eeb2a0"
     },
     "es": {
-      "checksum": "98797552a939a02d4a5adbbd0aee37cf",
-      "baseChecksum": "0f250f28bcbeb1c82456a7a4c954d725",
-      "status": "translated"
+      "checksum": "80f8c337c37cbeff271ca3d8439694ef",
+      "baseChecksum": "ce40eefa32c87be1fc1a51d276eeb2a0",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "84c5a34475aac5bb3f53272dac06f7e6",
-      "baseChecksum": "0f250f28bcbeb1c82456a7a4c954d725",
-      "status": "translated"
+      "checksum": "c1adc37f0a52cd2c618c0f58cb80ae7e",
+      "baseChecksum": "ce40eefa32c87be1fc1a51d276eeb2a0",
+      "status": "stale"
     }
   },
   "folderAlreadyAtLocation": {
@@ -226,17 +226,17 @@
   },
   "folderMovedX": {
     "en": {
-      "checksum": "d15411e7eea6552aa08d60264628c492"
+      "checksum": "e1ad81924f3ed1eec2bc567968949971"
     },
     "es": {
-      "checksum": "ac6a46b281064908a6903a8ac2dc6c0a",
-      "baseChecksum": "d15411e7eea6552aa08d60264628c492",
-      "status": "translated"
+      "checksum": "8878455bdde0d4511d2e6b6337cc365a",
+      "baseChecksum": "e1ad81924f3ed1eec2bc567968949971",
+      "status": "stale"
     },
     "fr-ca": {
-      "checksum": "ab5ab4efa9c8a3927ec3866c970230bf",
-      "baseChecksum": "d15411e7eea6552aa08d60264628c492",
-      "status": "translated"
+      "checksum": "0401d563667e407bac3518529dc6de20",
+      "baseChecksum": "e1ad81924f3ed1eec2bc567968949971",
+      "status": "stale"
     }
   },
   "moveResourceFailed": {

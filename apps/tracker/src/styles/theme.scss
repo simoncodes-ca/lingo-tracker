@@ -5,7 +5,7 @@
 
 // Define typography config
 $lingo-tracker-typography: mat.m2-define-typography-config(
-  $font-family: '"Inter", sans-serif',
+  $font-family: '"Nunito", sans-serif',
   $headline-1: mat.m2-define-typography-level(2.25rem, 1.25, 700),  // 4xl
   $headline-2: mat.m2-define-typography-level(1.875rem, 1.25, 700), // 3xl
   $headline-3: mat.m2-define-typography-level(1.5rem, 1.25, 600),   // 2xl
@@ -17,17 +17,20 @@ $lingo-tracker-typography: mat.m2-define-typography-config(
   $button: mat.m2-define-typography-level(0.875rem, 1, 500),
 );
 
-// Define color palettes
-$lingo-tracker-primary: mat.m2-define-palette(mat.$m2-blue-palette);
-$lingo-tracker-accent: mat.m2-define-palette(mat.$m2-light-blue-palette);
-$lingo-tracker-warn: mat.m2-define-palette(mat.$m2-red-palette);
+// Warm watercolor palettes
+// Primary: Coral/Vermillion tones
+$wc-coral-palette: mat.m2-define-palette(mat.$m2-deep-orange-palette, 300, 200, 500);
+// Accent: Sky blue tones
+$wc-sky-palette: mat.m2-define-palette(mat.$m2-light-blue-palette, 400, 200, 600);
+// Warn: Warm red
+$wc-warn-palette: mat.m2-define-palette(mat.$m2-red-palette, 300, 100, 500);
 
 // Create light theme
 $lingo-tracker-light-theme: mat.m2-define-light-theme((
   color: (
-    primary: $lingo-tracker-primary,
-    accent: $lingo-tracker-accent,
-    warn: $lingo-tracker-warn,
+    primary: $wc-coral-palette,
+    accent: $wc-sky-palette,
+    warn: $wc-warn-palette,
   ),
   typography: $lingo-tracker-typography,
   density: -1,
@@ -36,9 +39,9 @@ $lingo-tracker-light-theme: mat.m2-define-light-theme((
 // Create dark theme
 $lingo-tracker-dark-theme: mat.m2-define-dark-theme((
   color: (
-    primary: $lingo-tracker-primary,
-    accent: $lingo-tracker-accent,
-    warn: $lingo-tracker-warn,
+    primary: $wc-coral-palette,
+    accent: $wc-sky-palette,
+    warn: $wc-warn-palette,
   ),
   typography: $lingo-tracker-typography,
   density: -1,
@@ -52,4 +55,11 @@ $lingo-tracker-dark-theme: mat.m2-define-dark-theme((
 // Apply dark theme when data-theme="dark"
 [data-theme='dark'] {
   @include mat.all-component-colors($lingo-tracker-dark-theme);
+}
+
+// Apply dark theme when OS preference is dark and no explicit theme is set
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    @include mat.all-component-colors($lingo-tracker-dark-theme);
+  }
 }

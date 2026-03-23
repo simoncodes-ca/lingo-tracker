@@ -42,12 +42,12 @@ $footer-height: 32px;
   gap: var(--spacing-4);
   background-color: var(--color-background);
   border-top: 1px solid var(--color-border);
-  font-size: 11px;
-  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
   user-select: none;
 
   .footer-links {
-    color: var(--color-text-tertiary);
+    color: var(--color-text-secondary);
     display: flex;
     align-items: center;
     gap: var(--spacing-3);
@@ -60,12 +60,12 @@ $footer-height: 32px;
       transition: color var(--transition-fast);
 
       &:hover {
-        color: var(--color-text);
+        color: var(--color-text-primary);
       }
 
       mat-icon,
       svg {
-        font-size: 16px;
+        font-size: var(--font-size-base);
         width: 16px;
         height: 16px;
         margin-right: var(--spacing-1);
@@ -74,7 +74,7 @@ $footer-height: 32px;
   }
 
   span {
-    color: var(--color-text-tertiary);
+    color: var(--color-text-secondary);
   }
 }
 
@@ -92,6 +92,7 @@ $footer-height: 32px;
   overflow-y: auto;
   overflow-x: hidden;
   background-color: var(--color-background-subtle);
+  position: relative;
 
   // Smooth theme transitions
   transition: background-color var(--transition-normal),

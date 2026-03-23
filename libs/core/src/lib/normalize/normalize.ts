@@ -15,6 +15,7 @@ export interface NormalizeParams {
 export interface NormalizeResult {
   readonly entriesProcessed: number;
   readonly localesAdded: number;
+  readonly valuesConverted: number;
   readonly filesCreated: number;
   readonly filesUpdated: number;
   readonly foldersRemoved: number;
@@ -24,6 +25,7 @@ export interface NormalizeResult {
 interface NormalizationCounters {
   entriesProcessed: number;
   localesAdded: number;
+  valuesConverted: number;
   filesCreated: number;
   filesUpdated: number;
 }
@@ -41,6 +43,7 @@ interface NormalizedFolderData {
   readonly folderHadChanges: boolean;
   readonly entriesProcessedCount: number;
   readonly localesAddedCount: number;
+  readonly valuesConvertedCount: number;
 }
 
 interface PersistResourcesParams {
@@ -123,12 +126,14 @@ function normalizeAllEntriesInFolder(params: NormalizeAllEntriesParams): Normali
       folderHadChanges: false,
       entriesProcessedCount: 0,
       localesAddedCount: 0,
+      valuesConvertedCount: 0,
     };
   }
 
   let folderHadChanges = false;
   let entriesProcessedCount = 0;
   let localesAddedCount = 0;
+  let valuesConvertedCount = 0;
 
   const updatedResourceEntries = { ...resourceEntries };
   const updatedTrackerMetadata = { ...trackerMetadata };
@@ -150,8 +155,14 @@ function normalizeAllEntriesInFolder(params: NormalizeAllEntriesParams): Normali
 
     entriesProcessedCount++;
     localesAddedCount += result.changes.localesAdded;
+    valuesConvertedCount += result.changes.valuesConverted;
 
-    if (result.changes.localesAdded > 0 || result.changes.checksumsUpdated > 0 || result.changes.statusesChanged > 0) {
+    if (
+      result.changes.localesAdded > 0 ||
+      result.changes.checksumsUpdated > 0 ||
+      result.changes.statusesChanged > 0 ||
+      result.changes.valuesConverted > 0
+    ) {
       folderHadChanges = true;
     }
   }
@@ -162,6 +173,7 @@ function normalizeAllEntriesInFolder(params: NormalizeAllEntriesParams): Normali
     folderHadChanges,
     entriesProcessedCount,
     localesAddedCount,
+    valuesConvertedCount,
   };
 }
 
@@ -250,6 +262,7 @@ async function normalizeFolderResources(params: NormalizeFolderParams): Promise<
 
   counters.entriesProcessed += normalizedData.entriesProcessedCount;
   counters.localesAdded += normalizedData.localesAddedCount;
+  counters.valuesConverted += normalizedData.valuesConvertedCount;
 
   const persistResult = persistFolderResources({
     folderPath,
@@ -321,6 +334,7 @@ export async function normalize(params: NormalizeParams): Promise<NormalizeResul
   const counters: NormalizationCounters = {
     entriesProcessed: 0,
     localesAdded: 0,
+    valuesConverted: 0,
     filesCreated: 0,
     filesUpdated: 0,
   };
@@ -329,6 +343,7 @@ export async function normalize(params: NormalizeParams): Promise<NormalizeResul
     return {
       entriesProcessed: 0,
       localesAdded: 0,
+      valuesConverted: 0,
       filesCreated: 0,
       filesUpdated: 0,
       foldersRemoved: 0,
@@ -349,6 +364,7 @@ export async function normalize(params: NormalizeParams): Promise<NormalizeResul
   return {
     entriesProcessed: counters.entriesProcessed,
     localesAdded: counters.localesAdded,
+    valuesConverted: counters.valuesConverted,
     filesCreated: counters.filesCreated,
     filesUpdated: counters.filesUpdated,
     foldersRemoved: cleanupResult.foldersRemoved,
