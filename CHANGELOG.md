@@ -1,3 +1,18 @@
+# [0.10.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.9.0...v0.10.0) (2026-03-23)
+
+
+### Bug Fixes
+
+* **ci:** update remaining main.js references to main.cjs ([63ff414](https://github.com/simoncodes-ca/lingo-tracker/commit/63ff414da962101d76bca163d4cc4af31d4b5a58))
+
+
+### Features
+
+* add ICU format support with bidirectional Transloco conversion ([3ef6611](https://github.com/simoncodes-ca/lingo-tracker/commit/3ef66113adb4e05d2a37b8fbfea31a7d5a7547f3))
+* **app:** change logo and favicon ([25d98d9](https://github.com/simoncodes-ca/lingo-tracker/commit/25d98d9b1ed87fdb3c0c379b6cc93940f508f366))
+* **cli:** inject version from package.json at build time via esbuild define ([e661972](https://github.com/simoncodes-ca/lingo-tracker/commit/e661972f4c97075b20e179dba3428dbc63caa80d))
+* **tracker:** add locale picker to app header with persistence ([3d09d81](https://github.com/simoncodes-ca/lingo-tracker/commit/3d09d81963c2f671937747556f1455ad452f3307))
+
 # [0.9.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.8.0...v0.9.0) (2026-03-19)
 
 
