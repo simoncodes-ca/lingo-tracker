@@ -40,7 +40,7 @@ Before running any `npx lingo-tracker` command, ensure the CLI is built. Use the
 bash .claude/skills/lingo-tracker/scripts/ensure-cli.sh
 ```
 
-The script checks for `dist/apps/cli/main.js`. If it exists, it exits immediately (no rebuild). If missing, it runs `pnpm run build:cli`.
+The script checks for `dist/apps/cli/main.cjs`. If it exists, it exits immediately (no rebuild). If missing, it runs `pnpm run build:cli`.
 
 Do NOT run `pnpm run build:cli` directly — always use `ensure-cli.sh` to avoid unnecessary builds.
 
