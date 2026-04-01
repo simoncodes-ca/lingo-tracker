@@ -2104,7 +2104,7 @@ describe('import-from-json', () => {
 
     it('should normalize {{ variable }} syntax to ICU format when updating an existing resource', () => {
       const existingEntries = {
-        greeting: { source: 'Hello {name}', es: 'Hola {name}' },
+        greeting: { source: 'Hello {name}', es: 'Old greeting' },
       };
 
       const existingMeta = {

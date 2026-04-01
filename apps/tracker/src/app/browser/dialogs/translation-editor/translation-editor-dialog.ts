@@ -129,6 +129,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   readonly similarResources = signal<SearchResultDto[]>([]);
   readonly isSearchingSimilar = signal(false);
   readonly baseValueLength = signal(0);
+  readonly isLocalesScrolled = signal(false);
 
   readonly form = new FormGroup({
     key: new FormControl<string>('', {
@@ -197,9 +198,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
       this.#originalBaseValue = baseValue;
 
       this.#populateOtherLocaleTranslations();
-    } else if (this.data.folderPath) {
-      // In create mode, we might have a pre-selected folder
-      // The folder path is stored in data, not in the form
     }
 
     this.#setupSimilarResourcesSearch();
@@ -328,6 +326,14 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   onCtrlEnter(event: Event): void {
     event.preventDefault();
     this.onSubmit();
+  }
+
+  onTabChange(): void {
+    this.isLocalesScrolled.set(false);
+  }
+
+  onLocalesScroll(event: Event): void {
+    this.isLocalesScrolled.set((event.target as HTMLElement).scrollTop > 0);
   }
 
   onCancel(): void {

@@ -1,4 +1,13 @@
-import { Component, ChangeDetectionStrategy, input, output, signal, computed, inject } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+  signal,
+  computed,
+  inject,
+  type OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -30,7 +39,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
   templateUrl: './folder-picker.html',
   styleUrl: './folder-picker.scss',
 })
-export class FolderPicker {
+export class FolderPicker implements OnInit {
   readonly #store = inject(BrowserStore);
   readonly #snackBar = inject(MatSnackBar);
   readonly #transloco = inject(TranslocoService);
@@ -48,6 +57,9 @@ export class FolderPicker {
   /** Emitted when a new folder is created */
   readonly folderCreated = output<FolderNodeDto>();
 
+  /** When true, the folder tree is shown immediately and the currentPath ancestors are expanded */
+  readonly initiallyExpanded = input(false);
+
   readonly isExpanded = signal(false);
   readonly expandedPaths = signal<Set<string>>(new Set());
   readonly selectedPath = signal<string | null>(null);
@@ -57,12 +69,13 @@ export class FolderPicker {
   readonly isCreatingFolder = signal(false);
 
   readonly displayPath = computed(() => {
+    const rootLabel = this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.ROOTLABEL);
     const stagedPath = this.selectedPath();
     if (stagedPath !== null) {
-      return stagedPath || 'root';
+      return stagedPath || rootLabel;
     }
     const current = this.currentPath();
-    return current || 'root';
+    return current || rootLabel;
   });
 
   readonly chevronIcon = computed(() => {
@@ -73,7 +86,29 @@ export class FolderPicker {
     return this.rootFolders().length > 0;
   });
 
+  ngOnInit(): void {
+    if (this.initiallyExpanded()) {
+      this.isExpanded.set(true);
+      const currentPath = this.currentPath();
+      if (currentPath) {
+        this.selectedPath.set(currentPath);
+        // Note: we intentionally don't emit folderConfirmed here because the
+        // parent dialog already has the correct path from its data.
+        // Expand all ancestor segments so the current path is visible
+        const segments = currentPath.split('.');
+        const pathsToExpand = new Set<string>();
+        for (let i = 0; i < segments.length; i++) {
+          pathsToExpand.add(segments.slice(0, i + 1).join('.'));
+        }
+        this.expandedPaths.set(pathsToExpand);
+      }
+    }
+  }
+
   toggleExpanded(): void {
+    if (this.initiallyExpanded()) {
+      return;
+    }
     this.isExpanded.update((expanded) => !expanded);
     if (!this.isExpanded()) {
       this.selectedPath.set(null);
@@ -84,7 +119,9 @@ export class FolderPicker {
   onFolderSelect(folderPath: string): void {
     this.selectedPath.set(folderPath);
     this.folderConfirmed.emit(folderPath);
-    this.isExpanded.set(false);
+    if (!this.initiallyExpanded()) {
+      this.isExpanded.set(false);
+    }
     this.focusedPath.set(null);
   }
 
