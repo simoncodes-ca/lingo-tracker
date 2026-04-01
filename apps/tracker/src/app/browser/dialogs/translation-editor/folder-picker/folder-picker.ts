@@ -69,7 +69,7 @@ export class FolderPicker implements OnInit {
   readonly isCreatingFolder = signal(false);
 
   readonly displayPath = computed(() => {
-    const rootLabel = this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.ROOTLABEL);
+    const rootLabel = this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.ROOTLABEL) || 'root';
     const stagedPath = this.selectedPath();
     if (stagedPath !== null) {
       return stagedPath || rootLabel;
