@@ -28,7 +28,6 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          allowed_tools: "Bash(git diff:*),Bash(git log:*),Bash(git show:*),Read,Glob,Grep"
           prompt: |
             Review this PR. Focus on:
             - Bugs, logic errors, and edge cases
