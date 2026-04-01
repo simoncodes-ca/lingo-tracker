@@ -69,6 +69,13 @@
     "es": "No se pudo crear la carpeta",
     "fr-ca": "Impossible de créer le dossier"
   },
+  "rootLabel": {
+    "source": "root",
+    "comment": "Label displayed when the selected folder is the root (empty path)",
+    "tags": ["browser"],
+    "es": "raíz",
+    "fr-ca": "racine"
+  },
   "selectorAriaLabelX": {
     "source": "Folder selector, currently: { path }",
     "comment": "Aria-label for the folder picker header button. { path } is the currently selected folder path",

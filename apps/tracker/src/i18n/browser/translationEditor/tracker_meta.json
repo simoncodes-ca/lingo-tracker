@@ -59,6 +59,36 @@
       "status": "translated"
     }
   },
+  "locationLabel": {
+    "en": {
+      "checksum": "3a5b0a31626f29a78e12e995e0428fbb"
+    },
+    "es": {
+      "checksum": "b11ec21c5eb tried50c52c3e3c9e3a46f",
+      "baseChecksum": "3a5b0a31626f29a78e12e995e0428fbb",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+      "baseChecksum": "3a5b0a31626f29a78e12e995e0428fbb",
+      "status": "translated"
+    }
+  },
+  "locationTabHint": {
+    "en": {
+      "checksum": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9"
+    },
+    "es": {
+      "checksum": "e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
+      "baseChecksum": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1",
+      "baseChecksum": "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+      "status": "translated"
+    }
+  },
   "localeTranslationX": {
     "en": {
       "checksum": "06c8a0c2ef0476880f67ff4230e593b4"

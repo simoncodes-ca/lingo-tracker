@@ -27,6 +27,20 @@
     "es": "Base",
     "fr-ca": "Base"
   },
+  "locationLabel": {
+    "source": "Location:",
+    "comment": "Label prefix for the current folder location in the translation editor dialog",
+    "tags": ["browser"],
+    "es": "Ubicación:",
+    "fr-ca": "Emplacement :"
+  },
+  "locationTabHint": {
+    "source": "Choose a different folder for this translation resource.",
+    "comment": "Hint text shown at the top of the Change Location tab in the translation editor",
+    "tags": ["browser"],
+    "es": "Elija una carpeta diferente para este recurso de traducción.",
+    "fr-ca": "Choisissez un autre dossier pour cette ressource de traduction."
+  },
   "localeTranslationX": {
     "source": "{locale} Translation",
     "comment": "Label for locale translation input field, locale is uppercased locale code",

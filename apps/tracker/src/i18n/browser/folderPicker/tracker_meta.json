@@ -149,6 +149,21 @@
       "status": "translated"
     }
   },
+  "rootLabel": {
+    "en": {
+      "checksum": "63a9f0ea7bb98050796b649e85481845"
+    },
+    "es": {
+      "checksum": "2dfc25e20e31bb50b6af09da11400a02",
+      "baseChecksum": "63a9f0ea7bb98050796b649e85481845",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "29be74725a0760c1c05e11fa9de518e6",
+      "baseChecksum": "63a9f0ea7bb98050796b649e85481845",
+      "status": "translated"
+    }
+  },
   "selectorAriaLabelX": {
     "en": {
       "checksum": "b25b6c575d57b6fd62e0b80e20fe9c16"
