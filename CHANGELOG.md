@@ -1,3 +1,20 @@
+# [0.11.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.10.0...v0.11.0) (2026-04-01)
+
+
+### Bug Fixes
+
+* **app:** add missing translations ([7758c75](https://github.com/simoncodes-ca/lingo-tracker/commit/7758c75c86938d4307ca347969d49cd718fe3f6b))
+* **core:** fix transloco to ICU normalization ([345d5b8](https://github.com/simoncodes-ca/lingo-tracker/commit/345d5b87ef41bf74ef199c8eba4156b57d00037d))
+* **infra:** address msising review comments ([32c2a92](https://github.com/simoncodes-ca/lingo-tracker/commit/32c2a92597ba606098a15fbdffdd63c9a13578a2))
+* **infra:** remove invalid allowed_tools input from claude-review workflow ([74b5114](https://github.com/simoncodes-ca/lingo-tracker/commit/74b5114bd9ca0b7a6fd844c8fcaea1e2e6ae9c72))
+* **repo:** address vulnarabilities ([7c370e5](https://github.com/simoncodes-ca/lingo-tracker/commit/7c370e5d6f04143e60393eec63fcec303bb08fed))
+* **tests:** fix unit tests ([dcb4152](https://github.com/simoncodes-ca/lingo-tracker/commit/dcb4152b7b826202fe0e534d617fd14467d7dc76))
+
+
+### Features
+
+* **app:** change create/edit resource dialog to tabed view ([49563db](https://github.com/simoncodes-ca/lingo-tracker/commit/49563db74fd93af2f03dd755f120cd910c4e57c5))
+
 # [0.10.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.9.0...v0.10.0) (2026-03-23)
 
 
