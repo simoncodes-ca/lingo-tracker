@@ -2056,4 +2056,105 @@ describe('import-from-json', () => {
       });
     });
   });
+
+  describe('Transloco syntax normalization', () => {
+    it('should normalize {{ variable }} syntax to ICU format when creating a resource', () => {
+      const importData = {
+        'common.greeting': {
+          value: 'Hello {{ name }}',
+          baseValue: 'Hello {{ name }}',
+        },
+      };
+
+      vi.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
+        const pathStr = String(filePath);
+        if (pathStr.includes('import.json')) return true;
+        return false;
+      });
+
+      vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
+        const pathStr = String(filePath);
+        if (pathStr.includes('import.json')) return JSON.stringify(importData);
+        return '{}';
+      });
+
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+
+      const options: ImportOptions = {
+        source: '/import/import.json',
+        locale: 'es',
+        createMissing: true,
+      };
+
+      const result = importFromJson('/translations', options);
+
+      expect(result.resourcesCreated).toBe(1);
+
+      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
+      );
+
+      expect(resourceEntriesCall).toBeDefined();
+      if (resourceEntriesCall) {
+        const newEntries = JSON.parse(String(resourceEntriesCall[1]));
+        expect(newEntries.greeting.es).toBe('Hello {name}');
+      }
+    });
+
+    it('should normalize {{ variable }} syntax to ICU format when updating an existing resource', () => {
+      const existingEntries = {
+        greeting: { source: 'Hello {name}', es: 'Old greeting' },
+      };
+
+      const existingMeta = {
+        greeting: {
+          en: { checksum: 'base-checksum' },
+          es: {
+            checksum: 'old-checksum',
+            baseChecksum: 'base-checksum',
+            status: 'translated',
+          },
+        },
+      };
+
+      const importData = {
+        'common.greeting': {
+          value: 'Hola {{ name }}',
+          baseValue: 'Hello {{ name }}',
+        },
+      };
+
+      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+      vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
+        const pathStr = String(filePath);
+        if (pathStr.includes('import.json')) return JSON.stringify(importData);
+        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        return '{}';
+      });
+
+      const writeFileSyncSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+
+      const options: ImportOptions = {
+        source: '/import/import.json',
+        locale: 'es',
+      };
+
+      const result = importFromJson('/translations', options);
+
+      expect(result.resourcesUpdated).toBe(1);
+
+      const resourceEntriesCall = writeFileSyncSpy.mock.calls.find((call) =>
+        String(call[0]).includes('resource_entries.json'),
+      );
+
+      expect(resourceEntriesCall).toBeDefined();
+      if (resourceEntriesCall) {
+        const updatedEntries = JSON.parse(String(resourceEntriesCall[1]));
+        expect(updatedEntries.greeting.es).toBe('Hola {name}');
+      }
+    });
+  });
 });

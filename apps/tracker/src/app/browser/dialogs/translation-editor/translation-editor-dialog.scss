@@ -1,21 +1,32 @@
-// Dialog container with refined aesthetic
+// ─────────────────────────────────────────────────────────────────────────────
+// Host & dialog container
+// ─────────────────────────────────────────────────────────────────────────────
 :host {
   display: block;
   max-width: 750px;
 }
 
-// Dialog header section
+// ─────────────────────────────────────────────────────────────────────────────
+// Dialog header
+// ─────────────────────────────────────────────────────────────────────────────
+
 .dialog-header {
   position: relative;
   padding: var(--spacing-5) var(--spacing-6) var(--spacing-4);
   border-bottom: 1px solid var(--color-border);
 }
 
-.dialog-title {
+.dialog-header-content {
+  // Reserve right-side space so text doesn't slide under the close button
+  padding-right: var(--spacing-10);
+}
+
+.mat-dialog-title {
   margin: 0 0 var(--spacing-1);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
 }
 
 .dialog-subtitle {
@@ -32,24 +43,89 @@
   color: var(--color-text-secondary);
   transition: color var(--transition-fast);
 
-  &:hover { color: var(--color-text-primary); }
+  &:hover {
+    color: var(--color-text-primary);
+  }
 }
 
-// Main content area
-mat-dialog-content {
-  padding: var(--spacing-5) var(--spacing-6);
-  color: var(--color-text-primary);
-  min-height: 400px;
-  background-color: var(--color-background);
+// ─────────────────────────────────────────────────────────────────────────────
+// Pre-tab strip: location pill + error banner
+// ─────────────────────────────────────────────────────────────────────────────
+
+.dialog-pretab {
+  padding: var(--spacing-3) var(--spacing-6);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-background-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
 }
 
-// Error banner styling
+.location-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.location-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.location-label-icon {
+  font-size: var(--font-size-base);
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-text-tertiary);
+}
+
+// Pill that shows the current folder path
+.location-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-3);
+  background-color: var(--color-primary-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border-radius: var(--border-radius-full);
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.location-pill-icon {
+  font-size: var(--font-size-sm);
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.location-pill-path {
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Error banner
+// ─────────────────────────────────────────────────────────────────────────────
+
 .error-banner {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-3);
   padding: var(--spacing-3) var(--spacing-4);
-  margin-bottom: var(--spacing-5);
   background-color: color-mix(in srgb, var(--color-error) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
   border-radius: var(--border-radius-md);
@@ -69,83 +145,146 @@ mat-dialog-content {
   line-height: var(--line-height-normal);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Main dialog content — contains the tab group
+// ─────────────────────────────────────────────────────────────────────────────
+
+.dialog-tab-content {
+  // Override Material's default padding so the tab bar sits flush
+  padding: 0 !important;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  // Fixed height so the dialog content area doesn't shift when switching tabs
+  height: 570px;
+  // Disable Material's default overflow:auto so the tab group controls scrolling
+  // internally. Without this, the entire tab group (header + body) scrolls together,
+  // which causes the tab strip and the base locale banner to scroll away.
+  overflow: hidden !important;
+}
+
+// The <form> inside .dialog-tab-content has no intrinsic height, which breaks
+// the height chain for any descendant using height: 100%. Propagate the fixed
+// 570px height of the mat-dialog-content container downward so that the
+// mat-tab-group (height: 100%) resolves to the correct pixel value.
+.dialog-tab-content form {
+  height: 100%;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab group overrides
+// ─────────────────────────────────────────────────────────────────────────────
+
+.editor-tabs {
+  // Fill the full height of the dialog content and establish a flex column so
+  // the tab header and tab body can each be individually sized and positioned.
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  // Tab header strip — must not participate in scrolling. flex-shrink: 0
+  // prevents the header from being compressed when the body needs space.
+  ::ng-deep .mat-mdc-tab-header {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-background-subtle);
+    padding: 0 var(--spacing-4);
+  }
+
+  // Individual tab labels
+  ::ng-deep .mat-mdc-tab .mdc-tab__text-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+    letter-spacing: 0;
+  }
+
+  // Active tab label
+  ::ng-deep .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  // Active indicator underline
+  ::ng-deep .mat-mdc-tab-indicator .mdc-tab-indicator__content--underline {
+    border-color: var(--color-primary);
+    border-top-width: 2px;
+  }
+
+  // Tab body wrapper — fills remaining height after the header. min-height: 0
+  // is critical: without it, a flex child ignores overflow and expands past its
+  // parent, breaking the scroll containment chain.
+  ::ng-deep .mat-mdc-tab-body-wrapper {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  // Angular Material renders a mat-tab-body host element between
+  // .mat-mdc-tab-body-wrapper and .mat-mdc-tab-body-content. Without an explicit
+  // height it collapses, causing height: 100% on .mat-mdc-tab-body-content to
+  // resolve to zero and silently clipping the tab panel instead of scrolling it.
+  ::ng-deep .mat-mdc-tab-body {
+    height: 100%;
+  }
+
+  // Tab body content — the actual scroll container for most tabs. height: 100%
+  // ensures it fills the wrapper so nested panels using height:100% resolve correctly.
+  ::ng-deep .mat-mdc-tab-body-content {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab panels — shared base
+// ─────────────────────────────────────────────────────────────────────────────
+
+.tab-panel {
+  padding: var(--spacing-5) var(--spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Utility
+// ─────────────────────────────────────────────────────────────────────────────
+
 .full-width {
   width: 100%;
 }
 
-// Folder display with monospace path
-.folder-display {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  margin-bottom: var(--spacing-5);
-  padding: var(--spacing-3) var(--spacing-4);
-  background-color: var(--color-background-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab 1 — Base locale info
+// ─────────────────────────────────────────────────────────────────────────────
+
+.tab-panel--base {
+  padding-top: var(--spacing-6);
 }
 
-.folder-icon {
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-lg);
-  flex-shrink: 0;
-}
-
-.folder-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-}
-
-.folder-path {
-  font-size: var(--font-size-sm);
-  font-family: var(--font-family-mono);
-  color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-// Base locale card with distinctive left border
+// Base locale card with primary-coloured left accent
 .base-locale-card {
   padding: var(--spacing-4);
-  margin-top: var(--spacing-4);
   background-color: var(--color-background-subtle);
   border: 1px solid var(--color-border);
   border-left: 3px solid var(--color-primary);
   border-radius: var(--border-radius-lg);
   transition: box-shadow var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
 
   &:focus-within {
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 25%, transparent);
   }
 }
 
-// Other locale cards with neutral left border
-.locale-card {
-  padding: var(--spacing-4);
-  background-color: var(--color-background-subtle);
-  border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-border);
-  border-radius: var(--border-radius-lg);
-  transition: border-left-color var(--transition-fast), box-shadow var(--transition-fast);
-
-  &:hover {
-    border-left-color: var(--color-text-tertiary);
-  }
-
-  &:focus-within {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 25%, transparent);
-  }
-}
-
-// Card header layout
 .locale-card-header {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  margin-bottom: var(--spacing-4);
 }
 
 .locale-icon {
@@ -162,7 +301,7 @@ mat-dialog-content {
   flex: 1;
 }
 
-// Base badge - refined pill style
+// "BASE" badge — pill style
 .base-badge {
   padding: var(--spacing-1) var(--spacing-3);
   background-color: var(--color-primary);
@@ -176,81 +315,137 @@ mat-dialog-content {
   white-space: nowrap;
 }
 
-// Comment field spacing
+// Zero out margin — parent card uses gap for spacing
 .comment-field {
-  margin-top: var(--spacing-2);
-  margin-bottom: 0;
+  margin: 0;
 }
 
-// Other locales toggle button
-.other-locales-toggle {
-  margin: var(--spacing-5) 0 var(--spacing-4);
-  padding: var(--spacing-3) var(--spacing-4);
-  background-color: transparent;
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab 2 — Other locales
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Fill the entire tab body so we can split scrolling between the fixed
+// reference banner and the scrollable locale cards. The panel itself must not
+// add to the outer scroll — overflow: hidden delegates scrolling inward to
+// .other-locales-section only.
+.tab-panel--locales {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+// Read-only base value reference shown at the top of Tab 2.
+// flex-shrink: 0 ensures it never collapses as a flex child of .tab-panel--locales.
+// Scrolling is handled by .other-locales-section below, not this element.
+.base-value-reference {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4) var(--spacing-6);
+  margin: var(--spacing-4) var(--spacing-6) 0;
+  background-color: var(--color-background-subtle);
   border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
   border-radius: var(--border-radius-md);
-  cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  // Scroll-reveal shadow: transitions in when the locale cards list is scrolled,
+  // providing a visual separation between the fixed banner and scrolling content.
+  box-shadow: 0 2px 4px transparent;
+  transition: box-shadow var(--transition-fast);
 
-  &:hover {
-    background-color: var(--color-background-muted);
-    color: var(--color-text-primary);
-    border-color: var(--color-border-strong);
+  &.scrolled {
+    box-shadow: 0 3px 8px color-mix(in srgb, var(--color-text-primary) 16%, transparent);
   }
 
-  &:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+  // On very narrow containers, stack label above text
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: var(--spacing-1);
   }
 }
 
-// Other locales section with staggered animation
+.base-value-reference__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.base-value-reference__icon {
+  font-size: var(--font-size-sm);
+  width: 1rem;
+  height: 1rem;
+}
+
+.base-value-reference__badge {
+  padding: 1px var(--spacing-2);
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--border-radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.base-value-reference__text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-normal);
+  // Prevent very long strings from breaking layout
+  word-break: break-word;
+}
+
+// Stack of locale translation cards — the only scrollable region in Tab 2.
+// flex: 1 + min-height: 0 is the canonical flexbox pattern for a child that
+// must scroll within a fixed-height flex column parent.
 .other-locales-section {
-  margin-top: var(--spacing-4);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
-  animation: slideDown var(--transition-normal) ease-out;
+  padding: var(--spacing-4) var(--spacing-6) var(--spacing-5);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
 
-  .locale-card {
-    animation: cardSlide var(--transition-slow) ease-out;
+// Individual locale card (non-base locales)
+.locale-card {
+  padding: var(--spacing-4);
+  background-color: var(--color-background-subtle);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  transition: border-left-color var(--transition-fast), box-shadow var(--transition-fast);
 
-    @for $i from 1 through 10 {
-      &:nth-child(#{$i}) {
-        animation-delay: calc(#{$i} * 50ms);
-      }
+  &:hover {
+    border-left-color: var(--color-text-tertiary);
+  }
+
+  &:focus-within {
+    border-left-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 25%, transparent);
+  }
+
+  .full-width {
+    margin-top: var(--spacing-2);
+
+    // Locale value inputs carry no validation — remove reserved subscript space.
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none;
     }
   }
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-
-  to {
-    opacity: 1;
-    max-height: 1000px; /* generous ceiling for height:auto workaround; assumes < 25 locale cards */
-  }
-}
-
-@keyframes cardSlide {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// Status select styling
+// Status select — right-aligned, compact
 :host .status-select {
   width: 140px;
   margin-left: auto;
@@ -258,9 +453,67 @@ mat-dialog-content {
   ::ng-deep .mat-mdc-form-field-subscript-wrapper {
     display: none;
   }
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  ::ng-deep .mat-mdc-form-field-infix {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    min-height: unset;
+  }
 }
 
-// Action buttons area
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab 3 — Change location
+// ─────────────────────────────────────────────────────────────────────────────
+
+.tab-panel--location {
+  // Slightly tighter top padding — the hint text already provides visual lead-in
+  padding-top: var(--spacing-4);
+  gap: var(--spacing-3);
+}
+
+.location-tab-hint {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+// The FolderPicker is `initiallyExpanded` but the toggle header is still
+// rendered. Hide it so users can't collapse the tree inside this tab,
+// and force the content panel visible as a safety net.
+.location-folder-picker {
+  ::ng-deep app-folder-picker {
+    .folder-picker {
+      margin-bottom: 0;
+    }
+
+    // Hide the toggle header — the tab itself is the affordance for location
+    .folder-header {
+      display: none;
+    }
+
+    // Force the content panel to show regardless of the internal `isExpanded` signal
+    .folder-picker-content {
+      display: block !important;
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-md);
+      margin-top: 0;
+      overflow-y: auto;
+      max-height: 320px;
+      padding: var(--spacing-3);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dialog action bar
+// ─────────────────────────────────────────────────────────────────────────────
+
 mat-dialog-actions {
   padding: var(--spacing-4) var(--spacing-6);
   border-top: 1px solid var(--color-border);
@@ -269,6 +522,8 @@ mat-dialog-actions {
   gap: var(--spacing-3);
   justify-content: flex-end;
   align-items: center;
+  // Override Material's built-in min-height to keep it compact
+  min-height: unset;
 }
 
 .submit-button {
@@ -282,10 +537,14 @@ mat-dialog-actions {
     transform: translateY(-1px);
   }
 
-  &:not(:disabled):active { transform: translateY(0); }
+  &:not(:disabled):active {
+    transform: translateY(0);
+  }
 }
 
-.submit-spinner { display: inline-block; }
+.submit-spinner {
+  display: inline-block;
+}
 
 .cancel-button {
   color: var(--color-text-secondary);
@@ -294,5 +553,17 @@ mat-dialog-actions {
   &:not(:disabled):hover {
     color: var(--color-text-primary);
     background-color: var(--color-background-muted);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reduced motion
+// ─────────────────────────────────────────────────────────────────────────────
+
+@media (prefers-reduced-motion: reduce) {
+  .submit-button,
+  .cancel-button,
+  .close-button {
+    transition: none;
   }
 }

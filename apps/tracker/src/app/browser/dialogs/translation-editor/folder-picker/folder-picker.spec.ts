@@ -210,6 +210,72 @@ describe('FolderPicker', () => {
     });
   });
 
+  describe('initiallyExpanded', () => {
+    it('should auto-expand tree and set selectedPath when initiallyExpanded is true with currentPath', () => {
+      // Create a fresh component with initiallyExpanded
+      const expandedFixture = TestBed.createComponent(FolderPicker);
+      expandedFixture.componentRef.setInput('currentPath', 'common.buttons');
+      expandedFixture.componentRef.setInput('rootFolders', mockRootFolders);
+      expandedFixture.componentRef.setInput('initiallyExpanded', true);
+      expandedFixture.detectChanges();
+
+      const expandedComponent = expandedFixture.componentInstance;
+      expect(expandedComponent.isExpanded()).toBe(true);
+      expect(expandedComponent.selectedPath()).toBe('common.buttons');
+      expect(expandedComponent.expandedPaths().has('common')).toBe(true);
+      expect(expandedComponent.expandedPaths().has('common.buttons')).toBe(true);
+    });
+
+    it('should auto-expand tree without setting selectedPath when currentPath is empty', () => {
+      const expandedFixture = TestBed.createComponent(FolderPicker);
+      expandedFixture.componentRef.setInput('currentPath', '');
+      expandedFixture.componentRef.setInput('rootFolders', mockRootFolders);
+      expandedFixture.componentRef.setInput('initiallyExpanded', true);
+      expandedFixture.detectChanges();
+
+      const expandedComponent = expandedFixture.componentInstance;
+      expect(expandedComponent.isExpanded()).toBe(true);
+      expect(expandedComponent.selectedPath()).toBeNull();
+      expect(expandedComponent.expandedPaths().size).toBe(0);
+    });
+
+    it('should not auto-expand when initiallyExpanded is false', () => {
+      expect(component.isExpanded()).toBe(false);
+      expect(component.selectedPath()).toBeNull();
+    });
+
+    it('should keep the tree expanded after folder selection when initiallyExpanded is true', () => {
+      const expandedFixture = TestBed.createComponent(FolderPicker);
+      expandedFixture.componentRef.setInput('currentPath', 'common');
+      expandedFixture.componentRef.setInput('rootFolders', mockRootFolders);
+      expandedFixture.componentRef.setInput('initiallyExpanded', true);
+      expandedFixture.detectChanges();
+
+      const expandedComponent = expandedFixture.componentInstance;
+      const emitSpy = vi.fn();
+      expandedComponent.folderConfirmed.subscribe(emitSpy);
+
+      expandedComponent.onFolderSelect('errors');
+
+      expect(expandedComponent.selectedPath()).toBe('errors');
+      expect(emitSpy).toHaveBeenCalledWith('errors');
+      expect(expandedComponent.isExpanded()).toBe(true);
+    });
+
+    it('should not collapse the tree when toggleExpanded is called and initiallyExpanded is true', () => {
+      const expandedFixture = TestBed.createComponent(FolderPicker);
+      expandedFixture.componentRef.setInput('currentPath', 'common');
+      expandedFixture.componentRef.setInput('rootFolders', mockRootFolders);
+      expandedFixture.componentRef.setInput('initiallyExpanded', true);
+      expandedFixture.detectChanges();
+
+      const expandedComponent = expandedFixture.componentInstance;
+      expandedComponent.toggleExpanded();
+
+      expect(expandedComponent.isExpanded()).toBe(true);
+    });
+  });
+
   describe('Keyboard Navigation', () => {
     it('should move focus down on ArrowDown', () => {
       component.isExpanded.set(true);

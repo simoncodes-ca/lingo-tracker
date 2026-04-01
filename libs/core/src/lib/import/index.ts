@@ -66,6 +66,9 @@ export { validateImportResources } from './import-validation';
 export type { ImportWorkflowConfig } from './import-workflow';
 export { setupImportWorkflow, buildImportResult } from './import-workflow';
 
+// Export Transloco syntax normalization
+export { normalizeTranslocoSyntax } from './normalize-transloco-syntax';
+
 // Export ICU auto-fix utilities
 export {
   extractICUPlaceholders,

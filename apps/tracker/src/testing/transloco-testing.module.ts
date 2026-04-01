@@ -60,6 +60,7 @@ export function getTranslocoTestingModule(options: TranslocoTestingOptions = {})
         'browser.folderPicker.folderCreated': 'Folder created successfully',
         'browser.folderPicker.folderAlreadyExists': 'Folder already exists',
         'browser.folderPicker.createFolderFailed': 'Failed to create folder',
+        'browser.folderPicker.rootLabel': 'root',
         'browser.indexingOverlay.message': 'Indexing collection...',
         'browser.indexingOverlay.errorTitle': 'Indexing Failed',
         'browser.indexingOverlay.defaultError': 'An error occurred while indexing the collection.',
