@@ -27,7 +27,7 @@
     }
 
     <!-- Folder Icon -->
-    <mat-icon class="folder-icon">folder</mat-icon>
+    <mat-icon class="folder-icon">{{ isSelected() ? 'folder' : 'folder_open' }}</mat-icon>
 
     <!-- Folder Name -->
     <span class="folder-name">{{ folder().name }}</span>

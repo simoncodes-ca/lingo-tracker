@@ -1,7 +1,10 @@
-<div role="dialog" [attr.aria-labelledby]="'dialog-title'">
+<div role="dialog" [attr.aria-labelledby]="'dialog-title'" class="dialog-wrapper">
+  <!-- Dialog Header -->
   <div class="dialog-header">
-    <h2 id="dialog-title" class="dialog-title">{{ dialogTitle() | transloco }}</h2>
-    <p class="dialog-subtitle">{{ dialogSubtitle() | transloco }}</p>
+    <div class="dialog-header-content">
+      <h2 id="dialog-title" class="mat-dialog-title">{{ dialogTitle() | transloco }}</h2>
+      <p class="dialog-subtitle">{{ dialogSubtitle() | transloco }}</p>
+    </div>
 
     <button
       mat-icon-button
@@ -13,140 +16,185 @@
     </button>
   </div>
 
-  <mat-dialog-content>
-    <!-- Error Message Display -->
+  <!-- Pre-tab: Resource Location pill + Error banner -->
+  <div class="dialog-pretab">
+    <div class="location-row">
+      <span class="location-label">
+        <mat-icon class="location-label-icon">folder_open</mat-icon>
+        {{ TOKENS.BROWSER.TRANSLATIONEDITOR.LOCATIONLABEL | transloco }}
+      </span>
+      <span class="location-pill">
+        <mat-icon class="location-pill-icon">folder</mat-icon>
+        <span class="location-pill-path">{{ selectedFolderPath() || (TOKENS.BROWSER.FOLDERPICKER.ROOTLABEL | transloco) }}</span>
+      </span>
+    </div>
+
     @if (errorMessage()) {
       <div class="error-banner" role="alert">
         <mat-icon class="error-icon">error</mat-icon>
         <span class="error-text">{{ errorMessage() }}</span>
       </div>
     }
+  </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <!-- Translation Key Input -->
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.TRANSLATIONKEY | transloco }}</mat-label>
-        <input
-          #keyInput
-          matInput
-          formControlName="key"
-          required
-          autocomplete="off"
-        />
-        @if (form.controls.key.invalid && form.controls.key.touched) {
-          <mat-error>{{ getKeyErrorMessage() | transloco }}</mat-error>
-        }
-        <mat-hint>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.KEYHINT | transloco }}</mat-hint>
-      </mat-form-field>
+  <!-- Tabbed Content -->
+  <mat-dialog-content class="dialog-tab-content">
+    <form [formGroup]="form">
+      <mat-tab-group
+        class="editor-tabs"
+        animationDuration="150ms"
+        [disableRipple]="false"
+        (selectedTabChange)="onTabChange()"
+      >
+        <!-- ───────────────────────────── Tab 1: Base Locale Info ───────────────────────────── -->
+        <mat-tab [label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAB.BASEINFO | transloco">
+          <div class="tab-panel tab-panel--base">
+            <!-- Translation Key -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.TRANSLATIONKEY | transloco }}</mat-label>
+              <input
+                #keyInput
+                matInput
+                formControlName="key"
+                required
+                autocomplete="off"
+              />
+              @if (form.controls.key.invalid && form.controls.key.touched) {
+                <mat-error>{{ getKeyErrorMessage() | transloco }}</mat-error>
+              }
+              <mat-hint>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.KEYHINT | transloco }}</mat-hint>
+            </mat-form-field>
 
-      <!-- Folder Picker -->
-      <app-folder-picker
-        [currentPath]="selectedFolderPath()"
-        [rootFolders]="rootFolders()"
-        (folderConfirmed)="onFolderConfirmed($event)"
-        (folderCreated)="onFolderCreated($event)"
-      />
+            <!-- Base Locale Card -->
+            <div class="base-locale-card">
+              <div class="locale-card-header">
+                <mat-icon class="locale-icon">language</mat-icon>
+                <h3 class="locale-title">{{ data.baseLocale.toUpperCase() }}</h3>
+                <span class="base-badge">{{ TOKENS.BROWSER.TRANSLATIONEDITOR.BASEBADGE | transloco }}</span>
+              </div>
 
-      <!-- Base Locale Section -->
-      <div class="base-locale-card">
-        <div class="locale-card-header">
-          <mat-icon class="locale-icon">language</mat-icon>
-          <h3 class="locale-title">{{ data.baseLocale.toUpperCase() }}</h3>
-          <span class="base-badge">{{ TOKENS.BROWSER.TRANSLATIONEDITOR.BASEBADGE | transloco }}</span>
-        </div>
+              <!-- Base Value -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.LOCALETRANSLATIONX | transloco : { locale: data.baseLocale.toUpperCase() } }}</mat-label>
+                <input
+                  #baseValueInput
+                  matInput
+                  type="text"
+                  formControlName="baseValue"
+                  [placeholder]="TOKENS.BROWSER.TRANSLATIONEDITOR.ENTERTRANSLATIONX | transloco : { locale: data.baseLocale.toUpperCase() }"
+                  required
+                  autocomplete="off"
+                />
+                @if (form.controls.baseValue.hasError('required') && form.controls.baseValue.touched) {
+                  <mat-error>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.BASEVALUEREQUIRED | transloco }}</mat-error>
+                }
+              </mat-form-field>
 
-        <!-- Base Value -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.LOCALETRANSLATIONX | transloco : { locale: data.baseLocale.toUpperCase() } }}</mat-label>
-          <input
-            #baseValueInput
-            matInput
-            type="text"
-            formControlName="baseValue"
-            [placeholder]="TOKENS.BROWSER.TRANSLATIONEDITOR.ENTERTRANSLATIONX | transloco : { locale: data.baseLocale.toUpperCase() }"
-            required
-            autocomplete="off"
-          />
-          @if (form.controls.baseValue.hasError('required') && form.controls.baseValue.touched) {
-            <mat-error>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.BASEVALUEREQUIRED | transloco }}</mat-error>
-          }
-        </mat-form-field>
+              <!-- Comment -->
+              <mat-form-field appearance="outline" class="full-width comment-field">
+                <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTLABEL | transloco }}</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  formControlName="comment"
+                  [placeholder]="TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTPLACEHOLDER | transloco"
+                  autocomplete="off"
+                />
+                <mat-hint>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTHINT | transloco }}</mat-hint>
+              </mat-form-field>
 
-        <!-- Comment -->
-        <mat-form-field appearance="outline" class="full-width comment-field">
-          <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTLABEL | transloco }}</mat-label>
-          <input
-            matInput
-            type="text"
-            formControlName="comment"
-            [placeholder]="TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTPLACEHOLDER | transloco"
-            autocomplete="off"
-          />
-          <mat-hint>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTHINT | transloco }}</mat-hint>
-        </mat-form-field>
+              <!-- Similar Translations -->
+              <app-similar-translations
+                [results]="similarResources()"
+                [isLoading]="isSearchingSimilar()"
+                [hasSearchQuery]="hasSearchQuery()"
+                [baseLocale]="data.baseLocale"
+                (resourceClicked)="onSimilarResourceClick($event)"
+              />
+            </div>
+          </div>
+        </mat-tab>
 
-        <!-- Similar Translations (moved here, inside the card, after base value) -->
-        <app-similar-translations
-          [results]="similarResources()"
-          [isLoading]="isSearchingSimilar()"
-          [hasSearchQuery]="hasSearchQuery()"
-          [baseLocale]="data.baseLocale"
-          (resourceClicked)="onSimilarResourceClick($event)"
-        />
-      </div>
-
-      <!-- Other Locales Toggle -->
-      @if (otherLocales().length > 0) {
-        <div class="other-locales-toggle">
-          <mat-slide-toggle
-            [checked]="showOtherLocales()"
-            (change)="onToggleOtherLocales()"
-            color="primary"
-          >
-            {{ TOKENS.BROWSER.TRANSLATIONEDITOR.OTHERLOCALESTOGGLEX | transloco : { count: otherLocales().length } }}
-          </mat-slide-toggle>
-        </div>
-
-        <!-- Other Locale Cards -->
-        @if (showOtherLocales()) {
-          <div class="other-locales-section">
-            @for (localeControl of form.controls.translations.controls; track localeControl.value.locale; let i = $index) {
-              <div class="locale-card" [formGroup]="getLocaleFormGroup(i)">
-                <div class="locale-card-header">
-                  <mat-icon class="locale-icon">translate</mat-icon>
-                  <h3 class="locale-title">{{ getLocaleDisplayName(localeControl.value.locale) }}</h3>
-                  @if (isEditMode()) {
-                    <mat-form-field appearance="outline" class="status-select">
-                      <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.STATUS | transloco }}</mat-label>
-                      <mat-select formControlName="status">
-                        @for (statusOption of translationStatusOptions; track statusOption) {
-                          <mat-option [value]="statusOption">
-                            {{ statusOption }}
-                          </mat-option>
-                        }
-                      </mat-select>
-                    </mat-form-field>
-                  }
-                </div>
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.LOCALETRANSLATIONX | transloco : { locale: getLocaleDisplayName(localeControl.value.locale) } }}</mat-label>
-                  <input
-                    matInput
-                    type="text"
-                    formControlName="value"
-                    [placeholder]="TOKENS.BROWSER.TRANSLATIONEDITOR.ENTERTRANSLATIONX | transloco : { locale: getLocaleDisplayName(localeControl.value.locale) }"
-                    autocomplete="off"
-                  />
-                </mat-form-field>
+        <!-- ───────────────────────────── Tab 2: Other Locales ───────────────────────────── -->
+        <mat-tab
+          [label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAB.OTHERLOCALES | transloco"
+          [disabled]="otherLocales().length === 0"
+        >
+          <div class="tab-panel tab-panel--locales">
+            <!-- Base value reference banner -->
+            @if (form.controls.baseValue.value) {
+              <div class="base-value-reference" [class.scrolled]="isLocalesScrolled()">
+                <span class="base-value-reference__label">
+                  <mat-icon class="base-value-reference__icon">language</mat-icon>
+                  {{ data.baseLocale.toUpperCase() }}
+                  <span class="base-value-reference__badge">{{ TOKENS.BROWSER.TRANSLATIONEDITOR.BASEBADGE | transloco }}</span>
+                </span>
+                <span class="base-value-reference__text">{{ form.controls.baseValue.value }}</span>
               </div>
             }
+
+            <!-- Locale Cards -->
+            <div class="other-locales-section" (scroll)="onLocalesScroll($event)">
+              @for (localeControl of form.controls.translations.controls; track localeControl.value.locale; let i = $index) {
+                <div class="locale-card" [formGroup]="getLocaleFormGroup(i)">
+                  <div class="locale-card-header">
+                    <mat-icon class="locale-icon">translate</mat-icon>
+                    <h3 class="locale-title">{{ getLocaleDisplayName(localeControl.value.locale) }}</h3>
+                    @if (isEditMode()) {
+                      <mat-form-field appearance="outline" class="status-select">
+                        <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.STATUS | transloco }}</mat-label>
+                        <mat-select formControlName="status">
+                          @for (statusOption of translationStatusOptions; track statusOption) {
+                            <mat-option [value]="statusOption">
+                              {{ statusOption }}
+                            </mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                    }
+                  </div>
+
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.LOCALETRANSLATIONX | transloco : { locale: getLocaleDisplayName(localeControl.value.locale) } }}</mat-label>
+                    <input
+                      matInput
+                      type="text"
+                      formControlName="value"
+                      [placeholder]="TOKENS.BROWSER.TRANSLATIONEDITOR.ENTERTRANSLATIONX | transloco : { locale: getLocaleDisplayName(localeControl.value.locale) }"
+                      autocomplete="off"
+                    />
+                  </mat-form-field>
+                </div>
+              }
+            </div>
           </div>
-        }
-      }
+        </mat-tab>
+
+        <!-- ───────────────────────────── Tab 3: Change Location ───────────────────────────── -->
+        <mat-tab [label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAB.CHANGELOCATION | transloco">
+          <div class="tab-panel tab-panel--location">
+            <!-- Inline description -->
+            <p class="location-tab-hint">
+              {{ TOKENS.BROWSER.TRANSLATIONEDITOR.LOCATIONTABHINT | transloco }}
+            </p>
+
+            <!-- Folder tree — always expanded inside this tab via CSS override -->
+            <div class="location-folder-picker">
+              <app-folder-picker
+                [currentPath]="selectedFolderPath()"
+                [rootFolders]="rootFolders()"
+                [initiallyExpanded]="true"
+                (folderConfirmed)="onFolderConfirmed($event)"
+                (folderCreated)="onFolderCreated($event)"
+              />
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
     </form>
   </mat-dialog-content>
 
+  <!-- Dialog Actions -->
   <mat-dialog-actions align="end" class="dialog-actions">
     <button
       mat-button

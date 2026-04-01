@@ -110,16 +110,17 @@ describe('TranslationEditorDialog', () => {
       expect(component.dialogSubtitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.EDITSUBTITLE);
     });
 
-    it('should display correct folder path', () => {
-      expect(component.displayedFolderPath()).toBe('common.buttons');
+    it('should initialize form controls for all non-base locales', () => {
+      const translationsArray = component.form.controls.translations;
+      expect(translationsArray.length).toBe(2); // fr and de (en is base)
     });
 
-    it('should display "root" when no folder path provided', async () => {
-      const dataWithoutFolder = createMockData('create');
-      dataWithoutFolder.folderPath = undefined;
-      await setupTestBed(dataWithoutFolder);
-
-      expect(component.displayedFolderPath()).toBe('root');
+    it('should initialize all locale controls with empty values in create mode', () => {
+      const translationsArray = component.form.controls.translations;
+      translationsArray.controls.forEach((control) => {
+        expect(control.value.value).toBe('');
+        expect(control.value.status).toBe('new');
+      });
     });
   });
 
@@ -328,36 +329,6 @@ describe('TranslationEditorDialog', () => {
       component.onCtrlEnter(event);
 
       expect(dialogRef.close).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Other Locales Toggle', () => {
-    it('should default toggle to OFF', () => {
-      expect(component.showOtherLocales()).toBe(false);
-    });
-
-    it('should toggle ON when clicked', () => {
-      component.onToggleOtherLocales();
-      expect(component.showOtherLocales()).toBe(true);
-    });
-
-    it('should toggle OFF when clicked twice', () => {
-      component.onToggleOtherLocales();
-      component.onToggleOtherLocales();
-      expect(component.showOtherLocales()).toBe(false);
-    });
-
-    it('should initialize form controls for all non-base locales', () => {
-      const translationsArray = component.form.controls.translations;
-      expect(translationsArray.length).toBe(2); // fr and de (en is base)
-    });
-
-    it('should initialize all locale controls with empty values in create mode', () => {
-      const translationsArray = component.form.controls.translations;
-      translationsArray.controls.forEach((control) => {
-        expect(control.value.value).toBe('');
-        expect(control.value.status).toBe('new');
-      });
     });
   });
 

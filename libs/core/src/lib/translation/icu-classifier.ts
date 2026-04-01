@@ -1,3 +1,5 @@
+import { normalizeTranslocoSyntax } from '../import/normalize-transloco-syntax';
+
 /**
  * ICU Message Format Classification
  *
@@ -14,7 +16,7 @@
  *
  * - `'plain'`               - No ICU syntax at all; safe to send to the provider as-is.
  * - `'simple-placeholders'` - Contains only simple variable substitutions (`{name}`,
- *                             `{0}`, `{{ name }}`). No commas inside the braces.
+ *                             `{0}`). No commas inside the braces.
  *                             These can be translated using marker-based protection.
  * - `'complex-icu'`         - Contains plural, select, number, date, or time formatters,
  *                             or a mixture of simple and complex syntax. Must be
@@ -59,7 +61,7 @@ export type ICUClassification = 'plain' | 'simple-placeholders' | 'complex-icu';
 export function classifyICUContent(value: string): ICUClassification {
   // Normalize Transloco double-brace syntax {{ name }} → {name} before
   // analysis. The surrounding spaces are optional in the Transloco format.
-  const normalized = value.replace(/\{\{\s*([\w\s.]+?)\s*\}\}/g, (_, name: string) => `{${name.trim()}}`);
+  const normalized = normalizeTranslocoSyntax(value);
 
   let foundSimple = false;
   let foundComplex = false;

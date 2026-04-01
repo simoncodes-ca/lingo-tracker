@@ -18,7 +18,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -96,7 +96,7 @@ export interface TranslationEditorResult {
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatSlideToggleModule,
+    MatTabsModule,
     MatSelectModule,
     MatProgressSpinnerModule,
     TextFieldModule,
@@ -129,6 +129,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   readonly similarResources = signal<SearchResultDto[]>([]);
   readonly isSearchingSimilar = signal(false);
   readonly baseValueLength = signal(0);
+  readonly isLocalesScrolled = signal(false);
 
   readonly form = new FormGroup({
     key: new FormControl<string>('', {
@@ -151,7 +152,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     >([]),
   });
 
-  readonly showOtherLocales = signal(false);
   readonly selectedFolderPath = signal<string>('');
 
   readonly rootFolders = computed(() => this.browserStore.rootFolders());
@@ -178,7 +178,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
       ? TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.UPDATEBUTTON
       : TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.SAVEBUTTON,
   );
-  readonly displayedFolderPath = computed(() => this.data.folderPath || 'root');
   readonly hasSearchQuery = computed(() => this.baseValueLength() >= 3);
 
   ngOnInit(): void {
@@ -199,9 +198,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
       this.#originalBaseValue = baseValue;
 
       this.#populateOtherLocaleTranslations();
-    } else if (this.data.folderPath) {
-      // In create mode, we might have a pre-selected folder
-      // The folder path is stored in data, not in the form
     }
 
     this.#setupSimilarResourcesSearch();
@@ -332,12 +328,16 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     this.onSubmit();
   }
 
-  onCancel(): void {
-    this.dialogRef.close();
+  onTabChange(): void {
+    this.isLocalesScrolled.set(false);
   }
 
-  onToggleOtherLocales(): void {
-    this.showOtherLocales.set(!this.showOtherLocales());
+  onLocalesScroll(event: Event): void {
+    this.isLocalesScrolled.set((event.target as HTMLElement).scrollTop > 0);
+  }
+
+  onCancel(): void {
+    this.dialogRef.close();
   }
 
   onFolderConfirmed(folderPath: string): void {

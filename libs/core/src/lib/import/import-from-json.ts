@@ -9,6 +9,7 @@ import { calculateImportStatistics, calculateStatusTransitions } from './import-
 import { validateImportResources } from './import-validation';
 import { setupImportWorkflow, buildImportResult } from './import-workflow';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
+import { normalizeTranslocoSyntaxInResources } from './normalize-transloco-syntax';
 import type { ResourceEntries } from '../../resource/resource-entry';
 import { splitResolvedKey } from '../../resource/resource-key';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
@@ -303,16 +304,18 @@ function loadBaseLocaleValues(
  * 1. Reads and parses the JSON source file
  * 2. Auto-detects flat vs hierarchical structure
  * 3. Extracts resources (supports simple strings and rich format with metadata)
- * 4. Validates keys, detects conflicts, and filters invalid resources
- * 5. Resolves Transloco-style references (migration strategy only)
- * 6. Groups resources by folder for efficient batch processing
- * 7. For each resource:
+ * 4. Resolves Transloco-style references (migration strategy only)
+ * 5. Normalizes Transloco double-brace syntax `{{ variable }}` to ICU single-brace `{variable}`
+ * 6. Applies ICU placeholder auto-fixing to align translation placeholders with base locale
+ * 7. Validates keys, detects conflicts, and filters invalid resources
+ * 8. Groups resources by folder for efficient batch processing
+ * 9. For each resource:
  *    - Creates new resource if missing (when createMissing=true)
  *    - Updates existing resource values and metadata
  *    - Calculates checksums for change detection
  *    - Determines translation status based on strategy
- * 8. Writes updated resource_entries.json and tracker_meta.json files
- * 9. Returns comprehensive import result with statistics and changes
+ * 10. Writes updated resource_entries.json and tracker_meta.json files
+ * 11. Returns comprehensive import result with statistics and changes
  *
  * Import strategies control behavior:
  * - `translation-service`: Professional translation import (default, no creation)
@@ -396,6 +399,10 @@ export function importFromJson(translationsFolder: string, options: ImportOption
     onProgress?.(`Resolving Transloco-style references...`);
     resources = resolveAllReferences(resources, true, warnings);
   }
+
+  // Normalize Transloco double-brace syntax {{ variable }} to ICU single-brace {variable}
+  // before any ICU parsing or auto-fixing so downstream steps see a consistent format.
+  resources = normalizeTranslocoSyntaxInResources(resources);
 
   // Apply ICU auto-fixing before validation
   let icuAutoFixes: ICUAutoFix[] = [];
