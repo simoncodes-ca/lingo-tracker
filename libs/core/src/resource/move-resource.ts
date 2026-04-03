@@ -2,9 +2,9 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { addResource } from './add-resource';
 import { deleteResource } from './delete-resource';
-import { resolveResourceKey, splitResolvedKey, validateKey } from './resource-key';
+import { resolveResourceKey, splitResolvedKey, validateKey } from '@simoncodes-ca/domain';
 import type { ResourceEntries } from './resource-entry';
-import type { TranslationStatus } from './translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 import { RESOURCE_ENTRIES_FILENAME } from '../constants';
 
 export interface MoveResourceParams {

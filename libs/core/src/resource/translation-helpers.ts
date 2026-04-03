@@ -1,4 +1,4 @@
-import type { TranslationStatus } from './translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 
 /**
  * Creates default translations for all non-base locales using the base value.

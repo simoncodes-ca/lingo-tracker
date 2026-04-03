@@ -3,16 +3,20 @@ import { translocoToICU } from './transloco-to-icu';
 
 describe('translocoToICU', () => {
   describe('values without placeholders', () => {
-    it('returns an empty string unchanged', () => {
+    it('returns empty string unchanged', () => {
       expect(translocoToICU('')).toBe('');
     });
 
-    it('returns a plain string unchanged', () => {
+    it('returns plain text unchanged', () => {
       expect(translocoToICU('Hello world')).toBe('Hello world');
     });
 
-    it('returns a string with numbers and punctuation unchanged', () => {
+    it('returns text with numbers and punctuation unchanged', () => {
       expect(translocoToICU('Price: $4.99 (inc. tax)')).toBe('Price: $4.99 (inc. tax)');
+    });
+
+    it('returns whitespace-only string unchanged', () => {
+      expect(translocoToICU('   ')).toBe('   ');
     });
   });
 
@@ -21,11 +25,11 @@ describe('translocoToICU', () => {
       expect(translocoToICU('{{ name }}')).toBe('{name}');
     });
 
-    it('converts a placeholder with surrounding text', () => {
+    it('converts a placeholder at the end of text', () => {
       expect(translocoToICU('Hello {{ name }}')).toBe('Hello {name}');
     });
 
-    it('converts a placeholder in the middle of a sentence', () => {
+    it('converts a placeholder surrounded by text', () => {
       expect(translocoToICU('Hello {{ name }}, welcome!')).toBe('Hello {name}, welcome!');
     });
 
@@ -35,7 +39,7 @@ describe('translocoToICU', () => {
   });
 
   describe('whitespace handling inside braces', () => {
-    it('strips a single space on each side', () => {
+    it('strips single space on each side', () => {
       expect(translocoToICU('Hello {{ name }}')).toBe('Hello {name}');
     });
 
@@ -57,7 +61,7 @@ describe('translocoToICU', () => {
       expect(translocoToICU('Hello {{ firstName }} {{ lastName }}')).toBe('Hello {firstName} {lastName}');
     });
 
-    it('converts placeholders with text between them', () => {
+    it('converts placeholders separated by text', () => {
       expect(translocoToICU('{{ count }} of {{ total }} items')).toBe('{count} of {total} items');
     });
 
@@ -71,8 +75,7 @@ describe('translocoToICU', () => {
   });
 
   describe('already-ICU values pass through correctly', () => {
-    it('does not double-convert a simple ICU placeholder', () => {
-      // Single braces do not match {{ }} so they pass through unchanged
+    it('does not alter single-brace ICU placeholders', () => {
       expect(translocoToICU('{name}')).toBe('{name}');
     });
 
@@ -83,16 +86,11 @@ describe('translocoToICU', () => {
   });
 
   describe('edge cases', () => {
-    it('handles a string that is only whitespace', () => {
-      expect(translocoToICU('   ')).toBe('   ');
-    });
-
     it('does not alter a lone opening brace that is not a Transloco pattern', () => {
       expect(translocoToICU('use { for sets')).toBe('use { for sets');
     });
 
-    it('does not alter a double brace with no closing match', () => {
-      // Unclosed {{ is not a valid Transloco placeholder — regex won't match
+    it('does not alter unclosed double-brace (not a valid Transloco placeholder)', () => {
       expect(translocoToICU('{{ unclosed')).toBe('{{ unclosed');
     });
   });

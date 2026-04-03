@@ -6,10 +6,10 @@ import { updateMetadataForBaseValueChange } from '../lib/resource/metadata-opera
 import type { ResourceTreeEntry } from '../lib/resource/load-resource-tree';
 import type { TranslationConfig } from '../config/translation-config';
 import { autoTranslateResource } from '../lib/translation/auto-translate-resources';
-import type { TranslationStatus } from './translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 import type { ResourceEntry } from './resource-entry';
 import type { ResourceEntryMetadata } from './resource-entry-metadata';
-import { translocoToICU } from '../lib/format/transloco-to-icu';
+import { translocoToICU } from '@simoncodes-ca/domain';
 
 export interface EditResourceOptions {
   key: string;

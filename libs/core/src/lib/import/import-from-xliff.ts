@@ -9,7 +9,7 @@ import { validateImportResources } from './import-validation';
 import { setupImportWorkflow, buildImportResult } from './import-workflow';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
 import type { ResourceEntries } from '../../resource/resource-entry';
-import { splitResolvedKey } from '../../resource/resource-key';
+import { splitResolvedKey } from '@simoncodes-ca/domain';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
 
 /**

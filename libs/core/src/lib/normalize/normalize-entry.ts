@@ -1,9 +1,9 @@
 import { calculateChecksum } from '../../resource/checksum';
 import type { ResourceEntry } from '../../resource/resource-entry';
 import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
-import type { TranslationStatus } from '../../resource/translation-status';
-import type { LocaleMetadata } from '../../resource/locale-metadata';
-import { translocoToICU } from '../format/transloco-to-icu';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
+import type { LocaleMetadata } from '@simoncodes-ca/domain';
+import { translocoToICU } from '@simoncodes-ca/domain';
 
 export interface NormalizeEntryParams {
   readonly entryKey: string;

@@ -2,7 +2,7 @@ import { readdirSync, statSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ResourceEntry } from '../../resource/resource-entry';
 import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
-import type { TranslationStatus } from '../../resource/translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 import type { ResourceTreeNode } from './load-resource-tree';
 
 /**

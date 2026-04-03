@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 import type { ImportOptions, ImportedResource, ImportResult, ICUAutoFix, ICUAutoFixError } from './types';
-import type { TranslationStatus } from '../../resource/translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 import { resolveAllReferences } from './reference-resolver';
 import { groupResourcesByFolder } from './resource-grouping';
 import { processResourceGroup } from './process-resource-group';
@@ -11,7 +11,7 @@ import { setupImportWorkflow, buildImportResult } from './import-workflow';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
 import { normalizeTranslocoSyntaxInResources } from './normalize-transloco-syntax';
 import type { ResourceEntries } from '../../resource/resource-entry';
-import { splitResolvedKey } from '../../resource/resource-key';
+import { splitResolvedKey } from '@simoncodes-ca/domain';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
 import { join } from 'path';
 

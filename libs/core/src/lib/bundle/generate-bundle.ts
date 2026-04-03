@@ -11,8 +11,7 @@ import {
   type EntrySelectionRule,
   type TokenCasing,
 } from '../../config/bundle-definition';
-import { icuToTransloco } from '../format/icu-to-transloco';
-import { validateICUSyntax } from '../import/icu-auto-fixer';
+import { icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { loadCollectionResources, type FlatResource } from './resource-loader';
 import { matchesPattern } from './pattern-matcher';

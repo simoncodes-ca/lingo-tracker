@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { isValidSegment } from '../../resource/resource-key';
+import { isValidSegment } from '@simoncodes-ca/domain';
 import { moveResource, type MoveResourceResult } from '../../resource/move-resource';
 import { deleteFolder, type DeleteFolderResult } from './delete-folder';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';

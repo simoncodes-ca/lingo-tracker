@@ -1,5 +1,5 @@
 import { loadResourcesFromCollections, type LoadedResource } from '../export/export-common';
-import type { TranslationStatus } from '../../resource/translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 import type { ValidationOptions, ResourceValidationResult, ResourceValidationDetail, StatusCounts } from './types';
 
 /**

@@ -1,5 +1,5 @@
 import { resolve, join } from 'node:path';
-import { validateKey, validateTargetFolder, resolveResourceKey, splitResolvedKey } from '../../resource/resource-key';
+import { validateKey, validateTargetFolder, resolveResourceKey, splitResolvedKey } from '@simoncodes-ca/domain';
 import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
 
 export interface ResolvedResourcePaths {

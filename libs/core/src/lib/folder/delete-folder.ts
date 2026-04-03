@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { isValidSegment } from '../../resource/resource-key';
+import { isValidSegment } from '@simoncodes-ca/domain';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
 
 export interface DeleteFolderParams {

@@ -22,4 +22,3 @@ export * from './lib/config';
 export * from './lib/errors';
 export * from './lib/folder';
 export * from './lib/translation';
-export * from './lib/format';

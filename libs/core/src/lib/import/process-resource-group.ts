@@ -4,8 +4,8 @@ import type { ImportOptions, ImportChange, ImportedResource } from './types';
 import type { ResourceEntries, ResourceEntry } from '../../resource/resource-entry';
 import type { TrackerMetadata } from '../../resource/tracker-metadata';
 import { calculateChecksum } from '../../resource/checksum';
-import type { LocaleMetadata } from '../../resource/locale-metadata';
-import type { TranslationStatus } from '../../resource/translation-status';
+import type { LocaleMetadata } from '@simoncodes-ca/domain';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 import type { ResourceGroup } from './resource-grouping';
 
 /**
