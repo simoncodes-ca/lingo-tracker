@@ -93,11 +93,19 @@ export class TranslationList {
    * - TOUCH_EXTRA: additional height on touch devices for larger tap targets (~16px)
    * - LOCALE_ROW_HEIGHT: height of each locale translation row (~32px)
    * - MAX_VISIBLE_LOCALE_ROWS: locale rows visible before scroll kicks in (4)
+   * - MARGIN_BOTTOM: item-container margin-bottom = --spacing-3 (12px)
    */
   readonly #FULL_BASE_HEIGHT = 80;
   readonly #FULL_TOUCH_EXTRA = 16;
   readonly #FULL_LOCALE_ROW_HEIGHT = 32;
   readonly #FULL_MAX_VISIBLE_LOCALE_ROWS = 4;
+  readonly #FULL_MARGIN_BOTTOM = 12; // --spacing-3
+
+  /**
+   * Compact mode item margin-bottom = --spacing-1 (4px).
+   * Must be included in itemSize so CDK Virtual Scroll positions items correctly.
+   */
+  readonly #COMPACT_MARGIN_BOTTOM = 4; // --spacing-1
 
   /** Cached once at startup — touch capability never changes during a session. */
   readonly #isTouch = typeof window !== 'undefined' && 'ontouchstart' in window;
@@ -119,7 +127,7 @@ export class TranslationList {
 
     switch (mode) {
       case 'compact':
-        return isTouch ? 100 : 96;
+        return (isTouch ? 100 : 96) + this.#COMPACT_MARGIN_BOTTOM;
 
       case 'full': {
         const filteredLocales = this.store.filteredLocales();
@@ -130,7 +138,7 @@ export class TranslationList {
         const visibleLocaleRows = Math.min(nonBaseLocaleCount, this.#FULL_MAX_VISIBLE_LOCALE_ROWS);
         const baseHeight = this.#FULL_BASE_HEIGHT + (isTouch ? this.#FULL_TOUCH_EXTRA : 0);
 
-        return baseHeight + visibleLocaleRows * this.#FULL_LOCALE_ROW_HEIGHT;
+        return baseHeight + visibleLocaleRows * this.#FULL_LOCALE_ROW_HEIGHT + this.#FULL_MARGIN_BOTTOM;
       }
 
       default:
