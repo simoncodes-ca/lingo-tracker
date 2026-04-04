@@ -39,12 +39,31 @@ describe('Normalize', () => {
       } as fs.Stats;
     });
 
-    vi.mocked(fs.readdirSync).mockImplementation((filepath) => {
+    vi.mocked(fs.readdirSync).mockImplementation((filepath, options) => {
       const entry = mockFs[filepath as string];
       if (!entry || entry.type !== 'directory') {
         throw new Error(`ENOTDIR: not a directory, scandir '${filepath}'`);
       }
-      return (entry.children || []) as unknown as fs.Dirent[];
+      const childNames = entry.children || [];
+      // When withFileTypes is requested, return Dirent-like objects
+      if (options && typeof options === 'object' && (options as { withFileTypes?: boolean }).withFileTypes) {
+        return childNames.map((childName) => {
+          const childPath = path.join(filepath as string, childName);
+          const childEntry = mockFs[childPath];
+          const isDir = childEntry?.type === 'directory';
+          return {
+            name: childName,
+            isDirectory: () => isDir,
+            isFile: () => !isDir,
+            isSymbolicLink: () => false,
+            isBlockDevice: () => false,
+            isCharacterDevice: () => false,
+            isFIFO: () => false,
+            isSocket: () => false,
+          } as unknown as fs.Dirent;
+        });
+      }
+      return childNames as unknown as fs.Dirent[];
     });
 
     vi.mocked(fs.readFileSync).mockImplementation((filepath) => {

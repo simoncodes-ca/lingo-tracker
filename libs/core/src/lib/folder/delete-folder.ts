@@ -1,5 +1,6 @@
-import { existsSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
+import { walkFolders } from '../normalize/iterative-folder-walker';
 import { isValidSegment } from '@simoncodes-ca/domain';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
 
@@ -108,7 +109,7 @@ export function deleteFolder(translationsFolder: string, params: DeleteFolderPar
 }
 
 /**
- * Recursively counts all resource entries in a folder tree.
+ * Counts all resource entries in a folder tree.
  *
  * @param folderPath - Absolute path to the folder
  * @returns Total number of resource entries
@@ -116,9 +117,10 @@ export function deleteFolder(translationsFolder: string, params: DeleteFolderPar
 function countResourcesInFolder(folderPath: string): number {
   let totalResources = 0;
 
-  // Check for resource_entries.json in current folder
-  const entriesPath = join(folderPath, RESOURCE_ENTRIES_FILENAME);
-  if (existsSync(entriesPath)) {
+  for (const visit of walkFolders(folderPath, { skipHidden: false })) {
+    const entriesPath = join(visit.absolutePath, RESOURCE_ENTRIES_FILENAME);
+    if (!existsSync(entriesPath)) continue;
+
     try {
       const entriesContent = readFileSync(entriesPath, 'utf8');
       const entries = JSON.parse(entriesContent);
@@ -126,21 +128,6 @@ function countResourcesInFolder(folderPath: string): number {
     } catch {
       // Malformed JSON or read error, skip counting
     }
-  }
-
-  // Recursively count in child directories
-  try {
-    const dirEntries = readdirSync(folderPath, { withFileTypes: true });
-
-    for (const dirEntry of dirEntries) {
-      if (!dirEntry.isDirectory()) continue;
-      if (dirEntry.name.startsWith('.')) continue; // Skip hidden folders
-
-      const childPath = join(folderPath, dirEntry.name);
-      totalResources += countResourcesInFolder(childPath);
-    }
-  } catch {
-    // Error reading directory, skip counting children
   }
 
   return totalResources;

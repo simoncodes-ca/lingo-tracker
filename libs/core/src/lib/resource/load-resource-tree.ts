@@ -46,6 +46,13 @@ export interface LoadResourceTreeOptions {
   cwd?: string;
 }
 
+interface StackEntry {
+  readonly folderPath: string;
+  readonly pathSegments: string[];
+  readonly depth: number;
+  readonly parentChildren: FolderChild[];
+}
+
 export function loadResourceTree(options: LoadResourceTreeOptions): ResourceTreeNode {
   const { translationsFolder, path: folderPath = '', depth = 2, cwd = process.cwd() } = options;
 
@@ -70,101 +77,160 @@ export function loadResourceTree(options: LoadResourceTreeOptions): ResourceTree
   // Initialize visited paths for cycle detection
   const visitedPaths = new Set<string>();
 
-  // Load recursively
-  return loadFolderRecursive(absoluteFolderPath, pathSegments, 0, depth, visitedPaths);
+  return loadFolderIterative(absoluteFolderPath, pathSegments, depth, visitedPaths);
 }
 
-function loadFolderRecursive(
-  folderPath: string,
-  pathSegments: string[],
-  currentDepth: number,
-  maxDepth: number,
-  visitedPaths: Set<string>,
-): ResourceTreeNode {
-  // Check for cycles using realpath
-  const realPath = fs.realpathSync(folderPath);
-  if (visitedPaths.has(realPath)) {
-    // Cycle detected, return empty node
-    return {
-      folderPathSegments: pathSegments,
-      resources: [],
-      children: [],
-    };
-  }
-  visitedPaths.add(realPath);
-
-  // Load resource entries and metadata
+function loadResourcesFromFolder(folderPath: string): ResourceTreeEntry[] {
   const entriesPath = path.join(folderPath, RESOURCE_ENTRIES_FILENAME);
   const metaPath = path.join(folderPath, TRACKER_META_FILENAME);
 
-  const resources: ResourceTreeEntry[] = [];
-
-  if (fs.existsSync(entriesPath) && fs.existsSync(metaPath)) {
-    try {
-      const entries: ResourceEntries = JSON.parse(fs.readFileSync(entriesPath, 'utf8'));
-      const metadata: TrackerMetadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
-
-      for (const [key, entry] of Object.entries(entries)) {
-        const meta = metadata[key];
-        if (!meta) continue;
-
-        const translations: Record<string, string> = {};
-        for (const [prop, value] of Object.entries(entry)) {
-          if (prop !== 'source' && prop !== 'tags' && prop !== 'comment' && typeof value === 'string') {
-            translations[prop] = value;
-          }
-        }
-
-        resources.push({
-          key,
-          source: entry.source,
-          translations,
-          comment: entry.comment,
-          tags: entry.tags,
-          metadata: meta,
-        });
-      }
-    } catch (error) {
-      // Malformed JSON, skip this folder's resources
-      console.warn(`Error loading resources from ${folderPath}:`, error);
-    }
+  if (!fs.existsSync(entriesPath) || !fs.existsSync(metaPath)) {
+    return [];
   }
 
-  // Scan for child directories
-  const children: FolderChild[] = [];
-  const dirEntries = fs.readdirSync(folderPath, { withFileTypes: true });
+  const resources: ResourceTreeEntry[] = [];
 
-  for (const dirEntry of dirEntries) {
-    if (!dirEntry.isDirectory()) continue;
-    if (dirEntry.name.startsWith('.')) continue; // Skip hidden folders
+  try {
+    const entries: ResourceEntries = JSON.parse(fs.readFileSync(entriesPath, 'utf8'));
+    const metadata: TrackerMetadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
 
-    const childName = dirEntry.name;
-    const childPath = path.join(folderPath, childName);
-    const childPathSegments = [...pathSegments, childName];
+    for (const [key, entry] of Object.entries(entries)) {
+      const meta = metadata[key];
+      if (!meta) continue;
 
-    if (currentDepth < maxDepth) {
-      // Recursively load child
-      const childTree = loadFolderRecursive(childPath, childPathSegments, currentDepth + 1, maxDepth, visitedPaths);
+      const translations: Record<string, string> = {};
+      for (const [prop, value] of Object.entries(entry)) {
+        if (prop !== 'source' && prop !== 'tags' && prop !== 'comment' && typeof value === 'string') {
+          translations[prop] = value;
+        }
+      }
 
-      children.push({
-        name: childName,
-        fullPathSegments: childPathSegments,
-        loaded: true,
-        tree: childTree,
+      resources.push({
+        key,
+        source: entry.source,
+        translations,
+        comment: entry.comment,
+        tags: entry.tags,
+        metadata: meta,
       });
-    } else {
-      // Mark child as unloaded
-      children.push({
+    }
+  } catch (error) {
+    // Malformed JSON, skip this folder's resources
+    console.warn(`Error loading resources from ${folderPath}:`, error);
+  }
+
+  return resources;
+}
+
+function loadFolderIterative(
+  rootFolderPath: string,
+  rootPathSegments: string[],
+  maxDepth: number,
+  visitedPaths: Set<string>,
+): ResourceTreeNode {
+  const rootRealPath = fs.realpathSync(rootFolderPath);
+  visitedPaths.add(rootRealPath);
+
+  const rootNode: ResourceTreeNode = {
+    folderPathSegments: rootPathSegments,
+    resources: loadResourcesFromFolder(rootFolderPath),
+    children: [],
+  };
+
+  const stack: StackEntry[] = [];
+
+  const rootDirEntries = fs.readdirSync(rootFolderPath, { withFileTypes: true });
+
+  if (maxDepth === 0) {
+    // Children are pushed directly (not onto the stack), so forward iteration preserves readdir order.
+    for (const dirEntry of rootDirEntries) {
+      if (!dirEntry.isDirectory() || dirEntry.name.startsWith('.')) continue;
+      const childName = dirEntry.name;
+      rootNode.children.push({
         name: childName,
-        fullPathSegments: childPathSegments,
+        fullPathSegments: [...rootPathSegments, childName],
         loaded: false,
       });
     }
+  } else {
+    // Push in reverse so the stack pops entries in forward (readdir) order.
+    for (let i = rootDirEntries.length - 1; i >= 0; i--) {
+      const dirEntry = rootDirEntries[i];
+      if (!dirEntry.isDirectory() || dirEntry.name.startsWith('.')) continue;
+      const childName = dirEntry.name;
+      stack.push({
+        folderPath: path.join(rootFolderPath, childName),
+        pathSegments: [...rootPathSegments, childName],
+        depth: 1,
+        parentChildren: rootNode.children,
+      });
+    }
   }
 
-  return {
-    folderPathSegments: pathSegments,
-    resources,
-    children,
-  };
+  while (stack.length > 0) {
+    const { folderPath, pathSegments, depth, parentChildren } = stack.pop() as StackEntry;
+
+    let realPath: string;
+    try {
+      realPath = fs.realpathSync(folderPath);
+    } catch {
+      parentChildren.push({
+        name: pathSegments[pathSegments.length - 1],
+        fullPathSegments: pathSegments,
+        loaded: false,
+      });
+      continue;
+    }
+    if (visitedPaths.has(realPath)) {
+      // Cycle detected — push an empty loaded node so the child is represented
+      parentChildren.push({
+        name: pathSegments[pathSegments.length - 1],
+        fullPathSegments: pathSegments,
+        loaded: true,
+        tree: { folderPathSegments: pathSegments, resources: [], children: [] },
+      });
+      continue;
+    }
+    visitedPaths.add(realPath);
+
+    const node: ResourceTreeNode = {
+      folderPathSegments: pathSegments,
+      resources: loadResourcesFromFolder(folderPath),
+      children: [],
+    };
+
+    parentChildren.push({
+      name: pathSegments[pathSegments.length - 1],
+      fullPathSegments: pathSegments,
+      loaded: true,
+      tree: node,
+    });
+
+    const dirEntries = fs.readdirSync(folderPath, { withFileTypes: true });
+    for (let i = dirEntries.length - 1; i >= 0; i--) {
+      const dirEntry = dirEntries[i];
+      if (!dirEntry.isDirectory() || dirEntry.name.startsWith('.')) continue;
+
+      const childName = dirEntry.name;
+      const childPathSegments = [...pathSegments, childName];
+      const childFolderPath = path.join(folderPath, childName);
+
+      if (depth < maxDepth) {
+        stack.push({
+          folderPath: childFolderPath,
+          pathSegments: childPathSegments,
+          depth: depth + 1,
+          parentChildren: node.children,
+        });
+      } else {
+        node.children.push({
+          name: childName,
+          fullPathSegments: childPathSegments,
+          loaded: false,
+        });
+      }
+    }
+  }
+
+  return rootNode;
 }

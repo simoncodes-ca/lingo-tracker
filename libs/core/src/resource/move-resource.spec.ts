@@ -74,26 +74,31 @@ describe('Move Resource', () => {
       }
     });
 
-    (fs.readdirSync as Mock).mockImplementation((path: string) => {
+    (fs.readdirSync as Mock).mockImplementation((dirPath: string) => {
       // Find direct children
       const children = new Set<string>();
       // Check files
       for (const file of mockFileSystem.keys()) {
-        if (file.startsWith(path) && file !== path) {
-          const relative = file.slice(path.length + 1); // +1 for separator
+        if (file.startsWith(dirPath) && file !== dirPath) {
+          const relative = file.slice(dirPath.length + 1); // +1 for separator
           const firstPart = relative.split('/')[0]; // Assumes / separator in mock
           if (firstPart) children.add(firstPart);
         }
       }
       // Check dirs
       for (const dir of mockDirectories) {
-        if (dir.startsWith(path) && dir !== path) {
-          const relative = dir.slice(path.length + 1);
+        if (dir.startsWith(dirPath) && dir !== dirPath) {
+          const relative = dir.slice(dirPath.length + 1);
           const firstPart = relative.split('/')[0];
           if (firstPart) children.add(firstPart);
         }
       }
-      return Array.from(children);
+      // Return Dirent-like objects so walkFolders (withFileTypes: true) works correctly
+      return Array.from(children).map((name) => ({
+        name,
+        isDirectory: () => mockDirectories.has(join(dirPath, name)),
+        isFile: () => mockFileSystem.has(join(dirPath, name)),
+      }));
     });
 
     (fs.statSync as Mock).mockImplementation((path: string) => {

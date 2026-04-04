@@ -1,5 +1,6 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { walkFolders } from '../lib/normalize/iterative-folder-walker';
 import { addResource } from './add-resource';
 import { deleteResource } from './delete-resource';
 import { resolveResourceKey, splitResolvedKey, validateKey } from '@simoncodes-ca/domain';
@@ -169,33 +170,6 @@ async function moveResourcesByPattern(
 
   const keysToMove: string[] = [];
 
-  // Helper to recursively scan
-  function scanFolder(currentPath: string, currentKeyPrefix: string) {
-    if (!existsSync(currentPath)) return;
-
-    // Check for resources in this folder
-    const resourcePath = join(currentPath, RESOURCE_ENTRIES_FILENAME);
-    if (existsSync(resourcePath)) {
-      try {
-        const entries: ResourceEntries = JSON.parse(readFileSync(resourcePath, 'utf8'));
-        Object.keys(entries).forEach((key) => {
-          keysToMove.push(`${currentKeyPrefix}.${key}`);
-        });
-      } catch (_e) {
-        result.errors.push(`Failed to read file at ${resourcePath}`);
-      }
-    }
-
-    // Check for subdirectories
-    const items = readdirSync(currentPath);
-    for (const item of items) {
-      const itemPath = join(currentPath, item);
-      if (statSync(itemPath).isDirectory()) {
-        scanFolder(itemPath, `${currentKeyPrefix}.${item}`);
-      }
-    }
-  }
-
   const rootFolderParts = cleanPrefix.split('.');
   const rootFolderPath = join(sourceTranslationsFolder, ...rootFolderParts);
 
@@ -209,7 +183,22 @@ async function moveResourcesByPattern(
   }
 
   if (existsSync(rootFolderPath)) {
-    scanFolder(rootFolderPath, cleanPrefix);
+    for (const visit of walkFolders(rootFolderPath, { skipHidden: false })) {
+      const currentKeyPrefix = [cleanPrefix, visit.keyPrefix].filter(Boolean).join('.');
+
+      const resourcePath = join(visit.absolutePath, RESOURCE_ENTRIES_FILENAME);
+      if (!existsSync(resourcePath)) continue;
+
+      try {
+        const entries: ResourceEntries = JSON.parse(readFileSync(resourcePath, 'utf8'));
+        for (const key of Object.keys(entries)) {
+          const fullKey = currentKeyPrefix ? `${currentKeyPrefix}.${key}` : key;
+          keysToMove.push(fullKey);
+        }
+      } catch (_e) {
+        result.errors.push(`Failed to read file at ${resourcePath}`);
+      }
+    }
   } else {
     result.warnings.push(`No folder found for prefix ${cleanPrefix}. Nothing moved.`);
     return result;

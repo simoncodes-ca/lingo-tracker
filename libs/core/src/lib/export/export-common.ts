@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import { walkFolders } from '../normalize/iterative-folder-walker';
 import type { ResourceEntries } from '../../resource/resource-entry';
 import type { TrackerMetadata } from '../../resource/tracker-metadata';
 import type { TranslationStatus } from '@simoncodes-ca/domain';
@@ -49,28 +50,29 @@ export function loadResourcesFromCollections(collections: { name: string; path: 
     }
 
     // The collection.path should point directly to where translations are stored
-    loadFolderRecursively(collection.path, '', collection.name, allResources);
+    loadFolderResources(collection.path, collection.name, allResources);
   }
 
   return Array.from(allResources.values());
 }
 
-function loadFolderRecursively(
-  folderPath: string,
-  keyPrefix: string,
+function loadFolderResources(
+  collectionPath: string,
   collectionName: string,
   allResources: Map<string, LoadedResource>,
 ): void {
-  const entriesPath = path.join(folderPath, RESOURCE_ENTRIES_FILENAME);
-  const metaPath = path.join(folderPath, TRACKER_META_FILENAME);
+  for (const visit of walkFolders(collectionPath, { skipHidden: false })) {
+    const entriesPath = path.join(visit.absolutePath, RESOURCE_ENTRIES_FILENAME);
+    const metaPath = path.join(visit.absolutePath, TRACKER_META_FILENAME);
 
-  if (fs.existsSync(entriesPath) && fs.existsSync(metaPath)) {
+    if (!fs.existsSync(entriesPath) || !fs.existsSync(metaPath)) continue;
+
     try {
       const entries: ResourceEntries = JSON.parse(fs.readFileSync(entriesPath, 'utf8'));
       const metadata: TrackerMetadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
 
       for (const [key, entry] of Object.entries(entries)) {
-        const fullKey = keyPrefix ? `${keyPrefix}.${key}` : key;
+        const fullKey = visit.keyPrefix ? `${visit.keyPrefix}.${key}` : key;
         const meta = metadata[key];
 
         if (!meta) {
@@ -110,19 +112,7 @@ function loadFolderRecursively(
         allResources.set(fullKey, loadedResource);
       }
     } catch (e) {
-      console.warn(`Error loading files in ${folderPath}: ${(e as Error).message}`);
-    }
-  }
-
-  const children = fs.readdirSync(folderPath, { withFileTypes: true });
-  for (const child of children) {
-    if (child.isDirectory()) {
-      loadFolderRecursively(
-        path.join(folderPath, child.name),
-        keyPrefix ? `${keyPrefix}.${child.name}` : child.name,
-        collectionName,
-        allResources,
-      );
+      console.warn(`Error loading files in ${visit.absolutePath}: ${(e as Error).message}`);
     }
   }
 }

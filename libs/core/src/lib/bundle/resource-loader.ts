@@ -5,6 +5,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
+import { walkFolders } from '../normalize/iterative-folder-walker';
 import type { ResourceEntries } from '../../resource/resource-entry';
 
 export interface FlatResource {
@@ -33,36 +34,17 @@ export function loadCollectionResources(
     return resources;
   }
 
-  loadFolderResources(translationsFolder, '', locale, baseLocale, resources);
+  for (const visit of walkFolders(translationsFolder, { skipHidden: false })) {
+    const resourceEntriesPath = path.join(visit.absolutePath, RESOURCE_ENTRIES_FILENAME);
 
-  return resources;
-}
+    if (!fs.existsSync(resourceEntriesPath)) continue;
 
-/**
- * Recursively loads resources from a folder
- *
- * @param folderPath - Current folder path
- * @param keyPrefix - Accumulated key prefix
- * @param locale - Target locale
- * @param baseLocale - Base locale (source values use 'source' property)
- * @param resources - Accumulator array
- */
-function loadFolderResources(
-  folderPath: string,
-  keyPrefix: string,
-  locale: string,
-  baseLocale: string,
-  resources: FlatResource[],
-): void {
-  const resourceEntriesPath = path.join(folderPath, RESOURCE_ENTRIES_FILENAME);
-
-  if (fs.existsSync(resourceEntriesPath)) {
     try {
       const content = fs.readFileSync(resourceEntriesPath, 'utf8');
       const entries: ResourceEntries = JSON.parse(content);
 
       for (const [entryKey, entry] of Object.entries(entries)) {
-        const fullKey = keyPrefix ? `${keyPrefix}.${entryKey}` : entryKey;
+        const fullKey = visit.keyPrefix ? `${visit.keyPrefix}.${entryKey}` : entryKey;
 
         // For base locale, use 'source' property; for others, use locale key
         const value = locale === baseLocale ? entry.source : entry[locale];
@@ -82,13 +64,5 @@ function loadFolderResources(
     }
   }
 
-  // Recursively process subfolders
-  const entries = fs.readdirSync(folderPath, { withFileTypes: true });
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      const subfolderPath = path.join(folderPath, entry.name);
-      const subKeyPrefix = keyPrefix ? `${keyPrefix}.${entry.name}` : entry.name;
-      loadFolderResources(subfolderPath, subKeyPrefix, locale, baseLocale, resources);
-    }
-  }
+  return resources;
 }

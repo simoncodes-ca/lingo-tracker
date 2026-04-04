@@ -1,5 +1,6 @@
-import { readdirSync, statSync, existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { walkFolders } from '../normalize/iterative-folder-walker';
 import type { ResourceEntry } from '../../resource/resource-entry';
 import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
 import type { TranslationStatus } from '@simoncodes-ca/domain';
@@ -85,149 +86,123 @@ export function searchTranslations(params: SearchParams): SearchResult[] {
   const normalizedQuery = query.toLowerCase().trim();
   const results: SearchResult[] = [];
 
-  /**
-   * Recursively searches through folder structure.
-   */
-  function searchFolder(folderPath: string, keyPrefix: string): void {
-    if (!existsSync(folderPath)) {
-      return;
+  for (const visit of walkFolders(translationsFolder, { skipHidden: false })) {
+    const entriesFile = join(visit.absolutePath, 'resource_entries.json');
+    const metaFile = join(visit.absolutePath, 'tracker_meta.json');
+
+    if (!existsSync(entriesFile)) {
+      continue;
     }
 
-    // Check for resource files in current folder
-    const entriesFile = join(folderPath, 'resource_entries.json');
-    const metaFile = join(folderPath, 'tracker_meta.json');
+    try {
+      const entriesData = readFileSync(entriesFile, 'utf-8');
+      const entries: Record<string, ResourceEntry> = JSON.parse(entriesData);
 
-    if (existsSync(entriesFile)) {
-      try {
-        const entriesData = readFileSync(entriesFile, 'utf-8');
-        const entries: Record<string, ResourceEntry> = JSON.parse(entriesData);
+      let metadata: Record<string, ResourceEntryMetadata> = {};
+      if (existsSync(metaFile)) {
+        const metaData = readFileSync(metaFile, 'utf-8');
+        metadata = JSON.parse(metaData);
+      }
 
-        let metadata: Record<string, ResourceEntryMetadata> = {};
-        if (existsSync(metaFile)) {
-          const metaData = readFileSync(metaFile, 'utf-8');
-          metadata = JSON.parse(metaData);
+      // Search each entry
+      for (const [entryKey, entry] of Object.entries(entries)) {
+        const fullKey = visit.keyPrefix ? `${visit.keyPrefix}.${entryKey}` : entryKey;
+        const normalizedKey = fullKey.toLowerCase();
+
+        // Check key matches
+        let matchType: MatchType | null = null;
+        const matchedLocales: string[] = [];
+
+        if (normalizedKey === normalizedQuery) {
+          matchType = 'exact-key';
+        } else if (normalizedKey.includes(normalizedQuery)) {
+          matchType = 'partial-key';
         }
 
-        // Search each entry
-        for (const [entryKey, entry] of Object.entries(entries)) {
-          const fullKey = keyPrefix ? `${keyPrefix}.${entryKey}` : entryKey;
-          const normalizedKey = fullKey.toLowerCase();
-
-          // Check key matches
-          let matchType: MatchType | null = null;
-          const matchedLocales: string[] = [];
-
-          if (normalizedKey === normalizedQuery) {
-            matchType = 'exact-key';
-          } else if (normalizedKey.includes(normalizedQuery)) {
-            matchType = 'partial-key';
+        // Check value matches if no key match
+        if (!matchType) {
+          // Search source field if baseLocale is provided
+          if (baseLocale && entry.source && typeof entry.source === 'string') {
+            const normalizedValue = entry.source.toLowerCase();
+            if (normalizedValue === normalizedQuery) {
+              matchType = 'exact-value';
+              matchedLocales.push(baseLocale);
+            } else if (normalizedValue.includes(normalizedQuery)) {
+              matchType = 'partial-value';
+              matchedLocales.push(baseLocale);
+            }
           }
 
-          // Check value matches if no key match
-          if (!matchType) {
-            // Search source field if baseLocale is provided
-            if (baseLocale && entry.source && typeof entry.source === 'string') {
-              const normalizedValue = entry.source.toLowerCase();
+          // Search all other locale translations
+          for (const [locale, value] of Object.entries(entry)) {
+            // Skip non-string properties (comment, tags, source)
+            if (locale === 'comment' || locale === 'tags' || locale === 'source') {
+              continue;
+            }
+
+            if (typeof value === 'string') {
+              const normalizedValue = value.toLowerCase();
               if (normalizedValue === normalizedQuery) {
                 matchType = 'exact-value';
-                matchedLocales.push(baseLocale);
+                matchedLocales.push(locale);
               } else if (normalizedValue.includes(normalizedQuery)) {
-                matchType = 'partial-value';
-                matchedLocales.push(baseLocale);
-              }
-            }
-
-            // Search all other locale translations
-            for (const [locale, value] of Object.entries(entry)) {
-              // Skip non-string properties (comment, tags, source)
-              if (locale === 'comment' || locale === 'tags' || locale === 'source') {
-                continue;
-              }
-
-              if (typeof value === 'string') {
-                const normalizedValue = value.toLowerCase();
-                if (normalizedValue === normalizedQuery) {
-                  matchType = 'exact-value';
-                  matchedLocales.push(locale);
-                } else if (normalizedValue.includes(normalizedQuery)) {
-                  if (matchType !== 'exact-value') {
-                    matchType = 'partial-value';
-                  }
-                  matchedLocales.push(locale);
+                if (matchType !== 'exact-value') {
+                  matchType = 'partial-value';
                 }
+                matchedLocales.push(locale);
               }
-            }
-          }
-
-          // Add to results if match found
-          if (matchType) {
-            const meta = metadata[entryKey] || {};
-            const status: Record<string, TranslationStatus | undefined> = {};
-            const translations: Record<string, string> = {};
-
-            // Extract all locale translations (excluding special fields)
-            for (const locale in entry) {
-              if (locale === 'comment' || locale === 'tags' || locale === 'source') {
-                continue;
-              }
-
-              const value = entry[locale];
-              if (typeof value === 'string') {
-                translations[locale] = value;
-                status[locale] = meta[locale]?.status;
-              }
-            }
-
-            // Include base locale value from source field
-            if (baseLocale && entry.source) {
-              translations[baseLocale] = entry.source;
-            }
-
-            results.push({
-              key: fullKey,
-              translations,
-              status,
-              matchType,
-              matchedLocales: matchedLocales.length > 0 ? matchedLocales : undefined,
-              comment: entry.comment,
-              tags: entry.tags,
-            });
-
-            // Stop if we've reached max results
-            if (results.length >= maxResults) {
-              return;
             }
           }
         }
-      } catch (error) {
-        // Skip folders with invalid JSON
-        console.error(`Error reading resources in ${folderPath}:`, error);
-      }
-    }
 
-    // Recurse into subdirectories
-    try {
-      const items = readdirSync(folderPath);
-      for (const item of items) {
-        const itemPath = join(folderPath, item);
-        if (statSync(itemPath).isDirectory()) {
-          const newPrefix = keyPrefix ? `${keyPrefix}.${item}` : item;
-          searchFolder(itemPath, newPrefix);
+        // Add to results if match found
+        if (matchType) {
+          const meta = metadata[entryKey] || {};
+          const status: Record<string, TranslationStatus | undefined> = {};
+          const translations: Record<string, string> = {};
 
-          // Stop if we've reached max results
+          // Extract all locale translations (excluding special fields)
+          for (const locale in entry) {
+            if (locale === 'comment' || locale === 'tags' || locale === 'source') {
+              continue;
+            }
+
+            const value = entry[locale];
+            if (typeof value === 'string') {
+              translations[locale] = value;
+              status[locale] = meta[locale]?.status;
+            }
+          }
+
+          // Include base locale value from source field
+          if (baseLocale && entry.source) {
+            translations[baseLocale] = entry.source;
+          }
+
+          results.push({
+            key: fullKey,
+            translations,
+            status,
+            matchType,
+            matchedLocales: matchedLocales.length > 0 ? matchedLocales : undefined,
+            comment: entry.comment,
+            tags: entry.tags,
+          });
+
           if (results.length >= maxResults) {
-            return;
+            break;
           }
         }
       }
     } catch (error) {
-      // Skip folders we can't read
-      console.error(`Error reading directory ${folderPath}:`, error);
+      // Skip folders with invalid JSON
+      console.error(`Error reading resources in ${visit.absolutePath}:`, error);
+    }
+
+    if (results.length >= maxResults) {
+      break;
     }
   }
-
-  // Start search from root
-  searchFolder(translationsFolder, '');
 
   // Sort results by match type priority
   const priority: Record<MatchType, number> = {

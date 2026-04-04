@@ -1,10 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
-interface FolderInfo {
-  readonly path: string;
-  readonly depth: number;
-}
+import { walkFolders } from './iterative-folder-walker';
 
 /**
  * Recursively traverses a directory tree and returns all folder paths
@@ -15,32 +11,11 @@ interface FolderInfo {
  * @returns Array of folder paths sorted by depth (deepest first)
  */
 export function getAllFoldersBottomUp(rootPath: string): string[] {
-  const foldersWithDepth: FolderInfo[] = [];
+  const foldersWithDepth: { path: string; depth: number }[] = [];
 
-  function collectFoldersRecursively(currentPath: string, currentDepth: number): void {
-    if (!fs.existsSync(currentPath)) {
-      return;
-    }
-
-    const stats = fs.statSync(currentPath);
-    if (!stats.isDirectory()) {
-      return;
-    }
-
-    foldersWithDepth.push({ path: currentPath, depth: currentDepth });
-
-    const entries = fs.readdirSync(currentPath);
-    for (const entry of entries) {
-      const entryPath = path.join(currentPath, entry);
-      const entryStats = fs.statSync(entryPath);
-
-      if (entryStats.isDirectory()) {
-        collectFoldersRecursively(entryPath, currentDepth + 1);
-      }
-    }
+  for (const visit of walkFolders(rootPath, { skipHidden: false })) {
+    foldersWithDepth.push({ path: visit.absolutePath, depth: visit.depth });
   }
-
-  collectFoldersRecursively(rootPath, 0);
 
   // Sort by depth descending (deepest folders first) for bottom-up processing
   return foldersWithDepth.sort((a, b) => b.depth - a.depth).map((folder) => folder.path);
