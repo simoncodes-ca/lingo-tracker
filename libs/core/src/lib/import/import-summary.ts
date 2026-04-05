@@ -1,4 +1,5 @@
 import type { ImportOptions, ImportResult, ImportChange, StatusTransition, ICUAutoFix, ICUAutoFixError } from './types';
+import { formatMarkdownList, capitalize, formatISODate } from '../summary-utils';
 
 /**
  * Generates a comprehensive markdown summary of the import operation.
@@ -24,7 +25,7 @@ import type { ImportOptions, ImportResult, ImportChange, StatusTransition, ICUAu
 export function generateImportSummary(result: ImportResult, options: ImportOptions): string {
   const isDryRun = result.dryRun;
   const title = isDryRun ? '# Import Summary (DRY RUN)' : '# Import Summary';
-  const date = new Date().toISOString().replace('T', ' ').split('.')[0];
+  const date = formatISODate();
 
   let summary = `${title}
 
@@ -74,7 +75,7 @@ ${formatFilesModified(result.filesModified)}
     summary += `
 ## Warnings
 
-${formatList(result.warnings)}
+${formatMarkdownList(result.warnings)}
 `;
   }
 
@@ -83,7 +84,7 @@ ${formatList(result.warnings)}
     summary += `
 ## Errors
 
-${formatList(result.errors)}
+${formatMarkdownList(result.errors)}
 `;
   }
 
@@ -202,34 +203,6 @@ function formatFilesModified(files: string[]): string {
 
   if (remaining > 0) {
     output += `\n- _(+ ${remaining} more files)_`;
-  }
-
-  return output;
-}
-
-/**
- * Formats a generic list of items with overflow handling.
- *
- * Shows up to 10 items, with a count of remaining items if there are more.
- * Used for warnings and errors sections.
- *
- * @param items - Array of strings to format
- * @returns Formatted markdown list or "_None_" if empty
- * @internal
- */
-function formatList(items: string[]): string {
-  if (items.length === 0) {
-    return '_None_';
-  }
-
-  const maxToShow = 10;
-  const itemsToShow = items.slice(0, maxToShow);
-  const remaining = items.length - maxToShow;
-
-  let output = itemsToShow.map((item) => `- ${item}`).join('\n');
-
-  if (remaining > 0) {
-    output += `\n- _(... and ${remaining} more)_`;
   }
 
   return output;
@@ -484,18 +457,4 @@ function formatICUAutoFixErrors(autoFixErrors: ICUAutoFixError[]): string {
   }
 
   return output;
-}
-
-/**
- * Capitalizes the first letter of a string.
- *
- * Used for formatting status names in the summary output.
- *
- * @param str - String to capitalize
- * @returns String with first letter uppercased, or original if empty
- * @internal
- */
-function capitalize(str: string): string {
-  if (!str) return str;
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }

@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { detectJsonStructure, extractFromFlat, extractFromHierarchical, importFromJson } from './import-from-json';
 import type { ImportOptions } from './types';
+import * as configFileOperations from '../config/config-file-operations';
 
 // Mock fs module
 vi.mock('fs');
@@ -17,6 +18,18 @@ describe('import-from-json', () => {
 
     // Mock path.join to return predictable paths
     vi.spyOn(path, 'join').mockImplementation((...segments) => segments.join('/'));
+
+    vi.spyOn(configFileOperations, 'createConfigFileOperations').mockReturnValue({
+      read: () => ({
+        exportFolder: 'dist/lingo-export',
+        importFolder: 'dist/lingo-import',
+        baseLocale: 'en',
+        locales: ['en', 'es'],
+        collections: {},
+      }),
+      write: vi.fn(),
+      update: vi.fn(),
+    });
   });
 
   afterEach(() => {

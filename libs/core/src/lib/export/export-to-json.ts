@@ -1,6 +1,7 @@
 import type { ExportOptions, ExportResult, FilteredResource } from './types';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { writeJsonFile } from '../file-io/json-file-operations';
 
 /**
  * Exports resources to JSON format.
@@ -60,7 +61,7 @@ export function exportToJson(resources: FilteredResource[], options: ExportOptio
         if (options.onProgress) {
           options.onProgress(`Writing ${filePath}`);
         }
-        fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
+        writeJsonFile({ filePath, data: content });
       }
 
       result.filesCreated.push(filename);

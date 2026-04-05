@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { normalizeEntry } from './normalize-entry';
 import { cleanupEmptyFolders } from './cleanup-empty-folders';
 import { walkFolders } from './iterative-folder-walker';

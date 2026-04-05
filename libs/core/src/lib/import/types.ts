@@ -40,6 +40,8 @@ export interface ImportOptions {
   verbose?: boolean;
   /** Create backup before importing (.bak files) */
   backup?: boolean;
+  /** Base locale code (e.g., 'en'). Defaults to 'en' when not specified. */
+  baseLocale?: string;
 
   /** Callbacks */
   onProgress?: (message: string) => void;

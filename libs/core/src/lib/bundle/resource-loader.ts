@@ -2,11 +2,12 @@
  * Utilities for loading translation resources from collections
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
 import { walkFolders } from '../normalize/iterative-folder-walker';
 import type { ResourceEntries } from '../../resource/resource-entry';
+import { readJsonFile } from '../file-io/json-file-operations';
 
 export interface FlatResource {
   readonly key: string;
@@ -15,18 +16,26 @@ export interface FlatResource {
 }
 
 /**
- * Loads all resources from a collection's translations folder
- * Returns flat list of resources with full keys
+ * Loads all resources from a collection's translations folder.
+ *
+ * Returns a flat list of resources with full keys. When a `cache` map is
+ * provided, parsed `ResourceEntries` objects are stored in it by file path
+ * so subsequent calls for the same folder (e.g., different locales in the
+ * same bundle generation) avoid redundant disk reads and JSON parsing.
+ * The cache is intentionally short-lived: callers should create it per
+ * invocation and discard it afterwards to avoid stale data.
  *
  * @param translationsFolder - Path to collection's translations folder
  * @param locale - Target locale to extract values for
  * @param baseLocale - Base locale (source values use 'source' property)
+ * @param cache - Optional per-invocation cache of parsed ResourceEntries by file path
  * @returns Array of flat resources with keys, values, and tags
  */
 export function loadCollectionResources(
   translationsFolder: string,
   locale: string,
   baseLocale: string,
+  cache?: Map<string, ResourceEntries>,
 ): FlatResource[] {
   const resources: FlatResource[] = [];
 
@@ -40,8 +49,15 @@ export function loadCollectionResources(
     if (!fs.existsSync(resourceEntriesPath)) continue;
 
     try {
-      const content = fs.readFileSync(resourceEntriesPath, 'utf8');
-      const entries: ResourceEntries = JSON.parse(content);
+      let entries: ResourceEntries;
+
+      const cached = cache?.get(resourceEntriesPath);
+      if (cached) {
+        entries = cached;
+      } else {
+        entries = readJsonFile<ResourceEntries>({ filePath: resourceEntriesPath });
+        cache?.set(resourceEntriesPath, entries);
+      }
 
       for (const [entryKey, entry] of Object.entries(entries)) {
         const fullKey = visit.keyPrefix ? `${visit.keyPrefix}.${entryKey}` : entryKey;

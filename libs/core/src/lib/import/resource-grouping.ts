@@ -1,4 +1,4 @@
-import { resolve, join } from 'path';
+import { resolve, join } from 'node:path';
 import type { ImportedResource } from './types';
 import { splitResolvedKey } from '@simoncodes-ca/domain';
 import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';

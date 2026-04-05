@@ -3,6 +3,7 @@ import { extractFromXliff, importFromXliff } from './import-from-xliff';
 import type { ImportOptions } from './types';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as configFileOperations from '../config/config-file-operations';
 
 vi.mock('fs');
 vi.mock('path');
@@ -18,6 +19,18 @@ describe('import-from-xliff', () => {
       const parts = String(p).split('/');
       parts.pop();
       return parts.join('/');
+    });
+
+    vi.spyOn(configFileOperations, 'createConfigFileOperations').mockReturnValue({
+      read: () => ({
+        exportFolder: 'dist/lingo-export',
+        importFolder: 'dist/lingo-import',
+        baseLocale: 'en',
+        locales: ['en', 'es'],
+        collections: {},
+      }),
+      write: vi.fn(),
+      update: vi.fn(),
     });
   });
 

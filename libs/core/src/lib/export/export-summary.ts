@@ -1,4 +1,5 @@
 import type { ExportOptions, ExportResult } from './types';
+import { formatMarkdownList, formatISODate } from '../summary-utils';
 
 /**
  * Generates a markdown summary of the export operation.
@@ -6,7 +7,7 @@ import type { ExportOptions, ExportResult } from './types';
 export function generateExportSummary(result: ExportResult, options: ExportOptions): string {
   const isDryRun = options.dryRun;
   const title = isDryRun ? '# Export Summary (DRY RUN)' : '# Export Summary';
-  const date = new Date().toISOString().replace('T', ' ').split('.')[0];
+  const date = formatISODate();
 
   let summary = `${title}
 
@@ -32,7 +33,7 @@ ${formatFilesCreated(result.filesCreated)}
     summary += `
 ## Warnings
 
-${formatList(result.warnings)}
+${formatMarkdownList(result.warnings, Infinity)}
 `;
   }
 
@@ -49,28 +50,28 @@ ${formatList(result.warnings)}
     if (result.malformedFiles.length > 0) {
       summary += `
 ### Malformed Files
-${formatList(result.malformedFiles)}
+${formatMarkdownList(result.malformedFiles, Infinity)}
 `;
     }
 
     if (result.errors.length > 0) {
       summary += `
 ### General Errors
-${formatList(result.errors)}
+${formatMarkdownList(result.errors, Infinity)}
 `;
     }
 
     if (result.omittedResources.length > 0) {
       summary += `
 ### Resources Omitted (Missing Metadata)
-${formatList(result.omittedResources)}
+${formatMarkdownList(result.omittedResources, Infinity)}
 `;
     }
 
     if (result.hierarchicalConflicts.length > 0) {
       summary += `
 ### Hierarchical Key Conflicts
-${formatList(result.hierarchicalConflicts)}
+${formatMarkdownList(result.hierarchicalConflicts, Infinity)}
 `;
     }
   }
@@ -83,11 +84,4 @@ function formatFilesCreated(files: string[]): string {
     return '_No files created_';
   }
   return files.map((f) => `- \`${f}\``).join('\n');
-}
-
-function formatList(items: string[]): string {
-  if (items.length === 0) {
-    return '_None_';
-  }
-  return items.map((item) => `- ${item}`).join('\n');
 }

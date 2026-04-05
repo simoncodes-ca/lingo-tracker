@@ -282,6 +282,9 @@ export function resolveAllReferences(
     return resources;
   }
 
+  const hasAnyReferences = resources.some((r) => hasReferences(r.value));
+  if (!hasAnyReferences) return resources;
+
   // Build a map of key -> value for quick lookup
   const resourceMap = new Map<string, string>();
   for (const resource of resources) {

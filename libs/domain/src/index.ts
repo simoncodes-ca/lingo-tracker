@@ -6,3 +6,5 @@ export * from './lib/icu-auto-fixer';
 export * from './lib/icu-to-transloco';
 export * from './lib/transloco-to-icu';
 export * from './lib/validation-utils';
+export * from './lib/normalize-transloco-syntax';
+export * from './lib/icu-classifier';

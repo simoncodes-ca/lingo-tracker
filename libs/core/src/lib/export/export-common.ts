@@ -1,5 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { readJsonFile } from '../file-io/json-file-operations';
 import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
 import { walkFolders } from '../normalize/iterative-folder-walker';
 import type { ResourceEntries } from '../../resource/resource-entry';
@@ -68,8 +69,8 @@ function loadFolderResources(
     if (!fs.existsSync(entriesPath) || !fs.existsSync(metaPath)) continue;
 
     try {
-      const entries: ResourceEntries = JSON.parse(fs.readFileSync(entriesPath, 'utf8'));
-      const metadata: TrackerMetadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+      const entries = readJsonFile<ResourceEntries>({ filePath: entriesPath });
+      const metadata = readJsonFile<TrackerMetadata>({ filePath: metaPath });
 
       for (const [key, entry] of Object.entries(entries)) {
         const fullKey = visit.keyPrefix ? `${visit.keyPrefix}.${key}` : key;

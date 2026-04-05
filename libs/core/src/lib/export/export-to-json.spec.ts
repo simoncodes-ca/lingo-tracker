@@ -1,10 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as fs from 'fs';
+import * as jsonFileOps from '../file-io/json-file-operations';
 import { exportToJson } from './export-to-json';
 import type { ExportOptions, FilteredResource } from './types';
 
-// Mock fs module
-vi.mock('fs');
+vi.mock('../file-io/json-file-operations');
 
 describe('export-to-json', () => {
   const mockResources: FilteredResource[] = [
@@ -49,7 +48,7 @@ describe('export-to-json', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+    vi.mocked(jsonFileOps.writeJsonFile).mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -62,10 +61,12 @@ describe('export-to-json', () => {
     expect(result.filesCreated).toContain('es.json');
     expect(result.resourcesExported).toBe(3);
 
-    expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/export/es.json', expect.stringContaining('"common": {'));
+    expect(jsonFileOps.writeJsonFile).toHaveBeenCalledWith(
+      expect.objectContaining({ filePath: '/dist/export/es.json' }),
+    );
 
-    const callArgs = vi.mocked(fs.writeFileSync).mock.calls[0];
-    const content = JSON.parse(callArgs[1] as string);
+    const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
+    const content = callArgs.data as Record<string, unknown>;
 
     expect(content).toEqual({
       common: {
@@ -84,8 +85,8 @@ describe('export-to-json', () => {
     const options = { ...defaultOptions, jsonStructure: 'flat' as const };
     exportToJson(mockResources, options);
 
-    const callArgs = vi.mocked(fs.writeFileSync).mock.calls[0];
-    const content = JSON.parse(callArgs[1] as string);
+    const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
+    const content = callArgs.data as Record<string, unknown>;
 
     expect(content).toEqual({
       'common.buttons.ok': 'Aceptar',
@@ -104,8 +105,8 @@ describe('export-to-json', () => {
     };
     exportToJson(mockResources, options);
 
-    const callArgs = vi.mocked(fs.writeFileSync).mock.calls[0];
-    const content = JSON.parse(callArgs[1] as string);
+    const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
+    const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
     expect(content.common.buttons.ok).toEqual({
       value: 'Aceptar',
@@ -127,8 +128,8 @@ describe('export-to-json', () => {
     const options = { ...defaultOptions, includeBase: true };
     exportToJson(mockResources, options);
 
-    const callArgs = vi.mocked(fs.writeFileSync).mock.calls[0];
-    const content = JSON.parse(callArgs[1] as string);
+    const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
+    const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
     expect(content.common.buttons.ok).toEqual({
       value: 'Aceptar',
@@ -167,6 +168,8 @@ describe('export-to-json', () => {
     const result = exportToJson(mockResources, options);
 
     expect(result.filesCreated).toContain('custom-es.json');
-    expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/export/custom-es.json', expect.any(String));
+    expect(jsonFileOps.writeJsonFile).toHaveBeenCalledWith(
+      expect.objectContaining({ filePath: '/dist/export/custom-es.json' }),
+    );
   });
 });

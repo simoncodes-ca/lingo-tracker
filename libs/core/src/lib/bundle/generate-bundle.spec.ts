@@ -142,8 +142,8 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(loadSpy).toHaveBeenCalledWith('/translations/default', 'en', 'en');
-      expect(loadSpy).toHaveBeenCalledWith('/translations/admin', 'en', 'en');
+      expect(loadSpy).toHaveBeenCalledWith('/translations/default', 'en', 'en', expect.any(Map));
+      expect(loadSpy).toHaveBeenCalledWith('/translations/admin', 'en', 'en', expect.any(Map));
     });
 
     it('should process specific collections with selection rules', async () => {
