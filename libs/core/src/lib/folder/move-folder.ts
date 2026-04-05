@@ -1,6 +1,7 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { isValidSegment } from '../../resource/resource-key';
+import { walkFolders } from '../normalize/iterative-folder-walker';
+import { isValidSegment } from '@simoncodes-ca/domain';
 import { moveResource, type MoveResourceResult } from '../../resource/move-resource';
 import { deleteFolder, type DeleteFolderResult } from './delete-folder';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
@@ -238,7 +239,7 @@ export async function moveFolder(translationsFolder: string, params: MoveFolderP
 }
 
 /**
- * Recursively extracts all resource keys from a folder and its subfolders.
+ * Extracts all resource keys from a folder and its subfolders.
  *
  * @param absoluteFolderPath - Absolute filesystem path to the folder
  * @param folderKeyPrefix - Dot-delimited key prefix for this folder
@@ -247,39 +248,27 @@ export async function moveFolder(translationsFolder: string, params: MoveFolderP
 function extractAllResourceKeysFromFolder(absoluteFolderPath: string, folderKeyPrefix: string): string[] {
   const resourceKeys: string[] = [];
 
-  // Check for resource_entries.json in current folder
-  const entriesPath = join(absoluteFolderPath, RESOURCE_ENTRIES_FILENAME);
-  if (existsSync(entriesPath)) {
+  for (const visit of walkFolders(absoluteFolderPath, { skipHidden: false })) {
+    const currentKeyPrefix = visit.keyPrefix
+      ? folderKeyPrefix
+        ? `${folderKeyPrefix}.${visit.keyPrefix}`
+        : visit.keyPrefix
+      : folderKeyPrefix;
+
+    const entriesPath = join(visit.absolutePath, RESOURCE_ENTRIES_FILENAME);
+    if (!existsSync(entriesPath)) continue;
+
     try {
       const entriesContent = readFileSync(entriesPath, 'utf8');
       const entries: ResourceEntries = JSON.parse(entriesContent);
 
-      // Add all entry keys with folder prefix
       for (const entryKey of Object.keys(entries)) {
-        const fullKey = folderKeyPrefix ? `${folderKeyPrefix}.${entryKey}` : entryKey;
+        const fullKey = currentKeyPrefix ? `${currentKeyPrefix}.${entryKey}` : entryKey;
         resourceKeys.push(fullKey);
       }
     } catch {
       // Malformed JSON or read error, skip this folder
     }
-  }
-
-  // Recursively scan child directories
-  try {
-    const dirEntries = readdirSync(absoluteFolderPath, { withFileTypes: true });
-
-    for (const dirEntry of dirEntries) {
-      if (!dirEntry.isDirectory()) continue;
-      if (dirEntry.name.startsWith('.')) continue; // Skip hidden folders
-
-      const childPath = join(absoluteFolderPath, dirEntry.name);
-      const childPrefix = folderKeyPrefix ? `${folderKeyPrefix}.${dirEntry.name}` : dirEntry.name;
-
-      const childKeys = extractAllResourceKeysFromFolder(childPath, childPrefix);
-      resourceKeys.push(...childKeys);
-    }
-  } catch {
-    // Error reading directory, skip scanning children
   }
 
   return resourceKeys;

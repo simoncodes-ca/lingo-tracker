@@ -1,4 +1,4 @@
-import type { TranslationStatus } from '../../resource/translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 
 export type ExportFormat = 'xliff' | 'json';
 

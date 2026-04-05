@@ -7,7 +7,7 @@ import {
   hasTranslocoPlaceholders,
   extractTranslocoPlaceholders,
   autoFixTranslocoPlaceholders,
-} from './icu-auto-fixer';
+} from '@simoncodes-ca/domain';
 
 describe('icu-auto-fixer', () => {
   describe('hasICUPlaceholders', () => {

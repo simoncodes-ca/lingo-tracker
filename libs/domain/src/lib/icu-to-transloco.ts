@@ -20,7 +20,7 @@
  * @module icu-to-transloco
  */
 
-import { extractICUPlaceholders } from '../import/icu-auto-fixer';
+import { extractICUPlaceholders } from './icu-auto-fixer';
 
 /**
  * Converts a string from ICU single-brace placeholder syntax to Transloco

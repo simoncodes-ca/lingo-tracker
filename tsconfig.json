@@ -1,21 +1,5 @@
 {
   "extends": "./tsconfig.base.json",
   "files": [],
-  "references": [
-    {
-      "path": "./apps/api"
-    },
-    {
-      "path": "./apps/cli"
-    },
-    {
-      "path": "./apps/tracker"
-    },
-    {
-      "path": "./libs/core"
-    },
-    {
-      "path": "./libs/data-transfer"
-    }
-  ]
+  "references": []
 }

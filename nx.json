@@ -53,11 +53,11 @@
           "watchDepsName": "watch-deps"
         }
       },
-      "exclude": ["libs/core/*"]
+      "exclude": ["libs/core/*", "libs/domain/*"]
     },
     {
       "plugin": "@nx/js/typescript",
-      "include": ["libs/core/*"],
+      "include": ["libs/core/*", "libs/domain/*"],
       "options": {
         "typecheck": {
           "targetName": "typecheck"

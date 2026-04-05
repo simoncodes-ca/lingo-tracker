@@ -3,16 +3,20 @@ import { icuToTransloco } from './icu-to-transloco';
 
 describe('icuToTransloco', () => {
   describe('values without placeholders', () => {
-    it('returns an empty string unchanged', () => {
+    it('returns empty string unchanged', () => {
       expect(icuToTransloco('')).toBe('');
     });
 
-    it('returns a plain string unchanged', () => {
+    it('returns plain text unchanged', () => {
       expect(icuToTransloco('Hello world')).toBe('Hello world');
     });
 
-    it('returns a string with numbers and punctuation unchanged', () => {
+    it('returns text with numbers and punctuation unchanged', () => {
       expect(icuToTransloco('Price: $4.99 (inc. tax)')).toBe('Price: $4.99 (inc. tax)');
+    });
+
+    it('returns whitespace-only string unchanged', () => {
+      expect(icuToTransloco('   ')).toBe('   ');
     });
   });
 
@@ -21,11 +25,11 @@ describe('icuToTransloco', () => {
       expect(icuToTransloco('{name}')).toBe('{{ name }}');
     });
 
-    it('converts a placeholder with leading text', () => {
+    it('converts a placeholder at the end of text', () => {
       expect(icuToTransloco('Hello {name}')).toBe('Hello {{ name }}');
     });
 
-    it('converts a placeholder with surrounding text', () => {
+    it('converts a placeholder surrounded by text', () => {
       expect(icuToTransloco('Hello {name}, welcome!')).toBe('Hello {{ name }}, welcome!');
     });
 
@@ -39,7 +43,7 @@ describe('icuToTransloco', () => {
       expect(icuToTransloco('Hello {firstName} {lastName}')).toBe('Hello {{ firstName }} {{ lastName }}');
     });
 
-    it('converts placeholders with text between them', () => {
+    it('converts placeholders separated by text', () => {
       expect(icuToTransloco('{count} of {total} items')).toBe('{{ count }} of {{ total }} items');
     });
 
@@ -99,26 +103,17 @@ describe('icuToTransloco', () => {
     });
   });
 
-  describe('idempotency and round-trip behaviour', () => {
-    it('does not convert Transloco double-brace syntax (already exported format)', () => {
-      // A value that has already been exported ({{ }}) should not be double-converted.
-      // Double-braces are not valid ICU, so extractICUPlaceholders returns no placeholders.
+  describe('edge cases', () => {
+    it('does not double-convert Transloco syntax (already exported format)', () => {
       const alreadyExported = 'Hello {{ name }}';
       expect(icuToTransloco(alreadyExported)).toBe(alreadyExported);
     });
-  });
 
-  describe('edge cases', () => {
-    it('handles a string that is only whitespace', () => {
-      expect(icuToTransloco('   ')).toBe('   ');
-    });
-
-    it('returns the original value when ICU extraction fails due to unmatched braces', () => {
-      // Unmatched opening brace — extractICUPlaceholders will return success: false
+    it('returns original value when ICU extraction fails due to unmatched opening brace', () => {
       expect(icuToTransloco('{unclosed')).toBe('{unclosed');
     });
 
-    it('returns the original value when ICU extraction fails due to unmatched closing brace', () => {
+    it('returns original value when ICU extraction fails due to unmatched closing brace', () => {
       expect(icuToTransloco('unmatched}')).toBe('unmatched}');
     });
   });

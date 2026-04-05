@@ -28,16 +28,14 @@ describe('Folder Utilities', () => {
         return [testDir, level1, level2, level3].includes(filepath as string);
       });
 
-      vi.mocked(fs.statSync).mockImplementation((_filepath) => {
-        return { isDirectory: () => true } as fs.Stats;
-      });
+      const makeDirEntry = (name: string): fs.Dirent =>
+        ({ name, isDirectory: () => true, isFile: () => false }) as unknown as fs.Dirent;
 
       vi.mocked(fs.readdirSync).mockImplementation((filepath) => {
-        if (filepath === testDir) return ['level1'] as unknown as fs.Dirent[];
-        if (filepath === level1) return ['level2'] as unknown as fs.Dirent[];
-        if (filepath === level2) return ['level3'] as unknown as fs.Dirent[];
-        if (filepath === level3) return [] as unknown as fs.Dirent[];
-        return [] as unknown as fs.Dirent[];
+        if (filepath === testDir) return [makeDirEntry('level1')];
+        if (filepath === level1) return [makeDirEntry('level2')];
+        if (filepath === level2) return [makeDirEntry('level3')];
+        return [];
       });
 
       const folders = getAllFoldersBottomUp(testDir);
@@ -74,18 +72,15 @@ describe('Folder Utilities', () => {
         return allPaths.includes(filepath as string);
       });
 
-      vi.mocked(fs.statSync).mockImplementation(() => {
-        return { isDirectory: () => true } as fs.Stats;
-      });
+      const makeDirEntry = (name: string): fs.Dirent =>
+        ({ name, isDirectory: () => true, isFile: () => false }) as unknown as fs.Dirent;
 
       vi.mocked(fs.readdirSync).mockImplementation((filepath) => {
-        if (filepath === testDir) return ['apps', 'shared'] as unknown as fs.Dirent[];
-        if (filepath === apps) return ['common'] as unknown as fs.Dirent[];
-        if (filepath === common) return ['buttons'] as unknown as fs.Dirent[];
-        if (filepath === buttons) return [] as unknown as fs.Dirent[];
-        if (filepath === shared) return ['validation'] as unknown as fs.Dirent[];
-        if (filepath === validation) return [] as unknown as fs.Dirent[];
-        return [] as unknown as fs.Dirent[];
+        if (filepath === testDir) return [makeDirEntry('apps'), makeDirEntry('shared')];
+        if (filepath === apps) return [makeDirEntry('common')];
+        if (filepath === common) return [makeDirEntry('buttons')];
+        if (filepath === shared) return [makeDirEntry('validation')];
+        return [];
       });
 
       const folders = getAllFoldersBottomUp(testDir);
@@ -106,10 +101,7 @@ describe('Folder Utilities', () => {
       const testDir = '/test-root';
 
       vi.mocked(fs.existsSync).mockReturnValue(true);
-      vi.mocked(fs.statSync).mockReturnValue({
-        isDirectory: () => true,
-      } as fs.Stats);
-      vi.mocked(fs.readdirSync).mockReturnValue([] as unknown as fs.Dirent[]);
+      vi.mocked(fs.readdirSync).mockReturnValue([]);
 
       const folders = getAllFoldersBottomUp(testDir);
 
@@ -129,13 +121,12 @@ describe('Folder Utilities', () => {
         return allPaths.includes(filepath as string);
       });
 
-      vi.mocked(fs.statSync).mockReturnValue({
-        isDirectory: () => true,
-      } as fs.Stats);
+      const makeDirEntry = (name: string): fs.Dirent =>
+        ({ name, isDirectory: () => true, isFile: () => false }) as unknown as fs.Dirent;
 
       vi.mocked(fs.readdirSync).mockImplementation((filepath) => {
-        if (filepath === testDir) return ['folder1', 'folder2'] as unknown as fs.Dirent[];
-        return [] as unknown as fs.Dirent[];
+        if (filepath === testDir) return [makeDirEntry('folder1'), makeDirEntry('folder2')];
+        return [];
       });
 
       const folders = getAllFoldersBottomUp(testDir);

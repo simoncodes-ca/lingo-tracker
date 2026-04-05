@@ -17,7 +17,8 @@
     "typeRoots": ["./node_modules/@types", "./types"],
     "paths": {
       "@simoncodes-ca/core": ["libs/core/src"],
-      "@simoncodes-ca/data-transfer": ["libs/data-transfer/src"]
+      "@simoncodes-ca/data-transfer": ["libs/data-transfer/src"],
+      "@simoncodes-ca/domain": ["libs/domain/src"]
     }
   },
   "exclude": ["node_modules", "tmp"]

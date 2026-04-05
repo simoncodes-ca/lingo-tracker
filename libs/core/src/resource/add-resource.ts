@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import type { ResourceEntry } from './resource-entry';
-import type { TranslationStatus } from './translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 import { validateAndResolvePaths } from '../lib/resource/resource-file-paths';
 import { ensureDirectoryExists } from '../lib/file-io/directory-operations';
 import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
 import { createResourceMetadata } from '../lib/resource/metadata-operations';
 import type { TranslationConfig } from '../config/translation-config';
 import { autoTranslateResource } from '../lib/translation/auto-translate-resources';
-import { translocoToICU } from '../lib/format/transloco-to-icu';
+import { translocoToICU } from '@simoncodes-ca/domain';
 
 export interface AddResourceOptions {
   cwd?: string;

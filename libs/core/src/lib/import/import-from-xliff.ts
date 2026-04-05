@@ -1,5 +1,5 @@
-import { readFileSync, existsSync } from 'fs';
-import { resolve, join } from 'path';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import * as xliff from 'xliff';
 import type { ImportOptions, ImportedResource, ImportResult, ICUAutoFix, ICUAutoFixError } from './types';
 import { groupResourcesByFolder } from './resource-grouping';
@@ -8,9 +8,7 @@ import { calculateImportStatistics, calculateStatusTransitions } from './import-
 import { validateImportResources } from './import-validation';
 import { setupImportWorkflow, buildImportResult } from './import-workflow';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
-import type { ResourceEntries } from '../../resource/resource-entry';
-import { splitResolvedKey } from '../../resource/resource-key';
-import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
+import { loadBaseLocaleValues } from './load-base-locale-values';
 
 /**
  * Extracts translation resources from XLIFF 1.2 format content.
@@ -104,68 +102,6 @@ export async function extractFromXliff(xliffContent: string): Promise<ImportedRe
   }
 
   return resources;
-}
-
-/**
- * Loads base locale values for all imported resources from existing resource files.
- *
- * This function is used to provide base values for ICU auto-fixing. It loads the
- * source values from resource_entries.json files for each resource key.
- *
- * @param resources - Array of imported resources to load base values for
- * @param translationsFolder - Path to the translations directory
- * @param cwd - Current working directory for resolving absolute paths
- * @returns Map of resource keys to their base locale values
- */
-function loadBaseLocaleValues(
-  resources: ImportedResource[],
-  translationsFolder: string,
-  cwd: string,
-): Map<string, string> {
-  const baseValues = new Map<string, string>();
-
-  // Group by folder to minimize file reads
-  const folderToKeys = new Map<string, Array<{ key: string; entryKey: string }>>();
-
-  for (const resource of resources) {
-    const { folderPath: pathSegments, entryKey } = splitResolvedKey(resource.key);
-
-    const fullFolderPath = pathSegments.length ? join(translationsFolder, ...pathSegments) : translationsFolder;
-
-    if (!folderToKeys.has(fullFolderPath)) {
-      folderToKeys.set(fullFolderPath, []);
-    }
-
-    const folderKeys = folderToKeys.get(fullFolderPath);
-    if (folderKeys) {
-      folderKeys.push({ key: resource.key, entryKey });
-    }
-  }
-
-  // Load base values from each folder
-  for (const [folderPath, keys] of folderToKeys.entries()) {
-    const entryResourcePath = resolve(cwd, folderPath, RESOURCE_ENTRIES_FILENAME);
-
-    if (!existsSync(entryResourcePath)) {
-      continue;
-    }
-
-    try {
-      const entriesContent = readFileSync(entryResourcePath, 'utf8');
-      const resourceEntries: ResourceEntries = JSON.parse(entriesContent);
-
-      for (const { key, entryKey } of keys) {
-        const entry = resourceEntries[entryKey];
-        if (entry?.source) {
-          baseValues.set(key, entry.source);
-        }
-      }
-    } catch {
-      // ignore errors if files don't exist or can't be parsed
-    }
-  }
-
-  return baseValues;
 }
 
 /**

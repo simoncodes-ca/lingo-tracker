@@ -1,7 +1,7 @@
 import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
-import type { TranslationStatus } from '../../resource/translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 import { calculateChecksum } from '../../resource/checksum';
-import { createBaseLocaleMetadata } from '../../resource/status-helpers';
+import { createBaseLocaleMetadata } from '@simoncodes-ca/domain';
 
 export interface CreateResourceMetadataParams {
   /** The entry key for this resource */

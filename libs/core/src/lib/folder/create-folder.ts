@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { isValidSegment } from '../../resource/resource-key';
+import { isValidSegment } from '@simoncodes-ca/domain';
 import { ensureDirectoryExists } from '../file-io/directory-operations';
 
 export interface CreateFolderParams {

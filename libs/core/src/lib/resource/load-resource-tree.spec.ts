@@ -384,6 +384,46 @@ describe('loadResourceTree', () => {
     });
   });
 
+  describe('child ordering', () => {
+    it('should preserve readdir order for multiple sibling subdirectories', () => {
+      // Add two sibling subdirectories under apps/common: buttons and forms
+      // They are inserted in alphabetical (readdir) order so the mock returns them
+      // in that order — the iterative implementation must preserve it.
+      mockFs.set('/test/translations/apps/common/forms', 'directory');
+      mockFs.set(
+        '/test/translations/apps/common/forms/resource_entries.json',
+        JSON.stringify({
+          email: { source: 'Email', es: 'Correo', fr: 'E-mail' },
+        }),
+      );
+      mockFs.set(
+        '/test/translations/apps/common/forms/tracker_meta.json',
+        JSON.stringify({
+          email: {
+            en: { checksum: 'form111' },
+            es: { status: 'translated', checksum: 'form222', baseChecksum: 'form111' },
+            fr: { status: 'new', checksum: '', baseChecksum: 'form111' },
+          },
+        }),
+      );
+
+      const result = loadResourceTree({
+        translationsFolder,
+        path: 'apps.common',
+        depth: 1,
+        cwd: '/',
+      });
+
+      // Both children should be loaded
+      expect(result.children).toHaveLength(2);
+
+      // The Map iterates insertion order: buttons was inserted before forms,
+      // so readdir returns ["buttons", "forms"] — the tree must preserve that order.
+      expect(result.children[0].name).toBe('buttons');
+      expect(result.children[1].name).toBe('forms');
+    });
+  });
+
   describe('error handling', () => {
     it('should throw error for non-existent folder', () => {
       expect(() =>

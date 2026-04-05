@@ -1,11 +1,11 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import prompts from 'prompts';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 import {
   type LingoTrackerConfig,
   type ExportOptions,
   type ExportFormat,
-  type TranslationStatus,
   loadResourcesFromCollections,
   filterResources,
   validateOutputDirectory,
