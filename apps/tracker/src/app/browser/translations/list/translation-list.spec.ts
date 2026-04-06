@@ -1,8 +1,8 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
+import { NotificationService } from '../../../shared/notification';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TranslationList } from './translation-list';
 import { BrowserStore } from '../../store/browser.store';
@@ -24,7 +24,10 @@ describe('TranslationList', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        {
+          provide: NotificationService,
+          useValue: { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() },
+        },
         { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
@@ -70,7 +73,12 @@ describe('TranslationList - Copy to Clipboard', () => {
   let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
   let mockClipboard: { writeText: ReturnType<typeof vi.fn> };
-  let snackBarSpy: { open: ReturnType<typeof vi.fn> };
+  let notificationsSpy: {
+    success: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     mockClipboard = {
@@ -82,16 +90,14 @@ describe('TranslationList - Copy to Clipboard', () => {
       configurable: true,
     });
 
-    snackBarSpy = {
-      open: vi.fn(),
-    };
+    notificationsSpy = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [TranslationList, getTranslocoTestingModule()],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: snackBarSpy },
+        { provide: NotificationService, useValue: notificationsSpy },
         { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
@@ -108,11 +114,7 @@ describe('TranslationList - Copy to Clipboard', () => {
     await Promise.resolve(); // Wait for clipboard promise to resolve
 
     expect(mockClipboard.writeText).toHaveBeenCalledWith('common.buttons.save');
-    expect(snackBarSpy.open).toHaveBeenCalledWith(
-      'Copied to clipboard',
-      '',
-      expect.objectContaining({ duration: 2000 }),
-    );
+    expect(notificationsSpy.success).toHaveBeenCalledWith('Copied to clipboard');
   });
 
   it('should show error toast when clipboard write fails', async () => {
@@ -124,7 +126,7 @@ describe('TranslationList - Copy to Clipboard', () => {
     component.handleCopyKey('test.key');
     await Promise.resolve(); // Wait for clipboard promise to reject
 
-    expect(snackBarSpy.open).toHaveBeenCalledWith('Failed to copy', '', expect.objectContaining({ duration: 2000 }));
+    expect(notificationsSpy.error).toHaveBeenCalledWith('Failed to copy');
   });
 });
 
@@ -137,7 +139,10 @@ describe('TranslationList - Loading and Error States', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        {
+          provide: NotificationService,
+          useValue: { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() },
+        },
         { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
@@ -261,7 +266,10 @@ describe('TranslationList - Virtual Scrolling', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        {
+          provide: NotificationService,
+          useValue: { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() },
+        },
         { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
@@ -331,7 +339,12 @@ describe('TranslationList - Virtual Scrolling', () => {
 describe('TranslationList - skippedLocales warning snackbar', () => {
   let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
-  let snackBarSpy: { open: ReturnType<typeof vi.fn> };
+  let notificationsSpy: {
+    success: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
   let mockDialogRef: { afterClosed: ReturnType<typeof vi.fn> };
   let mockDialog: { open: ReturnType<typeof vi.fn> };
 
@@ -342,7 +355,7 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
   };
 
   beforeEach(async () => {
-    snackBarSpy = { open: vi.fn() };
+    notificationsSpy = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
     mockDialogRef = { afterClosed: vi.fn() };
     mockDialog = { open: vi.fn().mockReturnValue(mockDialogRef) };
 
@@ -350,7 +363,11 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
     // overrideProvider ensures our mock supersedes the module-level MatDialog instance.
     await TestBed.configureTestingModule({
       imports: [TranslationList, getTranslocoTestingModule()],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatSnackBar, useValue: snackBarSpy }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: NotificationService, useValue: notificationsSpy },
+      ],
     })
       .overrideProvider(MatDialog, { useValue: mockDialog })
       .compileComponents();
@@ -386,15 +403,14 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
       locales: 'fr, de',
     });
 
-    const warningCalls = snackBarSpy.open.mock.calls.filter((args: unknown[]) => args[0] === expectedSkippedMessage);
-    expect(warningCalls).toHaveLength(1);
+    expect(notificationsSpy.warning).toHaveBeenCalledWith(expectedSkippedMessage);
   });
 
   it('should not show warning snackbar when skippedLocales is empty or absent', async () => {
     vi.useFakeTimers();
 
     for (const skippedLocales of [[], undefined] as const) {
-      snackBarSpy.open.mockClear();
+      notificationsSpy.warning.mockClear();
 
       const result: TranslationEditorResult = {
         key: 'test_key',
@@ -409,10 +425,7 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
       component.handleEdit(mockResource);
       await vi.advanceTimersByTimeAsync(2200);
 
-      const warningCalls = snackBarSpy.open.mock.calls.filter(
-        (args: unknown[]) => typeof args[0] === 'string' && (args[0] as string).includes('ICU format'),
-      );
-      expect(warningCalls).toHaveLength(0);
+      expect(notificationsSpy.warning).not.toHaveBeenCalled();
     }
   });
 
@@ -421,7 +434,9 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
 
     component.handleEdit(mockResource);
 
-    expect(snackBarSpy.open).not.toHaveBeenCalled();
+    expect(notificationsSpy.success).not.toHaveBeenCalled();
+    expect(notificationsSpy.warning).not.toHaveBeenCalled();
+    expect(notificationsSpy.error).not.toHaveBeenCalled();
   });
 
   it('should update the store cache when the edit result contains skippedLocales', () => {
@@ -447,18 +462,27 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
 describe('TranslationList - handleEdit key rewrite', () => {
   let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
-  let snackBarSpy: { open: ReturnType<typeof vi.fn> };
+  let notificationsSpy: {
+    success: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
   let mockDialogRef: { afterClosed: ReturnType<typeof vi.fn> };
   let mockDialog: { open: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    snackBarSpy = { open: vi.fn() };
+    notificationsSpy = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
     mockDialogRef = { afterClosed: vi.fn() };
     mockDialog = { open: vi.fn().mockReturnValue(mockDialogRef) };
 
     await TestBed.configureTestingModule({
       imports: [TranslationList, getTranslocoTestingModule()],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MatSnackBar, useValue: snackBarSpy }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: NotificationService, useValue: notificationsSpy },
+      ],
     })
       .overrideProvider(MatDialog, { useValue: mockDialog })
       .compileComponents();
@@ -522,7 +546,10 @@ describe('TranslationList - Locale Filtering', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+        {
+          provide: NotificationService,
+          useValue: { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() },
+        },
         { provide: MatDialog, useValue: { open: vi.fn() } },
       ],
     }).compileComponents();
@@ -559,7 +586,12 @@ describe('TranslationList - Locale Filtering', () => {
 describe('TranslationList - handleTranslate', () => {
   let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
-  let snackBarSpy: { open: ReturnType<typeof vi.fn> };
+  let notificationsSpy: {
+    success: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
   let mockBrowserApi: { translateResource: ReturnType<typeof vi.fn>; deleteResource: ReturnType<typeof vi.fn> };
   let store: InstanceType<typeof BrowserStore>;
 
@@ -579,7 +611,7 @@ describe('TranslationList - handleTranslate', () => {
   };
 
   beforeEach(async () => {
-    snackBarSpy = { open: vi.fn() };
+    notificationsSpy = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
     mockBrowserApi = {
       translateResource: vi.fn(),
       deleteResource: vi.fn(),
@@ -590,7 +622,7 @@ describe('TranslationList - handleTranslate', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: snackBarSpy },
+        { provide: NotificationService, useValue: notificationsSpy },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         { provide: BrowserApiService, useValue: mockBrowserApi },
       ],
@@ -631,12 +663,8 @@ describe('TranslationList - handleTranslate', () => {
     // back to the relative-path key that the store indexes by ("btn_save").
     expect(updateCacheSpy).toHaveBeenCalledWith({ ...mockUpdatedResource, key: mockResource.key });
 
-    // Success snackbar shown
-    expect(snackBarSpy.open).toHaveBeenCalledWith(
-      '1 locale translated successfully',
-      '',
-      expect.objectContaining({ duration: 3000 }),
-    );
+    // Success notification shown
+    expect(notificationsSpy.success).toHaveBeenCalledWith('1 locale translated successfully');
   });
 
   it('should remove key from translatingKeys and show failure snackbar on error', () => {
@@ -648,7 +676,7 @@ describe('TranslationList - handleTranslate', () => {
     expect(component.translatingKeys().has('btn_save')).toBe(false);
 
     // Error message from the thrown Error is displayed
-    expect(snackBarSpy.open).toHaveBeenCalledWith('Network failure', '', expect.objectContaining({ duration: 4000 }));
+    expect(notificationsSpy.error).toHaveBeenCalledWith('Network failure');
   });
 
   it('should show ICU warning snackbar when skippedLocales is non-empty', () => {
@@ -667,7 +695,6 @@ describe('TranslationList - handleTranslate', () => {
       locales: 'fr, de',
     });
 
-    const icuWarningCalls = snackBarSpy.open.mock.calls.filter((args: unknown[]) => args[0] === expectedSkippedMessage);
-    expect(icuWarningCalls).toHaveLength(1);
+    expect(notificationsSpy.warning).toHaveBeenCalledWith(expectedSkippedMessage);
   });
 });

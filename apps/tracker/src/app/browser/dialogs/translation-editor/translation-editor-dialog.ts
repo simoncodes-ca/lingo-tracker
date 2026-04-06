@@ -21,8 +21,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TextFieldModule } from '@angular/cdk/text-field';
+import { NotificationService } from '../../../shared/notification';
 import type {
   ResourceSummaryDto,
   TranslationStatus,
@@ -110,7 +110,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   private readonly dialog = inject(MatDialog);
   private readonly browserApi = inject(BrowserApiService);
   private readonly browserStore = inject(BrowserStore);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly notifications = inject(NotificationService);
   private readonly transloco = inject(TranslocoService);
   private readonly destroy$ = new Subject<void>();
   private readonly baseValueSearch$ = new Subject<string>();
@@ -358,27 +358,17 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     const failedMessage = this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.COPYFAILED);
 
     if (!navigator.clipboard?.writeText) {
-      this.snackBar.open(failedMessage, '', {
-        duration: 2000,
-        panelClass: ['error-snackbar'],
-      });
+      this.notifications.error(failedMessage);
       return;
     }
 
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        this.snackBar.open(successMessage, '', {
-          duration: 2000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
+        this.notifications.success(successMessage);
       })
       .catch(() => {
-        this.snackBar.open(failedMessage, '', {
-          duration: 2000,
-          panelClass: ['error-snackbar'],
-        });
+        this.notifications.error(failedMessage);
       });
   }
 

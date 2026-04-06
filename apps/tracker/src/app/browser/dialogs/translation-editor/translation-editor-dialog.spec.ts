@@ -10,7 +10,7 @@ import {
 import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { of, throwError } from 'rxjs';
 import { BrowserApiService } from '../../services/browser-api.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotificationService } from '../../../shared/notification';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
@@ -26,7 +26,7 @@ describe('TranslationEditorDialog', () => {
     updateResource: Mock;
     searchTranslations: Mock;
   };
-  let mockSnackBar: { open: Mock };
+  let mockNotifications: { success: Mock; info: Mock; warning: Mock; error: Mock };
 
   const createMockData = (mode: 'create' | 'edit', resource?: ResourceSummaryDto): TranslationEditorDialogData => ({
     mode,
@@ -47,7 +47,7 @@ describe('TranslationEditorDialog', () => {
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: MatDialog, useValue: mockDialog },
         { provide: BrowserApiService, useValue: mockBrowserApi },
-        { provide: MatSnackBar, useValue: mockSnackBar },
+        { provide: NotificationService, useValue: mockNotifications },
         {
           provide: MAT_DIALOG_DATA,
           useValue: data,
@@ -81,9 +81,7 @@ describe('TranslationEditorDialog', () => {
       searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
     };
 
-    mockSnackBar = {
-      open: vi.fn(),
-    };
+    mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
 
     await setupTestBed(createMockData('create'));
   });
@@ -259,7 +257,7 @@ describe('TranslationEditorDialog', () => {
         updateResource: vi.fn().mockReturnValue(of({})),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
-      mockSnackBar = { open: vi.fn() };
+      mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       await setupTestBed(dataWithoutFolder);
 
       component.form.controls.key.setValue('test_key');
@@ -385,7 +383,7 @@ describe('TranslationEditorDialog', () => {
         updateResource: vi.fn().mockReturnValue(of({})),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
-      mockSnackBar = { open: vi.fn() };
+      mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       await setupTestBed(editData);
 
       const translationsArray = component.form.controls.translations;
@@ -505,7 +503,7 @@ describe('TranslationEditorDialog', () => {
         updateResource: vi.fn().mockReturnValue(of({})),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
       };
-      mockSnackBar = { open: vi.fn() };
+      mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       await setupTestBed(createMockData('create'));
     });
 
@@ -729,7 +727,7 @@ describe('TranslationEditorDialog', () => {
       mockDialog = {
         open: vi.fn().mockReturnValue({ afterClosed: () => of(true) }),
       };
-      mockSnackBar = { open: vi.fn() };
+      mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       await setupTestBed(editData);
 
       component.form.controls.baseValue.setValue('Updated Value');
@@ -761,7 +759,7 @@ describe('TranslationEditorDialog', () => {
       mockDialog = {
         open: vi.fn().mockReturnValue({ afterClosed: () => of(true) }),
       };
-      mockSnackBar = { open: vi.fn() };
+      mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       await setupTestBed(editData);
 
       component.form.controls.baseValue.setValue('Updated Value');
@@ -795,7 +793,7 @@ describe('TranslationEditorDialog', () => {
           afterClosed: () => of(true),
         }),
       };
-      mockSnackBar = { open: vi.fn() };
+      mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       await setupTestBed(editData);
 
       component.form.controls.baseValue.setValue('Updated Value');
@@ -833,7 +831,7 @@ describe('TranslationEditorDialog', () => {
           afterClosed: () => of(true),
         }),
       };
-      mockSnackBar = { open: vi.fn() };
+      mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       await setupTestBed(editData);
 
       const translationsArray = component.form.controls.translations;
@@ -900,7 +898,7 @@ describe('TranslationEditorDialog', () => {
           afterClosed: () => of(true),
         }),
       };
-      mockSnackBar = { open: vi.fn() };
+      mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       await setupTestBed(editData);
 
       await component.onSubmit();
@@ -929,7 +927,7 @@ describe('TranslationEditorDialog', () => {
           afterClosed: () => of(true),
         }),
       };
-      mockSnackBar = { open: vi.fn() };
+      mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       await setupTestBed(editData);
 
       component.form.controls.baseValue.setValue('Updated Value');

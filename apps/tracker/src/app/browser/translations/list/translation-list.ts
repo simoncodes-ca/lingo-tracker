@@ -15,8 +15,8 @@ import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrollin
 import { CdkDropList } from '@angular/cdk/drag-drop';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { NotificationService } from '../../../shared/notification';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -55,7 +55,7 @@ import type { DragData } from '../../types/drag-data';
 })
 export class TranslationList {
   protected readonly store = inject(BrowserStore);
-  readonly #snackBar = inject(MatSnackBar);
+  readonly #notifications = inject(NotificationService);
   readonly #dialog = inject(MatDialog);
   readonly #browserApi = inject(BrowserApiService);
   readonly #destroyRef = inject(DestroyRef);
@@ -168,11 +168,7 @@ export class TranslationList {
    */
   handleCopyKey(key: string): void {
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
-      this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED), '', {
-        duration: 2000,
-        horizontalPosition: 'center',
-        verticalPosition: 'bottom',
-      });
+      this.#notifications.error(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED));
 
       return;
     }
@@ -180,18 +176,10 @@ export class TranslationList {
     navigator.clipboard
       .writeText(key)
       .then(() => {
-        this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD), '', {
-          duration: 2000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
+        this.#notifications.success(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD));
       })
       .catch(() => {
-        this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED), '', {
-          duration: 2000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
+        this.#notifications.error(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED));
       });
   }
 
@@ -237,23 +225,13 @@ export class TranslationList {
         const storeResource = { ...result.resource, key: translation.key };
         this.store.updateTranslationInCache(storeResource);
         this.recentlyUpdatedKey.set(translation.key);
-        this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.TRANSLATIONUPDATED), '', {
-          duration: 2000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-        });
+        this.#notifications.success(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.TRANSLATIONUPDATED));
         setTimeout(() => this.recentlyUpdatedKey.set(undefined), 1500);
 
         if (result.skippedLocales && result.skippedLocales.length > 0) {
           const skippedList = result.skippedLocales.join(', ');
-          this.#snackBar.open(
+          this.#notifications.warning(
             this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, { locales: skippedList }),
-            this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DISMISS),
-            {
-              duration: 5000,
-              horizontalPosition: 'center',
-              verticalPosition: 'bottom',
-            },
           );
         }
       }
@@ -322,29 +300,15 @@ export class TranslationList {
                     count: translatedCount,
                   });
 
-            this.#snackBar.open(successMessage, '', {
-              duration: 3000,
-              horizontalPosition: 'center',
-              verticalPosition: 'bottom',
-            });
+            this.#notifications.success(successMessage);
           } else if (skippedLocales.length === 0) {
-            this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.ALLLOCALESUPTODATE), '', {
-              duration: 3000,
-              horizontalPosition: 'center',
-              verticalPosition: 'bottom',
-            });
+            this.#notifications.info(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.ALLLOCALESUPTODATE));
           }
 
           if (skippedLocales.length > 0) {
             const skippedList = skippedLocales.join(', ');
-            this.#snackBar.open(
+            this.#notifications.warning(
               this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, { locales: skippedList }),
-              this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DISMISS),
-              {
-                duration: 5000,
-                horizontalPosition: 'center',
-                verticalPosition: 'bottom',
-              },
             );
           }
         },
@@ -355,11 +319,7 @@ export class TranslationList {
             error instanceof Error
               ? error.message
               : this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.TRANSLATEFAILED);
-          this.#snackBar.open(message, '', {
-            duration: 4000,
-            horizontalPosition: 'center',
-            verticalPosition: 'bottom',
-          });
+          this.#notifications.error(message);
         },
       });
   }
@@ -471,17 +431,9 @@ export class TranslationList {
         next: (response) => {
           if (response.entriesDeleted > 0) {
             this.store.removeResourceFromCache(displayKey);
-            this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCEDELETED), '', {
-              duration: 2000,
-              horizontalPosition: 'center',
-              verticalPosition: 'bottom',
-            });
+            this.#notifications.success(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCEDELETED));
           } else {
-            this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.DELETEFAILED), '', {
-              duration: 4000,
-              horizontalPosition: 'center',
-              verticalPosition: 'bottom',
-            });
+            this.#notifications.error(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.DELETEFAILED));
           }
         },
         error: (error: unknown) => {
@@ -489,11 +441,7 @@ export class TranslationList {
             error instanceof Error
               ? error.message
               : this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.DELETEFAILED);
-          this.#snackBar.open(message, '', {
-            duration: 4000,
-            horizontalPosition: 'center',
-            verticalPosition: 'bottom',
-          });
+          this.#notifications.error(message);
         },
       });
   }

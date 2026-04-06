@@ -1,10 +1,12 @@
+@use '../../styles/breakpoints' as bp;
+
 .app-toolbar {
   background-color: var(--color-background);
   color: var(--color-text-primary);
   border-bottom: 1px solid var(--color-border);
   height: 64px;
   padding: 0 var(--spacing-6);
-  @media (max-width: 768px) {
+  @include bp.md-max {
     height: 56px;
     padding: 0 var(--spacing-4);
   }
@@ -78,7 +80,7 @@
     transition: transform var(--transition-fast);
     transform-origin: left center;
 
-    @media (max-width: 768px) {
+    @include bp.md-max {
       font-size: var(--font-size-xl);
     }
   }
@@ -189,7 +191,7 @@
   color: var(--color-text-tertiary);
   line-height: 1;
 
-  @media (max-width: 768px) {
+  @include bp.md-max {
     display: none;
   }
 }
@@ -204,7 +206,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 
-  @media (max-width: 768px) {
+  @include bp.md-max {
     max-width: 160px;
   }
 }
@@ -218,7 +220,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 
-  @media (max-width: 768px) {
+  @include bp.md-max {
     display: none;
   }
 }

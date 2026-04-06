@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { PickerFolderNode } from './picker-folder-node/picker-folder-node';
 import { BrowserStore } from '../../../store/browser.store';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotificationService } from '../../../../shared/notification';
 import type { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoService } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
@@ -41,7 +41,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 })
 export class FolderPicker implements OnInit {
   readonly #store = inject(BrowserStore);
-  readonly #snackBar = inject(MatSnackBar);
+  readonly #notifications = inject(NotificationService);
   readonly #transloco = inject(TranslocoService);
   readonly TOKENS = TRACKER_TOKENS;
 
@@ -160,15 +160,13 @@ export class FolderPicker implements OnInit {
             this.expandedPaths.update((expanded) => new Set(expanded).add(parentPath));
           }
 
-          this.#snackBar.open(
-            this.#transloco.translate(
-              response.created
-                ? TRACKER_TOKENS.BROWSER.FOLDERPICKER.FOLDERCREATED
-                : TRACKER_TOKENS.BROWSER.FOLDERPICKER.FOLDERALREADYEXISTS,
-            ),
-            this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.CLOSE),
-            { duration: 3000 },
-          );
+          if (response.created) {
+            this.#notifications.success(this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.FOLDERCREATED));
+          } else {
+            this.#notifications.info(
+              this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.FOLDERALREADYEXISTS),
+            );
+          }
         }
       },
       error: (error: HttpErrorResponse) => {
@@ -178,9 +176,7 @@ export class FolderPicker implements OnInit {
 
         const errorMessage =
           error.error?.message || this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.CREATEFOLDERFAILED);
-        this.#snackBar.open(errorMessage, this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.CLOSE), {
-          duration: 5000,
-        });
+        this.#notifications.error(errorMessage);
       },
     });
   }

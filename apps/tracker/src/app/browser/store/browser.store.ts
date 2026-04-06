@@ -15,10 +15,10 @@ import {
   retry,
   timer,
 } from 'rxjs';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslocoService } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
+import { NotificationService } from '../../shared/notification';
 import type {
   FolderNodeDto,
   ResourceSummaryDto,
@@ -729,7 +729,7 @@ export const BrowserStore = signalStore(
 
   withMethods((store) => {
     const api = inject(BrowserApiService);
-    const snackBar = inject(MatSnackBar);
+    const notifications = inject(NotificationService);
     const dialog = inject(MatDialog);
     const transloco = inject(TranslocoService);
 
@@ -748,9 +748,7 @@ export const BrowserStore = signalStore(
 
             // Check if dropping in same folder
             if (sourceFolderPath === destinationFolderPath) {
-              snackBar.open(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCEALREADYINFOLDER), undefined, {
-                duration: 3000,
-              });
+              notifications.info(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCEALREADYINFOLDER));
               patchState(store, { isDisabled: false });
               return of(null);
             }
@@ -767,13 +765,11 @@ export const BrowserStore = signalStore(
             return api.moveResource(collection, sourceKey, destinationKey).pipe(
               tap(() => {
                 const folderName = destinationFolderPath || 'root';
-                snackBar.open(
+                notifications.success(
                   transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCEMOVEDX, {
                     name: entryName,
                     folder: folderName,
                   }),
-                  undefined,
-                  { duration: 3000 },
                 );
                 patchState(store, { isDisabled: false });
 
@@ -793,7 +789,7 @@ export const BrowserStore = signalStore(
                   isDisabled: false,
                 });
 
-                snackBar.open(errorMessage, undefined, { duration: 5000 });
+                notifications.error(errorMessage);
                 return of(null);
               }),
             );
@@ -818,9 +814,7 @@ export const BrowserStore = signalStore(
             // Check if source and destination are the same
             const sourceParentPath = extractParentFolderPath(sourceFolderPath);
             if (sourceParentPath === destinationFolderPath) {
-              snackBar.open(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.FOLDERALREADYATLOCATION), undefined, {
-                duration: 3000,
-              });
+              notifications.info(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.FOLDERALREADYATLOCATION));
               return of(null);
             }
 
@@ -860,13 +854,11 @@ export const BrowserStore = signalStore(
                 return api.moveFolder(collection, sourceFolderPath, destinationFolderPath).pipe(
                   switchMap(() => {
                     const destName = destinationFolderPath || 'root';
-                    snackBar.open(
+                    notifications.success(
                       transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.FOLDERMOVEDX, {
                         name: folderName,
                         dest: destName,
                       }),
-                      undefined,
-                      { duration: 3000 },
                     );
                     patchState(store, { isDisabled: false, isDeletingFolder: false });
 
@@ -949,7 +941,7 @@ export const BrowserStore = signalStore(
                       isDeletingFolder: false,
                     });
 
-                    snackBar.open(errorMessage, undefined, { duration: 5000 });
+                    notifications.error(errorMessage);
                     return of(null);
                   }),
                 );
