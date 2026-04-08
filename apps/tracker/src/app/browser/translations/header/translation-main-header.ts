@@ -4,8 +4,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
+import { NotificationService } from '../../../shared/notification';
 import { TranslationSearch } from './translation-search/translation-search';
 import { BrowserStore } from '../../store/browser.store';
 import {
@@ -19,7 +19,7 @@ import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import type { DensityMode } from '../../types/density-mode';
 
 const DENSITY_ANIMATION_DURATION_MS = 250;
-const SNACKBAR_CHAIN_DELAY_MS = 2200;
+const SNACKBAR_CHAIN_DELAY_MS = 3200;
 
 /**
  * TranslationMainHeader component provides search and filtering controls
@@ -45,7 +45,7 @@ const SNACKBAR_CHAIN_DELAY_MS = 2200;
 export class TranslationMainHeader {
   readonly store = inject(BrowserStore);
   readonly #dialog = inject(MatDialog);
-  readonly #snackBar = inject(MatSnackBar);
+  readonly #notifications = inject(NotificationService);
   readonly #transloco = inject(TranslocoService);
   readonly TOKENS = TRACKER_TOKENS;
 
@@ -109,27 +109,16 @@ export class TranslationMainHeader {
       if (!result?.success) return;
 
       this.store.selectFolder(this.store.currentFolderPath());
-      this.#snackBar.open(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCECREATED), '', {
-        duration: 2000,
-        horizontalPosition: 'center',
-        verticalPosition: 'bottom',
-      });
+      this.#notifications.success(this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCECREATED));
 
       if (result.skippedLocales?.length) {
         const locales = result.skippedLocales.join(', ');
-        // Delay slightly longer than the success snackbar duration (2000ms) so the
+        // Delay slightly longer than the success notification duration so the
         // two messages don't overlap on screen.
         if (this.#snackbarChainTimeout) clearTimeout(this.#snackbarChainTimeout);
         this.#snackbarChainTimeout = setTimeout(() => {
-          this.#snackBar.open(
+          this.#notifications.warning(
             this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.AUTOTRANSLATIONSKIPPEDX, { locales }),
-            this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DISMISS),
-            {
-              duration: 6000,
-              horizontalPosition: 'center',
-              verticalPosition: 'bottom',
-              panelClass: ['warning-snackbar'],
-            },
           );
           this.#snackbarChainTimeout = undefined;
         }, SNACKBAR_CHAIN_DELAY_MS);

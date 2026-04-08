@@ -43,7 +43,8 @@ This is an Nx monorepo with three applications sharing core business logic:
 - **CLI** (`apps/cli`) — Command-line interface
 - **API** (`apps/api`) — NestJS REST API
 - **Tracker** (`apps/tracker`) — Angular web UI
-- **Core** (`libs/core`) — Shared business logic
+- **Domain** (`libs/domain`) — Pure business logic (browser-safe, no Node.js deps)
+- **Core** (`libs/core`) — Node.js business logic (file I/O, checksums, bundles)
 - **Data Transfer** (`libs/data-transfer`) — Shared DTOs
 
 ### Running Development Servers
@@ -105,7 +106,8 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/). 
 ## Code Standards
 
 - **Angular components**: Use signals, standalone components, OnPush change detection, and `inject()` for DI.
-- **Core logic**: All business logic belongs in `libs/core`.
+- **Domain logic**: Pure, platform-agnostic business logic belongs in `libs/domain`. This includes key validation/parsing, translation status helpers, ICU/Transloco format conversion, and shared types. Domain has **zero Node.js dependencies** so it can be imported by all apps, including the browser-based Tracker UI.
+- **Core logic**: Node.js-dependent business logic belongs in `libs/core` — file I/O, checksums, directory traversal, bundle generation. Core depends on domain; **domain must never depend on core**.
 - **DTOs**: API contracts are defined in `libs/data-transfer`.
 - **Testing**: Vitest for unit tests.
 

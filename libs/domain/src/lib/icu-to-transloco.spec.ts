@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { icuToTransloco } from './icu-to-transloco';
+import { unescapeIcuLiterals } from './icu-to-transloco';
 
 describe('icuToTransloco', () => {
   describe('values without placeholders', () => {
@@ -97,8 +98,9 @@ describe('icuToTransloco', () => {
     });
 
     it('handles two simple placeholders around a complex one', () => {
-      const input = '{greeting} {name} — {count, plural, one {# item} other {# items}} — {farewell}';
-      const expected = '{{ greeting }} {{ name }} — {count, plural, one {# item} other {# items}} — {{ farewell }}';
+      const input = '{greeting} {name} \u2014 {count, plural, one {# item} other {# items}} \u2014 {farewell}';
+      const expected =
+        '{{ greeting }} {{ name }} \u2014 {count, plural, one {# item} other {# items}} \u2014 {{ farewell }}';
       expect(icuToTransloco(input)).toBe(expected);
     });
   });
@@ -115,6 +117,55 @@ describe('icuToTransloco', () => {
 
     it('returns original value when ICU extraction fails due to unmatched closing brace', () => {
       expect(icuToTransloco('unmatched}')).toBe('unmatched}');
+    });
+  });
+
+  describe('ICU quote escaping', () => {
+    it('preserves a natural apostrophe in text while converting the placeholder', () => {
+      expect(icuToTransloco("don't have {count} items")).toBe("don't have {{ count }} items");
+    });
+
+    it('unescapes a fully-quoted brace literal when there are no real placeholders', () => {
+      // '{'literal'}' has no real ICU placeholders; should unescape to {literal}
+      expect(icuToTransloco("'{'literal'}'")).toBe('{literal}');
+    });
+
+    it('unescapes quoted braces in text and converts the real placeholder', () => {
+      // Use '{'name'}' as {realKey} \u2192 Use {name} as {{ realKey }}
+      expect(icuToTransloco("Use '{'name'}' as {realKey}")).toBe('Use {name} as {{ realKey }}');
+    });
+
+    it('converts a double-apostrophe literal to a single apostrophe and converts the placeholder', () => {
+      // it''s {name} \u2192 it's {{ name }}
+      expect(icuToTransloco("it''s {name}")).toBe("it's {{ name }}");
+    });
+  });
+
+  describe('unescapeIcuLiterals', () => {
+    it('passes through plain text unchanged', () => {
+      expect(unescapeIcuLiterals('hello world')).toBe('hello world');
+    });
+
+    it('keeps a natural apostrophe as-is', () => {
+      expect(unescapeIcuLiterals("don't")).toBe("don't");
+    });
+
+    it('converts a double-apostrophe to a single apostrophe', () => {
+      expect(unescapeIcuLiterals("it''s")).toBe("it's");
+    });
+
+    it('strips ICU quotes around a brace literal', () => {
+      expect(unescapeIcuLiterals("'{'literal'}'")).toBe('{literal}');
+    });
+
+    it('handles mixed natural apostrophe and escaped brace', () => {
+      expect(unescapeIcuLiterals("l'objet '{'key'}'")).toBe("l'objet {key}");
+    });
+
+    it('treats double-apostrophe inside an open quoted section as a literal apostrophe without closing the section', () => {
+      // '{ opens a section; '' inside emits a literal ' and stays in the section (not closing it); } is literal
+      // Input: '{ '' } — section opens, '' → literal ', } emitted literally, section never closed
+      expect(unescapeIcuLiterals("'{''}")).toBe("{'}");
     });
   });
 });

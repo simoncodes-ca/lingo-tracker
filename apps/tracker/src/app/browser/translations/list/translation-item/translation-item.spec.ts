@@ -1,36 +1,53 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { MatDialog } from '@angular/material/dialog';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TranslationItem } from './translation-item';
 import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
+import { BrowserStore } from '../../../store/browser.store';
+import { TranslationListStore } from '../store/translation-list.store';
+
+async function configureTranslationItemTestBed(): Promise<{
+  fixture: ComponentFixture<TranslationItem>;
+  component: TranslationItem;
+  store: InstanceType<typeof BrowserStore>;
+}> {
+  await TestBed.configureTestingModule({
+    imports: [TranslationItem, getTranslocoTestingModule()],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      { provide: MatDialog, useValue: { open: vi.fn() } },
+      TranslationListStore,
+    ],
+  }).compileComponents();
+
+  const fixture = TestBed.createComponent(TranslationItem);
+  return { fixture, component: fixture.componentInstance, store: TestBed.inject(BrowserStore) };
+}
+
+const mockTranslation: ResourceSummaryDto = {
+  key: 'common.buttons.save',
+  translations: {
+    en: 'Save',
+    es: 'Guardar',
+    fr: 'Enregistrer',
+  },
+  status: {
+    es: 'translated',
+    fr: 'verified',
+  },
+};
 
 describe('TranslationItem', () => {
   let component: TranslationItem;
   let fixture: ComponentFixture<TranslationItem>;
-
-  const mockTranslation: ResourceSummaryDto = {
-    key: 'common.buttons.save',
-    translations: {
-      en: 'Save',
-      es: 'Guardar',
-      fr: 'Enregistrer',
-    },
-    status: {
-      es: 'translated',
-      fr: 'verified',
-    },
-  };
+  let store: InstanceType<typeof BrowserStore>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [TranslationItem, getTranslocoTestingModule()],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(TranslationItem);
-    component = fixture.componentInstance;
+    ({ fixture, component, store } = await configureTranslationItemTestBed());
   });
 
   it('should create', () => {
@@ -38,8 +55,8 @@ describe('TranslationItem', () => {
   });
 
   it('should accept translation input', () => {
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es'], baseLocale: 'en' });
     fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', ['en', 'es']);
     fixture.detectChanges();
 
     expect(component.translation()).toEqual(mockTranslation);
@@ -52,25 +69,27 @@ describe('TranslationItem', () => {
       status: { es: 'new' },
     } as any;
 
+    // Compact mode with 'es' selected: filteredLocales() = ['es'], so primaryLocaleValue() = ''
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es'], baseLocale: 'en' });
+    store.setSelectedLocales(['es']);
     fixture.componentRef.setInput('translation', t);
-    fixture.componentRef.setInput('locales', ['en', 'es']);
-    fixture.componentRef.setInput('baseLocale', 'en');
     fixture.detectChanges();
 
-    // In compact mode with non-base locale selected, show that locale's (empty) value
-    // The primaryLocaleValue shows the non-base locale's value ('es' which is empty)
+    // primaryLocaleValue shows the non-base locale's value ('es' which is empty)
     expect(component.primaryLocaleValue()).toBe('');
     const html = fixture.nativeElement.innerHTML as string;
     expect(html).toContain('No translation');
   });
 
   it('should gracefully handle zero locales selected (compact fallback)', () => {
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es', 'fr'], baseLocale: 'en' });
+    store.setDensityMode('full');
+    store.clearAllLocales();
     fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', []);
     fixture.detectChanges();
 
-    // primaryLocale should fallback to baseLocale
-    expect(component.primaryLocale()).toBe(component.baseLocale());
+    // primaryLocale should fallback to baseLocale when filteredLocales is empty
+    expect(component.primaryLocale()).toBe(store.baseLocale());
     const html = fixture.nativeElement.innerHTML as string;
     // Should show a helpful message or at least not crash; check presence of key
     expect(html).toContain('common.buttons.save');
@@ -83,8 +102,8 @@ describe('TranslationItem', () => {
       status: { en: 'verified', es: 'verified' },
     } as any;
 
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es'], baseLocale: 'en' });
     fixture.componentRef.setInput('translation', t);
-    fixture.componentRef.setInput('locales', ['en', 'es']);
     fixture.detectChanges();
 
     const roll = component.rollupStatus();
@@ -92,78 +111,61 @@ describe('TranslationItem', () => {
     expect(roll[1]).toBe(2);
   });
 
-  it('should accept locales input', () => {
-    const locales = ['en', 'es', 'fr'];
+  it('should use filteredLocales from store (replaces locales input)', () => {
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es', 'fr'], baseLocale: 'en' });
+    store.setDensityMode('full');
+    store.clearAllLocales();
     fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', locales);
     fixture.detectChanges();
 
-    expect(component.locales()).toEqual(locales);
+    expect(store.filteredLocales()).toEqual(['en', 'es', 'fr']);
   });
 
-  it('should accept baseLocale input with default', () => {
-    expect(component.baseLocale()).toBe('en'); // default
-
+  it('should use baseLocale from store (replaces baseLocale input)', () => {
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'de'], baseLocale: 'de' });
     fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', ['en', 'de']);
-    fixture.componentRef.setInput('baseLocale', 'de');
     fixture.detectChanges();
 
-    expect(component.baseLocale()).toBe('de');
+    expect(store.baseLocale()).toBe('de');
   });
 });
 
 describe('TranslationItem - Compact helpers', () => {
   let component: TranslationItem;
   let fixture: ComponentFixture<TranslationItem>;
-
-  const mockTranslation: ResourceSummaryDto = {
-    key: 'common.buttons.save',
-    translations: {
-      en: 'Save',
-      es: 'Guardar',
-      fr: 'Enregistrer',
-    },
-    status: {
-      es: 'translated',
-      fr: 'verified',
-    },
-  };
+  let store: InstanceType<typeof BrowserStore>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [TranslationItem, getTranslocoTestingModule()],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(TranslationItem);
-    component = fixture.componentInstance;
+    ({ fixture, component, store } = await configureTranslationItemTestBed());
   });
 
-  it('should select primary locale from locales input', () => {
+  it('should select primary locale from filteredLocales in store', () => {
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es', 'fr'], baseLocale: 'en' });
+    store.setDensityMode('full');
+    store.clearAllLocales();
     fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('locales', ['en', 'es', 'fr']);
     fixture.detectChanges();
 
     expect(component.primaryLocale()).toBe('en');
   });
 
   it('should return selected non-base locale value, or base value when only base is selected', () => {
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es'], baseLocale: 'en' });
+    store.setDensityMode('full');
+    store.clearAllLocales();
     fixture.componentRef.setInput('translation', mockTranslation);
-    fixture.componentRef.setInput('baseLocale', 'en');
-    fixture.componentRef.setInput('locales', ['en', 'es']);
     fixture.detectChanges();
 
     // When a non-base locale is in the list alongside base, show non-base value
     expect(component.primaryLocaleValue()).toBe('Guardar');
 
     // When only a non-base locale is selected, show its value
-    fixture.componentRef.setInput('locales', ['es']);
+    store.setSelectedLocales(['es']);
     fixture.detectChanges();
     expect(component.primaryLocaleValue()).toBe('Guardar');
 
     // When only base locale is selected (or no non-base locales), show base value
-    fixture.componentRef.setInput('locales', ['en']);
+    store.setSelectedLocales(['en']);
     fixture.detectChanges();
     expect(component.primaryLocaleValue()).toBe('Save');
   });
@@ -175,8 +177,10 @@ describe('TranslationItem - Compact helpers', () => {
       status: { en: 'verified', es: 'translated', fr: 'stale' },
     };
 
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es', 'fr'], baseLocale: 'en' });
+    store.setDensityMode('full');
+    store.clearAllLocales();
     fixture.componentRef.setInput('translation', t);
-    fixture.componentRef.setInput('locales', ['en', 'es', 'fr']);
     fixture.detectChanges();
 
     const roll = component.rollupStatus();
@@ -193,8 +197,8 @@ describe('TranslationItem - Compact helpers', () => {
       comment: 'Needs review',
     } as any;
 
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en'], baseLocale: 'en' });
     fixture.componentRef.setInput('translation', tWithMeta);
-    fixture.componentRef.setInput('locales', ['en']);
     fixture.detectChanges();
 
     expect(component.hasMetadata()).toBe(true);
@@ -217,8 +221,10 @@ describe('TranslationItem - Compact helpers', () => {
       status: { en: 'stale', es: 'stale', fr: 'verified', de: 'new' },
     } as any;
 
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es', 'fr', 'de'], baseLocale: 'en' });
+    store.setDensityMode('full');
+    store.clearAllLocales();
     fixture.componentRef.setInput('translation', t);
-    fixture.componentRef.setInput('locales', ['en', 'es', 'fr', 'de']);
     fixture.detectChanges();
 
     // Expect order: stale, new, translated, verified (only present ones included)
@@ -226,20 +232,18 @@ describe('TranslationItem - Compact helpers', () => {
   });
 });
 
-// New tests for full density mode expansion logic
+// Tests for full density mode expansion logic
 describe('TranslationItem - Full density expansion', () => {
   let component: TranslationItem;
   let fixture: ComponentFixture<TranslationItem>;
+  let store: InstanceType<typeof BrowserStore>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [TranslationItem, getTranslocoTestingModule()],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    }).compileComponents();
+    ({ fixture, component, store } = await configureTranslationItemTestBed());
 
-    fixture = TestBed.createComponent(TranslationItem);
-    component = fixture.componentInstance;
-    fixture.componentRef.setInput('locales', ['en', 'es', 'fr']);
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es', 'fr'], baseLocale: 'en' });
+    store.setDensityMode('full');
+    store.clearAllLocales();
   });
 
   it('needsExpansion should be false for short values', () => {

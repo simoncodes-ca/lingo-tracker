@@ -1,8 +1,8 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
+import { NotificationService } from '../../../shared/notification';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { of } from 'rxjs';
@@ -14,12 +14,17 @@ import { getTranslocoTestingModule } from '../../../../testing/transloco-testing
 describe('TranslationMainHeader', () => {
   let component: TranslationMainHeader;
   let fixture: ComponentFixture<TranslationMainHeader>;
-  let snackBarSpy: { open: ReturnType<typeof vi.fn> };
+  let notificationsSpy: {
+    success: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
   let mockDialogRef: { afterClosed: ReturnType<typeof vi.fn> };
   let mockDialog: { open: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    snackBarSpy = { open: vi.fn() };
+    notificationsSpy = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
     mockDialogRef = { afterClosed: vi.fn() };
     mockDialog = { open: vi.fn().mockReturnValue(mockDialogRef) };
 
@@ -28,7 +33,7 @@ describe('TranslationMainHeader', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: MatSnackBar, useValue: snackBarSpy },
+        { provide: NotificationService, useValue: notificationsSpy },
         { provide: MatDialog, useValue: mockDialog },
       ],
     }).compileComponents();
@@ -49,8 +54,8 @@ describe('TranslationMainHeader', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('handleAddTranslation — success snackbar', () => {
-    it('should show success snackbar when translation is created', async () => {
+  describe('handleAddTranslation — success notification', () => {
+    it('should show success notification when translation is created', async () => {
       const result: TranslationEditorResult = {
         key: 'new_key',
         baseValue: 'New Value',
@@ -60,27 +65,24 @@ describe('TranslationMainHeader', () => {
       mockDialogRef.afterClosed.mockReturnValue(of(result));
 
       component.handleAddTranslation();
-      await vi.advanceTimersByTimeAsync(2200);
+      await vi.advanceTimersByTimeAsync(3200);
 
-      expect(snackBarSpy.open).toHaveBeenCalledWith(
-        'Resource created successfully',
-        '',
-        expect.objectContaining({ duration: 2000 }),
-      );
+      expect(notificationsSpy.success).toHaveBeenCalledWith('Resource created successfully');
     });
 
-    it('should not show any snackbar when dialog is dismissed without success', async () => {
+    it('should not show any notification when dialog is dismissed without success', async () => {
       mockDialogRef.afterClosed.mockReturnValue(of(undefined));
 
       component.handleAddTranslation();
-      await vi.advanceTimersByTimeAsync(2200);
+      await vi.advanceTimersByTimeAsync(3200);
 
-      expect(snackBarSpy.open).not.toHaveBeenCalled();
+      expect(notificationsSpy.success).not.toHaveBeenCalled();
+      expect(notificationsSpy.warning).not.toHaveBeenCalled();
     });
   });
 
-  describe('handleAddTranslation — skippedLocales warning snackbar', () => {
-    it('should show warning snackbar after success when skippedLocales is present', async () => {
+  describe('handleAddTranslation — skippedLocales warning notification', () => {
+    it('should show warning notification after success when skippedLocales is present', async () => {
       const result: TranslationEditorResult = {
         key: 'new_key',
         baseValue: 'New Value',
@@ -92,23 +94,14 @@ describe('TranslationMainHeader', () => {
 
       component.handleAddTranslation();
 
-      // Success snackbar fires immediately (synchronously in subscribe)
-      expect(snackBarSpy.open).toHaveBeenCalledWith(
-        'Resource created successfully',
-        '',
-        expect.objectContaining({ duration: 2000 }),
-      );
+      // Success notification fires immediately (synchronously in subscribe)
+      expect(notificationsSpy.success).toHaveBeenCalledWith('Resource created successfully');
 
-      // Warning snackbar fires after 2200ms
-      await vi.advanceTimersByTimeAsync(2200);
+      // Warning notification fires after 3200ms
+      await vi.advanceTimersByTimeAsync(3200);
 
-      expect(snackBarSpy.open).toHaveBeenCalledWith(
+      expect(notificationsSpy.warning).toHaveBeenCalledWith(
         'Auto-translation skipped for fr, de (ICU format not supported)',
-        'Dismiss',
-        expect.objectContaining({
-          duration: 6000,
-          panelClass: ['warning-snackbar'],
-        }),
       );
     });
 
@@ -123,19 +116,14 @@ describe('TranslationMainHeader', () => {
       mockDialogRef.afterClosed.mockReturnValue(of(result));
 
       component.handleAddTranslation();
-      await vi.advanceTimersByTimeAsync(2200);
+      await vi.advanceTimersByTimeAsync(3200);
 
-      expect(snackBarSpy.open).toHaveBeenCalledWith(
+      expect(notificationsSpy.warning).toHaveBeenCalledWith(
         'Auto-translation skipped for es (ICU format not supported)',
-        'Dismiss',
-        expect.objectContaining({
-          duration: 6000,
-          panelClass: ['warning-snackbar'],
-        }),
       );
     });
 
-    it('should not show warning snackbar when skippedLocales is an empty array', async () => {
+    it('should not show warning notification when skippedLocales is an empty array', async () => {
       const result: TranslationEditorResult = {
         key: 'new_key',
         baseValue: 'New Value',
@@ -146,15 +134,12 @@ describe('TranslationMainHeader', () => {
       mockDialogRef.afterClosed.mockReturnValue(of(result));
 
       component.handleAddTranslation();
-      await vi.advanceTimersByTimeAsync(2200);
+      await vi.advanceTimersByTimeAsync(3200);
 
-      const warningCalls = snackBarSpy.open.mock.calls.filter(
-        (args: unknown[]) => typeof args[0] === 'string' && (args[0] as string).includes('ICU format'),
-      );
-      expect(warningCalls).toHaveLength(0);
+      expect(notificationsSpy.warning).not.toHaveBeenCalled();
     });
 
-    it('should not show warning snackbar when skippedLocales is absent', async () => {
+    it('should not show warning notification when skippedLocales is absent', async () => {
       const result: TranslationEditorResult = {
         key: 'new_key',
         baseValue: 'New Value',
@@ -164,12 +149,9 @@ describe('TranslationMainHeader', () => {
       mockDialogRef.afterClosed.mockReturnValue(of(result));
 
       component.handleAddTranslation();
-      await vi.advanceTimersByTimeAsync(2200);
+      await vi.advanceTimersByTimeAsync(3200);
 
-      const warningCalls = snackBarSpy.open.mock.calls.filter(
-        (args: unknown[]) => typeof args[0] === 'string' && (args[0] as string).includes('ICU format'),
-      );
-      expect(warningCalls).toHaveLength(0);
+      expect(notificationsSpy.warning).not.toHaveBeenCalled();
     });
 
     it('should reload the current folder before showing snackbars', async () => {
@@ -186,7 +168,7 @@ describe('TranslationMainHeader', () => {
       mockDialogRef.afterClosed.mockReturnValue(of(result));
 
       component.handleAddTranslation();
-      await vi.advanceTimersByTimeAsync(2200);
+      await vi.advanceTimersByTimeAsync(3200);
 
       expect(selectFolderSpy).toHaveBeenCalled();
     });

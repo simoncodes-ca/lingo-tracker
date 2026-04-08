@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, computed, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -11,10 +11,16 @@ import { TruncateKeyPipe } from '../../../../shared/pipes/truncate-key.pipe';
 import { TagList } from '../../../../shared/tag-list/tag-list.component';
 import { TranslationRollup, type LocaleState } from './translation-rollup';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
+import type { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
+import { BrowserStore } from '../../../store/browser.store';
+import { TranslationListStore } from '../store/translation-list.store';
 
 /**
  * Header component for translation items displaying the key with copy button
- * and actions menu (edit, delete).
+ * and actions menu (edit, delete, translate).
+ *
+ * Reads locale state, search query, and translation status directly from
+ * BrowserStore and TranslationListStore to eliminate prop-drilling.
  */
 @Component({
   selector: 'app-translation-item-header',
@@ -40,26 +46,20 @@ import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
   },
 })
 export class TranslationItemHeader {
+  readonly #browserStore = inject(BrowserStore);
+  readonly #listStore = inject(TranslationListStore);
+
+  /** Active collection name — always set when this component is rendered. */
+  readonly #collectionName = computed(() => this.#browserStore.selectedCollection() ?? '');
+
   /** Full translation key to display */
   fullKey = input.required<string>();
 
-  /** Locale states for the rollup component */
-  localeStates = input<LocaleState[]>([]);
+  /** Translation data for deriving comment, tags, and locale states */
+  translation = input.required<ResourceSummaryDto>();
 
-  /** Base locale code */
-  baseLocale = input<string>('en');
-
-  /** Comment text for tooltip display */
-  comment = input<string>();
-
-  /** Whether comment is currently shown */
+  /** Whether comment is currently shown (compact mode) */
   showComment = input<boolean>(false);
-
-  /** Search query to check for matches in comment */
-  searchQuery = input<string>('');
-
-  /** Tags to display in header (medium/full mode only) */
-  tags = input<string[]>([]);
 
   /** Hide the comment toggle button (used in full mode where comment is shown inline) */
   hideCommentButton = input<boolean>(false);
@@ -67,28 +67,53 @@ export class TranslationItemHeader {
   /** Whether auto-translation is enabled for this collection */
   translationEnabled = input<boolean>(false);
 
-  /** Whether the translate action is disabled (no translatable locales or translation in progress) */
-  translateDisabled = input<boolean>(false);
-
-  /** Whether a translation is currently in progress for this item */
-  isTranslating = input<boolean>(false);
-
-  /** Emitted when user clicks copy key button */
-  copyKey = output<string>();
-
   /** Emitted when user toggles comment display */
   commentToggle = output<void>();
 
-  /** Emitted when user selects Edit from menu */
-  editAction = output<void>();
-
-  /** Emitted when user selects Delete from menu */
-  deleteAction = output<void>();
-
-  /** Emitted when user selects Translate from menu */
-  translateAction = output<void>();
-
   readonly TOKENS = TRACKER_TOKENS;
+
+  /** Locale states for the rollup component — derived from the translation status map */
+  readonly localeStates = computed<LocaleState[]>(() => {
+    const statusMap = this.translation().status || {};
+    const base = this.#browserStore.baseLocale();
+
+    return Object.entries(statusMap)
+      .filter(([locale, status]) => locale !== base && status)
+      .map(([locale, status]) => ({
+        code: locale,
+        status: status as TranslationStatus,
+      }));
+  });
+
+  /** Base locale code from the browser store */
+  readonly baseLocale = this.#browserStore.baseLocale;
+
+  /** Comment text derived from the translation input */
+  readonly comment = computed(() => this.translation().comment);
+
+  /** Current search query from the browser store */
+  readonly searchQuery = this.#browserStore.searchQuery;
+
+  /** Tags derived from the translation input */
+  readonly tags = computed(() => this.translation().tags ?? []);
+
+  /** Whether this specific item is currently being auto-translated */
+  readonly isTranslating = computed(() => this.#listStore.isTranslating(this.translation().key));
+
+  /**
+   * Returns true when at least one non-base locale has a 'new' or 'stale' status,
+   * indicating there is work for the auto-translator to do.
+   */
+  readonly hasTranslatableLocales = computed(() => {
+    const statusMap = this.translation().status || {};
+    const base = this.#browserStore.baseLocale();
+    return Object.entries(statusMap)
+      .filter(([locale]) => locale !== base)
+      .some(([, status]) => status === 'new' || status === 'stale');
+  });
+
+  /** Whether the translate action is disabled */
+  readonly translateDisabled = computed(() => !this.hasTranslatableLocales() || this.isTranslating());
 
   /** Computed signal for the comment icon name based on toggle state */
   readonly commentIcon = computed(() => {
@@ -108,19 +133,19 @@ export class TranslationItemHeader {
   });
 
   onCopyKey(): void {
-    this.copyKey.emit(this.fullKey());
+    this.#listStore.copyKey(this.fullKey());
   }
 
   onEdit(): void {
-    this.editAction.emit();
+    this.#listStore.editTranslation(this.translation(), this.#collectionName());
   }
 
   onDelete(): void {
-    this.deleteAction.emit();
+    this.#listStore.deleteTranslation(this.translation(), this.#collectionName());
   }
 
   onTranslate(): void {
-    this.translateAction.emit();
+    this.#listStore.translateResource(this.translation(), this.#collectionName());
   }
 
   onCommentClick(event: MouseEvent): void {

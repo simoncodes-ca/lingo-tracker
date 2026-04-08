@@ -58,6 +58,46 @@ export interface ICUAutoFixResult {
 }
 
 /**
+ * ICU syntax characters that trigger quote-escape mode when following a `'`.
+ *
+ * Per the ICU4J MessageFormat spec, a `'` starts a quoted section only when
+ * immediately followed by one of these characters. A lone `'` before any other
+ * character (e.g., a natural apostrophe in "don't") is treated as a literal
+ * apostrophe and does NOT enter escape mode.
+ */
+export const ICU_SYNTAX_CHARS = new Set<string>(['{', '}', '#', '|', "'"]);
+
+/**
+ * Returns true when the character at position `i` in `value` is a `'` that
+ * should open (or close) an ICU quoted section.
+ *
+ * A quote starts an escaped section when followed by a syntax char.
+ * A `''` (two consecutive apostrophes) is a literal apostrophe escape —
+ * it is handled separately by the caller and does NOT open a section.
+ * Inside a quoted section any `'` closes the section.
+ *
+ * @param value - The full message string
+ * @param i - Index of the `'` character to evaluate
+ * @param inEscapedSection - Whether the parser is currently inside a quoted section
+ * @returns true if the quote should toggle escaped-section state
+ * @internal
+ */
+function isQuoteToggle(value: string, i: number, inEscapedSection: boolean): boolean {
+  if (value[i] !== "'") {
+    return false;
+  }
+
+  if (inEscapedSection) {
+    // Any `'` closes the current quoted section
+    return true;
+  }
+
+  // Outside a quoted section: only toggle when followed by a syntax char.
+  // `''` (two apostrophes) is handled separately by advanceOverLiteralApostrophe.
+  return i + 1 < value.length && ICU_SYNTAX_CHARS.has(value[i + 1]);
+}
+
+/**
  * Extracts ICU placeholders from a message string.
  *
  * Handles:
@@ -65,8 +105,14 @@ export interface ICUAutoFixResult {
  * - Plural forms: {count, plural, one {# item} other {# items}}
  * - Select statements: {gender, select, male {he} female {she} other {they}}
  * - Number/date/time formatters: {price, number, currency}
- * - Escaped braces: '{literal text}'
+ * - Escaped braces: `'{literal text}'`
+ * - Natural apostrophes: `"don't"` — a `'` not followed by a syntax char is literal
+ * - Double apostrophe literal: `''` → literal `'` (no section toggle)
  * - Nested patterns (recursive extraction)
+ *
+ * Text segments in the result are raw substrings of the original input,
+ * including any ICU quote characters. Call `unescapeIcuLiterals` on each
+ * segment at the export layer if clean output is required.
  *
  * @param value - The message string to extract placeholders from
  * @returns Extraction result with placeholders and text segments
@@ -92,11 +138,23 @@ export function extractICUPlaceholders(value: string): PlaceholderExtractionResu
 
   for (let i = 0; i < value.length; i++) {
     const char = value[i];
-    const prevChar = i > 0 ? value[i - 1] : '';
 
-    // Handle escaped braces (single quotes)
-    if (char === "'" && prevChar !== '\\') {
-      inEscapedSection = !inEscapedSection;
+    // Handle ICU quote escaping per the MessageFormat spec:
+    // - `''` anywhere → literal apostrophe, no section toggle
+    // - `'` followed by a syntax char → opens a quoted section
+    // - `'` inside a quoted section → closes the section
+    // - `'` followed by a non-syntax char → literal apostrophe (e.g., "don't")
+    if (char === "'") {
+      if (value[i + 1] === "'") {
+        // `''` is always a literal apostrophe — skip both chars, no state change
+        i++;
+        continue;
+      }
+
+      if (isQuoteToggle(value, i, inEscapedSection)) {
+        inEscapedSection = !inEscapedSection;
+      }
+      // Whether toggling or not, the `'` itself is not a brace, so move on
       continue;
     }
 
@@ -105,7 +163,7 @@ export function extractICUPlaceholders(value: string): PlaceholderExtractionResu
     }
 
     // Track opening braces
-    if (char === '{' && prevChar !== '\\') {
+    if (char === '{') {
       if (braceDepth === 0) {
         // Starting a new placeholder
         currentPlaceholderStart = i;
@@ -117,7 +175,7 @@ export function extractICUPlaceholders(value: string): PlaceholderExtractionResu
     }
 
     // Track closing braces
-    if (char === '}' && prevChar !== '\\') {
+    if (char === '}') {
       braceDepth--;
 
       if (braceDepth === 0 && currentPlaceholderStart >= 0) {
@@ -152,6 +210,16 @@ export function extractICUPlaceholders(value: string): PlaceholderExtractionResu
         };
       }
     }
+  }
+
+  // Unclosed quoted section
+  if (inEscapedSection) {
+    return {
+      placeholders: [],
+      textSegments: [],
+      success: false,
+      error: 'Unclosed quoted section',
+    };
   }
 
   // Unclosed placeholder
@@ -300,10 +368,17 @@ export function hasICUPlaceholders(value: string): boolean {
 
   for (let i = 0; i < value.length; i++) {
     const char = value[i];
-    const prevChar = i > 0 ? value[i - 1] : '';
 
-    if (char === "'" && prevChar !== '\\') {
-      inEscapedSection = !inEscapedSection;
+    if (char === "'") {
+      if (value[i + 1] === "'") {
+        // `''` is a literal apostrophe — skip both, no state change
+        i++;
+        continue;
+      }
+
+      if (isQuoteToggle(value, i, inEscapedSection)) {
+        inEscapedSection = !inEscapedSection;
+      }
       continue;
     }
 
@@ -321,6 +396,8 @@ export function hasICUPlaceholders(value: string): boolean {
     }
   }
 
+  // A string that ends inside a quoted section is malformed — no valid placeholder
+  // can be detected, so treat it the same as a string with no placeholders.
   return false;
 }
 
@@ -369,7 +446,7 @@ export interface TranslocoPlaceholderExtractionResult {
  * ```
  */
 export function hasTranslocoPlaceholders(value: string): boolean {
-  return /\{\{\s*\w+\s*\}\}/.test(value);
+  return /\{\{\s*\w+\s*}}/.test(value);
 }
 
 /**
@@ -394,7 +471,7 @@ export function extractTranslocoPlaceholders(value: string): TranslocoPlaceholde
   const placeholders: TranslocoPlaceholder[] = [];
   const textSegments: string[] = [];
 
-  const pattern = /\{\{\s*(\w+)\s*\}\}/g;
+  const pattern = /\{\{\s*(\w+)\s*}}/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null = pattern.exec(value);
 
