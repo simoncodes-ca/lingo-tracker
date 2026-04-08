@@ -13,6 +13,7 @@ import { of, throwError } from 'rxjs';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { TranslocoService } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { TranslationListStore } from './store/translation-list.store';
 
 describe('TranslationList', () => {
   let component: TranslationList;
@@ -51,26 +52,12 @@ describe('TranslationList', () => {
     expect(component.collectionName()).toBe('test-collection');
   });
 
-  it('should compute displayLocales from store', () => {
-    const store = TestBed.inject(BrowserStore);
-    store.setSelectedCollection({
-      collectionName: 'test',
-      locales: ['en', 'es', 'fr'],
-    });
-
-    fixture.componentRef.setInput('collectionName', 'test');
-    fixture.detectChanges();
-
-    expect(component.displayLocales()).toEqual(['en', 'es', 'fr']);
-  });
-
   it('should use default baseLocale', () => {
     expect(component.baseLocale()).toBe('en');
   });
 });
 
 describe('TranslationList - Copy to Clipboard', () => {
-  let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
   let mockClipboard: { writeText: ReturnType<typeof vi.fn> };
   let notificationsSpy: {
@@ -103,14 +90,14 @@ describe('TranslationList - Copy to Clipboard', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
-    component = fixture.componentInstance;
   });
 
   it('should copy key to clipboard and show success toast', async () => {
     fixture.componentRef.setInput('collectionName', 'test');
     fixture.detectChanges();
 
-    component.handleCopyKey('common.buttons.save');
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+    listStore.copyKey('common.buttons.save');
     await Promise.resolve(); // Wait for clipboard promise to resolve
 
     expect(mockClipboard.writeText).toHaveBeenCalledWith('common.buttons.save');
@@ -123,7 +110,8 @@ describe('TranslationList - Copy to Clipboard', () => {
     fixture.componentRef.setInput('collectionName', 'test');
     fixture.detectChanges();
 
-    component.handleCopyKey('test.key');
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+    listStore.copyKey('test.key');
     await Promise.resolve(); // Wait for clipboard promise to reject
 
     expect(notificationsSpy.error).toHaveBeenCalledWith('Failed to copy');
@@ -337,7 +325,6 @@ describe('TranslationList - Virtual Scrolling', () => {
 });
 
 describe('TranslationList - skippedLocales warning snackbar', () => {
-  let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
   let notificationsSpy: {
     success: ReturnType<typeof vi.fn>;
@@ -349,7 +336,7 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
   let mockDialog: { open: ReturnType<typeof vi.fn> };
 
   const mockResource: ResourceSummaryDto = {
-    key: 'test_key',
+    key: 'common.test',
     translations: { en: 'Test Value', fr: 'Valeur test' },
     status: { fr: 'translated' },
   };
@@ -373,7 +360,6 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
       .compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
-    component = fixture.componentInstance;
     fixture.componentRef.setInput('collectionName', 'test-collection');
     fixture.detectChanges();
   });
@@ -386,16 +372,17 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
     vi.useFakeTimers();
 
     const result: TranslationEditorResult = {
-      key: 'test_key',
+      key: 'common.test',
       baseValue: 'Test Value',
-      folderPath: '',
+      folderPath: 'common',
       success: true,
       resource: mockResource,
       skippedLocales: ['fr', 'de'],
     };
     mockDialogRef.afterClosed.mockReturnValue(of(result));
 
-    component.handleEdit(mockResource);
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+    listStore.editTranslation(mockResource, 'test-collection');
     await vi.advanceTimersByTimeAsync(2200);
 
     const transloco = TestBed.inject(TranslocoService);
@@ -413,16 +400,17 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
       notificationsSpy.warning.mockClear();
 
       const result: TranslationEditorResult = {
-        key: 'test_key',
+        key: 'common.test',
         baseValue: 'Test Value',
-        folderPath: '',
+        folderPath: 'common',
         success: true,
         resource: mockResource,
         skippedLocales,
       };
       mockDialogRef.afterClosed.mockReturnValue(of(result));
 
-      component.handleEdit(mockResource);
+      const listStore = fixture.debugElement.injector.get(TranslationListStore);
+      listStore.editTranslation(mockResource, 'test-collection');
       await vi.advanceTimersByTimeAsync(2200);
 
       expect(notificationsSpy.warning).not.toHaveBeenCalled();
@@ -432,7 +420,8 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
   it('should not show any snackbar when edit dialog is dismissed without success', () => {
     mockDialogRef.afterClosed.mockReturnValue(of(undefined));
 
-    component.handleEdit(mockResource);
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+    listStore.editTranslation(mockResource, 'test-collection');
 
     expect(notificationsSpy.success).not.toHaveBeenCalled();
     expect(notificationsSpy.warning).not.toHaveBeenCalled();
@@ -444,23 +433,23 @@ describe('TranslationList - skippedLocales warning snackbar', () => {
     const updateCacheSpy = vi.spyOn(store, 'updateTranslationInCache');
 
     const result: TranslationEditorResult = {
-      key: 'test_key',
+      key: 'common.test',
       baseValue: 'Test Value',
-      folderPath: '',
+      folderPath: 'common',
       success: true,
       resource: mockResource,
       skippedLocales: ['fr', 'de'],
     };
     mockDialogRef.afterClosed.mockReturnValue(of(result));
 
-    component.handleEdit(mockResource);
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+    listStore.editTranslation(mockResource, 'test-collection');
 
     expect(updateCacheSpy).toHaveBeenCalledWith({ ...mockResource, key: mockResource.key });
   });
 });
 
 describe('TranslationList - handleEdit key rewrite', () => {
-  let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
   let notificationsSpy: {
     success: ReturnType<typeof vi.fn>;
@@ -488,7 +477,6 @@ describe('TranslationList - handleEdit key rewrite', () => {
       .compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
-    component = fixture.componentInstance;
     fixture.componentRef.setInput('collectionName', 'test-collection');
     fixture.detectChanges();
   });
@@ -518,7 +506,7 @@ describe('TranslationList - handleEdit key rewrite', () => {
     const result: TranslationEditorResult = {
       key: 'save',
       baseValue: 'Save',
-      // folderPath matches what #resolveEffectiveFolderPath returns for "buttons.save"
+      // folderPath matches what resolveEffectiveFolderPath returns for "buttons.save"
       // in search mode (all segments except the last), so no move occurs.
       folderPath: 'buttons',
       success: true,
@@ -527,7 +515,8 @@ describe('TranslationList - handleEdit key rewrite', () => {
     };
     mockDialogRef.afterClosed.mockReturnValue(of(result));
 
-    component.handleEdit(storeResource);
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+    listStore.editTranslation(storeResource, 'test-collection');
 
     // updateTranslationInCache must be called with the full-path key that the
     // store uses ("buttons.save"), not the bare API key ("save").
@@ -536,7 +525,6 @@ describe('TranslationList - handleEdit key rewrite', () => {
 });
 
 describe('TranslationList - Locale Filtering', () => {
-  let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
   let store: InstanceType<typeof BrowserStore>;
 
@@ -555,7 +543,6 @@ describe('TranslationList - Locale Filtering', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
-    component = fixture.componentInstance;
     store = TestBed.inject(BrowserStore);
 
     store.setSelectedCollection({
@@ -572,19 +559,103 @@ describe('TranslationList - Locale Filtering', () => {
   });
 
   it('should display all locales when none selected', () => {
-    expect(component.displayLocales()).toEqual(['en', 'es', 'fr']);
+    expect(store.filteredLocales()).toEqual(['en', 'es', 'fr']);
   });
 
   it('should display only selected locales', () => {
     store.setSelectedLocales(['en']);
     fixture.detectChanges();
 
-    expect(component.displayLocales()).toEqual(['en']);
+    expect(store.filteredLocales()).toEqual(['en']);
+  });
+});
+
+describe('TranslationList - deleteTranslation', () => {
+  let fixture: ComponentFixture<TranslationList>;
+  let notificationsSpy: {
+    success: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
+  let mockBrowserApi: { translateResource: ReturnType<typeof vi.fn>; deleteResource: ReturnType<typeof vi.fn> };
+  let mockDialogRef: { afterClosed: ReturnType<typeof vi.fn> };
+  let mockDialog: { open: ReturnType<typeof vi.fn> };
+  let store: InstanceType<typeof BrowserStore>;
+
+  const mockResource: ResourceSummaryDto = {
+    key: 'button.delete',
+    translations: { en: 'Delete', fr: 'Supprimer' },
+    status: { fr: 'translated' },
+  };
+
+  beforeEach(async () => {
+    notificationsSpy = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
+    mockBrowserApi = { translateResource: vi.fn(), deleteResource: vi.fn() };
+    mockDialogRef = { afterClosed: vi.fn() };
+    mockDialog = { open: vi.fn().mockReturnValue(mockDialogRef) };
+
+    await TestBed.configureTestingModule({
+      imports: [TranslationList, getTranslocoTestingModule()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: NotificationService, useValue: notificationsSpy },
+        { provide: BrowserApiService, useValue: mockBrowserApi },
+      ],
+    })
+      .overrideProvider(MatDialog, { useValue: mockDialog })
+      .compileComponents();
+
+    fixture = TestBed.createComponent(TranslationList);
+    store = TestBed.inject(BrowserStore);
+
+    store.setSelectedCollection({ collectionName: 'my-collection', locales: ['en', 'fr'] });
+    fixture.componentRef.setInput('collectionName', 'my-collection');
+    fixture.detectChanges();
+  });
+
+  it('should call API and show success notification when dialog is confirmed', () => {
+    mockDialogRef.afterClosed.mockReturnValue(of(true));
+    mockBrowserApi.deleteResource.mockReturnValue(of({ entriesDeleted: 1 }));
+
+    const removeFromCacheSpy = vi.spyOn(store, 'removeResourceFromCache');
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+
+    listStore.deleteTranslation(mockResource, 'my-collection');
+
+    expect(mockBrowserApi.deleteResource).toHaveBeenCalledWith('my-collection', ['button.delete']);
+    expect(removeFromCacheSpy).toHaveBeenCalledWith('button.delete');
+    expect(notificationsSpy.success).toHaveBeenCalled();
+    expect(notificationsSpy.error).not.toHaveBeenCalled();
+  });
+
+  it('should show error notification when API throws', () => {
+    mockDialogRef.afterClosed.mockReturnValue(of(true));
+    mockBrowserApi.deleteResource.mockReturnValue(throwError(() => new Error('Network failure')));
+
+    const removeFromCacheSpy = vi.spyOn(store, 'removeResourceFromCache');
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+
+    listStore.deleteTranslation(mockResource, 'my-collection');
+
+    expect(removeFromCacheSpy).not.toHaveBeenCalled();
+    expect(notificationsSpy.error).toHaveBeenCalledWith('Network failure');
+  });
+
+  it('should not call API when dialog is cancelled', () => {
+    mockDialogRef.afterClosed.mockReturnValue(of(false));
+
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+    listStore.deleteTranslation(mockResource, 'my-collection');
+
+    expect(mockBrowserApi.deleteResource).not.toHaveBeenCalled();
+    expect(notificationsSpy.success).not.toHaveBeenCalled();
+    expect(notificationsSpy.error).not.toHaveBeenCalled();
   });
 });
 
 describe('TranslationList - handleTranslate', () => {
-  let component: TranslationList;
   let fixture: ComponentFixture<TranslationList>;
   let notificationsSpy: {
     success: ReturnType<typeof vi.fn>;
@@ -596,13 +667,13 @@ describe('TranslationList - handleTranslate', () => {
   let store: InstanceType<typeof BrowserStore>;
 
   const mockResource: ResourceSummaryDto = {
-    key: 'btn_save',
+    key: 'button.save',
     translations: { en: 'Save', fr: '' },
     status: { fr: 'new' },
   };
 
   // The API returns only the bare entry key ("save"), not the relative-path key
-  // ("btn_save") that the store uses. The component must rewrite it before
+  // ("button.save") that the store uses. The store must rewrite it before
   // passing the resource to updateTranslationInCache.
   const mockUpdatedResource: ResourceSummaryDto = {
     key: 'save',
@@ -629,7 +700,6 @@ describe('TranslationList - handleTranslate', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(TranslationList);
-    component = fixture.componentInstance;
     store = TestBed.inject(BrowserStore);
 
     store.setSelectedCollection({ collectionName: 'my-collection', locales: ['en', 'fr'] });
@@ -653,14 +723,15 @@ describe('TranslationList - handleTranslate', () => {
     );
 
     const updateCacheSpy = vi.spyOn(store, 'updateTranslationInCache');
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
 
-    component.handleTranslate(mockResource);
+    listStore.translateResource(mockResource, 'my-collection');
 
     // The key is removed synchronously from translatingKeys after the observable emits
-    expect(component.translatingKeys().has('btn_save')).toBe(false);
+    expect(listStore.translatingKeys().has('button.save')).toBe(false);
 
     // Store was updated with the key rewritten from the bare API key ("save")
-    // back to the relative-path key that the store indexes by ("btn_save").
+    // back to the relative-path key that the store indexes by ("button.save").
     expect(updateCacheSpy).toHaveBeenCalledWith({ ...mockUpdatedResource, key: mockResource.key });
 
     // Success notification shown
@@ -670,10 +741,11 @@ describe('TranslationList - handleTranslate', () => {
   it('should remove key from translatingKeys and show failure snackbar on error', () => {
     mockBrowserApi.translateResource.mockReturnValue(throwError(() => new Error('Network failure')));
 
-    component.handleTranslate(mockResource);
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+    listStore.translateResource(mockResource, 'my-collection');
 
     // Key must not linger in the translating set after error
-    expect(component.translatingKeys().has('btn_save')).toBe(false);
+    expect(listStore.translatingKeys().has('button.save')).toBe(false);
 
     // Error message from the thrown Error is displayed
     expect(notificationsSpy.error).toHaveBeenCalledWith('Network failure');
@@ -688,7 +760,8 @@ describe('TranslationList - handleTranslate', () => {
       }),
     );
 
-    component.handleTranslate(mockResource);
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+    listStore.translateResource(mockResource, 'my-collection');
 
     const transloco = TestBed.inject(TranslocoService);
     const expectedSkippedMessage = transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, {
