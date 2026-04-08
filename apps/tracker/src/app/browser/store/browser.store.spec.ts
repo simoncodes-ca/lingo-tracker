@@ -125,6 +125,35 @@ describe('BrowserStore', () => {
 
       await waitForSignals();
     });
+
+    it('should clear nonCompactSelectedLocales when switching collections', async () => {
+      vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
+      vi.spyOn(apiService, 'getResourceTree').mockReturnValue(of(mockTreeRoot));
+
+      // Select first collection — initial densityMode is 'compact'
+      store.setSelectedCollection({
+        collectionName: 'app-translations',
+        locales: ['en', 'es', 'de'],
+      });
+
+      // Switch to full mode, then select multiple locales, then back to compact.
+      // Entering compact saves selectedLocales into nonCompactSelectedLocales.
+      store.setDensityMode('full');
+      store.setSelectedLocales(['en', 'es', 'de']);
+      store.setDensityMode('compact');
+
+      expect(store.nonCompactSelectedLocales()).toEqual(['en', 'es', 'de']);
+
+      // Switch to a different collection — nonCompactSelectedLocales must be cleared
+      store.setSelectedCollection({
+        collectionName: 'website-translations',
+        locales: ['en', 'fr'],
+      });
+
+      expect(store.nonCompactSelectedLocales()).toEqual([]);
+
+      await waitForSignals();
+    });
   });
 
   describe('Folder Tree Loading', () => {
@@ -209,7 +238,7 @@ describe('BrowserStore', () => {
     });
 
     it('should handle folder children loading errors', async () => {
-      const error = new Error('Failed to load folder contents');
+      const error = new Error('api error: load folder children');
       vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree')
         .mockReturnValueOnce(of(mockTreeRoot))
@@ -227,7 +256,7 @@ describe('BrowserStore', () => {
       await waitForSignals();
 
       expect(store.isFolderTreeLoading()).toBe(false);
-      expect(store.error()).toBe('Failed to load folder contents');
+      expect(store.error()).toBe('api error: load folder children');
     });
   });
 
@@ -256,7 +285,7 @@ describe('BrowserStore', () => {
     });
 
     it('should handle translation loading errors', async () => {
-      const error = new Error('Failed to load translations');
+      const error = new Error('api error: load translations');
       vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));
       vi.spyOn(apiService, 'getResourceTree')
         .mockReturnValueOnce(of(mockTreeRoot))
@@ -275,7 +304,7 @@ describe('BrowserStore', () => {
 
       expect(store.currentFolderPath()).toBe('common');
       expect(store.isTranslationsLoading()).toBe(false);
-      expect(store.error()).toBe('Failed to load translations');
+      expect(store.error()).toBe('api error: load translations');
     });
 
     it('should set loading state during translation fetch', async () => {
@@ -549,8 +578,8 @@ describe('BrowserStore', () => {
         selectedStatuses: [],
       };
 
-      // Save via store method
-      store.saveViewPreferences(coll, prefs);
+      // Write directly to localStorage (saveViewPreferences was removed — localStorage.setItem is the canonical write path)
+      localStorage.setItem(`lingo-tracker:view-prefs:${coll}`, JSON.stringify(prefs));
 
       // Ensure it's stored
       const raw = localStorage.getItem(`lingo-tracker:view-prefs:${coll}`);
