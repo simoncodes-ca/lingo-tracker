@@ -30,6 +30,7 @@ pnpm run test
 pnpm run test:cli
 pnpm run test:api
 pnpm run test:core
+pnpm run test:domain
 pnpm run test:tracker
 
 # Run a single test file (using Nx)
@@ -73,7 +74,10 @@ apps/
 └── tracker/    # Web UI (Angular 20 + Material)
 
 libs/
-├── core/              # Core business logic and domain models
+├── domain/            # Pure business logic (NO Node.js deps — browser-safe)
+│   └── src/lib/       # Flat structure: key validation, status helpers,
+│                      #   format conversion, validation utilities, shared types
+├── core/              # Node.js business logic (file I/O, checksums, bundles)
 │   ├── config/        # Configuration interfaces and management
 │   ├── resource/      # Resource CRUD, metadata, validation
 │   └── collections-manager/ # Collection operations
@@ -152,10 +156,19 @@ export class ExampleComponent implements OnInit {
 
 ### Code Organization
 
-- **Core Logic**: All business logic belongs in `libs/core`
-- **DTOs**: API contracts defined in `libs/data-transfer`
+- **Domain Logic** (`@simoncodes-ca/domain`): Pure business logic with **zero Node.js dependencies** — importable by all apps including the browser-based Tracker UI. This is where platform-agnostic logic belongs: key validation/parsing, translation status helpers, ICU↔Transloco format conversion, validation utilities (locale, key length, duplicates, hierarchical conflicts), and shared types (`TranslationStatus`, `LocaleMetadata`).
+- **Core Logic** (`@simoncodes-ca/core`): Node.js-dependent business logic — file I/O, checksums (crypto), directory traversal, bundle generation, import/export. Core depends on domain; **domain must never depend on core**.
+- **DTOs** (`@simoncodes-ca/data-transfer`): API contracts shared between API/CLI/UI
 - **Mappers**: Convert between domain models and DTOs in API layer
-- **File Operations**: Centralized in `libs/core`, apps consume via imports
+
+#### What goes in domain vs core
+
+| Belongs in `domain`                        | Belongs in `core`                          |
+|--------------------------------------------|---------------------------------------------|
+| Pure functions (string transforms, validation) | Anything using `fs`, `path`, `crypto`     |
+| Types and interfaces shared across all apps | File read/write operations                 |
+| Key parsing, status logic, format conversion | Bundle generation, import/export from disk |
+| Regex-based validation                     | Directory traversal, checksum calculation  |
 
 ## Key Implementation Patterns
 

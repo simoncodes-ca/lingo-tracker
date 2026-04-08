@@ -9,10 +9,13 @@ import * as resourceLoader from './resource-loader';
 vi.mock('fs');
 vi.mock('./resource-loader');
 vi.mock('./type-generation/generate-types');
-vi.mock('../format/icu-to-transloco');
+vi.mock('@simoncodes-ca/domain', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@simoncodes-ca/domain')>();
+  return { ...original, icuToTransloco: vi.fn((value: string) => value) };
+});
 
 import { generateBundleTypes } from './type-generation/generate-types';
-import * as icuToTranslocoModule from '../format/icu-to-transloco';
+import * as icuToTranslocoModule from '@simoncodes-ca/domain';
 
 describe('generate-bundle', () => {
   let mockConfig: LingoTrackerConfig;
@@ -139,8 +142,8 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(loadSpy).toHaveBeenCalledWith('/translations/default', 'en', 'en');
-      expect(loadSpy).toHaveBeenCalledWith('/translations/admin', 'en', 'en');
+      expect(loadSpy).toHaveBeenCalledWith('/translations/default', 'en', 'en', expect.any(Map));
+      expect(loadSpy).toHaveBeenCalledWith('/translations/admin', 'en', 'en', expect.any(Map));
     });
 
     it('should process specific collections with selection rules', async () => {

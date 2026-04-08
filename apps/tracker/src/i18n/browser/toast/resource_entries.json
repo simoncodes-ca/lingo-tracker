@@ -124,5 +124,54 @@
     "tags": ["browser"],
     "es": "No se pudo mover la carpeta",
     "fr-ca": "Impossible de déplacer le dossier"
+  },
+  "loadFoldersFailed": {
+    "source": "Failed to load folders",
+    "comment": "Snackbar/error message when loading the folder tree fails",
+    "tags": ["browser"],
+    "es": "No se pudieron cargar las carpetas",
+    "fr-ca": "Échec du chargement des dossiers"
+  },
+  "loadFolderChildrenFailed": {
+    "source": "Failed to load folder contents",
+    "comment": "Snackbar/error message when loading a folder's children fails",
+    "tags": ["browser"],
+    "es": "No se pudo cargar el contenido de la carpeta",
+    "fr-ca": "Impossible de charger le contenu du dossier"
+  },
+  "createFolderFailed": {
+    "source": "Failed to create folder",
+    "comment": "Snackbar/error message when creating a folder fails",
+    "tags": ["browser"],
+    "es": "Error al crear la carpeta",
+    "fr-ca": "Impossible de créer le dossier"
+  },
+  "deleteFolderFailed": {
+    "source": "Failed to delete folder",
+    "comment": "Snackbar/error message when deleting a folder fails",
+    "tags": ["browser"],
+    "es": "No se pudo eliminar la carpeta",
+    "fr-ca": "Échec de la suppression du dossier"
+  },
+  "loadTranslationsFailed": {
+    "source": "Failed to load translations",
+    "comment": "Snackbar/error message when loading translations for a folder fails",
+    "tags": ["browser"],
+    "es": "No se pudieron cargar las traducciones",
+    "fr-ca": "Impossible de charger les traductions"
+  },
+  "searchTranslationsFailed": {
+    "source": "Failed to search translations",
+    "comment": "Snackbar/error message when searching translations fails",
+    "tags": ["browser"],
+    "es": "No se pudo buscar traducciones",
+    "fr-ca": "Échec de la recherche de traductions"
+  },
+  "checkCacheStatusFailed": {
+    "source": "Failed to check cache status",
+    "comment": "Snackbar/error message when checking cache status fails",
+    "tags": ["browser"],
+    "es": "No se pudo comprobar el estado de la caché",
+    "fr-ca": "Échec de la vérification de l'état du cache"
   }
 }

@@ -5,7 +5,7 @@ import {
   isEmptyValue,
   detectHierarchicalConflicts,
   detectDuplicateKeys,
-} from './import-common';
+} from '@simoncodes-ca/domain';
 
 /**
  * Configuration for import validation process.

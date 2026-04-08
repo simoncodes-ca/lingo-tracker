@@ -1,0 +1,56 @@
+// Custom snackbar body rendered by NotificationService.
+//
+// Layout: leading severity icon + message + trailing close button,
+// with a 4px colored left border that conveys severity at a glance.
+// Severity colors map directly to existing semantic tokens defined in
+// styles/tokens.scss so the notification follows the active theme.
+
+:host {
+  align-items: center;
+  background-color: var(--color-neutral-100);
+  border-left: 4px solid var(--notification-accent, var(--color-neutral-400));
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text-primary);
+  display: flex;
+  font-size: var(--font-size-sm);
+  gap: var(--spacing-2);
+  max-width: min(90vw, 480px);
+  padding: var(--spacing-2) var(--spacing-2) var(--spacing-2) var(--spacing-3);
+}
+
+:host(.notification--success) {
+  --notification-accent: var(--color-success);
+}
+
+:host(.notification--info) {
+  --notification-accent: var(--color-info);
+}
+
+:host(.notification--warning) {
+  --notification-accent: var(--color-warning);
+}
+
+:host(.notification--error) {
+  --notification-accent: var(--color-error);
+}
+
+.notification__icon {
+  color: var(--notification-accent);
+  flex-shrink: 0;
+  font-size: var(--font-size-xl);
+  height: var(--font-size-xl);
+  width: var(--font-size-xl);
+}
+
+.notification__message {
+  flex: 1 1 auto;
+  line-height: var(--line-height-snug);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.notification__close {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}

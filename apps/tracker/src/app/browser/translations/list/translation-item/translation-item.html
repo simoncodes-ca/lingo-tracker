@@ -27,20 +27,10 @@
     <!-- Compact: 2-row layout -->
     <app-translation-item-header
       [fullKey]="fullKey()"
-      [localeStates]="localeStates()"
-      [baseLocale]="baseLocale()"
-      [comment]="translation().comment"
+      [translation]="translation()"
       [showComment]="showComment()"
-      [tags]="translation().tags ?? []"
-      [searchQuery]="searchQuery()"
       [translationEnabled]="translationEnabled()"
-      [translateDisabled]="!hasTranslatableLocales() || isTranslating()"
-      [isTranslating]="isTranslating()"
       (commentToggle)="toggleComment()"
-      (copyKey)="copyKey.emit($event)"
-      (editAction)="editTranslation.emit(translation())"
-      (deleteAction)="deleteTranslation.emit(translation())"
-      (translateAction)="translateTranslation.emit(translation())"
     />
 
     <div
@@ -59,18 +49,9 @@
     <!-- Full density: expanded details with overflow handling -->
     <app-translation-item-header
       [fullKey]="fullKey()"
-      [localeStates]="localeStates()"
-      [baseLocale]="baseLocale()"
-      [tags]="translation().tags ?? []"
+      [translation]="translation()"
       [hideCommentButton]="true"
-      [searchQuery]="searchQuery()"
       [translationEnabled]="translationEnabled()"
-      [translateDisabled]="!hasTranslatableLocales() || isTranslating()"
-      [isTranslating]="isTranslating()"
-      (copyKey)="copyKey.emit($event)"
-      (editAction)="editTranslation.emit(translation())"
-      (deleteAction)="deleteTranslation.emit(translation())"
-      (translateAction)="translateTranslation.emit(translation())"
     />
 
     <div class="base-value full" [class.expanded]="isExpanded()" [innerHTML]="baseValue() | highlight : searchQuery()">

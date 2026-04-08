@@ -1,4 +1,4 @@
-import type { LocaleMetadata } from './locale-metadata';
+import type { LocaleMetadata } from '@simoncodes-ca/domain';
 
 /**
  * Tracker metadata for a single resource entry.

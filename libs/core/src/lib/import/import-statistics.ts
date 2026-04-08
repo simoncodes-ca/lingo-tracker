@@ -1,5 +1,5 @@
 import type { ImportChange, StatusTransition } from './types';
-import type { TranslationStatus } from '../../resource/translation-status';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
 
 /**
  * Calculates summary statistics from an array of import changes.

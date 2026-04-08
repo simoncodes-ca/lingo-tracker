@@ -1,7 +1,7 @@
 import { existsSync, unlinkSync } from 'node:fs';
 import { resolveResourcePaths } from '../lib/resource/resource-file-paths';
 import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/file-io/json-file-operations';
-import { validateKey } from './resource-key';
+import { validateKey } from '@simoncodes-ca/domain';
 import type { TrackerMetadata } from './tracker-metadata';
 
 export interface DeleteResourceParams {

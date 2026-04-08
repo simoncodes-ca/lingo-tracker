@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import { getAllFoldersBottomUp, isFolderEmpty } from './folder-utils';
 
 export interface CleanupResult {

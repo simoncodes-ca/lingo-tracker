@@ -1,5 +1,8 @@
 import type { ImportOptions, ImportResult, StatusTransition, ImportChange, ICUAutoFix, ICUAutoFixError } from './types';
+import { resolve } from 'node:path';
 import { getStrategyDefaults } from './import-common';
+import { createConfigFileOperations } from '../config/config-file-operations';
+import { CONFIG_FILENAME } from '../../constants';
 
 /**
  * Configuration returned after setting up an import operation.
@@ -18,6 +21,21 @@ export interface ImportWorkflowConfig {
   mergedOptions: ImportOptions;
   /** Whether this is a base locale import (migration strategy only) */
   isBaseLocaleImport: boolean;
+}
+
+/**
+ * Resolves the base locale from the project config file.
+ * Falls back to 'en' only when the config is readable but omits baseLocale.
+ */
+function resolveBaseLocaleFromConfig(cwd: string): string {
+  const configPath = resolve(cwd, CONFIG_FILENAME);
+
+  try {
+    return createConfigFileOperations({ cwd, validate: false }).read().baseLocale ?? 'en';
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to read configuration file at "${configPath}": ${message}`);
+  }
 }
 
 /**
@@ -77,7 +95,7 @@ export function setupImportWorkflow(options: ImportOptions): ImportWorkflowConfi
   };
 
   const cwd = process.cwd();
-  const baseLocale = 'en'; // TODO: Get from config
+  const baseLocale = options.baseLocale ?? resolveBaseLocaleFromConfig(cwd);
 
   const isBaseLocaleImport = locale === baseLocale;
 

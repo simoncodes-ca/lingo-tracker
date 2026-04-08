@@ -1,18 +1,23 @@
 import { describe, it, expect } from 'vitest';
 import { icuToTransloco } from './icu-to-transloco';
+import { unescapeIcuLiterals } from './icu-to-transloco';
 
 describe('icuToTransloco', () => {
   describe('values without placeholders', () => {
-    it('returns an empty string unchanged', () => {
+    it('returns empty string unchanged', () => {
       expect(icuToTransloco('')).toBe('');
     });
 
-    it('returns a plain string unchanged', () => {
+    it('returns plain text unchanged', () => {
       expect(icuToTransloco('Hello world')).toBe('Hello world');
     });
 
-    it('returns a string with numbers and punctuation unchanged', () => {
+    it('returns text with numbers and punctuation unchanged', () => {
       expect(icuToTransloco('Price: $4.99 (inc. tax)')).toBe('Price: $4.99 (inc. tax)');
+    });
+
+    it('returns whitespace-only string unchanged', () => {
+      expect(icuToTransloco('   ')).toBe('   ');
     });
   });
 
@@ -21,11 +26,11 @@ describe('icuToTransloco', () => {
       expect(icuToTransloco('{name}')).toBe('{{ name }}');
     });
 
-    it('converts a placeholder with leading text', () => {
+    it('converts a placeholder at the end of text', () => {
       expect(icuToTransloco('Hello {name}')).toBe('Hello {{ name }}');
     });
 
-    it('converts a placeholder with surrounding text', () => {
+    it('converts a placeholder surrounded by text', () => {
       expect(icuToTransloco('Hello {name}, welcome!')).toBe('Hello {{ name }}, welcome!');
     });
 
@@ -39,7 +44,7 @@ describe('icuToTransloco', () => {
       expect(icuToTransloco('Hello {firstName} {lastName}')).toBe('Hello {{ firstName }} {{ lastName }}');
     });
 
-    it('converts placeholders with text between them', () => {
+    it('converts placeholders separated by text', () => {
       expect(icuToTransloco('{count} of {total} items')).toBe('{{ count }} of {{ total }} items');
     });
 
@@ -93,33 +98,74 @@ describe('icuToTransloco', () => {
     });
 
     it('handles two simple placeholders around a complex one', () => {
-      const input = '{greeting} {name} — {count, plural, one {# item} other {# items}} — {farewell}';
-      const expected = '{{ greeting }} {{ name }} — {count, plural, one {# item} other {# items}} — {{ farewell }}';
+      const input = '{greeting} {name} \u2014 {count, plural, one {# item} other {# items}} \u2014 {farewell}';
+      const expected =
+        '{{ greeting }} {{ name }} \u2014 {count, plural, one {# item} other {# items}} \u2014 {{ farewell }}';
       expect(icuToTransloco(input)).toBe(expected);
     });
   });
 
-  describe('idempotency and round-trip behaviour', () => {
-    it('does not convert Transloco double-brace syntax (already exported format)', () => {
-      // A value that has already been exported ({{ }}) should not be double-converted.
-      // Double-braces are not valid ICU, so extractICUPlaceholders returns no placeholders.
+  describe('edge cases', () => {
+    it('does not double-convert Transloco syntax (already exported format)', () => {
       const alreadyExported = 'Hello {{ name }}';
       expect(icuToTransloco(alreadyExported)).toBe(alreadyExported);
     });
-  });
 
-  describe('edge cases', () => {
-    it('handles a string that is only whitespace', () => {
-      expect(icuToTransloco('   ')).toBe('   ');
-    });
-
-    it('returns the original value when ICU extraction fails due to unmatched braces', () => {
-      // Unmatched opening brace — extractICUPlaceholders will return success: false
+    it('returns original value when ICU extraction fails due to unmatched opening brace', () => {
       expect(icuToTransloco('{unclosed')).toBe('{unclosed');
     });
 
-    it('returns the original value when ICU extraction fails due to unmatched closing brace', () => {
+    it('returns original value when ICU extraction fails due to unmatched closing brace', () => {
       expect(icuToTransloco('unmatched}')).toBe('unmatched}');
+    });
+  });
+
+  describe('ICU quote escaping', () => {
+    it('preserves a natural apostrophe in text while converting the placeholder', () => {
+      expect(icuToTransloco("don't have {count} items")).toBe("don't have {{ count }} items");
+    });
+
+    it('unescapes a fully-quoted brace literal when there are no real placeholders', () => {
+      // '{'literal'}' has no real ICU placeholders; should unescape to {literal}
+      expect(icuToTransloco("'{'literal'}'")).toBe('{literal}');
+    });
+
+    it('unescapes quoted braces in text and converts the real placeholder', () => {
+      // Use '{'name'}' as {realKey} \u2192 Use {name} as {{ realKey }}
+      expect(icuToTransloco("Use '{'name'}' as {realKey}")).toBe('Use {name} as {{ realKey }}');
+    });
+
+    it('converts a double-apostrophe literal to a single apostrophe and converts the placeholder', () => {
+      // it''s {name} \u2192 it's {{ name }}
+      expect(icuToTransloco("it''s {name}")).toBe("it's {{ name }}");
+    });
+  });
+
+  describe('unescapeIcuLiterals', () => {
+    it('passes through plain text unchanged', () => {
+      expect(unescapeIcuLiterals('hello world')).toBe('hello world');
+    });
+
+    it('keeps a natural apostrophe as-is', () => {
+      expect(unescapeIcuLiterals("don't")).toBe("don't");
+    });
+
+    it('converts a double-apostrophe to a single apostrophe', () => {
+      expect(unescapeIcuLiterals("it''s")).toBe("it's");
+    });
+
+    it('strips ICU quotes around a brace literal', () => {
+      expect(unescapeIcuLiterals("'{'literal'}'")).toBe('{literal}');
+    });
+
+    it('handles mixed natural apostrophe and escaped brace', () => {
+      expect(unescapeIcuLiterals("l'objet '{'key'}'")).toBe("l'objet {key}");
+    });
+
+    it('treats double-apostrophe inside an open quoted section as a literal apostrophe without closing the section', () => {
+      // '{ opens a section; '' inside emits a literal ' and stays in the section (not closing it); } is literal
+      // Input: '{ '' } — section opens, '' → literal ', } emitted literally, section never closed
+      expect(unescapeIcuLiterals("'{''}")).toBe("{'}");
     });
   });
 });

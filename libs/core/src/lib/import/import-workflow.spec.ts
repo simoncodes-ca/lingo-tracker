@@ -1,8 +1,26 @@
-import { describe, it, expect } from 'vitest';
+import { resolve } from 'node:path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CONFIG_FILENAME } from '../../constants';
 import { setupImportWorkflow, buildImportResult } from './import-workflow';
 import type { ImportOptions } from './types';
+import * as configFileOperations from '../config/config-file-operations';
 
 describe('import-workflow', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.spyOn(configFileOperations, 'createConfigFileOperations').mockReturnValue({
+      read: () => ({
+        exportFolder: 'dist/lingo-export',
+        importFolder: 'dist/lingo-import',
+        baseLocale: 'en',
+        locales: ['en', 'es'],
+        collections: {},
+      }),
+      write: vi.fn(),
+      update: vi.fn(),
+    });
+  });
+
   describe('setupImportWorkflow', () => {
     it('should apply strategy defaults for translation-service strategy', () => {
       const options: ImportOptions = {
@@ -142,6 +160,59 @@ describe('import-workflow', () => {
       const config = setupImportWorkflow(options);
 
       expect(config.cwd).toBe(process.cwd());
+    });
+
+    it('should use explicitly provided baseLocale without reading config', () => {
+      const createConfigSpy = vi.mocked(configFileOperations.createConfigFileOperations);
+      const options: ImportOptions = {
+        source: 'test.json',
+        locale: 'fr',
+        baseLocale: 'fr',
+        strategy: 'migration',
+      };
+
+      const config = setupImportWorkflow(options);
+
+      expect(config.baseLocale).toBe('fr');
+      expect(createConfigSpy).not.toHaveBeenCalled();
+    });
+
+    it('should fall back to en when config is readable but baseLocale is absent', () => {
+      vi.spyOn(configFileOperations, 'createConfigFileOperations').mockReturnValue({
+        read: () =>
+          ({
+            exportFolder: 'dist/lingo-export',
+            importFolder: 'dist/lingo-import',
+            locales: ['en', 'es'],
+            collections: {},
+          }) as unknown as ReturnType<ReturnType<typeof configFileOperations.createConfigFileOperations>['read']>,
+        write: vi.fn(),
+        update: vi.fn(),
+      });
+
+      const config = setupImportWorkflow({
+        source: 'test.json',
+        locale: 'es',
+      });
+
+      expect(config.baseLocale).toBe('en');
+    });
+
+    it('should throw with config path when config read fails', () => {
+      vi.spyOn(configFileOperations, 'createConfigFileOperations').mockReturnValue({
+        read: () => {
+          throw new Error('Failed to read or parse configuration file');
+        },
+        write: vi.fn(),
+        update: vi.fn(),
+      });
+
+      expect(() =>
+        setupImportWorkflow({
+          source: 'test.json',
+          locale: 'es',
+        }),
+      ).toThrow(`Failed to read configuration file at "${resolve(process.cwd(), CONFIG_FILENAME)}"`);
     });
   });
 

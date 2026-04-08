@@ -11,22 +11,29 @@ import {
   viewChild,
   type AfterViewInit,
   type OnDestroy,
-  type EffectRef,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { CdkDrag, CdkDragPlaceholder } from '@angular/cdk/drag-drop';
-import type { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { BrowserStore } from '../../../store/browser.store';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { TranslationItemHeader } from './item-header';
 import { TranslationItemLocales } from './item-locales';
-import type { LocaleState } from './translation-rollup';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
 import type { DragData } from '../../../types/drag-data';
+import { TranslationListStore } from '../store/translation-list.store';
 
 const EXPAND_THRESHOLD = 200;
 const LONG_PRESS_THRESHOLD = 500;
+
+const STATUS_SORT_PRIORITY: Record<string, number> = {
+  stale: 0,
+  new: 1,
+  translated: 2,
+  verified: 3,
+  missing: 4,
+};
 
 /**
  * Displays a single translation entry with key, base value, locale translations,
@@ -55,35 +62,11 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
   /** Translation data */
   translation = input.required<ResourceSummaryDto>();
 
-  /** Active locales to display */
-  locales = input.required<string[]>();
-
-  /** Base locale (source language) */
-  baseLocale = input<string>('en');
-
-  /** Current folder path for constructing full key (empty for search results) */
-  folderPath = input<string>('');
-
-  /** When true, briefly flash the item border to indicate it was just updated. */
-  isRecentlyUpdated = input<boolean>(false);
-
   /** Whether auto-translation is enabled for this collection */
   translationEnabled = input<boolean>(false);
 
-  /** Whether this specific item is currently being translated */
-  isTranslating = input<boolean>(false);
-
-  /** Emitted when user requests to copy key to clipboard */
-  copyKey = output<string>();
-
-  /** Emitted when user selects Edit from context menu */
-  editTranslation = output<ResourceSummaryDto>();
-
-  /** Emitted when user selects Delete from context menu */
-  deleteTranslation = output<ResourceSummaryDto>();
-
-  /** Emitted when user selects Translate from context menu */
-  translateTranslation = output<ResourceSummaryDto>();
+  /** Emitted when the item's expansion state changes (key + expanded). */
+  readonly expansionChanged = output<{ key: string; expanded: boolean }>();
 
   /** Emitted when drag starts on this item */
   dragStarted = output<DragData>();
@@ -92,14 +75,21 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
   dragEnded = output<void>();
 
   readonly #store = inject(BrowserStore);
+  readonly #listStore = inject(TranslationListStore);
   readonly #transloco = inject(TranslocoService);
   readonly TOKENS = TRACKER_TOKENS;
 
+  /** Active collection name — always set when this component is rendered. */
+  readonly #collectionName = computed(() => this.#store.selectedCollection() ?? '');
+
+  /** Whether this item was recently updated (flash highlight). */
+  readonly isRecentlyUpdated = computed(() => this.#listStore.isRecentlyUpdated(this.translation().key));
+
   /** Reference to the scrollable wrapper element (used as IntersectionObserver root). */
-  private readonly scrollWrapper = viewChild<ElementRef<HTMLElement>>('scrollWrapper');
+  protected readonly scrollWrapper = viewChild<ElementRef<HTMLElement>>('scrollWrapper');
 
   /** Reference to the invisible sentinel element observed to detect scroll-to-bottom. */
-  private readonly scrollSentinel = viewChild<ElementRef<HTMLElement>>('scrollSentinel');
+  protected readonly scrollSentinel = viewChild<ElementRef<HTMLElement>>('scrollSentinel');
 
   /**
    * True when the user has scrolled far enough that the sentinel (placed at the
@@ -112,7 +102,7 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
   #scrollObserver: IntersectionObserver | undefined;
 
   /** Current search query from the store */
-  readonly searchQuery = computed(() => this.#store.searchQuery());
+  readonly searchQuery = this.#store.searchQuery;
 
   // Timestamp when touch started (ms since epoch)
   #touchStartTs = 0;
@@ -126,31 +116,22 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
    * For folder browsing, we prepend the current folder path.
    */
   readonly fullKey = computed(() => {
-    const path = this.folderPath();
+    const path = this.#store.isSearchMode() ? '' : this.#store.currentFolderPath();
     const key = this.translation().key;
     return path ? `${path}.${key}` : key;
   });
 
   /** Base locale value (English/source) */
   readonly baseValue = computed(() => {
-    const base = this.baseLocale();
+    const base = this.#store.baseLocale();
     return this.translation().translations[base] || '';
   });
-
-  /** Priority order for translation status sorting (lower = higher priority / shown first) */
-  readonly #STATUS_SORT_PRIORITY: Record<string, number> = {
-    stale: 0,
-    new: 1,
-    translated: 2,
-    verified: 3,
-    missing: 4,
-  };
 
   /** Locale translations excluding base locale, sorted by status priority then locale code */
   readonly localeTranslations = computed(() => {
     const trans = this.translation();
-    const base = this.baseLocale();
-    const activeLocales = this.locales();
+    const base = this.#store.baseLocale();
+    const activeLocales = this.#store.filteredLocales();
 
     return activeLocales
       .filter((locale) => locale !== base)
@@ -160,8 +141,8 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
         status: trans.status ? trans.status[locale] : undefined,
       }))
       .sort((a, b) => {
-        const priorityA = a.status ? (this.#STATUS_SORT_PRIORITY[a.status] ?? 4) : 4;
-        const priorityB = b.status ? (this.#STATUS_SORT_PRIORITY[b.status] ?? 4) : 4;
+        const priorityA = a.status ? (STATUS_SORT_PRIORITY[a.status] ?? 4) : 4;
+        const priorityB = b.status ? (STATUS_SORT_PRIORITY[b.status] ?? 4) : 4;
         if (priorityA !== priorityB) return priorityA - priorityB;
         return a.locale.localeCompare(b.locale);
       });
@@ -170,10 +151,10 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
   /** Current density mode (reads from BrowserStore) */
   readonly currentDensityMode = computed(() => this.#store.densityMode());
 
-  /** Selected locale for compact mode: the first locale from the locales() input */
+  /** Selected locale for compact mode: the first locale from filteredLocales() */
   readonly primaryLocale = computed(() => {
-    const ls = this.locales();
-    return (ls && ls.length > 0 && ls[0]) || this.baseLocale();
+    const ls = this.#store.filteredLocales();
+    return (ls && ls.length > 0 && ls[0]) || this.#store.baseLocale();
   });
 
   /**
@@ -183,8 +164,8 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
    * - If nothing is selected or only base locale is selected → show the primary locale
    */
   readonly statusChipLocale = computed(() => {
-    const activeLocales = this.locales();
-    const base = this.baseLocale();
+    const activeLocales = this.#store.filteredLocales();
+    const base = this.#store.baseLocale();
 
     // Filter out base locale from active locales
     const nonBaseLocales = activeLocales.filter((locale) => locale !== base);
@@ -204,8 +185,8 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
    * Falls back to base locale value if no non-base locale is selected.
    */
   readonly primaryLocaleValue = computed(() => {
-    const activeLocales = this.locales();
-    const base = this.baseLocale();
+    const activeLocales = this.#store.filteredLocales();
+    const base = this.#store.baseLocale();
     const translations = this.translation().translations;
 
     // Filter out base locale to find selected non-base locales
@@ -233,9 +214,6 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
 
     return this.localeTranslations().some((v) => (v.value || '').length > EXPAND_THRESHOLD);
   });
-
-  /** Emitted when the item's expansion state changes (key + expanded). */
-  readonly expansionChanged = output<{ key: string; expanded: boolean }>();
 
   /** Toggles the expanded state for full density mode */
   toggleExpansion(): void {
@@ -271,58 +249,55 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
    */
   onDoubleClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
-    const isInteractiveElement = target.closest('button, input, textarea, select, a, [role="button"]') !== null;
+    const isInteractiveElement = Boolean(target.closest('button, input, textarea, select, a, [role="button"]'));
 
     if (isInteractiveElement) {
       return;
     }
 
-    this.editTranslation.emit(this.translation());
+    this.#listStore.editTranslation(this.translation(), this.#collectionName());
   }
 
   // Touch handlers ---------------------------------------------------------
-  onTouchStart(_ev?: TouchEvent): void {
+  onTouchStart(_event?: TouchEvent): void {
     this.#touchStartTs = Date.now();
     this.isTouchPressed.set(true);
   }
 
-  onTouchEnd(_ev?: TouchEvent): void {
+  onTouchEnd(_event?: TouchEvent): void {
     const duration = Date.now() - this.#touchStartTs;
     this.#touchStartTs = 0;
     this.isTouchPressed.set(false);
 
     // Long press -> open edit
     if (duration > LONG_PRESS_THRESHOLD) {
-      this.editTranslation.emit(this.translation());
+      this.#listStore.editTranslation(this.translation(), this.#collectionName());
     }
   }
 
   // Keyboard shortcuts when the item has focus -----------------------------
-  onKeyDown(ev: KeyboardEvent): void {
+  onKeyDown(event: KeyboardEvent): void {
     // Ignore with modifiers to avoid interfering with browser shortcuts
-    if (ev.ctrlKey || ev.altKey || ev.metaKey || ev.shiftKey) return;
+    if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
 
-    const key = (ev.key || '').toLowerCase();
+    const key = (event.key || '').toLowerCase();
 
-    let action: (() => void) | null = null;
+    let action: (() => void) | undefined;
 
     switch (key) {
       case 'e':
-        action = () => this.editTranslation.emit(this.translation());
+        action = () => this.#listStore.editTranslation(this.translation(), this.#collectionName());
         break;
 
       case 'delete':
       case 'del':
-        action = () => this.deleteTranslation.emit(this.translation());
+        action = () => this.#listStore.deleteTranslation(this.translation(), this.#collectionName());
         break;
-
-      default:
-        action = null;
     }
 
     if (action) {
-      ev.preventDefault();
-      ev.stopPropagation();
+      event.preventDefault();
+      event.stopPropagation();
       action();
     }
   }
@@ -353,49 +328,10 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
     return { counts, total } as const;
   });
 
-  /**
-   * Returns true when at least one non-base locale has a 'new' or 'stale' status,
-   * indicating there is work for the auto-translator to do.
-   * The base locale is excluded because its status does not represent a translation gap.
-   */
-  readonly hasTranslatableLocales = computed(() => {
-    const statusMap = this.translation().status || {};
-    const base = this.baseLocale();
-    return Object.entries(statusMap)
-      .filter(([locale]) => locale !== base)
-      .some(([, status]) => status === 'new' || status === 'stale');
-  });
-
-  /**
-   * Locale states for the rollup component.
-   * Transforms status map into LocaleState[] format.
-   */
-  readonly localeStates = computed<LocaleState[]>(() => {
-    const statusMap = this.translation().status || {};
-    const base = this.baseLocale();
-
-    return Object.entries(statusMap)
-      .filter(([locale, status]) => locale !== base && status)
-      .map(([locale, status]) => ({
-        code: locale,
-        status: status as TranslationStatus,
-      }));
-  });
-
-  // Cleanup callback for effects created in this component (if any).
-  #densityEffectCleanup: EffectRef | undefined;
-
   constructor() {
-    // Keep a lightweight effect that listens to density mode changes so we can
-    // reset transient touch UI state when density changes. Store the cleanup
-    // function and run it on destroy.
-    this.#densityEffectCleanup = effect(() => {
-      // Access the value so the effect subscribes to changes.
-      const _mode = this.currentDensityMode();
-      // Defensive: clear any transient touch pressed visual when mode changes.
+    effect(() => {
+      this.currentDensityMode(); // track density changes
       this.isTouchPressed.set(false);
-
-      // No explicit return needed. effect() returns a cleanup function we store above.
     });
   }
 
@@ -405,8 +341,6 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.#teardownScrollObserver();
-    this.#densityEffectCleanup?.destroy();
-    this.#densityEffectCleanup = undefined;
   }
 
   /**
@@ -461,7 +395,7 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
   readonly dragData = computed<DragData>(() => ({
     type: 'resource',
     key: this.fullKey(),
-    folderPath: this.folderPath(),
+    folderPath: this.#store.isSearchMode() ? '' : this.#store.currentFolderPath(),
   }));
 
   /**

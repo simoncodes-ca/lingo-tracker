@@ -40,7 +40,7 @@
 }
 
 @mixin md-max {
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     @content;
   }
 }
@@ -57,49 +57,3 @@
   }
 }
 
-// Responsive visibility utilities — kept as a shared kit for future use.
-.hide-on-mobile {
-  @include md-max {
-    display: none !important;
-  }
-}
-
-.hide-on-tablet {
-  @include md {
-    @media (max-width: 1023px) {
-      display: none !important;
-    }
-  }
-}
-
-.hide-on-desktop {
-  @include lg {
-    display: none !important;
-  }
-}
-
-.show-on-mobile-only {
-  @include md {
-    display: none !important;
-  }
-}
-
-.show-on-tablet-only {
-  display: none !important;
-
-  @include md {
-    display: block !important;
-  }
-
-  @include lg {
-    display: none !important;
-  }
-}
-
-.show-on-desktop-only {
-  display: none !important;
-
-  @include lg {
-    display: block !important;
-  }
-}

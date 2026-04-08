@@ -1,7 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { normalizeEntry } from './normalize-entry';
 import { cleanupEmptyFolders } from './cleanup-empty-folders';
+import { walkFolders } from './iterative-folder-walker';
 import type { ResourceEntries } from '../../resource/resource-entry';
 import type { TrackerMetadata } from '../../resource/tracker-metadata';
 
@@ -239,7 +240,7 @@ interface NormalizeFolderParams {
   readonly counters: NormalizationCounters;
 }
 
-async function normalizeFolderResources(params: NormalizeFolderParams): Promise<void> {
+function normalizeFolderResources(params: NormalizeFolderParams): void {
   const { folderPath, baseLocale, locales, dryRun, counters } = params;
 
   const resourceFiles = loadResourceFiles(folderPath);
@@ -278,41 +279,35 @@ async function normalizeFolderResources(params: NormalizeFolderParams): Promise<
   counters.filesUpdated += persistResult.filesUpdated;
 }
 
-interface TraverseFolderParams {
-  readonly folderPath: string;
+interface NormalizeAllFoldersParams {
+  readonly rootPath: string;
   readonly baseLocale: string;
   readonly locales: string[];
   readonly dryRun: boolean;
   readonly counters: NormalizationCounters;
 }
 
-async function traverseAndNormalizeFolder(params: TraverseFolderParams): Promise<void> {
-  const { folderPath, baseLocale, locales, dryRun, counters } = params;
+async function normalizeAllFolders(params: NormalizeAllFoldersParams): Promise<void> {
+  const { rootPath, baseLocale, locales, dryRun, counters } = params;
 
-  const entries = fs.readdirSync(folderPath);
-
-  for (const entry of entries) {
-    const entryPath = path.join(folderPath, entry);
-    const stats = fs.statSync(entryPath);
-
-    if (stats.isDirectory()) {
-      await traverseAndNormalizeFolder({
-        folderPath: entryPath,
-        baseLocale,
-        locales,
-        dryRun,
-        counters,
-      });
-    }
+  const foldersByDepth = new Map<number, string[]>();
+  for (const visit of walkFolders(rootPath, { skipHidden: false })) {
+    const group = foldersByDepth.get(visit.depth) ?? [];
+    group.push(visit.absolutePath);
+    foldersByDepth.set(visit.depth, group);
   }
 
-  await normalizeFolderResources({
-    folderPath,
-    baseLocale,
-    locales,
-    dryRun,
-    counters,
-  });
+  const depths = [...foldersByDepth.keys()].sort((a, b) => a - b);
+  for (const depth of depths) {
+    // Concurrency safety: folders at the same depth share the `counters` object. This is safe
+    // because normalizeFolderResources contains no await points — all I/O (fs.readFileSync,
+    // fs.writeFileSync) is synchronous, so mutations to `counters` are never interleaved.
+    await Promise.all(
+      (foldersByDepth.get(depth) ?? []).map((folderPath) =>
+        normalizeFolderResources({ folderPath, baseLocale, locales, dryRun, counters }),
+      ),
+    );
+  }
 }
 
 /**
@@ -351,8 +346,8 @@ export async function normalize(params: NormalizeParams): Promise<NormalizeResul
     };
   }
 
-  await traverseAndNormalizeFolder({
-    folderPath: translationsFolder,
+  await normalizeAllFolders({
+    rootPath: translationsFolder,
     baseLocale,
     locales,
     dryRun,

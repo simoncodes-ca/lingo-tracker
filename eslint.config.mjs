@@ -7,13 +7,13 @@ export default [
   {
     ignores: [
       '**/dist',
-      "**/tmp",
+      '**/tmp',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
       '**/.angular/**',
       '**/.claude/**',
       '**/.cursor/**',
-        '**/apps/tracker/src/i18n-types/**'
+      '**/apps/tracker/src/i18n-types/**',
     ],
   },
   {
@@ -47,21 +47,24 @@ export default [
     ],
     // Override or add rules here
     rules: {
-        "@typescript-eslint/no-unused-vars": ["error", {
-            "args": "all",
-            "argsIgnorePattern": "^_",
-            "caughtErrors": "all",
-            "caughtErrorsIgnorePattern": "^_",
-            "destructuredArrayIgnorePattern": "^_",
-            "varsIgnorePattern": "^_",
-            "ignoreRestSiblings": true
-        }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'all',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
     },
   },
-    {
-        files: ['**/*.spec.ts'],
-        rules: {
-            '@typescript-eslint/no-explicit-any': 'off'
-        }
-    }
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 ];

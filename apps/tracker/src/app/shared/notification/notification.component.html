@@ -1,0 +1,11 @@
+<mat-icon class="notification__icon" aria-hidden="true">{{ icon }}</mat-icon>
+<span class="notification__message">{{ data.message }}</span>
+<button
+  mat-icon-button
+  type="button"
+  class="notification__close"
+  [attr.aria-label]="TOKENS.COMMON.ACTIONS.CLOSE | transloco"
+  (click)="dismiss()"
+>
+  <mat-icon>close</mat-icon>
+</button>

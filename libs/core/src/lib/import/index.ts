@@ -12,17 +12,8 @@ export type {
   ICUAutoFixError,
 } from './types';
 
-// Export validation utilities
-export {
-  validateImportKey,
-  isKeyTooLong,
-  detectImportFormat,
-  getStrategyDefaults,
-  validateLocale,
-  isEmptyValue,
-  detectHierarchicalConflicts,
-  detectDuplicateKeys,
-} from './import-common';
+// Export import format detection and strategy defaults
+export { detectImportFormat, getStrategyDefaults } from './import-common';
 
 // Export import functions
 export {
@@ -68,22 +59,6 @@ export { setupImportWorkflow, buildImportResult } from './import-workflow';
 
 // Export Transloco syntax normalization
 export { normalizeTranslocoSyntax } from './normalize-transloco-syntax';
-
-// Export ICU auto-fix utilities
-export {
-  extractICUPlaceholders,
-  hasICUPlaceholders,
-  autoFixICUPlaceholders,
-  validateICUSyntax,
-  hasTranslocoPlaceholders,
-  extractTranslocoPlaceholders,
-  autoFixTranslocoPlaceholders,
-} from './icu-auto-fixer';
-export type {
-  ICUAutoFixResult,
-  TranslocoPlaceholder,
-  TranslocoPlaceholderExtractionResult,
-} from './icu-auto-fixer';
 
 export {
   applyICUAutoFixToResource,

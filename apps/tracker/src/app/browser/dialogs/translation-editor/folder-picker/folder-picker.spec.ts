@@ -1,6 +1,6 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotificationService } from '../../../../shared/notification';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FolderPicker } from './folder-picker';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
@@ -45,8 +45,8 @@ describe('FolderPicker', () => {
       imports: [FolderPicker, BrowserAnimationsModule, getTranslocoTestingModule()],
       providers: [
         {
-          provide: MatSnackBar,
-          useValue: { open: vi.fn() },
+          provide: NotificationService,
+          useValue: { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() },
         },
         {
           provide: BrowserStore,

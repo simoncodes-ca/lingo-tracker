@@ -4,7 +4,7 @@ import {
   hasICUPlaceholders,
   autoFixTranslocoPlaceholders,
   hasTranslocoPlaceholders,
-} from './icu-auto-fixer';
+} from '@simoncodes-ca/domain';
 
 /**
  * Configuration for applying ICU auto-fixes to imported resources

@@ -2,8 +2,8 @@
  * Core bundle generation logic
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import {
   hasTypeDistConfigured,
   type BundleDefinition,
@@ -11,10 +11,10 @@ import {
   type EntrySelectionRule,
   type TokenCasing,
 } from '../../config/bundle-definition';
-import { icuToTransloco } from '../format/icu-to-transloco';
-import { validateICUSyntax } from '../import/icu-auto-fixer';
+import { icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { loadCollectionResources, type FlatResource } from './resource-loader';
+import type { ResourceEntries } from '../../resource/resource-entry';
 import { matchesPattern } from './pattern-matcher';
 import { matchesTags } from './tag-filter';
 import { buildHierarchy } from './hierarchy-builder';
@@ -80,9 +80,17 @@ export async function generateBundle(params: GenerateBundleParams): Promise<Gene
 
   const targetLocales = locales ?? config.locales;
   let filesGenerated = 0;
+  const resourceCache = new Map<string, ResourceEntries>();
 
   for (const locale of targetLocales) {
-    const bundleData = collectBundleData(bundleDefinition, config, locale, warnings, resolvedTransformICUToTransloco);
+    const bundleData = collectBundleData(
+      bundleDefinition,
+      config,
+      locale,
+      warnings,
+      resolvedTransformICUToTransloco,
+      resourceCache,
+    );
 
     if (Object.keys(bundleData).length === 0) {
       warnings.push(`Bundle '${bundleKey}' for locale '${locale}' is empty`);
@@ -134,6 +142,7 @@ function collectBundleData(
   locale: string,
   warnings: string[],
   transformICUToTransloco: boolean,
+  cache: Map<string, ResourceEntries>,
 ): Record<string, string> {
   const bundleData: Record<string, string> = {};
 
@@ -153,6 +162,7 @@ function collectBundleData(
         bundleData,
         transformICUToTransloco,
         warnings,
+        cache,
       );
     }
   } else {
@@ -172,6 +182,7 @@ function collectBundleData(
         bundleData,
         transformICUToTransloco,
         warnings,
+        cache,
       );
     }
   }
@@ -190,8 +201,9 @@ function processCollection(
   bundleData: Record<string, string>,
   transformICUToTransloco: boolean,
   warnings: string[],
+  cache: Map<string, ResourceEntries>,
 ): void {
-  const resources = loadCollectionResources(translationsFolder, locale, baseLocale);
+  const resources = loadCollectionResources(translationsFolder, locale, baseLocale, cache);
   const filteredResources = filterResources(resources, collectionDef);
   const mergeStrategy = collectionDef.mergeStrategy ?? 'merge';
 

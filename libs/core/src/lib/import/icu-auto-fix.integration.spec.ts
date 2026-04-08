@@ -4,7 +4,7 @@ import {
   hasICUPlaceholders,
   extractICUPlaceholders,
   validateICUSyntax,
-} from './icu-auto-fixer';
+} from '@simoncodes-ca/domain';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
 import type { ImportedResource } from './types';
 

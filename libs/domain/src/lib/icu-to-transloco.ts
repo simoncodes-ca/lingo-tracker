@@ -20,7 +20,71 @@
  * @module icu-to-transloco
  */
 
-import { extractICUPlaceholders } from '../import/icu-auto-fixer';
+import { extractICUPlaceholders, ICU_SYNTAX_CHARS } from './icu-auto-fixer';
+
+/**
+ * Converts a raw ICU text segment (as extracted verbatim from the original
+ * message string) into clean output text by stripping ICU quote escaping.
+ *
+ * Conversion rules (per ICU4J MessageFormat spec):
+ * - `''` → `'`  (literal apostrophe, inside or outside a quoted section)
+ * - `'{...'` → `{...` (quoted section: drop the surrounding quotes, emit content literally)
+ * - A lone `'` not followed by a syntax char → `'`  (natural apostrophe, keep as-is)
+ *
+ * This is intentionally only applied to text segments, never to placeholder
+ * `fullText` values, so ICU syntax within `{…}` blocks is not altered.
+ *
+ * @param text - A raw text segment from `extractICUPlaceholders`
+ * @returns The unescaped string suitable for Transloco output
+ *
+ * @example
+ * ```typescript
+ * unescapeIcuLiterals("don't");                  // → "don't"
+ * unescapeIcuLiterals("it''s");                  // → "it's"
+ * unescapeIcuLiterals("'{'literal'}'");          // → "{literal}"
+ * unescapeIcuLiterals("Use '{'name'}' as a key"); // → "Use {name} as a key"
+ * ```
+ */
+export function unescapeIcuLiterals(text: string): string {
+  let result = '';
+  let inEscapedSection = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+
+    if (char === "'") {
+      if (text[i + 1] === "'") {
+        // `''` → literal apostrophe, regardless of current section state
+        result += "'";
+        i++;
+        continue;
+      }
+
+      if (inEscapedSection) {
+        // Closing quote — exit the section, drop the quote char
+        inEscapedSection = false;
+        continue;
+      }
+
+      // Outside a section: check if this opens one
+      if (i + 1 < text.length && ICU_SYNTAX_CHARS.has(text[i + 1] as string)) {
+        // Opening quote — enter escaped section, drop the quote char
+        inEscapedSection = true;
+        continue;
+      }
+
+      // Lone `'` before a non-syntax char → natural apostrophe, keep it
+      result += "'";
+      continue;
+    }
+
+    // Inside a quoted section braces are literal, outside they should not
+    // appear in a text segment (they belong to placeholder fullText).
+    result += char;
+  }
+
+  return result;
+}
 
 /**
  * Converts a string from ICU single-brace placeholder syntax to Transloco
@@ -61,22 +125,29 @@ import { extractICUPlaceholders } from '../import/icu-auto-fixer';
  * ```
  */
 export function icuToTransloco(value: string): string {
-  if (!value.includes('{')) {
+  // Values with no `'` and no `{` need no processing at all.
+  if (!value.includes('{') && !value.includes("'")) {
     return value;
   }
 
   const extraction = extractICUPlaceholders(value);
 
-  if (!extraction.success || extraction.placeholders.length === 0) {
+  if (!extraction.success) {
     return value;
   }
 
   const { placeholders, textSegments } = extraction;
 
+  // Values with no real placeholders may still contain ICU quote escaping
+  // (e.g., `"Use '{'name'}' as a key"`). Unescape the single text segment.
+  if (placeholders.length === 0) {
+    return unescapeIcuLiterals(textSegments[0]);
+  }
+
   let result = '';
 
   for (let i = 0; i < placeholders.length; i++) {
-    result += textSegments[i];
+    result += unescapeIcuLiterals(textSegments[i]);
 
     const placeholder = placeholders[i];
 
@@ -89,7 +160,7 @@ export function icuToTransloco(value: string): string {
   }
 
   // Append the trailing text segment that follows the last placeholder
-  result += textSegments[textSegments.length - 1];
+  result += unescapeIcuLiterals(textSegments[textSegments.length - 1]);
 
   return result;
 }

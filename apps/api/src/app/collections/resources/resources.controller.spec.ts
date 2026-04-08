@@ -1,6 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { HttpException, NotFoundException } from '@nestjs/common';
-import { TranslationError, type TranslationStatus, type LocaleMetadata } from '@simoncodes-ca/core';
+import { TranslationError } from '@simoncodes-ca/core';
+import type { TranslationStatus, LocaleMetadata } from '@simoncodes-ca/domain';
 import type { ResourceTreeDto } from '@simoncodes-ca/data-transfer';
 import { ResourcesController } from './resources.controller';
 import { ConfigService } from '../../config/config.service';

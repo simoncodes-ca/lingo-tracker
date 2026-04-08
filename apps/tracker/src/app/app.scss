@@ -1,3 +1,5 @@
+@use '../styles/breakpoints' as bp;
+
 $footer-height: 32px;
 
 // Skip to main content link (keyboard navigation)
@@ -100,7 +102,7 @@ $footer-height: 32px;
               border-color var(--transition-normal);
 
   // Responsive padding
-  @media (max-width: 768px) {
+  @include bp.md-max {
     padding: var(--spacing-4);
   }
 }

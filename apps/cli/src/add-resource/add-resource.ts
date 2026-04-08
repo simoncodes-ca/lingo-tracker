@@ -1,8 +1,9 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import prompts from 'prompts';
-import type { LingoTrackerConfig, TranslationStatus } from '@simoncodes-ca/core';
-import { createDefaultTranslations, addResource, resolveResourceKey, splitResolvedKey } from '@simoncodes-ca/core';
+import type { LingoTrackerConfig } from '@simoncodes-ca/core';
+import { createDefaultTranslations, addResource } from '@simoncodes-ca/core';
+import { type TranslationStatus, resolveResourceKey, splitResolvedKey } from '@simoncodes-ca/domain';
 import {
   loadConfiguration,
   parseCommaSeparatedList,
