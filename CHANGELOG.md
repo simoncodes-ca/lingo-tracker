@@ -1,3 +1,10 @@
+# [0.12.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.11.0...v0.12.0) (2026-04-08)
+
+
+### Features
+
+* **tracker:** handle quotes in ICU better ([8c6beca](https://github.com/simoncodes-ca/lingo-tracker/commit/8c6becae16c041ba78598f8e04d0e938463cd660))
+
 # [0.11.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.10.0...v0.11.0) (2026-04-01)
 
 
