@@ -86,7 +86,7 @@ libs/
 
 ### Application Responsibilities
 
-- **CLI** (`apps/cli`): Commands for init, add-collection, delete-collection, add-resource. Supports both interactive (TTY) and non-interactive (CI/CD) modes.
+- **CLI** (`apps/cli`): Commands for init, add-collection, delete-collection, add-resource, edit-resource, delete-resource, move, normalize, bundle, export, import, validate, find-similar, install-skill. Supports both interactive (TTY) and non-interactive (CI/CD) modes.
 - **API** (`apps/api`): REST endpoints at `/api/*`, serves static Tracker UI, uses mappers to convert between core domain models and DTOs.
 - **Tracker UI** (`apps/tracker`): Angular app with Material UI for browsing/managing translations, uses NgRx Signals for state management.
 

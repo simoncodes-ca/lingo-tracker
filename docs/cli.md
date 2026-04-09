@@ -127,11 +127,11 @@ lingo-tracker add-collection [options]
 
 **Options:**
 
-- `--collectionName <name>` - Name of the new collection (required in non-interactive mode)
-- `--translationsFolder <path>` - Path to the translations directory for this collection (required in non-interactive mode)
-- `--exportFolder <path>` - Override global export folder for this collection
-- `--importFolder <path>` - Override global import folder for this collection
-- `--baseLocale <locale>` - Override global base locale
+- `--collection-name <name>` - Name of the new collection (required in non-interactive mode)
+- `--translations-folder <path>` - Path to the translations directory for this collection (required in non-interactive mode)
+- `--export-folder <path>` - Override global export folder for this collection
+- `--import-folder <path>` - Override global import folder for this collection
+- `--base-locale <locale>` - Override global base locale
 - `--locales <locales...>` - Override global locales list
 
 **Examples:**
@@ -144,16 +144,16 @@ lingo-tracker add-collection
 Simple, using global defaults:
 ```bash
 lingo-tracker add-collection \
-  --collectionName Admin \
-  --translationsFolder apps/admin/src/assets/i18n
+  --collection-name Admin \
+  --translations-folder apps/admin/src/assets/i18n
 ```
 
 With collection-specific overrides (only differences are saved):
 ```bash
 lingo-tracker add-collection \
-  --collectionName Mobile \
-  --translationsFolder apps/mobile/src/i18n \
-  --baseLocale en-GB
+  --collection-name Mobile \
+  --translations-folder apps/mobile/src/i18n \
+  --base-locale en-GB
 ```
 
 **Notes:**
@@ -176,7 +176,7 @@ lingo-tracker delete-collection [options]
 
 **Options:**
 
-- `--collectionName <name>` - Name of the collection to delete (required in non-interactive mode)
+- `--collection-name <name>` - Name of the collection to delete (required in non-interactive mode)
 
 **Examples:**
 
@@ -187,7 +187,7 @@ lingo-tracker delete-collection
 
 Non-interactive mode:
 ```bash
-lingo-tracker delete-collection --collectionName Mobile
+lingo-tracker delete-collection --collection-name Mobile
 ```
 
 **Notes:**
@@ -216,7 +216,7 @@ lingo-tracker add-resource [options]
 - `--value <text>` - Base (source) text in the base locale (required in non-interactive mode)
 - `--comment <text>` - Optional context for translators
 - `--tags <tags>` - Optional comma-separated tags for filtering/exporting
-- `--targetFolder <folder>` - Optional dot-delimited path override for folder placement
+- `--target-folder <folder>` - Optional dot-delimited path override for folder placement
 - `--translations <json>` - Optional JSON array with translation objects
 
 **Translation Object Format:**
@@ -263,13 +263,13 @@ lingo-tracker add-resource \
   --value OK \
   --comment "OK button in dialogs" \
   --tags "ui,buttons,dialogs" \
-  --targetFolder apps.common \
+  --target-folder apps.common \
   --translations '[{"locale":"es","value":"Aceptar","status":"translated"},{"locale":"fr-ca","value":"OK","status":"new"}]'
 ```
 
 **Notes:**
 - In interactive mode, you'll be prompted if you want to provide translations for each configured locale
-- Resources are placed in the appropriate folder based on the key and optional `--targetFolder`
+- Resources are placed in the appropriate folder based on the key and optional `--target-folder`
 - If a translation's checksum matches the base value's checksum, the status will automatically be set to `new` regardless of the provided status
 
 ---
@@ -362,12 +362,12 @@ lingo-tracker edit-resource [options]
 
 - `--collection <name>` - Collection containing the resource (required in non-interactive mode)
 - `--key <key>` - Resource key (required in non-interactive mode)
-- `--baseValue <text>` - New base value (updates source text)
+- `--base-value <text>` - New base value (updates source text)
 - `--comment <text>` - New comment
 - `--tags <tags>` - New tags (comma-separated, replaces existing)
-- `--targetFolder <folder>` - New target folder
-- `--locale <locale>` - Locale to update (requires `--localeValue`)
-- `--localeValue <text>` - New translation value for the specified locale
+- `--target-folder <folder>` - New target folder
+- `--locale <locale>` - Locale to update (requires `--locale-value`)
+- `--locale-value <text>` - New translation value for the specified locale
 
 **Examples:**
 
@@ -381,7 +381,7 @@ Update base value (marks other locales as stale):
 lingo-tracker edit-resource \
   --collection Main \
   --key buttons.save \
-  --baseValue "Save Item"
+  --base-value "Save Item"
 ```
 
 Update a specific translation:
@@ -390,7 +390,7 @@ lingo-tracker edit-resource \
   --collection Main \
   --key buttons.save \
   --locale fr-ca \
-  --localeValue "Enregistrer l'article"
+  --locale-value "Enregistrer l'article"
 ```
 
 Update metadata:
@@ -403,7 +403,7 @@ lingo-tracker edit-resource \
 ```
 
 **Notes:**
-- Updating `baseValue` triggers a checksum update and marks all other existing translations as `stale`.
+- Updating `--base-value` triggers a checksum update and marks all other existing translations as `stale`.
 - Updating a locale value sets its status to `translated` and updates its checksum.
 - If no changes are detected (values match existing), the command reports "No changes detected".
 
@@ -424,7 +424,6 @@ lingo-tracker move [options]
 - `--collection <name>` - Collection to move resources in (required in non-interactive mode)
 - `--source <key>` - Source key or pattern (e.g., `common.buttons.ok` or `common.buttons.*`) (required in non-interactive mode)
 - `--dest <key>` - Destination key (e.g., `common.actions.ok` or `common.actions`) (required in non-interactive mode)
-- `--destCollection <name>` - Optional destination collection (defaults to source collection)
 - `--override` - Overwrite destination if it already exists
 - `--verbose` - Print detailed output for each moved resource
 
@@ -451,15 +450,6 @@ lingo-tracker move \
   --dest "common.actions"
 ```
 *Result: `common.buttons.ok` -> `common.actions.ok`, `common.buttons.cancel` -> `common.actions.cancel`*
-
-Move resource to another collection:
-```bash
-lingo-tracker move \
-  --collection Main \
-  --source common.buttons.ok \
-  --dest common.buttons.ok \
-  --destCollection Admin
-```
 
 Force move (overwrite destination):
 ```bash
@@ -619,6 +609,7 @@ lingo-tracker bundle [options]
 - `--locale <locales>` - Specific locale(s) to generate (comma-separated). If not specified, generates all locales
 - `--token-casing <casing>` - Casing style for generated type token keys: `upperCase` or `camelCase`. Overrides any `tokenCasing` set in the config file. Default: `upperCase`
 - `--token-constant-name <name>` - Custom name for the generated TypeScript constant. Must be a valid JavaScript identifier. Only works when targeting a single bundle (via `--name`). Overrides `tokenConstantName` in the bundle config
+- `--no-transform-icu-to-transloco` - Disable ICU to Transloco format conversion in bundle output
 - `--verbose` - Show detailed output including all warnings
 
 **What Bundle Generation Does:**
@@ -1056,6 +1047,8 @@ The validate command performs a comprehensive check:
 
 ---
 
+## Data Exchange Commands
+
 ### export
 
 Export translation resources to XLIFF or JSON format for integration with translation services, external systems, and third-party tools.
@@ -1304,7 +1297,138 @@ Every export generates an `export-summary.md` file in the output directory conta
 - Multiple collections merge into single output file per locale (last write wins)
 - Base locale is excluded from export (use bundle command for base locale)
 - Dry-run shows accurate resource counts without creating files
-- For detailed format specifications and examples, see [Export Feature Documentation](../features/export.md)
+- For detailed format specifications and examples, see [Export Feature Documentation](./features/export.md)
+
+---
+
+### import
+
+Import translation resources from XLIFF or JSON files into a collection. Supports professional translation workflows, language expert verification, system migrations, and bulk corrections.
+
+For full format specifications, workflow examples, and ICU auto-fix details, see the [Import Feature Documentation](./features/import.md).
+
+**Usage:**
+
+```bash
+lingo-tracker import --source <file> --locale <locale> [options]
+```
+
+**Options:**
+
+- `-f, --format <format>` - Import format: `xliff` or `json`. Default: auto-detected from file extension (`.xlf`/`.xliff` → xliff; `.json` → json)
+- `-s, --source <path>` - Path to the import file (required)
+- `-l, --locale <locale>` - Target locale for the import, e.g., `es`, `fr-ca` (required)
+- `-c, --collection <name>` - Target collection to import into. If not specified, prompts or auto-selects
+- `--strategy <strategy>` - Import strategy (see below). Default: `translation-service`
+- `--update-comments` - Update resource comments from import data. Default: `false`
+- `--update-tags` - Update resource tags from rich JSON. Default: `false`
+- `--preserve-status` - Allow rich JSON to specify status (advanced). Default: `false`
+- `--create-missing` - Create new resources if they don't exist
+- `--validate-base` - Warn if the source base value differs from existing. Default: `true`
+- `--dry-run` - Preview what would be imported without modifying files. Default: `false`
+- `--verbose` - Show detailed import progress. Default: `false`
+
+**Import Strategies:**
+
+| Strategy | Description |
+|----------|-------------|
+| `translation-service` (default) | Sets status to `translated`. For translation agencies. Does not create missing resources. |
+| `verification` | Sets status to `verified`. For native-speaker review and approval. Does not create missing resources. |
+| `migration` | Sets status to `translated`. Creates missing resources (`--create-missing` defaults to `true`). Resolves Transloco-style key refs. Updates comments and tags by default. |
+| `update` | Preserves existing status. Bulk-updates values without changing metadata. Does not create missing resources. |
+
+**Examples:**
+
+Interactive mode (prompts for all required values):
+```bash
+lingo-tracker import
+```
+
+Import XLIFF from a translation service (default strategy):
+```bash
+lingo-tracker import \
+  --source dist/lingo-import/es.xliff \
+  --locale es
+```
+
+Import with explicit strategy:
+```bash
+lingo-tracker import \
+  --source dist/lingo-import/fr.xliff \
+  --locale fr \
+  --strategy translation-service
+```
+
+Import for language expert verification:
+```bash
+lingo-tracker import \
+  --source fr-reviewed.xliff \
+  --locale fr \
+  --strategy verification
+```
+
+Migrate from another translation system (creates missing resources):
+```bash
+lingo-tracker import \
+  --source old-system-fr.json \
+  --locale fr \
+  --strategy migration
+```
+
+Bulk-correct existing translations without changing status:
+```bash
+lingo-tracker import \
+  --source corrections-de.json \
+  --locale de \
+  --strategy update
+```
+
+Dry-run to preview what would be imported:
+```bash
+lingo-tracker import \
+  --source translations-es.xliff \
+  --locale es \
+  --dry-run
+```
+
+Verbose output to see detailed progress:
+```bash
+lingo-tracker import \
+  --source translations-es.xliff \
+  --locale es \
+  --verbose
+```
+
+Import into a specific collection:
+```bash
+lingo-tracker import \
+  --source admin-es.xliff \
+  --locale es \
+  --collection Admin \
+  --strategy translation-service
+```
+
+**Round-Trip Workflow:**
+
+```bash
+# 1. Export resources needing translation
+lingo-tracker export --format xliff --locale es --status new,stale
+
+# 2. (Send es.xliff to translation agency, receive back translated file)
+
+# 3. Import translated file
+lingo-tracker import --source es.xliff --locale es --strategy translation-service
+
+# 4. Optionally verify with a language expert
+lingo-tracker import --source es-reviewed.xliff --locale es --strategy verification
+```
+
+**Notes:**
+- Format is auto-detected from the file extension; use `--format` to override
+- Every import generates an `import-summary.md` in the import folder with statistics, status transitions, ICU auto-fixes, warnings, and errors
+- ICU message placeholder errors (renamed or missing placeholders) are automatically detected and fixed where possible; all auto-fixes are reported in the summary
+- Dry-run mode produces the same summary report using "Would" language, with no files modified
+- In interactive mode, a wizard guides you through source file selection, locale, collection, and strategy
 
 ---
 
@@ -1431,15 +1555,15 @@ All commands support non-interactive mode for use in CI/CD pipelines. To ensure 
 ```bash
 # Initialize a project in CI
 lingo-tracker init \
-  --collectionName Main \
-  --translationsFolder src/assets/i18n \
-  --baseLocale en \
+  --collection-name Main \
+  --translations-folder src/assets/i18n \
+  --base-locale en \
   --locales en fr-ca es
 
 # Add a collection in CI
 lingo-tracker add-collection \
-  --collectionName Admin \
-  --translationsFolder src/admin/i18n
+  --collection-name Admin \
+  --translations-folder src/admin/i18n
 
 # Add a resource in CI
 lingo-tracker add-resource \

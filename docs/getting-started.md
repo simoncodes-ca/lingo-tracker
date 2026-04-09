@@ -12,13 +12,13 @@ npm install --save-dev @simoncodes-ca/lingo-tracker
 yarn add -D @simoncodes-ca/lingo-tracker
 ```
 
-Once installed, the use `npx lingo-tracker` command to interact with the CLI.
+Once installed, use the `npx lingo-tracker` command to interact with the CLI.
 
 ### Run the Lingo Tracker App
 
 The `lingo-tracker` package ships a built-in API server that hosts the Lingo Tracker web interface. 
 
-### Then start the app server:
+Then start the app server:
 
 ```bash
 npx lingo-tracker-app
@@ -39,7 +39,7 @@ Or set the `LINGO_TRACKER_PORT` environment variable. The `--port` flag takes pr
 ```json
 {
   "scripts": {
-    "lingo-tracker-app": "lingo-tracker-api --port 4000"
+    "lingo-tracker-app": "lingo-tracker-app --port 4000"
   }
 }
 ```
