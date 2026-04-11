@@ -157,3 +157,5 @@ vitest.config.*.timestamp*
 .worktrees/
 /apps/tracker/src/i18n-types/tracker-resources.ts
 /sample-translations/mock-design-system/
+/.playwright-cli/
+/.playwright/

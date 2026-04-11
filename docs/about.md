@@ -16,12 +16,12 @@ LingoTracker streamlines the entire translation workflow by providing intelligen
 - **Type Safety**: Compile-time translation key validation with full IDE completion support
 - **Auto-Translation**: Machine translation via Google Translate with ICU-aware placeholder protection
 - **CI/CD Integration**: Powerful CLI for automated validation in build pipelines
+- **REST API & Web UI**: Browser-based resource editor backed by a REST API, enabling team workflows and external integrations
 - **Format Flexibility**: Import/export support for JSON, XLIFF, and other translation formats
 - **Resource Linking**: Symlink support for sharing resources across projects
 - **Explicit Status Workflow**: `new`, `translated`, `stale`, `verified` with automatic updates on base changes
 - **Entry Tagging**: Tags stored alongside entries for rich filtering and export
-- **Deterministic Checksums**: MD5-based checksums for both base and translated values
-- **Strict Key Rules**: Dot-delimited keys; per-segment allowed chars `[A-Za-z0-9_-]+`; no de-duplication with target folder
+- **Structured Key Naming**: Dot-delimited keys with strict character rules ensure predictable, conflict-free resource paths
 
 ## Who It's For
 

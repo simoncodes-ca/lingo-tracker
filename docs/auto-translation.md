@@ -4,7 +4,7 @@ LingoTracker can automatically translate new and stale resources using machine t
 
 ## Overview
 
-When auto-translation is enabled, adding or editing a resource can trigger machine translation for all target locales. The system classifies each string by its ICU content and applies the appropriate translation strategy:
+When auto-translation is enabled, adding or editing a resource automatically triggers machine translation for all target locales — provided no explicit translations are supplied by the caller. The system classifies each string by its ICU content and applies the appropriate translation strategy:
 
 - **Plain text** is sent directly to the translation provider.
 - **Simple placeholders** (`{name}`, `{{ count }}`) are protected with markers before translation, then restored afterward.
@@ -71,9 +71,7 @@ A collection can override the global translation config. This is useful when dif
     "Admin": {
       "translationsFolder": "apps/admin/src/assets/i18n",
       "translation": {
-        "enabled": false,
-        "provider": "google-translate",
-        "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY"
+        "enabled": false
       }
     }
   }
@@ -100,9 +98,9 @@ The translation orchestrator sits between callers and the translation provider. 
 
 1. **Classifies** the string using the ICU classifier (see below).
 2. **Routes** the string based on classification:
-   - `plain` -- sends to the provider directly.
-   - `simple-placeholders` -- protects placeholders, sends, then restores.
-   - `complex-icu` -- returns the original value unchanged with `kind: 'skipped'`.
+   1. `plain` -- sends to the provider directly.
+   2. `simple-placeholders` -- protects placeholders, sends, then restores.
+   3. `complex-icu` -- returns the original value unchanged with `kind: 'skipped'`.
 3. **Returns** a result with `kind` indicating what happened:
    - `'translated'` -- plain text was translated.
    - `'translated-with-placeholders'` -- simple-placeholder text was translated with marker protection.
@@ -177,6 +175,15 @@ For this reason, complex ICU strings are always skipped and left for human trans
 The classifier normalizes Transloco's double-brace format (`{{ name }}`) to single-brace (`{name}`) before analysis. Both formats are treated identically for classification purposes. The placeholder protector preserves the original format in the translated output -- if your source uses `{{ name }}`, the translated string will too.
 
 ## Usage
+
+### CLI (add-resource and edit-resource)
+
+Auto-translation runs automatically during the `add-resource` and `edit-resource` CLI commands when `translation.enabled` is `true` in your config. No extra flags are needed.
+
+- **add-resource**: When no explicit translations are provided (interactively or via flags), the command delegates all target locales to the translation provider instead of populating them with the base value.
+- **edit-resource**: When the base value is updated, the command triggers translation for any locale whose status is `new` or `stale`.
+
+Skipped locales (complex ICU strings) are left at their current status and surfaced in the CLI output for manual handling.
 
 ### Translating existing resources via the API
 

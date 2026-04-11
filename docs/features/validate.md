@@ -29,8 +29,8 @@ lingo-tracker validate [options]
 
 ### Exit Codes
 
-- `0` - All validations passed (all resources verified)
-- `1` - Validation failures found (new/stale resources or translated without flag)
+- `0` - All validations passed (all resources verified or only warnings)
+- `1` - Validation failures found, OR configuration errors (config file missing or invalid JSON, no collections configured, no target locales configured)
 
 ## Validation Rules
 
@@ -42,6 +42,7 @@ The validate command categorizes resources based on their translation status:
 | `stale` | ❌ Failure | ❌ Failure | Base value changed, translation out of sync |
 | `translated` | ❌ Failure | ⚠️ Warning | Has translation but not verified |
 | `verified` | ✅ Success | ✅ Success | Reviewed and approved |
+| *(missing)* | ❌ Failure | ❌ Failure | No status entry for this locale — treated as `new` |
 
 ### Validation Philosophy
 
@@ -75,7 +76,8 @@ The validate command categorizes resources based on their translation status:
 - Base locale (source translations are authoritative by definition)
 - ICU message format syntax (use separate linting tools)
 - File structure or JSON validity (handled during resource loading)
-- Missing metadata (resources without metadata are skipped with warnings)
+
+Resources with no status entry for a locale are treated as `new` (failure), not skipped.
 
 ## Examples
 
@@ -96,16 +98,28 @@ lingo-tracker validate --allow-translated
 #### All Verified (Success)
 
 ```
-✅ Translation Validation PASSED
+✅ Validation PASSED
 
-Validation Summary by Locale:
-  es:
-    verified: 51
+📊 Validation Statistics:
+──────────────────────────────────────────────────
+  Total Resources Validated: 102
+  Unique Resource Keys: 51
+  Locales Validated: 2
+  Collections Validated: 1
 
-  fr-ca:
-    verified: 51
+📈 Status Breakdown:
+──────────────────────────────────────────────────
+  ✅ Verified: 102
+  ✏️  Translated: 0
+  ⚠️  Stale: 0
+  ❌ New: 0
 
-Total: 0 failures, 0 warnings
+──────────────────────────────────────────────────
+📋 Summary:
+  Total Failures: 0
+  Total Successes: 102
+
+✅ Validation passed successfully!
 ```
 
 Exit code: `0`
@@ -113,36 +127,43 @@ Exit code: `0`
 #### Mixed Status (Failure)
 
 ```
-❌ Translation Validation FAILED
+❌ Validation FAILED
 
-Validation Summary by Locale:
-  es:
-    new: 3
-    stale: 2
-    translated: 1
-    verified: 45
+📊 Validation Statistics:
+──────────────────────────────────────────────────
+  Total Resources Validated: 102
+  Unique Resource Keys: 51
+  Locales Validated: 2
+  Collections Validated: 1
 
-  fr-ca:
-    new: 1
-    stale: 0
-    translated: 2
-    verified: 48
+📈 Status Breakdown:
+──────────────────────────────────────────────────
+  ✅ Verified: 93
+  ✏️  Translated: 3
+  ⚠️  Stale: 2
+  ❌ New: 4
 
-Failures (6 resources):
-  es:
-    - apps.common.buttons.submit (new)
-    - apps.common.errors.network (new)
-    - apps.features.dashboard.title (new)
-    - apps.common.buttons.save (stale)
-    - apps.features.settings.label (stale)
-    - apps.common.buttons.cancel (translated)
+❌ Failures (9):
+──────────────────────────────────────────────────
+  Locale: es (6 failures)
+    ❌ [main] apps.common.buttons.submit (new)
+    ❌ [main] apps.common.errors.network (new)
+    ❌ [main] apps.features.dashboard.title (new)
+    ⚠️ [main] apps.common.buttons.save (stale)
+    ⚠️ [main] apps.features.settings.label (stale)
+    ✏️ [main] apps.common.buttons.cancel (translated)
 
-  fr-ca:
-    - apps.common.buttons.submit (new)
-    - apps.features.dashboard.subtitle (translated)
-    - apps.features.profile.header (translated)
+  Locale: fr-ca (3 failures)
+    ❌ [main] apps.common.buttons.submit (new)
+    ✏️ [main] apps.features.dashboard.subtitle (translated)
+    ✏️ [main] apps.features.profile.header (translated)
 
-Total: 6 failures, 0 warnings
+──────────────────────────────────────────────────
+📋 Summary:
+  Total Failures: 9
+  Total Successes: 93
+
+❌ Validation failed. Please review the failures above.
 ```
 
 Exit code: `1`
@@ -150,31 +171,40 @@ Exit code: `1`
 #### With --allow-translated Flag (Warnings)
 
 ```
-⚠️  Translation Validation PASSED with warnings
+✅ Validation PASSED
 
-Validation Summary by Locale:
-  es:
-    new: 0
-    stale: 0
-    translated: 3
-    verified: 48
+📊 Validation Statistics:
+──────────────────────────────────────────────────
+  Total Resources Validated: 102
+  Unique Resource Keys: 51
+  Locales Validated: 2
+  Collections Validated: 1
 
-  fr-ca:
-    new: 0
-    stale: 0
-    translated: 1
-    verified: 50
+📈 Status Breakdown:
+──────────────────────────────────────────────────
+  ✅ Verified: 98
+  ✏️  Translated: 4
+  ⚠️  Stale: 0
+  ❌ New: 0
 
-Warnings (4 resources):
-  es:
-    - apps.common.buttons.cancel (translated)
-    - apps.features.dashboard.subtitle (translated)
-    - apps.features.profile.header (translated)
+⚠️  Warnings (4):
+──────────────────────────────────────────────────
+  Resources with "translated" status (not yet verified):
+  Locale: es (3 warnings)
+    ✏️  [main] apps.common.buttons.cancel (translated)
+    ✏️  [main] apps.features.dashboard.subtitle (translated)
+    ✏️  [main] apps.features.profile.header (translated)
 
-  fr-ca:
-    - apps.common.buttons.apply (translated)
+  Locale: fr-ca (1 warnings)
+    ✏️  [main] apps.common.buttons.apply (translated)
 
-Total: 0 failures, 4 warnings
+──────────────────────────────────────────────────
+📋 Summary:
+  Total Failures: 0
+  Total Warnings: 4
+  Total Successes: 98
+
+✅ Validation passed with warnings.
 ```
 
 Exit code: `0`
@@ -245,91 +275,6 @@ jobs:
 
       - name: Deploy
         run: pnpm run deploy:staging
-```
-
-### GitLab CI
-
-```yaml
-stages:
-  - validate
-  - build
-  - deploy
-
-validate-translations:
-  stage: validate
-  script:
-    - lingo-tracker validate
-  only:
-    - main
-
-validate-translations-staging:
-  stage: validate
-  script:
-    - lingo-tracker validate --allow-translated
-  only:
-    - develop
-```
-
-### Jenkins
-
-```groovy
-pipeline {
-    agent any
-
-    stages {
-        stage('Validate Translations') {
-            steps {
-                sh 'lingo-tracker validate'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'pnpm run build'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                sh 'pnpm run deploy'
-            }
-        }
-    }
-}
-```
-
-### CircleCI
-
-```yaml
-version: 2.1
-
-jobs:
-  validate-and-deploy:
-    docker:
-      - image: cimg/node:22.16
-    steps:
-      - checkout
-      - run:
-          name: Install dependencies
-          command: pnpm install
-      - run:
-          name: Validate translations
-          command: lingo-tracker validate
-      - run:
-          name: Build
-          command: pnpm run build
-      - run:
-          name: Deploy
-          command: pnpm run deploy
-
-workflows:
-  version: 2
-  build-and-deploy:
-    jobs:
-      - validate-and-deploy:
-          filters:
-            branches:
-              only: main
 ```
 
 ### Custom Script Integration
@@ -526,20 +471,23 @@ The validate feature is implemented across two layers:
 
 The validate command reuses the existing `loadResourcesFromCollections` utility from the core library, ensuring consistency with export/import operations.
 
-### Status Determination
+### Translation Status Semantics
 
-Translation status is determined by examining metadata checksums:
+Validate reads pre-computed status values from resource metadata — it does not re-evaluate checksums. The status for each resource/locale pair is determined during resource loading by `loadResourcesFromCollections`. Validate maps a missing status entry to `new` via a null-coalescing fallback.
 
-- **new**: No translation or translation checksum matches base checksum
-- **stale**: Base checksum changed since translation was created
-- **translated**: Translation exists with non-matching checksums, not verified
-- **verified**: Translation exists and marked as verified
+The meaning of each status value:
+
+- **new**: Resource has been added but not yet translated (explicitly stored status)
+- **stale**: Base checksum changed since the translation was last updated (source drifted)
+- **translated**: Translation exists and matches the current base checksum, but not yet verified
+- **verified**: Translation exists and has been explicitly marked as verified
+
+A missing metadata entry for a locale is coalesced to `new` at validation time (already covered by the *(missing)* row in the Validation Rules table above).
 
 ### Performance
 
 - **Fast**: Validation only reads metadata, no heavy computation
 - **Scalable**: Handles projects with 10,000+ resources efficiently
-- **Memory-efficient**: Streams through resources, no large in-memory accumulation
 
 ## Limitations
 
@@ -554,12 +502,20 @@ Validate always checks ALL collections and ALL target locales. There is no optio
 
 ### No Verbose Mode
 
-Unlike export/import commands, validate does not have a `--verbose` flag. Output is always concise, showing only:
-- Summary counts by locale
-- List of failures
-- List of warnings
+Unlike export/import commands, validate does not have a `--verbose` flag. Output always includes:
+- Statistics (total resources, unique keys, locales, collections validated)
+- Status breakdown by count (verified, translated, stale, new)
+- Failures grouped by locale (with collection name and status)
+- Warnings grouped by locale (when `--allow-translated` is used)
+- Summary footer with total counts and final verdict
+
+Verified resources are not listed individually.
 
 **Rationale**: CI logs should be concise. Showing all verified resources adds noise.
+
+### Output Truncation
+
+Within each locale group, at most 100 failures or warnings are shown. The cap is applied independently per locale — a project with 5 locales could show up to 500 failure lines. When the per-locale limit is exceeded, the output includes `... and N more failures` (or `... and N more warnings` for the warnings section) to indicate additional items. This prevents extremely long CI logs for large projects with many missing translations.
 
 ### No JSON Output
 

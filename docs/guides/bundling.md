@@ -21,7 +21,9 @@ This guide provides comprehensive examples and best practices for using LingoTra
 
 ### What Are Bundles?
 
-Bundles are **deployment-ready translation files** generated from LingoTracker's source translations.
+LingoTracker stores translations in a structured format optimized for management — version control friendly, metadata-rich, and split across many small files. Your application, however, needs deployment-ready JSON files per locale at runtime. Bundles are that output: **one or more domain-specific translation files** assembled from LingoTracker's source translations.
+
+A single app might ship a `core` bundle loaded eagerly, an `admin` bundle loaded only for admin users, and a `reports` bundle lazy-loaded on demand. Each bundle is independently configured — you control which collections and keys go into it using key patterns, tags, or both. Tags in particular enable a high degree of customization: you can slice your translations by any cross-cutting concern (feature, audience, environment) regardless of how keys are structured in the folder hierarchy.
 
 **Source (LingoTracker)**:
 ```
@@ -51,6 +53,8 @@ translations/
 ---
 
 ## Quick Start
+
+> **Prerequisites**: Complete the [Getting Started](../getting-started.md) guide first. You should already have a `.lingo-tracker.json` with at least one collection configured.
 
 ### 1. Add Bundle Configuration
 
@@ -94,6 +98,8 @@ src/assets/i18n/
 ```
 
 Each file contains hierarchical JSON with all translations for that locale.
+
+> **Want TypeScript type safety?** Add `typeDistFile` to your bundle config and LingoTracker will generate a typed constants file alongside the JSON bundles. See [Bundle Type Generation](../features/bundle-type-generation.md).
 
 ---
 
@@ -177,29 +183,15 @@ Generate different bundles for different purposes:
 
 ### Filename Patterns
 
-The `{locale}` placeholder is replaced with each locale:
+The `{locale}` placeholder in `bundleName` is replaced with each locale at generation time:
 
-```json
-{
-  "bundles": {
-    "example1": {
-      "bundleName": "{locale}",           // en.json, fr-ca.json
-      "dist": "./dist/i18n",
-      "collections": "All"
-    },
-    "example2": {
-      "bundleName": "app.{locale}",       // app.en.json, app.fr-ca.json
-      "dist": "./dist",
-      "collections": "All"
-    },
-    "example3": {
-      "bundleName": "{locale}/main",      // en/main.json, fr-ca/main.json
-      "dist": "./dist/i18n",
-      "collections": "All"
-    }
-  }
-}
-```
+| `bundleName` | Output files (locales: `en`, `fr-ca`) |
+|---|---|
+| `{locale}` | `dist/i18n/en.json`, `dist/i18n/fr-ca.json` |
+| `app.{locale}` | `dist/app.en.json`, `dist/app.fr-ca.json` |
+| `{locale}/main` | `dist/i18n/en/main.json`, `dist/i18n/fr-ca/main.json` |
+
+The subdirectory form (`{locale}/main`) is useful for frameworks that expect one folder per locale.
 
 ---
 
@@ -220,19 +212,19 @@ When multiple collections contribute the same key, merge strategies determine wh
       "collections": [
         {
           "name": "Common",
-          "entriesSelectionRules": "All",
-          "mergeStrategy": "merge"
+          "entriesSelectionRules": "All"
         },
         {
           "name": "App",
-          "entriesSelectionRules": "All",
-          "mergeStrategy": "merge"
+          "entriesSelectionRules": "All"
         }
       ]
     }
   }
 }
 ```
+
+> `merge` is the default strategy, so you don't need to specify it explicitly.
 
 **Example**:
 
@@ -526,69 +518,7 @@ export class TranslocoHttpLoader implements TranslocoLoader {
 export class AppComponent {}
 ```
 
----
-
-### react-i18next
-
-**Bundle Configuration**:
-```json
-{
-  "bundles": {
-    "react": {
-      "bundleName": "{locale}/translation",
-      "dist": "./public/locales",
-      "collections": "All"
-    }
-  }
-}
-```
-
-**Generates**:
-```
-public/locales/
-├── en/translation.json
-├── fr-ca/translation.json
-└── es/translation.json
-```
-
-**i18next Setup** (`i18n.js`):
-```javascript
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import HttpBackend from 'i18next-http-backend';
-
-i18n
-  .use(HttpBackend)
-  .use(initReactI18next)
-  .init({
-    fallbackLng: 'en',
-    supportedLngs: ['en', 'fr-ca', 'es'],
-    backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json'
-    },
-    interpolation: {
-      escapeValue: false
-    }
-  });
-
-export default i18n;
-```
-
-**Usage in Components**:
-```jsx
-import { useTranslation } from 'react-i18next';
-
-function App() {
-  const { t } = useTranslation();
-
-  return (
-    <div>
-      <h1>{t('apps.common.title')}</h1>
-      <button>{t('apps.common.buttons.ok')}</button>
-    </div>
-  );
-}
-```
+> LingoTracker currently has first-class integration guidance for Angular/Transloco. Other frameworks (React, Vue, etc.) work the same way — configure `bundleName` and `dist` to match where your i18n library expects to load files from.
 
 ---
 
@@ -782,6 +712,73 @@ this.translocoService.setActiveLang('en');
 this.translocoService.load('admin').subscribe();
 ```
 
+### Tag-Driven Multi-Bundle Split
+
+Tags let you split a single collection into multiple bundles without relying on key structure. This is useful when translations don't follow a clean folder hierarchy, or when the same key might need to appear in more than one bundle.
+
+In this example, a single `App` collection is tagged per feature area. Each bundle selects only the keys tagged for it:
+
+**Tagging your resources** (in LingoTracker UI or via CLI):
+- `apps.common.*` keys → tagged `core`
+- `apps.admin.*` keys → tagged `admin`
+- `apps.reports.*` keys → tagged `reports`
+
+**Bundle configuration**:
+
+```json
+{
+  "bundles": {
+    "core": {
+      "bundleName": "core.{locale}",
+      "dist": "./src/assets/i18n",
+      "collections": [
+        {
+          "name": "App",
+          "entriesSelectionRules": [
+            {
+              "matchingPattern": "*",
+              "matchingTags": ["core"]
+            }
+          ]
+        }
+      ]
+    },
+    "admin": {
+      "bundleName": "admin.{locale}",
+      "dist": "./src/assets/i18n",
+      "collections": [
+        {
+          "name": "App",
+          "entriesSelectionRules": [
+            {
+              "matchingPattern": "*",
+              "matchingTags": ["admin"]
+            }
+          ]
+        }
+      ]
+    },
+    "reports": {
+      "bundleName": "reports.{locale}",
+      "dist": "./src/assets/i18n",
+      "collections": [
+        {
+          "name": "App",
+          "entriesSelectionRules": [
+            {
+              "matchingPattern": "*",
+              "matchingTags": ["reports"]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+The same approach works for any cross-cutting split: by audience (`public` / `internal`), by feature flag, or by release stage. A key can carry multiple tags, so it can appear in more than one bundle if needed.
+
 ### Environment-Specific Bundles
 
 Different bundles for different environments:
@@ -814,12 +811,13 @@ Different bundles for different environments:
 }
 ```
 
-Generate specific bundle:
+By default `lingo-tracker bundle` generates all configured bundles. Use `--name` to target a single bundle by its key in `.lingo-tracker.json`:
+
 ```bash
 lingo-tracker bundle --name production
 ```
 
-Override token casing from the CLI:
+Override token casing for a single bundle run:
 ```bash
 lingo-tracker bundle --name core --token-casing camelCase
 ```
@@ -869,7 +867,11 @@ Different bundles for different tenants:
 
 ### Bundled Key Prefixes
 
-Add prefixes to avoid key conflicts:
+`bundledKeyPrefix` prepends a namespace segment to every key from a collection before merging. This is useful when two collections have overlapping key structures and you need to keep them separate in the output.
+
+For example, if both `AppTranslations` and `LibraryTranslations` have a `buttons.ok` key, including both without a prefix would cause a collision (only one value survives). With `bundledKeyPrefix`, each collection's keys live under their own namespace.
+
+**Example**:
 
 ```json
 {
@@ -901,6 +903,8 @@ Add prefixes to avoid key conflicts:
 ---
 
 ## Troubleshooting
+
+> **Tip**: Run `lingo-tracker bundle --help` for a full list of flags. Add `--verbose` to any bundle command to see detailed output about which keys each collection contributes.
 
 ### Empty Bundle Warning
 
@@ -976,17 +980,19 @@ Add prefixes to avoid key conflicts:
 
 ## Summary
 
-Bundle generation is a powerful feature that separates translation management from application deployment:
+Bundle generation bridges translation management and application deployment: LingoTracker manages your translations in a structured, version-control-friendly format, and `lingo-tracker bundle` produces the runtime files your app actually loads.
 
-- **Configure once** in `.lingo-tracker.json`
-- **Generate anytime** with `lingo-tracker bundle`
-- **Integrate seamlessly** with any framework or build tool
-- **Filter flexibly** with patterns and tags
-- **Customize output** with merge strategies and prefixes
+**Recommended next step**: Add bundle generation to your `prebuild` npm script so bundles are always up to date before each build:
 
-For more information:
-- [CLI Reference](../cli.md) - Complete command documentation
-- [Getting Started](../getting-started.md) - Initial setup guide
-- [API Reference](../api.md) - REST API endpoints
+```json
+{
+  "scripts": {
+    "prebuild": "lingo-tracker bundle"
+  }
+}
+```
 
-**Next Steps**: Add bundle generation to your build pipeline and start deploying optimized translation files!
+**Further reading**:
+- [Bundle Type Generation](../features/bundle-type-generation.md) — generate TypeScript constants for type-safe translation keys
+- [CLI Reference](../cli.md) — full `bundle` command options and flags
+- [Getting Started](../getting-started.md) — initial project setup
