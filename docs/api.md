@@ -1134,6 +1134,118 @@ curl -X POST http://localhost:3030/api/collections/web-app/resources/translate \
   -d '{"key": "apps.common.buttons.cancel"}'
 ```
 
+### Start Bulk Locale Translation Job
+
+Starts an async job that translates all `new` and `stale` resources in a collection for a single target locale. Returns immediately with a `jobId` that can be polled for progress. Requires auto-translation to be enabled for the collection.
+
+**Endpoint**: `POST /api/collections/:collectionName/resources/translate-locale`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection
+
+**Request Body**:
+
+```json
+{
+  "locale": "fr"
+}
+```
+
+**Response** (202 Accepted):
+
+```typescript
+interface TranslateLocaleJobDto {
+  jobId: string;
+  collectionName: string;
+  targetLocale: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  totalResources: number;
+  translatedCount: number;
+  failedCount: number;
+  skippedCount: number;
+  failures?: Array<{ key: string; error: string }>;
+  skippedKeys?: string[];
+  startedAt?: string;
+  completedAt?: string;
+}
+```
+
+**Example Response**:
+
+```json
+{
+  "jobId": "uuid-here",
+  "collectionName": "playground",
+  "targetLocale": "fr",
+  "status": "pending",
+  "totalResources": 0,
+  "translatedCount": 0,
+  "failedCount": 0,
+  "skippedCount": 0
+}
+```
+
+**Status Codes**:
+- `202 Accepted`: Job started — poll the GET endpoint for progress
+- `400 Bad Request`: Invalid or missing locale
+- `422 Unprocessable Entity`: Auto-translation not enabled for this collection
+- `404 Not Found`: Collection not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:3030/api/collections/playground/resources/translate-locale \
+  -H 'Content-Type: application/json' \
+  -d '{"locale":"fr"}'
+```
+
+### Get Bulk Locale Translation Job Status
+
+Returns the current status and progress of a bulk locale translation job. Poll this endpoint every 2–5 seconds until `status` is `completed` or `failed`.
+
+**Endpoint**: `GET /api/collections/:collectionName/resources/translate-locale/:jobId`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection
+- `jobId` (string, required): The job ID returned by the POST endpoint
+
+**Response**:
+
+`TranslateLocaleJobDto` with current status. See the POST endpoint above for the full type definition.
+
+**Status progression**: `pending` → `running` → `completed` / `failed`
+
+**Example Response** (completed):
+
+```json
+{
+  "jobId": "uuid-here",
+  "collectionName": "playground",
+  "targetLocale": "fr",
+  "status": "completed",
+  "totalResources": 48,
+  "translatedCount": 45,
+  "failedCount": 0,
+  "skippedCount": 3,
+  "failures": [],
+  "skippedKeys": ["forms.upload.acceptedFormats"],
+  "startedAt": "2026-04-11T12:00:00.000Z",
+  "completedAt": "2026-04-11T12:00:15.000Z"
+}
+```
+
+**Status Codes**:
+- `200 OK`: Job status returned
+- `404 Not Found`: Collection or job not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl http://localhost:3030/api/collections/playground/resources/translate-locale/uuid-here
+```
+
 ## Folders API
 
 All folder endpoints are scoped to a specific collection.

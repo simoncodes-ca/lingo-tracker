@@ -137,6 +137,17 @@ program
   });
 
 program
+  .command('translate-locale')
+  .description('Auto-translate all new/stale resources for a target locale')
+  .option('--collection <name>', 'Collection name')
+  .option('--locale <locale>', 'Target locale to translate')
+  .option('--verbose', 'Show per-batch progress')
+  .action(async (options) => {
+    const { translateLocaleCommand } = await import('./commands/translate-locale');
+    await translateLocaleCommand(options);
+  });
+
+program
   .command('bundle')
   .description('Generate translation bundles for deployment')
   .option('--name <names>', 'Bundle name(s) - single name or comma-separated (e.g., core,admin)')

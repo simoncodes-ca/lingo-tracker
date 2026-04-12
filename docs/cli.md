@@ -409,6 +409,79 @@ lingo-tracker edit-resource \
 
 ---
 
+### translate-locale
+
+Auto-translate all `new` and `stale` resources in a collection for a single target locale. Requires auto-translation to be enabled in `.lingo-tracker.json`.
+
+**Usage:**
+
+```bash
+lingo-tracker translate-locale [options]
+```
+
+**Options:**
+
+- `--collection <name>` - Collection name (prompted if not provided)
+- `--locale <locale>` - Target locale to translate (prompted if not provided)
+- `--verbose` - Show per-batch progress (default: summary only)
+
+**Interactive mode:**
+
+When running in a TTY environment without `--collection` or `--locale`, the command prompts for the missing values.
+
+**Non-interactive mode:**
+
+Both `--collection` and `--locale` are required. The command exits with a non-zero code if either is missing.
+
+**Examples:**
+
+Interactive mode (prompts for collection and locale):
+```bash
+lingo-tracker translate-locale
+```
+
+Non-interactive mode:
+```bash
+lingo-tracker translate-locale \
+  --collection Main \
+  --locale fr
+```
+
+With verbose progress:
+```bash
+lingo-tracker translate-locale \
+  --collection Main \
+  --locale fr \
+  --verbose
+```
+
+**Output (summary mode):**
+
+```
+Translating locale 'fr' in collection 'playground'...
+Done.
+
+Translated: 45 resources
+Skipped (ICU): 3 resources
+Failed: 0 resources
+```
+
+**Output (verbose mode):**
+
+```
+[batch 1/9] translated: 5, skipped: 0, failed: 0
+[batch 2/9] translated: 10, skipped: 0, failed: 0
+...
+```
+
+**Notes:**
+- Only resources with status `new` or `stale` are translated; `translated` and `verified` resources are left unchanged
+- Resources whose base value uses complex ICU syntax are skipped and reported in the "Skipped (ICU)" count
+- Throttling is controlled by `batchSize` and `delayMs` in the `translation` config block; see [Auto-Translation](./auto-translation.md) for recommended settings
+- Requires `translation.enabled: true` in `.lingo-tracker.json`
+
+---
+
 ### move
 
 Move or rename translation resources. Supports moving single resources as well as bulk moves using wildcard patterns.

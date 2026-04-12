@@ -306,4 +306,113 @@ describe('TranslationOrchestrator', () => {
       expect(provider.translate).toHaveBeenCalledOnce();
     });
   });
+
+  // -------------------------------------------------------------------------
+  // translateBatchForLocale
+  // -------------------------------------------------------------------------
+
+  describe('translateBatchForLocale', () => {
+    it('returns an empty array for an empty input without calling the provider', async () => {
+      const results = await orchestrator.translateBatchForLocale([], 'en', 'de');
+
+      expect(results).toEqual([]);
+      expect(provider.translate).not.toHaveBeenCalled();
+    });
+
+    it('returns results in the same order as the input texts', async () => {
+      provider.translate.mockResolvedValueOnce([makeResult('Hallo'), makeResult('Tschüss')]);
+
+      const results = await orchestrator.translateBatchForLocale(['Hello', 'Goodbye'], 'en', 'de');
+
+      expect(results[0]).toEqual({ kind: 'translated', value: 'Hallo' });
+      expect(results[1]).toEqual({ kind: 'translated', value: 'Tschüss' });
+    });
+
+    it('skips complex ICU texts immediately without including them in the provider call', async () => {
+      const icuText = '{count, plural, one {# item} other {# items}}';
+
+      const results = await orchestrator.translateBatchForLocale([icuText], 'en', 'de');
+
+      expect(results).toEqual([{ kind: 'skipped', value: icuText }]);
+      expect(provider.translate).not.toHaveBeenCalled();
+    });
+
+    it('sends all plain texts to the provider in a single call', async () => {
+      provider.translate.mockResolvedValueOnce([makeResult('Hallo'), makeResult('Welt')]);
+
+      await orchestrator.translateBatchForLocale(['Hello', 'World'], 'en', 'de');
+
+      expect(provider.translate).toHaveBeenCalledOnce();
+      expect(provider.translate).toHaveBeenCalledWith([
+        { text: 'Hello', sourceLocale: 'en', targetLocale: 'de' },
+        { text: 'World', sourceLocale: 'en', targetLocale: 'de' },
+      ]);
+    });
+
+    it('protects and restores placeholders for simple-placeholder texts', async () => {
+      provider.translate.mockImplementation(async (requests: TranslateRequest[]) => {
+        // Simulate translation of surrounding text while leaving span markers intact.
+        return requests.map((req) => makeResult(req.text.replace('Hello', 'Hallo')));
+      });
+
+      const results = await orchestrator.translateBatchForLocale(['Hello {name}'], 'en', 'de');
+
+      expect(results[0].kind).toBe('translated-with-placeholders');
+      expect(results[0].value).toBe('Hallo {name}');
+    });
+
+    it('falls back to skipped when the provider drops a placeholder marker', async () => {
+      provider.translate.mockResolvedValueOnce([makeResult('Hallo')]);
+
+      const results = await orchestrator.translateBatchForLocale(['Hello {name}'], 'en', 'de');
+
+      expect(results[0]).toEqual({ kind: 'skipped', value: 'Hello {name}' });
+    });
+
+    it('calls the provider exactly once for a mixed batch of plain, simple-placeholder, and complex ICU texts', async () => {
+      const complexIcu = '{count, plural, one {# item} other {# items}}';
+
+      // Provider receives: plain text + protected simple-placeholder text (complex ICU is excluded).
+      provider.translate.mockImplementation(async (requests: TranslateRequest[]) => {
+        return requests.map((req) => makeResult(req.text.replace('Hello', 'Hallo')));
+      });
+
+      const results = await orchestrator.translateBatchForLocale(['Hello', 'Hello {name}', complexIcu], 'en', 'de');
+
+      expect(provider.translate).toHaveBeenCalledOnce();
+      expect(results[0]).toEqual({ kind: 'translated', value: 'Hallo' });
+      expect(results[1].kind).toBe('translated-with-placeholders');
+      expect(results[1].value).toBe('Hallo {name}');
+      expect(results[2]).toEqual({ kind: 'skipped', value: complexIcu });
+    });
+
+    it('returns kind: skipped for all items and never calls the provider when every item is complex ICU', async () => {
+      const icuPlural = '{count, plural, one {# item} other {# items}}';
+      const icuSelect = '{gender, select, male {he} female {she} other {they}}';
+      const icuMixed = 'Hello {name}, {count, plural, one {# item} other {# items}}';
+
+      const results = await orchestrator.translateBatchForLocale([icuPlural, icuSelect, icuMixed], 'en', 'de');
+
+      expect(provider.translate).not.toHaveBeenCalled();
+      expect(results).toHaveLength(3);
+      expect(results[0]).toEqual({ kind: 'skipped', value: icuPlural });
+      expect(results[1]).toEqual({ kind: 'skipped', value: icuSelect });
+      expect(results[2]).toEqual({ kind: 'skipped', value: icuMixed });
+    });
+
+    it('preserves order when complex ICU items are interspersed with translatable items', async () => {
+      const complexIcu = '{gender, select, male {he} female {she} other {they}}';
+
+      provider.translate.mockResolvedValueOnce([makeResult('Hallo'), makeResult('Tschüss')]);
+
+      const results = await orchestrator.translateBatchForLocale(['Hello', complexIcu, 'Goodbye'], 'en', 'de');
+
+      expect(results[0]).toEqual({ kind: 'translated', value: 'Hallo' });
+      expect(results[1]).toEqual({ kind: 'skipped', value: complexIcu });
+      expect(results[2]).toEqual({ kind: 'translated', value: 'Tschüss' });
+      // Only two texts were sent to the provider (Hello and Goodbye, not the ICU).
+      expect(provider.translate).toHaveBeenCalledOnce();
+      expect(provider.translate.mock.calls[0][0]).toHaveLength(2);
+    });
+  });
 });

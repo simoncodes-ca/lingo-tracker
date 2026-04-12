@@ -35,7 +35,9 @@ Add a `translation` block at the top level of your config file:
   "translation": {
     "enabled": true,
     "provider": "google-translate",
-    "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY"
+    "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY",
+    "batchSize": 5,
+    "delayMs": 1000
   },
   "collections": {
     "Main": {
@@ -45,13 +47,15 @@ Add a `translation` block at the top level of your config file:
 }
 ```
 
-The `translation` block accepts three fields:
+The `translation` block accepts the following fields:
 
 | Field | Type | Description |
 |---|---|---|
 | `enabled` | `boolean` | Whether auto-translation is active. Set to `false` to disable without removing the config. |
 | `provider` | `string` | The translation provider to use. Currently only `"google-translate"` is supported. |
 | `apiKeyEnv` | `string` | Name of the environment variable that holds the API key. The key is never stored in the config file. |
+| `batchSize` | `number` | Number of resources to translate per API batch during bulk locale translation. Default: `5`. |
+| `delayMs` | `number` | Milliseconds to wait between batches during bulk locale translation. Default: `1000`. |
 
 ### 2. Per-collection overrides
 
@@ -221,6 +225,62 @@ If the base value uses complex ICU, `skippedLocales` will list the locales that 
 ### Which locales are translated?
 
 Auto-translation targets locales where the translation status is `new` or `stale`, or where no metadata entry exists yet. Locales with status `translated` or `verified` are left unchanged. The base locale is always excluded.
+
+## Bulk Locale Translation
+
+The `translate-locale` operation translates **all** `new` and `stale` resources in a collection for a single target locale in one command. This is useful for bootstrapping a new locale or catching up after a large batch of authoring changes.
+
+### CLI
+
+```bash
+lingo-tracker translate-locale --collection <name> --locale <locale> [--verbose]
+```
+
+In interactive mode (TTY), the command prompts for collection and locale when they are not provided. In non-interactive mode (CI/CD), both `--collection` and `--locale` are required.
+
+**Summary mode (default):**
+
+```
+Translating locale 'fr' in collection 'playground'...
+Done.
+
+Translated: 45 resources
+Skipped (ICU): 3 resources
+Failed: 0 resources
+```
+
+**Verbose mode (`--verbose`):**
+
+```
+[batch 1/9] translated: 5, skipped: 0, failed: 0
+[batch 2/9] translated: 10, skipped: 0, failed: 0
+...
+```
+
+### API
+
+Bulk locale translation is exposed as an async job because large collections can take tens of seconds to translate. The workflow is:
+
+1. **Start the job** — `POST` to receive a `202 Accepted` response with a `jobId`.
+2. **Poll for status** — `GET` with the `jobId` every 2–5 seconds until the status is `completed` or `failed`.
+
+See the [API reference](./api.md) for full endpoint documentation.
+
+### Throttling
+
+The `batchSize` and `delayMs` config fields control how aggressively the bulk operation calls the translation provider:
+
+- **`batchSize`** — how many resources are sent in each API call. Larger batches are faster but increase the risk of hitting per-request quotas.
+- **`delayMs`** — how long to wait between batches. A non-zero delay smooths out rate-limit exposure over time.
+
+**Recommended settings:**
+
+| Tier | `batchSize` | `delayMs` |
+|---|---|---|
+| Free tier | `5` | `1000` |
+| Paid tier | `50` | `0` |
+
+Start with the free-tier defaults and increase `batchSize` once you have confirmed your quota headroom.
 
 ## Error Handling
 
