@@ -1,6 +1,6 @@
 {
   "name": "@simoncodes-ca/lingo-tracker",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Effortlessly Track, Validate, and Manage Your Translations.",
   "bin": {
     "lingo-tracker": "dist/apps/cli/main.cjs",
