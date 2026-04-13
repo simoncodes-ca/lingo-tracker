@@ -1,3 +1,8 @@
+---
+title: Export
+sidebar_position: 2
+---
+
 # Export Feature
 
 The Export feature allows you to export translation resources from LingoTracker into standard formats (XLIFF and JSON) for integration with translation services and external systems.

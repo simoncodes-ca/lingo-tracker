@@ -1,3 +1,8 @@
+---
+title: CLI Reference
+sidebar_position: 3
+---
+
 # CLI Reference
 
 This document provides a comprehensive reference for all Lingo Tracker CLI commands. For initial setup instructions, see the [Getting Started Guide](./getting-started.md).

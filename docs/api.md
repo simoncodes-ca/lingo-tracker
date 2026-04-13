@@ -1,3 +1,8 @@
+---
+title: API Reference
+sidebar_position: 4
+---
+
 # LingoTracker API Reference
 
 ## Overview
@@ -13,7 +18,7 @@ The LingoTracker API provides REST endpoints for managing translation resources,
 
 ## Authentication
 
-Currently, the API does not require authentication. All endpoints are publicly accessible.
+Currently, the API does not require authentication. It is meant to run on your machine when you need it.
 
 ## Health Check
 

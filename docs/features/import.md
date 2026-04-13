@@ -1,3 +1,8 @@
+---
+title: Import
+sidebar_position: 3
+---
+
 # Import Feature
 
 The Import feature allows you to import translation resources from external sources in standard formats (XLIFF and JSON), supporting professional translation workflows, system migrations, and expert verification processes.

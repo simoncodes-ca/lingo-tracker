@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "target": "ES2017",
+    "lib": ["ES2017", "DOM"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "react",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  }
+}

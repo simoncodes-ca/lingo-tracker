@@ -1,3 +1,8 @@
+---
+title: Bundle Type Generation
+sidebar_position: 1
+---
+
 # Bundle Type Generation
 
 LingoTracker can automatically generate TypeScript type definitions for your translation bundles. This provides compile-time type safety, autocomplete, and refactoring support for your translation keys.
@@ -12,8 +17,6 @@ LingoTracker can automatically generate TypeScript type definitions for your tra
 ## Configuration
 
 To enable type generation, add the `typeDistFile` property to your bundle definition in `.lingo-tracker.json`. This property specifies the output file path for the generated TypeScript file. The path must end with `.ts` and must point to a file, not a directory. Intermediate directories are created automatically if they do not exist.
-
-> If you are migrating from the deprecated `typeDist` property, see the [Migration section](#migration-from-typedist) below.
 
 ```json
 {
@@ -169,28 +172,6 @@ lingo-tracker bundle --name common --token-constant-name MY_KEYS
 - **Numeric Segments**: Preserved as-is (e.g., `steps.1.title` -> `STEPS.1.TITLE` or `steps.1.title`).
 - **Mixed nodes** (a key that is both a leaf and a parent, e.g., `buttons` and `buttons.ok` both exist): the leaf value is dropped and only the children are emitted. Standard i18n usage does not produce such keys.
 - **Empty bundles**: if the bundle resolves to zero keys, type generation is skipped and a warning is printed. No `.ts` file is written.
-
-## Migration from `typeDist`
-
-> **Deprecation Notice**: The `typeDist` configuration property has been renamed to `typeDistFile` to clarify that the value must be a file path (ending with `.ts`), not a directory.
-
-- The old `typeDist` name is still accepted but will produce a deprecation warning at runtime.
-- Users should update their `.lingo-tracker.json` to use `typeDistFile` instead of `typeDist`.
-- The `typeDistFile` value must end with `.ts` and must be a file path, not a directory path.
-
-**Before**:
-```json
-{
-  "typeDist": "./src/generated/common-tokens.ts"
-}
-```
-
-**After**:
-```json
-{
-  "typeDistFile": "./src/generated/common-tokens.ts"
-}
-```
 
 ## Integration
 

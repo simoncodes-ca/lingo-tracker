@@ -1,3 +1,8 @@
+---
+title: Validate
+sidebar_position: 4
+---
+
 # Validate Feature
 
 The Validate feature provides a comprehensive translation validation system designed to ensure translation completeness and quality before production deployment. It serves as a quality gate in CI/CD pipelines by checking the status of all translation resources across all configured locales and collections.

@@ -1,3 +1,8 @@
+---
+title: Auto-Translation
+sidebar_position: 5
+---
+
 # Auto-Translation
 
 LingoTracker can automatically translate new and stale resources using machine translation providers. This feature is opt-in and configured per-project or per-collection in `.lingo-tracker.json`.

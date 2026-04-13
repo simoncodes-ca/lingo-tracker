@@ -1,3 +1,8 @@
+---
+title: Bundling
+sidebar_position: 1
+---
+
 # Bundle Generation Guide
 
 This guide provides comprehensive examples and best practices for using LingoTracker's bundle generation feature to create optimized translation files for your applications.
@@ -100,6 +105,66 @@ src/assets/i18n/
 Each file contains hierarchical JSON with all translations for that locale.
 
 > **Want TypeScript type safety?** Add `typeDistFile` to your bundle config and LingoTracker will generate a typed constants file alongside the JSON bundles. See [Bundle Type Generation](../features/bundle-type-generation.md).
+
+### 4. Add Type-Safe Tokens (Optional)
+
+Extend the bundle config with `typeDistFile`:
+
+```json
+{
+  "bundles": {
+    "main": {
+      "bundleName": "{locale}",
+      "dist": "./src/assets/i18n",
+      "collections": "All",
+      "typeDistFile": "./src/generated/main-tokens.ts"
+    }
+  }
+}
+```
+
+Running `lingo-tracker bundle` now also generates `src/generated/main-tokens.ts`:
+
+```typescript
+// src/generated/main-tokens.ts (auto-generated — do not edit)
+export const MAIN_TOKENS = {
+  APPS: {
+    COMMON: {
+      BUTTONS: {
+        OK: 'apps.common.buttons.ok',
+        CANCEL: 'apps.common.buttons.cancel',
+        APPLY: 'apps.common.buttons.apply',
+      },
+    },
+  },
+} as const;
+
+export type MainTokens = typeof MAIN_TOKENS;
+```
+
+Use the constants in your components — no more hardcoded string keys:
+
+```typescript
+import { MAIN_TOKENS } from '@/generated/main-tokens';
+
+@Component({
+  template: `
+    <h1>{{ tokens.APPS.COMMON.BUTTONS.OK | transloco }}</h1>
+    <button>{{ tokens.APPS.COMMON.BUTTONS.CANCEL | transloco }}</button>
+  `
+})
+export class AppComponent {
+  readonly tokens = MAIN_TOKENS;
+}
+```
+
+Or pass individual keys directly:
+
+```typescript
+this.translocoService.translate(MAIN_TOKENS.APPS.COMMON.BUTTONS.OK);
+```
+
+Your IDE will autocomplete available keys, and renaming a key in LingoTracker regenerates the constant — any stale references become compile errors.
 
 ---
 

@@ -1,3 +1,8 @@
+---
+title: Migration
+sidebar_position: 2
+---
+
 # Migration Guide
 
 This guide provides step-by-step instructions for migrating translation resources from other translation management systems to LingoTracker.

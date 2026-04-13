@@ -32,7 +32,9 @@
     "format": "pnpm exec biome format --write apps libs scripts types",
     "format:check": "pnpm exec biome format apps libs scripts types",
     "format:write": "pnpm exec biome format --write apps libs scripts types",
-    "lingo-tracker": "node dist/apps/cli/main.cjs"
+    "lingo-tracker": "node dist/apps/cli/main.cjs",
+    "docs:dev": "cd docs-site && pnpm start",
+    "docs:build": "cd docs-site && pnpm build"
   },
   "keywords": [
     "translation",
