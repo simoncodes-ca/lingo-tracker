@@ -4,28 +4,32 @@
     "comment": "Success message after creating a collection",
     "es": "Colección creada exitosamente",
     "fr-ca": "Collection créée avec succès",
-    "ru": "Коллекция успешно создана."
+    "ru": "Коллекция успешно создана.",
+    "ja": "コレクションが正常に作成されました"
   },
   "updated": {
     "source": "Collection updated successfully",
     "comment": "Success message after editing a collection",
     "es": "Colección actualizada exitosamente",
     "fr-ca": "Collection mise à jour avec succès",
-    "ru": "Коллекция успешно обновлена."
+    "ru": "Коллекция успешно обновлена.",
+    "ja": "コレクションが正常に更新されました"
   },
   "deleted": {
     "source": "Collection deleted successfully",
     "comment": "Success message after deleting a collection",
     "es": "Colección eliminada exitosamente",
     "fr-ca": "Collection supprimée avec succès",
-    "ru": "Коллекция успешно удалена."
+    "ru": "Коллекция успешно удалена.",
+    "ja": "コレクションは正常に削除されました"
   },
   "error": {
     "source": "An error occurred. Please try again.",
     "comment": "Generic error message for failed operations",
     "es": "Ocurrió un error. Por favor, inténtalo de nuevo.",
     "fr-ca": "Une erreur s'est produite. Veuillez réessayer.",
-    "ru": "Произошла ошибка. Пожалуйста, попробуйте еще раз."
+    "ru": "Произошла ошибка. Пожалуйста, попробуйте еще раз.",
+    "ja": "エラーが発生しました。もう一度お試しください。"
   },
   "loadFailed": {
     "source": "Failed to load collections",
@@ -35,7 +39,8 @@
     ],
     "es": "No se pudieron cargar las colecciones",
     "fr-ca": "Échec du chargement des collections",
-    "ru": "Не удалось загрузить коллекции."
+    "ru": "Не удалось загрузить коллекции.",
+    "ja": "コレクションの読み込みに失敗しました"
   },
   "createFailed": {
     "source": "Failed to create collection",
@@ -45,7 +50,8 @@
     ],
     "es": "No se pudo crear la colección",
     "fr-ca": "Impossible de créer la collection",
-    "ru": "Не удалось создать коллекцию."
+    "ru": "Не удалось создать коллекцию.",
+    "ja": "コレクションの作成に失敗しました"
   },
   "updateFailed": {
     "source": "Failed to update collection",
@@ -55,7 +61,8 @@
     ],
     "es": "No se pudo actualizar la colección",
     "fr-ca": "Échec de la mise à jour de la collection",
-    "ru": "Не удалось обновить коллекцию."
+    "ru": "Не удалось обновить коллекцию.",
+    "ja": "コレクションの更新に失敗しました"
   },
   "deleteFailed": {
     "source": "Failed to delete collection",
@@ -65,6 +72,7 @@
     ],
     "es": "No se pudo eliminar la colección",
     "fr-ca": "Échec de la suppression de la collection",
-    "ru": "Не удалось удалить коллекцию."
+    "ru": "Не удалось удалить коллекцию.",
+    "ja": "コレクションの削除に失敗しました"
   }
 }

@@ -7,7 +7,8 @@
     ],
     "es": "Herramientas de SimonCodes-CA",
     "fr-ca": "Outils de SimonCodes-CA",
-    "ru": "Инструменты от SimonCodes-CA"
+    "ru": "Инструменты от SimonCodes-CA",
+    "ja": "SimonCodes-CAによるツール"
   },
   "githubTitle": {
     "source": "GitHub Repository",
@@ -17,7 +18,8 @@
     ],
     "es": "Repositorio de GitHub",
     "fr-ca": "Dépôt GitHub",
-    "ru": "Репозиторий GitHub"
+    "ru": "Репозиторий GitHub",
+    "ja": "GitHubリポジトリ"
   },
   "githubLabel": {
     "source": "GitHub",
@@ -27,7 +29,8 @@
     ],
     "es": "GitHub",
     "fr-ca": "GitHub",
-    "ru": "GitHub"
+    "ru": "GitHub",
+    "ja": "GitHub"
   },
   "issuesTitle": {
     "source": "Report an Issue",
@@ -37,7 +40,8 @@
     ],
     "es": "Informar un problema",
     "fr-ca": "Signaler un problème",
-    "ru": "Сообщить о проблеме"
+    "ru": "Сообщить о проблеме",
+    "ja": "問題を報告する"
   },
   "issuesLabel": {
     "source": "Issues",
@@ -47,6 +51,7 @@
     ],
     "es": "Asuntos",
     "fr-ca": "Problèmes",
-    "ru": "Проблемы"
+    "ru": "Проблемы",
+    "ja": "問題"
   }
 }

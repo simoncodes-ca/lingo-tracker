@@ -7,7 +7,8 @@
     ],
     "es": "Editar",
     "fr-ca": "Modifier",
-    "ru": "Редактировать"
+    "ru": "Редактировать",
+    "ja": "編集"
   },
   "delete": {
     "source": "Delete",
@@ -17,7 +18,8 @@
     ],
     "es": "Eliminar",
     "fr-ca": "Supprimer",
-    "ru": "Удалить"
+    "ru": "Удалить",
+    "ja": "消去"
   },
   "retry": {
     "source": "Retry",
@@ -27,40 +29,46 @@
     ],
     "es": "Reintentar",
     "fr-ca": "Réessayer",
-    "ru": "Повторить попытку"
+    "ru": "Повторить попытку",
+    "ja": "リトライ"
   },
   "cancel": {
     "source": "Cancel",
     "comment": "Text on a button to cancel whatever opration the user was about to do",
     "es": "Cancelar",
     "fr-ca": "Annuler",
-    "ru": "Отмена"
+    "ru": "Отмена",
+    "ja": "キャンセル"
   },
   "ok": {
     "source": "OK",
     "es": "OK",
     "fr-ca": "OK",
-    "ru": "ХОРОШО"
+    "ru": "ХОРОШО",
+    "ja": "わかりました"
   },
   "save": {
     "source": "Save",
     "comment": "Save button text in edit mode",
     "es": "Guardar",
     "fr-ca": "Enregistrer",
-    "ru": "Сохранять"
+    "ru": "Сохранять",
+    "ja": "保存"
   },
   "back": {
     "source": "Back",
     "es": "Volver",
     "fr-ca": "Retour",
-    "ru": "Назад"
+    "ru": "Назад",
+    "ja": "戻る"
   },
   "clickToCopy": {
     "source": "click to copy",
     "comment": "Message to user that item can be copied to clipboard",
     "es": "clic para copiar",
     "fr-ca": "cliquer pour copier",
-    "ru": "нажмите, чтобы скопировать"
+    "ru": "нажмите, чтобы скопировать",
+    "ja": "クリックしてコピー"
   },
   "move": {
     "source": "Move",
@@ -70,7 +78,8 @@
     ],
     "es": "Mover",
     "fr-ca": "Déplacer",
-    "ru": "Двигаться"
+    "ru": "Двигаться",
+    "ja": "動く"
   },
   "translate": {
     "source": "Translate",
@@ -80,7 +89,8 @@
     ],
     "es": "Traducir",
     "fr-ca": "Traduire",
-    "ru": "Переводить"
+    "ru": "Переводить",
+    "ja": "翻訳する"
   },
   "selectAll": {
     "source": "Select All",
@@ -90,7 +100,8 @@
     ],
     "es": "Seleccionar todo",
     "fr-ca": "Sélectionner tout",
-    "ru": "Выбрать все"
+    "ru": "Выбрать все",
+    "ja": "すべて選択"
   },
   "clearAll": {
     "source": "Clear All",
@@ -100,7 +111,8 @@
     ],
     "es": "Borrar todo",
     "fr-ca": "Effacer tout",
-    "ru": "Очистить все"
+    "ru": "Очистить все",
+    "ja": "すべてクリア"
   },
   "close": {
     "source": "Close",
@@ -110,7 +122,8 @@
     ],
     "es": "Cerca",
     "fr-ca": "Fermer",
-    "ru": "Закрывать"
+    "ru": "Закрывать",
+    "ja": "近い"
   },
   "dismiss": {
     "source": "Dismiss",
@@ -120,6 +133,7 @@
     ],
     "es": "Despedir",
     "fr-ca": "Rejeter",
-    "ru": "Увольнять"
+    "ru": "Увольнять",
+    "ja": "却下する"
   }
 }

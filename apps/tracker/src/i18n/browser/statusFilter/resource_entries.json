@@ -7,7 +7,8 @@
     ],
     "es": "Necesita trabajo",
     "fr-ca": "Nécessite des travaux",
-    "ru": "Требуется доработка"
+    "ru": "Требуется доработка",
+    "ja": "改善が必要"
   },
   "ariaLabelX": {
     "source": "Filter by status. Currently showing: { text }",
@@ -17,6 +18,7 @@
     ],
     "es": "Filtrar por estado. Actualmente se muestra: {texto}",
     "fr-ca": "Filtrer par statut. Affichage actuel : { texte }",
-    "ru": "Фильтр по статусу. В данный момент отображается: { текст }"
+    "ru": "Фильтр по статусу. В данный момент отображается: { текст }",
+    "ja": "ステータスで絞り込み。現在表示中：{テキスト}"
   }
 }

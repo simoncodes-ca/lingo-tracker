@@ -4,27 +4,31 @@
     "comment": "Theme switcher light mode label",
     "es": "Claro",
     "fr-ca": "Clair",
-    "ru": "Свет"
+    "ru": "Свет",
+    "ja": "ライト"
   },
   "dark": {
     "source": "Dark",
     "comment": "Theme switcher dark mode label",
     "es": "Oscuro",
     "fr-ca": "Sombre",
-    "ru": "Темный"
+    "ru": "Темный",
+    "ja": "暗い"
   },
   "system": {
     "source": "System",
     "comment": "Theme switcher system mode label",
     "es": "Sistema",
     "fr-ca": "Système",
-    "ru": "Система"
+    "ru": "Система",
+    "ja": "システム"
   },
   "settings": {
     "source": "Theme settings",
     "comment": "Aria-label for theme settings button",
     "es": "Configuración del tema",
     "fr-ca": "Paramètres du thème",
-    "ru": "Настройки темы"
+    "ru": "Настройки темы",
+    "ja": "テーマ設定"
   }
 }

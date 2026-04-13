@@ -7,7 +7,8 @@
     ],
     "es": "Nuevo",
     "fr-ca": "Nouveau",
-    "ru": "Новый"
+    "ru": "Новый",
+    "ja": "新しい"
   },
   "folderAriaLabelX": {
     "source": "Folder { name }",
@@ -17,7 +18,8 @@
     ],
     "es": "Carpeta { nombre }",
     "fr-ca": "Dossier { nom }",
-    "ru": "Папка { имя }"
+    "ru": "Папка { имя }",
+    "ja": "フォルダ {名前}"
   },
   "dragToMoveFolderAriaLabel": {
     "source": "Drag to move folder",
@@ -27,7 +29,8 @@
     ],
     "es": "Arrastrar para mover la carpeta",
     "fr-ca": "Faites glisser pour déplacer le dossier",
-    "ru": "Перетащите, чтобы переместить папку."
+    "ru": "Перетащите, чтобы переместить папку.",
+    "ja": "フォルダをドラッグして移動"
   },
   "deleteFolderAriaLabelX": {
     "source": "Delete folder { name }",
@@ -37,6 +40,7 @@
     ],
     "es": "Eliminar carpeta { nombre }",
     "fr-ca": "Supprimer le dossier { nom }",
-    "ru": "Удалить папку {имя}"
+    "ru": "Удалить папку {имя}",
+    "ja": "フォルダ {名前} を削除します"
   }
 }

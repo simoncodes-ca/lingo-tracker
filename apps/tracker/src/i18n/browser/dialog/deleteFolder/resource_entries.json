@@ -7,7 +7,8 @@
     ],
     "es": "Eliminar carpeta",
     "fr-ca": "Supprimer le dossier",
-    "ru": "Удалить папку"
+    "ru": "Удалить папку",
+    "ja": "フォルダを削除する"
   },
   "messageX": {
     "source": "Delete \"{name}\" and all its contents?",
@@ -17,6 +18,7 @@
     ],
     "es": "¿Eliminar \"{name}\" y todo su contenido?",
     "fr-ca": "Supprimer \"{name}\" et tout son contenu ?",
-    "ru": "Удалить \"{name}\" и всё его содержимое?"
+    "ru": "Удалить \"{name}\" и всё его содержимое?",
+    "ja": "「{name}」とその内容をすべて削除しますか？"
   }
 }

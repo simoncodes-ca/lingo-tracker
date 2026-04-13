@@ -7,7 +7,8 @@
     ],
     "es": "Nombre de la carpeta",
     "fr-ca": "Nom du dossier",
-    "ru": "Название папки"
+    "ru": "Название папки",
+    "ja": "フォルダ名"
   },
   "nameRequired": {
     "source": "Folder name is required",
@@ -17,7 +18,8 @@
     ],
     "es": "El nombre de la carpeta es obligatorio",
     "fr-ca": "Le nom du dossier est requis.",
-    "ru": "Название папки обязательно для указания."
+    "ru": "Название папки обязательно для указания.",
+    "ja": "フォルダ名は必須です"
   },
   "namePatternError": {
     "source": "Only letters, numbers, dashes, and underscores allowed",
@@ -27,6 +29,7 @@
     ],
     "es": "Solo se permiten letras, números, guiones y guiones bajos.",
     "fr-ca": "Seules les lettres, les chiffres, les tirets et les traits de soulignement sont autorisés.",
-    "ru": "Разрешается использовать только буквы, цифры, дефисы и подчеркивания."
+    "ru": "Разрешается использовать только буквы, цифры, дефисы и подчеркивания.",
+    "ja": "使用できる文字、数字、ハイフン、アンダースコアのみです。"
   }
 }

@@ -4,6 +4,7 @@
     "comment": "Validation error for required fields",
     "es": "Este campo es obligatorio",
     "fr-ca": "Ce champ est requis",
-    "ru": "Это поле обязательно к заполнению"
+    "ru": "Это поле обязательно к заполнению",
+    "ja": "この項目は必須です"
   }
 }

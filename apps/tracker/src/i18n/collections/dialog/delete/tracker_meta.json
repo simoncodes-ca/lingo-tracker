@@ -17,6 +17,11 @@
       "checksum": "0f440420a40b59ebe5a8eae593b4bc31",
       "baseChecksum": "8cea924216e9aff75416cfe2a64e362e",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "f87f76e7fdb4ade8d4a1a42261f66690",
+      "baseChecksum": "8cea924216e9aff75416cfe2a64e362e",
+      "status": "translated"
     }
   },
   "message": {
@@ -35,6 +40,11 @@
     },
     "ru": {
       "checksum": "8e9636f32d40af6bd958012fed558f26",
+      "baseChecksum": "df278e737e65dbbac79ec7c2ae2ea04e",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "cf8190775fd35a0a75bb78b90a8a0847",
       "baseChecksum": "df278e737e65dbbac79ec7c2ae2ea04e",
       "status": "translated"
     }

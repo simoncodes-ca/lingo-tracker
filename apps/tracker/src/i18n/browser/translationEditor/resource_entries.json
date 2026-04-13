@@ -7,7 +7,8 @@
     ],
     "es": "Cerrar diálogo",
     "fr-ca": "Fermer la boîte de dialogue",
-    "ru": "Закрыть диалог"
+    "ru": "Закрыть диалог",
+    "ja": "ダイアログを閉じる"
   },
   "translationKey": {
     "source": "Translation Key",
@@ -17,7 +18,8 @@
     ],
     "es": "Clave de traducción",
     "fr-ca": "Clé de traduction",
-    "ru": "Ключ перевода"
+    "ru": "Ключ перевода",
+    "ja": "翻訳キー"
   },
   "keyHint": {
     "source": "Use only letters, numbers, underscores, and hyphens",
@@ -27,7 +29,8 @@
     ],
     "es": "Utilice únicamente letras, números, guiones bajos y guiones.",
     "fr-ca": "Utilisez seulement des lettres, des chiffres, des traits de soulignement et des tirets.",
-    "ru": "Используйте только буквы, цифры, подчеркивания и дефисы."
+    "ru": "Используйте только буквы, цифры, подчеркивания и дефисы.",
+    "ja": "文字、数字、アンダースコア、ハイフンのみを使用してください。"
   },
   "baseBadge": {
     "source": "Base",
@@ -37,7 +40,8 @@
     ],
     "es": "Base",
     "fr-ca": "Base",
-    "ru": "База"
+    "ru": "База",
+    "ja": "ベース"
   },
   "locationLabel": {
     "source": "Location:",
@@ -47,7 +51,8 @@
     ],
     "es": "Ubicación:",
     "fr-ca": "Emplacement :",
-    "ru": "Расположение:"
+    "ru": "Расположение:",
+    "ja": "位置："
   },
   "locationTabHint": {
     "source": "Choose a different folder for this translation resource.",
@@ -57,7 +62,8 @@
     ],
     "es": "Elija una carpeta diferente para este recurso de traducción.",
     "fr-ca": "Choisissez un autre dossier pour cette ressource de traduction.",
-    "ru": "Выберите другую папку для этого ресурса перевода."
+    "ru": "Выберите другую папку для этого ресурса перевода.",
+    "ja": "この翻訳リソースの保存先フォルダを別のフォルダに選択してください。"
   },
   "localeTranslationX": {
     "source": "{locale} Translation",
@@ -67,7 +73,8 @@
     ],
     "es": "{locale} Traducción",
     "fr-ca": "{locale} Traduction",
-    "ru": "{locale} Перевод"
+    "ru": "{locale} Перевод",
+    "ja": "{locale} 翻訳"
   },
   "enterTranslationX": {
     "source": "Enter {locale} translation...",
@@ -77,7 +84,8 @@
     ],
     "es": "Ingrese la traducción de {locale}...",
     "fr-ca": "Entrez la traduction {locale}...",
-    "ru": "Введите {locale} перевод..."
+    "ru": "Введите {locale} перевод...",
+    "ja": "{locale} 翻訳を入力してください..."
   },
   "baseValueRequired": {
     "source": "Base translation is required",
@@ -87,7 +95,8 @@
     ],
     "es": "Se requiere traducción base",
     "fr-ca": "La traduction de base est requise",
-    "ru": "Требуется базовый перевод."
+    "ru": "Требуется базовый перевод.",
+    "ja": "基本翻訳が必要です"
   },
   "commentLabel": {
     "source": "Comment (Optional)",
@@ -97,7 +106,8 @@
     ],
     "es": "Comentario (opcional)",
     "fr-ca": "Commentaire (facultatif)",
-    "ru": "Комментарий (необязательно)"
+    "ru": "Комментарий (необязательно)",
+    "ja": "コメント（任意）"
   },
   "commentPlaceholder": {
     "source": "Add context for translators...",
@@ -107,7 +117,8 @@
     ],
     "es": "Añadir contexto para los traductores...",
     "fr-ca": "Ajouter du contexte pour les traducteurs...",
-    "ru": "Добавьте контекст для переводчиков..."
+    "ru": "Добавьте контекст для переводчиков...",
+    "ja": "翻訳者向けに背景情報を追加してください..."
   },
   "commentHint": {
     "source": "Provide context or instructions for translators",
@@ -117,7 +128,8 @@
     ],
     "es": "Proporcionar contexto o instrucciones para los traductores",
     "fr-ca": "Fournir un contexte ou des instructions aux traducteurs",
-    "ru": "Предоставьте контекст или инструкции для переводчиков."
+    "ru": "Предоставьте контекст или инструкции для переводчиков.",
+    "ja": "翻訳者向けに背景情報や指示を提供する"
   },
   "otherLocalesToggleX": {
     "source": "Add translations for other locales ({count} available)",
@@ -127,7 +139,8 @@
     ],
     "es": "Agregar traducciones para otras configuraciones regionales ({count} disponible)",
     "fr-ca": "Ajouter des traductions pour d'autres langues ({count} disponibles)",
-    "ru": "Добавить переводы для других языковых версий ({count} доступны)"
+    "ru": "Добавить переводы для других языковых версий ({count} доступны)",
+    "ja": "他のロケールの翻訳を追加してください（{count} が利用可能です）"
   },
   "status": {
     "source": "Status",
@@ -137,7 +150,8 @@
     ],
     "es": "Estado",
     "fr-ca": "Statut",
-    "ru": "Статус"
+    "ru": "Статус",
+    "ja": "状態"
   },
   "saving": {
     "source": "Saving...",
@@ -147,7 +161,8 @@
     ],
     "es": "Ahorro...",
     "fr-ca": "Économie...",
-    "ru": "Сохранение..."
+    "ru": "Сохранение...",
+    "ja": "保存中..."
   },
   "editTitle": {
     "source": "Edit Translation",
@@ -157,7 +172,8 @@
     ],
     "es": "Editar traducción",
     "fr-ca": "Modifier la traduction",
-    "ru": "Редактировать перевод"
+    "ru": "Редактировать перевод",
+    "ja": "翻訳を編集する"
   },
   "createTitle": {
     "source": "Create Translation",
@@ -167,7 +183,8 @@
     ],
     "es": "Crear traducción",
     "fr-ca": "Créer une traduction",
-    "ru": "Создать перевод"
+    "ru": "Создать перевод",
+    "ja": "翻訳を作成する"
   },
   "editSubtitle": {
     "source": "Update translation values and metadata",
@@ -177,7 +194,8 @@
     ],
     "es": "Actualizar los valores de traducción y los metadatos",
     "fr-ca": "Mise à jour des valeurs de traduction et des métadonnées",
-    "ru": "Обновите значения перевода и метаданные."
+    "ru": "Обновите значения перевода и метаданные.",
+    "ja": "翻訳値とメタデータを更新する"
   },
   "createSubtitle": {
     "source": "Add a new translation entry to your collection",
@@ -187,7 +205,8 @@
     ],
     "es": "Añade una nueva entrada de traducción a tu colección",
     "fr-ca": "Ajoutez une nouvelle entrée de traduction à votre collection",
-    "ru": "Добавьте новую запись о переводе в свою коллекцию."
+    "ru": "Добавьте новую запись о переводе в свою коллекцию.",
+    "ja": "コレクションに新しい翻訳エントリを追加する"
   },
   "updateButton": {
     "source": "Update Translation",
@@ -197,7 +216,8 @@
     ],
     "es": "Actualizar traducción",
     "fr-ca": "Mise à jour de la traduction",
-    "ru": "Обновить перевод"
+    "ru": "Обновить перевод",
+    "ja": "翻訳を更新"
   },
   "saveButton": {
     "source": "Save Translation",
@@ -207,7 +227,8 @@
     ],
     "es": "Guardar traducción",
     "fr-ca": "Enregistrer la traduction",
-    "ru": "Сохранить перевод"
+    "ru": "Сохранить перевод",
+    "ja": "翻訳を保存"
   },
   "keyCopied": {
     "source": "Similar resource key copied",
@@ -217,7 +238,8 @@
     ],
     "es": "Clave de recurso similar copiada",
     "fr-ca": "Clé de ressource similaire copiée",
-    "ru": "Аналогичный ключ ресурса скопирован."
+    "ru": "Аналогичный ключ ресурса скопирован.",
+    "ja": "同様のリソースキーがコピーされました"
   },
   "copyFailed": {
     "source": "Failed to copy",
@@ -227,7 +249,8 @@
     ],
     "es": "No se pudo copiar",
     "fr-ca": "Échec de la copie",
-    "ru": "Не удалось скопировать"
+    "ru": "Не удалось скопировать",
+    "ja": "コピーに失敗しました"
   },
   "keyRequired": {
     "source": "Translation key is required",
@@ -237,7 +260,8 @@
     ],
     "es": "Se requiere clave de traducción",
     "fr-ca": "Une clé de traduction est requise.",
-    "ru": "Требуется ключ перевода"
+    "ru": "Требуется ключ перевода",
+    "ja": "翻訳キーが必要です"
   },
   "keyPatternError": {
     "source": "Only letters, numbers, underscores, and hyphens allowed",
@@ -247,6 +271,7 @@
     ],
     "es": "Solo se permiten letras, números, guiones bajos y guiones.",
     "fr-ca": "Seules les lettres, les chiffres, les traits de soulignement et les tirets sont autorisés.",
-    "ru": "Разрешаются только буквы, цифры, подчеркивания и дефисы."
+    "ru": "Разрешаются только буквы, цифры, подчеркивания и дефисы.",
+    "ja": "使用できる文字は、英字、数字、アンダースコア、ハイフンのみです。"
   }
 }

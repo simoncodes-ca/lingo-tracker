@@ -7,7 +7,8 @@
     ],
     "es": "Arrastrar para mover la traducción",
     "fr-ca": "Faites glisser pour déplacer la traduction",
-    "ru": "Перетащите, чтобы переместить перевод."
+    "ru": "Перетащите, чтобы переместить перевод.",
+    "ja": "ドラッグして翻訳を移動"
   },
   "copyKeyAriaLabel": {
     "source": "Copy key",
@@ -17,7 +18,8 @@
     ],
     "es": "Copiar clave",
     "fr-ca": "Copier la clé",
-    "ru": "Копировать ключ"
+    "ru": "Копировать ключ",
+    "ja": "コピーキー"
   },
   "hideCommentAriaLabel": {
     "source": "Hide comment",
@@ -27,7 +29,8 @@
     ],
     "es": "Ocultar comentario",
     "fr-ca": "Masquer le commentaire",
-    "ru": "Скрыть комментарий"
+    "ru": "Скрыть комментарий",
+    "ja": "コメントを非表示にする"
   },
   "showCommentAriaLabel": {
     "source": "Show comment",
@@ -37,7 +40,8 @@
     ],
     "es": "Mostrar comentario",
     "fr-ca": "Afficher le commentaire",
-    "ru": "Показать комментарий"
+    "ru": "Показать комментарий",
+    "ja": "コメントを表示"
   },
   "moreActionsAriaLabel": {
     "source": "More actions",
@@ -47,7 +51,8 @@
     ],
     "es": "Más acciones",
     "fr-ca": "Plus d'actions",
-    "ru": "Дополнительные действия"
+    "ru": "Дополнительные действия",
+    "ja": "その他の操作"
   },
   "editAriaLabel": {
     "source": "Edit translation",
@@ -57,7 +62,8 @@
     ],
     "es": "Editar traducción",
     "fr-ca": "Modifier la traduction",
-    "ru": "Редактировать перевод"
+    "ru": "Редактировать перевод",
+    "ja": "翻訳を編集する"
   },
   "translateAriaLabel": {
     "source": "Translate resource",
@@ -67,7 +73,8 @@
     ],
     "es": "Traducir recurso",
     "fr-ca": "ressource de traduction",
-    "ru": "Перевести ресурс"
+    "ru": "Перевести ресурс",
+    "ja": "リソースを翻訳する"
   },
   "deleteAriaLabel": {
     "source": "Delete translation",
@@ -77,7 +84,8 @@
     ],
     "es": "Eliminar traducción",
     "fr-ca": "Supprimer la traduction",
-    "ru": "Удалить перевод"
+    "ru": "Удалить перевод",
+    "ja": "翻訳を削除"
   },
   "noStatuses": {
     "source": "No statuses",
@@ -87,6 +95,7 @@
     ],
     "es": "Sin estados",
     "fr-ca": "Aucun statut",
-    "ru": "Нет статусов"
+    "ru": "Нет статусов",
+    "ja": "ステータスなし"
   }
 }

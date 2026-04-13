@@ -7,7 +7,8 @@
     ],
     "es": "Filtrar carpetas",
     "fr-ca": "dossiers de filtrage",
-    "ru": "Фильтрация папок"
+    "ru": "Фильтрация папок",
+    "ja": "フォルダーをフィルタリングする"
   },
   "showCurrentFolderTooltip": {
     "source": "Show only current folder",
@@ -17,7 +18,8 @@
     ],
     "es": "Mostrar solo la carpeta actual",
     "fr-ca": "Afficher uniquement le dossier actuel",
-    "ru": "Показать только текущую папку"
+    "ru": "Показать только текущую папку",
+    "ja": "現在のフォルダーのみを表示する"
   },
   "showNestedResourcesTooltip": {
     "source": "Show all nested resources",
@@ -27,7 +29,8 @@
     ],
     "es": "Mostrar todos los recursos anidados",
     "fr-ca": "Afficher toutes les ressources imbriquées",
-    "ru": "Показать все вложенные ресурсы"
+    "ru": "Показать все вложенные ресурсы",
+    "ja": "ネストされたリソースをすべて表示する"
   },
   "addFolderAriaLabel": {
     "source": "Add folder",
@@ -37,7 +40,8 @@
     ],
     "es": "Agregar carpeta",
     "fr-ca": "Ajouter un dossier",
-    "ru": "Добавить папку"
+    "ru": "Добавить папку",
+    "ja": "フォルダーを追加する"
   },
   "addFolderTooltip": {
     "source": "Add folder (Ctrl+Shift+N)",
@@ -47,6 +51,7 @@
     ],
     "es": "Agregar carpeta (Ctrl+Shift+N)",
     "fr-ca": "Ajouter un dossier (Ctrl+Maj+N)",
-    "ru": "Добавить папку (Ctrl+Shift+N)"
+    "ru": "Добавить папку (Ctrl+Shift+N)",
+    "ja": "フォルダを追加する（Ctrl+Shift+N）"
   }
 }

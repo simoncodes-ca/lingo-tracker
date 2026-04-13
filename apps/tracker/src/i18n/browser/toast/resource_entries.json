@@ -7,7 +7,8 @@
     ],
     "es": "Copiado al portapapeles",
     "fr-ca": "Copié dans le presse-papiers",
-    "ru": "Скопировано в буфер обмена"
+    "ru": "Скопировано в буфер обмена",
+    "ja": "クリップボードにコピーされました"
   },
   "copyFailed": {
     "source": "Failed to copy",
@@ -17,7 +18,8 @@
     ],
     "es": "No se pudo copiar",
     "fr-ca": "Échec de la copie",
-    "ru": "Не удалось скопировать"
+    "ru": "Не удалось скопировать",
+    "ja": "コピーに失敗しました"
   },
   "resourceDeleted": {
     "source": "Resource deleted successfully",
@@ -27,7 +29,8 @@
     ],
     "es": "Recurso eliminado exitosamente",
     "fr-ca": "Ressource supprimée avec succès",
-    "ru": "Ресурс успешно удален"
+    "ru": "Ресурс успешно удален",
+    "ja": "リソースは正常に削除されました"
   },
   "deleteFailed": {
     "source": "Failed to delete resource",
@@ -37,7 +40,8 @@
     ],
     "es": "No se pudo eliminar el recurso",
     "fr-ca": "Échec de la suppression de la ressource",
-    "ru": "Не удалось удалить ресурс"
+    "ru": "Не удалось удалить ресурс",
+    "ja": "リソースの削除に失敗しました"
   },
   "translateFailed": {
     "source": "Failed to auto-translate resource",
@@ -47,7 +51,8 @@
     ],
     "es": "No se pudo traducir automáticamente el recurso",
     "fr-ca": "Échec de la traduction automatique de la ressource",
-    "ru": "Не удалось выполнить автоматический перевод ресурса."
+    "ru": "Не удалось выполнить автоматический перевод ресурса.",
+    "ja": "リソースの自動翻訳に失敗しました"
   },
   "translationUpdated": {
     "source": "Translation updated successfully",
@@ -57,7 +62,8 @@
     ],
     "es": "Traducción actualizada exitosamente",
     "fr-ca": "Traduction mise à jour avec succès",
-    "ru": "Перевод успешно обновлен."
+    "ru": "Перевод успешно обновлен.",
+    "ja": "翻訳が正常に更新されました"
   },
   "localeTranslated": {
     "source": "1 locale translated successfully",
@@ -67,7 +73,8 @@
     ],
     "es": "1 configuración regional traducida correctamente",
     "fr-ca": "1 langue traduite avec succès",
-    "ru": "1 локализация успешно переведена"
+    "ru": "1 локализация успешно переведена",
+    "ja": "1つのロケールが正常に翻訳されました"
   },
   "localesTranslatedX": {
     "source": "{count} locales translated successfully",
@@ -77,7 +84,8 @@
     ],
     "es": "{count} locales traducidos correctamente",
     "fr-ca": "{count} Les paramètres régionaux ont été traduits avec succès",
-    "ru": "{count} Локали успешно переведены"
+    "ru": "{count} Локали успешно переведены",
+    "ja": "{count}ロケールが正常に翻訳されました"
   },
   "allLocalesUpToDate": {
     "source": "All locales are already up to date",
@@ -87,7 +95,8 @@
     ],
     "es": "Todas las configuraciones regionales ya están actualizadas",
     "fr-ca": "Tous les emplacements sont déjà à jour.",
-    "ru": "Все языковые версии уже обновлены."
+    "ru": "Все языковые версии уже обновлены.",
+    "ja": "すべての地域は既に最新の状態です"
   },
   "skippedLocalesX": {
     "source": "Skipped locales (ICU format): {locales}",
@@ -97,7 +106,8 @@
     ],
     "es": "Configuraciones regionales omitidas (formato ICU): {locales}",
     "fr-ca": "Paramètres régionaux ignorés (format ICU) : {locales}",
-    "ru": "Пропущенные локали (формат ICU): {locales}"
+    "ru": "Пропущенные локали (формат ICU): {locales}",
+    "ja": "スキップされたロケール (ICU 形式): {locales}"
   },
   "resourceCreated": {
     "source": "Resource created successfully",
@@ -107,7 +117,8 @@
     ],
     "es": "Recurso creado exitosamente",
     "fr-ca": "Ressource créée avec succès",
-    "ru": "Ресурс успешно создан."
+    "ru": "Ресурс успешно создан.",
+    "ja": "リソースが正常に作成されました"
   },
   "autoTranslationSkippedX": {
     "source": "Auto-translation skipped for {locales} (ICU format not supported)",
@@ -117,7 +128,8 @@
     ],
     "es": "Se omitió la traducción automática para {locales} (formato ICU no compatible)",
     "fr-ca": "Traduction automatique ignorée pour {locales} (format ICU non pris en charge)",
-    "ru": "Автоматический перевод пропущен для {locales} (формат ICU не поддерживается)"
+    "ru": "Автоматический перевод пропущен для {locales} (формат ICU не поддерживается)",
+    "ja": "{locales} の自動翻訳はスキップされました（ICU形式はサポートされていません）。"
   },
   "resourceAlreadyInFolder": {
     "source": "Resource is already in this folder",
@@ -127,7 +139,8 @@
     ],
     "es": "El recurso ya está en esta carpeta",
     "fr-ca": "La ressource se trouve déjà dans ce dossier.",
-    "ru": "Ресурс уже находится в этой папке."
+    "ru": "Ресурс уже находится в этой папке.",
+    "ja": "リソースは既にこのフォルダにあります"
   },
   "resourceMovedX": {
     "source": "Moved \"{name}\" to {folder}",
@@ -137,7 +150,8 @@
     ],
     "es": "Se movió \"{name}\" a {folder}",
     "fr-ca": "Déplacé « {name} » vers {folder}",
-    "ru": "Перемещено \"{name}\" в {folder}"
+    "ru": "Перемещено \"{name}\" в {folder}",
+    "ja": "\"{name}\" を {folder} に移動しました。"
   },
   "folderAlreadyAtLocation": {
     "source": "Folder is already at this location",
@@ -147,7 +161,8 @@
     ],
     "es": "La carpeta ya está en esta ubicación",
     "fr-ca": "Le dossier est déjà à cet emplacement.",
-    "ru": "Папка уже находится по этому адресу."
+    "ru": "Папка уже находится по этому адресу.",
+    "ja": "フォルダは既にこの場所にあります"
   },
   "folderMovedX": {
     "source": "Moved \"{name}\" into {dest}",
@@ -157,7 +172,8 @@
     ],
     "es": "Se movió \"{name}\" a {dest}",
     "fr-ca": "Déplacé « {name} » dans {dest}",
-    "ru": "Перемещено \"{name}\" в {dest}"
+    "ru": "Перемещено \"{name}\" в {dest}",
+    "ja": "\"{name}\" を {dest} に移動しました。"
   },
   "moveResourceFailed": {
     "source": "Failed to move resource",
@@ -167,7 +183,8 @@
     ],
     "es": "No se pudo mover el recurso",
     "fr-ca": "Échec du déplacement de la ressource",
-    "ru": "Не удалось переместить ресурс."
+    "ru": "Не удалось переместить ресурс.",
+    "ja": "リソースの移動に失敗しました"
   },
   "moveFolderFailed": {
     "source": "Failed to move folder",
@@ -177,7 +194,8 @@
     ],
     "es": "No se pudo mover la carpeta",
     "fr-ca": "Impossible de déplacer le dossier",
-    "ru": "Не удалось переместить папку."
+    "ru": "Не удалось переместить папку.",
+    "ja": "フォルダの移動に失敗しました"
   },
   "loadFoldersFailed": {
     "source": "Failed to load folders",
@@ -187,7 +205,8 @@
     ],
     "es": "No se pudieron cargar las carpetas",
     "fr-ca": "Échec du chargement des dossiers",
-    "ru": "Не удалось загрузить папки."
+    "ru": "Не удалось загрузить папки.",
+    "ja": "フォルダの読み込みに失敗しました"
   },
   "loadFolderChildrenFailed": {
     "source": "Failed to load folder contents",
@@ -197,7 +216,8 @@
     ],
     "es": "No se pudo cargar el contenido de la carpeta",
     "fr-ca": "Impossible de charger le contenu du dossier",
-    "ru": "Не удалось загрузить содержимое папки."
+    "ru": "Не удалось загрузить содержимое папки.",
+    "ja": "フォルダの内容の読み込みに失敗しました"
   },
   "createFolderFailed": {
     "source": "Failed to create folder",
@@ -207,7 +227,8 @@
     ],
     "es": "Error al crear la carpeta",
     "fr-ca": "Impossible de créer le dossier",
-    "ru": "Не удалось создать папку."
+    "ru": "Не удалось создать папку.",
+    "ja": "フォルダの作成に失敗しました"
   },
   "deleteFolderFailed": {
     "source": "Failed to delete folder",
@@ -217,7 +238,8 @@
     ],
     "es": "No se pudo eliminar la carpeta",
     "fr-ca": "Échec de la suppression du dossier",
-    "ru": "Не удалось удалить папку."
+    "ru": "Не удалось удалить папку.",
+    "ja": "フォルダの削除に失敗しました"
   },
   "loadTranslationsFailed": {
     "source": "Failed to load translations",
@@ -227,7 +249,8 @@
     ],
     "es": "No se pudieron cargar las traducciones",
     "fr-ca": "Impossible de charger les traductions",
-    "ru": "Не удалось загрузить переводы."
+    "ru": "Не удалось загрузить переводы.",
+    "ja": "翻訳の読み込みに失敗しました"
   },
   "searchTranslationsFailed": {
     "source": "Failed to search translations",
@@ -237,7 +260,8 @@
     ],
     "es": "No se pudo buscar traducciones",
     "fr-ca": "Échec de la recherche de traductions",
-    "ru": "Поиск переводов не удался."
+    "ru": "Поиск переводов не удался.",
+    "ja": "翻訳の検索に失敗しました"
   },
   "checkCacheStatusFailed": {
     "source": "Failed to check cache status",
@@ -247,6 +271,7 @@
     ],
     "es": "No se pudo comprobar el estado de la caché",
     "fr-ca": "Échec de la vérification de l'état du cache",
-    "ru": "Не удалось проверить состояние кэша."
+    "ru": "Не удалось проверить состояние кэша.",
+    "ja": "キャッシュの状態を確認できませんでした"
   }
 }

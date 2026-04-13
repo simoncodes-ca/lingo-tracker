@@ -7,7 +7,8 @@
     ],
     "es": "Traducciones similares",
     "fr-ca": "Traductions similaires",
-    "ru": "Похожие переводы"
+    "ru": "Похожие переводы",
+    "ja": "類似の翻訳"
   },
   "idle": {
     "source": "Similar translations will appear as you type",
@@ -17,7 +18,8 @@
     ],
     "es": "Aparecerán traducciones similares a medida que escribas.",
     "fr-ca": "Des traductions semblables apparaîtront au fur et à mesure que vous taperez.",
-    "ru": "Похожие переводы будут появляться по мере ввода текста."
+    "ru": "Похожие переводы будут появляться по мере ввода текста.",
+    "ja": "入力すると類似の翻訳が表示されます"
   },
   "loading": {
     "source": "Searching for similar translations...",
@@ -27,7 +29,8 @@
     ],
     "es": "Buscando traducciones similares...",
     "fr-ca": "Recherche de traductions similaires...",
-    "ru": "Ищу похожие переводы..."
+    "ru": "Ищу похожие переводы...",
+    "ja": "類似の翻訳を検索中..."
   },
   "empty": {
     "source": "No similar translations found",
@@ -37,7 +40,8 @@
     ],
     "es": "No se encontraron traducciones similares",
     "fr-ca": "Aucune traduction semblable trouvée",
-    "ru": "Похожие переводы не найдены"
+    "ru": "Похожие переводы не найдены",
+    "ja": "類似の翻訳は見つかりませんでした"
   },
   "showMoreX": {
     "source": "Show {count} more",
@@ -47,6 +51,7 @@
     ],
     "es": "Mostrar {count} más",
     "fr-ca": "Show {count} more",
-    "ru": "Показать {count} больше"
+    "ru": "Показать {count} больше",
+    "ja": "{count} を表示"
   }
 }

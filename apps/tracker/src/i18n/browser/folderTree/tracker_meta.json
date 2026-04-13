@@ -17,6 +17,11 @@
       "checksum": "f57d9699734d8deab0bc3f9f0f060be3",
       "baseChecksum": "8aad8def5c9f4c9233fafc03317b3755",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "fea11c950afd6ad47292eb99e4e40ed7",
+      "baseChecksum": "8aad8def5c9f4c9233fafc03317b3755",
+      "status": "translated"
     }
   },
   "showCurrentFolderTooltip": {
@@ -35,6 +40,11 @@
     },
     "ru": {
       "checksum": "222cea24291a7d6423cfb9b054bd9e47",
+      "baseChecksum": "8bb8f6d2cca4c79060a585c3066b12dd",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "f090ff3a99674445f3d75beadfb801f0",
       "baseChecksum": "8bb8f6d2cca4c79060a585c3066b12dd",
       "status": "translated"
     }
@@ -57,6 +67,11 @@
       "checksum": "1cf4cbf25a09e2c5d6c5726732ab6bf7",
       "baseChecksum": "ef700afb7c85765e3b5122911e9461f7",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "20c2914867f9af50fb54675c28e8fc36",
+      "baseChecksum": "ef700afb7c85765e3b5122911e9461f7",
+      "status": "translated"
     }
   },
   "addFolderAriaLabel": {
@@ -77,6 +92,11 @@
       "checksum": "ffa55f40fbdf1182b30fc5247a1432c0",
       "baseChecksum": "b60bc90c77f58812129670659f977dbe",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "3bfda665313f438a5c1f8b67a0a5f767",
+      "baseChecksum": "b60bc90c77f58812129670659f977dbe",
+      "status": "translated"
     }
   },
   "addFolderTooltip": {
@@ -95,6 +115,11 @@
     },
     "ru": {
       "checksum": "2395fc181f2131519801b06b85121cc8",
+      "baseChecksum": "79e6232f92f3cc7bd3d268f4ec3c9e95",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "dcc7e150442bdf9e0e99890e676d94ef",
       "baseChecksum": "79e6232f92f3cc7bd3d268f4ec3c9e95",
       "status": "translated"
     }

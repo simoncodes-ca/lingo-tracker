@@ -7,7 +7,8 @@
     ],
     "es": "Información básica",
     "fr-ca": "Informations de base",
-    "ru": "Базовая информация"
+    "ru": "Базовая информация",
+    "ja": "基本情報"
   },
   "changeLocation": {
     "source": "Change Location",
@@ -17,7 +18,8 @@
     ],
     "es": "Cambiar ubicación",
     "fr-ca": "Changer d'emplacement",
-    "ru": "Изменить местоположение"
+    "ru": "Изменить местоположение",
+    "ja": "場所を変更する"
   },
   "otherLocales": {
     "source": "Other Locales",
@@ -27,6 +29,7 @@
     ],
     "es": "Otros lugares",
     "fr-ca": "Autres localités",
-    "ru": "Другие населенные пункты"
+    "ru": "Другие населенные пункты",
+    "ja": "その他の地域"
   }
 }

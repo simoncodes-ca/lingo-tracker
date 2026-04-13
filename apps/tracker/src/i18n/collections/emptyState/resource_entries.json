@@ -4,13 +4,15 @@
     "comment": "Message shown when user has no collections",
     "es": "Aún no hay colecciones",
     "fr-ca": "Aucune collection pour l'instant",
-    "ru": "Коллекций пока нет."
+    "ru": "Коллекций пока нет.",
+    "ja": "まだコレクションはありません"
   },
   "cta": {
     "source": "Create your first collection",
     "comment": "Call-to-action button in empty state to create first collection",
     "es": "Crea tu primera colección",
     "fr-ca": "Créez votre première collection",
-    "ru": "Создайте свою первую коллекцию"
+    "ru": "Создайте свою первую коллекцию",
+    "ja": "最初のコレクションを作成する"
   }
 }

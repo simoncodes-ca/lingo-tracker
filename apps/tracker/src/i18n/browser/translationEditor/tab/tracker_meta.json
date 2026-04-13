@@ -17,6 +17,11 @@
       "checksum": "1d0d6fe6f6c7d24f49c30c25806eeb00",
       "baseChecksum": "f0c1c6dcc3cd228eb523f5809d39878e",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "1ea1bc9ca57838426391b54659ec0235",
+      "baseChecksum": "f0c1c6dcc3cd228eb523f5809d39878e",
+      "status": "translated"
     }
   },
   "changeLocation": {
@@ -37,6 +42,11 @@
       "checksum": "86568c4f274d53ddbd5c0ca909838948",
       "baseChecksum": "6dd495f1c2ae29c8e9a6c4405f18e22e",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "1b8bf802cd4b26490f8d9ea9033c1b10",
+      "baseChecksum": "6dd495f1c2ae29c8e9a6c4405f18e22e",
+      "status": "translated"
     }
   },
   "otherLocales": {
@@ -55,6 +65,11 @@
     },
     "ru": {
       "checksum": "dae4ccfa3a748a5236612c9cb07dafac",
+      "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "5d191996e0ef3a0e2d45658ad517e8c1",
       "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
       "status": "translated"
     }

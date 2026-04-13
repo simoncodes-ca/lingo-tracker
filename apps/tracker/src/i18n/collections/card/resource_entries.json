@@ -8,7 +8,8 @@
     ],
     "es": "Editar colección",
     "fr-ca": "Modifier la collection",
-    "ru": "Редактировать коллекцию"
+    "ru": "Редактировать коллекцию",
+    "ja": "コレクションを編集"
   },
   "delete": {
     "source": "Delete collection",
@@ -19,7 +20,8 @@
     ],
     "es": "Eliminar colección",
     "fr-ca": "Supprimer la collection",
-    "ru": "Удалить коллекцию"
+    "ru": "Удалить коллекцию",
+    "ja": "コレクションを削除"
   },
   "moreActionsAriaLabel": {
     "source": "More actions for collection",
@@ -29,6 +31,7 @@
     ],
     "es": "Más acciones para la recolección",
     "fr-ca": "Plus d'actions pour la collecte",
-    "ru": "Дополнительные действия для сбора"
+    "ru": "Дополнительные действия для сбора",
+    "ja": "収集のためのその他のアクション"
   }
 }

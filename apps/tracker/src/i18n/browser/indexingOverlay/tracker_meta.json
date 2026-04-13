@@ -17,6 +17,11 @@
       "checksum": "e6be89a9e89333c4134ca0260c94b521",
       "baseChecksum": "a9dd11b1c5a6d656bbc67f69b58303ee",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "27a2ccde5f10886237423e9be9e0678e",
+      "baseChecksum": "a9dd11b1c5a6d656bbc67f69b58303ee",
+      "status": "translated"
     }
   },
   "errorTitle": {
@@ -37,6 +42,11 @@
       "checksum": "668e2616a7e2ad25f5c5414c3232adbb",
       "baseChecksum": "bdb612b5237ec3727393283341b07e0e",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "16d3d677155ea8fe7712686c7b2c8e63",
+      "baseChecksum": "bdb612b5237ec3727393283341b07e0e",
+      "status": "translated"
     }
   },
   "defaultError": {
@@ -55,6 +65,11 @@
     },
     "ru": {
       "checksum": "15092bbfb45097e6177acd73307896f3",
+      "baseChecksum": "cb1fe5c48be070cca575c0c84b89c06d",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "1b735119013f84e4351bafbcbc6c79a4",
       "baseChecksum": "cb1fe5c48be070cca575c0c84b89c06d",
       "status": "translated"
     }

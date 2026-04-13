@@ -17,6 +17,11 @@
       "checksum": "7dde960bec7839181d20fc35537bf20a",
       "baseChecksum": "e7926ae5bb733a6f509ed9e6d7e88245",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "73838d09ad1021c2c5926edcf3562640",
+      "baseChecksum": "e7926ae5bb733a6f509ed9e6d7e88245",
+      "status": "translated"
     }
   },
   "backToCollections": {
@@ -35,6 +40,11 @@
     },
     "ru": {
       "checksum": "fa210ccd7b7d9347d63fbc720faeb1bf",
+      "baseChecksum": "874fb8d79eb8715b9892cb64fbb77160",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "826da54bd00eb095a391f518f9241381",
       "baseChecksum": "874fb8d79eb8715b9892cb64fbb77160",
       "status": "translated"
     }
@@ -57,6 +67,11 @@
       "checksum": "2ccecfa93e0d0c95b7f229684871db68",
       "baseChecksum": "2ccecfa93e0d0c95b7f229684871db68",
       "status": "new"
+    },
+    "ja": {
+      "checksum": "2ccecfa93e0d0c95b7f229684871db68",
+      "baseChecksum": "2ccecfa93e0d0c95b7f229684871db68",
+      "status": "new"
     }
   },
   "localesCountX": {
@@ -74,6 +89,11 @@
       "status": "new"
     },
     "ru": {
+      "checksum": "ab692b642031b8646162616db0a399cf",
+      "baseChecksum": "ab692b642031b8646162616db0a399cf",
+      "status": "new"
+    },
+    "ja": {
       "checksum": "ab692b642031b8646162616db0a399cf",
       "baseChecksum": "ab692b642031b8646162616db0a399cf",
       "status": "new"
