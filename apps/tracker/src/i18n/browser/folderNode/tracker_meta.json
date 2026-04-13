@@ -12,6 +12,11 @@
       "checksum": "9ea17b10f506b881fed906aab0a50f8d",
       "baseChecksum": "03c2e7e41ffc181a4e84080b4710e81e",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "97ae6e0bca16b37dbdc5e324d0ecaf60",
+      "baseChecksum": "03c2e7e41ffc181a4e84080b4710e81e",
+      "status": "translated"
     }
   },
   "folderAriaLabelX": {
@@ -25,6 +30,11 @@
     },
     "fr-ca": {
       "checksum": "aaf5400b2f5e2d034201e563be05efd9",
+      "baseChecksum": "2807ee06f9cee829069ff722e0076f63",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "6c01295f55133a6381deaa9b19f298ed",
       "baseChecksum": "2807ee06f9cee829069ff722e0076f63",
       "status": "translated"
     }
@@ -42,6 +52,11 @@
       "checksum": "99ddcde95a1ca2801821826f38b538b4",
       "baseChecksum": "621cc4d814e3af59119d9cd80bf87908",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "c02424c40807563ededc26e70ee7764d",
+      "baseChecksum": "621cc4d814e3af59119d9cd80bf87908",
+      "status": "translated"
     }
   },
   "deleteFolderAriaLabelX": {
@@ -55,6 +70,11 @@
     },
     "fr-ca": {
       "checksum": "1b45ccc834ef6f20800df6bb073ab938",
+      "baseChecksum": "fa3c80ac936464dfdfec9ddb30c5278b",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "4ece16ddf1acf1166eda7b86121240de",
       "baseChecksum": "fa3c80ac936464dfdfec9ddb30c5278b",
       "status": "translated"
     }

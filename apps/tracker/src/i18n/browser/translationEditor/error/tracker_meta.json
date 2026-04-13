@@ -12,6 +12,11 @@
       "checksum": "60a05d3a9bc1a83a449f3397e81b54a2",
       "baseChecksum": "2f84b28f0c1490dbd9252e71e4031cf2",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "f367dff2a5b4ba833696a76796dea8bd",
+      "baseChecksum": "2f84b28f0c1490dbd9252e71e4031cf2",
+      "status": "translated"
     }
   },
   "keyRenamingNotSupported": {
@@ -25,6 +30,11 @@
     },
     "fr-ca": {
       "checksum": "90d61297c3b4fbac388c4be2b71bcc64",
+      "baseChecksum": "575ba68788d69e22ad6e2d4ecdb01755",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "2bb377f62e8cd28ed1f101cf11565bb0",
       "baseChecksum": "575ba68788d69e22ad6e2d4ecdb01755",
       "status": "translated"
     }
@@ -42,6 +52,11 @@
       "checksum": "31f68ee8d39879dc72fbc7a13727fa91",
       "baseChecksum": "a7e38d0533724516bbacee18834f67a5",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "ff9cd65e3847be6d65913357ff266b62",
+      "baseChecksum": "a7e38d0533724516bbacee18834f67a5",
+      "status": "translated"
     }
   },
   "invalidRequest": {
@@ -55,6 +70,11 @@
     },
     "fr-ca": {
       "checksum": "d6ee1ca377f0f08728472801722d1ad5",
+      "baseChecksum": "446b416d535ed3f547fcd653dc11d49c",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "343c7ad78b07f5457b637432b7ff6bda",
       "baseChecksum": "446b416d535ed3f547fcd653dc11d49c",
       "status": "translated"
     }
@@ -72,6 +92,11 @@
       "checksum": "fa7979919d970f5fd2df5d63a36735d9",
       "baseChecksum": "20a64455184899c3fb2e93b4566c8860",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "3b7de41d823bcb5109f394af407c9d21",
+      "baseChecksum": "20a64455184899c3fb2e93b4566c8860",
+      "status": "translated"
     }
   },
   "updateFailed": {
@@ -87,6 +112,11 @@
       "checksum": "a63fdd90ff3ce2dbfa649a37ee6e503d",
       "baseChecksum": "b3991113a051bbeb759a923bc636ad8d",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "5108d70d09cb4b6066e975ce887c6c04",
+      "baseChecksum": "b3991113a051bbeb759a923bc636ad8d",
+      "status": "translated"
     }
   },
   "unexpected": {
@@ -100,6 +130,11 @@
     },
     "fr-ca": {
       "checksum": "1493006d4d13050b985dce812a2b7b15",
+      "baseChecksum": "9789e322478c6f2d59e93d020808642a",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "660b970b7d6a7be830945cf28709dd59",
       "baseChecksum": "9789e322478c6f2d59e93d020808642a",
       "status": "translated"
     }

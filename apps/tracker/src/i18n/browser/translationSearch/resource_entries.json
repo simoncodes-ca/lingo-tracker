@@ -2,8 +2,11 @@
   "ariaLabel": {
     "source": "Search translations",
     "comment": "Aria-label for the translation search input in the main translation header",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Buscar traducciones",
-    "fr-ca": "Recherche de traductions"
+    "fr-ca": "Recherche de traductions",
+    "ru": "Поиск переводов"
   }
 }

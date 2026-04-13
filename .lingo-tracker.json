@@ -2,20 +2,49 @@
   "exportFolder": "dist/lingo-export",
   "importFolder": "dist/lingo-import",
   "baseLocale": "en",
-  "locales": ["en", "fr-ca", "es", "de", "ja"],
+  "locales": [
+    "en",
+    "fr-ca",
+    "es",
+    "de",
+    "ja"
+  ],
   "collections": {
     "TestDataPlayground": {
       "translationsFolder": "sample-translations/playground",
-      "locales": ["en", "fr-ca", "es", "de", "ja"]
+      "locales": [
+        "en",
+        "fr-ca",
+        "es",
+        "de",
+        "ja"
+      ]
     },
     "trackerResources": {
       "translationsFolder": "apps/tracker/src/i18n",
-      "locales": ["en", "es", "fr-ca"]
+      "locales": [
+        "en",
+        "es",
+        "fr-ca",
+        "ru"
+      ]
     },
     "mockDesignSystem": {
       "translationsFolder": "sample-translations/mock-design-system",
       "importFolder": "dist/ds-translations",
-      "locales": ["ar", "de", "es", "fr-ca", "fr-fr", "is", "ja", "ko", "nl", "pt-br", "sv"]
+      "locales": [
+        "ar",
+        "de",
+        "es",
+        "fr-ca",
+        "fr-fr",
+        "is",
+        "ja",
+        "ko",
+        "nl",
+        "pt-br",
+        "sv"
+      ]
     }
   },
   "translation": {

@@ -12,6 +12,11 @@
       "checksum": "48c6722c28f703c0dcf3134c8cb30156",
       "baseChecksum": "be7253840e621510212e49959ed1c8ad",
       "status": "new"
+    },
+    "ru": {
+      "checksum": "17977a7157daae9f845b5147d189ea2e",
+      "baseChecksum": "be7253840e621510212e49959ed1c8ad",
+      "status": "translated"
     }
   },
   "cta": {
@@ -27,6 +32,11 @@
       "checksum": "3bee4397201fc7e7bb847f6bea7ff859",
       "baseChecksum": "5532bcc75197c54314b36ba14e5a4ce5",
       "status": "new"
+    },
+    "ru": {
+      "checksum": "e3c8236d95bb0ee4367024ec8f2e5b46",
+      "baseChecksum": "5532bcc75197c54314b36ba14e5a4ce5",
+      "status": "translated"
     }
   }
 }

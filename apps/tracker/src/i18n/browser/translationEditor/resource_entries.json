@@ -2,176 +2,251 @@
   "closeDialog": {
     "source": "Close dialog",
     "comment": "Aria-label for close button on translation editor dialog",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Cerrar diálogo",
-    "fr-ca": "Fermer la boîte de dialogue"
+    "fr-ca": "Fermer la boîte de dialogue",
+    "ru": "Закрыть диалог"
   },
   "translationKey": {
     "source": "Translation Key",
     "comment": "Label for the translation key input field",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Clave de traducción",
-    "fr-ca": "Clé de traduction"
+    "fr-ca": "Clé de traduction",
+    "ru": "Ключ перевода"
   },
   "keyHint": {
     "source": "Use only letters, numbers, underscores, and hyphens",
     "comment": "Hint text below translation key input",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Utilice únicamente letras, números, guiones bajos y guiones.",
-    "fr-ca": "Utilisez seulement des lettres, des chiffres, des traits de soulignement et des tirets."
+    "fr-ca": "Utilisez seulement des lettres, des chiffres, des traits de soulignement et des tirets.",
+    "ru": "Используйте только буквы, цифры, подчеркивания и дефисы."
   },
   "baseBadge": {
     "source": "Base",
     "comment": "Badge label indicating the base locale",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Base",
-    "fr-ca": "Base"
+    "fr-ca": "Base",
+    "ru": "База"
   },
   "locationLabel": {
     "source": "Location:",
     "comment": "Label prefix for the current folder location in the translation editor dialog",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Ubicación:",
-    "fr-ca": "Emplacement :"
+    "fr-ca": "Emplacement :",
+    "ru": "Расположение:"
   },
   "locationTabHint": {
     "source": "Choose a different folder for this translation resource.",
     "comment": "Hint text shown at the top of the Change Location tab in the translation editor",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Elija una carpeta diferente para este recurso de traducción.",
-    "fr-ca": "Choisissez un autre dossier pour cette ressource de traduction."
+    "fr-ca": "Choisissez un autre dossier pour cette ressource de traduction.",
+    "ru": "Выберите другую папку для этого ресурса перевода."
   },
   "localeTranslationX": {
     "source": "{locale} Translation",
     "comment": "Label for locale translation input field, locale is uppercased locale code",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "{locale} Traducción",
-    "fr-ca": "{locale} Traduction"
+    "fr-ca": "{locale} Traduction",
+    "ru": "{locale} Перевод"
   },
   "enterTranslationX": {
     "source": "Enter {locale} translation...",
     "comment": "Placeholder for locale translation input field",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Ingrese la traducción de {locale}...",
-    "fr-ca": "Entrez la traduction {locale}..."
+    "fr-ca": "Entrez la traduction {locale}...",
+    "ru": "Введите {locale} перевод..."
   },
   "baseValueRequired": {
     "source": "Base translation is required",
     "comment": "Error shown when base translation value is empty",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Se requiere traducción base",
-    "fr-ca": "La traduction de base est requise"
+    "fr-ca": "La traduction de base est requise",
+    "ru": "Требуется базовый перевод."
   },
   "commentLabel": {
     "source": "Comment (Optional)",
     "comment": "Label for optional comment field",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Comentario (opcional)",
-    "fr-ca": "Commentaire (facultatif)"
+    "fr-ca": "Commentaire (facultatif)",
+    "ru": "Комментарий (необязательно)"
   },
   "commentPlaceholder": {
     "source": "Add context for translators...",
     "comment": "Placeholder for comment input field",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Añadir contexto para los traductores...",
-    "fr-ca": "Ajouter du contexte pour les traducteurs..."
+    "fr-ca": "Ajouter du contexte pour les traducteurs...",
+    "ru": "Добавьте контекст для переводчиков..."
   },
   "commentHint": {
     "source": "Provide context or instructions for translators",
     "comment": "Hint text below comment field",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Proporcionar contexto o instrucciones para los traductores",
-    "fr-ca": "Fournir un contexte ou des instructions aux traducteurs"
+    "fr-ca": "Fournir un contexte ou des instructions aux traducteurs",
+    "ru": "Предоставьте контекст или инструкции для переводчиков."
   },
   "otherLocalesToggleX": {
     "source": "Add translations for other locales ({count} available)",
     "comment": "Toggle label showing number of additional locales",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Agregar traducciones para otras configuraciones regionales ({count} disponible)",
-    "fr-ca": "Ajouter des traductions pour d'autres langues ({count} disponibles)"
+    "fr-ca": "Ajouter des traductions pour d'autres langues ({count} disponibles)",
+    "ru": "Добавить переводы для других языковых версий ({count} доступны)"
   },
   "status": {
     "source": "Status",
     "comment": "Label for translation status dropdown",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Estado",
-    "fr-ca": "Statut"
+    "fr-ca": "Statut",
+    "ru": "Статус"
   },
   "saving": {
     "source": "Saving...",
     "comment": "Button text shown while form is submitting",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Ahorro...",
-    "fr-ca": "Économie..."
+    "fr-ca": "Économie...",
+    "ru": "Сохранение..."
   },
   "editTitle": {
     "source": "Edit Translation",
     "comment": "Dialog title when editing an existing translation",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Editar traducción",
-    "fr-ca": "Modifier la traduction"
+    "fr-ca": "Modifier la traduction",
+    "ru": "Редактировать перевод"
   },
   "createTitle": {
     "source": "Create Translation",
     "comment": "Dialog title when creating a new translation",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Crear traducción",
-    "fr-ca": "Créer une traduction"
+    "fr-ca": "Créer une traduction",
+    "ru": "Создать перевод"
   },
   "editSubtitle": {
     "source": "Update translation values and metadata",
     "comment": "Dialog subtitle in edit mode",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Actualizar los valores de traducción y los metadatos",
-    "fr-ca": "Mise à jour des valeurs de traduction et des métadonnées"
+    "fr-ca": "Mise à jour des valeurs de traduction et des métadonnées",
+    "ru": "Обновите значения перевода и метаданные."
   },
   "createSubtitle": {
     "source": "Add a new translation entry to your collection",
     "comment": "Dialog subtitle in create mode",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Añade una nueva entrada de traducción a tu colección",
-    "fr-ca": "Ajoutez une nouvelle entrée de traduction à votre collection"
+    "fr-ca": "Ajoutez une nouvelle entrée de traduction à votre collection",
+    "ru": "Добавьте новую запись о переводе в свою коллекцию."
   },
   "updateButton": {
     "source": "Update Translation",
     "comment": "Submit button label in edit mode",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Actualizar traducción",
-    "fr-ca": "Mise à jour de la traduction"
+    "fr-ca": "Mise à jour de la traduction",
+    "ru": "Обновить перевод"
   },
   "saveButton": {
     "source": "Save Translation",
     "comment": "Submit button label in create mode",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Guardar traducción",
-    "fr-ca": "Enregistrer la traduction"
+    "fr-ca": "Enregistrer la traduction",
+    "ru": "Сохранить перевод"
   },
   "keyCopied": {
     "source": "Similar resource key copied",
     "comment": "Snackbar message after copying a similar resource key",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Clave de recurso similar copiada",
-    "fr-ca": "Clé de ressource similaire copiée"
+    "fr-ca": "Clé de ressource similaire copiée",
+    "ru": "Аналогичный ключ ресурса скопирован."
   },
   "copyFailed": {
     "source": "Failed to copy",
     "comment": "Snackbar message when clipboard copy fails",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "No se pudo copiar",
-    "fr-ca": "Échec de la copie"
+    "fr-ca": "Échec de la copie",
+    "ru": "Не удалось скопировать"
   },
   "keyRequired": {
     "source": "Translation key is required",
     "comment": "Validation error for empty key field",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Se requiere clave de traducción",
-    "fr-ca": "Une clé de traduction est requise."
+    "fr-ca": "Une clé de traduction est requise.",
+    "ru": "Требуется ключ перевода"
   },
   "keyPatternError": {
     "source": "Only letters, numbers, underscores, and hyphens allowed",
     "comment": "Validation error for invalid key characters",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Solo se permiten letras, números, guiones bajos y guiones.",
-    "fr-ca": "Seules les lettres, les chiffres, les traits de soulignement et les tirets sont autorisés."
+    "fr-ca": "Seules les lettres, les chiffres, les traits de soulignement et les tirets sont autorisés.",
+    "ru": "Разрешаются только буквы, цифры, подчеркивания и дефисы."
   }
 }

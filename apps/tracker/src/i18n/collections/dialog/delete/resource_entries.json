@@ -3,12 +3,14 @@
     "source": "Delete Collection",
     "comment": "Confirmation dialog title when deleting a collection",
     "es": "Eliminar Colección",
-    "fr-ca": "Supprimer la Collection"
+    "fr-ca": "Supprimer la Collection",
+    "ru": "Удалить коллекцию"
   },
   "message": {
     "source": "Are you sure you want to delete {name}?",
     "comment": "Confirmation message with collection name placeholder",
     "es": "¿Estás seguro de que deseas eliminar {name}?",
-    "fr-ca": "Êtes-vous sûr de vouloir supprimer {name}?"
+    "fr-ca": "Êtes-vous sûr de vouloir supprimer {name}?",
+    "ru": "Вы уверены, что хотите удалить {name}?"
   }
 }

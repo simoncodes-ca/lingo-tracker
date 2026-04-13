@@ -3,52 +3,68 @@
     "source": "Collection created successfully",
     "comment": "Success message after creating a collection",
     "es": "Colección creada exitosamente",
-    "fr-ca": "Collection créée avec succès"
+    "fr-ca": "Collection créée avec succès",
+    "ru": "Коллекция успешно создана."
   },
   "updated": {
     "source": "Collection updated successfully",
     "comment": "Success message after editing a collection",
     "es": "Colección actualizada exitosamente",
-    "fr-ca": "Collection mise à jour avec succès"
+    "fr-ca": "Collection mise à jour avec succès",
+    "ru": "Коллекция успешно обновлена."
   },
   "deleted": {
     "source": "Collection deleted successfully",
     "comment": "Success message after deleting a collection",
     "es": "Colección eliminada exitosamente",
-    "fr-ca": "Collection supprimée avec succès"
+    "fr-ca": "Collection supprimée avec succès",
+    "ru": "Коллекция успешно удалена."
   },
   "error": {
     "source": "An error occurred. Please try again.",
     "comment": "Generic error message for failed operations",
     "es": "Ocurrió un error. Por favor, inténtalo de nuevo.",
-    "fr-ca": "Une erreur s'est produite. Veuillez réessayer."
+    "fr-ca": "Une erreur s'est produite. Veuillez réessayer.",
+    "ru": "Произошла ошибка. Пожалуйста, попробуйте еще раз."
   },
   "loadFailed": {
     "source": "Failed to load collections",
     "comment": "Error toast when loading collections fails",
-    "tags": ["collections"],
+    "tags": [
+      "collections"
+    ],
     "es": "No se pudieron cargar las colecciones",
-    "fr-ca": "Échec du chargement des collections"
+    "fr-ca": "Échec du chargement des collections",
+    "ru": "Не удалось загрузить коллекции."
   },
   "createFailed": {
     "source": "Failed to create collection",
     "comment": "Error toast when creating a collection fails",
-    "tags": ["collections"],
+    "tags": [
+      "collections"
+    ],
     "es": "No se pudo crear la colección",
-    "fr-ca": "Impossible de créer la collection"
+    "fr-ca": "Impossible de créer la collection",
+    "ru": "Не удалось создать коллекцию."
   },
   "updateFailed": {
     "source": "Failed to update collection",
     "comment": "Error toast when updating a collection fails",
-    "tags": ["collections"],
+    "tags": [
+      "collections"
+    ],
     "es": "No se pudo actualizar la colección",
-    "fr-ca": "Échec de la mise à jour de la collection"
+    "fr-ca": "Échec de la mise à jour de la collection",
+    "ru": "Не удалось обновить коллекцию."
   },
   "deleteFailed": {
     "source": "Failed to delete collection",
     "comment": "Error toast when deleting a collection fails",
-    "tags": ["collections"],
+    "tags": [
+      "collections"
+    ],
     "es": "No se pudo eliminar la colección",
-    "fr-ca": "Échec de la suppression de la collection"
+    "fr-ca": "Échec de la suppression de la collection",
+    "ru": "Не удалось удалить коллекцию."
   }
 }

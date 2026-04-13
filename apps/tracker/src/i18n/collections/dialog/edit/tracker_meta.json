@@ -12,6 +12,11 @@
       "checksum": "4eccf5449475d38715d4d54aa6fdad49",
       "baseChecksum": "bcc40d0f321165f8d57c4185fc0357df",
       "status": "new"
+    },
+    "ru": {
+      "checksum": "fc542666f0b02b7b83ef1c93f694726c",
+      "baseChecksum": "bcc40d0f321165f8d57c4185fc0357df",
+      "status": "translated"
     }
   }
 }

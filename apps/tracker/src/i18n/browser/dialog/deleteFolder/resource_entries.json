@@ -2,15 +2,21 @@
   "title": {
     "source": "Delete Folder",
     "comment": "Title of the confirmation dialog when deleting a folder",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Eliminar carpeta",
-    "fr-ca": "Supprimer le dossier"
+    "fr-ca": "Supprimer le dossier",
+    "ru": "Удалить папку"
   },
   "messageX": {
     "source": "Delete \"{name}\" and all its contents?",
     "comment": "Confirmation message when deleting a folder, interpolated with the folder name",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "¿Eliminar \"{name}\" y todo su contenido?",
-    "fr-ca": "Supprimer \"{name}\" et tout son contenu ?"
+    "fr-ca": "Supprimer \"{name}\" et tout son contenu ?",
+    "ru": "Удалить \"{name}\" и всё его содержимое?"
   }
 }

@@ -12,6 +12,11 @@
       "checksum": "3c388b094f2f1d561d99a41462f02279",
       "baseChecksum": "82198ade859bc9f4034a6dd31276d473",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "58291dae413e4204dd1dc0adb831c6a7",
+      "baseChecksum": "82198ade859bc9f4034a6dd31276d473",
+      "status": "translated"
     }
   },
   "ariaLabelX": {
@@ -25,6 +30,11 @@
     },
     "fr-ca": {
       "checksum": "ba99ae2f5ef8f8da0cf7140ab17fc4ee",
+      "baseChecksum": "dae9b86c4a9710ce0da801e65751954d",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "046b8a36af662a632097d5e0ae2611ac",
       "baseChecksum": "dae9b86c4a9710ce0da801e65751954d",
       "status": "translated"
     }

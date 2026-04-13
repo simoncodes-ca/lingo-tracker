@@ -12,6 +12,11 @@
       "checksum": "b3009170157da9eb03bd31db89b85c04",
       "baseChecksum": "1c10ed990d6445081dfd3828812355e5",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "2506a41030af5ca68c85b9a0f7adef40",
+      "baseChecksum": "1c10ed990d6445081dfd3828812355e5",
+      "status": "translated"
     }
   },
   "messageX": {
@@ -27,6 +32,11 @@
       "checksum": "8f741688880541fe5c8fc950c9006d6f",
       "baseChecksum": "b7778a68166ffe0dab524997ad6b3bfd",
       "status": "stale"
+    },
+    "ru": {
+      "checksum": "1f0f24b76f5ae12fc19a83863b053b7b",
+      "baseChecksum": "b7778a68166ffe0dab524997ad6b3bfd",
+      "status": "translated"
     }
   }
 }

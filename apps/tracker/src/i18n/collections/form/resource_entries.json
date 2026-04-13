@@ -3,24 +3,28 @@
     "source": "Collection name",
     "comment": "Label for collection name input field",
     "es": "Nombre de la colección",
-    "fr-ca": "Nom de la collection"
+    "fr-ca": "Nom de la collection",
+    "ru": "Название коллекции"
   },
   "translationsFolder": {
     "source": "Translations folder",
     "comment": "Label for translations folder path input field",
     "es": "Carpeta de traducciones",
-    "fr-ca": "Dossier de traductions"
+    "fr-ca": "Dossier de traductions",
+    "ru": "Папка «Переводы»"
   },
   "locales": {
     "source": "Locales",
     "comment": "Label for locales input field",
     "es": "Idiomas",
-    "fr-ca": "Langues"
+    "fr-ca": "Langues",
+    "ru": "Локалы"
   },
   "localesPlaceholder": {
     "source": "Comma-separated (e.g., en,fr,es)",
     "comment": "Placeholder text showing format for locale input",
     "es": "Separados por comas (ej., en,fr,es)",
-    "fr-ca": "Séparés par des virgules (p. ex., en,fr,es)"
+    "fr-ca": "Séparés par des virgules (p. ex., en,fr,es)",
+    "ru": "Через запятую (например, en,fr,es)"
   }
 }

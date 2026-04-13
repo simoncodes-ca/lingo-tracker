@@ -2,8 +2,11 @@
   "skipToMainContent": {
     "source": "Skip to main content",
     "comment": "Accessibility link at top of page for keyboard navigation",
-    "tags": ["app"],
+    "tags": [
+      "app"
+    ],
     "es": "Saltar al contenido principal",
-    "fr-ca": "Passer au contenu principal"
+    "fr-ca": "Passer au contenu principal",
+    "ru": "Перейти к основному содержимому"
   }
 }

@@ -3,18 +3,21 @@
     "source": "Translation Browser Coming Soon",
     "comment": "Placeholder title for browser feature",
     "es": "Navegador de traducción disponible próximamente",
-    "fr-ca": "Navigateur de traduction bientôt disponible"
+    "fr-ca": "Navigateur de traduction bientôt disponible",
+    "ru": "Браузер для перевода скоро появится."
   },
   "message": {
     "source": "The translation browser feature is currently under development. Soon you'll be able to view, edit, and manage all translations within this collection.",
     "comment": "Placeholder message explaining feature status",
     "es": "La función de búsqueda de traducciones está en desarrollo. Pronto podrás ver, editar y gestionar todas las traducciones de esta colección.",
-    "fr-ca": "La fonctionnalité du navigateur de traductions est en cours de développement. Vous pourrez bientôt consulter, modifier et gérer toutes les traductions de cette collection."
+    "fr-ca": "La fonctionnalité du navigateur de traductions est en cours de développement. Vous pourrez bientôt consulter, modifier et gérer toutes les traductions de cette collection.",
+    "ru": "Функция просмотра переводов в настоящее время находится в разработке. Вскоре вы сможете просматривать, редактировать и управлять всеми переводами в этой коллекции."
   },
   "collection": {
     "source": "Collection",
     "comment": "Label for collection name display",
     "es": "Recopilación",
-    "fr-ca": "Collection"
+    "fr-ca": "Collection",
+    "ru": "Коллекция"
   }
 }

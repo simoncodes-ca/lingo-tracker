@@ -2,29 +2,41 @@
   "title": {
     "source": "Translation Key Already Exists",
     "comment": "Dialog title when key conflicts with existing resource",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "La clave de traducción ya existe",
-    "fr-ca": "La clé de traduction existe déjà."
+    "fr-ca": "La clé de traduction existe déjà.",
+    "ru": "Ключ перевода уже существует"
   },
   "messageX": {
     "source": "The translation key \"{key}\" already exists in this collection. Would you like to edit the existing translation or choose a different key?",
     "comment": "Conflict dialog message with the conflicting key name",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "La clave de traducción \"{key}\" ya existe en esta colección. ¿Desea editar la traducción existente o elegir una clave diferente?",
-    "fr-ca": "La clé de traduction « {key} » existe déjà dans cette collection. Souhaitez-vous modifier la traduction existante ou choisir une autre clé ?"
+    "fr-ca": "La clé de traduction « {key} » existe déjà dans cette collection. Souhaitez-vous modifier la traduction existante ou choisir une autre clé ?",
+    "ru": "Ключ перевода \"{key}\" уже существует в этой коллекции. Хотите отредактировать существующий перевод или выбрать другой ключ?"
   },
   "editExisting": {
     "source": "Edit Existing",
     "comment": "Button to open the existing resource for editing",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Editar existente",
-    "fr-ca": "Modifier l'existant"
+    "fr-ca": "Modifier l'existant",
+    "ru": "Редактировать существующий"
   },
   "chooseDifferentKey": {
     "source": "Choose Different Key",
     "comment": "Button to go back and pick a different key",
-    "tags": ["browser"],
+    "tags": [
+      "browser"
+    ],
     "es": "Elija una clave diferente",
-    "fr-ca": "Choisir une autre clé"
+    "fr-ca": "Choisir une autre clé",
+    "ru": "Выберите другой ключ"
   }
 }
