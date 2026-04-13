@@ -63,6 +63,26 @@ program
   });
 
 program
+  .command('add-locale')
+  .description('Add a locale to a collection and backfill all existing resources')
+  .option('--collection <name>', 'Name of the collection')
+  .option('--locale <locale>', 'Locale to add (e.g., fr-ca, de, es)')
+  .action(async (options) => {
+    const { addLocaleCommand } = await import('./commands/add-locale');
+    await addLocaleCommand(options);
+  });
+
+program
+  .command('remove-locale')
+  .description('Remove a locale from a collection and purge all locale data')
+  .option('--collection <name>', 'Name of the collection')
+  .option('--locale <locale>', 'Locale to remove')
+  .action(async (options) => {
+    const { removeLocaleCommand } = await import('./commands/remove-locale');
+    await removeLocaleCommand(options);
+  });
+
+program
   .command('add-resource')
   .description('Add a translation resource to a collection')
   .option('--collection <name>', 'Name of the collection')

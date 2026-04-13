@@ -22,8 +22,12 @@ interface TranslationJob {
 
 @Injectable()
 export class TranslationJobService {
-  readonly #logger = new Logger(TranslationJobService.name);
+  readonly #logger: Logger;
   readonly #jobs = new Map<string, TranslationJob>();
+
+  constructor(logger: Logger) {
+    this.#logger = logger;
+  }
 
   /**
    * Kicks off an async translate-locale job and returns its ID immediately.
@@ -79,7 +83,8 @@ export class TranslationJobService {
       job.skippedCount = progress.skippedCount;
     };
 
-    const runningJob = this.#jobs.get(jobId)!;
+    const runningJob = this.#jobs.get(jobId);
+    if (!runningJob) return;
     runningJob.status = 'running';
     runningJob.startedAt = new Date();
 

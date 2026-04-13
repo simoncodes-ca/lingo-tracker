@@ -201,7 +201,11 @@ export class TranslationOrchestrator {
         results[originalIndex] = { kind: 'translated', value: translatedText };
       } else {
         // simple-placeholders — restore markers
-        const placeholders = placeholderMaps.get(originalIndex)!;
+        const placeholders = placeholderMaps.get(originalIndex);
+        if (!placeholders) {
+          results[originalIndex] = { kind: 'skipped', value: texts[originalIndex] };
+          continue;
+        }
         const restoreResult = restorePlaceholders(translatedText, placeholders);
         if (!restoreResult.success) {
           results[originalIndex] = { kind: 'skipped', value: texts[originalIndex] };

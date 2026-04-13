@@ -285,6 +285,88 @@ Response:
 }
 ```
 
+## Locales API
+
+Manage locales within a specific collection.
+
+### Add Locale
+
+Adds a locale to a collection and backfills all existing resources with the new locale (value set to the base value, `status: "new"`).
+
+**Endpoint**: `POST /api/collections/:collectionName/locales`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
+
+**Request Body**:
+
+```json
+{
+  "locale": "de"
+}
+```
+
+**Response**:
+
+```json
+{
+  "message": "Locale \"de\" added to collection \"main\" successfully",
+  "entriesBackfilled": 42,
+  "filesUpdated": 8
+}
+```
+
+**Status Codes**:
+- `200 OK`: Locale added and resources backfilled
+- `400 Bad Request`: Invalid locale format, locale already exists, cannot modify base locale, or collection not found
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:3030/api/collections/main/locales \
+  -H 'Content-Type: application/json' \
+  -d '{"locale": "de"}'
+```
+
+---
+
+### Remove Locale
+
+Removes a locale from a collection and purges all translation data for that locale from resource files.
+
+**Endpoint**: `DELETE /api/collections/:collectionName/locales/:locale`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
+- `locale` (string, required): The locale to remove (URL-encoded if necessary)
+
+**Response**:
+
+```json
+{
+  "message": "Locale \"de\" removed from collection \"main\" successfully",
+  "entriesPurged": 42,
+  "filesUpdated": 8
+}
+```
+
+**Status Codes**:
+- `200 OK`: Locale removed and data purged
+- `400 Bad Request`: Invalid locale format, locale not found in collection, cannot modify base locale, or collection not found
+
+**Example**:
+
+```bash
+curl -X DELETE http://localhost:3030/api/collections/main/locales/de
+```
+
+**Notes**:
+- Translation data for the removed locale is permanently deleted from files (recoverable via git)
+- Removing the last non-base locale is allowed
+- Cannot remove the base locale
+
+---
+
 ## Resources API
 
 All resource endpoints are scoped to a specific collection.

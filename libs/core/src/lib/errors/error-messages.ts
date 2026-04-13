@@ -24,5 +24,14 @@ export const ErrorMessages = {
 
   collectionAlreadyExists: (name: string) => `Collection "${name}" already exists`,
 
+  localeAlreadyExists: (locale: string, collection: string) =>
+    `Locale "${locale}" already exists in collection "${collection}"`,
+
+  localeNotFound: (locale: string, collection: string) =>
+    `Locale "${locale}" not found in collection "${collection}"`,
+
+  cannotModifyBaseLocale: (locale: string) =>
+    `Cannot add or remove the base locale "${locale}"`,
+
   invalidKey: (key: string, reason: string) => `Invalid resource key "${key}": ${reason}`,
 } as const;

@@ -197,6 +197,79 @@ lingo-tracker delete-collection --collection-name Mobile
 
 ---
 
+### add-locale
+
+Add a locale to a collection and backfill all existing resources with the new locale.
+
+**Usage:**
+
+```bash
+lingo-tracker add-locale [options]
+```
+
+**Options:**
+
+- `--collection <name>` - Name of the collection (required in non-interactive mode)
+- `--locale <locale>` - Locale to add, e.g. `fr-ca`, `de`, `es` (required in non-interactive mode)
+
+**Examples:**
+
+Interactive mode (prompts for collection and locale):
+```bash
+lingo-tracker add-locale
+```
+
+Non-interactive mode:
+```bash
+lingo-tracker add-locale --collection Main --locale de
+```
+
+**Notes:**
+- Validates locale format (e.g. `en`, `fr-ca`, `zh-Hans`)
+- Errors if the locale already exists in the collection
+- Cannot add the base locale
+- If the collection inherits global locales (no explicit `locales` in its config), global locales are copied into the collection first, then the new locale is appended
+- All existing `resource_entries.json` files are updated with the new locale value set to the base (`source`) value, and `tracker_meta.json` is updated with `status: "new"`
+
+---
+
+### remove-locale
+
+Remove a locale from a collection and purge all of its translation data from resource files.
+
+**Usage:**
+
+```bash
+lingo-tracker remove-locale [options]
+```
+
+**Options:**
+
+- `--collection <name>` - Name of the collection (required in non-interactive mode)
+- `--locale <locale>` - Locale to remove (required in non-interactive mode)
+
+**Examples:**
+
+Interactive mode (prompts for collection, then shows a list of removable locales):
+```bash
+lingo-tracker remove-locale
+```
+
+Non-interactive mode:
+```bash
+lingo-tracker remove-locale --collection Main --locale de
+```
+
+**Notes:**
+- Errors if the locale does not exist in the collection
+- Cannot remove the base locale
+- Removes the locale key from all `resource_entries.json` and `tracker_meta.json` files in the collection
+- Translation data for the locale is permanently deleted from files (recoverable via git)
+- Removing the last non-base locale is allowed (results in a monolingual collection)
+- If the collection inherits global locales, global locales are copied into the collection first, then the target locale is removed
+
+---
+
 ## Resource Commands
 
 ### add-resource

@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { TranslationJobService } from './translation-job.service';
 import { TranslationError } from '@simoncodes-ca/core';
 import type { TranslateLocaleResult, TranslateLocaleProgress } from '@simoncodes-ca/core';
@@ -34,10 +35,12 @@ const makeStartJobParams = () => ({
 
 describe('TranslationJobService', () => {
   let service: TranslationJobService;
+  let mockLogger: jest.Mocked<Pick<Logger, 'error' | 'log' | 'warn'>>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new TranslationJobService();
+    mockLogger = { error: jest.fn(), log: jest.fn(), warn: jest.fn() };
+    service = new TranslationJobService(mockLogger as unknown as Logger);
   });
 
   it('startJob returns a non-empty job ID', () => {
@@ -62,10 +65,10 @@ describe('TranslationJobService', () => {
     const job = service.getJob(jobId);
 
     expect(job).toBeDefined();
-    expect(job!.jobId).toBe(jobId);
-    expect(job!.collectionName).toBe('my-collection');
-    expect(job!.targetLocale).toBe('fr');
-    expect(['pending', 'running']).toContain(job!.status);
+    expect(job?.jobId).toBe(jobId);
+    expect(job?.collectionName).toBe('my-collection');
+    expect(job?.targetLocale).toBe('fr');
+    expect(['pending', 'running']).toContain(job?.status);
   });
 
   it('job status becomes completed with correct counts after async resolves', async () => {
@@ -78,14 +81,15 @@ describe('TranslationJobService', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const job = service.getJob(jobId)!;
-    expect(job.status).toBe('completed');
-    expect(job.totalResources).toBe(result.totalResources);
-    expect(job.translatedCount).toBe(result.translatedCount);
-    expect(job.failedCount).toBe(result.failedCount);
-    expect(job.skippedCount).toBe(result.skippedCount);
-    expect(job.failures).toEqual(result.failures);
-    expect(job.completedAt).toBeDefined();
+    const job = service.getJob(jobId);
+    expect(job).toBeDefined();
+    expect(job?.status).toBe('completed');
+    expect(job?.totalResources).toBe(result.totalResources);
+    expect(job?.translatedCount).toBe(result.translatedCount);
+    expect(job?.failedCount).toBe(result.failedCount);
+    expect(job?.skippedCount).toBe(result.skippedCount);
+    expect(job?.failures).toEqual(result.failures);
+    expect(job?.completedAt).toBeDefined();
   });
 
   it('job status becomes failed when translateLocale throws a TranslationError', async () => {
@@ -96,9 +100,10 @@ describe('TranslationJobService', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const job = service.getJob(jobId)!;
-    expect(job.status).toBe('failed');
-    expect(job.completedAt).toBeDefined();
+    const job = service.getJob(jobId);
+    expect(job).toBeDefined();
+    expect(job?.status).toBe('failed');
+    expect(job?.completedAt).toBeDefined();
   });
 
   it('job status becomes failed when translateLocale throws a generic Error', async () => {
@@ -109,8 +114,9 @@ describe('TranslationJobService', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const job = service.getJob(jobId)!;
-    expect(job.status).toBe('failed');
+    const job = service.getJob(jobId);
+    expect(job).toBeDefined();
+    expect(job?.status).toBe('failed');
   });
 
   it('getJob omits optional fields when there are no failures or skipped keys', async () => {
@@ -121,9 +127,10 @@ describe('TranslationJobService', () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    const job = service.getJob(jobId)!;
-    expect(job.failures).toBeUndefined();
-    expect(job.skippedKeys).toBeUndefined();
+    const job = service.getJob(jobId);
+    expect(job).toBeDefined();
+    expect(job?.failures).toBeUndefined();
+    expect(job?.skippedKeys).toBeUndefined();
   });
 
   it('updates job counts when onProgress is called', async () => {

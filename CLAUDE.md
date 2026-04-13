@@ -154,6 +154,12 @@ export class ExampleComponent implements OnInit {
 }
 ```
 
+### TypeScript Safety
+
+- **No non-null assertions**: Never use the `!` operator. The linter (`lint/style/noNonNullAssertion`) forbids it.
+  - In production code: use an explicit null-guard (`if (!x) return;` or `if (!x) throw`) before accessing the value
+  - In tests: use `expect(value).toBeDefined()` followed by optional chaining (`value?.property`) for subsequent assertions
+
 ### Code Organization
 
 - **Domain Logic** (`@simoncodes-ca/domain`): Pure business logic with **zero Node.js dependencies** — importable by all apps including the browser-based Tracker UI. This is where platform-agnostic logic belongs: key validation/parsing, translation status helpers, ICU↔Transloco format conversion, validation utilities (locale, key length, duplicates, hierarchical conflicts), and shared types (`TranslationStatus`, `LocaleMetadata`).
