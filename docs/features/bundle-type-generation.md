@@ -1,3 +1,8 @@
+---
+title: Bundle Type Generation
+sidebar_position: 1
+---
+
 # Bundle Type Generation
 
 LingoTracker can automatically generate TypeScript type definitions for your translation bundles. This provides compile-time type safety, autocomplete, and refactoring support for your translation keys.
@@ -11,7 +16,7 @@ LingoTracker can automatically generate TypeScript type definitions for your tra
 
 ## Configuration
 
-To enable type generation, add the `typeDistFile` property to your bundle definition in `.lingo-tracker.json`. This property specifies the output file path for the generated TypeScript file. The path must end with `.ts` and must point to a file, not a directory.
+To enable type generation, add the `typeDistFile` property to your bundle definition in `.lingo-tracker.json`. This property specifies the output file path for the generated TypeScript file. The path must end with `.ts` and must point to a file, not a directory. Intermediate directories are created automatically if they do not exist.
 
 ```json
 {
@@ -89,18 +94,18 @@ export const COMMON_TOKENS = {
 export type CommonTokens = typeof COMMON_TOKENS;
 ```
 
-**More Examples**:
-
-| Translation Key | `upperCase` (default) | `camelCase` |
-|---|---|---|
-| `file-upload` | `FILE_UPLOAD` | `fileUpload` |
-| `common.buttons.ok` | `COMMON.BUTTONS.OK` | `common.buttons.ok` |
-
 To use camelCase, set `tokenCasing` in your bundle config or pass `--token-casing camelCase` to the `bundle` CLI command:
 
 ```bash
 lingo-tracker bundle --token-casing camelCase
 ```
+
+**Property path comparison** (arrows indicate nested object levels):
+
+| Translation Key | `upperCase` (default) | `camelCase` |
+|---|---|---|
+| `file-upload` | `FILE_UPLOAD` | `fileUpload` |
+| `common.buttons.ok` | `COMMON` → `BUTTONS` → `OK` | `common` → `buttons` → `ok` |
 
 ## Token Casing Precedence
 
@@ -115,7 +120,7 @@ The `tokenCasing` value is resolved in the following order (first match wins):
 
 By default, the generated constant name is derived from the bundle key (e.g., `common` → `COMMON_TOKENS`). You can override this with the `tokenConstantName` property in your bundle definition.
 
-The value must be a valid JavaScript identifier. Any casing is accepted — the type name is always auto-derived as PascalCase from whatever you provide.
+The value must be a valid JavaScript identifier using only ASCII characters (letters A–Z/a–z, digits, underscores `_`, and dollar signs `$`). Any casing is accepted — the type name is always auto-derived as PascalCase from whatever you provide.
 
 ```json
 {
@@ -152,7 +157,7 @@ export type MyKeys = typeof MY_KEYS;
 | `MyKeys` | `MyKeys` | `MyKeys` |
 | `APP_TRANSLATION_TOKENS` | `APP_TRANSLATION_TOKENS` | `AppTranslationTokens` |
 
-You can also override at the CLI level with `--token-constant-name`. This flag only works when targeting a single bundle:
+You can also override at the CLI level with `--token-constant-name`. This flag requires exactly one bundle to be targeted via `--name`; it is not compatible with multi-bundle runs or "all bundles" mode:
 
 ```bash
 lingo-tracker bundle --name common --token-constant-name MY_KEYS
@@ -165,28 +170,8 @@ lingo-tracker bundle --name common --token-constant-name MY_KEYS
 - **Key Segments (upperCase)**: Converted to `SCREAMING_SNAKE_CASE` (e.g., `buttons` -> `BUTTONS`, `file-upload` -> `FILE_UPLOAD`).
 - **Key Segments (camelCase)**: Converted to `camelCase` (e.g., `buttons` -> `buttons`, `file-upload` -> `fileUpload`).
 - **Numeric Segments**: Preserved as-is (e.g., `steps.1.title` -> `STEPS.1.TITLE` or `steps.1.title`).
-
-## Migration from `typeDist`
-
-> **Deprecation Notice**: The `typeDist` configuration property has been renamed to `typeDistFile` to clarify that the value must be a file path (ending with `.ts`), not a directory.
-
-- The old `typeDist` name is still accepted but will produce a deprecation warning at runtime.
-- Users should update their `.lingo-tracker.json` to use `typeDistFile` instead of `typeDist`.
-- The `typeDistFile` value must end with `.ts` and must be a file path, not a directory path.
-
-**Before**:
-```json
-{
-  "typeDist": "./src/generated/common-tokens.ts"
-}
-```
-
-**After**:
-```json
-{
-  "typeDistFile": "./src/generated/common-tokens.ts"
-}
-```
+- **Mixed nodes** (a key that is both a leaf and a parent, e.g., `buttons` and `buttons.ok` both exist): the leaf value is dropped and only the children are emitted. Standard i18n usage does not produce such keys.
+- **Empty bundles**: if the bundle resolves to zero keys, type generation is skipped and a warning is printed. No `.ts` file is written.
 
 ## Integration
 

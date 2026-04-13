@@ -3,6 +3,9 @@
     "source": "Edit Collection",
     "comment": "Dialog title when editing an existing collection",
     "es": "Editar Colección",
-    "fr-ca": "Modifier la Collection"
+    "fr-ca": "Modifier la Collection",
+    "ru": "Редактировать коллекцию",
+    "ja": "コレクションを編集",
+    "de": "Sammlung bearbeiten"
   }
 }

@@ -4,62 +4,89 @@
     "comment": "Aria-label for the drag handle on a translation item",
     "tags": ["browser"],
     "es": "Arrastrar para mover la traducción",
-    "fr-ca": "Faites glisser pour déplacer la traduction"
+    "fr-ca": "Faites glisser pour déplacer la traduction",
+    "ru": "Перетащите, чтобы переместить перевод.",
+    "ja": "ドラッグして翻訳を移動",
+    "de": "Zum Verschieben der Übersetzung ziehen"
   },
   "copyKeyAriaLabel": {
     "source": "Copy key",
     "comment": "Aria-label for the copy key button on a translation item header",
     "tags": ["browser"],
     "es": "Copiar clave",
-    "fr-ca": "Copier la clé"
+    "fr-ca": "Copier la clé",
+    "ru": "Копировать ключ",
+    "ja": "コピーキー",
+    "de": "Schlüssel kopieren"
   },
   "hideCommentAriaLabel": {
     "source": "Hide comment",
     "comment": "Aria-label for the comment toggle button when comment is currently shown",
     "tags": ["browser"],
     "es": "Ocultar comentario",
-    "fr-ca": "Masquer le commentaire"
+    "fr-ca": "Masquer le commentaire",
+    "ru": "Скрыть комментарий",
+    "ja": "コメントを非表示にする",
+    "de": "Kommentar ausblenden"
   },
   "showCommentAriaLabel": {
     "source": "Show comment",
     "comment": "Aria-label for the comment toggle button when comment is currently hidden",
     "tags": ["browser"],
     "es": "Mostrar comentario",
-    "fr-ca": "Afficher le commentaire"
+    "fr-ca": "Afficher le commentaire",
+    "ru": "Показать комментарий",
+    "ja": "コメントを表示",
+    "de": "Kommentar anzeigen"
   },
   "moreActionsAriaLabel": {
     "source": "More actions",
     "comment": "Aria-label for the more actions menu trigger button on a translation item",
     "tags": ["browser"],
     "es": "Más acciones",
-    "fr-ca": "Plus d'actions"
+    "fr-ca": "Plus d'actions",
+    "ru": "Дополнительные действия",
+    "ja": "その他の操作",
+    "de": "Weitere Aktionen"
   },
   "editAriaLabel": {
     "source": "Edit translation",
     "comment": "Aria-label for the Edit menu item in the translation item actions menu",
     "tags": ["browser"],
     "es": "Editar traducción",
-    "fr-ca": "Modifier la traduction"
+    "fr-ca": "Modifier la traduction",
+    "ru": "Редактировать перевод",
+    "ja": "翻訳を編集する",
+    "de": "Übersetzung bearbeiten"
   },
   "translateAriaLabel": {
     "source": "Translate resource",
     "comment": "Aria-label for the Translate menu item in the translation item actions menu",
     "tags": ["browser"],
     "es": "Traducir recurso",
-    "fr-ca": "ressource de traduction"
+    "fr-ca": "ressource de traduction",
+    "ru": "Перевести ресурс",
+    "ja": "リソースを翻訳する",
+    "de": "Ressource übersetzen"
   },
   "deleteAriaLabel": {
     "source": "Delete translation",
     "comment": "Aria-label for the Delete menu item in the translation item actions menu",
     "tags": ["browser"],
     "es": "Eliminar traducción",
-    "fr-ca": "Supprimer la traduction"
+    "fr-ca": "Supprimer la traduction",
+    "ru": "Удалить перевод",
+    "ja": "翻訳を削除",
+    "de": "Übersetzung löschen"
   },
   "noStatuses": {
     "source": "No statuses",
     "comment": "Screen-reader text shown in status breakdown when no translation statuses are available",
     "tags": ["browser"],
     "es": "Sin estados",
-    "fr-ca": "Aucun statut"
+    "fr-ca": "Aucun statut",
+    "ru": "Нет статусов",
+    "ja": "ステータスなし",
+    "de": "Keine Statusmeldungen"
   }
 }

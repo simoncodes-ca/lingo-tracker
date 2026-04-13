@@ -86,7 +86,7 @@ libs/
 
 ### Application Responsibilities
 
-- **CLI** (`apps/cli`): Commands for init, add-collection, delete-collection, add-resource. Supports both interactive (TTY) and non-interactive (CI/CD) modes.
+- **CLI** (`apps/cli`): Commands for init, add-collection, delete-collection, add-resource, edit-resource, delete-resource, move, normalize, bundle, export, import, validate, find-similar, install-skill. Supports both interactive (TTY) and non-interactive (CI/CD) modes.
 - **API** (`apps/api`): REST endpoints at `/api/*`, serves static Tracker UI, uses mappers to convert between core domain models and DTOs.
 - **Tracker UI** (`apps/tracker`): Angular app with Material UI for browsing/managing translations, uses NgRx Signals for state management.
 
@@ -153,6 +153,12 @@ export class ExampleComponent implements OnInit {
   }
 }
 ```
+
+### TypeScript Safety
+
+- **No non-null assertions**: Never use the `!` operator. The linter (`lint/style/noNonNullAssertion`) forbids it.
+  - In production code: use an explicit null-guard (`if (!x) return;` or `if (!x) throw`) before accessing the value
+  - In tests: use `expect(value).toBeDefined()` followed by optional chaining (`value?.property`) for subsequent assertions
 
 ### Code Organization
 

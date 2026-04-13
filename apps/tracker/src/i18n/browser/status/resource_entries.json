@@ -4,27 +4,39 @@
     "comment": "Translation status label: new, not yet translated",
     "tags": ["browser"],
     "es": "Nuevo",
-    "fr-ca": "Nouveau"
+    "fr-ca": "Nouveau",
+    "ru": "Новый",
+    "ja": "新しい",
+    "de": "Neu"
   },
   "stale": {
     "source": "Stale",
     "comment": "Translation status label: source has changed and translation is outdated",
     "tags": ["browser"],
     "es": "Duro",
-    "fr-ca": "Vicié"
+    "fr-ca": "Vicié",
+    "ru": "Залежалый",
+    "ja": "古くなった",
+    "de": "Abgestanden"
   },
   "translated": {
     "source": "Translated",
     "comment": "Translation status label: translated but not yet verified",
     "tags": ["browser"],
     "es": "Traducido",
-    "fr-ca": "Traduit"
+    "fr-ca": "Traduit",
+    "ru": "Переведено",
+    "ja": "翻訳済み",
+    "de": "Übersetzt"
   },
   "verified": {
     "source": "Verified",
     "comment": "Translation status label: reviewed and approved",
     "tags": ["browser"],
     "es": "Verificado",
-    "fr-ca": "Vérifié"
+    "fr-ca": "Vérifié",
+    "ru": "Подтверждено",
+    "ja": "検証済み",
+    "de": "Bestätigt"
   }
 }

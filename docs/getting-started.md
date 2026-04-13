@@ -1,24 +1,51 @@
+---
+title: Getting Started
+sidebar_position: 2
+---
+
 ## Getting Started
 
 Lingo Tracker helps you track, validate, and manage translations across projects. This guide shows how to install the CLI, initialize a project, and add collections.
 
 ### Install
 
-Node.js >= 22.16 is required. Install the CLI as a dev dependency in your project:
+Node.js >= 22.16 is required. Install the CLI as a dev dependency in your project.
+
+#### pnpm
 
 ```bash
 pnpm add -D @simoncodes-ca/lingo-tracker
+```
+
+#### npm
+
+```bash
 npm install --save-dev @simoncodes-ca/lingo-tracker
+```
+
+#### yarn
+
+```bash
 yarn add -D @simoncodes-ca/lingo-tracker
 ```
 
-Once installed, the use `npx lingo-tracker` command to interact with the CLI.
+Once installed, use the `npx lingo-tracker` command to interact with the CLI.
+
+### Install the Lingo Tracker Skill
+
+If you use Claude Code (or a compatible AI assistant), install the Lingo Tracker skill to enable guided i18n workflows — detecting hardcoded strings, creating translation resources, and updating components to use Transloco:
+
+```bash
+npx lingo-tracker install-skill
+```
+
+This writes a skill file to your project that Claude Code picks up automatically. See [`install-skill`](./cli.md#install-skill) in the CLI Reference for details.
 
 ### Run the Lingo Tracker App
 
 The `lingo-tracker` package ships a built-in API server that hosts the Lingo Tracker web interface. 
 
-### Then start the app server:
+Then start the app server:
 
 ```bash
 npx lingo-tracker-app
@@ -39,7 +66,7 @@ Or set the `LINGO_TRACKER_PORT` environment variable. The `--port` flag takes pr
 ```json
 {
   "scripts": {
-    "lingo-tracker-app": "lingo-tracker-api --port 4000"
+    "lingo-tracker-app": "lingo-tracker-app --port 4000"
   }
 }
 ```
@@ -337,4 +364,3 @@ For full details on configuration, ICU handling, and best practices, see the [Au
 - For managing translation resources and other CLI commands, see the [CLI Reference](./cli.md)
 - For programmatic access via REST API, see the [API Reference](./api.md)
 - For setting up machine translation, see the [Auto-Translation Guide](./auto-translation.md)
-- To set up an AI assistant skill for your repo (guides Claude Code and similar tools through the i18n workflow), run `lingo-tracker install-skill` — see [`install-skill`](./cli.md#install-skill) in the CLI Reference

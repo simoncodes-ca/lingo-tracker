@@ -17,3 +17,5 @@ export { autoTranslateResource } from './auto-translate-resources';
 export type { AutoTranslateParams, AutoTranslatedEntry, AutoTranslateResult } from './auto-translate-resources';
 export { translateExistingResource } from './translate-existing-resource';
 export type { TranslateExistingResourceOptions, TranslateExistingResourceResult } from './translate-existing-resource';
+export { translateLocale } from './translate-locale';
+export type { TranslateLocaleParams, TranslateLocaleProgress, TranslateLocaleResult } from './translate-locale';

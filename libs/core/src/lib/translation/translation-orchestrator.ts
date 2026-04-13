@@ -124,6 +124,101 @@ export class TranslationOrchestrator {
   }
 
   /**
+   * Translates multiple texts for a single target locale in one provider call.
+   *
+   * This is the key optimization for bulk locale translation: rather than making
+   * one provider call per resource, all translatable texts are collected and sent
+   * in a single call (the provider handles its own internal chunking at 128 items).
+   *
+   * Complex ICU texts are classified and skipped immediately without any API call.
+   * Simple-placeholder texts have their placeholders protected before sending and
+   * restored from the translated result; a marker mismatch falls back to `kind: 'skipped'`.
+   *
+   * Results are returned in the same order as the input `texts` array.
+   *
+   * @param texts        - Array of source strings to translate.
+   * @param sourceLocale - BCP 47 locale code of the source texts.
+   * @param targetLocale - BCP 47 locale code to translate into.
+   * @returns Results in the same order as the input.
+   * @throws {TranslationError} for any provider-level failure.
+   */
+  async translateBatchForLocale(
+    texts: string[],
+    sourceLocale: string,
+    targetLocale: string,
+  ): Promise<TranslateTextResult[]> {
+    if (texts.length === 0) {
+      return [];
+    }
+
+    type TextKind = 'plain' | 'simple-placeholders' | 'complex-icu';
+    const classifications: TextKind[] = texts.map((text) => classifyICUContent(text));
+
+    // Collect translatable texts (plain + protected simple-placeholder) in one flat array,
+    // preserving an index so we can map results back to the original input positions.
+    const providerInputs: Array<{ text: string; originalIndex: number }> = [];
+
+    // For simple-placeholder items we need the protect result to restore later.
+    const placeholderMaps = new Map<number, ReturnType<typeof protectPlaceholders>['placeholders']>();
+
+    for (let i = 0; i < texts.length; i++) {
+      const kind = classifications[i];
+      if (kind === 'complex-icu') continue;
+
+      if (kind === 'plain') {
+        providerInputs.push({ text: texts[i], originalIndex: i });
+      } else {
+        // simple-placeholders
+        const { protectedText, placeholders } = protectPlaceholders(texts[i]);
+        placeholderMaps.set(i, placeholders);
+        providerInputs.push({ text: protectedText, originalIndex: i });
+      }
+    }
+
+    let providerResults: Array<{ translatedText: string }> = [];
+    if (providerInputs.length > 0) {
+      providerResults = await this.#provider.translate(
+        providerInputs.map(({ text }) => ({ text, sourceLocale, targetLocale })),
+      );
+    }
+
+    const results: TranslateTextResult[] = new Array(texts.length);
+
+    // Fill complex-ICU skips first.
+    for (let i = 0; i < texts.length; i++) {
+      if (classifications[i] === 'complex-icu') {
+        results[i] = { kind: 'skipped', value: texts[i] };
+      }
+    }
+
+    // Fill translated results.
+    for (let providerIdx = 0; providerIdx < providerInputs.length; providerIdx++) {
+      const { originalIndex } = providerInputs[providerIdx];
+      const translatedText = providerResults[providerIdx].translatedText;
+      const kind = classifications[originalIndex];
+
+      if (kind === 'plain') {
+        results[originalIndex] = { kind: 'translated', value: translatedText };
+      } else {
+        // simple-placeholders — restore markers
+        const placeholders = placeholderMaps.get(originalIndex);
+        if (!placeholders) {
+          results[originalIndex] = { kind: 'skipped', value: texts[originalIndex] };
+          continue;
+        }
+        const restoreResult = restorePlaceholders(translatedText, placeholders);
+        if (!restoreResult.success) {
+          results[originalIndex] = { kind: 'skipped', value: texts[originalIndex] };
+        } else {
+          results[originalIndex] = { kind: 'translated-with-placeholders', value: restoreResult.value };
+        }
+      }
+    }
+
+    return results;
+  }
+
+  /**
    * Protects simple placeholders with markers, translates the protected text,
    * then restores the original placeholder syntax.
    *

@@ -4,20 +4,29 @@
     "comment": "Placeholder text in the inline folder name input field",
     "tags": ["browser"],
     "es": "Nombre de la carpeta",
-    "fr-ca": "Nom du dossier"
+    "fr-ca": "Nom du dossier",
+    "ru": "Название папки",
+    "ja": "フォルダ名",
+    "de": "Ordnername"
   },
   "nameRequired": {
     "source": "Folder name is required",
     "comment": "Validation error when folder name input is empty",
     "tags": ["browser"],
     "es": "El nombre de la carpeta es obligatorio",
-    "fr-ca": "Le nom du dossier est requis."
+    "fr-ca": "Le nom du dossier est requis.",
+    "ru": "Название папки обязательно для указания.",
+    "ja": "フォルダ名は必須です",
+    "de": "Ein Ordnername ist erforderlich."
   },
   "namePatternError": {
     "source": "Only letters, numbers, dashes, and underscores allowed",
     "comment": "Validation error when folder name contains invalid characters",
     "tags": ["browser"],
     "es": "Solo se permiten letras, números, guiones y guiones bajos.",
-    "fr-ca": "Seules les lettres, les chiffres, les tirets et les traits de soulignement sont autorisés."
+    "fr-ca": "Seules les lettres, les chiffres, les tirets et les traits de soulignement sont autorisés.",
+    "ru": "Разрешается использовать только буквы, цифры, дефисы и подчеркивания.",
+    "ja": "使用できる文字、数字、ハイフン、アンダースコアのみです。",
+    "de": "Nur Buchstaben, Zahlen, Bindestriche und Unterstriche sind erlaubt."
   }
 }

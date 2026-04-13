@@ -1,10 +1,15 @@
+---
+title: Auto-Translation
+sidebar_position: 5
+---
+
 # Auto-Translation
 
 LingoTracker can automatically translate new and stale resources using machine translation providers. This feature is opt-in and configured per-project or per-collection in `.lingo-tracker.json`.
 
 ## Overview
 
-When auto-translation is enabled, adding or editing a resource can trigger machine translation for all target locales. The system classifies each string by its ICU content and applies the appropriate translation strategy:
+When auto-translation is enabled, adding or editing a resource automatically triggers machine translation for all target locales — provided no explicit translations are supplied by the caller. The system classifies each string by its ICU content and applies the appropriate translation strategy:
 
 - **Plain text** is sent directly to the translation provider.
 - **Simple placeholders** (`{name}`, `{{ count }}`) are protected with markers before translation, then restored afterward.
@@ -35,7 +40,9 @@ Add a `translation` block at the top level of your config file:
   "translation": {
     "enabled": true,
     "provider": "google-translate",
-    "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY"
+    "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY",
+    "batchSize": 5,
+    "delayMs": 1000
   },
   "collections": {
     "Main": {
@@ -45,13 +52,15 @@ Add a `translation` block at the top level of your config file:
 }
 ```
 
-The `translation` block accepts three fields:
+The `translation` block accepts the following fields:
 
 | Field | Type | Description |
 |---|---|---|
 | `enabled` | `boolean` | Whether auto-translation is active. Set to `false` to disable without removing the config. |
 | `provider` | `string` | The translation provider to use. Currently only `"google-translate"` is supported. |
 | `apiKeyEnv` | `string` | Name of the environment variable that holds the API key. The key is never stored in the config file. |
+| `batchSize` | `number` | Number of resources to translate per API batch during bulk locale translation. Default: `5`. |
+| `delayMs` | `number` | Milliseconds to wait between batches during bulk locale translation. Default: `1000`. |
 
 ### 2. Per-collection overrides
 
@@ -71,9 +80,7 @@ A collection can override the global translation config. This is useful when dif
     "Admin": {
       "translationsFolder": "apps/admin/src/assets/i18n",
       "translation": {
-        "enabled": false,
-        "provider": "google-translate",
-        "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY"
+        "enabled": false
       }
     }
   }
@@ -100,9 +107,9 @@ The translation orchestrator sits between callers and the translation provider. 
 
 1. **Classifies** the string using the ICU classifier (see below).
 2. **Routes** the string based on classification:
-   - `plain` -- sends to the provider directly.
-   - `simple-placeholders` -- protects placeholders, sends, then restores.
-   - `complex-icu` -- returns the original value unchanged with `kind: 'skipped'`.
+   1. `plain` -- sends to the provider directly.
+   2. `simple-placeholders` -- protects placeholders, sends, then restores.
+   3. `complex-icu` -- returns the original value unchanged with `kind: 'skipped'`.
 3. **Returns** a result with `kind` indicating what happened:
    - `'translated'` -- plain text was translated.
    - `'translated-with-placeholders'` -- simple-placeholder text was translated with marker protection.
@@ -178,6 +185,15 @@ The classifier normalizes Transloco's double-brace format (`{{ name }}`) to sing
 
 ## Usage
 
+### CLI (add-resource and edit-resource)
+
+Auto-translation runs automatically during the `add-resource` and `edit-resource` CLI commands when `translation.enabled` is `true` in your config. No extra flags are needed.
+
+- **add-resource**: When no explicit translations are provided (interactively or via flags), the command delegates all target locales to the translation provider instead of populating them with the base value.
+- **edit-resource**: When the base value is updated, the command triggers translation for any locale whose status is `new` or `stale`.
+
+Skipped locales (complex ICU strings) are left at their current status and surfaced in the CLI output for manual handling.
+
 ### Translating existing resources via the API
 
 The API exposes an endpoint to translate an existing resource entry. Send a POST request with the resource key:
@@ -214,6 +230,62 @@ If the base value uses complex ICU, `skippedLocales` will list the locales that 
 ### Which locales are translated?
 
 Auto-translation targets locales where the translation status is `new` or `stale`, or where no metadata entry exists yet. Locales with status `translated` or `verified` are left unchanged. The base locale is always excluded.
+
+## Bulk Locale Translation
+
+The `translate-locale` operation translates **all** `new` and `stale` resources in a collection for a single target locale in one command. This is useful for bootstrapping a new locale or catching up after a large batch of authoring changes.
+
+### CLI
+
+```bash
+lingo-tracker translate-locale --collection <name> --locale <locale> [--verbose]
+```
+
+In interactive mode (TTY), the command prompts for collection and locale when they are not provided. In non-interactive mode (CI/CD), both `--collection` and `--locale` are required.
+
+**Summary mode (default):**
+
+```
+Translating locale 'fr' in collection 'playground'...
+Done.
+
+Translated: 45 resources
+Skipped (ICU): 3 resources
+Failed: 0 resources
+```
+
+**Verbose mode (`--verbose`):**
+
+```
+[batch 1/9] translated: 5, skipped: 0, failed: 0
+[batch 2/9] translated: 10, skipped: 0, failed: 0
+...
+```
+
+### API
+
+Bulk locale translation is exposed as an async job because large collections can take tens of seconds to translate. The workflow is:
+
+1. **Start the job** — `POST` to receive a `202 Accepted` response with a `jobId`.
+2. **Poll for status** — `GET` with the `jobId` every 2–5 seconds until the status is `completed` or `failed`.
+
+See the [API reference](./api.md) for full endpoint documentation.
+
+### Throttling
+
+The `batchSize` and `delayMs` config fields control how aggressively the bulk operation calls the translation provider:
+
+- **`batchSize`** — how many resources are sent in each API call. Larger batches are faster but increase the risk of hitting per-request quotas.
+- **`delayMs`** — how long to wait between batches. A non-zero delay smooths out rate-limit exposure over time.
+
+**Recommended settings:**
+
+| Tier | `batchSize` | `delayMs` |
+|---|---|---|
+| Free tier | `5` | `1000` |
+| Paid tier | `50` | `0` |
+
+Start with the free-tier defaults and increase `batchSize` once you have confirmed your quota headroom.
 
 ## Error Handling
 

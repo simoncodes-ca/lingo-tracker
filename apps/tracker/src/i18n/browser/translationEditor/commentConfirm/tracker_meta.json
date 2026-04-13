@@ -12,6 +12,21 @@
       "checksum": "c64a94c7605203f3cd268369aef501db",
       "baseChecksum": "530d98327e030fcb737f5821d32684f4",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "2c3a45454b973f06cd5ebdf1959dae25",
+      "baseChecksum": "530d98327e030fcb737f5821d32684f4",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "8422c999f7ca634b16fb41454b36cfca",
+      "baseChecksum": "530d98327e030fcb737f5821d32684f4",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "43cf190ade83de9432e03faf60026840",
+      "baseChecksum": "530d98327e030fcb737f5821d32684f4",
+      "status": "translated"
     }
   },
   "message": {
@@ -25,6 +40,21 @@
     },
     "fr-ca": {
       "checksum": "d589cdbb0b05a9a0180e3047221fdcbd",
+      "baseChecksum": "5bd6562c61ffbb16b723bdaad497a7fe",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "a891cc739cae53e981ea9a4823e6fcc1",
+      "baseChecksum": "5bd6562c61ffbb16b723bdaad497a7fe",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "2d5750a29bf55220f1e6685c2bd435f4",
+      "baseChecksum": "5bd6562c61ffbb16b723bdaad497a7fe",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "5e9bd3c52ba462d8eb541d1fef01185a",
       "baseChecksum": "5bd6562c61ffbb16b723bdaad497a7fe",
       "status": "translated"
     }
@@ -42,6 +72,21 @@
       "checksum": "4d784e8a28ffb470384928bac41e1ad6",
       "baseChecksum": "8e4d177015b856fc0864fea051e6ad57",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "68025402bb82a18da19a787c6f7b138b",
+      "baseChecksum": "8e4d177015b856fc0864fea051e6ad57",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "0ceece09d9645df4510d92c685f5ad61",
+      "baseChecksum": "8e4d177015b856fc0864fea051e6ad57",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "71af06e4f7eb515af230b767ac31469c",
+      "baseChecksum": "8e4d177015b856fc0864fea051e6ad57",
+      "status": "translated"
     }
   },
   "addComment": {
@@ -55,6 +100,21 @@
     },
     "fr-ca": {
       "checksum": "04979267671e33bcd261434689879386",
+      "baseChecksum": "a508cd6ee07b35ea8efdf98d6520ce83",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "86571d3b73c9fcf90635997b576007bb",
+      "baseChecksum": "a508cd6ee07b35ea8efdf98d6520ce83",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "49c9ea90a9ab1f73d3cd2c0626430d9a",
+      "baseChecksum": "a508cd6ee07b35ea8efdf98d6520ce83",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "e1ac8fee45f0845f898ea93429d147fd",
       "baseChecksum": "a508cd6ee07b35ea8efdf98d6520ce83",
       "status": "translated"
     }

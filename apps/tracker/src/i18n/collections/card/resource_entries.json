@@ -4,20 +4,29 @@
     "comment": "Accessible label for edit icon button on collection card",
     "tags": ["card", "collection"],
     "es": "Editar colección",
-    "fr-ca": "Modifier la collection"
+    "fr-ca": "Modifier la collection",
+    "ru": "Редактировать коллекцию",
+    "ja": "コレクションを編集",
+    "de": "Sammlung bearbeiten"
   },
   "delete": {
     "source": "Delete collection",
     "comment": "Accessible label for delete icon button on collection card",
     "tags": ["card", "collection"],
     "es": "Eliminar colección",
-    "fr-ca": "Supprimer la collection"
+    "fr-ca": "Supprimer la collection",
+    "ru": "Удалить коллекцию",
+    "ja": "コレクションを削除",
+    "de": "Sammlung löschen"
   },
   "moreActionsAriaLabel": {
     "source": "More actions for collection",
     "comment": "Aria label for the more actions button on a collection card",
     "tags": ["collections"],
     "es": "Más acciones para la recolección",
-    "fr-ca": "Plus d'actions pour la collecte"
+    "fr-ca": "Plus d'actions pour la collecte",
+    "ru": "Дополнительные действия для сбора",
+    "ja": "収集のためのその他のアクション",
+    "de": "Weitere Aktionen zur Sammlung"
   }
 }

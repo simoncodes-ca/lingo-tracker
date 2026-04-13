@@ -4,13 +4,19 @@
     "comment": "Quick filter button that selects new and stale statuses",
     "tags": ["browser"],
     "es": "Necesita trabajo",
-    "fr-ca": "Nécessite des travaux"
+    "fr-ca": "Nécessite des travaux",
+    "ru": "Требуется доработка",
+    "ja": "改善が必要",
+    "de": "Überarbeitungsbedürftig"
   },
   "ariaLabelX": {
     "source": "Filter by status. Currently showing: { text }",
     "comment": "Aria-label for the status filter button. { text } is the current filter display text (e.g. 'All' or status name)",
     "tags": ["browser"],
     "es": "Filtrar por estado. Actualmente se muestra: {texto}",
-    "fr-ca": "Filtrer par statut. Affichage actuel : { texte }"
+    "fr-ca": "Filtrer par statut. Affichage actuel : { texte }",
+    "ru": "Фильтр по статусу. В данный момент отображается: { текст }",
+    "ja": "ステータスで絞り込み。現在表示中：{テキスト}",
+    "de": "Nach Status filtern. Aktuell angezeigt: { text }"
   }
 }

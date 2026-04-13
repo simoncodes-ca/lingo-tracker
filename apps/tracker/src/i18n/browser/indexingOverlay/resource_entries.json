@@ -4,20 +4,29 @@
     "comment": "Message shown while the collection cache is being built",
     "tags": ["browser"],
     "es": "Colección de indexación...",
-    "fr-ca": "Collection d'indexation..."
+    "fr-ca": "Collection d'indexation...",
+    "ru": "Индексирование коллекции...",
+    "ja": "コレクションのインデックスを作成しています...",
+    "de": "Sammlung wird indexiert..."
   },
   "errorTitle": {
     "source": "Indexing Failed",
     "comment": "Title of the error card shown when indexing fails",
     "tags": ["browser"],
     "es": "Error de indexación",
-    "fr-ca": "L'indexation a échoué"
+    "fr-ca": "L'indexation a échoué",
+    "ru": "Индексирование не удалось",
+    "ja": "インデックス作成に失敗しました",
+    "de": "Indizierung fehlgeschlagen"
   },
   "defaultError": {
     "source": "An error occurred while indexing the collection.",
     "comment": "Default error message shown in the indexing overlay when no specific error is available",
     "tags": ["browser"],
     "es": "Se produjo un error al indexar la colección.",
-    "fr-ca": "Une erreur s'est produite lors de l'indexation de la collection."
+    "fr-ca": "Une erreur s'est produite lors de l'indexation de la collection.",
+    "ru": "Произошла ошибка при индексировании коллекции.",
+    "ja": "コレクションのインデックス作成中にエラーが発生しました。",
+    "de": "Beim Indizieren der Sammlung ist ein Fehler aufgetreten."
   }
 }

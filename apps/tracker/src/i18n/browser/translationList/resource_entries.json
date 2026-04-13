@@ -4,6 +4,9 @@
     "comment": "Aria-label for the virtual scroll viewport containing the list of translations",
     "tags": ["browser"],
     "es": "Lista de traducciones",
-    "fr-ca": "Liste de traductions"
+    "fr-ca": "Liste de traductions",
+    "ru": "Список переводов",
+    "ja": "翻訳リスト",
+    "de": "Übersetzungsliste"
   }
 }

@@ -6,6 +6,7 @@ import type { ResourceTreeDto } from '@simoncodes-ca/data-transfer';
 import { ResourcesController } from './resources.controller';
 import { ConfigService } from '../../config/config.service';
 import { CollectionCacheService, CacheStatus } from '../../cache/collection-cache.service';
+import { TranslationJobService } from '../../translation-job/translation-job.service';
 import * as core from '@simoncodes-ca/core';
 
 // Mock the core module
@@ -132,6 +133,13 @@ describe('ResourcesController', () => {
         {
           provide: CollectionCacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: TranslationJobService,
+          useValue: {
+            startJob: jest.fn().mockReturnValue('mock-job-id'),
+            getJob: jest.fn().mockReturnValue(null),
+          },
         },
       ],
     }).compile();
@@ -1507,6 +1515,151 @@ describe('ResourcesController', () => {
 
       expect(result.translatedCount).toBe(0);
       expect(result.skippedLocales).toEqual(['fr-ca', 'es']);
+    });
+  });
+
+  describe('translateLocale (POST translate-locale)', () => {
+    const configWithTranslation = {
+      ...mockConfig,
+      translation: {
+        enabled: true,
+        provider: 'google-translate',
+        apiKeyEnv: 'GOOGLE_TRANSLATE_API_KEY',
+      },
+    };
+
+    const mockJobDto = {
+      jobId: 'mock-job-id',
+      collectionName: 'test-collection',
+      targetLocale: 'fr-ca',
+      status: 'pending' as const,
+      totalResources: 0,
+      translatedCount: 0,
+      failedCount: 0,
+      skippedCount: 0,
+    };
+
+    it('should return 202 with a job DTO when valid', async () => {
+      const translationJobService = resourcesModule.get<TranslationJobService>(TranslationJobService);
+      (translationJobService.startJob as jest.Mock).mockReturnValue('mock-job-id');
+      (translationJobService.getJob as jest.Mock).mockReturnValue(mockJobDto);
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
+
+      const mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      };
+
+      await resourcesController.translateLocale('test-collection', { locale: 'fr-ca' }, mockResponse as any);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(202);
+      expect(mockResponse.json).toHaveBeenCalledWith(mockJobDto);
+    });
+
+    it('should return 404 when collection not found', async () => {
+      (configService.getConfig as jest.Mock).mockReturnValue({ ...mockConfig, collections: {} });
+
+      const mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      };
+
+      await expect(
+        resourcesController.translateLocale('unknown-collection', { locale: 'fr-ca' }, mockResponse as any),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return 422 when translation is not enabled for the collection', async () => {
+      // mockConfig has no translation config — auto-translation is disabled by default
+      const mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      };
+
+      try {
+        await resourcesController.translateLocale('test-collection', { locale: 'fr-ca' }, mockResponse as any);
+        fail('expected HttpException to be thrown');
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect((error as HttpException).getStatus()).toBe(422);
+      }
+    });
+
+    it('should return 400 when locale equals the base locale', async () => {
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
+
+      const mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      };
+
+      try {
+        await resourcesController.translateLocale('test-collection', { locale: 'en' }, mockResponse as any);
+        fail('expected HttpException to be thrown');
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect((error as HttpException).getStatus()).toBe(400);
+      }
+    });
+
+    it('should return 400 when locale is not in the collection locales list', async () => {
+      (configService.getConfig as jest.Mock).mockReturnValue(configWithTranslation);
+
+      const mockResponse = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn().mockReturnThis(),
+      };
+
+      try {
+        await resourcesController.translateLocale('test-collection', { locale: 'de' }, mockResponse as any);
+        fail('expected HttpException to be thrown');
+      } catch (error: unknown) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect((error as HttpException).getStatus()).toBe(400);
+      }
+    });
+  });
+
+  describe('getTranslateLocaleJob (GET translate-locale/:jobId)', () => {
+    const mockJobDto = {
+      jobId: 'known-job-id',
+      collectionName: 'test-collection',
+      targetLocale: 'fr-ca',
+      status: 'completed' as const,
+      totalResources: 10,
+      translatedCount: 9,
+      failedCount: 1,
+      skippedCount: 0,
+    };
+
+    it('should return the job DTO when found and collection matches', async () => {
+      const translationJobService = resourcesModule.get<TranslationJobService>(TranslationJobService);
+      (translationJobService.getJob as jest.Mock).mockReturnValue(mockJobDto);
+
+      const result = await resourcesController.getTranslateLocaleJob('test-collection', 'known-job-id');
+
+      expect(result).toEqual(mockJobDto);
+    });
+
+    it('should return 404 when job not found', async () => {
+      const translationJobService = resourcesModule.get<TranslationJobService>(TranslationJobService);
+      (translationJobService.getJob as jest.Mock).mockReturnValue(undefined);
+
+      await expect(resourcesController.getTranslateLocaleJob('test-collection', 'unknown-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should return 404 when job exists but collectionName does not match', async () => {
+      const translationJobService = resourcesModule.get<TranslationJobService>(TranslationJobService);
+      (translationJobService.getJob as jest.Mock).mockReturnValue({
+        ...mockJobDto,
+        collectionName: 'other-collection',
+      });
+
+      await expect(resourcesController.getTranslateLocaleJob('test-collection', 'known-job-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });
