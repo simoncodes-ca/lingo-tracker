@@ -79,7 +79,7 @@ npx lingo-tracker validate
 npx lingo-tracker-app
 ```
 
-Check the [getting started guide](docs/getting-started.md) for detailed setup instructions, or the full [CLI reference](docs/cli.md) for all available commands.
+Check the [documentation site](https://simoncodes-ca.github.io/lingo-tracker/), the [getting started guide](docs/getting-started.md) for detailed setup instructions, or the full [CLI reference](docs/cli.md) for all available commands.
 
 ## Roadmap
 
