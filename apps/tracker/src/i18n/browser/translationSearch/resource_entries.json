@@ -4,6 +4,9 @@
     "comment": "Aria-label for the translation search input in the main translation header",
     "tags": ["browser"],
     "es": "Buscar traducciones",
-    "fr-ca": "Recherche de traductions"
+    "fr-ca": "Recherche de traductions",
+    "ru": "Поиск переводов",
+    "ja": "翻訳を検索",
+    "de": "Übersetzungen suchen"
   }
 }

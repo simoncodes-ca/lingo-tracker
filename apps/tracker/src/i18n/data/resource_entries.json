@@ -4,6 +4,9 @@
     "comment": "Message shown while data is loading",
     "tags": ["data"],
     "es": "Cargando",
-    "fr-ca": "Chargement"
+    "fr-ca": "Chargement",
+    "ru": "Загрузка",
+    "ja": "ロード中",
+    "de": "Laden"
   }
 }

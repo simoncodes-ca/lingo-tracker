@@ -111,6 +111,16 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/). 
 - **DTOs**: API contracts are defined in `libs/data-transfer`.
 - **Testing**: Vitest for unit tests.
 
+## Contributing to Documentation
+
+The docs site lives in `docs-site/` and is built with [Docusaurus](https://docusaurus.io/). To run it locally:
+
+```bash
+pnpm run docs:dev
+```
+
+Documentation source files are located under `docs-site/src/pages/`. Add or edit pages there and open a pull request as you would for any other change.
+
 ## Questions?
 
 Open an [issue](https://github.com/simoncodes-ca/lingo-tracker/issues) and we'll be happy to help.

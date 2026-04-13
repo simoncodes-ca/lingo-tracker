@@ -12,6 +12,21 @@
       "checksum": "531e79f4739df35a25f6ebd479c2aa67",
       "baseChecksum": "c7c796f3d37ab9fbc712335f9def7b81",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "e66e399449da382ed3c954e8f5e4a915",
+      "baseChecksum": "c7c796f3d37ab9fbc712335f9def7b81",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "5e7cd0c3a357e01a8377e570c101d36b",
+      "baseChecksum": "c7c796f3d37ab9fbc712335f9def7b81",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "c030d07060ea8ea8173302e3042e375d",
+      "baseChecksum": "c7c796f3d37ab9fbc712335f9def7b81",
+      "status": "translated"
     }
   },
   "message": {
@@ -27,6 +42,21 @@
       "checksum": "8fbb0a3a0e5c526770762bb6c09da9ce",
       "baseChecksum": "1cf7c14142897e3c49ea7b6b28ceb567",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "506d3a73c9cb4d2a7d596359925ddc26",
+      "baseChecksum": "1cf7c14142897e3c49ea7b6b28ceb567",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "d028883676b3802bd56b4fc3a1bcb523",
+      "baseChecksum": "1cf7c14142897e3c49ea7b6b28ceb567",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "b27b43a4af8a50725701f3e2ccc04e38",
+      "baseChecksum": "1cf7c14142897e3c49ea7b6b28ceb567",
+      "status": "translated"
     }
   },
   "collection": {
@@ -40,6 +70,21 @@
     },
     "fr-ca": {
       "checksum": "d15b505cce09406de9f918cb1f8c641c",
+      "baseChecksum": "d15b505cce09406de9f918cb1f8c641c",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "e383e52780ab039fa602807bc784b3ac",
+      "baseChecksum": "d15b505cce09406de9f918cb1f8c641c",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "695b82464aee401b828677a0100f6cba",
+      "baseChecksum": "d15b505cce09406de9f918cb1f8c641c",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "475b422743f9887f4d8bd4974b28b499",
       "baseChecksum": "d15b505cce09406de9f918cb1f8c641c",
       "status": "translated"
     }

@@ -1,0 +1,168 @@
+/* Google Fonts — Watercolor design system */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* ─── Light theme ─────────────────────────────────────────────────────────── */
+:root {
+  /* Primary — Warm Coral */
+  --ifm-color-primary: #d4726a;
+  --ifm-color-primary-dark: #c25d55;
+  --ifm-color-primary-darker: #b95750;
+  --ifm-color-primary-darkest: #9d413a;
+  --ifm-color-primary-light: #da8880;
+  --ifm-color-primary-lighter: #de9189;
+  --ifm-color-primary-lightest: #e8a9a3;
+
+  /* Fonts */
+  --ifm-font-family-base: 'Nunito', sans-serif;
+  --ifm-font-family-monospace: 'IBM Plex Mono', monospace;
+  --ifm-code-font-size: 90%;
+
+  /* Background & text */
+  --ifm-background-color: #faf8f5;
+  --ifm-background-surface-color: #f5f1eb;
+  --ifm-font-color-base: #2e2923;
+  --ifm-font-color-secondary: #5a534a;
+
+  /* Navbar */
+  --ifm-navbar-background-color: #faf8f5;
+  --ifm-navbar-shadow: 0 1px 3px 0 rgb(44 36 28 / 0.08);
+
+  /* Sidebar */
+  --ifm-sidebar-background-color: #f5f1eb;
+
+  /* Footer */
+  --ifm-footer-background-color: #2e2923;
+  --ifm-footer-color: #d4cdc3;
+  --ifm-footer-link-color: #d4cdc3;
+  --ifm-footer-link-hover-color: #e8847c;
+  --ifm-footer-title-color: #f3efe9;
+
+  /* Links */
+  --ifm-link-color: #4a7fb5;
+  --ifm-link-hover-color: #3a6a9e;
+
+  /* Code blocks */
+  --ifm-code-background: #ede8e0;
+  --docusaurus-highlighted-code-line-bg: rgb(212 114 106 / 0.1);
+
+  /* Borders */
+  --ifm-color-emphasis-300: #e5dfd7;
+  --ifm-color-emphasis-400: #d4cdc3;
+  --ifm-hr-border-color: #e5dfd7;
+  --ifm-toc-border-color: #e5dfd7;
+  --ifm-table-border-color: #e5dfd7;
+
+  /* Border radius */
+  --ifm-global-radius: 0.5rem;
+  --ifm-code-border-radius: 0.375rem;
+
+  /* Shadows */
+  --ifm-global-shadow-md: 0 4px 8px -1px rgb(44 36 28 / 0.08), 0 2px 4px -2px rgb(44 36 28 / 0.06);
+  --ifm-global-shadow-lw: 0 1px 3px 0 rgb(44 36 28 / 0.06);
+
+  /* Alerts */
+  --ifm-color-success: #6da67e;
+  --ifm-color-warning: #d9a441;
+  --ifm-color-danger: #c95e5e;
+  --ifm-color-info: #4a7fb5;
+}
+
+/* ─── Dark theme ──────────────────────────────────────────────────────────── */
+[data-theme='dark'] {
+  /* Primary — brightened Coral */
+  --ifm-color-primary: #e8847c;
+  --ifm-color-primary-dark: #e06e65;
+  --ifm-color-primary-darker: #d4726a;
+  --ifm-color-primary-darkest: #c25d55;
+  --ifm-color-primary-light: #f0a09a;
+  --ifm-color-primary-lighter: #f4b0ab;
+  --ifm-color-primary-lightest: #f8c8c4;
+
+  /* Background & text */
+  --ifm-background-color: #141210;
+  --ifm-background-surface-color: #1c1814;
+  --ifm-font-color-base: #f3efe9;
+  --ifm-font-color-secondary: #d4cdc3;
+
+  /* Navbar */
+  --ifm-navbar-background-color: #1c1814;
+  --ifm-navbar-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+
+  /* Sidebar */
+  --ifm-sidebar-background-color: #1c1814;
+
+  /* Footer */
+  --ifm-footer-background-color: #0e0c0a;
+  --ifm-footer-color: #a89f93;
+  --ifm-footer-link-color: #a89f93;
+  --ifm-footer-link-hover-color: #e8847c;
+  --ifm-footer-title-color: #d4cdc3;
+
+  /* Links */
+  --ifm-link-color: #7bafde;
+  --ifm-link-hover-color: #9dc4e8;
+
+  /* Code blocks */
+  --ifm-code-background: #2e2923;
+  --docusaurus-highlighted-code-line-bg: rgb(232 132 124 / 0.12);
+
+  /* Borders */
+  --ifm-color-emphasis-300: #433d36;
+  --ifm-color-emphasis-400: #5a534a;
+  --ifm-hr-border-color: #433d36;
+  --ifm-toc-border-color: #433d36;
+  --ifm-table-border-color: #433d36;
+
+  /* Shadows */
+  --ifm-global-shadow-md: 0 4px 8px -1px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.25);
+  --ifm-global-shadow-lw: 0 1px 3px 0 rgb(0 0 0 / 0.25);
+
+  /* Alerts */
+  --ifm-color-success: #7dbb8f;
+  --ifm-color-warning: #e4b454;
+  --ifm-color-danger: #d97878;
+  --ifm-color-info: #7bafde;
+}
+
+/* ─── Body texture ────────────────────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* ─── Navbar ──────────────────────────────────────────────────────────────── */
+.navbar__logo img {
+  height: 28px;
+}
+
+.navbar__brand {
+  gap: 0.5rem;
+}
+
+.navbar__title {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+.menu__link--active {
+  font-weight: 600;
+}
+
+/* ─── Code ────────────────────────────────────────────────────────────────── */
+code {
+  border-radius: var(--ifm-code-border-radius);
+}
+
+/* ─── Markdown ────────────────────────────────────────────────────────────── */
+article h1,
+article h2,
+article h3,
+article h4 {
+  font-weight: 700;
+}

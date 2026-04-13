@@ -1,3 +1,8 @@
+---
+title: About
+sidebar_position: 1
+---
+
 # About LingoTracker
 
 LingoTracker is a comprehensive translation management tool designed as the ultimate companion to the [Transloco](https://github.com/jsverse/transloco) library. It provides developers and teams with an efficient, scalable solution for managing translation resources across multiple languages.
@@ -16,16 +21,17 @@ LingoTracker streamlines the entire translation workflow by providing intelligen
 - **Type Safety**: Compile-time translation key validation with full IDE completion support
 - **Auto-Translation**: Machine translation via Google Translate with ICU-aware placeholder protection
 - **CI/CD Integration**: Powerful CLI for automated validation in build pipelines
+- **REST API & Web UI**: Browser-based resource editor backed by a REST API, enabling team workflows and external integrations
 - **Format Flexibility**: Import/export support for JSON, XLIFF, and other translation formats
 - **Resource Linking**: Symlink support for sharing resources across projects
 - **Explicit Status Workflow**: `new`, `translated`, `stale`, `verified` with automatic updates on base changes
 - **Entry Tagging**: Tags stored alongside entries for rich filtering and export
-- **Deterministic Checksums**: MD5-based checksums for both base and translated values
-- **Strict Key Rules**: Dot-delimited keys; per-segment allowed chars `[A-Za-z0-9_-]+`; no de-duplication with target folder
+- **Structured Key Naming**: Dot-delimited keys with strict character rules ensure predictable, conflict-free resource paths
+- **AI Integration**: Installable Claude Code skill for AI-assisted translation workflows — detect hardcoded strings, create resources, and update components directly from your AI coding assistant
 
 ## Who It's For
 
-LingoTracker is ideal for development teams working on internationalized applications who need reliable, scalable translation management. Whether you're managing a small project with a few languages or an enterprise application with hundreds of translation keys, LingoTracker adapts to your needs.
+LingoTracker is ideal for development teams working on internationalized applications who need reliable, scalable translation management. Whether you're managing a small project with a few languages or an enterprise application with thousands of translation keys, LingoTracker adapts to your needs.
 
 ## Technology Integration
 

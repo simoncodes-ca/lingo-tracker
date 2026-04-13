@@ -12,6 +12,21 @@
       "checksum": "e7c2ebf83638051fcfc3bffd2697e2ec",
       "baseChecksum": "f0c1c6dcc3cd228eb523f5809d39878e",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "1d0d6fe6f6c7d24f49c30c25806eeb00",
+      "baseChecksum": "f0c1c6dcc3cd228eb523f5809d39878e",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "1ea1bc9ca57838426391b54659ec0235",
+      "baseChecksum": "f0c1c6dcc3cd228eb523f5809d39878e",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "9ea673b3bd066bb5b0cb547eeaed96b2",
+      "baseChecksum": "f0c1c6dcc3cd228eb523f5809d39878e",
+      "status": "translated"
     }
   },
   "changeLocation": {
@@ -27,6 +42,21 @@
       "checksum": "dc49addffb6da2de09e5a3fa596dcdfb",
       "baseChecksum": "6dd495f1c2ae29c8e9a6c4405f18e22e",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "86568c4f274d53ddbd5c0ca909838948",
+      "baseChecksum": "6dd495f1c2ae29c8e9a6c4405f18e22e",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "1b8bf802cd4b26490f8d9ea9033c1b10",
+      "baseChecksum": "6dd495f1c2ae29c8e9a6c4405f18e22e",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "37b9b091bf44c29f032ce905da6fd10f",
+      "baseChecksum": "6dd495f1c2ae29c8e9a6c4405f18e22e",
+      "status": "translated"
     }
   },
   "otherLocales": {
@@ -40,6 +70,21 @@
     },
     "fr-ca": {
       "checksum": "7d4be744a78b006182b35c9d056b566e",
+      "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "dae4ccfa3a748a5236612c9cb07dafac",
+      "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "5d191996e0ef3a0e2d45658ad517e8c1",
+      "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "01a98b4b9cfdd78d96ce093d75f2efe6",
       "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
       "status": "translated"
     }

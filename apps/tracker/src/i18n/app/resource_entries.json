@@ -4,6 +4,9 @@
     "comment": "Accessibility link at top of page for keyboard navigation",
     "tags": ["app"],
     "es": "Saltar al contenido principal",
-    "fr-ca": "Passer au contenu principal"
+    "fr-ca": "Passer au contenu principal",
+    "ru": "Перейти к основному содержимому",
+    "ja": "メインコンテンツへスキップ",
+    "de": "Zum Hauptinhalt springen"
   }
 }

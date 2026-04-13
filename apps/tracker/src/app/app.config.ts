@@ -19,7 +19,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideTransloco({
       config: {
-        availableLangs: ['en', 'es', 'fr-ca'],
+        availableLangs: ['en', 'es', 'fr-ca', 'ru', 'ja', 'de'],
         defaultLang: 'en',
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),

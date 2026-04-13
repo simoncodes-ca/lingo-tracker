@@ -3,65 +3,98 @@
     "source": "Collection Name",
     "comment": "Label for collection name input field",
     "es": "Nombre de la Colección",
-    "fr-ca": "Nom de la Collection"
+    "fr-ca": "Nom de la Collection",
+    "ru": "Название коллекции",
+    "ja": "コレクション名",
+    "de": "Sammlungsname"
   },
   "namePlaceholder": {
     "source": "e.g., my-app-i18n",
     "comment": "Placeholder text for collection name input",
     "es": "ej., mi-app-i18n",
-    "fr-ca": "p. ex., mon-app-i18n"
+    "fr-ca": "p. ex., mon-app-i18n",
+    "ru": "например, my-app-i18n",
+    "ja": "例：my-app-i18n",
+    "de": "z.B. meine-app-i18n"
   },
   "nameRequired": {
     "source": "Collection name is required",
     "comment": "Error message when name is required",
     "es": "El nombre de la colección es obligatorio",
-    "fr-ca": "Le nom de la collection est requis"
+    "fr-ca": "Le nom de la collection est requis",
+    "ru": "Название коллекции обязательно для указания.",
+    "ja": "コレクション名は必須です。",
+    "de": "Ein Sammlungsname ist erforderlich."
   },
   "folderLabel": {
     "source": "Translations Folder",
     "comment": "Label for translations folder input field",
     "es": "Carpeta de Traducciones",
-    "fr-ca": "Dossier de Traductions"
+    "fr-ca": "Dossier de Traductions",
+    "ru": "Папка переводов",
+    "ja": "翻訳フォルダ",
+    "de": "Übersetzungsordner"
   },
   "folderPlaceholder": {
     "source": "e.g., ./src/assets/i18n",
     "comment": "Placeholder text for folder path input",
     "es": "ej., ./src/assets/i18n",
-    "fr-ca": "p. ex., ./src/assets/i18n"
+    "fr-ca": "p. ex., ./src/assets/i18n",
+    "ru": "например, ./src/assets/i18n",
+    "ja": "例：./src/assets/i18n",
+    "de": "z. B. ./src/assets/i18n"
   },
   "folderRequired": {
     "source": "Translations folder is required",
     "comment": "Error message when folder is required",
     "es": "La carpeta de traducciones es obligatoria",
-    "fr-ca": "Le dossier de traductions est requis"
+    "fr-ca": "Le dossier de traductions est requis",
+    "ru": "Необходима папка «Переводы».",
+    "ja": "翻訳フォルダが必要です",
+    "de": "Der Ordner „Übersetzungen“ wird benötigt."
   },
   "localesLabel": {
     "source": "Locales (Optional)",
     "comment": "Label for locales input field",
     "es": "Idiomas (Opcional)",
-    "fr-ca": "Langues (Optionnel)"
+    "fr-ca": "Langues (Optionnel)",
+    "ru": "Локали (необязательно)",
+    "ja": "ロケール（オプション）",
+    "de": "Regionen (optional)"
   },
   "localesHint": {
     "source": "Comma-separated list of locale codes. Leave empty to use global config.",
     "comment": "Hint text for locales input",
     "es": "Lista de códigos de idioma separados por comas. Dejar vacío para usar la configuración global.",
-    "fr-ca": "Liste de codes de langue séparés par des virgules. Laisser vide pour utiliser la configuration globale."
+    "fr-ca": "Liste de codes de langue séparés par des virgules. Laisser vide pour utiliser la configuration globale.",
+    "ru": "Список кодов локали, разделённых запятыми. Оставьте пустым, чтобы использовать глобальную конфигурацию.",
+    "ja": "カンマ区切りのロケールコードのリスト。グローバル設定を使用する場合は空欄のままにしてください。",
+    "de": "Durch Kommas getrennte Liste von Gebietsschemacodes. Leer lassen, um die globale Konfiguration zu verwenden."
   },
   "createButton": {
     "source": "Create",
     "comment": "Create button text in create mode",
     "es": "Crear",
-    "fr-ca": "Créer"
+    "fr-ca": "Créer",
+    "ru": "Создавать",
+    "ja": "作成する",
+    "de": "Erstellen"
   },
   "localesPlaceholder": {
     "source": "e.g., en, fr, es",
     "comment": "Placeholder text for locales input",
     "es": "ej., en, fr, es",
-    "fr-ca": "p. ex., en, fr, es"
+    "fr-ca": "p. ex., en, fr, es",
+    "ru": "например, en, fr, es",
+    "ja": "例：en、fr、es",
+    "de": "z.B. en, fr, es"
   },
   "createTitle": {
     "source": "Create Collection",
     "es": "Crear Colección",
-    "fr-ca": "Créer une Collection"
+    "fr-ca": "Créer une Collection",
+    "ru": "Создать коллекцию",
+    "ja": "コレクションを作成する",
+    "de": "Sammlung erstellen"
   }
 }

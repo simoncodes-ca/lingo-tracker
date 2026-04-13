@@ -4,90 +4,132 @@
     "comment": "Text on a button or link that will display edit form for an entity",
     "tags": ["common"],
     "es": "Editar",
-    "fr-ca": "Modifier"
+    "fr-ca": "Modifier",
+    "ru": "Редактировать",
+    "ja": "編集",
+    "de": "Bearbeiten"
   },
   "delete": {
     "source": "Delete",
     "comment": "Text on a button that will cause an entity to be deleted",
     "tags": ["common"],
     "es": "Eliminar",
-    "fr-ca": "Supprimer"
+    "fr-ca": "Supprimer",
+    "ru": "Удалить",
+    "ja": "消去",
+    "de": "Löschen"
   },
   "retry": {
     "source": "Retry",
     "comment": "Text on a button to cause an action to retry operation",
     "tags": ["common"],
     "es": "Reintentar",
-    "fr-ca": "Réessayer"
+    "fr-ca": "Réessayer",
+    "ru": "Повторить попытку",
+    "ja": "リトライ",
+    "de": "Wiederholen"
   },
   "cancel": {
     "source": "Cancel",
     "comment": "Text on a button to cancel whatever opration the user was about to do",
     "es": "Cancelar",
-    "fr-ca": "Annuler"
+    "fr-ca": "Annuler",
+    "ru": "Отмена",
+    "ja": "キャンセル",
+    "de": "Stornieren"
   },
   "ok": {
     "source": "OK",
     "es": "OK",
-    "fr-ca": "OK"
+    "fr-ca": "OK",
+    "ru": "ХОРОШО",
+    "ja": "わかりました",
+    "de": "OK"
   },
   "save": {
     "source": "Save",
     "comment": "Save button text in edit mode",
     "es": "Guardar",
-    "fr-ca": "Enregistrer"
+    "fr-ca": "Enregistrer",
+    "ru": "Сохранять",
+    "ja": "保存",
+    "de": "Speichern"
   },
   "back": {
     "source": "Back",
     "es": "Volver",
-    "fr-ca": "Retour"
+    "fr-ca": "Retour",
+    "ru": "Назад",
+    "ja": "戻る",
+    "de": "Zurück"
   },
   "clickToCopy": {
     "source": "click to copy",
     "comment": "Message to user that item can be copied to clipboard",
     "es": "clic para copiar",
-    "fr-ca": "cliquer pour copier"
+    "fr-ca": "cliquer pour copier",
+    "ru": "нажмите, чтобы скопировать",
+    "ja": "クリックしてコピー",
+    "de": "Zum Kopieren klicken"
   },
   "move": {
     "source": "Move",
     "comment": "Action label to move an item to a different location",
     "tags": ["common"],
     "es": "Mover",
-    "fr-ca": "Déplacer"
+    "fr-ca": "Déplacer",
+    "ru": "Двигаться",
+    "ja": "動く",
+    "de": "Bewegen"
   },
   "translate": {
     "source": "Translate",
     "comment": "Action button to auto-translate a resource",
     "tags": ["common"],
     "es": "Traducir",
-    "fr-ca": "Traduire"
+    "fr-ca": "Traduire",
+    "ru": "Переводить",
+    "ja": "翻訳する",
+    "de": "Übersetzen"
   },
   "selectAll": {
     "source": "Select All",
     "comment": "Button to select all items in a list or filter",
     "tags": ["common"],
     "es": "Seleccionar todo",
-    "fr-ca": "Sélectionner tout"
+    "fr-ca": "Sélectionner tout",
+    "ru": "Выбрать все",
+    "ja": "すべて選択",
+    "de": "Alle auswählen"
   },
   "clearAll": {
     "source": "Clear All",
     "comment": "Button to clear all selections in a list or filter",
     "tags": ["common"],
     "es": "Borrar todo",
-    "fr-ca": "Effacer tout"
+    "fr-ca": "Effacer tout",
+    "ru": "Очистить все",
+    "ja": "すべてクリア",
+    "de": "Alles löschen"
   },
   "close": {
     "source": "Close",
     "comment": "Button to close a dialog or dismiss a notification",
     "tags": ["common"],
     "es": "Cerca",
-    "fr-ca": "Fermer"
+    "fr-ca": "Fermer",
+    "ru": "Закрывать",
+    "ja": "近い",
+    "de": "Schließen"
   },
   "dismiss": {
     "source": "Dismiss",
     "comment": "Button to dismiss a notification or snackbar",
     "tags": ["common"],
     "es": "Despedir",
-    "fr-ca": "Rejeter"
+    "fr-ca": "Rejeter",
+    "ru": "Увольнять",
+    "ja": "却下する",
+    "de": "Zurückweisen"
   }
 }

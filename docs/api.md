@@ -1,3 +1,8 @@
+---
+title: API Reference
+sidebar_position: 4
+---
+
 # LingoTracker API Reference
 
 ## Overview
@@ -13,7 +18,7 @@ The LingoTracker API provides REST endpoints for managing translation resources,
 
 ## Authentication
 
-Currently, the API does not require authentication. All endpoints are publicly accessible.
+Currently, the API does not require authentication. It is meant to run on your machine when you need it.
 
 ## Health Check
 
@@ -148,7 +153,7 @@ interface LingoTrackerCollectionDto {
 ```
 
 **Status Codes**:
-- `200 OK`: Collection created successfully
+- `201 Created`: Collection created successfully
 - `400 Bad Request`: Invalid request body or collection already exists
 - `500 Internal Server Error`: Unexpected error during collection creation
 
@@ -186,6 +191,54 @@ Response:
   "statusCode": 400,
   "message": "Collection 'web-app' already exists"
 }
+```
+
+### Update Collection
+
+Updates or renames an existing collection.
+
+**Endpoint**: `PUT /api/collections/:collectionName`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection to update (URL-encoded if necessary)
+
+**Request Body**:
+
+```typescript
+interface UpdateCollectionDto {
+  /** Optional new name to rename the collection */
+  name?: string;
+  /** Updated collection configuration */
+  collection: LingoTrackerCollectionDto;
+}
+```
+
+**Response**:
+
+```json
+{
+  "message": "Collection 'admin-portal' updated successfully"
+}
+```
+
+**Status Codes**:
+- `200 OK`: Collection updated successfully
+- `400 Bad Request`: Invalid request body or collection not found
+- `500 Internal Server Error`: Unexpected error during update
+
+**Example**:
+
+```bash
+curl -X PUT http://localhost:3030/api/collections/admin-portal \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "admin-portal-v2",
+    "collection": {
+      "translationsFolder": "./apps/admin/src/i18n",
+      "baseLocale": "en",
+      "locales": ["en", "es", "fr", "de"]
+    }
+  }'
 ```
 
 ### Delete Collection
@@ -236,6 +289,88 @@ Response:
   "message": "Collection 'non-existent' not found"
 }
 ```
+
+## Locales API
+
+Manage locales within a specific collection.
+
+### Add Locale
+
+Adds a locale to a collection and backfills all existing resources with the new locale (value set to the base value, `status: "new"`).
+
+**Endpoint**: `POST /api/collections/:collectionName/locales`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
+
+**Request Body**:
+
+```json
+{
+  "locale": "de"
+}
+```
+
+**Response**:
+
+```json
+{
+  "message": "Locale \"de\" added to collection \"main\" successfully",
+  "entriesBackfilled": 42,
+  "filesUpdated": 8
+}
+```
+
+**Status Codes**:
+- `200 OK`: Locale added and resources backfilled
+- `400 Bad Request`: Invalid locale format, locale already exists, cannot modify base locale, or collection not found
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:3030/api/collections/main/locales \
+  -H 'Content-Type: application/json' \
+  -d '{"locale": "de"}'
+```
+
+---
+
+### Remove Locale
+
+Removes a locale from a collection and purges all translation data for that locale from resource files.
+
+**Endpoint**: `DELETE /api/collections/:collectionName/locales/:locale`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
+- `locale` (string, required): The locale to remove (URL-encoded if necessary)
+
+**Response**:
+
+```json
+{
+  "message": "Locale \"de\" removed from collection \"main\" successfully",
+  "entriesPurged": 42,
+  "filesUpdated": 8
+}
+```
+
+**Status Codes**:
+- `200 OK`: Locale removed and data purged
+- `400 Bad Request`: Invalid locale format, locale not found in collection, cannot modify base locale, or collection not found
+
+**Example**:
+
+```bash
+curl -X DELETE http://localhost:3030/api/collections/main/locales/de
+```
+
+**Notes**:
+- Translation data for the removed locale is permanently deleted from files (recoverable via git)
+- Removing the last non-base locale is allowed
+- Cannot remove the base locale
+
+---
 
 ## Resources API
 
@@ -358,6 +493,11 @@ interface CreateResourceResponseDto {
   entriesCreated: number;
   /** Whether at least one resource entry was newly created */
   created: boolean;
+  /**
+   * Locales skipped during auto-translation (ICU message format not supported).
+   * Only present when auto-translation is enabled and some locales were skipped.
+   */
+  skippedLocales?: string[];
 }
 ```
 
@@ -371,7 +511,7 @@ interface CreateResourceResponseDto {
 ```
 
 **Status Codes**:
-- `200 OK`: Resources processed successfully (check `entriesCreated` to see how many were new)
+- `201 Created`: Resources processed successfully (check `entriesCreated` to see how many were new)
 - `400 Bad Request`: Invalid request body, validation error, or empty resource array
 - `404 Not Found`: Collection not found
 - `500 Internal Server Error`: Unexpected error during resource creation
@@ -717,11 +857,10 @@ interface UpdateResourceDto {
   tags?: string[];
   /** Optional target folder override */
   targetFolder?: string;
-  /** Optional base locale override */
-  baseLocale?: string;
   /** Optional map of locale updates */
   locales?: Record<string, {
     value: string;
+    status: 'new' | 'translated' | 'stale' | 'verified';
   }>;
 }
 ```
@@ -750,6 +889,13 @@ interface UpdateResourceResponseDto {
   updated: boolean;
   /** Optional message (e.g., "No changes detected") */
   message?: string;
+  /** The updated resource data (present when updated is true) */
+  resource?: ResourceSummaryDto;
+  /**
+   * Locales skipped during auto-translation (ICU message format not supported).
+   * Only present when auto-translation is enabled and some locales were skipped.
+   */
+  skippedLocales?: string[];
 }
 ```
 
@@ -773,7 +919,7 @@ interface UpdateResourceResponseDto {
 - Updating a locale value will set its status to `translated` and update its checksums.
 - If no changes are detected (values match existing), `updated` will be `false`.
 
-## Move Resource(s)
+### Move Resource(s)
 
 Moves or renames translation resources within a collection. Supports single resource moves and wildcard pattern moves.
 
@@ -857,7 +1003,481 @@ interface MoveResourceResponseDto {
 - Wildcard moves (`source: "prefix.*"`) will move all matching resources to the `destination` prefix.
 - The operation is atomic per move entry but not transactional across all moves.
 
+### Get Resource Tree
 
+Returns the resource tree for a collection, optionally scoped to a sub-path. The tree is built from an in-memory cache — the first request triggers background indexing and returns a `202 Accepted` with a status response until the cache is ready.
+
+**Endpoint**: `GET /api/collections/:collectionName/resources/tree`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection
+
+**Query Parameters**:
+- `path` (string, optional): Dot-delimited folder path to scope the tree (e.g., `apps.common`)
+- `includeNested` (boolean, optional): When `true` and `path` is set, returns all nested resources flattened into the `resources` array
+
+**Response** (cache ready — `200 OK`):
+
+```typescript
+interface ResourceTreeDto {
+  /** Current folder path (dot-delimited, empty for root) */
+  path: string;
+  /** Resources in this folder */
+  resources: ResourceSummaryDto[];
+  /** Child folders */
+  children: FolderNodeDto[];
+}
+
+interface ResourceSummaryDto {
+  key: string;
+  translations: Record<string, string>;
+  status: Record<string, 'new' | 'translated' | 'stale' | 'verified' | undefined>;
+  comment?: string;
+  tags?: string[];
+}
+
+interface FolderNodeDto {
+  name: string;
+  fullPath: string;
+  loaded: boolean;
+  tree?: ResourceTreeDto;
+}
+```
+
+**Response** (cache not ready — `202 Accepted`):
+
+```typescript
+interface TreeStatusResponseDto {
+  status: 'not-ready' | 'indexing';
+  message: string;
+}
+```
+
+**Status Codes**:
+- `200 OK`: Tree returned successfully
+- `202 Accepted`: Cache is indexing — retry shortly
+- `404 Not Found`: Collection or path not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+# Full tree
+curl http://localhost:3030/api/collections/web-app/resources/tree
+
+# Scoped subtree
+curl "http://localhost:3030/api/collections/web-app/resources/tree?path=apps.common"
+
+# Scoped subtree with all nested resources
+curl "http://localhost:3030/api/collections/web-app/resources/tree?path=apps.common&includeNested=true"
+```
+
+### Get Cache Status
+
+Returns the current indexing status of a collection's resource cache.
+
+**Endpoint**: `GET /api/collections/:collectionName/resources/cache/status`
+
+**Response**:
+
+```typescript
+interface CacheStatusDto {
+  status: 'not-started' | 'indexing' | 'ready' | 'error';
+  collectionName?: string;
+  /** ISO date string — present when status is 'ready' */
+  indexedAt?: string;
+  /** Error message — present when status is 'error' */
+  error?: string;
+  /** Collection statistics — present when status is 'ready' */
+  stats?: {
+    totalKeys: number;
+    localeCount: number;
+  };
+}
+```
+
+**Example Response**:
+
+```json
+{
+  "status": "ready",
+  "collectionName": "web-app",
+  "indexedAt": "2026-04-09T12:00:00.000Z",
+  "stats": {
+    "totalKeys": 342,
+    "localeCount": 4
+  }
+}
+```
+
+**Status Codes**:
+- `200 OK`: Status retrieved
+- `404 Not Found`: Collection not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl http://localhost:3030/api/collections/web-app/resources/cache/status
+```
+
+### Search Translations
+
+Searches resources by key or translation value within a collection. Uses the in-memory cache when available, otherwise falls back to disk.
+
+**Endpoint**: `GET /api/collections/:collectionName/resources/search`
+
+**Query Parameters**:
+- `query` (string, required): Search string (case-insensitive, matches keys and values)
+- `maxResults` (number, optional): Maximum results to return. Default: `100`, max: `500`
+
+**Response**:
+
+```typescript
+interface SearchResultsDto {
+  query: string;
+  results: SearchResultDto[];
+  totalFound: number;
+  /** True when results were capped by maxResults */
+  limited: boolean;
+}
+
+interface SearchResultDto extends ResourceSummaryDto {
+  matchType: 'exact-key' | 'partial-key' | 'exact-value' | 'partial-value';
+  /** Locales where value match was found */
+  matchedLocales?: string[];
+}
+```
+
+**Example Response**:
+
+```json
+{
+  "query": "cancel",
+  "results": [
+    {
+      "key": "apps.common.buttons.cancel",
+      "translations": { "en": "Cancel", "es": "Cancelar", "fr": "Annuler" },
+      "status": { "en": null, "es": "verified", "fr": "translated" },
+      "matchType": "partial-key"
+    }
+  ],
+  "totalFound": 1,
+  "limited": false
+}
+```
+
+**Status Codes**:
+- `200 OK`: Search completed
+- `404 Not Found`: Collection not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl "http://localhost:3030/api/collections/web-app/resources/search?query=cancel&maxResults=50"
+```
+
+### Translate Resource
+
+Triggers auto-translation for a resource using the collection's configured translation provider. Returns an error if auto-translation is not enabled for the collection.
+
+**Endpoint**: `POST /api/collections/:collectionName/resources/translate`
+
+**Request Body**:
+
+```typescript
+interface TranslateResourceDto {
+  /** Full dot-delimited key of the resource to translate */
+  key: string;
+}
+```
+
+**Response**:
+
+```typescript
+interface TranslateResourceResponseDto {
+  /** The resource with translated values applied */
+  resource: ResourceSummaryDto;
+  /** Number of locales successfully translated */
+  translatedCount: number;
+  /** Locales skipped because the base value uses ICU message format */
+  skippedLocales: string[];
+}
+```
+
+**Status Codes**:
+- `201 Created`: Translation completed
+- `404 Not Found`: Collection or resource not found
+- `422 Unprocessable Entity`: Auto-translation not enabled for this collection
+- `502 Bad Gateway`: Translation provider error
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:3030/api/collections/web-app/resources/translate \
+  -H "Content-Type: application/json" \
+  -d '{"key": "apps.common.buttons.cancel"}'
+```
+
+### Start Bulk Locale Translation Job
+
+Starts an async job that translates all `new` and `stale` resources in a collection for a single target locale. Returns immediately with a `jobId` that can be polled for progress. Requires auto-translation to be enabled for the collection.
+
+**Endpoint**: `POST /api/collections/:collectionName/resources/translate-locale`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection
+
+**Request Body**:
+
+```json
+{
+  "locale": "fr"
+}
+```
+
+**Response** (202 Accepted):
+
+```typescript
+interface TranslateLocaleJobDto {
+  jobId: string;
+  collectionName: string;
+  targetLocale: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  totalResources: number;
+  translatedCount: number;
+  failedCount: number;
+  skippedCount: number;
+  failures?: Array<{ key: string; error: string }>;
+  skippedKeys?: string[];
+  startedAt?: string;
+  completedAt?: string;
+}
+```
+
+**Example Response**:
+
+```json
+{
+  "jobId": "uuid-here",
+  "collectionName": "playground",
+  "targetLocale": "fr",
+  "status": "pending",
+  "totalResources": 0,
+  "translatedCount": 0,
+  "failedCount": 0,
+  "skippedCount": 0
+}
+```
+
+**Status Codes**:
+- `202 Accepted`: Job started — poll the GET endpoint for progress
+- `400 Bad Request`: Invalid or missing locale
+- `422 Unprocessable Entity`: Auto-translation not enabled for this collection
+- `404 Not Found`: Collection not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:3030/api/collections/playground/resources/translate-locale \
+  -H 'Content-Type: application/json' \
+  -d '{"locale":"fr"}'
+```
+
+### Get Bulk Locale Translation Job Status
+
+Returns the current status and progress of a bulk locale translation job. Poll this endpoint every 2–5 seconds until `status` is `completed` or `failed`.
+
+**Endpoint**: `GET /api/collections/:collectionName/resources/translate-locale/:jobId`
+
+**Path Parameters**:
+- `collectionName` (string, required): The name of the collection
+- `jobId` (string, required): The job ID returned by the POST endpoint
+
+**Response**:
+
+`TranslateLocaleJobDto` with current status. See the POST endpoint above for the full type definition.
+
+**Status progression**: `pending` → `running` → `completed` / `failed`
+
+**Example Response** (completed):
+
+```json
+{
+  "jobId": "uuid-here",
+  "collectionName": "playground",
+  "targetLocale": "fr",
+  "status": "completed",
+  "totalResources": 48,
+  "translatedCount": 45,
+  "failedCount": 0,
+  "skippedCount": 3,
+  "failures": [],
+  "skippedKeys": ["forms.upload.acceptedFormats"],
+  "startedAt": "2026-04-11T12:00:00.000Z",
+  "completedAt": "2026-04-11T12:00:15.000Z"
+}
+```
+
+**Status Codes**:
+- `200 OK`: Job status returned
+- `404 Not Found`: Collection or job not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl http://localhost:3030/api/collections/playground/resources/translate-locale/uuid-here
+```
+
+## Folders API
+
+All folder endpoints are scoped to a specific collection.
+
+### Create Folder
+
+Creates a new folder node in the resource hierarchy.
+
+**Endpoint**: `POST /api/collections/:collectionName/folders`
+
+**Request Body**:
+
+```typescript
+interface CreateFolderDto {
+  /** Single-segment folder name (alphanumeric, dashes, underscores) */
+  folderName: string;
+  /** Optional dot-delimited parent path (e.g., "apps.common"). Root if omitted. */
+  parentPath?: string;
+}
+```
+
+**Response**:
+
+```typescript
+interface CreateFolderResponseDto {
+  /** Filesystem path of the created folder */
+  folderPath: string;
+  /** False if the folder already existed */
+  created: boolean;
+  /** The new folder node for inserting into the tree */
+  folder: FolderNodeDto;
+}
+```
+
+**Status Codes**:
+- `201 Created`: Folder created (or already existed)
+- `400 Bad Request`: Invalid folder name
+- `404 Not Found`: Collection not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:3030/api/collections/web-app/folders \
+  -H "Content-Type: application/json" \
+  -d '{"folderName": "navigation", "parentPath": "apps.common"}'
+```
+
+### Delete Folder
+
+Deletes a folder and all resources within it.
+
+**Endpoint**: `DELETE /api/collections/:collectionName/folders`
+
+**Request Body**:
+
+```typescript
+interface DeleteFolderDto {
+  /** Dot-delimited folder path to delete (e.g., "apps.common.buttons") */
+  folderPath: string;
+}
+```
+
+**Response**:
+
+```typescript
+interface DeleteFolderResponseDto {
+  deleted: boolean;
+  folderPath: string;
+  /** Number of resource entries deleted with the folder */
+  resourcesDeleted: number;
+  error?: string;
+}
+```
+
+**Status Codes**:
+- `200 OK`: Deletion attempted (check `deleted` and `error` fields)
+- `400 Bad Request`: Invalid folder path
+- `404 Not Found`: Collection not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl -X DELETE http://localhost:3030/api/collections/web-app/folders \
+  -H "Content-Type: application/json" \
+  -d '{"folderPath": "apps.common.buttons"}'
+```
+
+### Move Folder
+
+Moves a folder (and all its resources) to a new location. Supports cross-collection moves.
+
+**Endpoint**: `POST /api/collections/:collectionName/folders/move`
+
+**Request Body**:
+
+```typescript
+interface MoveFolderDto {
+  /** Dot-delimited source folder path (e.g., "apps.common.buttons") */
+  sourceFolderPath: string;
+  /** Dot-delimited destination folder path (e.g., "apps.shared") */
+  destinationFolderPath: string;
+  /** If true, overwrite existing resources at destination. Default: false */
+  override?: boolean;
+  /** Optional destination collection name for cross-collection moves */
+  toCollection?: string;
+  /**
+   * When true, the source folder is nested under the destination as a child.
+   * Default: true
+   */
+  nestUnderDestination?: boolean;
+}
+```
+
+**Response**:
+
+```typescript
+interface MoveFolderResponseDto {
+  movedCount: number;
+  foldersDeleted: number;
+  warnings: string[];
+  errors: string[];
+}
+```
+
+**Status Codes**:
+- `201 Created`: Move completed (check `movedCount` and `errors` for details)
+- `400 Bad Request`: Invalid paths or validation error
+- `404 Not Found`: Collection not found
+- `500 Internal Server Error`: Unexpected error
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:3030/api/collections/web-app/folders/move \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sourceFolderPath": "apps.common.buttons",
+    "destinationFolderPath": "apps.shared",
+    "nestUnderDestination": true
+  }'
+```
+
+## Error Handling
 
 All error responses follow a consistent format:
 

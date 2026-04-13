@@ -3,6 +3,9 @@
     "source": "Create Collection",
     "comment": "Dialog title when creating a new collection",
     "es": "Crear Colección",
-    "fr-ca": "Créer une Collection"
+    "fr-ca": "Créer une Collection",
+    "ru": "Создать коллекцию",
+    "ja": "コレクションを作成する",
+    "de": "Sammlung erstellen"
   }
 }

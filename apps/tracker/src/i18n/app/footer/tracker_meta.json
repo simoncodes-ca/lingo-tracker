@@ -12,6 +12,21 @@
       "checksum": "3b5b0ef2d1ba39310908b2533bfad938",
       "baseChecksum": "228e177a7df025238b894f2ae0026f34",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "bff63c3ad261cf3012d39009a567b8d2",
+      "baseChecksum": "228e177a7df025238b894f2ae0026f34",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "5094ff9d5b9514b745dd2fb92f16ff3b",
+      "baseChecksum": "228e177a7df025238b894f2ae0026f34",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "7c0be44fa717402e31bf6806b3cff5c2",
+      "baseChecksum": "228e177a7df025238b894f2ae0026f34",
+      "status": "translated"
     }
   },
   "githubTitle": {
@@ -27,6 +42,21 @@
       "checksum": "6dec98956e678475c578da6924a7b582",
       "baseChecksum": "cf08730d37f83da9e97ca3262bf7072d",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "4e7b4d27eeda52dff555a4c657e5dd96",
+      "baseChecksum": "cf08730d37f83da9e97ca3262bf7072d",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "12a12fb5f7e5802e5b4c8a450b719c14",
+      "baseChecksum": "cf08730d37f83da9e97ca3262bf7072d",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "c638b7f7dbc525cacfb36111a77206df",
+      "baseChecksum": "cf08730d37f83da9e97ca3262bf7072d",
+      "status": "translated"
     }
   },
   "githubLabel": {
@@ -39,6 +69,21 @@
       "status": "translated"
     },
     "fr-ca": {
+      "checksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "baseChecksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "baseChecksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "baseChecksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "status": "translated"
+    },
+    "de": {
       "checksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
       "baseChecksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
       "status": "translated"
@@ -57,6 +102,21 @@
       "checksum": "5238d59077988c93ae554981b20fc64e",
       "baseChecksum": "0c6d9ab23098fd3e876c216fe1ca7ffc",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "0949cf4c28d447f70367d086dec62847",
+      "baseChecksum": "0c6d9ab23098fd3e876c216fe1ca7ffc",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "655422ca284cf1a1aabf2ce72ffb66f7",
+      "baseChecksum": "0c6d9ab23098fd3e876c216fe1ca7ffc",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "d3ca3d5f69058ef4267255fe4b242393",
+      "baseChecksum": "0c6d9ab23098fd3e876c216fe1ca7ffc",
+      "status": "translated"
     }
   },
   "issuesLabel": {
@@ -70,6 +130,21 @@
     },
     "fr-ca": {
       "checksum": "e040a699fc6d0d5808cfdaf3d1fa7146",
+      "baseChecksum": "80b768b15c3693e345a436b9dc0ea36f",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "f9890ec0744946bb63769a8bebab69d3",
+      "baseChecksum": "80b768b15c3693e345a436b9dc0ea36f",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "25486ad4e541ea9a04632f8c28ba14f8",
+      "baseChecksum": "80b768b15c3693e345a436b9dc0ea36f",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "20b97fe763e2c83e86ad13c5deab2793",
       "baseChecksum": "80b768b15c3693e345a436b9dc0ea36f",
       "status": "translated"
     }

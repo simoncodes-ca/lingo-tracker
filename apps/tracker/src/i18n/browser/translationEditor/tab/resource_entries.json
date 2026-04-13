@@ -4,20 +4,29 @@
     "comment": "Tab label for the base translation info section in the editor dialog",
     "tags": ["browser"],
     "es": "Información básica",
-    "fr-ca": "Informations de base"
+    "fr-ca": "Informations de base",
+    "ru": "Базовая информация",
+    "ja": "基本情報",
+    "de": "Basisinformationen"
   },
   "changeLocation": {
     "source": "Change Location",
     "comment": "Tab label for the change location section in the editor dialog",
     "tags": ["browser"],
     "es": "Cambiar ubicación",
-    "fr-ca": "Changer d'emplacement"
+    "fr-ca": "Changer d'emplacement",
+    "ru": "Изменить местоположение",
+    "ja": "場所を変更する",
+    "de": "Standort ändern"
   },
   "otherLocales": {
     "source": "Other Locales",
     "comment": "Tab label for the other locales section in the editor dialog",
     "tags": ["browser"],
     "es": "Otros lugares",
-    "fr-ca": "Autres localités"
+    "fr-ca": "Autres localités",
+    "ru": "Другие населенные пункты",
+    "ja": "その他の地域",
+    "de": "Andere Orte"
   }
 }

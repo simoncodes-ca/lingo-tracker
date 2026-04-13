@@ -4,174 +4,249 @@
     "comment": "Snackbar message after copying a key to clipboard",
     "tags": ["browser"],
     "es": "Copiado al portapapeles",
-    "fr-ca": "Copié dans le presse-papiers"
+    "fr-ca": "Copié dans le presse-papiers",
+    "ru": "Скопировано в буфер обмена",
+    "ja": "クリップボードにコピーされました",
+    "de": "In die Zwischenablage kopiert"
   },
   "copyFailed": {
     "source": "Failed to copy",
     "comment": "Snackbar error message when clipboard copy fails",
     "tags": ["browser"],
     "es": "No se pudo copiar",
-    "fr-ca": "Échec de la copie"
+    "fr-ca": "Échec de la copie",
+    "ru": "Не удалось скопировать",
+    "ja": "コピーに失敗しました",
+    "de": "Kopiervorgang fehlgeschlagen"
   },
   "resourceDeleted": {
     "source": "Resource deleted successfully",
     "comment": "Snackbar message after successfully deleting a resource",
     "tags": ["browser"],
     "es": "Recurso eliminado exitosamente",
-    "fr-ca": "Ressource supprimée avec succès"
+    "fr-ca": "Ressource supprimée avec succès",
+    "ru": "Ресурс успешно удален",
+    "ja": "リソースは正常に削除されました",
+    "de": "Ressource erfolgreich gelöscht"
   },
   "deleteFailed": {
     "source": "Failed to delete resource",
     "comment": "Snackbar error message when resource deletion fails",
     "tags": ["browser"],
     "es": "No se pudo eliminar el recurso",
-    "fr-ca": "Échec de la suppression de la ressource"
+    "fr-ca": "Échec de la suppression de la ressource",
+    "ru": "Не удалось удалить ресурс",
+    "ja": "リソースの削除に失敗しました",
+    "de": "Ressource konnte nicht gelöscht werden"
   },
   "translateFailed": {
     "source": "Failed to auto-translate resource",
     "comment": "Snackbar error message when auto-translation fails",
     "tags": ["browser"],
     "es": "No se pudo traducir automáticamente el recurso",
-    "fr-ca": "Échec de la traduction automatique de la ressource"
+    "fr-ca": "Échec de la traduction automatique de la ressource",
+    "ru": "Не удалось выполнить автоматический перевод ресурса.",
+    "ja": "リソースの自動翻訳に失敗しました",
+    "de": "Die automatische Übersetzung der Ressource ist fehlgeschlagen."
   },
   "translationUpdated": {
     "source": "Translation updated successfully",
     "comment": "Snackbar message after successfully updating a translation",
     "tags": ["browser"],
     "es": "Traducción actualizada exitosamente",
-    "fr-ca": "Traduction mise à jour avec succès"
+    "fr-ca": "Traduction mise à jour avec succès",
+    "ru": "Перевод успешно обновлен.",
+    "ja": "翻訳が正常に更新されました",
+    "de": "Übersetzung erfolgreich aktualisiert"
   },
   "localeTranslated": {
     "source": "1 locale translated successfully",
     "comment": "Snackbar message when exactly 1 locale was auto-translated",
     "tags": ["browser"],
     "es": "1 configuración regional traducida correctamente",
-    "fr-ca": "1 langue traduite avec succès"
+    "fr-ca": "1 langue traduite avec succès",
+    "ru": "1 локализация успешно переведена",
+    "ja": "1つのロケールが正常に翻訳されました",
+    "de": "1 Gebietsschema erfolgreich übersetzt"
   },
   "localesTranslatedX": {
     "source": "{count} locales translated successfully",
     "comment": "Snackbar message when multiple locales were auto-translated",
     "tags": ["browser"],
     "es": "{count} locales traducidos correctamente",
-    "fr-ca": "{count} Les paramètres régionaux ont été traduits avec succès"
+    "fr-ca": "{count} Les paramètres régionaux ont été traduits avec succès",
+    "ru": "{count} Локали успешно переведены",
+    "ja": "{count}ロケールが正常に翻訳されました",
+    "de": "{count} Gebietsschemas erfolgreich übersetzt"
   },
   "allLocalesUpToDate": {
     "source": "All locales are already up to date",
     "comment": "Snackbar message when auto-translate finds nothing to update",
     "tags": ["browser"],
     "es": "Todas las configuraciones regionales ya están actualizadas",
-    "fr-ca": "Tous les emplacements sont déjà à jour."
+    "fr-ca": "Tous les emplacements sont déjà à jour.",
+    "ru": "Все языковые версии уже обновлены.",
+    "ja": "すべての地域は既に最新の状態です",
+    "de": "Alle Standorte sind bereits auf dem neuesten Stand."
   },
   "skippedLocalesX": {
     "source": "Skipped locales (ICU format): {locales}",
     "comment": "Snackbar warning when some locales were skipped because they use ICU format",
     "tags": ["browser"],
     "es": "Configuraciones regionales omitidas (formato ICU): {locales}",
-    "fr-ca": "Paramètres régionaux ignorés (format ICU) : {locales}"
+    "fr-ca": "Paramètres régionaux ignorés (format ICU) : {locales}",
+    "ru": "Пропущенные локали (формат ICU): {locales}",
+    "ja": "スキップされたロケール (ICU 形式): {locales}",
+    "de": "Übersprungene Gebietsschemas (ICU-Format): {locales}"
   },
   "resourceCreated": {
     "source": "Resource created successfully",
     "comment": "Snackbar message after successfully creating a new resource",
     "tags": ["browser"],
     "es": "Recurso creado exitosamente",
-    "fr-ca": "Ressource créée avec succès"
+    "fr-ca": "Ressource créée avec succès",
+    "ru": "Ресурс успешно создан.",
+    "ja": "リソースが正常に作成されました",
+    "de": "Ressource erfolgreich erstellt"
   },
   "autoTranslationSkippedX": {
     "source": "Auto-translation skipped for {locales} (ICU format not supported)",
     "comment": "Snackbar warning when auto-translation was skipped for some locales due to ICU format",
     "tags": ["browser"],
     "es": "Se omitió la traducción automática para {locales} (formato ICU no compatible)",
-    "fr-ca": "Traduction automatique ignorée pour {locales} (format ICU non pris en charge)"
+    "fr-ca": "Traduction automatique ignorée pour {locales} (format ICU non pris en charge)",
+    "ru": "Автоматический перевод пропущен для {locales} (формат ICU не поддерживается)",
+    "ja": "{locales} の自動翻訳はスキップされました（ICU形式はサポートされていません）。",
+    "de": "Automatische Übersetzung für {locales} übersprungen (ICU-Format wird nicht unterstützt)"
   },
   "resourceAlreadyInFolder": {
     "source": "Resource is already in this folder",
     "comment": "Snackbar message when user drops a resource onto its current folder",
     "tags": ["browser"],
     "es": "El recurso ya está en esta carpeta",
-    "fr-ca": "La ressource se trouve déjà dans ce dossier."
+    "fr-ca": "La ressource se trouve déjà dans ce dossier.",
+    "ru": "Ресурс уже находится в этой папке.",
+    "ja": "リソースは既にこのフォルダにあります",
+    "de": "Die Ressource befindet sich bereits in diesem Ordner"
   },
   "resourceMovedX": {
     "source": "Moved \"{name}\" to {folder}",
     "comment": "Snackbar message after moving a resource to a different folder",
     "tags": ["browser"],
     "es": "Se movió \"{name}\" a {folder}",
-    "fr-ca": "Déplacé « {name} » vers {folder}"
+    "fr-ca": "Déplacé « {name} » vers {folder}",
+    "ru": "Перемещено \"{name}\" в {folder}",
+    "ja": "\"{name}\" を {folder} に移動しました。",
+    "de": "\"{name}\" wurde nach {folder} verschoben."
   },
   "folderAlreadyAtLocation": {
     "source": "Folder is already at this location",
     "comment": "Snackbar message when user drops a folder onto its current parent location",
     "tags": ["browser"],
     "es": "La carpeta ya está en esta ubicación",
-    "fr-ca": "Le dossier est déjà à cet emplacement."
+    "fr-ca": "Le dossier est déjà à cet emplacement.",
+    "ru": "Папка уже находится по этому адресу.",
+    "ja": "フォルダは既にこの場所にあります",
+    "de": "Der Ordner befindet sich bereits an diesem Speicherort"
   },
   "folderMovedX": {
     "source": "Moved \"{name}\" into {dest}",
     "comment": "Snackbar message after successfully moving a folder",
     "tags": ["browser"],
     "es": "Se movió \"{name}\" a {dest}",
-    "fr-ca": "Déplacé « {name} » dans {dest}"
+    "fr-ca": "Déplacé « {name} » dans {dest}",
+    "ru": "Перемещено \"{name}\" в {dest}",
+    "ja": "\"{name}\" を {dest} に移動しました。",
+    "de": "\"{name}\" wurde nach {dest} verschoben."
   },
   "moveResourceFailed": {
     "source": "Failed to move resource",
     "comment": "Snackbar error message when moving a resource fails",
     "tags": ["browser"],
     "es": "No se pudo mover el recurso",
-    "fr-ca": "Échec du déplacement de la ressource"
+    "fr-ca": "Échec du déplacement de la ressource",
+    "ru": "Не удалось переместить ресурс.",
+    "ja": "リソースの移動に失敗しました",
+    "de": "Ressource konnte nicht verschoben werden"
   },
   "moveFolderFailed": {
     "source": "Failed to move folder",
     "comment": "Snackbar error message when moving a folder fails",
     "tags": ["browser"],
     "es": "No se pudo mover la carpeta",
-    "fr-ca": "Impossible de déplacer le dossier"
+    "fr-ca": "Impossible de déplacer le dossier",
+    "ru": "Не удалось переместить папку.",
+    "ja": "フォルダの移動に失敗しました",
+    "de": "Ordner konnte nicht verschoben werden"
   },
   "loadFoldersFailed": {
     "source": "Failed to load folders",
     "comment": "Snackbar/error message when loading the folder tree fails",
     "tags": ["browser"],
     "es": "No se pudieron cargar las carpetas",
-    "fr-ca": "Échec du chargement des dossiers"
+    "fr-ca": "Échec du chargement des dossiers",
+    "ru": "Не удалось загрузить папки.",
+    "ja": "フォルダの読み込みに失敗しました",
+    "de": "Ordner konnten nicht geladen werden"
   },
   "loadFolderChildrenFailed": {
     "source": "Failed to load folder contents",
     "comment": "Snackbar/error message when loading a folder's children fails",
     "tags": ["browser"],
     "es": "No se pudo cargar el contenido de la carpeta",
-    "fr-ca": "Impossible de charger le contenu du dossier"
+    "fr-ca": "Impossible de charger le contenu du dossier",
+    "ru": "Не удалось загрузить содержимое папки.",
+    "ja": "フォルダの内容の読み込みに失敗しました",
+    "de": "Ordnerinhalt konnte nicht geladen werden"
   },
   "createFolderFailed": {
     "source": "Failed to create folder",
     "comment": "Snackbar/error message when creating a folder fails",
     "tags": ["browser"],
     "es": "Error al crear la carpeta",
-    "fr-ca": "Impossible de créer le dossier"
+    "fr-ca": "Impossible de créer le dossier",
+    "ru": "Не удалось создать папку.",
+    "ja": "フォルダの作成に失敗しました",
+    "de": "Ordner konnte nicht erstellt werden"
   },
   "deleteFolderFailed": {
     "source": "Failed to delete folder",
     "comment": "Snackbar/error message when deleting a folder fails",
     "tags": ["browser"],
     "es": "No se pudo eliminar la carpeta",
-    "fr-ca": "Échec de la suppression du dossier"
+    "fr-ca": "Échec de la suppression du dossier",
+    "ru": "Не удалось удалить папку.",
+    "ja": "フォルダの削除に失敗しました",
+    "de": "Ordner konnte nicht gelöscht werden"
   },
   "loadTranslationsFailed": {
     "source": "Failed to load translations",
     "comment": "Snackbar/error message when loading translations for a folder fails",
     "tags": ["browser"],
     "es": "No se pudieron cargar las traducciones",
-    "fr-ca": "Impossible de charger les traductions"
+    "fr-ca": "Impossible de charger les traductions",
+    "ru": "Не удалось загрузить переводы.",
+    "ja": "翻訳の読み込みに失敗しました",
+    "de": "Übersetzungen konnten nicht geladen werden"
   },
   "searchTranslationsFailed": {
     "source": "Failed to search translations",
     "comment": "Snackbar/error message when searching translations fails",
     "tags": ["browser"],
     "es": "No se pudo buscar traducciones",
-    "fr-ca": "Échec de la recherche de traductions"
+    "fr-ca": "Échec de la recherche de traductions",
+    "ru": "Поиск переводов не удался.",
+    "ja": "翻訳の検索に失敗しました",
+    "de": "Übersetzungssuche fehlgeschlagen"
   },
   "checkCacheStatusFailed": {
     "source": "Failed to check cache status",
     "comment": "Snackbar/error message when checking cache status fails",
     "tags": ["browser"],
     "es": "No se pudo comprobar el estado de la caché",
-    "fr-ca": "Échec de la vérification de l'état du cache"
+    "fr-ca": "Échec de la vérification de l'état du cache",
+    "ru": "Не удалось проверить состояние кэша.",
+    "ja": "キャッシュの状態を確認できませんでした",
+    "de": "Cache-Statusprüfung fehlgeschlagen"
   }
 }

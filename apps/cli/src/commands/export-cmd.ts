@@ -477,7 +477,7 @@ async function promptForMissing(
     questions.push({
       type: 'text',
       name: 'filename',
-      message: 'Custom filename pattern (optional, e.g., "translations-{locale}.{ext}")',
+      message: 'Custom filename pattern (optional, e.g., "translations-{locale}")',
       initial: '',
     });
   }

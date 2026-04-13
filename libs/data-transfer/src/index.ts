@@ -22,3 +22,7 @@ export * from './lib/tree-status-response.dto';
 export * from './lib/translation-config.dto';
 export * from './lib/translate-resource.dto';
 export * from './lib/translate-resource-response.dto';
+export * from './lib/translate-locale.dto';
+export * from './lib/add-locale.dto';
+export * from './lib/add-locale-response.dto';
+export * from './lib/remove-locale-response.dto';

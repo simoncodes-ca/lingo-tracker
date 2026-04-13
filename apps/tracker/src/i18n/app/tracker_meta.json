@@ -12,6 +12,21 @@
       "checksum": "1b832d4bc3ea43f017b16032aff04f57",
       "baseChecksum": "cc367b544fab23df0ddaf982fb1445b5",
       "status": "translated"
+    },
+    "ru": {
+      "checksum": "26915f78356945d1b403f0c694a320b7",
+      "baseChecksum": "cc367b544fab23df0ddaf982fb1445b5",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "cd757fa937839fce931945543637e8a4",
+      "baseChecksum": "cc367b544fab23df0ddaf982fb1445b5",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "26702fe976ca5f8e477b4ddb1a7736a3",
+      "baseChecksum": "cc367b544fab23df0ddaf982fb1445b5",
+      "status": "translated"
     }
   }
 }

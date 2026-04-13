@@ -4,13 +4,19 @@
     "comment": "Title of the confirmation dialog when deleting a resource",
     "tags": ["browser"],
     "es": "Eliminar recurso",
-    "fr-ca": "Supprimer la ressource"
+    "fr-ca": "Supprimer la ressource",
+    "ru": "Удалить ресурс",
+    "ja": "リソースを削除する",
+    "de": "Ressource löschen"
   },
   "messageX": {
     "source": "Are you sure you want to delete the resource \"{key}\"? This action cannot be undone.",
     "comment": "Confirmation message when deleting a resource, interpolated with the resource key",
     "tags": ["browser"],
     "es": "¿Seguro que desea eliminar el recurso \"{key}\"? Esta acción no se puede deshacer.",
-    "fr-ca": "Êtes-vous certain de vouloir supprimer la ressource « {key} » ? Cette action est irréversible."
+    "fr-ca": "Êtes-vous certain de vouloir supprimer la ressource « {key} » ? Cette action est irréversible.",
+    "ru": "Вы уверены, что хотите удалить ресурс \"{key}\"? Это действие необратимо.",
+    "ja": "リソース「{key}」を削除してもよろしいですか？この操作は元に戻せません。",
+    "de": "Sind Sie sicher, dass Sie die Ressource \"{key}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
   }
 }

@@ -48,21 +48,32 @@ import type {
   TreeStatusResponseDto,
   TranslateResourceDto,
   TranslateResourceResponseDto,
+  TranslateLocaleRequestDto,
+  TranslateLocaleJobDto,
 } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { mapDtoToAddResourceParams } from '../../mappers/resource.mapper';
 import { mapResourceTreeToDto, mapResourceEntryToSummary } from '../../mappers/resource-tree.mapper';
 import { mapSearchResultsToDto } from '../../mappers/search-result.mapper';
 import { CollectionCacheService, CacheStatus } from '../../cache/collection-cache.service';
+import { TranslationJobService } from '../../translation-job/translation-job.service';
 
 @Controller('collections/:collectionName/resources')
 export class ResourcesController {
   readonly #logger = new Logger(ResourcesController.name);
+  readonly #configService: ConfigService;
+  readonly #cacheService: CollectionCacheService;
+  readonly #translationJobService: TranslationJobService;
 
   constructor(
-    private readonly configService: ConfigService,
-    private readonly cacheService: CollectionCacheService,
-  ) {}
+    configService: ConfigService,
+    cacheService: CollectionCacheService,
+    translationJobService: TranslationJobService,
+  ) {
+    this.#configService = configService;
+    this.#cacheService = cacheService;
+    this.#translationJobService = translationJobService;
+  }
 
   @Post('translate')
   async translateResource(
@@ -71,7 +82,7 @@ export class ResourcesController {
   ): Promise<TranslateResourceResponseDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
-      const config = this.configService.getConfig();
+      const config = this.#configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
         throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
@@ -97,7 +108,7 @@ export class ResourcesController {
         cwd: process.cwd(),
       });
 
-      this.cacheService.addResourceToCache(
+      this.#cacheService.addResourceToCache(
         decodedCollectionName,
         result.entry,
         dto.key.split('.').slice(0, -1).join('.'),
@@ -136,7 +147,7 @@ export class ResourcesController {
   ): Promise<CreateResourceResponseDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
-      const config = this.configService.getConfig();
+      const config = this.#configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
         throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
@@ -225,7 +236,7 @@ export class ResourcesController {
             ...(resource.tags && resource.tags.length > 0 && { tags: resource.tags }),
           };
 
-          this.cacheService.addResourceToCache(decodedCollectionName, cacheEntry, folderPath);
+          this.#cacheService.addResourceToCache(decodedCollectionName, cacheEntry, folderPath);
         } catch (error: unknown) {
           // Validation errors (invalid key, etc.) should return 400
           const errorMessage = error instanceof Error ? error.message : '';
@@ -266,7 +277,7 @@ export class ResourcesController {
   ): Promise<DeleteResourceResponseDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
-      const config = this.configService.getConfig();
+      const config = this.#configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
         throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
@@ -286,7 +297,7 @@ export class ResourcesController {
 
       // Clear cache after successful resource deletion
       if (result.entriesDeleted > 0) {
-        this.cacheService.clearCache();
+        this.#cacheService.clearCache();
       }
 
       return {
@@ -314,7 +325,7 @@ export class ResourcesController {
   ): Promise<MoveResourceResponseDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
-      const config = this.configService.getConfig();
+      const config = this.#configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
         throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
@@ -369,7 +380,7 @@ export class ResourcesController {
 
       // Clear cache after successful resource move
       if (result.movedCount > 0) {
-        this.cacheService.clearCache();
+        this.#cacheService.clearCache();
       }
 
       return result;
@@ -390,7 +401,7 @@ export class ResourcesController {
   ): Promise<UpdateResourceResponseDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
-      const config = this.configService.getConfig();
+      const config = this.#configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
         throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
@@ -418,11 +429,11 @@ export class ResourcesController {
 
         if (dto.targetFolder !== undefined && dto.targetFolder !== oldFolderPath) {
           // Resource moved to a different folder — remove from old location, insert at new
-          this.cacheService.removeResourceFromCache(decodedCollectionName, entryKey, oldFolderPath);
-          this.cacheService.addResourceToCache(decodedCollectionName, result.entry, dto.targetFolder ?? '');
+          this.#cacheService.removeResourceFromCache(decodedCollectionName, entryKey, oldFolderPath);
+          this.#cacheService.addResourceToCache(decodedCollectionName, result.entry, dto.targetFolder ?? '');
         } else {
           // In-place edit — upsert in the same folder
-          this.cacheService.addResourceToCache(decodedCollectionName, result.entry, oldFolderPath);
+          this.#cacheService.addResourceToCache(decodedCollectionName, result.entry, oldFolderPath);
         }
 
         resourceDto = mapResourceEntryToSummary(result.entry);
@@ -482,7 +493,7 @@ export class ResourcesController {
         isIncludeNested = false;
       }
 
-      const config = this.configService.getConfig();
+      const config = this.#configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
         throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
@@ -492,13 +503,13 @@ export class ResourcesController {
       const translationsFolder = collection.translationsFolder;
 
       // Check cache status
-      const cacheStatus = this.cacheService.getCacheStatus(decodedCollectionName);
+      const cacheStatus = this.#cacheService.getCacheStatus(decodedCollectionName);
 
       // Handle cache states
       if (cacheStatus === CacheStatus.NOT_STARTED || cacheStatus === CacheStatus.ERROR) {
         // Trigger indexing asynchronously (don't await)
         const locales = collection.locales ?? config.locales ?? [];
-        this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
+        this.#cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
           this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);
         });
 
@@ -531,7 +542,7 @@ export class ResourcesController {
       }
 
       // Cache is READY - retrieve cached tree
-      const cachedTree = this.cacheService.getCache(decodedCollectionName);
+      const cachedTree = this.#cacheService.getCache(decodedCollectionName);
 
       if (!cachedTree) {
         throw new HttpException('Cache is marked as ready but tree is not available', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -611,13 +622,13 @@ export class ResourcesController {
   async getCacheStatus(@Param('collectionName') collectionName: string): Promise<CacheStatusDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
-      const config = this.configService.getConfig();
+      const config = this.#configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
         throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
       }
 
-      const cacheStatus = this.cacheService.getCacheStatus(decodedCollectionName);
+      const cacheStatus = this.#cacheService.getCacheStatus(decodedCollectionName);
 
       // If cache is not started, trigger indexing asynchronously
       const collection = config.collections[decodedCollectionName];
@@ -625,13 +636,13 @@ export class ResourcesController {
         const translationsFolder = collection.translationsFolder;
         const locales = collection.locales ?? config.locales ?? [];
 
-        this.cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
+        this.#cacheService.indexCollection(decodedCollectionName, translationsFolder, locales.length).catch((error) => {
           this.#logger.warn(`Async indexing failed for ${decodedCollectionName}`, error);
         });
       }
 
       // Get additional cache metadata
-      const metadata = this.cacheService.getCacheMetadata(decodedCollectionName);
+      const metadata = this.#cacheService.getCacheMetadata(decodedCollectionName);
 
       // Map CacheStatus enum to CacheStatusType string literal
       const statusType = cacheStatus as 'not-started' | 'indexing' | 'ready' | 'error';
@@ -651,7 +662,7 @@ export class ResourcesController {
 
       // Include stats when cache is ready
       if (cacheStatus === CacheStatus.READY) {
-        const stats = this.cacheService.getCacheStats(decodedCollectionName);
+        const stats = this.#cacheService.getCacheStats(decodedCollectionName);
         if (stats) {
           statusDto.stats = stats;
         }
@@ -679,7 +690,7 @@ export class ResourcesController {
   ): Promise<SearchResultsDto> {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
-      const config = this.configService.getConfig();
+      const config = this.#configService.getConfig();
 
       if (!config.collections || !config.collections[decodedCollectionName]) {
         throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
@@ -703,7 +714,7 @@ export class ResourcesController {
       const maxResults = Math.min(dto.maxResults || 100, 500);
 
       // Try to use cached tree for faster search
-      const cachedTree = this.cacheService.getCache(decodedCollectionName);
+      const cachedTree = this.#cacheService.getCache(decodedCollectionName);
       let searchResults: SearchResult[];
 
       if (cachedTree) {
@@ -747,5 +758,68 @@ export class ResourcesController {
       const errorMessage = error instanceof Error ? error.message : 'Error searching translations';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  @Post('translate-locale')
+  async translateLocale(
+    @Param('collectionName') collectionName: string,
+    @Body() dto: TranslateLocaleRequestDto,
+    @Res() response: Response,
+  ): Promise<void> {
+    const decodedCollectionName = decodeURIComponent(collectionName);
+    const config = this.#configService.getConfig();
+
+    if (!config.collections || !config.collections[decodedCollectionName]) {
+      throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
+    }
+
+    const collection = config.collections[decodedCollectionName];
+    const translationConfig = collection.translation ?? config.translation;
+
+    if (!translationConfig?.enabled) {
+      throw new HttpException('Auto-translation is not enabled for this collection', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    const baseLocale = collection.baseLocale || config.baseLocale || 'en';
+    const allLocales = collection.locales ?? config.locales ?? [];
+
+    if (dto.locale === baseLocale || !allLocales.includes(dto.locale)) {
+      throw new HttpException(
+        `Invalid locale "${dto.locale}": must be a non-base locale defined in the collection's locales`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const jobId = this.#translationJobService.startJob({
+      collectionName: decodedCollectionName,
+      translationsFolder: collection.translationsFolder,
+      translationConfig,
+      targetLocale: dto.locale,
+      baseLocale,
+      allLocales,
+      cwd: process.cwd(),
+    });
+
+    const job = this.#translationJobService.getJob(jobId);
+    (response as unknown as import('express').Response).status(HttpStatus.ACCEPTED).json(job);
+  }
+
+  @Get('translate-locale/:jobId')
+  async getTranslateLocaleJob(
+    @Param('collectionName') collectionName: string,
+    @Param('jobId') jobId: string,
+  ): Promise<TranslateLocaleJobDto> {
+    const decodedCollectionName = decodeURIComponent(collectionName);
+    const job = this.#translationJobService.getJob(jobId);
+
+    if (job === undefined) {
+      throw new NotFoundException(`Translation job "${jobId}" not found`);
+    }
+
+    if (job.collectionName !== decodedCollectionName) {
+      throw new NotFoundException(`Translation job "${jobId}" not found`);
+    }
+
+    return job;
   }
 }
