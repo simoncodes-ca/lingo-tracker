@@ -22,6 +22,11 @@
       "checksum": "5094ff9d5b9514b745dd2fb92f16ff3b",
       "baseChecksum": "228e177a7df025238b894f2ae0026f34",
       "status": "translated"
+    },
+    "de": {
+      "checksum": "7c0be44fa717402e31bf6806b3cff5c2",
+      "baseChecksum": "228e177a7df025238b894f2ae0026f34",
+      "status": "translated"
     }
   },
   "githubTitle": {
@@ -47,6 +52,11 @@
       "checksum": "12a12fb5f7e5802e5b4c8a450b719c14",
       "baseChecksum": "cf08730d37f83da9e97ca3262bf7072d",
       "status": "translated"
+    },
+    "de": {
+      "checksum": "c638b7f7dbc525cacfb36111a77206df",
+      "baseChecksum": "cf08730d37f83da9e97ca3262bf7072d",
+      "status": "translated"
     }
   },
   "githubLabel": {
@@ -69,6 +79,11 @@
       "status": "translated"
     },
     "ja": {
+      "checksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "baseChecksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
+      "status": "translated"
+    },
+    "de": {
       "checksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
       "baseChecksum": "d3b7c913cd04ebfec0e9ec32cb6fd58c",
       "status": "translated"
@@ -97,6 +112,11 @@
       "checksum": "655422ca284cf1a1aabf2ce72ffb66f7",
       "baseChecksum": "0c6d9ab23098fd3e876c216fe1ca7ffc",
       "status": "translated"
+    },
+    "de": {
+      "checksum": "d3ca3d5f69058ef4267255fe4b242393",
+      "baseChecksum": "0c6d9ab23098fd3e876c216fe1ca7ffc",
+      "status": "translated"
     }
   },
   "issuesLabel": {
@@ -120,6 +140,11 @@
     },
     "ja": {
       "checksum": "25486ad4e541ea9a04632f8c28ba14f8",
+      "baseChecksum": "80b768b15c3693e345a436b9dc0ea36f",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "20b97fe763e2c83e86ad13c5deab2793",
       "baseChecksum": "80b768b15c3693e345a436b9dc0ea36f",
       "status": "translated"
     }

@@ -5,7 +5,8 @@
     "es": "Eliminar Colección",
     "fr-ca": "Supprimer la Collection",
     "ru": "Удалить коллекцию",
-    "ja": "コレクションを削除"
+    "ja": "コレクションを削除",
+    "de": "Sammlung löschen"
   },
   "message": {
     "source": "Are you sure you want to delete {name}?",
@@ -13,6 +14,7 @@
     "es": "¿Estás seguro de que deseas eliminar {name}?",
     "fr-ca": "Êtes-vous sûr de vouloir supprimer {name}?",
     "ru": "Вы уверены, что хотите удалить {name}?",
-    "ja": "{name} を削除してもよろしいですか？"
+    "ja": "{name} を削除してもよろしいですか？",
+    "de": "Sind Sie sicher, dass Sie {name} löschen möchten?"
   }
 }

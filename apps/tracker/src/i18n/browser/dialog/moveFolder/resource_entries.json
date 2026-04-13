@@ -8,7 +8,8 @@
     "es": "Mover carpeta",
     "fr-ca": "Déplacer le dossier",
     "ru": "Переместить папку",
-    "ja": "フォルダーを移動する"
+    "ja": "フォルダーを移動する",
+    "de": "Ordner verschieben"
   },
   "messageX": {
     "source": "Move folder \"{name}\" and all its contents to \"{dest}\"?",
@@ -19,6 +20,7 @@
     "es": "¿Mover la carpeta \"{name}\" y todo su contenido a \"{dest}\"?",
     "fr-ca": "Déplacer le dossier \"{name}\" et tout son contenu vers \"{dest}\" ?",
     "ru": "Переместить папку \"{name}\" и все ее содержимое в \"{dest}\"?",
-    "ja": "フォルダ「{name}」とその中のすべての内容を「{dest}」に移動しますか？"
+    "ja": "フォルダ「{name}」とその中のすべての内容を「{dest}」に移動しますか？",
+    "de": "Ordner \"{name}\" und seinen gesamten Inhalt nach \"{dest}\" verschieben?"
   }
 }

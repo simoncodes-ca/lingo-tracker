@@ -22,6 +22,11 @@
       "checksum": "695b82464aee401b828677a0100f6cba",
       "baseChecksum": "a9fc91939a389c7c73e7a3f3cbf411cd",
       "status": "translated"
+    },
+    "de": {
+      "checksum": "18c4b3ff903711a9bd98c54cacb132a2",
+      "baseChecksum": "a9fc91939a389c7c73e7a3f3cbf411cd",
+      "status": "translated"
     }
   },
   "addButton": {
@@ -45,6 +50,11 @@
     },
     "ja": {
       "checksum": "0404adec384698dfde5bf4e317661742",
+      "baseChecksum": "10ac958235fe83036f8e5244454f7c78",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "88e8e83cfb5d7e109e7f4e65ed345d73",
       "baseChecksum": "10ac958235fe83036f8e5244454f7c78",
       "status": "translated"
     }

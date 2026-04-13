@@ -8,7 +8,8 @@
     "es": "Carpeta {name}",
     "fr-ca": "Dossier {name}",
     "ru": "Папка {name}",
-    "ja": "フォルダ {name}"
+    "ja": "フォルダ {name}",
+    "de": "Ordner {name}"
   },
   "collapse": {
     "source": "Collapse",
@@ -19,7 +20,8 @@
     "es": "Colapsar",
     "fr-ca": "Effondrement",
     "ru": "Крах",
-    "ja": "崩壊"
+    "ja": "崩壊",
+    "de": "Zusammenbruch"
   },
   "expand": {
     "source": "Expand",
@@ -30,7 +32,8 @@
     "es": "Expandir",
     "fr-ca": "Élargir",
     "ru": "Расширять",
-    "ja": "拡大する"
+    "ja": "拡大する",
+    "de": "Expandieren"
   },
   "addSubfolderToX": {
     "source": "Add subfolder to {name}",
@@ -41,7 +44,8 @@
     "es": "Agregar subcarpeta a {name}",
     "fr-ca": "Ajouter un sous-dossier à {name}",
     "ru": "Добавить подпапку в {name}",
-    "ja": "{name} にサブフォルダを追加します"
+    "ja": "{name} にサブフォルダを追加します",
+    "de": "Füge einen Unterordner zu {name} hinzu."
   },
   "folderLabel": {
     "source": "Folder:",
@@ -52,7 +56,8 @@
     "es": "Carpeta:",
     "fr-ca": "Dossier :",
     "ru": "Папка:",
-    "ja": "フォルダ："
+    "ja": "フォルダ：",
+    "de": "Ordner:"
   },
   "noFoldersYet": {
     "source": "No folders yet",
@@ -63,7 +68,8 @@
     "es": "No hay carpetas todavía",
     "fr-ca": "Aucun dossier pour le moment",
     "ru": "Папок пока нет.",
-    "ja": "まだフォルダはありません"
+    "ja": "まだフォルダはありません",
+    "de": "Noch keine Ordner"
   },
   "createFirstFolder": {
     "source": "Create First Folder",
@@ -74,7 +80,8 @@
     "es": "Crear la primera carpeta",
     "fr-ca": "Créer le premier dossier",
     "ru": "Создать первую папку",
-    "ja": "最初のフォルダを作成する"
+    "ja": "最初のフォルダを作成する",
+    "de": "Ersten Ordner erstellen"
   },
   "folderCreated": {
     "source": "Folder created successfully",
@@ -85,7 +92,8 @@
     "es": "Carpeta creada exitosamente",
     "fr-ca": "Dossier créé avec succès",
     "ru": "Папка успешно создана.",
-    "ja": "フォルダが正常に作成されました"
+    "ja": "フォルダが正常に作成されました",
+    "de": "Ordner erfolgreich erstellt"
   },
   "folderAlreadyExists": {
     "source": "Folder already exists",
@@ -96,7 +104,8 @@
     "es": "La carpeta ya existe",
     "fr-ca": "Le dossier existe déjà.",
     "ru": "Папка уже существует",
-    "ja": "フォルダは既に存在します"
+    "ja": "フォルダは既に存在します",
+    "de": "Der Ordner existiert bereits."
   },
   "createFolderFailed": {
     "source": "Failed to create folder",
@@ -107,7 +116,8 @@
     "es": "No se pudo crear la carpeta",
     "fr-ca": "Impossible de créer le dossier",
     "ru": "Не удалось создать папку.",
-    "ja": "フォルダの作成に失敗しました"
+    "ja": "フォルダの作成に失敗しました",
+    "de": "Ordner konnte nicht erstellt werden"
   },
   "rootLabel": {
     "source": "root",
@@ -118,7 +128,8 @@
     "es": "raíz",
     "fr-ca": "racine",
     "ru": "корень",
-    "ja": "根"
+    "ja": "根",
+    "de": "Wurzel"
   },
   "selectorAriaLabelX": {
     "source": "Folder selector, currently: { path }",
@@ -129,7 +140,8 @@
     "es": "Selector de carpeta, actualmente: { ruta }",
     "fr-ca": "Sélecteur de dossier, présentement : { chemin }",
     "ru": "Селектор папки, в данный момент: { путь }",
-    "ja": "フォルダセレクター、現在の値: { パス }"
+    "ja": "フォルダセレクター、現在の値: { パス }",
+    "de": "Ordnerauswahl, aktuell: { Pfad }"
   },
   "treeAriaLabel": {
     "source": "Folder tree",
@@ -140,6 +152,7 @@
     "es": "Árbol de carpetas",
     "fr-ca": "Arborescence des dossiers",
     "ru": "Дерево папок",
-    "ja": "フォルダーツリー"
+    "ja": "フォルダーツリー",
+    "de": "Ordnerstruktur"
   }
 }

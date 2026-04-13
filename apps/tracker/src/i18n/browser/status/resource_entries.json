@@ -8,7 +8,8 @@
     "es": "Nuevo",
     "fr-ca": "Nouveau",
     "ru": "Новый",
-    "ja": "新しい"
+    "ja": "新しい",
+    "de": "Neu"
   },
   "stale": {
     "source": "Stale",
@@ -19,7 +20,8 @@
     "es": "Duro",
     "fr-ca": "Vicié",
     "ru": "Залежалый",
-    "ja": "古くなった"
+    "ja": "古くなった",
+    "de": "Abgestanden"
   },
   "translated": {
     "source": "Translated",
@@ -30,7 +32,8 @@
     "es": "Traducido",
     "fr-ca": "Traduit",
     "ru": "Переведено",
-    "ja": "翻訳済み"
+    "ja": "翻訳済み",
+    "de": "Übersetzt"
   },
   "verified": {
     "source": "Verified",
@@ -41,6 +44,7 @@
     "es": "Verificado",
     "fr-ca": "Vérifié",
     "ru": "Подтверждено",
-    "ja": "検証済み"
+    "ja": "検証済み",
+    "de": "Bestätigt"
   }
 }

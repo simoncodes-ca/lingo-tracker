@@ -22,6 +22,11 @@
       "checksum": "2174839253a0130780fff656fa933796",
       "baseChecksum": "9914a0ce04a7b7b6a8e39bec55064b82",
       "status": "translated"
+    },
+    "de": {
+      "checksum": "c8f1ac1513293af37c9ad8dc06101be6",
+      "baseChecksum": "9914a0ce04a7b7b6a8e39bec55064b82",
+      "status": "translated"
     }
   },
   "dark": {
@@ -45,6 +50,11 @@
     },
     "ja": {
       "checksum": "a0256100275b5af922ddf1d8cd054a45",
+      "baseChecksum": "a18366b217ebf811ad1886e4f4f865b2",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "e8ad273a49203705685b42a379367d2f",
       "baseChecksum": "a18366b217ebf811ad1886e4f4f865b2",
       "status": "translated"
     }
@@ -72,6 +82,11 @@
       "checksum": "6b46505ad5d38932a5771f1261e21b1a",
       "baseChecksum": "a45da96d0bf6575970f2d27af22be28a",
       "status": "translated"
+    },
+    "de": {
+      "checksum": "a45da96d0bf6575970f2d27af22be28a",
+      "baseChecksum": "a45da96d0bf6575970f2d27af22be28a",
+      "status": "translated"
     }
   },
   "settings": {
@@ -95,6 +110,11 @@
     },
     "ja": {
       "checksum": "011045e70d825df3367471773c09a58a",
+      "baseChecksum": "55b8deb25fdc0f8b628027f7d1d21cbe",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "2a3784e0720dd8045567b1d48441e0bb",
       "baseChecksum": "55b8deb25fdc0f8b628027f7d1d21cbe",
       "status": "translated"
     }

@@ -8,7 +8,8 @@
     "es": "Idioma actual: {language}",
     "fr-ca": "Langue actuelle : {language}",
     "ru": "Текущий язык: {language}",
-    "ja": "現在の言語: {language}"
+    "ja": "現在の言語: {language}",
+    "de": "Aktuelle Sprache: {language}"
   },
   "selectLanguage": {
     "source": "Select language",
@@ -19,6 +20,7 @@
     "es": "Seleccionar idioma",
     "fr-ca": "Choisir la langue",
     "ru": "Выберите язык",
-    "ja": "言語を選択してください"
+    "ja": "言語を選択してください",
+    "de": "Sprache auswählen"
   }
 }

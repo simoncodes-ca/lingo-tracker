@@ -6,6 +6,7 @@
     "en",
     "fr-ca",
     "es",
+    "ru",
     "de",
     "ja"
   ],
@@ -27,7 +28,8 @@
         "es",
         "fr-ca",
         "ru",
-        "ja"
+        "ja",
+        "de"
       ]
     },
     "mockDesignSystem": {

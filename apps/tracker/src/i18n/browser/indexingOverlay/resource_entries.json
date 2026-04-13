@@ -8,7 +8,8 @@
     "es": "Colección de indexación...",
     "fr-ca": "Collection d'indexation...",
     "ru": "Индексирование коллекции...",
-    "ja": "コレクションのインデックスを作成しています..."
+    "ja": "コレクションのインデックスを作成しています...",
+    "de": "Sammlung wird indexiert..."
   },
   "errorTitle": {
     "source": "Indexing Failed",
@@ -19,7 +20,8 @@
     "es": "Error de indexación",
     "fr-ca": "L'indexation a échoué",
     "ru": "Индексирование не удалось",
-    "ja": "インデックス作成に失敗しました"
+    "ja": "インデックス作成に失敗しました",
+    "de": "Indizierung fehlgeschlagen"
   },
   "defaultError": {
     "source": "An error occurred while indexing the collection.",
@@ -30,6 +32,7 @@
     "es": "Se produjo un error al indexar la colección.",
     "fr-ca": "Une erreur s'est produite lors de l'indexation de la collection.",
     "ru": "Произошла ошибка при индексировании коллекции.",
-    "ja": "コレクションのインデックス作成中にエラーが発生しました。"
+    "ja": "コレクションのインデックス作成中にエラーが発生しました。",
+    "de": "Beim Indizieren der Sammlung ist ein Fehler aufgetreten."
   }
 }

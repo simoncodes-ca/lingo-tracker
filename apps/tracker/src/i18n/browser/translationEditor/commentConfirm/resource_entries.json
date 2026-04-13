@@ -8,7 +8,8 @@
     "es": "Sin comentarios añadidos",
     "fr-ca": "Aucun commentaire ajouté",
     "ru": "Комментарий не добавлен",
-    "ja": "コメントは追加されていません"
+    "ja": "コメントは追加されていません",
+    "de": "Kein Kommentar hinzugefügt"
   },
   "message": {
     "source": "Comments help other translators understand context. Are you sure you want to save without a comment?",
@@ -19,7 +20,8 @@
     "es": "Los comentarios ayudan a otros traductores a comprender el contexto. ¿Seguro que quieres guardar sin comentarios?",
     "fr-ca": "Les commentaires aident les autres traducteurs à comprendre le contexte. Voulez-vous vraiment enregistrer sans commentaire ?",
     "ru": "Комментарии помогают другим переводчикам понять контекст. Вы уверены, что хотите сохранить документ без комментария?",
-    "ja": "コメントは他の翻訳者が文脈を理解するのに役立ちます。コメントなしで保存してもよろしいですか？"
+    "ja": "コメントは他の翻訳者が文脈を理解するのに役立ちます。コメントなしで保存してもよろしいですか？",
+    "de": "Kommentare helfen anderen Übersetzern, den Kontext zu verstehen. Möchten Sie die Datei wirklich ohne Kommentar speichern?"
   },
   "saveAnyway": {
     "source": "Save Anyway",
@@ -30,7 +32,8 @@
     "es": "Guardar de todos modos",
     "fr-ca": "Sauvegarder quand même",
     "ru": "В любом случае сохранить",
-    "ja": "とにかく保存する"
+    "ja": "とにかく保存する",
+    "de": "Trotzdem speichern"
   },
   "addComment": {
     "source": "Add Comment",
@@ -41,6 +44,7 @@
     "es": "Añadir comentario",
     "fr-ca": "Ajouter un commentaire",
     "ru": "Добавить комментарий",
-    "ja": "コメントを追加"
+    "ja": "コメントを追加",
+    "de": "Kommentar hinzufügen"
   }
 }

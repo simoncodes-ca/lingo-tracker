@@ -8,7 +8,8 @@
     "es": "Compacto: vista de 2 líneas, alta densidad",
     "fr-ca": "Compact — affichage sur 2 lignes, haute densité",
     "ru": "Компактный — двухстрочный режим отображения, высокая плотность пикселей.",
-    "ja": "コンパクト - 2行表示、高密度"
+    "ja": "コンパクト - 2行表示、高密度",
+    "de": "Kompakt – 2-Zeilen-Ansicht, hohe Dichte"
   },
   "fullTooltip": {
     "source": "Full — detailed view with comments and all locales",
@@ -19,7 +20,8 @@
     "es": "Completo: vista detallada con comentarios y todas las configuraciones regionales",
     "fr-ca": "Vue complète et détaillée avec commentaires et toutes les langues",
     "ru": "Полный — подробный просмотр с комментариями и всеми локалями.",
-    "ja": "完全版 — コメントとすべての地域を含む詳細表示"
+    "ja": "完全版 — コメントとすべての地域を含む詳細表示",
+    "de": "Vollständige – detaillierte Ansicht mit Kommentaren und allen Standorten"
   },
   "modeAriaLabel": {
     "source": "Density mode",
@@ -30,7 +32,8 @@
     "es": "Modo de densidad",
     "fr-ca": "Mode de densité",
     "ru": "Режим плотности",
-    "ja": "密度モード"
+    "ja": "密度モード",
+    "de": "Dichtemodus"
   },
   "compactAriaLabel": {
     "source": "Compact density",
@@ -41,7 +44,8 @@
     "es": "Densidad compacta",
     "fr-ca": "Densité compacte",
     "ru": "Плотная компактность",
-    "ja": "高密度"
+    "ja": "高密度",
+    "de": "Kompakte Dichte"
   },
   "fullAriaLabel": {
     "source": "Full density",
@@ -52,6 +56,7 @@
     "es": "Densidad completa",
     "fr-ca": "Densité maximale",
     "ru": "Полная плотность",
-    "ja": "完全密度"
+    "ja": "完全密度",
+    "de": "Volle Dichte"
   }
 }

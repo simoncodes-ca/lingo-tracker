@@ -5,7 +5,8 @@
     "es": "Volver a las colecciones",
     "fr-ca": "Retour aux collections",
     "ru": "Вернуться к коллекциям",
-    "ja": "コレクション一覧に戻る"
+    "ja": "コレクション一覧に戻る",
+    "de": "Zurück zu den Sammlungen"
   },
   "filterFolders": {
     "source": "Filter folders...",
@@ -13,28 +14,32 @@
     "es": "Filtrar carpetas...",
     "fr-ca": "Dossiers de filtrage...",
     "ru": "Фильтрация папок...",
-    "ja": "フォルダをフィルタリング..."
+    "ja": "フォルダをフィルタリング...",
+    "de": "Filterordner..."
   },
   "loadingFolders": {
     "source": "Loading folders...",
     "es": "Cargando carpetas...",
     "fr-ca": "Chargement des dossiers...",
     "ru": "Загрузка папок...",
-    "ja": "フォルダを読み込んでいます..."
+    "ja": "フォルダを読み込んでいます...",
+    "de": "Ordner werden geladen..."
   },
   "noFoldersMatchSearch": {
     "source": "No folders match your search",
     "es": "No se encontraron carpetas que coincidan con su búsqueda.",
     "fr-ca": "Aucun dossier ne correspond à votre recherche",
     "ru": "Папки не соответствуют вашему запросу.",
-    "ja": "検索条件に一致するフォルダはありません"
+    "ja": "検索条件に一致するフォルダはありません",
+    "de": "Keine Ordner entsprechen Ihrer Suche"
   },
   "noFoldersFound": {
     "source": "No folders found",
     "es": "No se encontraron carpetas",
     "fr-ca": "Aucun dossier trouvé",
     "ru": "Папки не найдены",
-    "ja": "フォルダが見つかりませんでした"
+    "ja": "フォルダが見つかりませんでした",
+    "de": "Keine Ordner gefunden"
   },
   "clickToLoad": {
     "source": "click to load",
@@ -42,49 +47,56 @@
     "es": "Haz clic para cargar",
     "fr-ca": "cliquer pour charger",
     "ru": "нажмите для загрузки",
-    "ja": "クリックして読み込む"
+    "ja": "クリックして読み込む",
+    "de": "Zum Laden klicken"
   },
   "loadingCollectionConfiguration": {
     "source": "Loading collection configuration...",
     "es": "Cargando configuración de la colección...",
     "fr-ca": "Chargement de la configuration de la collection...",
     "ru": "Загрузка конфигурации коллекции...",
-    "ja": "コレクション設定を読み込んでいます..."
+    "ja": "コレクション設定を読み込んでいます...",
+    "de": "Sammlungskonfiguration wird geladen..."
   },
   "loadingTranslations": {
     "source": "Loading translations...",
     "es": "Cargando traducciones...",
     "fr-ca": "Chargement des traductions...",
     "ru": "Загрузка переводов...",
-    "ja": "翻訳を読み込んでいます..."
+    "ja": "翻訳を読み込んでいます...",
+    "de": "Übersetzungen werden geladen..."
   },
   "noTranslationsFoundInFolder": {
     "source": "No translations found in this folder.",
     "es": "No se encontraron traducciones en esta carpeta.",
     "fr-ca": "Aucune traduction trouvée dans ce dossier.",
     "ru": "В этой папке не найдено ни одного перевода.",
-    "ja": "このフォルダには翻訳ファイルが見つかりませんでした。"
+    "ja": "このフォルダには翻訳ファイルが見つかりませんでした。",
+    "de": "In diesem Ordner wurden keine Übersetzungen gefunden."
   },
   "searchTranslations": {
     "source": "Search (min 3 characters)...",
     "es": "Buscar (mínimo 3 caracteres)...",
     "fr-ca": "Recherche (3 caractères minimum)...",
     "ru": "Поиск (минимум 3 символа)...",
-    "ja": "検索（最低3文字）..."
+    "ja": "検索（最低3文字）...",
+    "de": "Suche (mind. 3 Zeichen)..."
   },
   "showingSearchResultsForX": {
     "source": "Showing search results for \"{query}\"",
     "es": "Mostrando resultados de búsqueda para \"{query}\"",
     "fr-ca": "Affichage des résultats de recherche pour \"{query}\"",
     "ru": "Показаны результаты поиска по запросу \"{query}\"",
-    "ja": "「{query}」の検索結果を表示しています。"
+    "ja": "「{query}」の検索結果を表示しています。",
+    "de": "Suchergebnisse für \"{query}\" anzeigen"
   },
   "clearSearch": {
     "source": "Clear Search",
     "es": "Búsqueda clara",
     "fr-ca": "Effacer la recherche",
     "ru": "Очистить поиск",
-    "ja": "検索をクリア"
+    "ja": "検索をクリア",
+    "de": "Suche löschen"
   },
   "noFolderSelected": {
     "source": "No resource folder selected",
@@ -95,7 +107,8 @@
     "es": "No se seleccionó ninguna carpeta de recursos",
     "fr-ca": "Aucun dossier de ressources sélectionné",
     "ru": "Папка ресурсов не выбрана",
-    "ja": "リソースフォルダが選択されていません"
+    "ja": "リソースフォルダが選択されていません",
+    "de": "Kein Ressourcenordner ausgewählt"
   },
   "addTranslationButton": {
     "source": "Add Translation",
@@ -106,7 +119,8 @@
     "es": "Añadir traducción",
     "fr-ca": "Ajouter une traduction",
     "ru": "Добавить перевод",
-    "ja": "翻訳を追加"
+    "ja": "翻訳を追加",
+    "de": "Übersetzung hinzufügen"
   },
   "sortAscending": {
     "source": "Sort ascending",
@@ -117,7 +131,8 @@
     "es": "Ordenar ascendentemente",
     "fr-ca": "Trier en ordre croissant",
     "ru": "Сортировка по возрастанию",
-    "ja": "昇順で並べ替え"
+    "ja": "昇順で並べ替え",
+    "de": "Aufsteigend sortieren"
   },
   "sortDescending": {
     "source": "Sort descending",
@@ -128,7 +143,8 @@
     "es": "Ordenar descendentemente",
     "fr-ca": "Trier par ordre décroissant",
     "ru": "Сортировать по убыванию",
-    "ja": "降順で並べ替え"
+    "ja": "降順で並べ替え",
+    "de": "Sortieren Sie absteigend"
   },
   "sortAscendingTooltip": {
     "source": "Sort ascending (A→Z)",
@@ -139,7 +155,8 @@
     "es": "Ordenar ascendentemente (A→Z)",
     "fr-ca": "Trier par ordre croissant (A→Z)",
     "ru": "Сортировка по возрастанию (от А до Я)",
-    "ja": "昇順（A→Z）に並べ替え"
+    "ja": "昇順（A→Z）に並べ替え",
+    "de": "Aufsteigend sortieren (A→Z)"
   },
   "sortDescendingTooltip": {
     "source": "Sort descending (Z→A)",
@@ -150,7 +167,8 @@
     "es": "Ordenar descendentemente (Z→A)",
     "fr-ca": "Trier par ordre décroissant (Z→A)",
     "ru": "Сортировка по убыванию (Z→A)",
-    "ja": "降順でソート（Z→A）"
+    "ja": "降順でソート（Z→A）",
+    "de": "Sortieren absteigend (Z→A)"
   },
   "selectFolderFirst": {
     "source": "Select a folder first",
@@ -161,7 +179,8 @@
     "es": "Seleccione una carpeta primero",
     "fr-ca": "Sélectionnez d'abord un dossier",
     "ru": "Сначала выберите папку.",
-    "ja": "まずフォルダを選択してください。"
+    "ja": "まずフォルダを選択してください。",
+    "de": "Wählen Sie zuerst einen Ordner aus."
   },
   "addNewTranslationTooltip": {
     "source": "Add a new translation",
@@ -172,7 +191,8 @@
     "es": "Añadir una nueva traducción",
     "fr-ca": "Ajouter une nouvelle traduction",
     "ru": "Добавить новый перевод",
-    "ja": "新しい翻訳を追加する"
+    "ja": "新しい翻訳を追加する",
+    "de": "Füge eine neue Übersetzung hinzu"
   },
   "noTranslation": {
     "source": "No translation",
@@ -183,7 +203,8 @@
     "es": "Sin traducción",
     "fr-ca": "Aucune traduction",
     "ru": "Нет перевода",
-    "ja": "翻訳なし"
+    "ja": "翻訳なし",
+    "de": "Keine Übersetzung"
   },
   "commentPrefix": {
     "source": "Comment:",
@@ -194,7 +215,8 @@
     "es": "Comentario:",
     "fr-ca": "Commentaire:",
     "ru": "Комментарий:",
-    "ja": "コメント："
+    "ja": "コメント：",
+    "de": "Kommentar:"
   },
   "toggleExpansion": {
     "source": "Toggle expansion",
@@ -205,6 +227,7 @@
     "es": "Activar o desactivar la expansión",
     "fr-ca": "Basculer l'extension",
     "ru": "Переключить расширение",
-    "ja": "展開を切り替える"
+    "ja": "展開を切り替える",
+    "de": "Erweiterung umschalten"
   }
 }

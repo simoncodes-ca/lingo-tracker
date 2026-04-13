@@ -8,7 +8,8 @@
     "es": "Arrastrar para mover la traducción",
     "fr-ca": "Faites glisser pour déplacer la traduction",
     "ru": "Перетащите, чтобы переместить перевод.",
-    "ja": "ドラッグして翻訳を移動"
+    "ja": "ドラッグして翻訳を移動",
+    "de": "Zum Verschieben der Übersetzung ziehen"
   },
   "copyKeyAriaLabel": {
     "source": "Copy key",
@@ -19,7 +20,8 @@
     "es": "Copiar clave",
     "fr-ca": "Copier la clé",
     "ru": "Копировать ключ",
-    "ja": "コピーキー"
+    "ja": "コピーキー",
+    "de": "Schlüssel kopieren"
   },
   "hideCommentAriaLabel": {
     "source": "Hide comment",
@@ -30,7 +32,8 @@
     "es": "Ocultar comentario",
     "fr-ca": "Masquer le commentaire",
     "ru": "Скрыть комментарий",
-    "ja": "コメントを非表示にする"
+    "ja": "コメントを非表示にする",
+    "de": "Kommentar ausblenden"
   },
   "showCommentAriaLabel": {
     "source": "Show comment",
@@ -41,7 +44,8 @@
     "es": "Mostrar comentario",
     "fr-ca": "Afficher le commentaire",
     "ru": "Показать комментарий",
-    "ja": "コメントを表示"
+    "ja": "コメントを表示",
+    "de": "Kommentar anzeigen"
   },
   "moreActionsAriaLabel": {
     "source": "More actions",
@@ -52,7 +56,8 @@
     "es": "Más acciones",
     "fr-ca": "Plus d'actions",
     "ru": "Дополнительные действия",
-    "ja": "その他の操作"
+    "ja": "その他の操作",
+    "de": "Weitere Aktionen"
   },
   "editAriaLabel": {
     "source": "Edit translation",
@@ -63,7 +68,8 @@
     "es": "Editar traducción",
     "fr-ca": "Modifier la traduction",
     "ru": "Редактировать перевод",
-    "ja": "翻訳を編集する"
+    "ja": "翻訳を編集する",
+    "de": "Übersetzung bearbeiten"
   },
   "translateAriaLabel": {
     "source": "Translate resource",
@@ -74,7 +80,8 @@
     "es": "Traducir recurso",
     "fr-ca": "ressource de traduction",
     "ru": "Перевести ресурс",
-    "ja": "リソースを翻訳する"
+    "ja": "リソースを翻訳する",
+    "de": "Ressource übersetzen"
   },
   "deleteAriaLabel": {
     "source": "Delete translation",
@@ -85,7 +92,8 @@
     "es": "Eliminar traducción",
     "fr-ca": "Supprimer la traduction",
     "ru": "Удалить перевод",
-    "ja": "翻訳を削除"
+    "ja": "翻訳を削除",
+    "de": "Übersetzung löschen"
   },
   "noStatuses": {
     "source": "No statuses",
@@ -96,6 +104,7 @@
     "es": "Sin estados",
     "fr-ca": "Aucun statut",
     "ru": "Нет статусов",
-    "ja": "ステータスなし"
+    "ja": "ステータスなし",
+    "de": "Keine Statusmeldungen"
   }
 }

@@ -8,7 +8,8 @@
     "es": "Ir a Colecciones",
     "fr-ca": "Accéder aux collections",
     "ru": "Перейти в Коллекции",
-    "ja": "コレクションへ移動"
+    "ja": "コレクションへ移動",
+    "de": "Zu den Sammlungen"
   },
   "backToCollections": {
     "source": "Back to Collections",
@@ -19,7 +20,8 @@
     "es": "Volver a Colecciones",
     "fr-ca": "Retour aux collections",
     "ru": "Вернуться к коллекциям",
-    "ja": "コレクション一覧に戻る"
+    "ja": "コレクション一覧に戻る",
+    "de": "Zurück zu den Sammlungen"
   },
   "keysCountX": {
     "source": "{ count, plural, =1 {1 key} other {{count} keys} }",
@@ -30,7 +32,8 @@
     "es": "{ count, plural, =1 {1 key} other {{count} keys} }",
     "fr-ca": "{ count, plural, =1 {1 key} other {{count} keys} }",
     "ru": "{ count, plural, =1 {1 key} other {{count} keys} }",
-    "ja": "{ count, plural, =1 {1 key} other {{count} keys} }"
+    "ja": "{ count, plural, =1 {1 key} other {{count} keys} }",
+    "de": "{ count, plural, =1 {1 key} other {{count} keys} }"
   },
   "localesCountX": {
     "source": "{ count, plural, =1 {1 locale} other {{count} locales} }",
@@ -41,6 +44,7 @@
     "es": "{ count, plural, =1 {1 locale} other {{count} locales} }",
     "fr-ca": "{ count, plural, =1 {1 locale} other {{count} locales} }",
     "ru": "{ count, plural, =1 {1 locale} other {{count} locales} }",
-    "ja": "{ count, plural, =1 {1 locale} other {{count} locales} }"
+    "ja": "{ count, plural, =1 {1 locale} other {{count} locales} }",
+    "de": "{ count, plural, =1 {1 locale} other {{count} locales} }"
   }
 }

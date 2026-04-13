@@ -5,7 +5,8 @@
     "es": "Aún no hay colecciones",
     "fr-ca": "Aucune collection pour l'instant",
     "ru": "Коллекций пока нет.",
-    "ja": "まだコレクションはありません"
+    "ja": "まだコレクションはありません",
+    "de": "Noch keine Sammlungen"
   },
   "cta": {
     "source": "Create your first collection",
@@ -13,6 +14,7 @@
     "es": "Crea tu primera colección",
     "fr-ca": "Créez votre première collection",
     "ru": "Создайте свою первую коллекцию",
-    "ja": "最初のコレクションを作成する"
+    "ja": "最初のコレクションを作成する",
+    "de": "Erstelle deine erste Kollektion"
   }
 }

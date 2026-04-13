@@ -22,6 +22,11 @@
       "checksum": "62c71b3f7f45a8b6da35ef6a135cc061",
       "baseChecksum": "bcc40d0f321165f8d57c4185fc0357df",
       "status": "translated"
+    },
+    "de": {
+      "checksum": "f7537fa7c0c52321d16635b4085d8cd1",
+      "baseChecksum": "bcc40d0f321165f8d57c4185fc0357df",
+      "status": "translated"
     }
   }
 }

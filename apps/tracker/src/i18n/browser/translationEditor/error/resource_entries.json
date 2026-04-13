@@ -8,7 +8,8 @@
     "es": "No se puede actualizar: faltan datos del recurso",
     "fr-ca": "Impossible de mettre à jour : les données de ressources sont manquantes.",
     "ru": "Невозможно обновить: отсутствуют данные ресурса.",
-    "ja": "更新できません: リソースデータが不足しています"
+    "ja": "更新できません: リソースデータが不足しています",
+    "de": "Aktualisierung fehlgeschlagen: Ressourcendaten fehlen"
   },
   "keyRenamingNotSupported": {
     "source": "Key renaming is not yet supported. Please use the same key or create a new resource.",
@@ -19,7 +20,8 @@
     "es": "Aún no se admite el cambio de nombre de clave. Utilice la misma clave o cree un nuevo recurso.",
     "fr-ca": "Le renommage des clés n'est pas encore pris en charge. Veuillez utiliser la même clé ou créer une nouvelle ressource.",
     "ru": "Функция переименования ключей пока не поддерживается. Пожалуйста, используйте тот же ключ или создайте новый ресурс.",
-    "ja": "キー名の変更はまだサポートされていません。同じキーを使用するか、新しいリソースを作成してください。"
+    "ja": "キー名の変更はまだサポートされていません。同じキーを使用するか、新しいリソースを作成してください。",
+    "de": "Das Umbenennen von Schlüsseln wird noch nicht unterstützt. Bitte verwenden Sie denselben Schlüssel oder erstellen Sie eine neue Ressource."
   },
   "notFound": {
     "source": "Resource not found. It may have been deleted.",
@@ -30,7 +32,8 @@
     "es": "Recurso no encontrado. Es posible que se haya eliminado.",
     "fr-ca": "Ressource introuvable. Elle a peut-être été supprimée.",
     "ru": "Ресурс не найден. Возможно, он был удален.",
-    "ja": "リソースが見つかりません。削除された可能性があります。"
+    "ja": "リソースが見つかりません。削除された可能性があります。",
+    "de": "Ressource nicht gefunden. Sie wurde möglicherweise gelöscht."
   },
   "invalidRequest": {
     "source": "Invalid request",
@@ -41,7 +44,8 @@
     "es": "Solicitud no válida",
     "fr-ca": "Requête invalide",
     "ru": "Неверный запрос",
-    "ja": "無効なリクエスト"
+    "ja": "無効なリクエスト",
+    "de": "Ungültige Anfrage"
   },
   "createFailed": {
     "source": "Failed to create translation",
@@ -52,7 +56,8 @@
     "es": "No se pudo crear la traducción",
     "fr-ca": "Échec de la traduction",
     "ru": "Не удалось создать перевод",
-    "ja": "翻訳の作成に失敗しました"
+    "ja": "翻訳の作成に失敗しました",
+    "de": "Übersetzung konnte nicht erstellt werden"
   },
   "updateFailed": {
     "source": "Failed to update translation",
@@ -63,7 +68,8 @@
     "es": "No se pudo actualizar la traducción",
     "fr-ca": "Échec de la mise à jour de la traduction",
     "ru": "Не удалось обновить перевод",
-    "ja": "翻訳の更新に失敗しました"
+    "ja": "翻訳の更新に失敗しました",
+    "de": "Übersetzung konnte nicht aktualisiert werden"
   },
   "unexpected": {
     "source": "An unexpected error occurred",
@@ -74,6 +80,7 @@
     "es": "Se produjo un error inesperado",
     "fr-ca": "Une erreur inattendue s'est produite.",
     "ru": "Произошла непредвиденная ошибка.",
-    "ja": "予期せぬエラーが発生しました"
+    "ja": "予期せぬエラーが発生しました",
+    "de": "Es ist ein unerwarteter Fehler aufgetreten."
   }
 }

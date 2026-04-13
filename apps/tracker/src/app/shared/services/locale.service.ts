@@ -2,7 +2,7 @@ import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { TranslocoService } from '@jsverse/transloco';
 
-export type LocaleCode = 'en' | 'es' | 'fr-ca';
+export type LocaleCode = 'en' | 'es' | 'fr-ca' | 'ru' | 'ja' | 'de';
 
 export interface LocaleOption {
   readonly code: LocaleCode;
@@ -16,6 +16,9 @@ const AVAILABLE_LOCALES: readonly LocaleOption[] = [
   { code: 'en', displayName: 'English' },
   { code: 'es', displayName: 'Español' },
   { code: 'fr-ca', displayName: 'Français (CA)' },
+  { code: 'ru', displayName: 'Русский' },
+  { code: 'ja', displayName: '日本語' },
+  { code: 'de', displayName: 'Deutsch' },
 ] as const;
 
 const VALID_LOCALE_CODES = new Set<string>(AVAILABLE_LOCALES.map((l) => l.code));

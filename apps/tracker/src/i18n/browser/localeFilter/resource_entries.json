@@ -8,6 +8,7 @@
     "es": "Filtrar regiones. Actualmente se muestra: {texto}",
     "fr-ca": "Filtrer les paramètres régionaux. Affichage actuel : { texte }",
     "ru": "Фильтр по языкам. В данный момент отображается: { текст }",
-    "ja": "地域をフィルタリングします。現在表示中: { テキスト }"
+    "ja": "地域をフィルタリングします。現在表示中: { テキスト }",
+    "de": "Gebietsschemas filtern. Aktuell angezeigt: { text }"
   }
 }

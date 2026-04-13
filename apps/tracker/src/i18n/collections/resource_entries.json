@@ -5,7 +5,8 @@
     "es": "Colecciones",
     "fr-ca": "Collections",
     "ru": "Коллекции",
-    "ja": "コレクション"
+    "ja": "コレクション",
+    "de": "Sammlungen"
   },
   "addButton": {
     "source": "Add Collection",
@@ -13,6 +14,7 @@
     "es": "Agregar Colección",
     "fr-ca": "Ajouter une Collection",
     "ru": "Добавить коллекцию",
-    "ja": "コレクションを追加"
+    "ja": "コレクションを追加",
+    "de": "Sammlung hinzufügen"
   }
 }

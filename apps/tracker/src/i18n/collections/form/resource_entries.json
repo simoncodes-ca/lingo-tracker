@@ -5,7 +5,8 @@
     "es": "Nombre de la colección",
     "fr-ca": "Nom de la collection",
     "ru": "Название коллекции",
-    "ja": "コレクション名"
+    "ja": "コレクション名",
+    "de": "Sammlungsname"
   },
   "translationsFolder": {
     "source": "Translations folder",
@@ -13,7 +14,8 @@
     "es": "Carpeta de traducciones",
     "fr-ca": "Dossier de traductions",
     "ru": "Папка «Переводы»",
-    "ja": "翻訳フォルダ"
+    "ja": "翻訳フォルダ",
+    "de": "Übersetzungsordner"
   },
   "locales": {
     "source": "Locales",
@@ -21,7 +23,8 @@
     "es": "Idiomas",
     "fr-ca": "Langues",
     "ru": "Локалы",
-    "ja": "地域"
+    "ja": "地域",
+    "de": "Orte"
   },
   "localesPlaceholder": {
     "source": "Comma-separated (e.g., en,fr,es)",
@@ -29,6 +32,7 @@
     "es": "Separados por comas (ej., en,fr,es)",
     "fr-ca": "Séparés par des virgules (p. ex., en,fr,es)",
     "ru": "Через запятую (например, en,fr,es)",
-    "ja": "カンマ区切り (例: en、fr、es)"
+    "ja": "カンマ区切り (例: en、fr、es)",
+    "de": "Durch Kommas getrennt (z. B. en,fr,es)"
   }
 }

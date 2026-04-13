@@ -8,7 +8,8 @@
     "es": "La clave de traducción ya existe",
     "fr-ca": "La clé de traduction existe déjà.",
     "ru": "Ключ перевода уже существует",
-    "ja": "翻訳キーは既に存在します"
+    "ja": "翻訳キーは既に存在します",
+    "de": "Übersetzungsschlüssel existiert bereits"
   },
   "messageX": {
     "source": "The translation key \"{key}\" already exists in this collection. Would you like to edit the existing translation or choose a different key?",
@@ -19,7 +20,8 @@
     "es": "La clave de traducción \"{key}\" ya existe en esta colección. ¿Desea editar la traducción existente o elegir una clave diferente?",
     "fr-ca": "La clé de traduction « {key} » existe déjà dans cette collection. Souhaitez-vous modifier la traduction existante ou choisir une autre clé ?",
     "ru": "Ключ перевода \"{key}\" уже существует в этой коллекции. Хотите отредактировать существующий перевод или выбрать другой ключ?",
-    "ja": "翻訳キー「{key}」は既にこのコレクションに存在します。既存の翻訳を編集しますか、それとも別のキーを選択しますか？"
+    "ja": "翻訳キー「{key}」は既にこのコレクションに存在します。既存の翻訳を編集しますか、それとも別のキーを選択しますか？",
+    "de": "Der Übersetzungsschlüssel \"{key}\" ist in dieser Sammlung bereits vorhanden. Möchten Sie die bestehende Übersetzung bearbeiten oder einen anderen Schlüssel auswählen?"
   },
   "editExisting": {
     "source": "Edit Existing",
@@ -30,7 +32,8 @@
     "es": "Editar existente",
     "fr-ca": "Modifier l'existant",
     "ru": "Редактировать существующий",
-    "ja": "既存のものを編集する"
+    "ja": "既存のものを編集する",
+    "de": "Vorhandenen bearbeiten"
   },
   "chooseDifferentKey": {
     "source": "Choose Different Key",
@@ -41,6 +44,7 @@
     "es": "Elija una clave diferente",
     "fr-ca": "Choisir une autre clé",
     "ru": "Выберите другой ключ",
-    "ja": "別のキーを選択してください"
+    "ja": "別のキーを選択してください",
+    "de": "Wählen Sie eine andere Taste"
   }
 }

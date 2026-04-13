@@ -5,7 +5,8 @@
     "es": "Claro",
     "fr-ca": "Clair",
     "ru": "Свет",
-    "ja": "ライト"
+    "ja": "ライト",
+    "de": "Licht"
   },
   "dark": {
     "source": "Dark",
@@ -13,7 +14,8 @@
     "es": "Oscuro",
     "fr-ca": "Sombre",
     "ru": "Темный",
-    "ja": "暗い"
+    "ja": "暗い",
+    "de": "Dunkel"
   },
   "system": {
     "source": "System",
@@ -21,7 +23,8 @@
     "es": "Sistema",
     "fr-ca": "Système",
     "ru": "Система",
-    "ja": "システム"
+    "ja": "システム",
+    "de": "System"
   },
   "settings": {
     "source": "Theme settings",
@@ -29,6 +32,7 @@
     "es": "Configuración del tema",
     "fr-ca": "Paramètres du thème",
     "ru": "Настройки темы",
-    "ja": "テーマ設定"
+    "ja": "テーマ設定",
+    "de": "Designeinstellungen"
   }
 }
