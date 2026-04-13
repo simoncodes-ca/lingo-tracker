@@ -91,9 +91,7 @@ describe('removeLocaleCommand', () => {
       await removeLocaleCommand(options);
 
       expect(removeLocaleFromCollection).toHaveBeenCalledWith('main', 'fr', { cwd: '/project' });
-      expect(ConsoleFormatter.success).toHaveBeenCalledWith(
-        'Locale "fr" removed from collection "main" successfully',
-      );
+      expect(ConsoleFormatter.success).toHaveBeenCalledWith('Locale "fr" removed from collection "main" successfully');
       expect(ConsoleFormatter.keyValue).toHaveBeenCalledWith('Entries purged', 5);
       expect(ConsoleFormatter.keyValue).toHaveBeenCalledWith('Files updated', 3);
     });
@@ -107,15 +105,11 @@ describe('removeLocaleCommand', () => {
     });
 
     it('prints error via ConsoleFormatter.error when core function throws', async () => {
-      vi.mocked(removeLocaleFromCollection).mockRejectedValue(
-        new Error('Locale "fr" not found in collection "main"'),
-      );
+      vi.mocked(removeLocaleFromCollection).mockRejectedValue(new Error('Locale "fr" not found in collection "main"'));
 
       await removeLocaleCommand({ collection: 'main', locale: 'fr' });
 
-      expect(ConsoleFormatter.error).toHaveBeenCalledWith(
-        'Locale "fr" not found in collection "main"',
-      );
+      expect(ConsoleFormatter.error).toHaveBeenCalledWith('Locale "fr" not found in collection "main"');
     });
 
     it('prints generic error message when core throws a non-Error value', async () => {

@@ -32,7 +32,10 @@ describe('addLocaleToCollection', () => {
       ok: { source: 'OK', fr: 'OK' },
     };
     const meta: TrackerMetadata = {
-      ok: { en: { checksum: calculateChecksum('OK') }, fr: { checksum: calculateChecksum('OK'), baseChecksum: calculateChecksum('OK'), status: 'new' } },
+      ok: {
+        en: { checksum: calculateChecksum('OK') },
+        fr: { checksum: calculateChecksum('OK'), baseChecksum: calculateChecksum('OK'), status: 'new' },
+      },
     };
 
     setupMockFs({
@@ -161,9 +164,7 @@ describe('addLocaleToCollection', () => {
       [CONFIG_PATH]: { type: 'file', content: JSON.stringify(makeConfig()) },
     });
 
-    await expect(addLocaleToCollection('main', 'not-valid-123', { cwd: CWD })).rejects.toThrow(
-      'Invalid locale format',
-    );
+    await expect(addLocaleToCollection('main', 'not-valid-123', { cwd: CWD })).rejects.toThrow('Invalid locale format');
   });
 
   it('uses collection-level baseLocale when blocking base locale add', async () => {

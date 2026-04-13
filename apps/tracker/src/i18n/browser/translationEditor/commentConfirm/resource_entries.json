@@ -2,9 +2,7 @@
   "title": {
     "source": "No Comment Added",
     "comment": "Dialog title when submitting without a comment",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Sin comentarios añadidos",
     "fr-ca": "Aucun commentaire ajouté",
     "ru": "Комментарий не добавлен",
@@ -14,9 +12,7 @@
   "message": {
     "source": "Comments help other translators understand context. Are you sure you want to save without a comment?",
     "comment": "Confirmation message about missing comment",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Los comentarios ayudan a otros traductores a comprender el contexto. ¿Seguro que quieres guardar sin comentarios?",
     "fr-ca": "Les commentaires aident les autres traducteurs à comprendre le contexte. Voulez-vous vraiment enregistrer sans commentaire ?",
     "ru": "Комментарии помогают другим переводчикам понять контекст. Вы уверены, что хотите сохранить документ без комментария?",
@@ -26,9 +22,7 @@
   "saveAnyway": {
     "source": "Save Anyway",
     "comment": "Button to proceed without comment",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Guardar de todos modos",
     "fr-ca": "Sauvegarder quand même",
     "ru": "В любом случае сохранить",
@@ -38,9 +32,7 @@
   "addComment": {
     "source": "Add Comment",
     "comment": "Button to go back and add a comment",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Añadir comentario",
     "fr-ca": "Ajouter un commentaire",
     "ru": "Добавить комментарий",

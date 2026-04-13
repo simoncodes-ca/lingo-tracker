@@ -2,9 +2,7 @@
   "missingResource": {
     "source": "Cannot update: resource data is missing",
     "comment": "Error when resource data is unavailable during edit",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "No se puede actualizar: faltan datos del recurso",
     "fr-ca": "Impossible de mettre à jour : les données de ressources sont manquantes.",
     "ru": "Невозможно обновить: отсутствуют данные ресурса.",
@@ -14,9 +12,7 @@
   "keyRenamingNotSupported": {
     "source": "Key renaming is not yet supported. Please use the same key or create a new resource.",
     "comment": "Error when user tries to change resource key",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Aún no se admite el cambio de nombre de clave. Utilice la misma clave o cree un nuevo recurso.",
     "fr-ca": "Le renommage des clés n'est pas encore pris en charge. Veuillez utiliser la même clé ou créer une nouvelle ressource.",
     "ru": "Функция переименования ключей пока не поддерживается. Пожалуйста, используйте тот же ключ или создайте новый ресурс.",
@@ -26,9 +22,7 @@
   "notFound": {
     "source": "Resource not found. It may have been deleted.",
     "comment": "Error when resource no longer exists on server",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Recurso no encontrado. Es posible que se haya eliminado.",
     "fr-ca": "Ressource introuvable. Elle a peut-être été supprimée.",
     "ru": "Ресурс не найден. Возможно, он был удален.",
@@ -38,9 +32,7 @@
   "invalidRequest": {
     "source": "Invalid request",
     "comment": "Fallback error message for 400 status responses",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Solicitud no válida",
     "fr-ca": "Requête invalide",
     "ru": "Неверный запрос",
@@ -50,9 +42,7 @@
   "createFailed": {
     "source": "Failed to create translation",
     "comment": "Fallback error when resource creation fails",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "No se pudo crear la traducción",
     "fr-ca": "Échec de la traduction",
     "ru": "Не удалось создать перевод",
@@ -62,9 +52,7 @@
   "updateFailed": {
     "source": "Failed to update translation",
     "comment": "Fallback error when resource update fails",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "No se pudo actualizar la traducción",
     "fr-ca": "Échec de la mise à jour de la traduction",
     "ru": "Не удалось обновить перевод",
@@ -74,9 +62,7 @@
   "unexpected": {
     "source": "An unexpected error occurred",
     "comment": "Fallback error for non-HTTP errors",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Se produjo un error inesperado",
     "fr-ca": "Une erreur inattendue s'est produite.",
     "ru": "Произошла непредвиденная ошибка.",

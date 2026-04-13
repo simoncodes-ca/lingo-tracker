@@ -91,9 +91,7 @@ describe('addLocaleCommand', () => {
       await addLocaleCommand(options);
 
       expect(addLocaleToCollection).toHaveBeenCalledWith('main', 'de', { cwd: '/project' });
-      expect(ConsoleFormatter.success).toHaveBeenCalledWith(
-        'Locale "de" added to collection "main" successfully',
-      );
+      expect(ConsoleFormatter.success).toHaveBeenCalledWith('Locale "de" added to collection "main" successfully');
       expect(ConsoleFormatter.keyValue).toHaveBeenCalledWith('Entries backfilled', 3);
       expect(ConsoleFormatter.keyValue).toHaveBeenCalledWith('Files updated', 2);
     });
@@ -107,15 +105,11 @@ describe('addLocaleCommand', () => {
     });
 
     it('prints error via ConsoleFormatter.error when core function throws', async () => {
-      vi.mocked(addLocaleToCollection).mockRejectedValue(
-        new Error('Locale "de" already exists in collection "main"'),
-      );
+      vi.mocked(addLocaleToCollection).mockRejectedValue(new Error('Locale "de" already exists in collection "main"'));
 
       await addLocaleCommand({ collection: 'main', locale: 'de' });
 
-      expect(ConsoleFormatter.error).toHaveBeenCalledWith(
-        'Locale "de" already exists in collection "main"',
-      );
+      expect(ConsoleFormatter.error).toHaveBeenCalledWith('Locale "de" already exists in collection "main"');
     });
 
     it('prints generic error message when core throws a non-Error value', async () => {

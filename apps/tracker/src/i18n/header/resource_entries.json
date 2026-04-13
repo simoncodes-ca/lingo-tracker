@@ -2,9 +2,7 @@
   "goToCollections": {
     "source": "Go to Collections",
     "comment": "Aria-label and tooltip for the brand link in the app header",
-    "tags": [
-      "header"
-    ],
+    "tags": ["header"],
     "es": "Ir a Colecciones",
     "fr-ca": "Accéder aux collections",
     "ru": "Перейти в Коллекции",
@@ -14,9 +12,7 @@
   "backToCollections": {
     "source": "Back to Collections",
     "comment": "Aria-label and tooltip for the back button in the app header when viewing a collection",
-    "tags": [
-      "header"
-    ],
+    "tags": ["header"],
     "es": "Volver a Colecciones",
     "fr-ca": "Retour aux collections",
     "ru": "Вернуться к коллекциям",
@@ -26,9 +22,7 @@
   "keysCountX": {
     "source": "{ count, plural, =1 {1 key} other {{count} keys} }",
     "comment": "Pluralized count of translation keys shown in the app header stats",
-    "tags": [
-      "header"
-    ],
+    "tags": ["header"],
     "es": "{ count, plural, =1 {1 key} other {{count} keys} }",
     "fr-ca": "{ count, plural, =1 {1 key} other {{count} keys} }",
     "ru": "{ count, plural, =1 {1 key} other {{count} keys} }",
@@ -38,9 +32,7 @@
   "localesCountX": {
     "source": "{ count, plural, =1 {1 locale} other {{count} locales} }",
     "comment": "Pluralized count of locales shown in the app header stats",
-    "tags": [
-      "header"
-    ],
+    "tags": ["header"],
     "es": "{ count, plural, =1 {1 locale} other {{count} locales} }",
     "fr-ca": "{ count, plural, =1 {1 locale} other {{count} locales} }",
     "ru": "{ count, plural, =1 {1 locale} other {{count} locales} }",

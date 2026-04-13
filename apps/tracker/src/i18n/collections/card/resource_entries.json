@@ -2,10 +2,7 @@
   "edit": {
     "source": "Edit collection",
     "comment": "Accessible label for edit icon button on collection card",
-    "tags": [
-      "card",
-      "collection"
-    ],
+    "tags": ["card", "collection"],
     "es": "Editar colección",
     "fr-ca": "Modifier la collection",
     "ru": "Редактировать коллекцию",
@@ -15,10 +12,7 @@
   "delete": {
     "source": "Delete collection",
     "comment": "Accessible label for delete icon button on collection card",
-    "tags": [
-      "card",
-      "collection"
-    ],
+    "tags": ["card", "collection"],
     "es": "Eliminar colección",
     "fr-ca": "Supprimer la collection",
     "ru": "Удалить коллекцию",
@@ -28,9 +22,7 @@
   "moreActionsAriaLabel": {
     "source": "More actions for collection",
     "comment": "Aria label for the more actions button on a collection card",
-    "tags": [
-      "collections"
-    ],
+    "tags": ["collections"],
     "es": "Más acciones para la recolección",
     "fr-ca": "Plus d'actions pour la collecte",
     "ru": "Дополнительные действия для сбора",

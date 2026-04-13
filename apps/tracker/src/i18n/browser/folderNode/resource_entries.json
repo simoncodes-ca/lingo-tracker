@@ -2,9 +2,7 @@
   "newChip": {
     "source": "New",
     "comment": "Badge shown on a folder node immediately after it is created",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Nuevo",
     "fr-ca": "Nouveau",
     "ru": "Новый",
@@ -14,9 +12,7 @@
   "folderAriaLabelX": {
     "source": "Folder { name }",
     "comment": "Aria-label for a folder node in the tree. { name } is the folder name",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Carpeta { nombre }",
     "fr-ca": "Dossier { nom }",
     "ru": "Папка { имя }",
@@ -26,9 +22,7 @@
   "dragToMoveFolderAriaLabel": {
     "source": "Drag to move folder",
     "comment": "Aria-label for the drag handle icon on a folder node",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Arrastrar para mover la carpeta",
     "fr-ca": "Faites glisser pour déplacer le dossier",
     "ru": "Перетащите, чтобы переместить папку.",
@@ -38,9 +32,7 @@
   "deleteFolderAriaLabelX": {
     "source": "Delete folder { name }",
     "comment": "Aria-label for the delete button on a folder node. { name } is the folder name",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Eliminar carpeta { nombre }",
     "fr-ca": "Supprimer le dossier { nom }",
     "ru": "Удалить папку {имя}",

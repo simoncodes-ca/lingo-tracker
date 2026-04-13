@@ -2,9 +2,7 @@
   "filterFoldersAriaLabel": {
     "source": "Filter folders",
     "comment": "Aria-label for the folder search input in the folder tree sidebar",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Filtrar carpetas",
     "fr-ca": "dossiers de filtrage",
     "ru": "Фильтрация папок",
@@ -14,9 +12,7 @@
   "showCurrentFolderTooltip": {
     "source": "Show only current folder",
     "comment": "Tooltip and aria-label for the toggle button to show only the current folder's resources",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Mostrar solo la carpeta actual",
     "fr-ca": "Afficher uniquement le dossier actuel",
     "ru": "Показать только текущую папку",
@@ -26,9 +22,7 @@
   "showNestedResourcesTooltip": {
     "source": "Show all nested resources",
     "comment": "Tooltip and aria-label for the toggle button to show all nested resources recursively",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Mostrar todos los recursos anidados",
     "fr-ca": "Afficher toutes les ressources imbriquées",
     "ru": "Показать все вложенные ресурсы",
@@ -38,9 +32,7 @@
   "addFolderAriaLabel": {
     "source": "Add folder",
     "comment": "Aria-label for the add folder button in the folder tree",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Agregar carpeta",
     "fr-ca": "Ajouter un dossier",
     "ru": "Добавить папку",
@@ -50,9 +42,7 @@
   "addFolderTooltip": {
     "source": "Add folder (Ctrl+Shift+N)",
     "comment": "Tooltip for the add folder button, includes keyboard shortcut",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Agregar carpeta (Ctrl+Shift+N)",
     "fr-ca": "Ajouter un dossier (Ctrl+Maj+N)",
     "ru": "Добавить папку (Ctrl+Shift+N)",

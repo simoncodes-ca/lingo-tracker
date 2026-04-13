@@ -2,9 +2,7 @@
   "madeBy": {
     "source": "Tools by SimonCodes-CA",
     "comment": "Footer attribution text; SimonCodes-CA is a brand name and should not be translated",
-    "tags": [
-      "app"
-    ],
+    "tags": ["app"],
     "es": "Herramientas de SimonCodes-CA",
     "fr-ca": "Outils de SimonCodes-CA",
     "ru": "Инструменты от SimonCodes-CA",
@@ -14,9 +12,7 @@
   "githubTitle": {
     "source": "GitHub Repository",
     "comment": "Tooltip/title for the GitHub link in the footer",
-    "tags": [
-      "app"
-    ],
+    "tags": ["app"],
     "es": "Repositorio de GitHub",
     "fr-ca": "Dépôt GitHub",
     "ru": "Репозиторий GitHub",
@@ -26,9 +22,7 @@
   "githubLabel": {
     "source": "GitHub",
     "comment": "Visible label for the GitHub link in the footer",
-    "tags": [
-      "app"
-    ],
+    "tags": ["app"],
     "es": "GitHub",
     "fr-ca": "GitHub",
     "ru": "GitHub",
@@ -38,9 +32,7 @@
   "issuesTitle": {
     "source": "Report an Issue",
     "comment": "Tooltip/title for the Issues link in the footer",
-    "tags": [
-      "app"
-    ],
+    "tags": ["app"],
     "es": "Informar un problema",
     "fr-ca": "Signaler un problème",
     "ru": "Сообщить о проблеме",
@@ -50,9 +42,7 @@
   "issuesLabel": {
     "source": "Issues",
     "comment": "Visible label for the Issues link in the footer",
-    "tags": [
-      "app"
-    ],
+    "tags": ["app"],
     "es": "Asuntos",
     "fr-ca": "Problèmes",
     "ru": "Проблемы",

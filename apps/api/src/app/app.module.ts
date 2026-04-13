@@ -12,7 +12,14 @@ import { TranslationJobService } from './translation-job/translation-job.service
 
 @Module({
   imports: [],
-  controllers: [AppController, ConfigController, CollectionsController, ResourcesController, FoldersController, LocalesController],
+  controllers: [
+    AppController,
+    ConfigController,
+    CollectionsController,
+    ResourcesController,
+    FoldersController,
+    LocalesController,
+  ],
   providers: [AppService, ConfigService, CollectionCacheService, TranslationJobService, Logger],
 })
 export class AppModule {

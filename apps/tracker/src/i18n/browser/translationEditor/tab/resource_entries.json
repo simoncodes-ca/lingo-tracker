@@ -2,9 +2,7 @@
   "baseInfo": {
     "source": "Base Info",
     "comment": "Tab label for the base translation info section in the editor dialog",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Información básica",
     "fr-ca": "Informations de base",
     "ru": "Базовая информация",
@@ -14,9 +12,7 @@
   "changeLocation": {
     "source": "Change Location",
     "comment": "Tab label for the change location section in the editor dialog",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Cambiar ubicación",
     "fr-ca": "Changer d'emplacement",
     "ru": "Изменить местоположение",
@@ -26,9 +22,7 @@
   "otherLocales": {
     "source": "Other Locales",
     "comment": "Tab label for the other locales section in the editor dialog",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Otros lugares",
     "fr-ca": "Autres localités",
     "ru": "Другие населенные пункты",

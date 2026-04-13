@@ -2,9 +2,7 @@
   "ariaLabelX": {
     "source": "Filter locales. Currently showing: { text }",
     "comment": "Aria-label for the locale filter button. { text } is the current filter display text (e.g. 'All' or a locale code)",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Filtrar regiones. Actualmente se muestra: {texto}",
     "fr-ca": "Filtrer les paramètres régionaux. Affichage actuel : { texte }",
     "ru": "Фильтр по языкам. В данный момент отображается: { текст }",

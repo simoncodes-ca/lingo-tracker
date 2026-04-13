@@ -79,9 +79,7 @@ describe('LocalesController', () => {
         new Error('Locale "fr" already exists in collection "test-collection"'),
       );
 
-      await expect(
-        localesController.addLocale('test-collection', { locale: 'fr' }),
-      ).rejects.toThrow(HttpException);
+      await expect(localesController.addLocale('test-collection', { locale: 'fr' })).rejects.toThrow(HttpException);
 
       const error = await localesController
         .addLocale('test-collection', { locale: 'fr' })
@@ -91,9 +89,9 @@ describe('LocalesController', () => {
     });
 
     it('returns 404 when collection is not in config', async () => {
-      await expect(
-        localesController.addLocale('nonexistent-collection', { locale: 'de' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(localesController.addLocale('nonexistent-collection', { locale: 'de' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('returns 400 when trying to add the base locale', async () => {
@@ -109,9 +107,7 @@ describe('LocalesController', () => {
     });
 
     it('returns 400 when locale format is invalid', async () => {
-      (core.addLocaleToCollection as jest.Mock).mockRejectedValue(
-        new Error('Invalid locale format: "not-valid-123"'),
-      );
+      (core.addLocaleToCollection as jest.Mock).mockRejectedValue(new Error('Invalid locale format: "not-valid-123"'));
 
       const error = await localesController
         .addLocale('test-collection', { locale: 'not-valid-123' })
@@ -154,9 +150,7 @@ describe('LocalesController', () => {
     });
 
     it('returns 404 when collection is not in config', async () => {
-      await expect(
-        localesController.removeLocale('nonexistent-collection', 'fr'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(localesController.removeLocale('nonexistent-collection', 'fr')).rejects.toThrow(NotFoundException);
     });
 
     it('returns 400 when locale is not in the collection', async () => {
@@ -164,9 +158,7 @@ describe('LocalesController', () => {
         new Error('Locale "ja" not found in collection "test-collection"'),
       );
 
-      const error = await localesController
-        .removeLocale('test-collection', 'ja')
-        .catch((e: HttpException) => e);
+      const error = await localesController.removeLocale('test-collection', 'ja').catch((e: HttpException) => e);
 
       expect((error as HttpException).getStatus()).toBe(400);
     });
@@ -176,21 +168,15 @@ describe('LocalesController', () => {
         new Error('Cannot add or remove the base locale "en"'),
       );
 
-      const error = await localesController
-        .removeLocale('test-collection', 'en')
-        .catch((e: HttpException) => e);
+      const error = await localesController.removeLocale('test-collection', 'en').catch((e: HttpException) => e);
 
       expect((error as HttpException).getStatus()).toBe(400);
     });
 
     it('returns 400 when locale format is invalid', async () => {
-      (core.removeLocaleFromCollection as jest.Mock).mockRejectedValue(
-        new Error('Invalid locale format: "bad!"'),
-      );
+      (core.removeLocaleFromCollection as jest.Mock).mockRejectedValue(new Error('Invalid locale format: "bad!"'));
 
-      const error = await localesController
-        .removeLocale('test-collection', 'bad!')
-        .catch((e: HttpException) => e);
+      const error = await localesController.removeLocale('test-collection', 'bad!').catch((e: HttpException) => e);
 
       expect((error as HttpException).getStatus()).toBe(400);
     });
@@ -198,9 +184,7 @@ describe('LocalesController', () => {
     it('returns 500 for unexpected errors', async () => {
       (core.removeLocaleFromCollection as jest.Mock).mockRejectedValue(new Error('Disk write failure'));
 
-      const error = await localesController
-        .removeLocale('test-collection', 'fr')
-        .catch((e: HttpException) => e);
+      const error = await localesController.removeLocale('test-collection', 'fr').catch((e: HttpException) => e);
 
       expect((error as HttpException).getStatus()).toBe(500);
     });

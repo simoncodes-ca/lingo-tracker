@@ -2,9 +2,7 @@
   "ariaLabel": {
     "source": "Translation list",
     "comment": "Aria-label for the virtual scroll viewport containing the list of translations",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Lista de traducciones",
     "fr-ca": "Liste de traductions",
     "ru": "Список переводов",

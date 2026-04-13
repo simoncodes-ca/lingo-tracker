@@ -2,9 +2,7 @@
   "title": {
     "source": "Similar Translations",
     "comment": "Header title for similar translations panel",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Traducciones similares",
     "fr-ca": "Traductions similaires",
     "ru": "Похожие переводы",
@@ -14,9 +12,7 @@
   "idle": {
     "source": "Similar translations will appear as you type",
     "comment": "Message shown when no search query entered yet",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Aparecerán traducciones similares a medida que escribas.",
     "fr-ca": "Des traductions semblables apparaîtront au fur et à mesure que vous taperez.",
     "ru": "Похожие переводы будут появляться по мере ввода текста.",
@@ -26,9 +22,7 @@
   "loading": {
     "source": "Searching for similar translations...",
     "comment": "Loading message while searching for similar translations",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Buscando traducciones similares...",
     "fr-ca": "Recherche de traductions similaires...",
     "ru": "Ищу похожие переводы...",
@@ -38,9 +32,7 @@
   "empty": {
     "source": "No similar translations found",
     "comment": "Message when search returns no results",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "No se encontraron traducciones similares",
     "fr-ca": "Aucune traduction semblable trouvée",
     "ru": "Похожие переводы не найдены",
@@ -50,9 +42,7 @@
   "showMoreX": {
     "source": "Show {count} more",
     "comment": "Button to show remaining similar translation results, count is the number of hidden results",
-    "tags": [
-      "browser"
-    ],
+    "tags": ["browser"],
     "es": "Mostrar {count} más",
     "fr-ca": "Show {count} more",
     "ru": "Показать {count} больше",

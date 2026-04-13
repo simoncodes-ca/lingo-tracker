@@ -38,10 +38,7 @@ export class LocalesController {
 
       const errorMessage = error instanceof Error ? error.message : 'Error adding locale';
 
-      if (
-        errorMessage.includes('not found') ||
-        errorMessage.includes('not found in collection')
-      ) {
+      if (errorMessage.includes('not found') || errorMessage.includes('not found in collection')) {
         throw new NotFoundException(errorMessage);
       }
 
