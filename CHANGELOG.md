@@ -1,3 +1,11 @@
+# [0.13.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.12.0...v0.13.0) (2026-04-13)
+
+
+### Features
+
+* **cli:** add ability to add and remove locales ([07417e7](https://github.com/simoncodes-ca/lingo-tracker/commit/07417e7397fee8fccd78380175cc1fe250eb4201))
+* **cli:** add ability to translate a locale ([684f185](https://github.com/simoncodes-ca/lingo-tracker/commit/684f185c27c9900f780717c550332f0e1b9277f2))
+
 # [0.12.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.11.0...v0.12.0) (2026-04-08)
 
 
