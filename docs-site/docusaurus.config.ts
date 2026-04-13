@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Lingo Tracker',
   tagline: 'Effortlessly Track, Validate, and Manage Your Translations',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.png',
 
   url: 'https://simoncodes-ca.github.io',
   baseUrl: '/lingo-tracker/',
@@ -44,8 +44,17 @@ const config: Config = {
   ],
 
   themeConfig: {
+    colorMode: {
+      defaultMode: 'light',
+      respectPrefersColorScheme: true,
+    },
     navbar: {
       title: 'Lingo Tracker',
+      logo: {
+        alt: 'Lingo Tracker Logo',
+        src: 'img/logo.png',
+        srcDark: 'img/logo-dark.png',
+      },
       items: [
         {
           type: 'docSidebar',
