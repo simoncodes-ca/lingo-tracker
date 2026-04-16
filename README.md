@@ -81,6 +81,8 @@ npx lingo-tracker-app
 
 Check the [documentation site](https://simoncodes-ca.github.io/lingo-tracker/), the [getting started guide](docs/getting-started.md) for detailed setup instructions, or the full [CLI reference](docs/cli.md) for all available commands.
 
+For contributors and AI agents, the [architecture documentation](architecture-docs/README.md) covers system design, data models, application layers, and key user flows.
+
 ## Roadmap
 
 ### Version 1.0
