@@ -1,3 +1,20 @@
+# [0.14.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.13.0...v0.14.0) (2026-05-21)
+
+
+### Bug Fixes
+
+* **cli:** fix and improve json export flag resolution ([cd17dee](https://github.com/simoncodes-ca/lingo-tracker/commit/cd17dee458f8fd77dda14b15cfaa6b899cc10b79))
+* **core:** add source-language and target-language to file node in xliff export ([c7c276a](https://github.com/simoncodes-ca/lingo-tracker/commit/c7c276a544c5f75965f0663eb0a999154d532d3a))
+
+
+### Features
+
+* **app:** allow user to modify locales of a collection ([b38c75e](https://github.com/simoncodes-ca/lingo-tracker/commit/b38c75e67c6e1d8abc8189fefbdd178a3d836120))
+* **cli:** add ability to change base value property in exported json files ([3db9bf5](https://github.com/simoncodes-ca/lingo-tracker/commit/3db9bf53bbb237a6e7785edb2f245a113168a003))
+* **cli:** add configurable debug-keys option for bundle generation ([bf77dae](https://github.com/simoncodes-ca/lingo-tracker/commit/bf77daecc503f41d7e9a1b2014f0554357aa2269))
+* **cli:** allow to skip some locales in validate command ([0408f94](https://github.com/simoncodes-ca/lingo-tracker/commit/0408f948901000d262fc4d985ec1ea3dc64fb1a2))
+* **tracker:** add link to documentation in the footer ([5d4f40e](https://github.com/simoncodes-ca/lingo-tracker/commit/5d4f40e42a42ba77c37019c51fa9df2a4554eb6e))
+
 # [0.13.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.12.0...v0.13.0) (2026-04-13)
 
 
