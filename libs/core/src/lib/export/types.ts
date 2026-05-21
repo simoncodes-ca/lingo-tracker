@@ -20,6 +20,7 @@ export interface ExportOptions {
   includeStatus?: boolean;
   includeComment?: boolean;
   includeTags?: boolean;
+  basePropertyName?: string;
 
   // Callbacks
   onProgress?: (message: string) => void;

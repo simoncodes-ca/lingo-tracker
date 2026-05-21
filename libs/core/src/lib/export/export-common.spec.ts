@@ -5,6 +5,7 @@ import {
   loadResourcesFromCollections,
   filterResources,
   validateOutputDirectory,
+  validateBasePropertyName,
   type LoadedResource,
 } from './export-common';
 
@@ -188,6 +189,35 @@ describe('export-common', () => {
       const result = filterResources(mockResources, 'es', ['new'], undefined);
       expect(result).toHaveLength(1);
       expect(result[0].key).toBe('key2');
+    });
+  });
+
+  describe('validateBasePropertyName', () => {
+    it('should accept valid custom names', () => {
+      expect(() => validateBasePropertyName('original')).not.toThrow();
+      expect(() => validateBasePropertyName('source')).not.toThrow();
+      expect(() => validateBasePropertyName('base')).not.toThrow();
+      expect(() => validateBasePropertyName('baseValue')).not.toThrow();
+    });
+
+    it('should throw for empty string', () => {
+      expect(() => validateBasePropertyName('')).toThrow('basePropertyName cannot be empty');
+    });
+
+    it('should throw for reserved key: value', () => {
+      expect(() => validateBasePropertyName('value')).toThrow('"value"');
+    });
+
+    it('should throw for reserved key: comment', () => {
+      expect(() => validateBasePropertyName('comment')).toThrow('"comment"');
+    });
+
+    it('should throw for reserved key: status', () => {
+      expect(() => validateBasePropertyName('status')).toThrow('"status"');
+    });
+
+    it('should throw for reserved key: tags', () => {
+      expect(() => validateBasePropertyName('tags')).toThrow('"tags"');
     });
   });
 });

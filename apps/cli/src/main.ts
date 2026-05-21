@@ -199,6 +199,7 @@ program
   .option('--include-status', 'Include status in rich objects (JSON only)', false)
   .option('--include-comment', 'Include comment in rich objects (JSON only)', true)
   .option('--include-tags', 'Include tags array in rich objects (JSON only)', false)
+  .option('--base-property-name <name>', 'Property name for base locale value in JSON output (default: baseValue)')
   .option('--filename <pattern>', 'Custom filename pattern')
   .option('--dry-run', 'Show what would be exported without writing files', false)
   .option('--verbose', 'Show detailed export progress', false)

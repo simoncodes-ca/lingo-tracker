@@ -9,6 +9,7 @@ import {
   loadResourcesFromCollections,
   filterResources,
   validateOutputDirectory,
+  validateBasePropertyName,
   exportToJson,
   exportToXliff,
   generateExportSummary,
@@ -36,6 +37,7 @@ export interface ExportCommandOptions {
   includeStatus?: boolean;
   includeComment?: boolean;
   includeTags?: boolean;
+  basePropertyName?: string;
   filename?: string;
   dryRun?: boolean;
   verbose?: boolean;
@@ -75,9 +77,25 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
   options.includeStatus = answers.includeStatus;
   options.includeComment = answers.includeComment;
   options.includeTags = answers.includeTags;
+  options.basePropertyName = answers.basePropertyName;
   options.filename = answers.filename;
   options.dryRun = answers.dryRun;
   options.verbose = answers.verbose;
+
+  // Warn if --base-property-name was set without --include-base
+  if (options.basePropertyName && !options.includeBase) {
+    ConsoleFormatter.warning('--base-property-name has no effect without --include-base');
+  }
+
+  // Validate --base-property-name if provided
+  if (options.basePropertyName) {
+    try {
+      validateBasePropertyName(options.basePropertyName);
+    } catch (error) {
+      ConsoleFormatter.error((error as Error).message);
+      process.exit(1);
+    }
+  }
 
   // Resolve output directory
   const outputDir = options.output
@@ -151,6 +169,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     includeStatus: options.includeStatus,
     includeComment: options.includeComment,
     includeTags: options.includeTags,
+    basePropertyName: options.basePropertyName,
     onProgress: options.verbose ? (msg) => console.log(`   ${msg}`) : undefined,
   };
 
@@ -260,6 +279,7 @@ async function promptForMissing(
   includeStatus?: boolean;
   includeComment?: boolean;
   includeTags?: boolean;
+  basePropertyName?: string;
   filename?: string;
   dryRun?: boolean;
   verbose?: boolean;
@@ -277,6 +297,7 @@ async function promptForMissing(
     includeStatus: boolean;
     includeComment: boolean;
     includeTags: boolean;
+    basePropertyName: string;
     filename: string;
     dryRun: boolean;
     verbose: boolean;
@@ -470,6 +491,20 @@ async function promptForMissing(
         inactive: 'No',
       });
     }
+
+    // Base property name
+    if (options.basePropertyName === undefined) {
+      questions.push({
+        type: (_prev: unknown, values: { format?: string; includeBase?: boolean }) => {
+          const selectedFormat = options.format || values.format;
+          const isIncludeBase = options.includeBase !== undefined ? options.includeBase : values.includeBase;
+          return selectedFormat === 'json' && isIncludeBase ? 'text' : null;
+        },
+        name: 'basePropertyName',
+        message: 'Property name for base locale value',
+        initial: 'baseValue',
+      });
+    }
   }
 
   // Custom filename pattern
@@ -549,6 +584,7 @@ async function promptForMissing(
     includeStatus: options.includeStatus ?? responses.includeStatus ?? false,
     includeComment: options.includeComment ?? responses.includeComment ?? true,
     includeTags: options.includeTags ?? responses.includeTags ?? false,
+    basePropertyName: options.basePropertyName ?? (responses.basePropertyName || undefined),
     filename: options.filename ?? (responses.filename || undefined),
     dryRun: options.dryRun ?? responses.dryRun ?? false,
     verbose: options.verbose ?? responses.verbose ?? false,

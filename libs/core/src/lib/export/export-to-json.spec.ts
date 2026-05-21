@@ -137,6 +137,74 @@ describe('export-to-json', () => {
     });
   });
 
+  describe('basePropertyName option', () => {
+    it('should use custom property name in rich JSON mode', () => {
+      const options = { ...defaultOptions, richJson: true, includeBase: true, basePropertyName: 'original' };
+      exportToJson(mockResources, options);
+
+      const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
+      const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
+
+      expect(content.common.buttons.ok).toEqual({
+        value: 'Aceptar',
+        original: 'OK',
+        comment: 'OK button',
+      });
+      expect(content.common.buttons.ok).not.toHaveProperty('baseValue');
+    });
+
+    it('should use custom property name in non-rich --include-base mode', () => {
+      const options = { ...defaultOptions, includeBase: true, basePropertyName: 'source' };
+      exportToJson(mockResources, options);
+
+      const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
+      const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
+
+      expect(content.common.buttons.ok).toEqual({ value: 'Aceptar', source: 'OK' });
+      expect(content.common.buttons.ok).not.toHaveProperty('baseValue');
+    });
+
+    it('should not emit any base property when includeBase is false', () => {
+      const options = { ...defaultOptions, includeBase: false, basePropertyName: 'original' };
+      exportToJson(mockResources, options);
+
+      const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
+      const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
+
+      expect(content.common.buttons.ok).toBe('Aceptar');
+    });
+
+    it('should default to baseValue when basePropertyName is not provided', () => {
+      const options = { ...defaultOptions, richJson: true, includeBase: true };
+      exportToJson(mockResources, options);
+
+      const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
+      const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
+
+      expect(content.common.buttons.ok).toHaveProperty('baseValue', 'OK');
+    });
+
+    it('should correctly detect hierarchical conflict when custom basePropertyName is used', () => {
+      // 'a' is set first as a rich value with property name 'original'.
+      // Then 'a.b' tries to traverse into 'a', which should be detected as a conflict
+      // (leaf treated as parent). Without threading basePropertyName into isRichValue,
+      // 'a' would not be recognised as a rich value and traversal would silently corrupt the tree.
+      const conflictResources: FilteredResource[] = [
+        { key: 'a', value: 'leaf', baseValue: 'Leaf', status: 'translated', collection: 'Core', locale: 'es' },
+        { key: 'a.b', value: 'child', baseValue: 'Child', status: 'translated', collection: 'Core', locale: 'es' },
+      ];
+
+      const result = exportToJson(conflictResources, {
+        ...defaultOptions,
+        includeBase: true,
+        basePropertyName: 'original',
+      });
+
+      expect(result.hierarchicalConflicts).toHaveLength(1);
+      expect(result.hierarchicalConflicts[0]).toContain('conflicts with parent');
+    });
+  });
+
   it('should detect hierarchical conflicts', () => {
     const conflictResources: FilteredResource[] = [
       {

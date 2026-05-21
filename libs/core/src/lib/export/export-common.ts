@@ -22,6 +22,17 @@ export interface LoadedResource {
 /**
  * Validates that the output directory exists or can be created, and is writable.
  */
+const RESERVED_RICH_KEYS = ['value', 'comment', 'status', 'tags'] as const;
+
+export function validateBasePropertyName(name: string): void {
+  if (name.length === 0) {
+    throw new Error('basePropertyName cannot be empty');
+  }
+  if ((RESERVED_RICH_KEYS as readonly string[]).includes(name)) {
+    throw new Error(`basePropertyName "${name}" is a reserved key. Reserved: ${RESERVED_RICH_KEYS.join(', ')}`);
+  }
+}
+
 export function validateOutputDirectory(directory: string): void {
   if (!fs.existsSync(directory)) {
     try {
