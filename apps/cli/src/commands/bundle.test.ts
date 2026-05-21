@@ -433,6 +433,38 @@ describe('bundleCommand', () => {
     });
   });
 
+  describe('--debug-keys option', () => {
+    it('passes debugKeysLocale as "99" when --debug-keys flag is set (boolean true)', async () => {
+      await bundleCommand({ name: 'core', debugKeys: true });
+
+      expect(mockGenerateBundle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          debugKeysLocale: '99',
+        }),
+      );
+    });
+
+    it('passes debugKeysLocale with custom locale when --debug-keys <locale> is provided', async () => {
+      await bundleCommand({ name: 'core', debugKeys: 'keys' });
+
+      expect(mockGenerateBundle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          debugKeysLocale: 'keys',
+        }),
+      );
+    });
+
+    it('passes undefined debugKeysLocale when --debug-keys is not set', async () => {
+      await bundleCommand({ name: 'core' });
+
+      expect(mockGenerateBundle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          debugKeysLocale: undefined,
+        }),
+      );
+    });
+  });
+
   describe('error handling', () => {
     it('should handle generateBundle errors and continue', async () => {
       mockGenerateBundle

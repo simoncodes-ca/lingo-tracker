@@ -11,6 +11,7 @@ vi.mock('@simoncodes-ca/core', () => ({
   loadResourcesFromCollections: vi.fn(),
   filterResources: vi.fn(),
   validateOutputDirectory: vi.fn(),
+  validateBasePropertyName: vi.fn(),
   exportToJson: vi.fn(),
   exportToXliff: vi.fn(),
   generateExportSummary: vi.fn(),
@@ -20,6 +21,7 @@ import * as core from '@simoncodes-ca/core';
 const mockLoadResourcesFromCollections = vi.mocked(core.loadResourcesFromCollections);
 const mockFilterResources = vi.mocked(core.filterResources);
 const mockValidateOutputDirectory = vi.mocked(core.validateOutputDirectory);
+const mockValidateBasePropertyName = vi.mocked(core.validateBasePropertyName);
 const mockExportToJson = vi.mocked(core.exportToJson);
 const mockExportToXliff = vi.mocked(core.exportToXliff);
 const mockGenerateExportSummary = vi.mocked(core.generateExportSummary);
@@ -924,6 +926,69 @@ describe('exportCommand', () => {
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Export Summary'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Resources Exported: 25'));
+    });
+  });
+
+  describe('--base-property-name option', () => {
+    it('should warn when --base-property-name is set without --include-base', async () => {
+      mockFilterResources.mockReturnValue([]);
+
+      await exportCommand({
+        format: 'json',
+        locale: 'fr',
+        basePropertyName: 'original',
+        includeBase: false,
+      });
+
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('--base-property-name has no effect without --include-base'),
+      );
+    });
+
+    it('should exit with error when --base-property-name validation fails', async () => {
+      mockValidateBasePropertyName.mockImplementation(() => {
+        throw new Error('basePropertyName "value" is a reserved key');
+      });
+      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
+        throw new Error(`process.exit called with code ${code}`);
+      });
+
+      await expect(
+        exportCommand({
+          format: 'json',
+          locale: 'fr',
+          basePropertyName: 'value',
+          includeBase: true,
+        }),
+      ).rejects.toThrow('process.exit called with code 1');
+
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('basePropertyName "value" is a reserved key'));
+    });
+
+    it('should pass basePropertyName through to exportToJson', async () => {
+      mockFilterResources.mockReturnValue([
+        {
+          key: 'hello',
+          value: 'Bonjour',
+          baseValue: 'Hello',
+          status: 'translated',
+          collection: 'common',
+          locale: 'fr',
+        },
+      ]);
+
+      await exportCommand({
+        format: 'json',
+        locale: 'fr',
+        basePropertyName: 'original',
+        includeBase: true,
+      });
+
+      expect(mockExportToJson).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ basePropertyName: 'original' }),
+        expect.anything(),
+      );
     });
   });
 });

@@ -15,7 +15,7 @@ The validate command is a CLI-only, non-interactive tool that performs exhaustiv
 
 - **CLI-only**: No API or UI implementation
 - **Non-interactive**: Designed for CI/CD environments, never prompts for input
-- **Comprehensive**: Validates ALL resources across ALL locales and collections
+- **Comprehensive**: Validates ALL resources across ALL locales and collections (locales can optionally be excluded with `--skip-locales`)
 - **Non-short-circuiting**: Collects ALL validation results before reporting (does not stop at first error)
 - **Configurable strictness**: Supports both strict (production) and relaxed (staging) validation modes
 - **CI-friendly**: Clear exit codes and structured output for pipeline integration
@@ -31,11 +31,12 @@ lingo-tracker validate [options]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--allow-translated` | Treat 'translated' status as warning instead of failure | `false` |
+| `--skip-locales <locales>` | Comma-separated list of locales to exclude from validation | None |
 
 ### Exit Codes
 
 - `0` - All validations passed (all resources verified or only warnings)
-- `1` - Validation failures found, OR configuration errors (config file missing or invalid JSON, no collections configured, no target locales configured)
+- `1` - Validation failures found, OR configuration errors (config file missing or invalid JSON, no collections configured, no target locales configured, all target locales were skipped)
 
 ## Validation Rules
 
@@ -72,7 +73,7 @@ The validate command categorizes resources based on their translation status:
 ### What Gets Validated
 
 - **Collections**: ALL configured collections (no filtering)
-- **Locales**: ALL target locales (base locale excluded)
+- **Locales**: ALL target locales by default (base locale always excluded; use `--skip-locales` to exclude additional locales)
 - **Resources**: EVERY resource in every collection
 - **Statuses**: Checked against validation rules for each locale
 
@@ -83,6 +84,40 @@ The validate command categorizes resources based on their translation status:
 - File structure or JSON validity (handled during resource loading)
 
 Resources with no status entry for a locale are treated as `new` (failure), not skipped.
+
+## Skipping Locales
+
+Use `--skip-locales` to exclude one or more locales from validation. This is useful when a locale has been added to the project configuration but its translations are still being prepared and are not yet ready for validation.
+
+```bash
+# Skip a single locale
+lingo-tracker validate --skip-locales fr
+
+# Skip multiple locales
+lingo-tracker validate --skip-locales fr,de
+```
+
+**Behaviour:**
+
+- **Unknown locales** — locale codes not present in `config.locales` emit a console warning (`⚠️  Skipping unknown locale '...' — not in configured locales`) and are silently ignored.
+- **Base locale** — specifying the base locale in `--skip-locales` is silently ignored (the base locale is never validated regardless).
+- **All target locales skipped** — if every target locale is excluded, the command exits with code `1` rather than reporting a vacuous pass.
+- **Validation summary** — skipped locales appear in the summary between "Locales Validated" and "Collections Validated": `Skipped Locales: fr, de (2)`.
+
+**CI/CD example — skip a locale in-progress while still gating production:**
+
+```yaml
+- name: Validate translations (skip in-progress locale)
+  run: lingo-tracker validate --skip-locales de
+```
+
+Combine with `--allow-translated` for a staging-friendly gate that only validates the locales that are complete:
+
+```bash
+lingo-tracker validate --skip-locales de --allow-translated
+```
+
+---
 
 ## Examples
 
@@ -496,12 +531,13 @@ A missing metadata entry for a locale is coalesced to `new` at validation time (
 
 ## Limitations
 
-### No Filtering
+### No Collection or Pattern Filtering
 
-Validate always checks ALL collections and ALL target locales. There is no option to:
+Validate always checks ALL collections. There is no option to:
 - Validate specific collections only
-- Validate specific locales only
 - Filter by tags or patterns
+
+Locales can be excluded with `--skip-locales`, but collection-level filtering is not supported.
 
 **Rationale**: Validation is a pre-release gate and should be comprehensive. Partial validation creates risk of missing incomplete translations.
 
@@ -539,7 +575,7 @@ Unlike export/import, validate does not write a summary file to disk.
 Features explicitly not included but could be added:
 
 1. **Verbose Mode**: Show detailed per-resource status with `--verbose` flag
-2. **Collection/Locale Filtering**: Validate specific subsets with `--collection` and `--locale` flags
+2. **Collection Filtering**: Validate specific collections with a `--collection` flag
 3. **JSON Output**: Structured output for programmatic consumption with `--format=json`
 4. **Summary File**: Write markdown summary to disk with `--output` flag
 5. **Custom Exit Codes**: Different codes for different failure types

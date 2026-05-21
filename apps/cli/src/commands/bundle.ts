@@ -17,6 +17,12 @@ export interface BundleOptions {
   tokenConstantName?: string;
   /** CLI-level override for ICU to Transloco transformation. */
   transformICUToTransloco?: boolean;
+  /**
+   * When set, also emits a debug bundle where every value equals its own dot-delimited key.
+   * `true` means flag was present without a value — default locale `99` is used.
+   * A string value is used as the locale code directly.
+   */
+  debugKeys?: string | boolean;
 }
 
 interface BundleGenerationResult {
@@ -26,6 +32,8 @@ interface BundleGenerationResult {
   localesProcessed: string[];
   error?: string;
 }
+
+const DEFAULT_DEBUG_KEYS_LOCALE = '99';
 
 export async function bundleCommand(options: BundleOptions): Promise<void> {
   const loaded = loadConfiguration({ exitOnError: false });
@@ -64,6 +72,8 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
   // Parse locale filter if provided
   const localeFilter = answers.locales && answers.locales.length > 0 ? answers.locales : undefined;
 
+  const debugKeysLocale = options.debugKeys === true ? DEFAULT_DEBUG_KEYS_LOCALE : options.debugKeys || undefined;
+
   // Process each bundle
   const bundleResults: BundleGenerationResult[] = [];
 
@@ -97,6 +107,7 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
         tokenCasing: options.tokenCasing,
         tokenConstantName: options.tokenConstantName,
         transformICUToTransloco: options.transformICUToTransloco,
+        debugKeysLocale,
       });
 
       bundleResults.push({

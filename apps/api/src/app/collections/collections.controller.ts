@@ -39,7 +39,7 @@ export class CollectionsController {
     try {
       const decodedCollectionName = decodeURIComponent(collectionName);
       const { name, collection } = body;
-      const result = updateCollection(decodedCollectionName, name, mapDtoToCollection(collection));
+      const result = await updateCollection(decodedCollectionName, name, mapDtoToCollection(collection));
       return { message: result.message };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error updating collection';

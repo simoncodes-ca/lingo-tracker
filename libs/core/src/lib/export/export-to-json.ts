@@ -130,7 +130,7 @@ export function buildHierarchicalStructure(
           // If it's an object, it means we have a parent collision (e.g. 'a.b' existed, now adding 'a').
           // But since we are at the leaf of 'a', 'a' is the key.
           // If current[part] is an object, it means 'a' was already created as a parent for something else.
-          if (typeof current[part] === 'object' && !isRichValue(current[part])) {
+          if (typeof current[part] === 'object' && !isRichValue(current[part], options.basePropertyName)) {
             conflicts.push(`${res.key} conflicts with existing children`);
           } else {
             // Overwrite or duplicate key?
@@ -147,7 +147,7 @@ export function buildHierarchicalStructure(
 
         // If current[part] exists but is not an object (it's a leaf value from a previous key),
         // or it is a rich value object (which is technically an object but conceptually a leaf).
-        if (typeof current[part] !== 'object' || isRichValue(current[part])) {
+        if (typeof current[part] !== 'object' || isRichValue(current[part], options.basePropertyName)) {
           conflicts.push(`${res.key} conflicts with parent ${parts.slice(0, i + 1).join('.')}`);
           // We can't continue traversing down a leaf.
           // We have to stop or overwrite.
@@ -167,23 +167,26 @@ export function buildHierarchicalStructure(
   return result;
 }
 
-function isRichValue(obj: unknown): boolean {
+function isRichValue(obj: unknown, basePropertyName = 'baseValue'): boolean {
   return (
     obj !== null &&
     typeof obj === 'object' &&
     'value' in obj &&
-    Object.keys(obj).every((k) => ['value', 'baseValue', 'comment', 'status', 'tags'].includes(k))
+    Object.keys(obj).every((k) => ['value', basePropertyName, 'comment', 'status', 'tags'].includes(k))
   );
 }
 
 function formatValue(resource: FilteredResource, options: ExportOptions): unknown {
-  if (options.richJson) {
+  const useRich =
+    options.richJson || options.includeBase || options.includeComment || options.includeStatus || options.includeTags;
+
+  if (useRich) {
     const richObj: Record<string, unknown> = {
       value: resource.value,
     };
 
     if (options.includeBase && resource.baseValue) {
-      richObj['baseValue'] = resource.baseValue;
+      richObj[options.basePropertyName ?? 'baseValue'] = resource.baseValue;
     }
 
     if (options.includeComment && resource.comment) {
@@ -199,15 +202,7 @@ function formatValue(resource: FilteredResource, options: ExportOptions): unknow
     }
 
     return richObj;
-  } else {
-    // Simple value
-    if (options.includeBase) {
-      // Special case: --include-base without --rich
-      return {
-        value: resource.value,
-        baseValue: resource.baseValue,
-      };
-    }
-    return resource.value;
   }
+
+  return resource.value;
 }

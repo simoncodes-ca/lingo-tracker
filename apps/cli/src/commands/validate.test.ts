@@ -30,12 +30,14 @@ describe('validateCommand', () => {
 
   const originalLog = console.log;
   const originalError = console.error;
+  const originalWarn = console.warn;
   const originalExit = process.exit;
 
   beforeEach(() => {
     vi.clearAllMocks();
     console.log = vi.fn();
     console.error = vi.fn();
+    console.warn = vi.fn();
     process.exit = vi.fn() as unknown as (code?: number | string | null | undefined) => never;
 
     vi.mocked(fs.existsSync).mockReturnValue(true);
@@ -47,6 +49,7 @@ describe('validateCommand', () => {
   afterEach(() => {
     console.log = originalLog;
     console.error = originalError;
+    console.warn = originalWarn;
     process.exit = originalExit;
   });
 
@@ -178,10 +181,13 @@ describe('validateCommand', () => {
           },
         ],
         ['fr', 'es', 'de'],
-        { allowTranslated: false },
+        { allowTranslated: false, skippedLocales: [] },
       );
 
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(successResult, { allowTranslated: false });
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(successResult, {
+        allowTranslated: false,
+        skippedLocales: [],
+      });
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
       expect(process.exit).not.toHaveBeenCalled();
@@ -283,7 +289,10 @@ describe('validateCommand', () => {
       await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, { allowTranslated: false });
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, {
+        allowTranslated: false,
+        skippedLocales: [],
+      });
     });
 
     it('should fail validation with stale resources', async () => {
@@ -331,7 +340,10 @@ describe('validateCommand', () => {
       await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, { allowTranslated: false });
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, {
+        allowTranslated: false,
+        skippedLocales: [],
+      });
     });
 
     it('should fail validation with translated resources by default', async () => {
@@ -380,6 +392,7 @@ describe('validateCommand', () => {
 
       expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
         allowTranslated: false,
+        skippedLocales: [],
       });
     });
 
@@ -637,9 +650,13 @@ describe('validateCommand', () => {
 
       expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
         allowTranslated: true,
+        skippedLocales: [],
       });
 
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(warningResult, { allowTranslated: true });
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(warningResult, {
+        allowTranslated: true,
+        skippedLocales: [],
+      });
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
       expect(process.exit).not.toHaveBeenCalled();
@@ -727,6 +744,7 @@ describe('validateCommand', () => {
 
       expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
         allowTranslated: false,
+        skippedLocales: [],
       });
     });
   });
@@ -935,6 +953,82 @@ describe('validateCommand', () => {
         }),
         expect.any(Object),
       );
+    });
+  });
+
+  describe('skipLocales option', () => {
+    const successResult = {
+      totalResourcesValidated: 4,
+      totalUniqueKeys: 2,
+      localesValidated: 2,
+      collectionsValidated: 2,
+      statusCounts: { new: 0, translated: 0, stale: 0, verified: 4 },
+      failures: [],
+      warnings: [],
+      successes: [],
+      passed: true,
+    };
+
+    it('should exclude a known locale from validation and report it as skipped', async () => {
+      mockValidateResources.mockReturnValue(successResult);
+
+      await validateCommand({ skipLocales: ['fr'] });
+
+      // fr is excluded from the locales passed to validateResources
+      const localeArg = mockValidateResources.mock.calls[0][1];
+      expect(localeArg).not.toContain('fr');
+      expect(localeArg).toContain('es');
+      expect(localeArg).toContain('de');
+
+      // skippedLocales is forwarded to generateValidationSummary
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({ skippedLocales: ['fr'] }),
+      );
+    });
+
+    it('should warn about unknown locales and not filter them', async () => {
+      mockValidateResources.mockReturnValue(successResult);
+
+      await validateCommand({ skipLocales: ['xx'] });
+
+      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("Skipping unknown locale 'xx'"));
+
+      // All original target locales are still validated
+      const localeArg = mockValidateResources.mock.calls[0][1];
+      expect(localeArg).toEqual(['fr', 'es', 'de']);
+
+      // skippedLocales in summary is empty (unknown locale was not effectively skipped)
+      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({ skippedLocales: [] }),
+      );
+    });
+
+    it('should silently ignore the base locale in skip list', async () => {
+      mockValidateResources.mockReturnValue(successResult);
+
+      await validateCommand({ skipLocales: ['en'] });
+
+      // No warning logged
+      expect(console.warn).not.toHaveBeenCalled();
+
+      // All target locales still validated (base locale was never a target)
+      const localeArg = mockValidateResources.mock.calls[0][1];
+      expect(localeArg).toEqual(['fr', 'es', 'de']);
+    });
+
+    it('should exit with code 1 when all target locales are skipped', async () => {
+      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
+        throw new Error(`process.exit called with code ${code}`);
+      });
+
+      await expect(validateCommand({ skipLocales: ['fr', 'es', 'de'] })).rejects.toThrow(
+        'process.exit called with code 1',
+      );
+
+      expect(console.error).toHaveBeenCalledWith('❌ All target locales were skipped; nothing to validate.');
+      expect(mockValidateResources).not.toHaveBeenCalled();
     });
   });
 

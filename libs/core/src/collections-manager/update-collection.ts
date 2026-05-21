@@ -1,19 +1,51 @@
 import type { LingoTrackerCollection } from '../config/lingo-tracker-collection';
-import { updateConfig } from '../lib/config/config-file-operations';
+import { createConfigFileOperations, updateConfig } from '../lib/config/config-file-operations';
 import { ErrorMessages } from '../lib/errors/error-messages';
+import { addLocaleToCollection } from './add-locale-to-collection';
+import { removeLocaleFromCollection } from './remove-locale-from-collection';
 
 export interface UpdateCollectionOptions {
   cwd?: string;
 }
 
-export function updateCollection(
+export async function updateCollection(
   collectionName: string,
   newCollectionName: string | undefined,
   collection: LingoTrackerCollection,
   options: UpdateCollectionOptions = {},
-): { message: string } {
+): Promise<{ message: string }> {
   if (!collection || !collection.translationsFolder || !collection.translationsFolder.trim()) {
     throw new Error('translationsFolder is required');
+  }
+
+  const { cwd } = options;
+  const newLocales = collection.locales;
+
+  // Only diff when caller provides an explicit, non-empty locales array.
+  // An empty/undefined list means "inherit from global" — no translation files are touched.
+  if (newLocales !== undefined && newLocales.length > 0) {
+    // Read config here only to diff existing vs new locales; updateConfig below will re-read the already-mutated file.
+    const config = createConfigFileOperations({ cwd }).read();
+    const existingCollection = config.collections?.[collectionName];
+
+    if (!existingCollection) {
+      throw new Error(ErrorMessages.collectionNotFound(collectionName));
+    }
+
+    const existingLocales = existingCollection.locales ?? config.locales ?? [];
+    const baseLocale = existingCollection.baseLocale ?? config.baseLocale;
+
+    const addedLocales = newLocales.filter((l) => !existingLocales.includes(l));
+    // Never try to remove the base locale — it can only be set at create time.
+    const removedLocales = existingLocales.filter((l) => !newLocales.includes(l) && l !== baseLocale);
+
+    for (const locale of removedLocales) {
+      await removeLocaleFromCollection(collectionName, locale, { cwd });
+    }
+
+    for (const locale of addedLocales) {
+      await addLocaleToCollection(collectionName, locale, { cwd });
+    }
   }
 
   const trimmedTranslationsFolder = collection.translationsFolder.trim();
@@ -25,7 +57,6 @@ export function updateCollection(
       throw new Error(ErrorMessages.collectionNotFound(collectionName));
     }
 
-    // Check if target name conflicts with existing collection (when renaming)
     if (isRename && config.collections[targetName]) {
       throw new Error(ErrorMessages.collectionAlreadyExists(targetName));
     }
@@ -34,7 +65,6 @@ export function updateCollection(
       translationsFolder: trimmedTranslationsFolder,
     };
 
-    // Append only properties that are explicitly different from the root config
     if (collection.exportFolder !== undefined && collection.exportFolder !== config.exportFolder) {
       minimalCollection.exportFolder = collection.exportFolder;
     }
@@ -51,7 +81,6 @@ export function updateCollection(
       minimalCollection.locales = collection.locales;
     }
 
-    // Remove old collection if renaming
     if (isRename) {
       delete config.collections[collectionName];
     }
@@ -63,7 +92,7 @@ export function updateCollection(
         [targetName]: minimalCollection,
       },
     };
-  }, options.cwd);
+  }, cwd);
 
   if (isRename) {
     return {

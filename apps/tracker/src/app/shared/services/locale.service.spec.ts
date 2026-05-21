@@ -13,7 +13,7 @@ describe('LocaleService', () => {
     setActiveLang: vi.fn(),
   });
 
-  const recreateService = (platformId: string = 'browser'): void => {
+  const recreateService = (platformId = 'browser'): void => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [

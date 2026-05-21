@@ -31,6 +31,40 @@ yarn add -D @simoncodes-ca/lingo-tracker
 
 Once installed, use the `npx lingo-tracker` command to interact with the CLI.
 
+### Quick Start: Initialize Your Project
+
+Run this in your project root to create a `.lingo-tracker.json` with a sensible default setup:
+
+```bash
+npx lingo-tracker init \
+  --collection-name Main \
+  --translations-folder src/assets/i18n \
+  --base-locale en \
+  --locales en fr-ca es \
+  --setup-bundle true \
+  --bundle-dist ./src/assets/i18n \
+  --bundle-name "{locale}" \
+  --type-dist-file ./src/generated/translation-tokens.ts
+```
+
+What each flag does:
+
+| Flag | Value | Why |
+|------|-------|-----|
+| `--collection-name` | `Main` | Name for the initial translation collection |
+| `--translations-folder` | `src/assets/i18n` | Where LingoTracker stores its internal JSON source files |
+| `--base-locale` | `en` | Authoring language — the locale you write source strings in |
+| `--locales` | `en fr-ca es` | All locales your app supports (adjust to your needs) |
+| `--bundle-dist` | `./src/assets/i18n` | Output directory for the runtime bundle files Transloco loads |
+| `--bundle-name` | `{locale}` | Output filename pattern — produces `en.json`, `fr-ca.json`, etc. |
+| `--type-dist-file` | `./src/generated/translation-tokens.ts` | Enables TypeScript token generation for type-safe translation keys |
+
+After running this command, `lingo-tracker bundle` will produce `en.json`, `fr-ca.json`, and `es.json` in `src/assets/i18n`, and a typed `translation-tokens.ts` constant file in `src/generated/`.
+
+See [Initialize a project](#initialize-a-project) below for the full option reference, and the [Bundle Generation Guide](./guides/bundling.md) for bundle configuration details.
+
+---
+
 ### Install the Lingo Tracker Skill
 
 If you use Claude Code (or a compatible AI assistant), install the Lingo Tracker skill to enable guided i18n workflows — detecting hardcoded strings, creating translation resources, and updating components to use Transloco:
