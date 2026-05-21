@@ -1,3 +1,10 @@
+## [0.14.4](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.3...v0.14.4) (2026-05-21)
+
+
+### Bug Fixes
+
+* **repo:** upgrade npm to 11.5.1+ for OIDC trusted publishing ([4eaf917](https://github.com/simoncodes-ca/lingo-tracker/commit/4eaf917e5c6fadf5f704557059cb2760dd4b74a3))
+
 ## [0.14.3](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.2...v0.14.3) (2026-05-21)
 
 
