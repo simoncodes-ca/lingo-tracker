@@ -821,6 +821,52 @@ describe('generateValidationSummary', () => {
       expect(summary).toContain('resource.with.numbers.123.in.key');
     });
   });
+  describe('skippedLocales reporting', () => {
+    const baseResult: ResourceValidationResult = {
+      totalResourcesValidated: 4,
+      totalUniqueKeys: 2,
+      localesValidated: 2,
+      collectionsValidated: 1,
+      statusCounts: { new: 0, translated: 0, stale: 0, verified: 4 },
+      failures: [],
+      warnings: [],
+      successes: createResourceDetails('verified', 4, 'es', 'main'),
+      passed: true,
+    };
+
+    it('should include skipped locales line when skippedLocales is non-empty', () => {
+      const options: ValidationOptions = { allowTranslated: false, skippedLocales: ['fr', 'de'] };
+      const summary = generateValidationSummary(baseResult, options);
+
+      expect(summary).toContain('Skipped Locales: fr, de (2)');
+    });
+
+    it('should not include skipped locales line when skippedLocales is empty', () => {
+      const options: ValidationOptions = { allowTranslated: false, skippedLocales: [] };
+      const summary = generateValidationSummary(baseResult, options);
+
+      expect(summary).not.toContain('Skipped Locales');
+    });
+
+    it('should not include skipped locales line when skippedLocales is undefined', () => {
+      const options: ValidationOptions = { allowTranslated: false };
+      const summary = generateValidationSummary(baseResult, options);
+
+      expect(summary).not.toContain('Skipped Locales');
+    });
+
+    it('should place skipped locales between Locales Validated and Collections Validated', () => {
+      const options: ValidationOptions = { allowTranslated: false, skippedLocales: ['fr'] };
+      const summary = generateValidationSummary(baseResult, options);
+
+      const localesIdx = summary.indexOf('Locales Validated:');
+      const skippedIdx = summary.indexOf('Skipped Locales:');
+      const collectionsIdx = summary.indexOf('Collections Validated:');
+
+      expect(localesIdx).toBeLessThan(skippedIdx);
+      expect(skippedIdx).toBeLessThan(collectionsIdx);
+    });
+  });
 });
 
 /**

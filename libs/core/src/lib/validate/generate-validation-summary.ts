@@ -37,7 +37,7 @@ export function generateValidationSummary(result: ResourceValidationResult, opti
   const sections: string[] = [];
 
   sections.push(buildHeaderSection(result));
-  sections.push(buildStatisticsSection(result));
+  sections.push(buildStatisticsSection(result, options));
   sections.push(buildStatusBreakdownSection(result));
 
   if (result.failures.length > 0) {
@@ -72,15 +72,20 @@ function buildHeaderSection(result: ResourceValidationResult): string {
  * @returns Formatted statistics string
  * @internal
  */
-function buildStatisticsSection(result: ResourceValidationResult): string {
+function buildStatisticsSection(result: ResourceValidationResult, options: ValidationOptions): string {
   const lines = [
     '📊 Validation Statistics:',
     '─'.repeat(50),
     `  Total Resources Validated: ${result.totalResourcesValidated}`,
     `  Unique Resource Keys: ${result.totalUniqueKeys}`,
     `  Locales Validated: ${result.localesValidated}`,
-    `  Collections Validated: ${result.collectionsValidated}`,
   ];
+
+  if (options.skippedLocales && options.skippedLocales.length > 0) {
+    lines.push(`  Skipped Locales: ${options.skippedLocales.join(', ')} (${options.skippedLocales.length})`);
+  }
+
+  lines.push(`  Collections Validated: ${result.collectionsValidated}`);
 
   return lines.join('\n');
 }

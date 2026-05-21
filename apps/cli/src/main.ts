@@ -292,6 +292,7 @@ program
   .command('validate')
   .description('Verify translation completeness and readiness for production release')
   .option('--allow-translated', 'Treat translated status as warning instead of error', false)
+  .option('--skip-locales <locales>', 'Comma-separated list of locales to exclude from validation')
   .addHelpText(
     'after',
     `
@@ -301,6 +302,10 @@ Examples:
 
   # Relaxed mode - allow translated status with warnings
   $ lingo-tracker validate --allow-translated
+
+  # Skip specific locales (e.g. newly-added locale still in progress)
+  $ lingo-tracker validate --skip-locales fr
+  $ lingo-tracker validate --skip-locales fr,de
 
   # Use in CI pipeline (exits with code 1 on validation failure)
   $ lingo-tracker validate || exit 1
@@ -410,7 +415,9 @@ Exit Codes:
   1  Validation failures found (new/stale/translated resources)
 
 Notes:
-  - Validates ALL collections and ALL target locales (no filtering)
+  - Validates ALL collections and ALL target locales (no filtering) by default
+  - Use --skip-locales to exclude specific locales; skipped locales appear in the report
+  - Unknown locale values in --skip-locales emit a warning and are ignored
   - Collects ALL failures before reporting (comprehensive check)
   - Perfect for pre-release quality gates in CI/CD pipelines
   - Use --allow-translated for staging environments
@@ -419,7 +426,13 @@ Notes:
   )
   .action(async (options) => {
     const { validateCommand } = await import('./commands/validate');
-    await validateCommand({ allowTranslated: options.allowTranslated });
+    const skipLocales = options.skipLocales
+      ? options.skipLocales
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      : [];
+    await validateCommand({ allowTranslated: options.allowTranslated, skipLocales });
   });
 
 program

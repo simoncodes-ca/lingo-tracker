@@ -12,6 +12,12 @@ export interface ValidationOptions {
    * while relaxed mode accepts 'translated' with warnings.
    */
   readonly allowTranslated: boolean;
+
+  /**
+   * Locales that were excluded from validation by the caller.
+   * Used only for reporting — not for filtering (filtering happens before validateResources is called).
+   */
+  readonly skippedLocales?: readonly string[];
 }
 
 /**
