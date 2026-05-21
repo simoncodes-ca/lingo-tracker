@@ -1247,10 +1247,10 @@ lingo-tracker export [options]
 
 - `--structure <type>` - JSON structure: `hierarchical` (nested objects) or `flat` (dot-delimited keys). Default: `hierarchical`
 - `--rich` - Include metadata in JSON objects (creates objects instead of string values). Default: `false`
-- `--include-base` - Include base locale value in rich objects. Default: `false`
-- `--include-status` - Include translation status in rich objects. Default: `false`
-- `--include-comment` - Include translator comments in rich objects. Default: `true`
-- `--include-tags` - Include tags array in rich objects. Default: `false`
+- `--include-base` - Include base locale value in the output object. Default: `false`
+- `--include-status` - Include translation status in the output object. Default: `false`
+- `--include-comment` - Include translator comments in the output object. Default: `false`
+- `--include-tags` - Include tags array in the output object. Default: `false`
 - `--base-property-name <name>` - Property name used for the base locale value in JSON output. Only applies with `--include-base`. Default: `baseValue`. The names `value`, `comment`, `status`, and `tags` are reserved and will cause an error.
 
 **Filename Placeholders:**

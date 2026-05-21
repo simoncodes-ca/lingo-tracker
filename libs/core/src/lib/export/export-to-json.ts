@@ -177,7 +177,10 @@ function isRichValue(obj: unknown, basePropertyName = 'baseValue'): boolean {
 }
 
 function formatValue(resource: FilteredResource, options: ExportOptions): unknown {
-  if (options.richJson) {
+  const useRich =
+    options.richJson || options.includeBase || options.includeComment || options.includeStatus || options.includeTags;
+
+  if (useRich) {
     const richObj: Record<string, unknown> = {
       value: resource.value,
     };
@@ -199,14 +202,7 @@ function formatValue(resource: FilteredResource, options: ExportOptions): unknow
     }
 
     return richObj;
-  } else {
-    // Simple value
-    if (options.includeBase) {
-      return {
-        value: resource.value,
-        [options.basePropertyName ?? 'baseValue']: resource.baseValue,
-      };
-    }
-    return resource.value;
   }
+
+  return resource.value;
 }

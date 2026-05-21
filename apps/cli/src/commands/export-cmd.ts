@@ -469,7 +469,7 @@ async function promptForMissing(
           return selectedFormat === 'json' && isRich ? 'toggle' : null;
         },
         name: 'includeComment',
-        message: 'Include comments in rich objects?',
+        message: 'Include comments?',
         initial: true,
         active: 'Yes',
         inactive: 'No',
@@ -582,7 +582,7 @@ async function promptForMissing(
     rich: options.rich ?? responses.rich ?? false,
     includeBase: options.includeBase ?? responses.includeBase ?? false,
     includeStatus: options.includeStatus ?? responses.includeStatus ?? false,
-    includeComment: options.includeComment ?? responses.includeComment ?? true,
+    includeComment: options.includeComment ?? responses.includeComment ?? false,
     includeTags: options.includeTags ?? responses.includeTags ?? false,
     basePropertyName: options.basePropertyName ?? (responses.basePropertyName || undefined),
     filename: options.filename ?? (responses.filename || undefined),
