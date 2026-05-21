@@ -47,6 +47,8 @@ export async function exportToXliff(
       // Structure: resources -> namespace -> key -> { source, target, note }
       // We'll use a default namespace 'translations' as we merge everything.
       const xliffData = {
+        sourceLanguage: baseLocale,
+        targetLanguage: locale,
         resources: {
           translations: {} as Record<string, { source: string; target: string; note?: string }>,
         },
@@ -66,8 +68,6 @@ export async function exportToXliff(
         jsToXliff12(
           xliffData,
           {
-            targetLanguage: locale,
-            sourceLanguage: baseLocale,
             indent: '  ',
           },
           (err: Error | null, res: string) => {

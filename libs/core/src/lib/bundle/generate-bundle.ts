@@ -38,6 +38,13 @@ export interface GenerateBundleParams {
    * Takes precedence over bundle config and global config.
    */
   readonly transformICUToTransloco?: boolean;
+  /**
+   * When set, emits an additional bundle file where every value equals its own
+   * dot-delimited key. The value is the locale code used in the output filename
+   * (e.g. `"99"` produces `main.99.json`). ICU transformation is intentionally
+   * skipped for this bundle — the keys themselves have no ICU content.
+   */
+  readonly debugKeysLocale?: string;
 }
 
 export interface GenerateBundleResult {
@@ -63,6 +70,7 @@ export async function generateBundle(params: GenerateBundleParams): Promise<Gene
     tokenCasing: tokenCasingOverride,
     tokenConstantName,
     transformICUToTransloco: transformICUToTranslocoOverride,
+    debugKeysLocale,
   } = params;
   const warnings: string[] = [];
   const localesProcessed: string[] = [];
@@ -104,6 +112,32 @@ export async function generateBundle(params: GenerateBundleParams): Promise<Gene
 
     filesGenerated++;
     localesProcessed.push(locale);
+  }
+
+  if (debugKeysLocale) {
+    const debugBaseData = collectBundleData(
+      bundleDefinition,
+      config,
+      config.baseLocale,
+      warnings,
+      false,
+      resourceCache,
+    );
+
+    const debugData: Record<string, string> = {};
+    for (const key of Object.keys(debugBaseData)) {
+      debugData[key] = key;
+    }
+
+    if (Object.keys(debugData).length === 0) {
+      warnings.push(`Bundle '${bundleKey}' debug bundle is empty`);
+    } else {
+      const hierarchicalData = buildHierarchy(debugData);
+      const outputPath = getBundleOutputPath(bundleDefinition, debugKeysLocale);
+      writeBundleFile(outputPath, hierarchicalData);
+      filesGenerated++;
+      localesProcessed.push(debugKeysLocale);
+    }
   }
 
   // Generate types if configured

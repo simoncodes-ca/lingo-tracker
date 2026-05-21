@@ -29,6 +29,26 @@
     "ja": "GitHub",
     "de": "GitHub"
   },
+  "docsTitle": {
+    "source": "Documentation",
+    "comment": "Tooltip/title for the documentation link in the footer",
+    "tags": ["app"],
+    "es": "Documentación",
+    "fr-ca": "Documentation",
+    "ru": "Документация",
+    "ja": "ドキュメント",
+    "de": "Dokumentation"
+  },
+  "docsLabel": {
+    "source": "Docs",
+    "comment": "Visible label for the documentation link in the footer",
+    "tags": ["app"],
+    "es": "Docs",
+    "fr-ca": "Docs",
+    "ru": "Docs",
+    "ja": "Docs",
+    "de": "Docs"
+  },
   "issuesTitle": {
     "source": "Report an Issue",
     "comment": "Tooltip/title for the Issues link in the footer",

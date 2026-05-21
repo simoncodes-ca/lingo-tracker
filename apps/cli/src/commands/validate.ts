@@ -14,6 +14,13 @@ export interface ValidateCommandOptions {
    * may not be fully verified yet. Strict mode (default) is recommended for production.
    */
   allowTranslated?: boolean;
+
+  /**
+   * Locales to exclude from validation. Values that are unknown (not in config.locales)
+   * emit a warning. The base locale is silently ignored. If all target locales are skipped,
+   * the command exits with code 1.
+   */
+  skipLocales?: readonly string[];
 }
 
 /**
@@ -95,13 +102,37 @@ export async function validateCommand(options: ValidateCommandOptions): Promise<
     process.exit(1);
   }
 
-  const validationResult = validateResources(allCollections, targetLocales, {
-    allowTranslated: options.allowTranslated ?? false,
-  });
+  const configuredLocales = new Set(config.locales || []);
+  const requestedSkip = options.skipLocales ?? [];
+  const effectiveSkipped: string[] = [];
 
-  const summary = generateValidationSummary(validationResult, {
+  for (const locale of requestedSkip) {
+    if (locale === config.baseLocale) {
+      // Base locale is already excluded from targetLocales — silently ignore
+      continue;
+    }
+    if (!configuredLocales.has(locale)) {
+      console.warn(`⚠️  Skipping unknown locale '${locale}' — not in configured locales`);
+      continue;
+    }
+    effectiveSkipped.push(locale);
+  }
+
+  const localesToValidate = targetLocales.filter((l: string) => !effectiveSkipped.includes(l));
+
+  if (localesToValidate.length === 0) {
+    console.error('❌ All target locales were skipped; nothing to validate.');
+    process.exit(1);
+  }
+
+  const validationOptions = {
     allowTranslated: options.allowTranslated ?? false,
-  });
+    skippedLocales: effectiveSkipped,
+  };
+
+  const validationResult = validateResources(allCollections, localesToValidate, validationOptions);
+
+  const summary = generateValidationSummary(validationResult, validationOptions);
 
   console.log(summary);
 

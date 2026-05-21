@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command, Option } from 'commander';
+import { parseCommaSeparatedList } from './utils';
 
 function collect(value: string, previous: string[]): string[] {
   return previous.concat([value]);
@@ -179,6 +180,10 @@ program
     'Custom name for the generated TypeScript constant (single bundle only, e.g. MY_TOKENS)',
   )
   .option('--no-transform-icu-to-transloco', 'Disable ICU to Transloco format conversion in bundle output')
+  .option(
+    '--debug-keys [locale]',
+    'Also emit a debug bundle where each value is its own dot-delimited key. Optional locale code (default: 99)',
+  )
   .action(async (options) => {
     const { bundleCommand } = await import('./commands/bundle');
     await bundleCommand(options);
@@ -196,9 +201,10 @@ program
   .option('--structure <type>', 'JSON structure (flat | hierarchical)', 'hierarchical')
   .option('--rich', 'Include metadata in JSON objects', false)
   .option('--include-base', 'Include base locale value (JSON only)', false)
-  .option('--include-status', 'Include status in rich objects (JSON only)', false)
-  .option('--include-comment', 'Include comment in rich objects (JSON only)', true)
-  .option('--include-tags', 'Include tags array in rich objects (JSON only)', false)
+  .option('--include-status', 'Include translation status (JSON only)', false)
+  .option('--include-comment', 'Include comment (JSON only)', false)
+  .option('--include-tags', 'Include tags array (JSON only)', false)
+  .option('--base-property-name <name>', 'Property name for base locale value in JSON output (default: baseValue)')
   .option('--filename <pattern>', 'Custom filename pattern')
   .option('--dry-run', 'Show what would be exported without writing files', false)
   .option('--verbose', 'Show detailed export progress', false)
@@ -291,6 +297,7 @@ program
   .command('validate')
   .description('Verify translation completeness and readiness for production release')
   .option('--allow-translated', 'Treat translated status as warning instead of error', false)
+  .option('--skip-locales <locales>', 'Comma-separated list of locales to exclude from validation')
   .addHelpText(
     'after',
     `
@@ -300,6 +307,10 @@ Examples:
 
   # Relaxed mode - allow translated status with warnings
   $ lingo-tracker validate --allow-translated
+
+  # Skip specific locales (e.g. newly-added locale still in progress)
+  $ lingo-tracker validate --skip-locales fr
+  $ lingo-tracker validate --skip-locales fr,de
 
   # Use in CI pipeline (exits with code 1 on validation failure)
   $ lingo-tracker validate || exit 1
@@ -409,7 +420,9 @@ Exit Codes:
   1  Validation failures found (new/stale/translated resources)
 
 Notes:
-  - Validates ALL collections and ALL target locales (no filtering)
+  - Validates ALL collections and ALL target locales (no filtering) by default
+  - Use --skip-locales to exclude specific locales; skipped locales appear in the report
+  - Unknown locale values in --skip-locales emit a warning and are ignored
   - Collects ALL failures before reporting (comprehensive check)
   - Perfect for pre-release quality gates in CI/CD pipelines
   - Use --allow-translated for staging environments
@@ -418,7 +431,8 @@ Notes:
   )
   .action(async (options) => {
     const { validateCommand } = await import('./commands/validate');
-    await validateCommand({ allowTranslated: options.allowTranslated });
+    const skipLocales = parseCommaSeparatedList(options.skipLocales) ?? [];
+    await validateCommand({ allowTranslated: options.allowTranslated, skipLocales });
   });
 
 program

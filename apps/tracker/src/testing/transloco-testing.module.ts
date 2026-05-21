@@ -1,14 +1,5 @@
 import { TranslocoTestingModule, type TranslocoTestingOptions } from '@jsverse/transloco';
 
-/**
- * Creates a configured TranslocoTestingModule for unit tests.
- *
- * This helper provides a consistent Transloco setup across all test specs,
- * including all required providers (TRANSLOCO_TRANSPILER, etc.) and preloaded translations.
- *
- * @param options - Optional Transloco testing configuration overrides
- * @returns Configured TranslocoTestingModule
- */
 export function getTranslocoTestingModule(options: TranslocoTestingOptions = {}) {
   return TranslocoTestingModule.forRoot({
     langs: {
@@ -151,6 +142,28 @@ export function getTranslocoTestingModule(options: TranslocoTestingOptions = {})
         'common.actions.clearAll': 'Clear All',
         'common.actions.close': 'Close',
         'common.actions.dismiss': 'Dismiss',
+        'collections.dialog.create.title': 'Create Collection',
+        'collections.dialog.edit.title': 'Edit Collection',
+        'collections.dialog.nameLabel': 'Collection Name',
+        'collections.dialog.namePlaceholder': 'e.g., my-app-i18n',
+        'collections.dialog.nameRequired': 'Collection name is required',
+        'collections.dialog.folderLabel': 'Translations Folder',
+        'collections.dialog.folderPlaceholder': 'e.g., ./src/assets/i18n',
+        'collections.dialog.folderRequired': 'Translations folder is required',
+        'collections.dialog.localesLabel': 'Locales (Optional)',
+        'collections.dialog.addLocaleLabel': 'Add locale',
+        'collections.dialog.addButton': 'Add',
+        'collections.dialog.removeAria': 'Remove locale {{ locale }}',
+        'collections.dialog.invalidLocale': 'Invalid locale format. Expected: en, fr-ca, es',
+        'collections.dialog.duplicateLocale': 'Locale already added',
+        'collections.dialog.localesEmpty': 'No locales added — will inherit from global config',
+        'collections.dialog.baseLocaleLocked': 'Base locale cannot be changed after collection creation',
+        'collections.dialog.removeConfirmTitle': 'Remove locales',
+        'collections.dialog.removeConfirmBody':
+          'Removing locales: {{ locales }}. Their translation entries will be deleted. This cannot be undone.',
+        'collections.dialog.createButton': 'Create',
+        'collections.dialog.delete.title': 'Delete Collection',
+        'collections.dialog.delete.message': 'Are you sure you want to delete {{ name }}?',
       },
     },
     translocoConfig: {

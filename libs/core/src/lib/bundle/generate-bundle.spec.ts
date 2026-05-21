@@ -727,6 +727,133 @@ describe('generate-bundle', () => {
       });
     });
 
+    describe('debugKeysLocale', () => {
+      const bundleDefinition: BundleDefinition = {
+        bundleName: 'main.{locale}',
+        dist: '/dist/bundles',
+        collections: 'All',
+      };
+
+      it('emits one extra file in addition to normal locale files', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+        const result = await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: mockConfig,
+          locales: ['en'],
+          debugKeysLocale: '99',
+        });
+
+        // 1 real locale + 1 debug
+        expect(result.filesGenerated).toBe(2);
+        expect(result.localesProcessed).toEqual(['en', '99']);
+      });
+
+      it('writes debug file where every value equals its key', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+          { key: 'buttons.ok', value: 'OK' },
+          { key: 'header.title', value: 'Title' },
+        ]);
+
+        await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: mockConfig,
+          locales: ['en'],
+          debugKeysLocale: '99',
+        });
+
+        const debugWriteCall = vi
+          .mocked(fs.writeFileSync)
+          .mock.calls.find((call) => (call[0] as string).includes('99'));
+        expect(debugWriteCall).toBeDefined();
+        const writtenData = JSON.parse(debugWriteCall?.[1] as string);
+        expect(writtenData.buttons.ok).toBe('buttons.ok');
+        expect(writtenData.header.title).toBe('header.title');
+      });
+
+      it('uses the bundledKeyPrefix in the value (post-prefix key)', async () => {
+        const bundleDefWithPrefix: BundleDefinition = {
+          ...bundleDefinition,
+          collections: [{ name: 'default', bundledKeyPrefix: 'app', entriesSelectionRules: 'All' }],
+        };
+
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
+
+        await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition: bundleDefWithPrefix,
+          config: mockConfig,
+          locales: ['en'],
+          debugKeysLocale: '99',
+        });
+
+        const debugWriteCall = vi
+          .mocked(fs.writeFileSync)
+          .mock.calls.find((call) => (call[0] as string).includes('99'));
+        const writtenData = JSON.parse(debugWriteCall?.[1] as string);
+        // Value should reflect the prefixed key
+        expect(writtenData.app.buttons.ok).toBe('app.buttons.ok');
+      });
+
+      it('uses a custom locale code in the output filename', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'msg', value: 'Hello' }]);
+
+        await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: mockConfig,
+          locales: ['en'],
+          debugKeysLocale: 'keys',
+        });
+
+        expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/bundles/main.keys.json', expect.any(String), 'utf8');
+      });
+
+      it('emits a warning and no debug file when the bundle is empty', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([]);
+
+        const result = await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: mockConfig,
+          locales: ['en'],
+          debugKeysLocale: '99',
+        });
+
+        expect(result.warnings).toContain("Bundle 'main' debug bundle is empty");
+        expect(vi.mocked(fs.writeFileSync).mock.calls.some((c) => (c[0] as string).includes('99'))).toBe(false);
+      });
+
+      it('does not call icuToTransloco for the debug pass', async () => {
+        const icuSpy = vi.spyOn(icuToTranslocoModule, 'icuToTransloco');
+
+        const singleCollectionConfig: LingoTrackerConfig = {
+          ...mockConfig,
+          collections: {
+            default: { translationsFolder: '/translations/default' },
+          },
+        };
+
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+          { key: 'greeting', value: 'Hello {name}' },
+        ]);
+
+        await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: singleCollectionConfig,
+          locales: ['en'],
+          transformICUToTransloco: true,
+          debugKeysLocale: '99',
+        });
+
+        // 1 call for the real 'en' locale pass (1 collection × 1 resource); 0 for the debug pass
+        expect(icuSpy).toHaveBeenCalledTimes(1);
+      });
+    });
+
     describe('transformICUToTransloco', () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',

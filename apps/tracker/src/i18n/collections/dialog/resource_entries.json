@@ -96,5 +96,41 @@
     "ru": "Создать коллекцию",
     "ja": "コレクションを作成する",
     "de": "Sammlung erstellen"
+  },
+  "addButton": {
+    "source": "Add",
+    "comment": "Button label to add a locale to the list"
+  },
+  "addLocaleLabel": {
+    "source": "Add Locale",
+    "comment": "Label for the add locale input field"
+  },
+  "baseLocaleLocked": {
+    "source": "Base locale cannot be changed after creation",
+    "comment": "Tooltip shown on the base locale radio button when in edit mode"
+  },
+  "duplicateLocale": {
+    "source": "This locale has already been added",
+    "comment": "Validation error when the user tries to add a locale that is already in the list"
+  },
+  "invalidLocale": {
+    "source": "Invalid locale code",
+    "comment": "Validation error shown when an entered locale code is not valid"
+  },
+  "localesEmpty": {
+    "source": "No locales added yet",
+    "comment": "Empty state message shown when no locales have been added to the list"
+  },
+  "removeAria": {
+    "source": "Remove locale {{locale}}",
+    "comment": "Aria label for the remove button on each locale row"
+  },
+  "removeConfirmBody": {
+    "source": "Removing {{locales}} will permanently delete all translation data for those locales. This cannot be undone.",
+    "comment": "Body of the confirmation dialog when removing locales in edit mode"
+  },
+  "removeConfirmTitle": {
+    "source": "Remove Locales?",
+    "comment": "Title of the confirmation dialog when removing locales in edit mode"
   }
 }

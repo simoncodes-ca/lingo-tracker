@@ -42,7 +42,7 @@ All paths are relative to the `/api` global prefix. URL path parameters that con
 | Method | Path | Purpose | Request DTO | Response DTO |
 |--------|------|---------|-------------|--------------|
 | `POST` | `/collections` | Create a new [collection](glossary.md#collection) | `CreateCollectionDto` | `{ message: string }` |
-| `PUT` | `/collections/:collectionName` | Update a collection's name or settings | `UpdateCollectionDto` | `{ message: string }` |
+| `PUT` | `/collections/:collectionName` | Update a collection's name or settings. When `locales` in the request body differs from the current config, the handler diffs the two lists and adds/removes locale files on disk accordingly (base locale cannot be removed). | `UpdateCollectionDto` | `{ message: string }` |
 | `DELETE` | `/collections/:collectionName` | Delete a collection and its config entry | — | `{ message: string }` |
 
 ### Resources

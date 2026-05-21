@@ -38,10 +38,11 @@ lingo-tracker export --format <format> [options]
 |--------|-------------|---------|
 | `--structure <type>` | `hierarchical` or `flat`. | `hierarchical` |
 | `--rich` | Output rich objects with metadata instead of plain string values. | `false` |
-| `--include-base` | Include base locale value. Only applies when `--rich` is set. | `false` |
-| `--include-status` | Include translation status. Only applies when `--rich` is set. | `false` |
-| `--include-comment` | Include comments. Only applies when `--rich` is set. | `true` |
-| `--include-tags` | Include tags array. Only applies when `--rich` is set. | `false` |
+| `--include-base` | Include base locale value in the output object. | `false` |
+| `--include-status` | Include translation status in the output object. | `false` |
+| `--include-comment` | Include comments in the output object. | `false` |
+| `--include-tags` | Include tags array in the output object. | `false` |
+| `--base-property-name <name>` | Property name for the base locale value in JSON output. Only applies with `--include-base`. Reserved names (`value`, `comment`, `status`, `tags`) are rejected. | `baseValue` |
 
 ### Filename Placeholders
 
@@ -75,14 +76,46 @@ lingo-tracker export --format json --structure flat --filename "{locale}-transla
 # Generates: es-translations.json, fr-translations.json, etc.
 ```
 
+Export JSON with comments only (any `--include-*` flag automatically produces rich objects):
+```bash
+lingo-tracker export --format json --include-comment
+```
+
 Export rich JSON including base values and comments (useful for translator context):
 ```bash
-lingo-tracker export --format json --rich --include-base --include-comment
+lingo-tracker export --format json --include-base --include-comment
+```
+
+Export rich JSON with a custom property name for the base value (e.g. for tools that expect `original` instead of `baseValue`):
+```bash
+lingo-tracker export --format json --rich --include-base --base-property-name original
 ```
 
 Preview an export without writing any files:
 ```bash
 lingo-tracker export --format xliff --dry-run
+```
+
+## Customising the Base Value Property Name
+
+When exporting to JSON with `--include-base`, the base locale value is added to each object under the key `baseValue` by default. Use `--base-property-name` to override this when integrating with translation management systems or external tools that expect a different property name:
+
+```bash
+# Produce: { "value": "Aceptar", "original": "OK" }
+lingo-tracker export --format json --include-base --base-property-name original
+
+# Produce rich objects: { "value": "Aceptar", "source": "OK", "comment": "OK button" }
+lingo-tracker export --format json --include-base --include-comment --base-property-name source
+```
+
+The names `value`, `comment`, `status`, and `tags` are reserved — they are existing fields in rich JSON objects and cannot be used as the base property name. Using a reserved name exits with an error before any files are written.
+
+## XLIFF Source and Target Language
+
+XLIFF 1.2 exports now include the `source-language` and `target-language` attributes on the `<file>` element, matching the XLIFF 1.2 spec. This improves compatibility with translation tools that parse these attributes to determine locale mapping:
+
+```xml
+<file original="translations" source-language="en" target-language="es" datatype="plaintext">
 ```
 
 ## Export Summary

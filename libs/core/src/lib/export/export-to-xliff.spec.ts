@@ -62,11 +62,9 @@ describe('export-to-xliff', () => {
       note: 'OK button',
     });
 
-    expect(opts).toEqual({
-      targetLanguage: 'es',
-      sourceLanguage: 'en',
-      indent: '  ',
-    });
+    expect(data.sourceLanguage).toBe('en');
+    expect(data.targetLanguage).toBe('es');
+    expect(opts).toEqual({ indent: '  ' });
   });
 
   it('should use custom filename pattern', async () => {
