@@ -1,3 +1,10 @@
+## [0.14.2](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.1...v0.14.2) (2026-05-21)
+
+
+### Bug Fixes
+
+* **repo:** use explicit ./ prefix so npm treats tarball as a local file ([9000ad4](https://github.com/simoncodes-ca/lingo-tracker/commit/9000ad4d4f67e55123ab58215f68f3ffa61a9c17))
+
 ## [0.14.1](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.0...v0.14.1) (2026-05-21)
 
 
