@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command, Option } from 'commander';
+import { parseCommaSeparatedList } from './utils';
 
 function collect(value: string, previous: string[]): string[] {
   return previous.concat([value]);
@@ -179,6 +180,10 @@ program
     'Custom name for the generated TypeScript constant (single bundle only, e.g. MY_TOKENS)',
   )
   .option('--no-transform-icu-to-transloco', 'Disable ICU to Transloco format conversion in bundle output')
+  .option(
+    '--debug-keys [locale]',
+    'Also emit a debug bundle where each value is its own dot-delimited key. Optional locale code (default: 99)',
+  )
   .action(async (options) => {
     const { bundleCommand } = await import('./commands/bundle');
     await bundleCommand(options);
@@ -426,12 +431,7 @@ Notes:
   )
   .action(async (options) => {
     const { validateCommand } = await import('./commands/validate');
-    const skipLocales = options.skipLocales
-      ? options.skipLocales
-          .split(',')
-          .map((s: string) => s.trim())
-          .filter(Boolean)
-      : [];
+    const skipLocales = parseCommaSeparatedList(options.skipLocales) ?? [];
     await validateCommand({ allowTranslated: options.allowTranslated, skipLocales });
   });
 
