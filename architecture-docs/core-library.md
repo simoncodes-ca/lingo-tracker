@@ -52,7 +52,7 @@ libs/core/src/
 ├── collections-manager/          # Collection-level operations (create / delete / update in config)
 │   ├── add-collection.ts         # addCollection()
 │   ├── delete-collection-by-name.ts # deleteCollectionByName()
-│   └── update-collection.ts      # updateCollection()
+│   └── update-collection.ts      # updateCollection() — async; diffs locale list and calls addLocaleToCollection / removeLocaleFromCollection
 │
 └── lib/                          # Deeper sub-modules
     ├── bundle/                   # Bundle generation pipeline
@@ -64,7 +64,7 @@ libs/core/src/
     │   └── type-generation/      # TypeScript type file generation from bundle keys
     │
     ├── export/                   # Export pipelines (JSON and XLIFF)
-    │   ├── export-common.ts      # loadResourcesFromCollections(): shared resource walker
+    │   ├── export-common.ts      # loadResourcesFromCollections(): shared resource walker; validateBasePropertyName(): checks reserved keys
     │   ├── export-to-json.ts     # JSON export
     │   ├── export-to-xliff.ts    # XLIFF 1.2 export
     │   ├── export-summary.ts     # Human-readable export result summary
@@ -481,6 +481,8 @@ The function never stops at the first failure — it validates all resources and
 `generateValidationSummary()` in `generate-validation-summary.ts` converts this result into a human-readable string for CLI output.
 
 The CLI's `validate` command exits with a non-zero code when `passed` is `false`, making it suitable for use as a blocking step in CI pipelines. The `--allow-translated` flag maps directly to `options.allowTranslated`.
+
+`ValidationOptions` also accepts an optional `skippedLocales: readonly string[]` field. This is **reporting-only** — it does not filter resources inside `validateResources()`. The CLI performs locale filtering before calling the function (removing skipped locales from `targetLocales`) and then passes the skipped list so `generateValidationSummary()` can include a `Skipped Locales: <list> (<count>)` line in the output between "Locales Validated" and "Collections Validated".
 
 For the [staleness](glossary.md#staleness) detection mechanism that produces `stale` status entries in the first place, see [domain-and-data-model.md — Checksum-Driven Staleness Detection](domain-and-data-model.md#checksum-driven-staleness-detection).
 

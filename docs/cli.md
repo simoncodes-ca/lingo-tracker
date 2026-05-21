@@ -761,6 +761,7 @@ lingo-tracker bundle [options]
 - `--token-casing <casing>` - Casing style for generated type token keys: `upperCase` or `camelCase`. Overrides any `tokenCasing` set in the config file. Default: `upperCase`
 - `--token-constant-name <name>` - Custom name for the generated TypeScript constant. Must be a valid JavaScript identifier. Only works when targeting a single bundle (via `--name`). Overrides `tokenConstantName` in the bundle config
 - `--no-transform-icu-to-transloco` - Disable ICU to Transloco format conversion in bundle output
+- `--debug-keys [locale]` - Also emit a debug bundle where every value equals its own dot-delimited key. Useful for visually locating untranslated strings at runtime by switching your app to this locale. If no locale code is provided, defaults to `99` (e.g. `main.99.json`). ICU transformation is skipped for the debug bundle.
 - `--verbose` - Show detailed output including all warnings
 
 **What Bundle Generation Does:**
@@ -821,6 +822,16 @@ lingo-tracker bundle --token-casing camelCase
 Custom constant name for a single bundle:
 ```bash
 lingo-tracker bundle --name core --token-constant-name MY_KEYS
+```
+
+Generate debug bundle with default locale `99`:
+```bash
+lingo-tracker bundle --debug-keys
+```
+
+Generate debug bundle with a custom locale code:
+```bash
+lingo-tracker bundle --debug-keys debug
 ```
 
 **Output:**
@@ -1029,6 +1040,7 @@ lingo-tracker validate [options]
 **Options:**
 
 - `--allow-translated` - Treat 'translated' status as warning instead of failure (default: false)
+- `--skip-locales <locales>` - Comma-separated list of locales to exclude from validation (e.g. `fr` or `fr,de`). Useful when a locale has been added to the config but its translations are still in progress. Unknown locales (not in `config.locales`) emit a warning and are ignored. The base locale is silently ignored. If all target locales are skipped, the command exits with code `1`.
 
 **What Validate Does:**
 
@@ -1145,6 +1157,12 @@ Warnings (3 resources):
 Total: 5 failures, 3 warnings
 ```
 
+Skip a locale that is still in progress:
+```bash
+lingo-tracker validate --skip-locales fr
+lingo-tracker validate --skip-locales fr,de
+```
+
 CI/CD Integration Examples:
 
 **GitHub Actions:**
@@ -1182,7 +1200,7 @@ Staging pipeline (allow translated):
 
 The validate command performs a comprehensive check:
 - Validates **ALL** collections (no filtering)
-- Validates **ALL** target locales (excludes base locale)
+- Validates **ALL** target locales by default (excludes base locale)
 - Collects **ALL** validation results before reporting
 - Shows **COMPLETE** summary of all failures and warnings
 - Does **NOT** stop at first error
@@ -1190,7 +1208,9 @@ The validate command performs a comprehensive check:
 **Notes:**
 
 - Non-interactive only (designed for CI/CD, never prompts)
-- Validates all target locales (base locale is excluded)
+- Validates all target locales by default (base locale is excluded)
+- Use `--skip-locales` to exclude specific locales; skipped locales appear in the validation summary
+- Unknown locale values in `--skip-locales` emit a warning and are ignored
 - Validates all collections (no collection filtering)
 - Reports all issues comprehensively before exiting
 - Exit code reflects overall validation status after checking everything
@@ -1231,6 +1251,7 @@ lingo-tracker export [options]
 - `--include-status` - Include translation status in rich objects. Default: `false`
 - `--include-comment` - Include translator comments in rich objects. Default: `true`
 - `--include-tags` - Include tags array in rich objects. Default: `false`
+- `--base-property-name <name>` - Property name used for the base locale value in JSON output. Only applies with `--include-base`. Default: `baseValue`. The names `value`, `comment`, `status`, and `tags` are reserved and will cause an error.
 
 **Filename Placeholders:**
 

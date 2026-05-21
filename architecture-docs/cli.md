@@ -45,10 +45,10 @@ All commands are registered in `apps/cli/src/main.ts`. Each row below lists the 
 | `move` | `--collection`, `--source`, `--dest`, `--override`, `--verbose` | `moveResource()` |
 | `normalize` | `--collection`, `--all`, `--dry-run`, `--json` | `normalize()` |
 | `translate-locale` | `--collection`, `--locale`, `--verbose` | `translateLocale()` |
-| `bundle` | `--name`, `--locale`, `--verbose`, `--token-casing`, `--token-constant-name`, `--no-transform-icu-to-transloco` | `generateBundle()` |
-| `export` | `-f/--format`, `-c/--collection`, `-l/--locale`, `-s/--status`, `-t/--tags`, `-o/--output`, `--structure`, `--rich`, `--include-base`, `--include-status`, `--include-comment`, `--include-tags`, `--filename`, `--dry-run`, `--verbose` | `exportToJson()` / `exportToXliff()` |
+| `bundle` | `--name`, `--locale`, `--verbose`, `--token-casing`, `--token-constant-name`, `--no-transform-icu-to-transloco`, `--debug-keys` | `generateBundle()` |
+| `export` | `-f/--format`, `-c/--collection`, `-l/--locale`, `-s/--status`, `-t/--tags`, `-o/--output`, `--structure`, `--rich`, `--include-base`, `--include-status`, `--include-comment`, `--include-tags`, `--base-property-name`, `--filename`, `--dry-run`, `--verbose` | `exportToJson()` / `exportToXliff()` |
 | `import` | `-f/--format`, `-s/--source`, `-l/--locale`, `-c/--collection`, `--strategy`, `--update-comments`, `--update-tags`, `--preserve-status`, `--create-missing`, `--validate-base`, `--dry-run`, `--verbose` | `importFromJson()` / `importFromXliff()` |
-| `validate` | `--allow-translated` | `validateResources()`, `generateValidationSummary()` |
+| `validate` | `--allow-translated`, `--skip-locales` | `validateResources()`, `generateValidationSummary()` |
 | `find-similar` | `--collection`, `--value`, `--max-results` | `searchTranslations()` |
 | `install-skill` | `--collection <spec>` (repeatable), `--dir`, `--token-casing` | No core call — generates a `.claude/` skill file by template |
 

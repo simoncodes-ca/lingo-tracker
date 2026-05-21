@@ -22,6 +22,7 @@ Return to [architecture README](README.md).
 - [ICU-to-Transloco Conversion at Bundle Time](#icu-to-transloco-conversion-at-bundle-time)
 - [Output Artefacts](#output-artefacts)
   - [Per-Locale JSON Files](#per-locale-json-files)
+  - [Debug Key Bundle](#debug-key-bundle)
   - [TypeScript Type File](#typescript-type-file)
 - [Type Generation Deep-Dive](#type-generation-deep-dive)
   - [Why Type Generation Exists](#why-type-generation-exists)
@@ -374,6 +375,27 @@ Output nested JSON (`en.json`):
 ```
 
 **Locale fallback**: if a [resource entry](glossary.md#resource-entry) has no translation for the target locale, `loadCollectionResources()` omits that key from `FlatResource[]` — it does not silently fall back to the base locale value. The base locale value is read from `entry.source`; all other locale values are read from `entry[locale]`. An entry without a value for the requested locale simply does not appear in the bundle.
+
+### Debug Key Bundle
+
+When the `debugKeysLocale` parameter is passed to `generateBundle()` (exposed via `--debug-keys [locale]` on the CLI), an additional bundle file is emitted after all normal locale bundles. In this file every translation value is replaced with its own dot-delimited key.
+
+```json
+{
+  "browser": {
+    "addTranslationButton": "browser.addTranslationButton",
+    "dialog": {
+      "deleteResource": {
+        "title": "browser.dialog.deleteResource.title"
+      }
+    }
+  }
+}
+```
+
+The `debugKeysLocale` value is used as the locale code in the output filename — with `bundleName: "{locale}"` and `debugKeysLocale: "99"`, the file is written as `99.json`. ICU-to-Transloco conversion is intentionally skipped for this bundle because the key strings themselves contain no ICU syntax. If the resolved key set is empty, the debug bundle is not written and a warning is appended to `GenerateBundleResult.warnings` instead.
+
+Default value when the flag is present without an argument: `"99"`.
 
 ### TypeScript Type File
 

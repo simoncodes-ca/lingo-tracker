@@ -69,7 +69,7 @@ flowchart TD
 
     CollectionsManager --> TagList["TagList\n(shared/tag-list)\nDisplays locale tags on each collection card"]
 
-    CollectionsManager -. "lazy on create/edit" .-> CollectionFormDialog["CollectionFormDialog\n(collection-form-dialog/collection-form-dialog.ts)\nReactive form: name, locales, baseLocale, translationsFolder"]
+    CollectionsManager -. "lazy on create/edit" .-> CollectionFormDialog["CollectionFormDialog\n(collection-form-dialog/collection-form-dialog.ts)\nReactive form: name, translationsFolder\nLocales: FormArray with add-field + remove buttons\nbaseLocale: radio group (locked in edit mode)"]
     CollectionsManager -. "lazy on delete" .-> ConfirmationDialog["ConfirmationDialog\n(shared/components/confirmation-dialog)\nGeneric destructive-action confirmation"]
 ```
 
@@ -189,7 +189,7 @@ Because `TranslationListStore` is component-provided, each `TranslationList` ins
 
 ### CollectionsStore
 
-`CollectionsStore` is a flat, root-provided signal store (no feature decomposition). It holds `config: LingoTrackerConfigDto | null`, `isLoading`, and `error`. Computed signals derive `collectionEntries`, `collectionEntriesWithLocales`, `hasCollections`, and `collections`. Methods (`loadCollections`, `createCollection`, `updateCollection`, `deleteCollection`) each reload the full config from the API after mutation rather than doing local optimistic updates — collections change rarely, so this keeps the store simple.
+`CollectionsStore` is a flat, root-provided signal store (no feature decomposition). It holds `config: LingoTrackerConfigDto | null`, `isLoading`, and `error`. Computed signals derive `collectionEntries`, `collectionEntriesWithLocales`, `hasCollections`, and `collections`. Methods (`loadCollections`, `createCollection`, `updateCollection`, `deleteCollection`) each reload the full config from the API after mutation rather than doing local optimistic updates — collections change rarely, so this keeps the store simple. The `updateCollection` call is async — locale diffing and file-system mutations happen inside `PUT /collections/:name` on the core side; the store simply awaits the response and reloads.
 
 ---
 

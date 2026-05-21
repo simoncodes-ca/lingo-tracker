@@ -967,6 +967,47 @@ For example, if both `AppTranslations` and `LibraryTranslations` have a `buttons
 
 ---
 
+## Debug Bundles
+
+The `--debug-keys` flag emits an additional bundle file alongside the normal locale bundles, where every translation value equals its own dot-delimited key instead of the actual translated text.
+
+```bash
+# Emit a debug bundle using the default locale code 99 (e.g. main.99.json)
+lingo-tracker bundle --debug-keys
+
+# Emit a debug bundle with a custom locale code
+lingo-tracker bundle --debug-keys debug
+```
+
+For a bundle with `bundleName: "{locale}"` and `dist: "./dist/i18n"`, the debug run produces:
+
+```
+dist/i18n/en.json        ← normal bundle
+dist/i18n/fr.json        ← normal bundle
+dist/i18n/99.json        ← debug bundle (all values = their own key)
+```
+
+**What the debug bundle looks like:**
+
+```json
+{
+  "apps": {
+    "common": {
+      "buttons": {
+        "ok": "apps.common.buttons.ok",
+        "save": "apps.common.buttons.save"
+      }
+    }
+  }
+}
+```
+
+**Use case:** Switch your Transloco app's active language to `99` (or your custom code) during development. Every translated string on screen will display its own key rather than its value, making it easy to identify which key corresponds to which UI element — without hunting through source files.
+
+ICU transformation is intentionally skipped for the debug bundle since the key strings themselves contain no ICU syntax. If the resolved key set is empty (e.g. because no resources match the bundle's selection rules) the debug bundle is not written and a warning is emitted instead.
+
+---
+
 ## Troubleshooting
 
 > **Tip**: Run `lingo-tracker bundle --help` for a full list of flags. Add `--verbose` to any bundle command to see detailed output about which keys each collection contributes.
