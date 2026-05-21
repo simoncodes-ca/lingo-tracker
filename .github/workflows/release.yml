@@ -46,3 +46,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HUSKY: '0'
         run: pnpm run release
+
+      - name: Publish to npm (trusted publishing)
+        if: hashFiles('dist/*.tgz') != ''
+        run: npm publish dist/*.tgz --provenance --access public
