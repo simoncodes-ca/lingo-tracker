@@ -56,4 +56,4 @@ jobs:
 
       - name: Publish to npm (trusted publishing)
         if: hashFiles('dist/*.tgz') != ''
-        run: npm publish dist/*.tgz --provenance --access public
+        run: npm publish ./dist/*.tgz --provenance --access public
