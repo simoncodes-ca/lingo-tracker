@@ -53,3 +53,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           HUSKY: '0'
         run: pnpm run release
+
+      - name: Publish to npm (trusted publishing)
+        if: hashFiles('dist/*.tgz') != ''
+        run: npm publish dist/*.tgz --provenance --access public
