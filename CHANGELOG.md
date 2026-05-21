@@ -1,3 +1,31 @@
+## [0.14.4](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.3...v0.14.4) (2026-05-21)
+
+
+### Bug Fixes
+
+* **repo:** upgrade npm to 11.5.1+ for OIDC trusted publishing ([4eaf917](https://github.com/simoncodes-ca/lingo-tracker/commit/4eaf917e5c6fadf5f704557059cb2760dd4b74a3))
+
+## [0.14.3](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.2...v0.14.3) (2026-05-21)
+
+
+### Bug Fixes
+
+* **repo:** add registry-url to setup-node to enable OIDC trusted publishing ([0f40449](https://github.com/simoncodes-ca/lingo-tracker/commit/0f40449bf41519859cbc8f98db23b8733341c693))
+
+## [0.14.2](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.1...v0.14.2) (2026-05-21)
+
+
+### Bug Fixes
+
+* **repo:** use explicit ./ prefix so npm treats tarball as a local file ([9000ad4](https://github.com/simoncodes-ca/lingo-tracker/commit/9000ad4d4f67e55123ab58215f68f3ffa61a9c17))
+
+## [0.14.1](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.0...v0.14.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **repo:** restore npm trusted publishing in release workflow ([410abfe](https://github.com/simoncodes-ca/lingo-tracker/commit/410abfe96b2f5cbf9d2982901e0cc94ddaaa905a))
+
 # [0.14.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.13.0...v0.14.0) (2026-05-21)
 
 
