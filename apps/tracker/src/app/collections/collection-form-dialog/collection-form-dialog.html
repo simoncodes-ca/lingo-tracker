@@ -29,15 +29,58 @@
         }
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ TOKENS.COLLECTIONS.DIALOG.LOCALESLABEL | transloco }}</mat-label>
-        <input
-          matInput
-          formControlName="locales"
-          [placeholder]="TOKENS.COLLECTIONS.DIALOG.LOCALESPLACEHOLDER | transloco"
-        />
-        <mat-hint>{{ TOKENS.COLLECTIONS.DIALOG.LOCALESHINT | transloco }}</mat-hint>
-      </mat-form-field>
+      <section class="locale-section">
+        <p class="locale-section-label">{{ TOKENS.COLLECTIONS.DIALOG.LOCALESLABEL | transloco }}</p>
+
+        @if (form.controls.locales.length > 0) {
+          <mat-radio-group formControlName="baseLocale" class="locale-list">
+            @for (localeCtrl of form.controls.locales.controls; track $index) {
+              <div class="locale-row">
+                <mat-radio-button
+                  [value]="localeCtrl.value"
+                  [disabled]="isEditMode"
+                  [matTooltip]="isEditMode ? (TOKENS.COLLECTIONS.DIALOG.BASELOCALELOCKED | transloco) : ''"
+                  class="locale-radio"
+                >
+                  <span class="locale-code">{{ localeCtrl.value }}</span>
+                </mat-radio-button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="removeLocale($index)"
+                  [disabled]="isEditMode && localeCtrl.value === form.controls.baseLocale.value"
+                  [attr.aria-label]="TOKENS.COLLECTIONS.DIALOG.REMOVEARIA | transloco : { locale: localeCtrl.value }"
+                  class="locale-remove-btn"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            }
+          </mat-radio-group>
+        } @else {
+          <p class="locale-empty-hint">{{ TOKENS.COLLECTIONS.DIALOG.LOCALESEMPTY | transloco }}</p>
+        }
+
+        <div class="locale-add-row">
+          <mat-form-field appearance="outline" class="locale-add-field">
+            <mat-label>{{ TOKENS.COLLECTIONS.DIALOG.ADDLOCALELABEL | transloco }}</mat-label>
+            <input
+              matInput
+              [formControl]="addLocaleInput"
+              (keydown.enter)="$event.preventDefault(); addLocale()"
+            />
+            @if (addLocaleInput.hasError('invalidLocale')) {
+              <mat-error>{{ TOKENS.COLLECTIONS.DIALOG.INVALIDLOCALE | transloco }}</mat-error>
+            }
+            @if (addLocaleInput.hasError('duplicateLocale')) {
+              <mat-error>{{ TOKENS.COLLECTIONS.DIALOG.DUPLICATELOCALE | transloco }}</mat-error>
+            }
+          </mat-form-field>
+          <button mat-stroked-button type="button" (click)="addLocale()" class="locale-add-btn">
+            {{ TOKENS.COLLECTIONS.DIALOG.ADDBUTTON | transloco }}
+          </button>
+        </div>
+      </section>
     </form>
   </mat-dialog-content>
 
