@@ -14,7 +14,7 @@
     "build": "pnpm run build:cli && pnpm run build:api && pnpm run build:tracker",
     "serve:api": "nx serve api",
     "serve:tracker": "nx serve tracker",
-    "prepare": "husky",
+    "prepare": "node .husky/install.mjs",
     "commit": "git-cz",
     "release": "semantic-release",
     "test:api": "nx test api",
