@@ -1,3 +1,10 @@
+## [0.14.3](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.2...v0.14.3) (2026-05-21)
+
+
+### Bug Fixes
+
+* **repo:** add registry-url to setup-node to enable OIDC trusted publishing ([0f40449](https://github.com/simoncodes-ca/lingo-tracker/commit/0f40449bf41519859cbc8f98db23b8733341c693))
+
 ## [0.14.2](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.1...v0.14.2) (2026-05-21)
 
 
