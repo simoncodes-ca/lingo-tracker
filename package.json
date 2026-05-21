@@ -65,7 +65,8 @@
     "docs"
   ],
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "license": "MIT",
   "packageManager": "pnpm@10.27.0",
