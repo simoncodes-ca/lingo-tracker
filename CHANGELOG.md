@@ -1,3 +1,10 @@
+## [0.14.1](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.0...v0.14.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **repo:** restore npm trusted publishing in release workflow ([410abfe](https://github.com/simoncodes-ca/lingo-tracker/commit/410abfe96b2f5cbf9d2982901e0cc94ddaaa905a))
+
 # [0.14.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.13.0...v0.14.0) (2026-05-21)
 
 
