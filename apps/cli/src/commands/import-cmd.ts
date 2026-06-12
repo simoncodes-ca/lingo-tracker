@@ -164,7 +164,8 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
   displayResults(result, finalOptions);
 
   // Generate and write summary
-  const summaryPath = path.join(os.tmpdir(), 'lingo-tracker-import-summary.md');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const summaryPath = path.join(os.tmpdir(), `lingo-tracker-import-summary-${timestamp}.md`);
   if (!finalOptions.dryRun) {
     try {
       const summary = generateImportSummary(result, finalOptions);

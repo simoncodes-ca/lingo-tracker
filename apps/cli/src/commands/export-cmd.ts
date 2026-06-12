@@ -254,7 +254,8 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     exportOptions,
   );
 
-  const summaryPath = path.join(os.tmpdir(), 'lingo-tracker-export-summary.md');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const summaryPath = path.join(os.tmpdir(), `lingo-tracker-export-summary-${timestamp}.md`);
   if (!options.dryRun) {
     fs.writeFileSync(summaryPath, summary);
     console.log(`\n📄 Summary written to: ${summaryPath}`);
