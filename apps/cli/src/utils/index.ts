@@ -6,3 +6,4 @@ export * from './error-messages';
 export * from './prompt-utils';
 export * from './result-aggregator';
 export * from './string-parsers';
+export * from './summary-path';

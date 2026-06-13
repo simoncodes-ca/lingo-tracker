@@ -22,6 +22,7 @@ import {
   multiselectResultToString,
   ConsoleFormatter,
   ErrorMessages,
+  buildSummaryPath,
 } from '../utils';
 
 export interface ExportCommandOptions {
@@ -253,7 +254,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     exportOptions,
   );
 
-  const summaryPath = path.join(outputDir, 'export-summary.md');
+  const summaryPath = buildSummaryPath('export');
   if (!options.dryRun) {
     fs.writeFileSync(summaryPath, summary);
     console.log(`\n📄 Summary written to: ${summaryPath}`);

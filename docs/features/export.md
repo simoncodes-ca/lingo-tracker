@@ -120,7 +120,7 @@ XLIFF 1.2 exports now include the `source-language` and `target-language` attrib
 
 ## Export Summary
 
-Every export generates an `export-summary.md` file in the output directory. It contains:
+Every export generates a timestamped `lingo-tracker-export-summary-<timestamp>.md` file in the **OS temp directory** (e.g. `/tmp` on macOS/Linux, `%TEMP%` on Windows) and prints the full path to the console. The file is written outside your project tree to avoid polluting your repository or breaking build pipelines that scan `.md` files. It contains:
 
 - **Metadata**: date, format, collections, target locales, status and tag filters applied.
 - **Results**: resources exported, files created, output directory.

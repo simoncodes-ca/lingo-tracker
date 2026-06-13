@@ -667,7 +667,10 @@ describe('exportCommand', () => {
       });
 
       expect(mockGenerateExportSummary).toHaveBeenCalled();
-      expect(fs.writeFileSync).toHaveBeenCalledWith(expect.stringContaining('export-summary.md'), '# Export Summary');
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.stringContaining('lingo-tracker-export-summary'),
+        '# Export Summary',
+      );
     });
 
     it('should not write summary in dry run mode', async () => {

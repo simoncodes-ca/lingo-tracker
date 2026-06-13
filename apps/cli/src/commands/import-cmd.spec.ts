@@ -24,6 +24,7 @@ vi.mock('../utils', () => ({
   isInteractiveTerminal: vi.fn(() => false),
   promptForCollection: vi.fn(),
   resolveCollection: vi.fn(),
+  buildSummaryPath: vi.fn(() => '/tmp/lingo-tracker-import-summary-test.md'),
   ConsoleFormatter: {
     error: vi.fn((message: string) => console.log(`[error] ${message}`)),
     success: vi.fn((message: string) => console.log(`[success] ${message}`)),

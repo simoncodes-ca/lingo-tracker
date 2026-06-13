@@ -19,6 +19,7 @@ import {
   ConsoleFormatter,
   ErrorMessages,
   isInteractiveTerminal,
+  buildSummaryPath,
 } from '../utils';
 
 export const LARGE_FILE_SIZE_THRESHOLD = 5;
@@ -163,10 +164,10 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
   displayResults(result, finalOptions);
 
   // Generate and write summary
+  const summaryPath = buildSummaryPath('import');
   if (!finalOptions.dryRun) {
     try {
       const summary = generateImportSummary(result, finalOptions);
-      const summaryPath = path.join(translationsFolderPath, 'import-summary.md');
       fs.writeFileSync(summaryPath, summary, 'utf8');
       console.log('');
       console.log(`Import summary written to: ${summaryPath}`);
@@ -174,7 +175,6 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
       ConsoleFormatter.warning(`Failed to write summary file: ${(error as Error).message}`);
     }
   } else {
-    const summaryPath = path.join(translationsFolderPath, 'import-summary.md');
     console.log('');
     console.log(`Import summary would be written to: ${summaryPath}`);
   }
