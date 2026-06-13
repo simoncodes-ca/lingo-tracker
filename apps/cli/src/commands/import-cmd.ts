@@ -1,6 +1,5 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import * as os from 'os';
 import prompts from 'prompts';
 import {
   type LingoTrackerConfig,
@@ -20,6 +19,7 @@ import {
   ConsoleFormatter,
   ErrorMessages,
   isInteractiveTerminal,
+  buildSummaryPath,
 } from '../utils';
 
 export const LARGE_FILE_SIZE_THRESHOLD = 5;
@@ -164,8 +164,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
   displayResults(result, finalOptions);
 
   // Generate and write summary
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const summaryPath = path.join(os.tmpdir(), `lingo-tracker-import-summary-${timestamp}.md`);
+  const summaryPath = buildSummaryPath('import');
   if (!finalOptions.dryRun) {
     try {
       const summary = generateImportSummary(result, finalOptions);

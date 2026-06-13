@@ -1,6 +1,5 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import * as os from 'os';
 import prompts from 'prompts';
 import type { TranslationStatus } from '@simoncodes-ca/domain';
 import {
@@ -23,6 +22,7 @@ import {
   multiselectResultToString,
   ConsoleFormatter,
   ErrorMessages,
+  buildSummaryPath,
 } from '../utils';
 
 export interface ExportCommandOptions {
@@ -254,8 +254,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     exportOptions,
   );
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const summaryPath = path.join(os.tmpdir(), `lingo-tracker-export-summary-${timestamp}.md`);
+  const summaryPath = buildSummaryPath('export');
   if (!options.dryRun) {
     fs.writeFileSync(summaryPath, summary);
     console.log(`\n📄 Summary written to: ${summaryPath}`);
