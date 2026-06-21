@@ -6,9 +6,28 @@
   "sourceRoot": "apps/tracker/src",
   "tags": [],
   "targets": {
+    "generate-tokens": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["cli:build"],
+      "inputs": [
+        "{workspaceRoot}/apps/tracker/src/i18n/**/*",
+        "{workspaceRoot}/.lingo-tracker.json",
+        "{workspaceRoot}/dist/apps/cli/**/*"
+      ],
+      "outputs": [
+        "{workspaceRoot}/apps/tracker/src/i18n-types/tracker-resources.ts",
+        "{workspaceRoot}/apps/tracker/src/assets/i18n"
+      ],
+      "options": {
+        "command": "node dist/apps/cli/main.cjs bundle --name tracker",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "build": {
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
+      "dependsOn": ["^build", "generate-tokens"],
       "options": {
         "outputPath": "dist/apps/tracker",
         "browser": "apps/tracker/src/main.ts",
@@ -67,7 +86,7 @@
         }
       },
       "defaultConfiguration": "development",
-      "dependsOn": ["api:serve"]
+      "dependsOn": ["generate-tokens", "api:serve"]
     },
     "extract-i18n": {
       "executor": "@angular/build:extract-i18n",
@@ -81,6 +100,7 @@
     "test": {
       "executor": "@nx/vite:test",
       "outputs": ["{options.reportsDirectory}"],
+      "dependsOn": ["generate-tokens"],
       "options": {
         "reportsDirectory": "../../coverage/apps/tracker"
       }
