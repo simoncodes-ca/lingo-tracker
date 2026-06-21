@@ -1,3 +1,4 @@
+export * from './lib/escape-regexp';
 export * from './lib/translation-status';
 export * from './lib/locale-metadata';
 export * from './lib/resource-key';
