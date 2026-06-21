@@ -1025,6 +1025,83 @@ No similar values found for "Save draft".
 
 ---
 
+### glossary
+
+Extract a glossary of relevant translations from a block of text. Given a paragraph of base-locale text (for example a page of online help), the command pulls out the meaningful terms, finds the matching translation entries, and writes a JSON glossary containing each term's translations across all locales. The glossary can then be handed to whoever (or whatever) translates the help content so they reuse the app's existing terminology.
+
+**Usage:**
+
+```bash
+lingo-tracker glossary [options]
+```
+
+**Options:**
+
+- `--text <text>` - Inline text block to extract terms from
+- `--input <file>` - Path to a file whose contents are the input text block
+- `--output <file>` - Output JSON file path (default: `./lingo-tracker-glossary-<timestamp>.json`)
+- `--stdout` - Print the glossary JSON to stdout instead of writing a file (status messages go to stderr)
+- `--collection <name>` - Limit matching to a single collection (default: all collections)
+- `--locales <list>` - Comma-separated locales to include (default: all configured locales)
+- `--include-all` - Include `new`/`stale` entries (default: only `translated` + `verified`)
+- `--extractor <mode>` - Term extraction strategy: `ngram` (default). `ai` is reserved for a future release.
+
+Input precedence is `--text` → `--input` → piped stdin.
+
+**Examples:**
+
+From a file:
+```bash
+lingo-tracker glossary --input help-page.md
+```
+
+Inline snippet, French only, printed to stdout:
+```bash
+lingo-tracker glossary --text "Click Save in Settings to update your profile" --locales fr --stdout
+```
+
+Piped from another command:
+```bash
+cat help-page.md | lingo-tracker glossary --stdout | jq '.terms[].key'
+```
+
+**Output:**
+
+```json
+{
+  "baseLocale": "en",
+  "locales": ["fr", "es"],
+  "source": { "chars": 1234, "candidates": 18 },
+  "matchCount": 2,
+  "terms": [
+    {
+      "key": "apps.common.buttons.save",
+      "collection": "app",
+      "base": "Save",
+      "matchedTerm": "save",
+      "score": 1.0,
+      "translations": { "fr": "Enregistrer", "es": "Guardar" },
+      "status": { "fr": "verified", "es": "translated" }
+    }
+  ]
+}
+```
+
+**How It Works:**
+
+1. **Extract** — the block is split into sentences and tokenized; stopwords and very short tokens are dropped, leaving content-word unigrams and bigrams as candidate terms.
+2. **Match** — each candidate is matched against entries' **base-locale values only** (key names are ignored). Scoring: exact value match (`1.0`) beats whole-word/phrase containment.
+3. **Rank** — the single best entry per candidate is kept; an entry matched by several candidates appears once (highest score wins). Results are sorted by score.
+4. **Filter & write** — only `translated`/`verified` locales are included by default (`--include-all` adds `new`/`stale`); each collection's base locale is omitted from `translations` since it appears as `base`.
+
+**Notes:**
+
+- Matching is deterministic and value-only — no fuzzy matching, which keeps the glossary precise (favouring precision over recall).
+- The extractor is a swappable stage: the `--extractor` flag reserves room for a future AI-based extractor.
+- The stopword list is English-oriented, so extraction is weaker when the base locale is not English.
+
+---
+
 ## Validation Commands
 
 ### validate
