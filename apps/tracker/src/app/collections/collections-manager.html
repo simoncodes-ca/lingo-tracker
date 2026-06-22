@@ -91,6 +91,12 @@
                 <mat-icon>folder</mat-icon>
               </div>
               <h3 class="collection-name">{{ item.name }}</h3>
+              @if (item.config.readOnly) {
+                <span class="readonly-badge" [matTooltip]="TOKENS.COLLECTIONS.CARD.READONLYTOOLTIP | transloco">
+                  <mat-icon class="readonly-badge-icon">lock</mat-icon>
+                  <span class="readonly-badge-text">{{ TOKENS.COLLECTIONS.CARD.READONLYBADGE | transloco }}</span>
+                </span>
+              }
             </div>
             <div class="card-actions">
               <button

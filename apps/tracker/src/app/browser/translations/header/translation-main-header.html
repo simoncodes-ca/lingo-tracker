@@ -22,7 +22,7 @@
       mat-raised-button
       color="primary"
       (click)="handleAddTranslation()"
-      [disabled]="store.isDisabled() || !store.currentFolderPath()"
+      [disabled]="store.effectiveDisabled() || !store.currentFolderPath()"
       [matTooltip]="(!store.currentFolderPath() ? TOKENS.BROWSER.SELECTFOLDERFIRST : TOKENS.BROWSER.ADDNEWTRANSLATIONTOOLTIP) | transloco"
       [attr.aria-label]="TOKENS.BROWSER.ADDTRANSLATIONBUTTON | transloco"
     >

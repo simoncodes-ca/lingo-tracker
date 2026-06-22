@@ -8,6 +8,16 @@ export interface UpdateCollectionOptions {
   cwd?: string;
 }
 
+/**
+ * Updates (and optionally renames) a collection's config entry.
+ *
+ * NOTE: This uses **full-replace** semantics — the stored collection is rebuilt from the
+ * passed `collection`, persisting only fields that differ from the global config. Any
+ * optional field omitted from `collection` (including `readOnly`, `translation`,
+ * `exportFolder`, `importFolder`, `locales`) is therefore dropped from the entry. Callers
+ * performing a partial update must send the full desired collection config, not just the
+ * changed fields.
+ */
 export async function updateCollection(
   collectionName: string,
   newCollectionName: string | undefined,
@@ -79,6 +89,11 @@ export async function updateCollection(
 
     if (collection.locales !== undefined && JSON.stringify(collection.locales) !== JSON.stringify(config.locales)) {
       minimalCollection.locales = collection.locales;
+    }
+
+    // Persist read-only only when set; passing false (or omitting) clears the flag, making the collection writable.
+    if (collection.readOnly) {
+      minimalCollection.readOnly = true;
     }
 
     if (isRename) {

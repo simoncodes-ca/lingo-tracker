@@ -53,6 +53,8 @@ export interface TranslationEditorDialogData {
   folderPath?: string;
   availableLocales: string[];
   baseLocale: string;
+  /** When true, the dialog opens in view-only mode: inputs disabled, no save. */
+  readOnly?: boolean;
 }
 
 interface TranslationFormValue {
@@ -163,6 +165,8 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   readonly translationStatusOptions: TranslationStatus[] = ['new', 'translated', 'stale', 'verified'];
 
   readonly isEditMode = computed(() => this.data.mode === 'edit');
+  /** Whether the dialog is view-only because the collection is read-only. */
+  readonly isReadOnly = computed(() => this.data.readOnly === true);
   readonly dialogTitle = computed(() =>
     this.isEditMode()
       ? TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.EDITTITLE
@@ -201,6 +205,11 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     }
 
     this.#setupSimilarResourcesSearch();
+
+    // View-only mode: lock down all inputs. Save is hidden in the template.
+    if (this.isReadOnly()) {
+      this.form.disable({ emitEvent: false });
+    }
   }
 
   ngOnDestroy(): void {
@@ -373,7 +382,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   }
 
   async onSubmit(): Promise<void> {
-    if (this.form.invalid || this.isSubmitting()) {
+    if (this.isReadOnly() || this.form.invalid || this.isSubmitting()) {
       return;
     }
 

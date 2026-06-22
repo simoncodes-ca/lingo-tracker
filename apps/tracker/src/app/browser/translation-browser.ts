@@ -11,6 +11,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 import { HeaderContextService } from '../shared/services/header-context.service';
@@ -43,6 +44,7 @@ import type { DragData } from './types/drag-data';
   imports: [
     CommonModule,
     CdkDropListGroup,
+    MatIconModule,
     TranslocoModule,
     FolderTree,
     TranslationList,
@@ -141,6 +143,7 @@ export class TranslationBrowser {
         collectionName: decodedName,
         locales,
         baseLocale,
+        readOnly: collection?.readOnly ?? false,
       });
     });
 

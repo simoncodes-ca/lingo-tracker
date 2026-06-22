@@ -1,9 +1,21 @@
-import { Controller, Post, Delete, Param, Body, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Delete,
+  Param,
+  Body,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+  UseGuards,
+} from '@nestjs/common';
 import { addLocaleToCollection, removeLocaleFromCollection } from '@simoncodes-ca/core';
 import type { AddLocaleDto, AddLocaleResponseDto, RemoveLocaleResponseDto } from '@simoncodes-ca/data-transfer';
 import { ConfigService } from '../../config/config.service';
 import { CollectionCacheService } from '../../cache/collection-cache.service';
+import { WritableCollectionGuard } from '../guards/writable-collection.guard';
 
+@UseGuards(WritableCollectionGuard)
 @Controller('collections/:collectionName/locales')
 export class LocalesController {
   readonly #configService: ConfigService;

@@ -195,9 +195,12 @@ Collection shape:
   "exportFolder": "optional/override",
   "importFolder": "optional/override",
   "baseLocale": "en",
-  "locales": ["en", "fr-ca"]
+  "locales": ["en", "fr-ca"],
+  "readOnly": false
 }
 ```
+
+- `readOnly` (optional) marks the collection as read-only: its resources cannot be added, edited, deleted, moved, imported, or auto-translated through the CLI, API, or UI. The collection can still be unregistered and its config entry edited. This is intended for collections that belong to a component library and are vendored under `node_modules` of a consumer repo.
 
 ### Add additional collections
 
@@ -215,6 +218,7 @@ lingo-tracker add-collection
   - `--import-folder <path>`
   - `--base-locale <locale>`
   - `--locales <locales...>`
+  - `--read-only` / `--no-read-only` (mark the collection read-only, or force it writable). When the folder is under `node_modules`, read-only defaults to on; use `--no-read-only` to override.
 
 Examples:
 
@@ -235,9 +239,19 @@ lingo-tracker add-collection \
   --base-locale en-GB
 ```
 
+- Register a component-library collection (vendored under `node_modules`) as read-only:
+
+```bash
+lingo-tracker add-collection \
+  --collection-name DesignSystem \
+  --translations-folder node_modules/@acme/design-system/i18n \
+  --read-only
+```
+
 Notes:
 - If `.lingo-tracker.json` is missing or invalid, the command will exit with a helpful message.
 - If the collection name already exists, the command will refuse to overwrite.
+- Collections under `node_modules` are marked read-only by default; pass `--no-read-only` to opt out.
 
 ### Non-interactive and CI usage
 

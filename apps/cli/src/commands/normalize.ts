@@ -70,6 +70,23 @@ export async function normalizeCommand(options: NormalizeOptions): Promise<void>
       continue;
     }
 
+    // Read-only collections cannot be normalized (it rewrites resource files).
+    // In a bulk `--all` run, skip them without failing; when one is explicitly targeted, fail.
+    if (collection.config.readOnly) {
+      if (answers.all) {
+        if (!options.json) {
+          console.log('');
+          ConsoleFormatter.info(`Skipping read-only collection: ${collectionName}`);
+        }
+      } else {
+        if (!options.json) {
+          console.log(ErrorMessages.COLLECTION_READ_ONLY(collectionName));
+        }
+        process.exitCode = 1;
+      }
+      continue;
+    }
+
     const translationsFolder = collection.translationsFolderPath;
     const baseLocale = collection.config.baseLocale ?? config.baseLocale;
     const locales = collection.config.locales ?? config.locales;

@@ -207,5 +207,15 @@
     "ru": "Переключить расширение",
     "ja": "展開を切り替える",
     "de": "Erweiterung umschalten"
+  },
+  "readOnlyNotice": {
+    "source": "This collection is read-only. Its resources can't be modified.",
+    "comment": "Banner shown above the translation list when the active collection is read-only.",
+    "tags": ["browser"],
+    "es": "This collection is read-only. Its resources can't be modified.",
+    "fr-ca": "This collection is read-only. Its resources can't be modified.",
+    "ru": "This collection is read-only. Its resources can't be modified.",
+    "ja": "This collection is read-only. Its resources can't be modified.",
+    "de": "This collection is read-only. Its resources can't be modified."
   }
 }

@@ -177,6 +177,8 @@ After loading config, most commands call `promptForCollection()` followed by `re
 
 `resolveCollection()` in `collection-resolver.ts` then validates the selected name against `config.collections`, logs `❌ Collection "name" not found.` if absent, and computes the absolute `translationsFolderPath` by joining `baseDirectory` with `collectionConfig.translationsFolder`.
 
+**Read-only enforcement.** Commands that mutate resources call `resolveWritableCollection()` instead of `resolveCollection()`. It wraps `resolveCollection()` and, if the collection's config has `readOnly: true`, prints `❌ Collection "name" is read-only...`, sets `process.exitCode = 1` (so CI fails), and returns `null`. This is the single CLI choke-point for read-only enforcement — no per-command checks. Read-only commands (`bundle`, `export`, `validate`, `find-similar`, `glossary`) and `delete-collection` keep using plain `resolveCollection()`, since they either don't mutate resources or operate on the collection's registration rather than its contents.
+
 ### Resolution Flowchart
 
 ```mermaid

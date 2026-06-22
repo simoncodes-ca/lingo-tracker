@@ -78,3 +78,27 @@
   height: 100%;
   color: var(--color-text-secondary);
 }
+
+.readonly-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin: var(--spacing-2) var(--spacing-4) 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  background-color: color-mix(in srgb, var(--color-warn, #b26a00) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-warn, #b26a00) 24%, transparent);
+  border-radius: var(--border-radius-md);
+  color: var(--color-warn, #b26a00);
+
+  .readonly-banner-icon {
+    font-size: var(--font-size-lg);
+    width: var(--font-size-lg);
+    height: var(--font-size-lg);
+    flex-shrink: 0;
+  }
+
+  .readonly-banner-text {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+  }
+}

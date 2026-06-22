@@ -4,7 +4,7 @@ import {
   loadConfiguration,
   parseCommaSeparatedList,
   promptForCollection,
-  resolveCollection,
+  resolveWritableCollection,
   ConsoleFormatter,
   ErrorMessages,
   isInteractiveTerminal,
@@ -27,7 +27,7 @@ export async function deleteResourceCommand(options: DeleteResourceOptions): Pro
   if (!collectionName) return;
 
   // Validate collection exists
-  const collection = resolveCollection(collectionName, config, cwd);
+  const collection = resolveWritableCollection(collectionName, config, cwd);
   if (!collection) return;
 
   // Prompt for other fields

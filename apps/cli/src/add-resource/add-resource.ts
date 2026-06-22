@@ -8,7 +8,7 @@ import {
   loadConfiguration,
   parseCommaSeparatedList,
   promptForCollection,
-  resolveCollection,
+  resolveWritableCollection,
   ConsoleFormatter,
   ErrorMessages,
 } from '../utils';
@@ -35,7 +35,7 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
   const collectionName = await promptForCollection(config, options.collection);
   if (!collectionName) return;
 
-  const collection = resolveCollection(collectionName, config, cwd);
+  const collection = resolveWritableCollection(collectionName, config, cwd);
   if (!collection) return;
 
   const answers = await promptForMissing(options, config, collectionName);

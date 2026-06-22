@@ -15,7 +15,7 @@ import {
 import {
   loadConfiguration,
   promptForCollection,
-  resolveCollection,
+  resolveWritableCollection,
   ConsoleFormatter,
   ErrorMessages,
   isInteractiveTerminal,
@@ -47,7 +47,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
   const collectionName = await promptForCollection(config, options.collection);
   if (!collectionName) return;
 
-  const collection = resolveCollection(collectionName, config, cwd);
+  const collection = resolveWritableCollection(collectionName, config, cwd);
   if (!collection) return;
 
   let answers: Partial<ImportCommandOptions>;

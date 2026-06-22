@@ -131,5 +131,15 @@
     "ru": "Увольнять",
     "ja": "却下する",
     "de": "Zurückweisen"
+  },
+  "view": {
+    "source": "View",
+    "comment": "Generic action label for opening a read-only/view-only item.",
+    "tags": ["common"],
+    "es": "View",
+    "fr-ca": "View",
+    "ru": "View",
+    "ja": "View",
+    "de": "View"
   }
 }

@@ -88,6 +88,15 @@ export class TranslationItemHeader {
   /** Base locale code from the browser store */
   readonly baseLocale = this.#browserStore.baseLocale;
 
+  /** Whether the active collection is read-only (mutating actions are disabled). */
+  readonly isReadOnly = this.#browserStore.isReadOnly;
+
+  /** The primary action opens the editor; in read-only collections it is view-only, so label/icon adapt. */
+  readonly editActionLabel = computed(() =>
+    this.isReadOnly() ? TRACKER_TOKENS.COMMON.ACTIONS.VIEW : TRACKER_TOKENS.COMMON.ACTIONS.EDIT,
+  );
+  readonly editActionIcon = computed(() => (this.isReadOnly() ? 'visibility' : 'edit'));
+
   /** Comment text derived from the translation input */
   readonly comment = computed(() => this.translation().comment);
 
@@ -113,7 +122,9 @@ export class TranslationItemHeader {
   });
 
   /** Whether the translate action is disabled */
-  readonly translateDisabled = computed(() => !this.hasTranslatableLocales() || this.isTranslating());
+  readonly translateDisabled = computed(
+    () => this.isReadOnly() || !this.hasTranslatableLocales() || this.isTranslating(),
+  );
 
   /** Computed signal for the comment icon name based on toggle state */
   readonly commentIcon = computed(() => {

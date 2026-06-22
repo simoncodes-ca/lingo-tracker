@@ -29,7 +29,7 @@ npx lingo-tracker-app
 ### Enterprise Ready & Scalable
 LingoTracker is designed with scalability in mind. By storing metadata in separate files and allowing flexible splitting of resources into nested folders, you can manage even the largest resource sets with ease. Whether you're maintaining a handful of translations or managing thousands of keys across dozens of locales, LingoTracker scales with your application.
 
-Built for enterprise workflows, LingoTracker supports multiple collections to organize resources by team, feature, or domain. Its CLI-first approach integrates naturally into CI/CD pipelines, enabling automated validation and resource bundling as part of your release process. Combined with Git-friendly storage, teams of any size can collaborate on translations with full traceability and review through their existing pull request workflows.
+Built for enterprise workflows, LingoTracker supports multiple collections to organize resources by team, feature, or domain. Collections can be marked **read-only** — useful for component-library translations vendored under `node_modules`, which are protected from accidental edits across the CLI, API, and UI (and detected automatically when added). Its CLI-first approach integrates naturally into CI/CD pipelines, enabling automated validation and resource bundling as part of your release process. Combined with Git-friendly storage, teams of any size can collaborate on translations with full traceability and review through their existing pull request workflows.
 
 ### ICU Format Validation
 LingoTracker validates ICU message syntax — balanced braces, placeholder formats, plural/select/number/date expressions, and quote-escape sections — catching errors before they reach production.

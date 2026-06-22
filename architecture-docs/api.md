@@ -154,6 +154,8 @@ graph TD
 
 Controllers are the only layer that knows HTTP. They resolve collection config from `ConfigService`, delegate business operations to `@simoncodes-ca/core` (see [core-library.md](core-library.md)), apply mappers at the boundary, and update `CollectionCacheService` incrementally after successful writes.
 
+**Read-only enforcement.** `WritableCollectionGuard` (`collections/guards/writable-collection.guard.ts`) is applied at the class level to the `Resources`, `Locales`, and `Folders` controllers. For any non-`GET` request it reads the `:collectionName` route param, looks up the collection in `ConfigService`, and throws `403 Forbidden` when the collection is `readOnly`. This is the single API choke-point for read-only enforcement. The `Collections` controller is intentionally **not** guarded: updating a collection's config entry or unregistering it (`PUT`/`DELETE /collections/:name`) is permitted even for read-only collections, since the lock protects resources, not the registration. On create, the controller defaults `readOnly` to `true` for `node_modules` paths (via the `isUnderNodeModules` domain helper) when the DTO omits it.
+
 ---
 
 ## Static File Serving

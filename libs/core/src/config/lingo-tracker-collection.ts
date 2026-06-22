@@ -12,4 +12,10 @@ export interface LingoTrackerCollection {
   locales?: string[];
   /** Per-collection override for auto-translation settings. Falls back to the global translation config when absent. */
   translation?: TranslationConfig;
+  /**
+   * When true, the resources in this collection cannot be modified (add/edit/delete resource, move, normalize,
+   * import, folder/locale changes, auto-translate). The collection can still be unregistered and its config entry
+   * edited. Typically set for collections vendored under node_modules.
+   */
+  readOnly?: boolean;
 }

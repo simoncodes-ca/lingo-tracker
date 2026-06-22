@@ -59,6 +59,12 @@ export const ErrorMessages = {
    */
   NO_COLLECTIONS_AVAILABLE: '❌ No collections available.',
 
+  /**
+   * Error when attempting to modify resources in a read-only collection
+   * @param name - Name of the read-only collection
+   */
+  COLLECTION_READ_ONLY: (name: string) => `❌ Collection "${name}" is read-only. Its resources cannot be modified.`,
+
   // Option Errors
   /**
    * Error when a single required option is missing

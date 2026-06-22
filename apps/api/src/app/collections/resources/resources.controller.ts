@@ -12,6 +12,7 @@ import {
   NotFoundException,
   Res,
   Logger,
+  UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import {
@@ -57,7 +58,9 @@ import { mapResourceTreeToDto, mapResourceEntryToSummary } from '../../mappers/r
 import { mapSearchResultsToDto } from '../../mappers/search-result.mapper';
 import { CollectionCacheService, CacheStatus } from '../../cache/collection-cache.service';
 import { TranslationJobService } from '../../translation-job/translation-job.service';
+import { WritableCollectionGuard } from '../guards/writable-collection.guard';
 
+@UseGuards(WritableCollectionGuard)
 @Controller('collections/:collectionName/resources')
 export class ResourcesController {
   readonly #logger = new Logger(ResourcesController.name);

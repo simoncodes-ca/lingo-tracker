@@ -81,6 +81,15 @@
           </button>
         </div>
       </section>
+
+      <section class="readonly-section">
+        <mat-checkbox formControlName="readOnly" (change)="onReadOnlyToggle()">
+          {{ TOKENS.COLLECTIONS.DIALOG.READONLYLABEL | transloco }}
+        </mat-checkbox>
+        <p class="readonly-hint">
+          {{ (isNodeModulesPath ? TOKENS.COLLECTIONS.DIALOG.READONLYNODEMODULESHINT : TOKENS.COLLECTIONS.DIALOG.READONLYHINT) | transloco }}
+        </p>
+      </section>
     </form>
   </mat-dialog-content>
 

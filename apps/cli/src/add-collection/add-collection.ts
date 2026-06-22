@@ -1,5 +1,6 @@
 import type prompts from 'prompts';
 import { CONFIG_FILENAME, addCollection, DEFAULT_CONFIG } from '@simoncodes-ca/core';
+import { isUnderNodeModules } from '@simoncodes-ca/domain';
 import type { InitOptions } from '../types/init-options.js';
 import { loadConfiguration, ConsoleFormatter, ErrorMessages, executePromptsWithFallback } from '../utils';
 
@@ -21,12 +22,16 @@ export async function addCollectionCommand(options: InitOptions): Promise<void> 
     return;
   }
 
+  const readOnly = await resolveReadOnly(options, isUnderNodeModules(translationsFolder));
+
   const newCollection = {
     translationsFolder,
     exportFolder,
     importFolder,
     baseLocale,
     locales,
+    // Only persist the flag when set, keeping writable collections clean in config.
+    ...(readOnly ? { readOnly: true } : {}),
   };
 
   try {
@@ -35,6 +40,33 @@ export async function addCollectionCommand(options: InitOptions): Promise<void> 
   } catch (e: unknown) {
     ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to add collection');
   }
+}
+
+/**
+ * Resolves the collection's read-only flag. An explicit --read-only/--no-read-only flag
+ * always wins. Otherwise, in an interactive terminal the user is prompted (pre-filled from
+ * node_modules detection); in non-interactive mode the node_modules detection is the default.
+ */
+async function resolveReadOnly(options: InitOptions, nodeModulesDefault: boolean): Promise<boolean> {
+  if (typeof options.readOnly === 'boolean') {
+    return options.readOnly;
+  }
+
+  if (!process.stdout.isTTY) {
+    return nodeModulesDefault;
+  }
+
+  const prompt = (await import('prompts')).default;
+  const result = await prompt({
+    type: 'confirm',
+    name: 'readOnly',
+    message: nodeModulesDefault
+      ? 'This folder is under node_modules. Mark the collection as read-only?'
+      : 'Mark the collection as read-only? (its resources cannot be modified)',
+    initial: nodeModulesDefault,
+  });
+
+  return Boolean(result.readOnly);
 }
 
 async function promptForMissing(options: InitOptions): Promise<{
