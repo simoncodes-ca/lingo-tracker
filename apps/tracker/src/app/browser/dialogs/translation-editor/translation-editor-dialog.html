@@ -110,6 +110,38 @@
                 <mat-hint>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTHINT | transloco }}</mat-hint>
               </mat-form-field>
 
+              <!-- Tags -->
+              <mat-form-field appearance="outline" class="full-width tags-field">
+                <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.LABEL | transloco }}</mat-label>
+                <mat-chip-grid #chipGrid [disabled]="isReadOnly()">
+                  @for (tag of tagsList(); track tag) {
+                    <mat-chip-row (removed)="removeTag(tag)">
+                      {{ tag }}
+                      @if (!isReadOnly()) {
+                        <button matChipRemove [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.REMOVETAGX | transloco : { tag }">
+                          <mat-icon>cancel</mat-icon>
+                        </button>
+                      }
+                    </mat-chip-row>
+                  }
+                </mat-chip-grid>
+                <input
+                  [placeholder]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.ADDPLACEHOLDER | transloco"
+                  [matChipInputFor]="chipGrid"
+                  [matChipInputSeparatorKeyCodes]="tagSeparatorKeyCodes"
+                  [matAutocomplete]="tagAuto"
+                  (matChipInputTokenEnd)="addTag($event)"
+                  (input)="onTagInputChange($event)"
+                  autocomplete="off"
+                />
+                <mat-autocomplete #tagAuto="matAutocomplete" (optionSelected)="addTagFromAutocomplete($event)">
+                  @for (suggestion of filteredTagSuggestions(); track suggestion) {
+                    <mat-option [value]="suggestion">{{ suggestion }}</mat-option>
+                  }
+                </mat-autocomplete>
+                <mat-hint>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.HINT | transloco }}</mat-hint>
+              </mat-form-field>
+
               <!-- Similar Translations -->
               <app-similar-translations
                 [results]="similarResources()"

@@ -21,7 +21,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule, type MatChipInputEvent } from '@angular/material/chips';
+import { MatAutocompleteModule, type MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { TextFieldModule } from '@angular/cdk/text-field';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { NotificationService } from '../../../shared/notification';
 import type {
   ResourceSummaryDto,
@@ -45,6 +48,7 @@ import { FolderPicker } from './folder-picker/folder-picker';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, takeUntil, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { normalizeTag } from '@simoncodes-ca/domain';
 
 export interface TranslationEditorDialogData {
   mode: 'create' | 'edit';
@@ -102,6 +106,8 @@ export interface TranslationEditorResult {
     MatSelectModule,
     MatProgressSpinnerModule,
     TextFieldModule,
+    MatChipsModule,
+    MatAutocompleteModule,
     SimilarTranslations,
     FolderPicker,
     TranslocoPipe,
@@ -132,6 +138,10 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   readonly isSearchingSimilar = signal(false);
   readonly baseValueLength = signal(0);
   readonly isLocalesScrolled = signal(false);
+
+  readonly tagSeparatorKeyCodes = [ENTER, COMMA] as const;
+  readonly tagInputText = signal('');
+  readonly tagsList = signal<string[]>([]);
 
   readonly form = new FormGroup({
     key: new FormControl<string>('', {
@@ -184,6 +194,22 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   );
   readonly hasSearchQuery = computed(() => this.baseValueLength() >= 3);
 
+  readonly allTagSuggestions = computed(() => {
+    const seen = new Set<string>();
+    for (const resource of this.browserStore.translations()) {
+      for (const tag of resource.tags ?? []) {
+        seen.add(tag);
+      }
+    }
+    return [...seen].sort();
+  });
+
+  readonly filteredTagSuggestions = computed(() => {
+    const input = this.tagInputText().toLowerCase();
+    const existing = new Set(this.tagsList());
+    return this.allTagSuggestions().filter((t) => !existing.has(t) && (input === '' || t.includes(input)));
+  });
+
   ngOnInit(): void {
     // Initialize folder path from dialog data
     this.selectedFolderPath.set(this.data.folderPath || '');
@@ -198,6 +224,8 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
         baseValue,
         comment,
       });
+
+      this.tagsList.set(this.data.resource.tags ?? []);
 
       this.#originalBaseValue = baseValue;
 
@@ -358,6 +386,31 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     this.selectedFolderPath.set(folder.fullPath);
   }
 
+  addTag(event: MatChipInputEvent): void {
+    const normalized = normalizeTag(event.value);
+    if (normalized && !this.tagsList().includes(normalized)) {
+      this.tagsList.update((tags) => [...tags, normalized]);
+    }
+    event.chipInput?.clear();
+    this.tagInputText.set('');
+  }
+
+  addTagFromAutocomplete(event: MatAutocompleteSelectedEvent): void {
+    const normalized = normalizeTag(event.option.value as string);
+    if (normalized && !this.tagsList().includes(normalized)) {
+      this.tagsList.update((tags) => [...tags, normalized]);
+    }
+    this.tagInputText.set('');
+  }
+
+  removeTag(tag: string): void {
+    this.tagsList.update((tags) => tags.filter((t) => t !== tag));
+  }
+
+  onTagInputChange(event: Event): void {
+    this.tagInputText.set((event.target as HTMLInputElement).value);
+  }
+
   onSimilarResourceClick(result: SearchResultDto): void {
     const fullKey = result.key;
     this.#copyToClipboard(fullKey, this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.KEYCOPIED));
@@ -445,6 +498,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
       key: originalKey,
       baseValue: formValue.baseValue,
       comment: commentValue || undefined,
+      tags: this.tagsList(),
     };
 
     if (hasFolderChanged) {
@@ -493,6 +547,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
       key: fullKey,
       baseValue: formValue.baseValue,
       comment: commentValue || undefined,
+      tags: this.tagsList().length > 0 ? this.tagsList() : undefined,
       baseLocale: this.data.baseLocale,
       translations: filledTranslations.length > 0 ? filledTranslations : undefined,
     };

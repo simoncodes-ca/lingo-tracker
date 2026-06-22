@@ -9,7 +9,7 @@ import { autoTranslateResource } from '../lib/translation/auto-translate-resourc
 import type { TranslationStatus } from '@simoncodes-ca/domain';
 import type { ResourceEntry } from './resource-entry';
 import type { ResourceEntryMetadata } from './resource-entry-metadata';
-import { translocoToICU } from '@simoncodes-ca/domain';
+import { translocoToICU, normalizeTags } from '@simoncodes-ca/domain';
 
 export interface EditResourceOptions {
   key: string;
@@ -103,12 +103,12 @@ export async function editResource(
   // 3. Update Tags
   if (options.tags !== undefined) {
     const currentTags = resourceEntry.tags || [];
-    const newTags = options.tags;
+    const newTags = normalizeTags(options.tags);
     const isDifferent =
       currentTags.length !== newTags.length || !currentTags.every((tag, index) => tag === newTags[index]);
 
     if (isDifferent) {
-      resourceEntry.tags = newTags;
+      resourceEntry.tags = newTags.length > 0 ? newTags : undefined;
       hasChanges = true;
     }
   }

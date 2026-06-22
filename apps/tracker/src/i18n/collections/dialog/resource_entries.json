@@ -99,39 +99,84 @@
   },
   "addButton": {
     "source": "Add",
-    "comment": "Button label to add a locale to the list"
+    "comment": "Button label to add a locale to the list",
+    "es": "Agregar",
+    "fr-ca": "Ajouter",
+    "ru": "Добавить",
+    "ja": "追加",
+    "de": "Hinzufügen"
   },
   "addLocaleLabel": {
     "source": "Add Locale",
-    "comment": "Label for the add locale input field"
+    "comment": "Label for the add locale input field",
+    "es": "Agregar configuración regional",
+    "fr-ca": "Ajouter une langue",
+    "ru": "Добавить локаль",
+    "ja": "ロケールを追加",
+    "de": "Gebietsschema hinzufügen"
   },
   "baseLocaleLocked": {
     "source": "Base locale cannot be changed after creation",
-    "comment": "Tooltip shown on the base locale radio button when in edit mode"
+    "comment": "Tooltip shown on the base locale radio button when in edit mode",
+    "es": "La configuración regional base no puede modificarse después de la creación",
+    "fr-ca": "La langue de base ne peut pas être modifiée après la création",
+    "ru": "Базовая локаль не может быть изменена после создания",
+    "ja": "作成後にベースロケールは変更できません",
+    "de": "Die Basissprache kann nach der Erstellung nicht geändert werden"
   },
   "duplicateLocale": {
     "source": "This locale has already been added",
-    "comment": "Validation error when the user tries to add a locale that is already in the list"
+    "comment": "Validation error when the user tries to add a locale that is already in the list",
+    "es": "Esta configuración regional ya ha sido añadida",
+    "fr-ca": "Cette langue a déjà été ajoutée",
+    "ru": "Эта локаль уже добавлена",
+    "ja": "このロケールはすでに追加されています",
+    "de": "Dieses Gebietsschema wurde bereits hinzugefügt"
   },
   "invalidLocale": {
     "source": "Invalid locale code",
-    "comment": "Validation error shown when an entered locale code is not valid"
+    "comment": "Validation error shown when an entered locale code is not valid",
+    "es": "Código de configuración regional no válido",
+    "fr-ca": "Code de langue invalide",
+    "ru": "Недопустимый код локали",
+    "ja": "無効なロケールコード",
+    "de": "Ungültiger Gebietsschema-Code"
   },
   "localesEmpty": {
     "source": "No locales added yet",
-    "comment": "Empty state message shown when no locales have been added to the list"
+    "comment": "Empty state message shown when no locales have been added to the list",
+    "es": "Aún no se han añadido configuraciones regionales",
+    "fr-ca": "Aucune langue ajoutée pour l'instant",
+    "ru": "Локали ещё не добавлены",
+    "ja": "ロケールはまだ追加されていません",
+    "de": "Noch keine Gebietsschemata hinzugefügt"
   },
   "removeAria": {
-    "source": "Remove locale {{locale}}",
-    "comment": "Aria label for the remove button on each locale row"
+    "source": "Remove locale {locale}",
+    "comment": "Aria label for the remove button on each locale row",
+    "es": "Eliminar la configuración regional {locale}",
+    "fr-ca": "Supprimer la langue {locale}",
+    "ru": "Удалить локаль {locale}",
+    "ja": "ロケール {locale} を削除",
+    "de": "Gebietsschema {locale} entfernen"
   },
   "removeConfirmBody": {
-    "source": "Removing {{locales}} will permanently delete all translation data for those locales. This cannot be undone.",
-    "comment": "Body of the confirmation dialog when removing locales in edit mode"
+    "source": "Removing {locales} will permanently delete all translation data for those locales. This cannot be undone.",
+    "comment": "Body of the confirmation dialog when removing locales in edit mode",
+    "es": "Eliminar {locales} borrará permanentemente todos los datos de traducción para esas configuraciones regionales. Esta acción no se puede deshacer.",
+    "fr-ca": "Supprimer {locales} effacera définitivement toutes les données de traduction pour ces langues. Cette action est irréversible.",
+    "ru": "Удаление {locales} безвозвратно удалит все данные перевода для этих локалей. Это действие нельзя отменить.",
+    "ja": "{locales} を削除すると、それらのロケールのすべての翻訳データが完全に削除されます。この操作は元に戻せません。",
+    "de": "Das Entfernen von {locales} löscht dauerhaft alle Übersetzungsdaten für diese Gebietsschemata. Dies kann nicht rückgängig gemacht werden."
   },
   "removeConfirmTitle": {
     "source": "Remove Locales?",
-    "comment": "Title of the confirmation dialog when removing locales in edit mode"
+    "comment": "Title of the confirmation dialog when removing locales in edit mode",
+    "es": "¿Eliminar configuraciones regionales?",
+    "fr-ca": "Supprimer les langues ?",
+    "ru": "Удалить локали?",
+    "ja": "ロケールを削除しますか？",
+    "de": "Gebietsschemata entfernen?"
   },
   "readOnlyLabel": {
     "source": "Read-only collection",

@@ -66,6 +66,14 @@ interface ResourceEntry {
 }
 ```
 
+**Tag normalization rules** (`libs/domain/src/lib/normalize-tags.ts` is the single source of truth):
+- Lowercased, whitespace replaced with hyphens, non-`[a-z0-9-]` characters stripped
+- Repeated hyphens collapsed; leading/trailing hyphens removed
+- Maximum 50 characters per tag (truncated before cleanup)
+- Duplicates removed (case-insensitive after normalization), first-occurrence wins
+- Tags are coerced on write by `addResource` / `editResource` (core) and on `normalize` (CLI)
+- The Tracker UI chip input normalizes each tag on commit
+
 Real example from `apps/tracker/src/i18n/browser/dialog/deleteResource/resource_entries.json`:
 
 ```json

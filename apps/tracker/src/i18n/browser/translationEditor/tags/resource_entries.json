@@ -1,0 +1,42 @@
+{
+  "label": {
+    "source": "Tags",
+    "comment": "Label for the tags chip input field in the translation editor dialog",
+    "tags": ["browser"],
+    "es": "Etiquetas",
+    "fr-ca": "Étiquettes",
+    "ru": "Теги",
+    "ja": "タグ",
+    "de": "Tags"
+  },
+  "addPlaceholder": {
+    "source": "Add tag…",
+    "comment": "Placeholder text inside the tag chip input in the translation editor dialog",
+    "tags": ["browser"],
+    "es": "Agregar etiqueta…",
+    "fr-ca": "Ajouter une étiquette…",
+    "ru": "Добавить тег…",
+    "ja": "タグを追加…",
+    "de": "Tag hinzufügen…"
+  },
+  "removeTagX": {
+    "source": "Remove {tag}",
+    "comment": "Aria-label for the remove button on a tag chip; {tag} is the tag value",
+    "tags": ["browser"],
+    "es": "Eliminar {tag}",
+    "fr-ca": "Supprimer {tag}",
+    "ru": "Удалить {tag}",
+    "ja": "{tag} を削除",
+    "de": "Entfernen Sie {tag}"
+  },
+  "hint": {
+    "source": "Lowercase, hyphens allowed (e.g. common-ui). Press Enter or comma to add.",
+    "comment": "Hint text below the tags chip input in the translation editor dialog",
+    "tags": ["browser"],
+    "es": "Se permiten minúsculas y guiones (por ejemplo, common-ui). Pulse Intro o una coma para añadir.",
+    "fr-ca": "En minuscules, les traits d'union sont permis (ex. : common-ui). Appuyez sur Entrée ou sur une virgule pour ajouter.",
+    "ru": "Используйте строчные буквы, дефисы разрешены (например, common-ui). Нажмите Enter или запятую для добавления.",
+    "ja": "小文字、ハイフン可（例：common-ui）。Enterキーまたはカンマを押して追加してください。",
+    "de": "Kleinbuchstaben, Bindestriche erlaubt (z. B. common-ui). Zum Hinzufügen die Eingabetaste oder ein Komma drücken."
+  }
+}
