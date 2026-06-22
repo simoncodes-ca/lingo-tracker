@@ -1,5 +1,6 @@
 import { Pipe, type PipeTransform, inject } from '@angular/core';
 import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
+import { escapeRegExp } from '@simoncodes-ca/domain';
 
 @Pipe({
   name: 'highlight',
@@ -19,17 +20,13 @@ export class HighlightPipe implements PipeTransform {
       return this.#sanitizer.bypassSecurityTrustHtml(this.#escapeHtml(text));
     }
 
-    const escapedSearchTerm = this.#escapeRegex(searchTerm);
+    const escapedSearchTerm = escapeRegExp(searchTerm);
     const searchPattern = new RegExp(escapedSearchTerm, 'gi');
     const highlightedText = text.replace(searchPattern, (match) => {
       return `<mark class="search-highlight">${this.#escapeHtml(match)}</mark>`;
     });
 
     return this.#sanitizer.bypassSecurityTrustHtml(highlightedText);
-  }
-
-  #escapeRegex(text: string): string {
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   #escapeHtml(text: string): string {

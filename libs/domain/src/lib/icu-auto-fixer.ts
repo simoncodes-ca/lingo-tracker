@@ -9,6 +9,8 @@
  * @module icu-auto-fixer
  */
 
+import { escapeRegExp } from './escape-regexp';
+
 /**
  * Represents a placeholder extracted from an ICU message
  */
@@ -817,7 +819,7 @@ function reconstructPlaceholder(basePlaceholder: ICUPlaceholder, translationPlac
       const baseName = basePlaceholder.name;
 
       // Create regex to match {translationName} - need to escape special regex chars
-      const escapedTranslationName = translationName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedTranslationName = escapeRegExp(translationName);
       const placeholderRegex = new RegExp(`\\{${escapedTranslationName}\\}`, 'g');
 
       format = format.replace(placeholderRegex, `{${baseName}}`);

@@ -40,7 +40,14 @@ When importing translations from external tools or translators, variable and pla
 Experience compile-time guarantees with generated translation key tokens. This feature ensures that your application uses the correct and valid translation keys, along with type completion, adding an extra layer of confidence to your translations. [Learn more](docs/features/bundle-type-generation.md).
 
 ### CLI Support
-LingoTracker provides a comprehensive CLI with commands to add, edit, delete, and move resources, find similar translations, normalize metadata, generate bundles, import/export in JSON and XLIFF, and validate resources. All commands support both interactive (TTY) and non-interactive (CI) modes.
+LingoTracker provides a comprehensive CLI with commands to add, edit, delete, and move resources, find similar translations, extract help-translation glossaries, normalize metadata, generate bundles, import/export in JSON and XLIFF, and validate resources. All commands support both interactive (TTY) and non-interactive (CI) modes.
+
+### Help Translation Glossary
+Translating online help or documentation? The `glossary` command extracts the UI terms mentioned in a block of help text and emits a JSON glossary of their translations across every locale — so help translators reuse the exact terminology already shipped in your app. Feed it a file, a snippet, or piped stdin. [Learn more](docs/features/glossary.md).
+
+```bash
+lingo-tracker glossary --input help-page.md
+```
 
 ### CI/CD Validation
 The `validate` command acts as a quality gate for your release pipeline — it exits with a non-zero code if any resource is `new`, `stale`, or untranslated. Add it to GitHub Actions, GitLab CI, or any build system to catch translation gaps before they ship. See the [validation docs](docs/features/validate.md) for CI configuration examples.

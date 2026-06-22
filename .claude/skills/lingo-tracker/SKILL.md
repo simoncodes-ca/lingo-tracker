@@ -140,6 +140,13 @@ npx lingo-tracker normalize --collection trackerResources
 npx lingo-tracker validate --collection trackerResources
 ```
 
+### Extract a help-translation glossary
+Pull the translations of UI terms mentioned in a block of help/doc text, so help translators reuse the app's existing terminology. Outputs a JSON glossary (all locales per matched term).
+```bash
+npx lingo-tracker glossary --input help-page.md
+npx lingo-tracker glossary --text "Click Save in Settings" --stdout
+```
+
 ## Code Patterns
 
 For template and TypeScript patterns (pipe usage, component setup, imperative translation, TranslocoPipe vs TranslocoModule), read:
