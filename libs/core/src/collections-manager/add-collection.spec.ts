@@ -79,6 +79,21 @@ describe('addCollection', () => {
     expect(writtenConfig.collections.diffs.locales).toBeUndefined();
   });
 
+  it('persists readOnly when true and omits it when false', () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ...baseConfig }, null, 2) as SafeAny);
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
+
+    addCollection('ro', { translationsFolder: './a', readOnly: true }, { cwd: '/test' });
+    addCollection('rw', { translationsFolder: './b', readOnly: false }, { cwd: '/test' });
+
+    const calls = vi.mocked(fs.writeFileSync).mock.calls;
+    const roConfig = JSON.parse(calls[0][1] as string);
+    const rwConfig = JSON.parse(calls[1][1] as string);
+
+    expect(roConfig.collections.ro.readOnly).toBe(true);
+    expect(rwConfig.collections.rw.readOnly).toBeUndefined();
+  });
+
   it('throws when collection already exists', () => {
     const config = {
       ...baseConfig,

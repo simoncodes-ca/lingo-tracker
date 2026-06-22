@@ -49,6 +49,8 @@ program
   .option('--import-folder <path>', 'dist/lingo-import')
   .option('--base-locale <locale>', 'en')
   .option('--locales <locales...>', 'supported locales')
+  .option('--read-only', 'Mark the collection as read-only (its resources cannot be modified)')
+  .option('--no-read-only', 'Force the collection writable, overriding node_modules auto-detection')
   .action(async (options) => {
     const { addCollectionCommand } = await import('./add-collection/add-collection');
     await addCollectionCommand(options);

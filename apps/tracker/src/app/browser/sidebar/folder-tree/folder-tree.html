@@ -24,7 +24,7 @@
       mat-icon-button
       type="button"
       (click)="onAddFolderButtonClick()"
-      [disabled]="store.isDisabled()"
+      [disabled]="store.effectiveDisabled()"
       [attr.aria-label]="TOKENS.BROWSER.FOLDERTREE.ADDFOLDERARIALABEL | transloco"
       [matTooltip]="TOKENS.BROWSER.FOLDERTREE.ADDFOLDERTOOLTIP | transloco"
       class="add-folder-button"
@@ -82,6 +82,7 @@
           [selectedPath]="store.currentFolderPath()"
           [showNestedResources]="showNestedResources()"
           [disabled]="store.isDisabled()"
+          [readOnly]="store.isReadOnly()"
           [isDeleting]="store.deletingFolderPath() === folder.fullPath"
           [activeDragData]="activeDragData()"
           (folderClick)="onFolderClick($event)"

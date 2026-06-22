@@ -501,3 +501,26 @@
   .ring { animation: none; }
   .collection-card { animation: none; }
 }
+
+// ---------------------------------------------------------------------------
+// Read-only badge
+// ---------------------------------------------------------------------------
+.readonly-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--spacing-2);
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm, 4px);
+  background-color: color-mix(in srgb, var(--color-warn, #b26a00) 12%, transparent);
+  color: var(--color-warn, #b26a00);
+  font-size: var(--font-size-xs, 0.75rem);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+
+  .readonly-badge-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}

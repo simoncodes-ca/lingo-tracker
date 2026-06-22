@@ -64,6 +64,7 @@ export function withItemActions() {
             folderPath,
             availableLocales: browserStore.availableLocales(),
             baseLocale: browserStore.baseLocale(),
+            readOnly: browserStore.isReadOnly(),
           };
 
           const dialogRef = dialog.open(TranslationEditorDialog, {

@@ -1,6 +1,6 @@
 import prompts from 'prompts';
 import { addLocaleToCollection } from '@simoncodes-ca/core';
-import { loadConfiguration, promptForCollection, resolveCollection, ConsoleFormatter } from '../utils';
+import { loadConfiguration, promptForCollection, resolveWritableCollection, ConsoleFormatter } from '../utils';
 
 export interface AddLocaleOptions {
   collection?: string;
@@ -15,7 +15,7 @@ export async function addLocaleCommand(options: AddLocaleOptions): Promise<void>
   const collectionName = await promptForCollection(config, options.collection);
   if (!collectionName) return;
 
-  const collection = resolveCollection(collectionName, config, cwd);
+  const collection = resolveWritableCollection(collectionName, config, cwd);
   if (!collection) return;
 
   let locale = options.locale;

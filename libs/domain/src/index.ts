@@ -9,3 +9,4 @@ export * from './lib/transloco-to-icu';
 export * from './lib/validation-utils';
 export * from './lib/normalize-transloco-syntax';
 export * from './lib/icu-classifier';
+export * from './lib/node-modules';

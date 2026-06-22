@@ -29,6 +29,13 @@
       </span>
     </div>
 
+    @if (isReadOnly()) {
+      <div class="readonly-banner" role="status">
+        <mat-icon class="readonly-icon">lock</mat-icon>
+        <span class="readonly-text">{{ TOKENS.BROWSER.TRANSLATIONEDITOR.READONLYNOTICE | transloco }}</span>
+      </div>
+    }
+
     @if (errorMessage()) {
       <div class="error-banner" role="alert">
         <mat-icon class="error-icon">error</mat-icon>
@@ -171,7 +178,7 @@
         </mat-tab>
 
         <!-- ───────────────────────────── Tab 3: Change Location ───────────────────────────── -->
-        <mat-tab [label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAB.CHANGELOCATION | transloco">
+        <mat-tab [label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAB.CHANGELOCATION | transloco" [disabled]="isReadOnly()">
           <div class="tab-panel tab-panel--location">
             <!-- Inline description -->
             <p class="location-tab-hint">
@@ -205,20 +212,22 @@
     >
       {{ TOKENS.COMMON.ACTIONS.CANCEL | transloco }}
     </button>
-    <button
-      mat-raised-button
-      color="primary"
-      type="button"
-      (click)="onSubmit()"
-      [disabled]="form.invalid || isSubmitting()"
-      class="submit-button"
-    >
-      @if (isSubmitting()) {
-        <mat-spinner diameter="20" class="submit-spinner"></mat-spinner>
-        {{ TOKENS.BROWSER.TRANSLATIONEDITOR.SAVING | transloco }}
-      } @else {
-        {{ saveButtonLabel() | transloco }}
-      }
-    </button>
+    @if (!isReadOnly()) {
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="form.invalid || isSubmitting()"
+        class="submit-button"
+      >
+        @if (isSubmitting()) {
+          <mat-spinner diameter="20" class="submit-spinner"></mat-spinner>
+          {{ TOKENS.BROWSER.TRANSLATIONEDITOR.SAVING | transloco }}
+        } @else {
+          {{ saveButtonLabel() | transloco }}
+        }
+      </button>
+    }
   </mat-dialog-actions>
 </div>

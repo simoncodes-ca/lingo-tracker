@@ -522,6 +522,43 @@ describe('BrowserStore', () => {
     });
   });
 
+  describe('Read-only State', () => {
+    it('should default to not read-only', () => {
+      expect(store.isReadOnly()).toBe(false);
+      expect(store.effectiveDisabled()).toBe(false);
+    });
+
+    it('effectiveDisabled is true when either isDisabled or isReadOnly is true', () => {
+      store.setReadOnly(true);
+      expect(store.effectiveDisabled()).toBe(true);
+
+      store.setReadOnly(false);
+      store.setDisabled(true);
+      expect(store.effectiveDisabled()).toBe(true);
+    });
+
+    it('persists read-only across clearSearch (does not get cleared like isDisabled)', () => {
+      store.setReadOnly(true);
+      store.setSearchQuery('something');
+      expect(store.isDisabled()).toBe(true);
+
+      store.clearSearch();
+
+      // Transient disabled is cleared, but read-only remains.
+      expect(store.isDisabled()).toBe(false);
+      expect(store.isReadOnly()).toBe(true);
+      expect(store.effectiveDisabled()).toBe(true);
+    });
+
+    it('sets read-only from setSelectedCollection params', () => {
+      store.setSelectedCollection({ collectionName: 'vendor', locales: ['en'], readOnly: true });
+      expect(store.isReadOnly()).toBe(true);
+
+      store.setSelectedCollection({ collectionName: 'main', locales: ['en'] });
+      expect(store.isReadOnly()).toBe(false);
+    });
+  });
+
   describe('Reset', () => {
     it('should reset store to initial state', async () => {
       vi.spyOn(apiService, 'getCacheStatus').mockReturnValue(of(mockCacheReady));

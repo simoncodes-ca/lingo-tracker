@@ -32,7 +32,7 @@
       (keydown.delete)="onDeleteKeydown($event)"
       cdkDrag
       [cdkDragData]="dragData()"
-      [cdkDragDisabled]="disabled()"
+      [cdkDragDisabled]="mutationDisabled()"
       (cdkDragStarted)="onDragStarted()"
       (cdkDragEnded)="onDragEnded()"
     >
@@ -44,7 +44,7 @@
     <button
       mat-icon-button
       class="delete-button"
-      [disabled]="disabled()"
+      [disabled]="mutationDisabled()"
       (click)="onDeleteClick($event)"
       [attr.aria-label]="TOKENS.BROWSER.FOLDERNODE.DELETEFOLDERARIALABELX | transloco : { name: folder().name }"
     >
@@ -73,6 +73,7 @@
           [selectedPath]="selectedPath()"
           [showNestedResources]="showNestedResources()"
           [disabled]="disabled()"
+          [readOnly]="readOnly()"
           [activeDragData]="activeDragData()"
           (folderClick)="folderClick.emit($event)"
           (loadFolder)="loadFolder.emit($event)"

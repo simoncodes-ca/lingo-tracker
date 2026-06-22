@@ -132,5 +132,35 @@
   "removeConfirmTitle": {
     "source": "Remove Locales?",
     "comment": "Title of the confirmation dialog when removing locales in edit mode"
+  },
+  "readOnlyLabel": {
+    "source": "Read-only collection",
+    "comment": "Checkbox label in the add/edit collection dialog.",
+    "tags": ["collections"],
+    "es": "Read-only collection",
+    "fr-ca": "Read-only collection",
+    "ru": "Read-only collection",
+    "ja": "Read-only collection",
+    "de": "Read-only collection"
+  },
+  "readOnlyHint": {
+    "source": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "comment": "Hint under the read-only checkbox in the collection dialog.",
+    "tags": ["collections"],
+    "es": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "fr-ca": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "ru": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "ja": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "de": "Read-only collections cannot have their resources modified (add/edit/delete/move)."
+  },
+  "readOnlyNodeModulesHint": {
+    "source": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "comment": "Hint shown when the chosen translations folder is under node_modules.",
+    "tags": ["collections"],
+    "es": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "fr-ca": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "ru": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "ja": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "de": "This folder is under node_modules, so it is read-only by default. You can override this."
   }
 }

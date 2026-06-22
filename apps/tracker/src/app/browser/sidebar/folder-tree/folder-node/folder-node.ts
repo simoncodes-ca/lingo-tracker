@@ -48,8 +48,11 @@ export class FolderNode {
   /** Whether nested resources mode is active */
   showNestedResources = input<boolean>(false);
 
-  /** Whether the tree is disabled */
+  /** Whether the tree is disabled (transient: search/operation in progress). Blocks navigation too. */
   disabled = input<boolean>(false);
+
+  /** Whether the collection is read-only. Blocks mutation (drag/drop/delete) but NOT navigation. */
+  readOnly = input<boolean>(false);
 
   /** Emitted when a folder is clicked */
   folderClick = output<FolderNodeDto>();
@@ -79,6 +82,9 @@ export class FolderNode {
   activeDragData = input<DragData | null>(null);
 
   readonly TOKENS = TRACKER_TOKENS;
+
+  /** Mutation affordances (drag, drop, delete) are disabled when the tree is busy OR read-only. */
+  readonly mutationDisabled = computed(() => this.disabled() || this.readOnly());
 
   /** Timer for auto-expand on hover */
   #expandTimer: ReturnType<typeof setTimeout> | null = null;
@@ -309,6 +315,8 @@ export class FolderNode {
    * Predicate function for CDK drop list to determine if drop is allowed.
    */
   canDrop = (drag: CdkDrag<DragData>): boolean => {
+    if (this.readOnly()) return false;
+
     const dragData = drag.data;
     if (!dragData) return false;
 

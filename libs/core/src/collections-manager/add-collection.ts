@@ -47,6 +47,11 @@ export function addCollection(
       minimalCollection.locales = collection.locales;
     }
 
+    // Persist read-only only when set, keeping writable collections clean.
+    if (collection.readOnly) {
+      minimalCollection.readOnly = true;
+    }
+
     return {
       ...config,
       collections: {

@@ -23,7 +23,7 @@ vi.mock('../utils', () => ({
   loadConfiguration: vi.fn(),
   isInteractiveTerminal: vi.fn(() => false),
   promptForCollection: vi.fn(),
-  resolveCollection: vi.fn(),
+  resolveWritableCollection: vi.fn(),
   buildSummaryPath: vi.fn(() => '/tmp/lingo-tracker-import-summary-test.md'),
   ConsoleFormatter: {
     error: vi.fn((message: string) => console.log(`[error] ${message}`)),
@@ -52,7 +52,7 @@ vi.mock('../utils', () => ({
 
 // Import the mocked functions
 import { importFromJson, importFromXliff, detectImportFormat } from '@simoncodes-ca/core';
-import { loadConfiguration, promptForCollection, resolveCollection, ConsoleFormatter } from '../utils';
+import { loadConfiguration, promptForCollection, resolveWritableCollection, ConsoleFormatter } from '../utils';
 
 describe('import-cmd', () => {
   const baseConfig = {
@@ -103,7 +103,7 @@ describe('import-cmd', () => {
 
     // Default collection mocks — most tests use a single 'default' collection
     vi.mocked(promptForCollection).mockResolvedValue('default');
-    vi.mocked(resolveCollection).mockReturnValue({
+    vi.mocked(resolveWritableCollection).mockReturnValue({
       name: 'default',
       config: { translationsFolder: 'src/translations' },
       translationsFolderPath: '/test/project/src/translations',
@@ -376,7 +376,7 @@ describe('import-cmd', () => {
         cwd: '/test/project',
       });
       vi.mocked(promptForCollection).mockResolvedValue('admin');
-      vi.mocked(resolveCollection).mockReturnValue({
+      vi.mocked(resolveWritableCollection).mockReturnValue({
         name: 'admin',
         config: { translationsFolder: 'src/admin-translations' },
         translationsFolderPath: '/test/project/src/admin-translations',
@@ -428,8 +428,8 @@ describe('import-cmd', () => {
       expect(importFromJson).not.toHaveBeenCalled();
     });
 
-    it('should return early when resolveCollection returns null', async () => {
-      vi.mocked(resolveCollection).mockReturnValue(null);
+    it('should return early when resolveWritableCollection returns null', async () => {
+      vi.mocked(resolveWritableCollection).mockReturnValue(null);
 
       await importCommand({ source: '/test/import.json', locale: 'es', format: 'json' });
 

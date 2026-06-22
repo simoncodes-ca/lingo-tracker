@@ -88,5 +88,65 @@
       "baseChecksum": "4f46bf6697514d7744218c4a5184b8b0",
       "status": "translated"
     }
+  },
+  "readOnlyBadge": {
+    "en": {
+      "checksum": "d8bd6e60adcc01ce20f509ea6800de8f"
+    },
+    "es": {
+      "checksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "status": "new"
+    },
+    "ru": {
+      "checksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "status": "new"
+    },
+    "ja": {
+      "checksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "status": "new"
+    },
+    "de": {
+      "checksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
+      "status": "new"
+    }
+  },
+  "readOnlyTooltip": {
+    "en": {
+      "checksum": "ee180bd986e2dab87c25b037339bfd5c"
+    },
+    "es": {
+      "checksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "baseChecksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "baseChecksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "status": "new"
+    },
+    "ru": {
+      "checksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "baseChecksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "status": "new"
+    },
+    "ja": {
+      "checksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "baseChecksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "status": "new"
+    },
+    "de": {
+      "checksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "baseChecksum": "ee180bd986e2dab87c25b037339bfd5c",
+      "status": "new"
+    }
   }
 }

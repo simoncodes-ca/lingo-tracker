@@ -138,10 +138,12 @@ lingo-tracker add-collection [options]
 - `--import-folder <path>` - Override global import folder for this collection
 - `--base-locale <locale>` - Override global base locale
 - `--locales <locales...>` - Override global locales list
+- `--read-only` - Mark the collection as read-only (its resources cannot be modified)
+- `--no-read-only` - Force the collection writable, overriding `node_modules` auto-detection
 
 **Examples:**
 
-Interactive mode (prompts for collection details):
+Interactive mode (prompts for collection details, including a read-only confirmation):
 ```bash
 lingo-tracker add-collection
 ```
@@ -161,11 +163,26 @@ lingo-tracker add-collection \
   --base-locale en-GB
 ```
 
+Register a component library's collection as read-only:
+```bash
+lingo-tracker add-collection \
+  --collection-name DesignSystem \
+  --translations-folder node_modules/@acme/design-system/i18n \
+  --read-only
+```
+
 **Notes:**
 - Requires an existing `.lingo-tracker.json` configuration file (run `init` first)
 - Reuses global defaults; only saves overrides when they differ
 - Will refuse to add a collection if the name already exists
 - Only persists per-collection settings that differ from global configuration
+
+**Read-only collections:**
+- A collection can be marked read-only via the `readOnly` flag on its config entry. When `true`, the CLI, API, and web UI refuse to modify its resources — `add-resource`, `edit-resource`, `delete-resource`, `move`, `normalize`, `import`, `add-locale`, `remove-locale`, and `translate-locale` are all blocked (the CLI exits with a non-zero status so CI fails). Read-only commands (`bundle`, `export`, `validate`, `find-similar`, `glossary`) are unaffected.
+- `normalize --all` is the one exception: it **skips** read-only collections with an informational message and does not fail the run (so bulk normalization stays green even when a vendored read-only collection is present). Targeting a read-only collection explicitly (`normalize --collection <name>`) still fails.
+- The lock protects a collection's **resources**, not its registration: you can still `delete-collection` (unregister it) and edit its config entry — including turning `readOnly` off.
+- When the `--translations-folder` is under `node_modules`, read-only defaults to `true` (in interactive mode the prompt is pre-checked; in non-interactive mode pass `--no-read-only` to override). This is convenient for component-library collections vendored into a consumer repo, which should not be edited locally.
+- The stored `readOnly` flag is the single source of truth. A `node_modules` path only sets the default at add time — it never forces read-only at runtime, and existing collections are never auto-migrated.
 
 ---
 
@@ -1780,6 +1797,10 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
     "Admin": {
       "translationsFolder": "apps/admin/src/assets/i18n",
       "baseLocale": "en-GB"
+    },
+    "DesignSystem": {
+      "translationsFolder": "node_modules/@acme/design-system/i18n",
+      "readOnly": true
     }
   }
 }
@@ -1787,6 +1808,7 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
 
 - **Global fields** (`exportFolder`, `importFolder`, `baseLocale`, `locales`, `tokenCasing`) apply to all collections and bundles by default
 - **Per-collection fields** can override global settings for specific collections
+- **`readOnly`** (optional, per-collection) - When `true`, resource mutations to this collection are blocked across the CLI, API, and UI. The collection can still be unregistered and its config entry edited. Defaults to `true` for `node_modules` paths when added via `add-collection`. See [add-collection](#add-collection) for details.
 - **`tokenCasing`** (optional) - Controls the casing style for generated type token keys. Accepts `"upperCase"` (default, SCREAMING_SNAKE_CASE) or `"camelCase"`. Can be set globally or per-bundle. See [Bundle Type Generation](./features/bundle-type-generation.md) for details. Precedence: CLI flag `--token-casing` > per-bundle config > global config > default (`"upperCase"`)
 
 ---
