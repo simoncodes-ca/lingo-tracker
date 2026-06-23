@@ -1,3 +1,19 @@
+# [0.15.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.4...v0.15.0) (2026-06-23)
+
+
+### Bug Fixes
+
+* **cli:** timestamp summary filenames to prevent overwrite across runs ([5fbb7d4](https://github.com/simoncodes-ca/lingo-tracker/commit/5fbb7d4de68e2a3c8660ec87853a4e3d1faeee94))
+* **cli:** write import/export summary files to OS temp dir ([7440a81](https://github.com/simoncodes-ca/lingo-tracker/commit/7440a8172fb11fac612098a03ece5154f23f8cb9)), closes [#56](https://github.com/simoncodes-ca/lingo-tracker/issues/56)
+
+
+### Features
+
+* **cli:** add glossary command for help-translation extraction ([6ddd6e6](https://github.com/simoncodes-ca/lingo-tracker/commit/6ddd6e686bcb7ad785c403adb83103a53f8c8e9b))
+* **collections:** add read-only flag to block resource mutations across CLI, API, and UI ([accfbc7](https://github.com/simoncodes-ca/lingo-tracker/commit/accfbc73e86d667afb9ab52e195ad95a8b306aa9))
+* **core:** add collection level inheritable tags ([c0654dd](https://github.com/simoncodes-ca/lingo-tracker/commit/c0654dd31407407af48fee160f49c0f2685212b7))
+* **tracker:** add ability to edit tags and few small fixes ([e768f81](https://github.com/simoncodes-ca/lingo-tracker/commit/e768f8129f934fe986f3914d9e1c0b588aa962c1))
+
 ## [0.14.4](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.3...v0.14.4) (2026-05-21)
 
 
