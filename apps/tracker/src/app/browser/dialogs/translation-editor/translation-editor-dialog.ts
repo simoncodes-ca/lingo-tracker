@@ -23,6 +23,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule, type MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteModule, type MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { NotificationService } from '../../../shared/notification';
@@ -111,6 +112,7 @@ export interface TranslationEditorResult {
     SimilarTranslations,
     FolderPicker,
     TranslocoPipe,
+    MatTooltipModule,
   ],
 })
 export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit {
@@ -142,6 +144,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   readonly tagSeparatorKeyCodes = [ENTER, COMMA] as const;
   readonly tagInputText = signal('');
   readonly tagsList = signal<string[]>([]);
+  readonly inheritedTagsList = computed(() => this.data.resource?.inheritedTags ?? []);
 
   readonly form = new FormGroup({
     key: new FormControl<string>('', {
@@ -206,7 +209,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
 
   readonly filteredTagSuggestions = computed(() => {
     const input = this.tagInputText().toLowerCase();
-    const existing = new Set(this.tagsList());
+    const existing = new Set([...this.tagsList(), ...this.inheritedTagsList()]);
     return this.allTagSuggestions().filter((t) => !existing.has(t) && (input === '' || t.includes(input)));
   });
 
@@ -404,6 +407,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   }
 
   removeTag(tag: string): void {
+    if (this.inheritedTagsList().includes(tag)) return;
     this.tagsList.update((tags) => tags.filter((t) => t !== tag));
   }
 

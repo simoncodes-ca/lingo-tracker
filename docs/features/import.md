@@ -56,6 +56,7 @@ Different import workflows require different approaches. The `--strategy` option
 - Preserves existing base values (warns if source differs)
 - Does NOT create new resources (skips missing resources; counted in Resources Skipped, not an error)
 - Does NOT update comments or tags by default
+- Collection-level inherited tags are **not** stored in bundle files — they re-apply automatically based on the destination collection's own config after import
 
 **Typical Workflow**:
 1. Export resources with status `new,stale` to XLIFF

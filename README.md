@@ -53,7 +53,7 @@ lingo-tracker glossary --input help-page.md
 The `validate` command acts as a quality gate for your release pipeline — it exits with a non-zero code if any resource is `new`, `stale`, or untranslated. Add it to GitHub Actions, GitLab CI, or any build system to catch translation gaps before they ship. See the [validation docs](docs/features/validate.md) for CI configuration examples.
 
 ### Flexibility
-Import and export your resource data in JSON and XLIFF 1.2 formats. Use tags to segment resources, filter exports by status or locale, and configure multiple bundles with pattern matching and collection merging strategies. LingoTracker gives you complete control over how you manage and bundle resources for your application.
+Import and export your resource data in JSON and XLIFF 1.2 formats. Use tags to segment resources, filter exports by status or locale, and configure multiple bundles with pattern matching and collection merging strategies. Define **collection-level tags** in your collection configuration to have every resource in a collection automatically inherit those tags — making cross-collection export filtering effortless. LingoTracker gives you complete control over how you manage and bundle resources for your application.
 
 ## Get Started
 

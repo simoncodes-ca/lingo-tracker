@@ -15,9 +15,9 @@
 
   <div class="header-spacer"></div>
 
-  @if (tags().length) {
+  @if (tags().length || inheritedTags().length) {
     <div class="header-tags">
-      <app-tag-list [tags]="tags()" />
+      <app-tag-list [tags]="tags()" [inheritedTags]="inheritedTags()" />
     </div>
   }
 

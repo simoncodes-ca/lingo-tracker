@@ -114,6 +114,11 @@
               <mat-form-field appearance="outline" class="full-width tags-field">
                 <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.LABEL | transloco }}</mat-label>
                 <mat-chip-grid #chipGrid [disabled]="isReadOnly()">
+                  @for (tag of inheritedTagsList(); track tag) {
+                    <mat-chip-row class="chip--inherited" [matTooltip]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.INHERITEDTOOLTIP | transloco" matTooltipPosition="above" [removable]="false">
+                      {{ tag }}
+                    </mat-chip-row>
+                  }
                   @for (tag of tagsList(); track tag) {
                     <mat-chip-row (removed)="removeTag(tag)">
                       {{ tag }}

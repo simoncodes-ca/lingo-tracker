@@ -29,6 +29,16 @@
     "ja": "{tag} を削除",
     "de": "Entfernen Sie {tag}"
   },
+  "inheritedTooltip": {
+    "source": "Inherited from collection",
+    "comment": "Tooltip on a tag chip that is inherited from the collection config and cannot be removed on the resource",
+    "tags": ["browser"],
+    "es": "Heredado de la colección",
+    "fr-ca": "Hérité de la collection",
+    "ru": "Унаследовано от коллекции",
+    "ja": "コレクションから継承",
+    "de": "Von der Sammlung geerbt"
+  },
   "hint": {
     "source": "Lowercase, hyphens allowed (e.g. common-ui). Press Enter or comma to add.",
     "comment": "Hint text below the tags chip input in the translation editor dialog",

@@ -116,6 +116,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
   const allCollections = Object.entries(config.collections || {}).map(([name, col]) => ({
     name,
     path: col.translationsFolder,
+    tags: col.tags,
   }));
 
   const collectionsToProcess = allCollections.filter((c) => !collectionNames || collectionNames.includes(c.name));
@@ -151,6 +152,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     collectionsToProcess.map((c) => ({
       name: c.name,
       path: path.resolve(cwd, c.path),
+      tags: c.tags,
     })),
   );
 

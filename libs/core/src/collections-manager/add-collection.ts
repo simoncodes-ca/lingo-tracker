@@ -1,3 +1,4 @@
+import { normalizeTags } from '@simoncodes-ca/domain';
 import type { LingoTrackerCollection } from '../config/lingo-tracker-collection';
 import { updateConfig } from '../lib/config/config-file-operations';
 import { ErrorMessages } from '../lib/errors/error-messages';
@@ -50,6 +51,11 @@ export function addCollection(
     // Persist read-only only when set, keeping writable collections clean.
     if (collection.readOnly) {
       minimalCollection.readOnly = true;
+    }
+
+    const normalizedTags = normalizeTags(collection.tags ?? []);
+    if (normalizedTags.length > 0) {
+      minimalCollection.tags = normalizedTags;
     }
 
     return {

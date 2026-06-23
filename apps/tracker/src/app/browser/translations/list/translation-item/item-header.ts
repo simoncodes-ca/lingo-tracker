@@ -106,6 +106,9 @@ export class TranslationItemHeader {
   /** Tags derived from the translation input */
   readonly tags = computed(() => this.translation().tags ?? []);
 
+  /** Tags inherited from the parent collection */
+  readonly inheritedTags = computed(() => this.translation().inheritedTags ?? []);
+
   /** Whether this specific item is currently being auto-translated */
   readonly isTranslating = computed(() => this.#listStore.isTranslating(this.translation().key));
 

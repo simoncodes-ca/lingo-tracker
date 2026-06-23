@@ -13,6 +13,7 @@ export interface FlatResource {
   readonly key: string;
   readonly value: string;
   readonly tags?: string[];
+  readonly collectionTags?: string[];
 }
 
 /**
@@ -36,6 +37,7 @@ export function loadCollectionResources(
   locale: string,
   baseLocale: string,
   cache?: Map<string, ResourceEntries>,
+  collectionTags?: string[],
 ): FlatResource[] {
   const resources: FlatResource[] = [];
 
@@ -71,6 +73,7 @@ export function loadCollectionResources(
             key: fullKey,
             value,
             tags: entry.tags,
+            collectionTags,
           });
         }
       }

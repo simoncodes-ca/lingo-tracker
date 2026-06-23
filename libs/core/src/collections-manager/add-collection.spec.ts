@@ -177,4 +177,26 @@ describe('addCollection', () => {
       newOne: { translationsFolder: './new' },
     });
   });
+
+  it('persists normalized tags when provided', () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ...baseConfig }, null, 2) as SafeAny);
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
+
+    addCollection('tagged', { translationsFolder: './t', tags: ['Team X', 'feature-a', 'Team X'] }, { cwd: '/test' });
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+    const writtenConfig = JSON.parse(writeCall[1] as string);
+    expect(writtenConfig.collections.tagged.tags).toEqual(['team-x', 'feature-a']);
+  });
+
+  it('omits tags field when tags array is empty', () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ...baseConfig }, null, 2) as SafeAny);
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
+
+    addCollection('noTags', { translationsFolder: './t', tags: [] }, { cwd: '/test' });
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+    const writtenConfig = JSON.parse(writeCall[1] as string);
+    expect(writtenConfig.collections.noTags.tags).toBeUndefined();
+  });
 });

@@ -186,6 +186,57 @@ lingo-tracker add-collection \
 
 ---
 
+### edit-collection
+
+Edit an existing collection's configuration. Currently supports managing collection-level tags that are inherited by all resources in the collection.
+
+**Usage:**
+
+```bash
+lingo-tracker edit-collection <name> [options]
+```
+
+**Options:**
+
+- `--add-tag <tag>` - Add a tag to the collection's tag list (repeatable, normalized automatically)
+- `--remove-tag <tag>` - Remove a tag from the collection's tag list (repeatable)
+- `--set-tags <a,b,c>` - Replace the entire tag list with a comma-separated set; pass `""` to clear all tags (mutually exclusive with `--add-tag`/`--remove-tag`)
+
+**Examples:**
+
+Add a tag:
+```bash
+lingo-tracker edit-collection myApp --add-tag team-x
+```
+
+Remove a tag:
+```bash
+lingo-tracker edit-collection myApp --remove-tag team-x
+```
+
+Add multiple tags at once:
+```bash
+lingo-tracker edit-collection myApp --add-tag team-x --add-tag mobile
+```
+
+Replace all tags:
+```bash
+lingo-tracker edit-collection myApp --set-tags "team-x,mobile,legal"
+```
+
+Clear all tags:
+```bash
+lingo-tracker edit-collection myApp --set-tags ""
+```
+
+**Notes:**
+- `--set-tags` and `--add-tag`/`--remove-tag` are mutually exclusive
+- Tags are normalized automatically (lowercase, hyphens, max 50 chars)
+- Collection-level tags are inherited by every resource in the collection at read time; they are not written into `resource_entries.json` files
+- These tags are respected by `export --tags`, bundle filtering, and the Tracker UI
+
+---
+
 ### delete-collection
 
 Delete a translation collection from the project.
@@ -1930,6 +1981,8 @@ jobs:
 - Use tags to organize related resources: `--tags "ui,buttons,dialogs"`
 - Tags can be used for filtering during export/import operations
 - Tags are comma-separated and stored in metadata
+- For cross-collection tagging, use **collection-level tags** via `edit-collection --add-tag <tag>` — every resource in the collection inherits the tag without modifying individual `resource_entries.json` files
+- Collection-level tags are reflected in `export --tags`, bundle filtering, and the Tracker UI
 
 ### Working with Multiple Collections
 

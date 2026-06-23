@@ -117,7 +117,7 @@ export class ResourcesController {
         dto.key.split('.').slice(0, -1).join('.'),
       );
 
-      const resource = mapResourceEntryToSummary(result.entry);
+      const resource = mapResourceEntryToSummary(result.entry, collection.tags);
 
       return {
         resource,
@@ -439,7 +439,7 @@ export class ResourcesController {
           this.#cacheService.addResourceToCache(decodedCollectionName, result.entry, oldFolderPath);
         }
 
-        resourceDto = mapResourceEntryToSummary(result.entry);
+        resourceDto = mapResourceEntryToSummary(result.entry, collection.tags);
       }
 
       return {
@@ -553,7 +553,7 @@ export class ResourcesController {
 
       // If no path specified, return full tree
       if (!path || path.trim() === '') {
-        const treeDto = mapResourceTreeToDto(cachedTree);
+        const treeDto = mapResourceTreeToDto(cachedTree, collection.tags);
         if (responseObj) {
           responseObj.status(HttpStatus.OK).json(treeDto);
           return treeDto;
@@ -568,7 +568,7 @@ export class ResourcesController {
         throw new NotFoundException(`Path "${path}" not found in collection tree`);
       }
 
-      const treeDto = mapResourceTreeToDto(subtree);
+      const treeDto = mapResourceTreeToDto(subtree, collection.tags);
 
       if (isIncludeNested) {
         const nestedResources = extractResourcesRecursively(subtree);
@@ -741,7 +741,7 @@ export class ResourcesController {
       // Check if results were limited
       const limited = searchResults.length > maxResults;
       const coreResults = limited ? searchResults.slice(0, maxResults) : searchResults;
-      const results = mapSearchResultsToDto(coreResults);
+      const results = mapSearchResultsToDto(coreResults, collection.tags);
 
       return {
         query: dto.query,

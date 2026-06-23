@@ -15,5 +15,11 @@
     font-family: var(--font-family-mono);
     background: color-mix(in srgb, var(--color-primary) 25%, transparent);
     color: var(--color-text-primary);
+
+    &--inherited {
+      background: color-mix(in srgb, var(--color-secondary, var(--color-primary)) 15%, transparent);
+      border: 1px dashed color-mix(in srgb, var(--color-primary) 40%, transparent);
+      cursor: default;
+    }
   }
 }

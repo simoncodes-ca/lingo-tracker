@@ -11,3 +11,4 @@ export * from './lib/normalize-transloco-syntax';
 export * from './lib/icu-classifier';
 export * from './lib/node-modules';
 export * from './lib/normalize-tags';
+export * from './lib/effective-tags';
