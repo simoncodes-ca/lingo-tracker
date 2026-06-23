@@ -1,3 +1,4 @@
+import { normalizeTags } from '@simoncodes-ca/domain';
 import type { LingoTrackerCollection } from '../config/lingo-tracker-collection';
 import { createConfigFileOperations, updateConfig } from '../lib/config/config-file-operations';
 import { ErrorMessages } from '../lib/errors/error-messages';
@@ -94,6 +95,11 @@ export async function updateCollection(
     // Persist read-only only when set; passing false (or omitting) clears the flag, making the collection writable.
     if (collection.readOnly) {
       minimalCollection.readOnly = true;
+    }
+
+    const normalizedTags = normalizeTags(collection.tags ?? []);
+    if (normalizedTags.length > 0) {
+      minimalCollection.tags = normalizedTags;
     }
 
     if (isRename) {

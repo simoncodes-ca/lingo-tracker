@@ -1,5 +1,8 @@
 <div class="tag-list-container" role="list">
-  @for (tag of tags(); track $index) {
+  @for (tag of inheritedTags(); track tag) {
+    <span class="tag-badge tag-badge--inherited" role="listitem" [matTooltip]="'Inherited from collection'" matTooltipPosition="above">{{ tag }}</span>
+  }
+  @for (tag of tags(); track tag) {
     <span class="tag-badge" role="listitem">{{ tag }}</span>
   }
 </div>

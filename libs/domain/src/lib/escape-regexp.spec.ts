@@ -3,7 +3,7 @@ import { escapeRegExp } from './escape-regexp';
 
 describe('escapeRegExp', () => {
   it('escapes all regex metacharacters', () => {
-    expect(escapeRegExp('.*+?^${}()|[]\\')).toBe('\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\');
+    expect(escapeRegExp(`.*+?^\${}()|[]\\`)).toBe('\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\');
   });
 
   it('leaves plain text unchanged', () => {

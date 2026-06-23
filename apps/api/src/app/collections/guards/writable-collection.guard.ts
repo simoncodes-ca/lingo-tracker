@@ -33,7 +33,7 @@ export class WritableCollectionGuard implements CanActivate {
       return true;
     }
 
-    const collectionName = decodeURIComponent(request.params['collectionName'] ?? '');
+    const collectionName = decodeURIComponent(request.params.collectionName ?? '');
     if (!collectionName) {
       return true;
     }

@@ -5,7 +5,7 @@ import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constant
 import { walkFolders } from '../normalize/iterative-folder-walker';
 import type { ResourceEntries } from '../../resource/resource-entry';
 import type { TrackerMetadata } from '../../resource/tracker-metadata';
-import type { TranslationStatus } from '@simoncodes-ca/domain';
+import { effectiveTags, type TranslationStatus } from '@simoncodes-ca/domain';
 import type { FilteredResource } from './types';
 
 export interface LoadedResource {
@@ -14,6 +14,7 @@ export interface LoadedResource {
   source: string;
   translations: Record<string, string>;
   tags?: string[];
+  collectionTags?: string[];
   comment?: string;
   status: Record<string, TranslationStatus>;
   collection: string;
@@ -52,7 +53,9 @@ export function validateOutputDirectory(directory: string): void {
 /**
  * Loads all resources and metadata from a list of collections.
  */
-export function loadResourcesFromCollections(collections: { name: string; path: string }[]): LoadedResource[] {
+export function loadResourcesFromCollections(
+  collections: { name: string; path: string; tags?: string[] }[],
+): LoadedResource[] {
   const allResources: Map<string, LoadedResource> = new Map();
 
   for (const collection of collections) {
@@ -62,7 +65,7 @@ export function loadResourcesFromCollections(collections: { name: string; path: 
     }
 
     // The collection.path should point directly to where translations are stored
-    loadFolderResources(collection.path, collection.name, allResources);
+    loadFolderResources(collection.path, collection.name, allResources, collection.tags);
   }
 
   return Array.from(allResources.values());
@@ -72,6 +75,7 @@ function loadFolderResources(
   collectionPath: string,
   collectionName: string,
   allResources: Map<string, LoadedResource>,
+  collectionTags?: string[],
 ): void {
   for (const visit of walkFolders(collectionPath, { skipHidden: false })) {
     const entriesPath = path.join(visit.absolutePath, RESOURCE_ENTRIES_FILENAME);
@@ -98,6 +102,7 @@ function loadFolderResources(
           source: entry.source,
           translations: {},
           tags: entry.tags,
+          collectionTags,
           comment: entry.comment,
           status: {},
           collection: collectionName,
@@ -153,10 +158,10 @@ export function filterResources(
         return false;
       }
 
-      // Tag filter
+      // Tag filter — use effective tags (collection-level union resource-level)
       if (tagFilter && tagFilter.length > 0) {
-        const resTags = res.tags || [];
-        const hasMatch = tagFilter.some((tag) => resTags.includes(tag));
+        const tags = effectiveTags(res.collectionTags, res.tags);
+        const hasMatch = tagFilter.some((tag) => tags.includes(tag));
         if (!hasMatch) {
           return false;
         }

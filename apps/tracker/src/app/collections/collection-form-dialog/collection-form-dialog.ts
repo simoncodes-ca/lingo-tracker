@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, DestroyRef, type OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, DestroyRef, type OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, FormArray, Validators } from '@angular/forms';
@@ -10,9 +10,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatChipsModule, type MatChipInputEvent } from '@angular/material/chips';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { isUnderNodeModules, validateLocale } from '@simoncodes-ca/domain';
+import { isUnderNodeModules, normalizeTag, validateLocale } from '@simoncodes-ca/domain';
 import type { CollectionFormDialogData } from './collection-form-dialog-data';
 import type { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
@@ -39,6 +41,7 @@ export interface CollectionFormResult {
     MatIconModule,
     MatRadioModule,
     MatTooltipModule,
+    MatChipsModule,
     TranslocoModule,
   ],
   templateUrl: './collection-form-dialog.html',
@@ -68,6 +71,8 @@ export class CollectionFormDialog implements OnInit {
   });
 
   readonly addLocaleInput = new FormControl<string>('', { nonNullable: true });
+  readonly tagSeparatorKeyCodes = [ENTER, COMMA] as const;
+  readonly tagsList = signal<string[]>([]);
 
   #originalLocales: string[] = [];
   /** Tracks whether the user manually toggled read-only, so auto-detection stops overriding it. */
@@ -94,6 +99,8 @@ export class CollectionFormDialog implements OnInit {
         baseLocale: this.#data.config.baseLocale ?? '',
         readOnly: this.#data.config.readOnly ?? false,
       });
+
+      this.tagsList.set(this.#data.config.tags ?? []);
       // An existing read-only flag is the user's prior choice — don't let auto-detection override it.
       this.#readOnlyTouchedByUser = this.#data.config.readOnly !== undefined;
 
@@ -153,6 +160,18 @@ export class CollectionFormDialog implements OnInit {
     this.addLocaleInput.setValue('');
   }
 
+  addCollectionTag(event: MatChipInputEvent): void {
+    const normalized = normalizeTag(event.value);
+    if (normalized && !this.tagsList().includes(normalized)) {
+      this.tagsList.update((tags) => [...tags, normalized]);
+    }
+    event.chipInput?.clear();
+  }
+
+  removeCollectionTag(tag: string): void {
+    this.tagsList.update((tags) => tags.filter((t) => t !== tag));
+  }
+
   removeLocale(index: number): void {
     if (this.isEditMode && this.form.controls.locales.at(index).value === this.form.controls.baseLocale.value) {
       return;
@@ -204,6 +223,7 @@ export class CollectionFormDialog implements OnInit {
   #buildResult(): CollectionFormResult {
     const raw = this.form.getRawValue();
     const localesArray = raw.locales;
+    const tags = this.tagsList();
     return {
       name: raw.name,
       config: {
@@ -211,6 +231,7 @@ export class CollectionFormDialog implements OnInit {
         ...(localesArray.length > 0 ? { locales: localesArray } : {}),
         ...(raw.baseLocale ? { baseLocale: raw.baseLocale } : {}),
         readOnly: raw.readOnly,
+        ...(tags.length > 0 ? { tags } : {}),
       },
     };
   }

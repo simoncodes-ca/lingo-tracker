@@ -467,6 +467,18 @@ program
   });
 
 program
+  .command('edit-collection')
+  .description('Edit a collection configuration (currently: manage collection-level tags)')
+  .argument('<name>', 'Collection name')
+  .option('--add-tag <tag>', 'Add a tag to the collection (repeatable)', collect, [])
+  .option('--remove-tag <tag>', 'Remove a tag from the collection (repeatable)', collect, [])
+  .option('--set-tags <tags>', 'Replace all collection tags with a comma-separated list (use "" to clear)')
+  .action(async (name, options) => {
+    const { editCollectionCommand } = await import('./commands/edit-collection');
+    await editCollectionCommand(name, options);
+  });
+
+program
   .command('install-skill')
   .description('Generate a lingo-tracker AI skill configured for this repository')
   .option('--collection <spec>', 'Collection spec: name:bundle:TokenConstant:tokenFilePath (repeatable)', collect, [])

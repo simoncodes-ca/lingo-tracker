@@ -428,8 +428,8 @@ For the full sequence diagram of an import operation, see [user-flows.md — Imp
 
 Export serializes the current resource tree for one locale into an external file format. The pipeline shares a common resource-loading step:
 
-1. **Load resources** — `loadResourcesFromCollections()` in `export-common.ts` walks the translation folder tree via `walkFolders()`, reading every `resource_entries.json` and its paired `tracker_meta.json`. Each entry becomes a `LoadedResource` object carrying `source`, `translations`, `status`, `tags`, and `comment`.
-2. **Filter** — callers may restrict the export by tag or key pattern.
+1. **Load resources** — `loadResourcesFromCollections()` in `export-common.ts` walks the translation folder tree via `walkFolders()`, reading every `resource_entries.json` and its paired `tracker_meta.json`. Each entry becomes a `LoadedResource` object carrying `source`, `translations`, `status`, `tags`, `collectionTags`, and `comment`. Collection-level tags are passed in from the caller and stored on each `LoadedResource` for use in tag filtering.
+2. **Filter** — callers may restrict the export by tag or key pattern. Tag filtering uses `effectiveTags(collectionTags, resourceTags)` (from `libs/domain/src/lib/effective-tags.ts`) so resources whose collection has an inherited tag are correctly matched even when they have no per-resource tags.
 3. **Serialize** — JSON export writes a flat or hierarchical JSON file; XLIFF export writes an XLIFF 1.2 document with `<trans-unit>` elements and optional `<note>` elements for comments.
 
 For the full sequence diagram, see [user-flows.md — Import / Export Flow](user-flows.md#2-import--export-flow).

@@ -11,7 +11,7 @@ import {
   type EntrySelectionRule,
   type TokenCasing,
 } from '../../config/bundle-definition';
-import { icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
+import { effectiveTags, icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { loadCollectionResources, type FlatResource } from './resource-loader';
 import type { ResourceEntries } from '../../resource/resource-entry';
@@ -197,6 +197,7 @@ function collectBundleData(
         transformICUToTransloco,
         warnings,
         cache,
+        collectionConfig.tags,
       );
     }
   } else {
@@ -217,6 +218,7 @@ function collectBundleData(
         transformICUToTransloco,
         warnings,
         cache,
+        collectionConfig.tags,
       );
     }
   }
@@ -236,8 +238,9 @@ function processCollection(
   transformICUToTransloco: boolean,
   warnings: string[],
   cache: Map<string, ResourceEntries>,
+  collectionTags?: string[],
 ): void {
-  const resources = loadCollectionResources(translationsFolder, locale, baseLocale, cache);
+  const resources = loadCollectionResources(translationsFolder, locale, baseLocale, cache, collectionTags);
   const filteredResources = filterResources(resources, collectionDef);
   const mergeStrategy = collectionDef.mergeStrategy ?? 'merge';
 
@@ -284,9 +287,10 @@ function filterResources(resources: FlatResource[], collectionDef: CollectionBun
  * Checks if resource matches any of the selection rules
  */
 function matchesAnyRule(resource: FlatResource, rules: EntrySelectionRule[]): boolean {
+  const tags = effectiveTags(resource.collectionTags, resource.tags);
   return rules.some((rule) => {
     const patternMatch = matchesPattern(resource.key, rule.matchingPattern);
-    const tagMatch = matchesTags(resource.tags, rule.matchingTags, rule.matchingTagOperator);
+    const tagMatch = matchesTags(tags.length > 0 ? tags : undefined, rule.matchingTags, rule.matchingTagOperator);
     return patternMatch && tagMatch;
   });
 }

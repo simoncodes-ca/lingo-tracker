@@ -7,7 +7,7 @@ import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../lib/
 import { createResourceMetadata } from '../lib/resource/metadata-operations';
 import type { TranslationConfig } from '../config/translation-config';
 import { autoTranslateResource } from '../lib/translation/auto-translate-resources';
-import { translocoToICU } from '@simoncodes-ca/domain';
+import { translocoToICU, normalizeTags } from '@simoncodes-ca/domain';
 
 export interface AddResourceOptions {
   cwd?: string;
@@ -98,7 +98,10 @@ export async function addResource(
   }
 
   if (params.tags && params.tags.length > 0) {
-    resourceEntry.tags = params.tags;
+    const normalized = normalizeTags(params.tags);
+    if (normalized.length > 0) {
+      resourceEntry.tags = normalized;
+    }
   }
 
   // Resolve translations: prefer explicit translations, fall back to auto-translation, then nothing.

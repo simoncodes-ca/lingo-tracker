@@ -18,4 +18,6 @@ export interface LingoTrackerCollection {
    * edited. Typically set for collections vendored under node_modules.
    */
   readOnly?: boolean;
+  /** Tags inherited by every resource in this collection. Unioned with per-resource tags at read time. */
+  tags?: string[];
 }

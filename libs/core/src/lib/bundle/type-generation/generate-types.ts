@@ -5,6 +5,7 @@ import { hasTypeDistConfigured, type TokenCasing } from '../../../config/bundle-
 import { loadCollectionResources } from '../resource-loader';
 import { matchesPattern } from '../pattern-matcher';
 import { matchesTags } from '../tag-filter';
+import { effectiveTags } from '@simoncodes-ca/domain';
 import { buildTypeHierarchy, serializeHierarchy } from './hierarchy-builder';
 import { generateFileHeader } from './file-header';
 import { bundleKeyToConstantName, validateJavaScriptIdentifier } from './key-transformer';
@@ -98,6 +99,8 @@ export async function generateBundleTypes(
       collectionConfig.translationsFolder,
       config.baseLocale,
       config.baseLocale,
+      undefined,
+      collectionConfig.tags,
     );
 
     for (const resource of resources) {
@@ -107,10 +110,11 @@ export async function generateBundleTypes(
       if (collectionDef.entriesSelectionRules === 'All') {
         isMatch = true;
       } else {
+        const tags = effectiveTags(resource.collectionTags, resource.tags);
         for (const rule of collectionDef.entriesSelectionRules) {
           if (
             matchesPattern(resource.key, rule.matchingPattern) &&
-            matchesTags(resource.tags || [], rule.matchingTags, rule.matchingTagOperator)
+            matchesTags(tags.length > 0 ? tags : undefined, rule.matchingTags, rule.matchingTagOperator)
           ) {
             isMatch = true;
             break;

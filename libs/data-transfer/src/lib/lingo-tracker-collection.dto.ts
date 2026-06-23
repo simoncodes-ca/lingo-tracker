@@ -9,4 +9,6 @@ export interface LingoTrackerCollectionDto {
   translation?: TranslationConfigDto;
   /** When true, resources in this collection cannot be modified. */
   readOnly?: boolean;
+  /** Tags inherited by every resource in this collection. */
+  tags?: string[];
 }

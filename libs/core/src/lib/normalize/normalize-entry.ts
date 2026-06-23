@@ -3,7 +3,7 @@ import type { ResourceEntry } from '../../resource/resource-entry';
 import type { ResourceEntryMetadata } from '../../resource/resource-entry-metadata';
 import type { TranslationStatus } from '@simoncodes-ca/domain';
 import type { LocaleMetadata } from '@simoncodes-ca/domain';
-import { translocoToICU } from '@simoncodes-ca/domain';
+import { translocoToICU, normalizeTags } from '@simoncodes-ca/domain';
 
 export interface NormalizeEntryParams {
   readonly entryKey: string;
@@ -21,6 +21,7 @@ export interface NormalizeEntryResult {
     readonly checksumsUpdated: number;
     readonly statusesChanged: number;
     readonly valuesConverted: number;
+    readonly tagsNormalized: number;
   };
 }
 
@@ -251,6 +252,19 @@ export function normalizeEntry(params: NormalizeEntryParams): NormalizeEntryResu
     valuesConverted++;
   }
 
+  // Normalize tags: lowercase, hyphenate, dedupe, strip invalid chars
+  let tagsNormalized = 0;
+  if (Array.isArray(normalizedEntry.tags) && normalizedEntry.tags.length > 0) {
+    const normalized = normalizeTags(normalizedEntry.tags);
+    const hasChanges =
+      normalized.length !== normalizedEntry.tags.length ||
+      normalized.some((t, i) => t !== (normalizedEntry.tags as string[])[i]);
+    if (hasChanges) {
+      normalizedEntry.tags = normalized.length > 0 ? normalized : undefined;
+      tagsNormalized = 1;
+    }
+  }
+
   const nonValueKeys = new Set(['source', 'comment', 'tags']);
   for (const key of Object.keys(normalizedEntry)) {
     if (!nonValueKeys.has(key) && typeof normalizedEntry[key] === 'string') {
@@ -294,6 +308,7 @@ export function normalizeEntry(params: NormalizeEntryParams): NormalizeEntryResu
       checksumsUpdated: baseChecksumsUpdated + localeChanges.checksumsUpdated,
       statusesChanged: localeChanges.statusesChanged,
       valuesConverted,
+      tagsNormalized,
     },
   };
 }

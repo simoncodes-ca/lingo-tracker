@@ -186,6 +186,57 @@ lingo-tracker add-collection \
 
 ---
 
+### edit-collection
+
+Edit an existing collection's configuration. Currently supports managing collection-level tags that are inherited by all resources in the collection.
+
+**Usage:**
+
+```bash
+lingo-tracker edit-collection <name> [options]
+```
+
+**Options:**
+
+- `--add-tag <tag>` - Add a tag to the collection's tag list (repeatable, normalized automatically)
+- `--remove-tag <tag>` - Remove a tag from the collection's tag list (repeatable)
+- `--set-tags <a,b,c>` - Replace the entire tag list with a comma-separated set; pass `""` to clear all tags (mutually exclusive with `--add-tag`/`--remove-tag`)
+
+**Examples:**
+
+Add a tag:
+```bash
+lingo-tracker edit-collection myApp --add-tag team-x
+```
+
+Remove a tag:
+```bash
+lingo-tracker edit-collection myApp --remove-tag team-x
+```
+
+Add multiple tags at once:
+```bash
+lingo-tracker edit-collection myApp --add-tag team-x --add-tag mobile
+```
+
+Replace all tags:
+```bash
+lingo-tracker edit-collection myApp --set-tags "team-x,mobile,legal"
+```
+
+Clear all tags:
+```bash
+lingo-tracker edit-collection myApp --set-tags ""
+```
+
+**Notes:**
+- `--set-tags` and `--add-tag`/`--remove-tag` are mutually exclusive
+- Tags are normalized automatically (lowercase, hyphens, max 50 chars)
+- Collection-level tags are inherited by every resource in the collection at read time; they are not written into `resource_entries.json` files
+- These tags are respected by `export --tags`, bundle filtering, and the Tracker UI
+
+---
+
 ### delete-collection
 
 Delete a translation collection from the project.
@@ -310,7 +361,7 @@ lingo-tracker add-resource [options]
 - `--key <key>` - Dot-delimited resource key, e.g., `apps.common.buttons.ok` (required in non-interactive mode)
 - `--value <text>` - Base (source) text in the base locale (required in non-interactive mode)
 - `--comment <text>` - Optional context for translators
-- `--tags <tags>` - Optional comma-separated tags for filtering/exporting
+- `--tags <tags>` - Optional comma-separated tags for filtering/exporting. Values are normalized on write: lowercased, whitespace replaced with hyphens, non-`[a-z0-9-]` characters stripped, max 50 chars.
 - `--target-folder <folder>` - Optional dot-delimited path override for folder placement
 - `--translations <json>` - Optional JSON array with translation objects
 
@@ -459,7 +510,7 @@ lingo-tracker edit-resource [options]
 - `--key <key>` - Resource key (required in non-interactive mode)
 - `--base-value <text>` - New base value (updates source text)
 - `--comment <text>` - New comment
-- `--tags <tags>` - New tags (comma-separated, replaces existing)
+- `--tags <tags>` - New tags (comma-separated, replaces existing). Values are normalized on write: lowercased, whitespace replaced with hyphens, non-`[a-z0-9-]` characters stripped, max 50 chars.
 - `--target-folder <folder>` - New target folder
 - `--locale <locale>` - Locale to update (requires `--locale-value`)
 - `--locale-value <text>` - New translation value for the specified locale
@@ -660,8 +711,9 @@ lingo-tracker normalize [options]
    - `new` - Locale entry was just added or matches base value
    - `stale` - Base value changed since last translation (checksum mismatch)
    - `translated` / `verified` - Preserved when base value unchanged
-4. **Creates missing files**: Ensures `resource_entries.json` and `tracker_meta.json` exist at every folder level
-5. **Cleans up empty folders**: Removes folders with no entries (bottom-up recursive cleanup)
+4. **Normalizes tags**: Coerces all tag values to lowercase, hyphenated form (`[a-z0-9-]`, max 50 chars). For example `"Common UI"` → `"common-ui"`. Deduplicates tags within each resource. This is the recommended way to clean up legacy tag data that pre-dates strict validation.
+5. **Creates missing files**: Ensures `resource_entries.json` and `tracker_meta.json` exist at every folder level
+6. **Cleans up empty folders**: Removes folders with no entries (bottom-up recursive cleanup)
 
 **Folder Cleanup Behavior:**
 
@@ -723,10 +775,14 @@ Human-readable format (default):
 
    ✅ Entries processed: 42
    ✅ Locales added: 7
+   ✅ Values converted to ICU: 0
+   ✅ Tags normalized: 5
    ✅ Files created: 2
    ✅ Files updated: 15
    ✅ Folders removed: 3
 ```
+
+> Note: "Tags normalized" only appears when at least one tag was coerced.
 
 JSON format (`--json` flag):
 ```json
@@ -736,6 +792,8 @@ JSON format (`--json` flag):
       "collectionName": "Main",
       "entriesProcessed": 42,
       "localesAdded": 7,
+      "valuesConverted": 0,
+      "tagsNormalized": 5,
       "filesCreated": 2,
       "filesUpdated": 15,
       "foldersRemoved": 3
@@ -745,6 +803,8 @@ JSON format (`--json` flag):
     "collectionsProcessed": 1,
     "entriesProcessed": 42,
     "localesAdded": 7,
+    "valuesConverted": 0,
+    "tagsNormalized": 5,
     "filesCreated": 2,
     "filesUpdated": 15,
     "foldersRemoved": 3
@@ -753,7 +813,8 @@ JSON format (`--json` flag):
 ```
 
 **Notes:**
-- Normalization is **non-destructive**: it preserves existing translation values, comments, and tags
+- Normalization is **non-destructive**: it preserves existing translation values and comments
+- Tag values are coerced to normalized form (lowercase, hyphens, max 50 chars) — this is the intended cleanup path for legacy tags
 - Only fills in missing data and corrects metadata
 - Dry-run mode counts folders that would be removed but doesn't delete them
 - In interactive mode, you'll be prompted to confirm when using `--all`
@@ -1920,6 +1981,8 @@ jobs:
 - Use tags to organize related resources: `--tags "ui,buttons,dialogs"`
 - Tags can be used for filtering during export/import operations
 - Tags are comma-separated and stored in metadata
+- For cross-collection tagging, use **collection-level tags** via `edit-collection --add-tag <tag>` — every resource in the collection inherits the tag without modifying individual `resource_entries.json` files
+- Collection-level tags are reflected in `export --tags`, bundle filtering, and the Tracker UI
 
 ### Working with Multiple Collections
 
