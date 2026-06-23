@@ -132,6 +132,30 @@
   color: var(--color-error);
 }
 
+.readonly-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  background-color: color-mix(in srgb, var(--color-warn, #b26a00) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-warn, #b26a00) 24%, transparent);
+  border-radius: var(--border-radius-md);
+  color: var(--color-warn, #b26a00);
+
+  .readonly-icon {
+    font-size: var(--font-size-lg);
+    width: var(--font-size-lg);
+    height: var(--font-size-lg);
+    flex-shrink: 0;
+  }
+
+  .readonly-text {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+  }
+}
+
 .error-icon {
   color: var(--color-error);
   font-size: var(--font-size-lg);
@@ -554,6 +578,16 @@ mat-dialog-actions {
     color: var(--color-text-primary);
     background-color: var(--color-background-muted);
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inherited tag chips
+// ─────────────────────────────────────────────────────────────────────────────
+
+:host ::ng-deep .chip--inherited {
+  opacity: 0.75;
+  border: 1px dashed currentColor;
+  cursor: default;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

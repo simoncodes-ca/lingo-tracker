@@ -26,7 +26,7 @@ lingo-tracker export --format <format> [options]
 | `-c, --collection <names>` | Comma-separated list of collections to export. | All collections |
 | `-l, --locale <locales>` | Comma-separated list of target locales. The base locale is always excluded. | All target locales |
 | `-s, --status <statuses>` | Filter by status (`new`, `translated`, `stale`, `verified`). | `new,stale` |
-| `-t, --tags <tags>` | Filter by tags (comma-separated). | None |
+| `-t, --tags <tags>` | Filter by tags (comma-separated). Matches against the resource's *effective tags* — the union of per-resource tags and the collection's inherited tags. | None |
 | `-o, --output <path>` | Output directory. Defaults to `exportFolder` from config if set. | `dist/lingo-export` |
 | `--filename <pattern>` | Custom filename pattern. The extension (`.xliff` or `.json`) is appended automatically if omitted. | `<locale>.xliff` or `<locale>.json` |
 | `--dry-run` | Preview export without writing files. | `false` |
@@ -120,7 +120,7 @@ XLIFF 1.2 exports now include the `source-language` and `target-language` attrib
 
 ## Export Summary
 
-Every export generates an `export-summary.md` file in the output directory. It contains:
+Every export generates a timestamped `lingo-tracker-export-summary-<timestamp>.md` file in the **OS temp directory** (e.g. `/tmp` on macOS/Linux, `%TEMP%` on Windows) and prints the full path to the console. The file is written outside your project tree to avoid polluting your repository or breaking build pipelines that scan `.md` files. It contains:
 
 - **Metadata**: date, format, collections, target locales, status and tag filters applied.
 - **Results**: resources exported, files created, output directory.

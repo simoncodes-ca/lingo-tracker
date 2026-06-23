@@ -400,10 +400,10 @@ export class TranslationItem implements AfterViewInit, OnDestroy {
 
   /**
    * Whether dragging is disabled for this item.
-   * Disabled during search mode or when store is disabled.
+   * Disabled during search mode, when the store is busy, or when the collection is read-only.
    */
   readonly isDragDisabled = computed(() => {
-    return Boolean(this.searchQuery()) || this.#store.isDisabled();
+    return Boolean(this.searchQuery()) || this.#store.effectiveDisabled();
   });
 
   /**

@@ -79,6 +79,21 @@ describe('addCollection', () => {
     expect(writtenConfig.collections.diffs.locales).toBeUndefined();
   });
 
+  it('persists readOnly when true and omits it when false', () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ...baseConfig }, null, 2) as SafeAny);
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
+
+    addCollection('ro', { translationsFolder: './a', readOnly: true }, { cwd: '/test' });
+    addCollection('rw', { translationsFolder: './b', readOnly: false }, { cwd: '/test' });
+
+    const calls = vi.mocked(fs.writeFileSync).mock.calls;
+    const roConfig = JSON.parse(calls[0][1] as string);
+    const rwConfig = JSON.parse(calls[1][1] as string);
+
+    expect(roConfig.collections.ro.readOnly).toBe(true);
+    expect(rwConfig.collections.rw.readOnly).toBeUndefined();
+  });
+
   it('throws when collection already exists', () => {
     const config = {
       ...baseConfig,
@@ -161,5 +176,27 @@ describe('addCollection', () => {
       existing: { translationsFolder: './existing' },
       newOne: { translationsFolder: './new' },
     });
+  });
+
+  it('persists normalized tags when provided', () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ...baseConfig }, null, 2) as SafeAny);
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
+
+    addCollection('tagged', { translationsFolder: './t', tags: ['Team X', 'feature-a', 'Team X'] }, { cwd: '/test' });
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+    const writtenConfig = JSON.parse(writeCall[1] as string);
+    expect(writtenConfig.collections.tagged.tags).toEqual(['team-x', 'feature-a']);
+  });
+
+  it('omits tags field when tags array is empty', () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ...baseConfig }, null, 2) as SafeAny);
+    vi.mocked(fs.writeFileSync).mockImplementation(noop);
+
+    addCollection('noTags', { translationsFolder: './t', tags: [] }, { cwd: '/test' });
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+    const writtenConfig = JSON.parse(writeCall[1] as string);
+    expect(writtenConfig.collections.noTags.tags).toBeUndefined();
   });
 });

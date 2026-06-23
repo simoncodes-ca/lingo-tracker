@@ -99,38 +99,143 @@
   },
   "addButton": {
     "source": "Add",
-    "comment": "Button label to add a locale to the list"
+    "comment": "Button label to add a locale to the list",
+    "es": "Agregar",
+    "fr-ca": "Ajouter",
+    "ru": "Добавить",
+    "ja": "追加",
+    "de": "Hinzufügen"
   },
   "addLocaleLabel": {
     "source": "Add Locale",
-    "comment": "Label for the add locale input field"
+    "comment": "Label for the add locale input field",
+    "es": "Agregar configuración regional",
+    "fr-ca": "Ajouter une langue",
+    "ru": "Добавить локаль",
+    "ja": "ロケールを追加",
+    "de": "Gebietsschema hinzufügen"
   },
   "baseLocaleLocked": {
     "source": "Base locale cannot be changed after creation",
-    "comment": "Tooltip shown on the base locale radio button when in edit mode"
+    "comment": "Tooltip shown on the base locale radio button when in edit mode",
+    "es": "La configuración regional base no puede modificarse después de la creación",
+    "fr-ca": "La langue de base ne peut pas être modifiée après la création",
+    "ru": "Базовая локаль не может быть изменена после создания",
+    "ja": "作成後にベースロケールは変更できません",
+    "de": "Die Basissprache kann nach der Erstellung nicht geändert werden"
   },
   "duplicateLocale": {
     "source": "This locale has already been added",
-    "comment": "Validation error when the user tries to add a locale that is already in the list"
+    "comment": "Validation error when the user tries to add a locale that is already in the list",
+    "es": "Esta configuración regional ya ha sido añadida",
+    "fr-ca": "Cette langue a déjà été ajoutée",
+    "ru": "Эта локаль уже добавлена",
+    "ja": "このロケールはすでに追加されています",
+    "de": "Dieses Gebietsschema wurde bereits hinzugefügt"
   },
   "invalidLocale": {
     "source": "Invalid locale code",
-    "comment": "Validation error shown when an entered locale code is not valid"
+    "comment": "Validation error shown when an entered locale code is not valid",
+    "es": "Código de configuración regional no válido",
+    "fr-ca": "Code de langue invalide",
+    "ru": "Недопустимый код локали",
+    "ja": "無効なロケールコード",
+    "de": "Ungültiger Gebietsschema-Code"
   },
   "localesEmpty": {
     "source": "No locales added yet",
-    "comment": "Empty state message shown when no locales have been added to the list"
+    "comment": "Empty state message shown when no locales have been added to the list",
+    "es": "Aún no se han añadido configuraciones regionales",
+    "fr-ca": "Aucune langue ajoutée pour l'instant",
+    "ru": "Локали ещё не добавлены",
+    "ja": "ロケールはまだ追加されていません",
+    "de": "Noch keine Gebietsschemata hinzugefügt"
   },
   "removeAria": {
-    "source": "Remove locale {{locale}}",
-    "comment": "Aria label for the remove button on each locale row"
+    "source": "Remove locale {locale}",
+    "comment": "Aria label for the remove button on each locale row",
+    "es": "Eliminar la configuración regional {locale}",
+    "fr-ca": "Supprimer la langue {locale}",
+    "ru": "Удалить локаль {locale}",
+    "ja": "ロケール {locale} を削除",
+    "de": "Gebietsschema {locale} entfernen"
   },
   "removeConfirmBody": {
-    "source": "Removing {{locales}} will permanently delete all translation data for those locales. This cannot be undone.",
-    "comment": "Body of the confirmation dialog when removing locales in edit mode"
+    "source": "Removing {locales} will permanently delete all translation data for those locales. This cannot be undone.",
+    "comment": "Body of the confirmation dialog when removing locales in edit mode",
+    "es": "Eliminar {locales} borrará permanentemente todos los datos de traducción para esas configuraciones regionales. Esta acción no se puede deshacer.",
+    "fr-ca": "Supprimer {locales} effacera définitivement toutes les données de traduction pour ces langues. Cette action est irréversible.",
+    "ru": "Удаление {locales} безвозвратно удалит все данные перевода для этих локалей. Это действие нельзя отменить.",
+    "ja": "{locales} を削除すると、それらのロケールのすべての翻訳データが完全に削除されます。この操作は元に戻せません。",
+    "de": "Das Entfernen von {locales} löscht dauerhaft alle Übersetzungsdaten für diese Gebietsschemata. Dies kann nicht rückgängig gemacht werden."
   },
   "removeConfirmTitle": {
     "source": "Remove Locales?",
-    "comment": "Title of the confirmation dialog when removing locales in edit mode"
+    "comment": "Title of the confirmation dialog when removing locales in edit mode",
+    "es": "¿Eliminar configuraciones regionales?",
+    "fr-ca": "Supprimer les langues ?",
+    "ru": "Удалить локали?",
+    "ja": "ロケールを削除しますか？",
+    "de": "Gebietsschemata entfernen?"
+  },
+  "tagsLabel": {
+    "source": "Collection Tags (Optional)",
+    "comment": "Label for the tags chip input field in the collection create/edit dialog",
+    "tags": ["collections"],
+    "es": "Etiquetas de colección (opcional)",
+    "fr-ca": "Étiquettes de collection (optionnel)",
+    "ru": "Теги коллекции (необязательно)",
+    "ja": "コレクションタグ（オプション）",
+    "de": "Sammlungs-Tags (optional)"
+  },
+  "tagsHint": {
+    "source": "Tags inherited by all resources in this collection. Press Enter or comma to add.",
+    "comment": "Hint text under the tags field in the collection dialog",
+    "tags": ["collections"],
+    "es": "Etiquetas heredadas por todos los recursos de esta colección. Pulse Intro o una coma para añadir.",
+    "fr-ca": "Étiquettes héritées par toutes les ressources de cette collection. Appuyez sur Entrée ou sur une virgule pour ajouter.",
+    "ru": "Теги, унаследованные всеми ресурсами этой коллекции. Нажмите Enter или запятую для добавления.",
+    "ja": "このコレクションのすべてのリソースに継承されるタグです。Enterキーまたはカンマを押して追加してください。",
+    "de": "Tags, die von allen Ressourcen in dieser Sammlung geerbt werden. Zum Hinzufügen die Eingabetaste oder ein Komma drücken."
+  },
+  "tagsAddPlaceholder": {
+    "source": "Add collection tag…",
+    "comment": "Placeholder inside the tag chip input in the collection dialog",
+    "tags": ["collections"],
+    "es": "Añadir etiqueta de colección…",
+    "fr-ca": "Ajouter une étiquette de collection…",
+    "ru": "Добавить тег коллекции…",
+    "ja": "コレクションタグを追加…",
+    "de": "Sammlungs-Tag hinzufügen…"
+  },
+  "readOnlyLabel": {
+    "source": "Read-only collection",
+    "comment": "Checkbox label in the add/edit collection dialog.",
+    "tags": ["collections"],
+    "es": "Read-only collection",
+    "fr-ca": "Read-only collection",
+    "ru": "Read-only collection",
+    "ja": "Read-only collection",
+    "de": "Read-only collection"
+  },
+  "readOnlyHint": {
+    "source": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "comment": "Hint under the read-only checkbox in the collection dialog.",
+    "tags": ["collections"],
+    "es": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "fr-ca": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "ru": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "ja": "Read-only collections cannot have their resources modified (add/edit/delete/move).",
+    "de": "Read-only collections cannot have their resources modified (add/edit/delete/move)."
+  },
+  "readOnlyNodeModulesHint": {
+    "source": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "comment": "Hint shown when the chosen translations folder is under node_modules.",
+    "tags": ["collections"],
+    "es": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "fr-ca": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "ru": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "ja": "This folder is under node_modules, so it is read-only by default. You can override this.",
+    "de": "This folder is under node_modules, so it is read-only by default. You can override this."
   }
 }

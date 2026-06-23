@@ -10,6 +10,8 @@ export type InitOptions = {
   importFolder?: string;
   baseLocale?: string;
   locales?: string[];
+  /** When true/false, sets the collection's read-only flag explicitly. When undefined, falls back to node_modules detection (and an interactive prompt in TTY mode). */
+  readOnly?: boolean;
   enableAutoTranslation?: boolean;
   translationProvider?: string;
   translationApiKeyEnv?: string;

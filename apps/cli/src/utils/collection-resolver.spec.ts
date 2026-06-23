@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { resolveCollection } from './collection-resolver';
+import { resolveCollection, resolveWritableCollection } from './collection-resolver';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
 import * as path from 'node:path';
 
@@ -285,6 +285,48 @@ describe('collection-resolver', () => {
       resolveCollection('wrong-collection-name', mockConfig, '/project');
 
       expect(console.log).toHaveBeenCalledWith('❌ Collection "wrong-collection-name" not found.');
+    });
+  });
+
+  describe('resolveWritableCollection', () => {
+    const readOnlyConfig: LingoTrackerConfig = {
+      ...mockConfig,
+      collections: {
+        ...mockConfig.collections,
+        vendor: { translationsFolder: 'node_modules/@scope/lib/i18n', readOnly: true },
+      },
+    };
+
+    beforeEach(() => {
+      process.exitCode = undefined;
+    });
+
+    afterEach(() => {
+      process.exitCode = undefined;
+    });
+
+    it('returns the resolved collection when it is writable', () => {
+      const result = resolveWritableCollection('main', mockConfig, '/project');
+
+      expect(result?.name).toBe('main');
+      expect(process.exitCode).toBeUndefined();
+    });
+
+    it('returns null and sets a non-zero exit code for a read-only collection', () => {
+      const result = resolveWritableCollection('vendor', readOnlyConfig, '/project');
+
+      expect(result).toBeNull();
+      expect(process.exitCode).toBe(1);
+      expect(console.log).toHaveBeenCalledWith(
+        '❌ Collection "vendor" is read-only. Its resources cannot be modified.',
+      );
+    });
+
+    it('returns null without setting exit code when the collection does not exist', () => {
+      const result = resolveWritableCollection('missing', mockConfig, '/project');
+
+      expect(result).toBeNull();
+      expect(process.exitCode).toBeUndefined();
     });
   });
 });

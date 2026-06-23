@@ -1,16 +1,20 @@
-import { Component, ChangeDetectionStrategy, inject, type OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, DestroyRef, type OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, FormArray, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatChipsModule, type MatChipInputEvent } from '@angular/material/chips';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { validateLocale } from '@simoncodes-ca/domain';
+import { isUnderNodeModules, normalizeTag, validateLocale } from '@simoncodes-ca/domain';
 import type { CollectionFormDialogData } from './collection-form-dialog-data';
 import type { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
@@ -33,9 +37,11 @@ export interface CollectionFormResult {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatIconModule,
     MatRadioModule,
     MatTooltipModule,
+    MatChipsModule,
     TranslocoModule,
   ],
   templateUrl: './collection-form-dialog.html',
@@ -46,6 +52,7 @@ export class CollectionFormDialog implements OnInit {
   readonly #data = inject<CollectionFormDialogData>(MAT_DIALOG_DATA);
   readonly #dialog = inject(MatDialog);
   readonly #translocoService = inject(TranslocoService);
+  readonly #destroyRef = inject(DestroyRef);
 
   readonly TOKENS = TRACKER_TOKENS;
 
@@ -60,11 +67,16 @@ export class CollectionFormDialog implements OnInit {
     }),
     baseLocale: new FormControl<string>('', { nonNullable: true }),
     locales: new FormArray<FormControl<string>>([]),
+    readOnly: new FormControl<boolean>(false, { nonNullable: true }),
   });
 
   readonly addLocaleInput = new FormControl<string>('', { nonNullable: true });
+  readonly tagSeparatorKeyCodes = [ENTER, COMMA] as const;
+  readonly tagsList = signal<string[]>([]);
 
   #originalLocales: string[] = [];
+  /** Tracks whether the user manually toggled read-only, so auto-detection stops overriding it. */
+  #readOnlyTouchedByUser = false;
 
   get isEditMode(): boolean {
     return this.#data.mode === 'edit';
@@ -85,7 +97,12 @@ export class CollectionFormDialog implements OnInit {
         name: this.#data.name ?? '',
         translationsFolder: this.#data.config.translationsFolder ?? '',
         baseLocale: this.#data.config.baseLocale ?? '',
+        readOnly: this.#data.config.readOnly ?? false,
       });
+
+      this.tagsList.set(this.#data.config.tags ?? []);
+      // An existing read-only flag is the user's prior choice — don't let auto-detection override it.
+      this.#readOnlyTouchedByUser = this.#data.config.readOnly !== undefined;
 
       for (const locale of configLocales) {
         this.form.controls.locales.push(new FormControl<string>(locale, { nonNullable: true }));
@@ -95,6 +112,23 @@ export class CollectionFormDialog implements OnInit {
         this.form.controls.name.disable();
       }
     }
+
+    // Auto-default read-only for node_modules paths until the user overrides it.
+    this.form.controls.translationsFolder.valueChanges
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((folder) => {
+        if (this.#readOnlyTouchedByUser) return;
+        this.form.controls.readOnly.setValue(isUnderNodeModules(folder), { emitEvent: false });
+      });
+  }
+
+  onReadOnlyToggle(): void {
+    this.#readOnlyTouchedByUser = true;
+  }
+
+  /** Whether the entered folder is under node_modules (drives the read-only hint). */
+  get isNodeModulesPath(): boolean {
+    return isUnderNodeModules(this.form.controls.translationsFolder.value);
   }
 
   addLocale(): void {
@@ -124,6 +158,18 @@ export class CollectionFormDialog implements OnInit {
     }
 
     this.addLocaleInput.setValue('');
+  }
+
+  addCollectionTag(event: MatChipInputEvent): void {
+    const normalized = normalizeTag(event.value);
+    if (normalized && !this.tagsList().includes(normalized)) {
+      this.tagsList.update((tags) => [...tags, normalized]);
+    }
+    event.chipInput?.clear();
+  }
+
+  removeCollectionTag(tag: string): void {
+    this.tagsList.update((tags) => tags.filter((t) => t !== tag));
   }
 
   removeLocale(index: number): void {
@@ -177,12 +223,15 @@ export class CollectionFormDialog implements OnInit {
   #buildResult(): CollectionFormResult {
     const raw = this.form.getRawValue();
     const localesArray = raw.locales;
+    const tags = this.tagsList();
     return {
       name: raw.name,
       config: {
         translationsFolder: raw.translationsFolder,
         ...(localesArray.length > 0 ? { locales: localesArray } : {}),
         ...(raw.baseLocale ? { baseLocale: raw.baseLocale } : {}),
+        readOnly: raw.readOnly,
+        ...(tags.length > 0 ? { tags } : {}),
       },
     };
   }

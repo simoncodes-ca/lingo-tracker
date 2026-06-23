@@ -23,6 +23,13 @@
 
       <!-- Main Content: Translation List -->
       <main class="translation-main">
+        @if (store.isReadOnly()) {
+          <div class="readonly-banner" role="status">
+            <mat-icon class="readonly-banner-icon">lock</mat-icon>
+            <span class="readonly-banner-text">{{ TOKENS.BROWSER.READONLYNOTICE | transloco }}</span>
+          </div>
+        }
+
         <app-translation-header />
 
         @if (collectionName() && activeLocales().length > 0) {

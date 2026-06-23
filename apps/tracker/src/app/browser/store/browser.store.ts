@@ -1,5 +1,5 @@
-import { inject } from '@angular/core';
-import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
+import { computed, inject } from '@angular/core';
+import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, tap, switchMap, catchError, of } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
@@ -29,6 +29,12 @@ interface RootState {
   availableLocales: string[];
   baseLocale: string;
   isDisabled: boolean;
+  /**
+   * True when the active collection is read-only. Persistent for the lifetime of the
+   * selected collection — kept separate from the transient `isDisabled` flag (which search
+   * and move operations flip on and off) so it is never accidentally cleared.
+   */
+  isReadOnly: boolean;
   error: string | null;
   currentFolderPath: string;
   densityMode: DensityMode;
@@ -42,6 +48,7 @@ const initialRootState: RootState = {
   availableLocales: [],
   baseLocale: '',
   isDisabled: false,
+  isReadOnly: false,
   error: null,
   currentFolderPath: '',
   densityMode: 'compact',
@@ -59,6 +66,13 @@ export const BrowserStore = signalStore(
   withFolderTreeFeature(),
   withCacheStatusFeature(),
   withViewPreferencesFeature(),
+  withComputed((store) => ({
+    /**
+     * Combined disable signal for editing affordances: true when an operation is in
+     * progress/search is active (`isDisabled`) OR the collection is read-only.
+     */
+    effectiveDisabled: computed(() => store.isDisabled() || store.isReadOnly()),
+  })),
   withMethods((store) => {
     const api = inject(BrowserApiService);
     const notifications = inject(NotificationService);
@@ -71,6 +85,10 @@ export const BrowserStore = signalStore(
 
       setDisabled(disabled: boolean): void {
         patchState(store, { isDisabled: disabled });
+      },
+
+      setReadOnly(readOnly: boolean): void {
+        patchState(store, { isReadOnly: readOnly });
       },
 
       clearError(): void {
@@ -113,13 +131,19 @@ export const BrowserStore = signalStore(
        * Switches the active collection, restoring any previously saved view preferences.
        * Resets transient state (search, folders, cache) before triggering cache status polling.
        */
-      setSelectedCollection(params: { collectionName: string; locales: string[]; baseLocale?: string }): void {
+      setSelectedCollection(params: {
+        collectionName: string;
+        locales: string[];
+        baseLocale?: string;
+        readOnly?: boolean;
+      }): void {
         const loaded = store.loadViewPreferences(params.collectionName);
         const baseLocale = params.baseLocale || '';
 
         patchState(store, {
           selectedCollection: params.collectionName,
           availableLocales: params.locales,
+          isReadOnly: params.readOnly ?? false,
           selectedLocales: loaded?.selectedLocales || [],
           baseLocale,
           cacheStatus: null,

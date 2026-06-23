@@ -29,7 +29,7 @@ npx lingo-tracker-app
 ### Enterprise Ready & Scalable
 LingoTracker is designed with scalability in mind. By storing metadata in separate files and allowing flexible splitting of resources into nested folders, you can manage even the largest resource sets with ease. Whether you're maintaining a handful of translations or managing thousands of keys across dozens of locales, LingoTracker scales with your application.
 
-Built for enterprise workflows, LingoTracker supports multiple collections to organize resources by team, feature, or domain. Its CLI-first approach integrates naturally into CI/CD pipelines, enabling automated validation and resource bundling as part of your release process. Combined with Git-friendly storage, teams of any size can collaborate on translations with full traceability and review through their existing pull request workflows.
+Built for enterprise workflows, LingoTracker supports multiple collections to organize resources by team, feature, or domain. Collections can be marked **read-only** — useful for component-library translations vendored under `node_modules`, which are protected from accidental edits across the CLI, API, and UI (and detected automatically when added). Its CLI-first approach integrates naturally into CI/CD pipelines, enabling automated validation and resource bundling as part of your release process. Combined with Git-friendly storage, teams of any size can collaborate on translations with full traceability and review through their existing pull request workflows.
 
 ### ICU Format Validation
 LingoTracker validates ICU message syntax — balanced braces, placeholder formats, plural/select/number/date expressions, and quote-escape sections — catching errors before they reach production.
@@ -40,13 +40,20 @@ When importing translations from external tools or translators, variable and pla
 Experience compile-time guarantees with generated translation key tokens. This feature ensures that your application uses the correct and valid translation keys, along with type completion, adding an extra layer of confidence to your translations. [Learn more](docs/features/bundle-type-generation.md).
 
 ### CLI Support
-LingoTracker provides a comprehensive CLI with commands to add, edit, delete, and move resources, find similar translations, normalize metadata, generate bundles, import/export in JSON and XLIFF, and validate resources. All commands support both interactive (TTY) and non-interactive (CI) modes.
+LingoTracker provides a comprehensive CLI with commands to add, edit, delete, and move resources, find similar translations, extract help-translation glossaries, normalize metadata, generate bundles, import/export in JSON and XLIFF, and validate resources. All commands support both interactive (TTY) and non-interactive (CI) modes.
+
+### Help Translation Glossary
+Translating online help or documentation? The `glossary` command extracts the UI terms mentioned in a block of help text and emits a JSON glossary of their translations across every locale — so help translators reuse the exact terminology already shipped in your app. Feed it a file, a snippet, or piped stdin. [Learn more](docs/features/glossary.md).
+
+```bash
+lingo-tracker glossary --input help-page.md
+```
 
 ### CI/CD Validation
 The `validate` command acts as a quality gate for your release pipeline — it exits with a non-zero code if any resource is `new`, `stale`, or untranslated. Add it to GitHub Actions, GitLab CI, or any build system to catch translation gaps before they ship. See the [validation docs](docs/features/validate.md) for CI configuration examples.
 
 ### Flexibility
-Import and export your resource data in JSON and XLIFF 1.2 formats. Use tags to segment resources, filter exports by status or locale, and configure multiple bundles with pattern matching and collection merging strategies. LingoTracker gives you complete control over how you manage and bundle resources for your application.
+Import and export your resource data in JSON and XLIFF 1.2 formats. Use tags to segment resources, filter exports by status or locale, and configure multiple bundles with pattern matching and collection merging strategies. Define **collection-level tags** in your collection configuration to have every resource in a collection automatically inherit those tags — making cross-collection export filtering effortless. LingoTracker gives you complete control over how you manage and bundle resources for your application.
 
 ## Get Started
 

@@ -3,7 +3,7 @@ import { moveResource } from '@simoncodes-ca/core';
 import {
   loadConfiguration,
   promptForCollection,
-  resolveCollection,
+  resolveWritableCollection,
   executePromptsWithFallback,
   type ResolvedCollection,
 } from '../utils';
@@ -26,8 +26,8 @@ export async function moveResourceCommand(options: MoveResourceOptions): Promise
   const sourceCollectionName = await promptForCollection(config, options.collection);
   if (!sourceCollectionName) return;
 
-  // Validate source collection exists
-  const sourceCollection = resolveCollection(sourceCollectionName, config, cwd);
+  // Validate source collection exists and is writable
+  const sourceCollection = resolveWritableCollection(sourceCollectionName, config, cwd);
   if (!sourceCollection) return;
 
   // Prompt for other fields
@@ -36,7 +36,7 @@ export async function moveResourceCommand(options: MoveResourceOptions): Promise
   // Handle optional destination collection
   let destCollection: ResolvedCollection | undefined;
   if (answers.destCollection) {
-    destCollection = resolveCollection(answers.destCollection, config, cwd);
+    destCollection = resolveWritableCollection(answers.destCollection, config, cwd);
     if (!destCollection) return;
   }
 

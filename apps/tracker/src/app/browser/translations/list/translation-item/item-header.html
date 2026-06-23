@@ -15,9 +15,9 @@
 
   <div class="header-spacer"></div>
 
-  @if (tags().length) {
+  @if (tags().length || inheritedTags().length) {
     <div class="header-tags">
-      <app-tag-list [tags]="tags()" />
+      <app-tag-list [tags]="tags()" [inheritedTags]="inheritedTags()" />
     </div>
   }
 
@@ -58,8 +58,8 @@
 
     <mat-menu #menu="matMenu">
       <button mat-menu-item (click)="onEdit()" [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.EDITARIALABEL | transloco">
-        <mat-icon>edit</mat-icon>
-        <span>{{ TOKENS.COMMON.ACTIONS.EDIT | transloco }}</span>
+        <mat-icon>{{ editActionIcon() }}</mat-icon>
+        <span>{{ editActionLabel() | transloco }}</span>
       </button>
       @if (translationEnabled()) {
         <!-- Auto-translate menu item: shows spinner while translating -->
@@ -72,7 +72,7 @@
           <span>{{ TOKENS.COMMON.ACTIONS.TRANSLATE | transloco }}</span>
         </button>
       }
-      <button mat-menu-item (click)="onDelete()" [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.DELETEARIALABEL | transloco">
+      <button mat-menu-item (click)="onDelete()" [disabled]="isReadOnly()" [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.DELETEARIALABEL | transloco">
         <mat-icon>delete</mat-icon>
         <span>{{ TOKENS.COMMON.ACTIONS.DELETE | transloco }}</span>
       </button>

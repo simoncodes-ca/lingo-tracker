@@ -34,7 +34,7 @@ vi.mock('../utils', async () => {
     ...actual,
     loadConfiguration: vi.fn(),
     promptForCollection: vi.fn(),
-    resolveCollection: vi.fn(),
+    resolveWritableCollection: vi.fn(),
     parseCommaSeparatedList: vi.fn((input: string | undefined) => {
       if (!input) return undefined;
       const result = input
@@ -59,7 +59,7 @@ describe('addResourceCommand', () => {
     // Default mock implementations for utils
     vi.mocked(utils.loadConfiguration).mockReturnValue(null);
     vi.mocked(utils.promptForCollection).mockResolvedValue(null);
-    vi.mocked(utils.resolveCollection).mockReturnValue(null);
+    vi.mocked(utils.resolveWritableCollection).mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -135,8 +135,8 @@ describe('addResourceCommand', () => {
     // Mock promptForCollection to return the collection name
     vi.mocked(utils.promptForCollection).mockResolvedValue('NonExistentCollection');
 
-    // Mock resolveCollection to return null (collection not found)
-    vi.mocked(utils.resolveCollection).mockReturnValue(null);
+    // Mock resolveWritableCollection to return null (collection not found)
+    vi.mocked(utils.resolveWritableCollection).mockReturnValue(null);
 
     await addResourceCommand({
       collection: 'NonExistentCollection',
@@ -144,8 +144,8 @@ describe('addResourceCommand', () => {
       value: 'OK',
     });
 
-    // Should call resolveCollection and get null back
-    expect(utils.resolveCollection).toHaveBeenCalledWith('NonExistentCollection', config, '/test');
+    // Should call resolveWritableCollection and get null back
+    expect(utils.resolveWritableCollection).toHaveBeenCalledWith('NonExistentCollection', config, '/test');
   });
 
   it('should handle translations array format', async () => {
@@ -171,8 +171,8 @@ describe('addResourceCommand', () => {
     // Mock promptForCollection to return the collection name
     vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
 
-    // Mock resolveCollection to return collection data
-    vi.mocked(utils.resolveCollection).mockReturnValue({
+    // Mock resolveWritableCollection to return collection data
+    vi.mocked(utils.resolveWritableCollection).mockReturnValue({
       name: 'TestCollection',
       config: config.collections.TestCollection,
       translationsFolderPath: '/test/translations',
@@ -232,8 +232,8 @@ describe('addResourceCommand', () => {
     // Mock promptForCollection to return the collection name
     vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
 
-    // Mock resolveCollection to return collection data
-    vi.mocked(utils.resolveCollection).mockReturnValue({
+    // Mock resolveWritableCollection to return collection data
+    vi.mocked(utils.resolveWritableCollection).mockReturnValue({
       name: 'TestCollection',
       config: config.collections.TestCollection,
       translationsFolderPath: '/test/translations',
@@ -304,8 +304,8 @@ describe('addResourceCommand', () => {
     // Mock promptForCollection to return the collection name
     vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
 
-    // Mock resolveCollection to return collection data
-    vi.mocked(utils.resolveCollection).mockReturnValue({
+    // Mock resolveWritableCollection to return collection data
+    vi.mocked(utils.resolveWritableCollection).mockReturnValue({
       name: 'TestCollection',
       config: config.collections.TestCollection,
       translationsFolderPath: '/test/translations',

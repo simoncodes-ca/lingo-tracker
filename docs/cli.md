@@ -138,10 +138,12 @@ lingo-tracker add-collection [options]
 - `--import-folder <path>` - Override global import folder for this collection
 - `--base-locale <locale>` - Override global base locale
 - `--locales <locales...>` - Override global locales list
+- `--read-only` - Mark the collection as read-only (its resources cannot be modified)
+- `--no-read-only` - Force the collection writable, overriding `node_modules` auto-detection
 
 **Examples:**
 
-Interactive mode (prompts for collection details):
+Interactive mode (prompts for collection details, including a read-only confirmation):
 ```bash
 lingo-tracker add-collection
 ```
@@ -161,11 +163,77 @@ lingo-tracker add-collection \
   --base-locale en-GB
 ```
 
+Register a component library's collection as read-only:
+```bash
+lingo-tracker add-collection \
+  --collection-name DesignSystem \
+  --translations-folder node_modules/@acme/design-system/i18n \
+  --read-only
+```
+
 **Notes:**
 - Requires an existing `.lingo-tracker.json` configuration file (run `init` first)
 - Reuses global defaults; only saves overrides when they differ
 - Will refuse to add a collection if the name already exists
 - Only persists per-collection settings that differ from global configuration
+
+**Read-only collections:**
+- A collection can be marked read-only via the `readOnly` flag on its config entry. When `true`, the CLI, API, and web UI refuse to modify its resources — `add-resource`, `edit-resource`, `delete-resource`, `move`, `normalize`, `import`, `add-locale`, `remove-locale`, and `translate-locale` are all blocked (the CLI exits with a non-zero status so CI fails). Read-only commands (`bundle`, `export`, `validate`, `find-similar`, `glossary`) are unaffected.
+- `normalize --all` is the one exception: it **skips** read-only collections with an informational message and does not fail the run (so bulk normalization stays green even when a vendored read-only collection is present). Targeting a read-only collection explicitly (`normalize --collection <name>`) still fails.
+- The lock protects a collection's **resources**, not its registration: you can still `delete-collection` (unregister it) and edit its config entry — including turning `readOnly` off.
+- When the `--translations-folder` is under `node_modules`, read-only defaults to `true` (in interactive mode the prompt is pre-checked; in non-interactive mode pass `--no-read-only` to override). This is convenient for component-library collections vendored into a consumer repo, which should not be edited locally.
+- The stored `readOnly` flag is the single source of truth. A `node_modules` path only sets the default at add time — it never forces read-only at runtime, and existing collections are never auto-migrated.
+
+---
+
+### edit-collection
+
+Edit an existing collection's configuration. Currently supports managing collection-level tags that are inherited by all resources in the collection.
+
+**Usage:**
+
+```bash
+lingo-tracker edit-collection <name> [options]
+```
+
+**Options:**
+
+- `--add-tag <tag>` - Add a tag to the collection's tag list (repeatable, normalized automatically)
+- `--remove-tag <tag>` - Remove a tag from the collection's tag list (repeatable)
+- `--set-tags <a,b,c>` - Replace the entire tag list with a comma-separated set; pass `""` to clear all tags (mutually exclusive with `--add-tag`/`--remove-tag`)
+
+**Examples:**
+
+Add a tag:
+```bash
+lingo-tracker edit-collection myApp --add-tag team-x
+```
+
+Remove a tag:
+```bash
+lingo-tracker edit-collection myApp --remove-tag team-x
+```
+
+Add multiple tags at once:
+```bash
+lingo-tracker edit-collection myApp --add-tag team-x --add-tag mobile
+```
+
+Replace all tags:
+```bash
+lingo-tracker edit-collection myApp --set-tags "team-x,mobile,legal"
+```
+
+Clear all tags:
+```bash
+lingo-tracker edit-collection myApp --set-tags ""
+```
+
+**Notes:**
+- `--set-tags` and `--add-tag`/`--remove-tag` are mutually exclusive
+- Tags are normalized automatically (lowercase, hyphens, max 50 chars)
+- Collection-level tags are inherited by every resource in the collection at read time; they are not written into `resource_entries.json` files
+- These tags are respected by `export --tags`, bundle filtering, and the Tracker UI
 
 ---
 
@@ -293,7 +361,7 @@ lingo-tracker add-resource [options]
 - `--key <key>` - Dot-delimited resource key, e.g., `apps.common.buttons.ok` (required in non-interactive mode)
 - `--value <text>` - Base (source) text in the base locale (required in non-interactive mode)
 - `--comment <text>` - Optional context for translators
-- `--tags <tags>` - Optional comma-separated tags for filtering/exporting
+- `--tags <tags>` - Optional comma-separated tags for filtering/exporting. Values are normalized on write: lowercased, whitespace replaced with hyphens, non-`[a-z0-9-]` characters stripped, max 50 chars.
 - `--target-folder <folder>` - Optional dot-delimited path override for folder placement
 - `--translations <json>` - Optional JSON array with translation objects
 
@@ -442,7 +510,7 @@ lingo-tracker edit-resource [options]
 - `--key <key>` - Resource key (required in non-interactive mode)
 - `--base-value <text>` - New base value (updates source text)
 - `--comment <text>` - New comment
-- `--tags <tags>` - New tags (comma-separated, replaces existing)
+- `--tags <tags>` - New tags (comma-separated, replaces existing). Values are normalized on write: lowercased, whitespace replaced with hyphens, non-`[a-z0-9-]` characters stripped, max 50 chars.
 - `--target-folder <folder>` - New target folder
 - `--locale <locale>` - Locale to update (requires `--locale-value`)
 - `--locale-value <text>` - New translation value for the specified locale
@@ -643,8 +711,9 @@ lingo-tracker normalize [options]
    - `new` - Locale entry was just added or matches base value
    - `stale` - Base value changed since last translation (checksum mismatch)
    - `translated` / `verified` - Preserved when base value unchanged
-4. **Creates missing files**: Ensures `resource_entries.json` and `tracker_meta.json` exist at every folder level
-5. **Cleans up empty folders**: Removes folders with no entries (bottom-up recursive cleanup)
+4. **Normalizes tags**: Coerces all tag values to lowercase, hyphenated form (`[a-z0-9-]`, max 50 chars). For example `"Common UI"` → `"common-ui"`. Deduplicates tags within each resource. This is the recommended way to clean up legacy tag data that pre-dates strict validation.
+5. **Creates missing files**: Ensures `resource_entries.json` and `tracker_meta.json` exist at every folder level
+6. **Cleans up empty folders**: Removes folders with no entries (bottom-up recursive cleanup)
 
 **Folder Cleanup Behavior:**
 
@@ -706,10 +775,14 @@ Human-readable format (default):
 
    ✅ Entries processed: 42
    ✅ Locales added: 7
+   ✅ Values converted to ICU: 0
+   ✅ Tags normalized: 5
    ✅ Files created: 2
    ✅ Files updated: 15
    ✅ Folders removed: 3
 ```
+
+> Note: "Tags normalized" only appears when at least one tag was coerced.
 
 JSON format (`--json` flag):
 ```json
@@ -719,6 +792,8 @@ JSON format (`--json` flag):
       "collectionName": "Main",
       "entriesProcessed": 42,
       "localesAdded": 7,
+      "valuesConverted": 0,
+      "tagsNormalized": 5,
       "filesCreated": 2,
       "filesUpdated": 15,
       "foldersRemoved": 3
@@ -728,6 +803,8 @@ JSON format (`--json` flag):
     "collectionsProcessed": 1,
     "entriesProcessed": 42,
     "localesAdded": 7,
+    "valuesConverted": 0,
+    "tagsNormalized": 5,
     "filesCreated": 2,
     "filesUpdated": 15,
     "foldersRemoved": 3
@@ -736,7 +813,8 @@ JSON format (`--json` flag):
 ```
 
 **Notes:**
-- Normalization is **non-destructive**: it preserves existing translation values, comments, and tags
+- Normalization is **non-destructive**: it preserves existing translation values and comments
+- Tag values are coerced to normalized form (lowercase, hyphens, max 50 chars) — this is the intended cleanup path for legacy tags
 - Only fills in missing data and corrects metadata
 - Dry-run mode counts folders that would be removed but doesn't delete them
 - In interactive mode, you'll be prompted to confirm when using `--all`
@@ -1022,6 +1100,83 @@ No similar values found for "Save draft".
 - Only `exact-value` and `partial-value` match types are considered; key-based matches are excluded
 - Similarity threshold is fixed at 80% — results below this are not shown
 - Non-interactive only; does not prompt for missing options
+
+---
+
+### glossary
+
+Extract a glossary of relevant translations from a block of text. Given a paragraph of base-locale text (for example a page of online help), the command pulls out the meaningful terms, finds the matching translation entries, and writes a JSON glossary containing each term's translations across all locales. The glossary can then be handed to whoever (or whatever) translates the help content so they reuse the app's existing terminology.
+
+**Usage:**
+
+```bash
+lingo-tracker glossary [options]
+```
+
+**Options:**
+
+- `--text <text>` - Inline text block to extract terms from
+- `--input <file>` - Path to a file whose contents are the input text block
+- `--output <file>` - Output JSON file path (default: `./lingo-tracker-glossary-<timestamp>.json`)
+- `--stdout` - Print the glossary JSON to stdout instead of writing a file (status messages go to stderr)
+- `--collection <name>` - Limit matching to a single collection (default: all collections)
+- `--locales <list>` - Comma-separated locales to include (default: all configured locales)
+- `--include-all` - Include `new`/`stale` entries (default: only `translated` + `verified`)
+- `--extractor <mode>` - Term extraction strategy: `ngram` (default). `ai` is reserved for a future release.
+
+Input precedence is `--text` → `--input` → piped stdin.
+
+**Examples:**
+
+From a file:
+```bash
+lingo-tracker glossary --input help-page.md
+```
+
+Inline snippet, French only, printed to stdout:
+```bash
+lingo-tracker glossary --text "Click Save in Settings to update your profile" --locales fr --stdout
+```
+
+Piped from another command:
+```bash
+cat help-page.md | lingo-tracker glossary --stdout | jq '.terms[].key'
+```
+
+**Output:**
+
+```json
+{
+  "baseLocale": "en",
+  "locales": ["fr", "es"],
+  "source": { "chars": 1234, "candidates": 18 },
+  "matchCount": 2,
+  "terms": [
+    {
+      "key": "apps.common.buttons.save",
+      "collection": "app",
+      "base": "Save",
+      "matchedTerm": "save",
+      "score": 1.0,
+      "translations": { "fr": "Enregistrer", "es": "Guardar" },
+      "status": { "fr": "verified", "es": "translated" }
+    }
+  ]
+}
+```
+
+**How It Works:**
+
+1. **Extract** — the block is split into sentences and tokenized; stopwords and very short tokens are dropped, leaving content-word unigrams and bigrams as candidate terms.
+2. **Match** — each candidate is matched against entries' **base-locale values only** (key names are ignored). Scoring: exact value match (`1.0`) beats whole-word/phrase containment.
+3. **Rank** — the single best entry per candidate is kept; an entry matched by several candidates appears once (highest score wins). Results are sorted by score.
+4. **Filter & write** — only `translated`/`verified` locales are included by default (`--include-all` adds `new`/`stale`); each collection's base locale is omitted from `translations` since it appears as `base`.
+
+**Notes:**
+
+- Matching is deterministic and value-only — no fuzzy matching, which keeps the glossary precise (favouring precision over recall).
+- The extractor is a swappable stage: the `--extractor` flag reserves room for a future AI-based extractor.
+- The stopword list is English-oriented, so extraction is weaker when the base locale is not English.
 
 ---
 
@@ -1703,6 +1858,10 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
     "Admin": {
       "translationsFolder": "apps/admin/src/assets/i18n",
       "baseLocale": "en-GB"
+    },
+    "DesignSystem": {
+      "translationsFolder": "node_modules/@acme/design-system/i18n",
+      "readOnly": true
     }
   }
 }
@@ -1710,6 +1869,7 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
 
 - **Global fields** (`exportFolder`, `importFolder`, `baseLocale`, `locales`, `tokenCasing`) apply to all collections and bundles by default
 - **Per-collection fields** can override global settings for specific collections
+- **`readOnly`** (optional, per-collection) - When `true`, resource mutations to this collection are blocked across the CLI, API, and UI. The collection can still be unregistered and its config entry edited. Defaults to `true` for `node_modules` paths when added via `add-collection`. See [add-collection](#add-collection) for details.
 - **`tokenCasing`** (optional) - Controls the casing style for generated type token keys. Accepts `"upperCase"` (default, SCREAMING_SNAKE_CASE) or `"camelCase"`. Can be set globally or per-bundle. See [Bundle Type Generation](./features/bundle-type-generation.md) for details. Precedence: CLI flag `--token-casing` > per-bundle config > global config > default (`"upperCase"`)
 
 ---
@@ -1821,6 +1981,8 @@ jobs:
 - Use tags to organize related resources: `--tags "ui,buttons,dialogs"`
 - Tags can be used for filtering during export/import operations
 - Tags are comma-separated and stored in metadata
+- For cross-collection tagging, use **collection-level tags** via `edit-collection --add-tag <tag>` — every resource in the collection inherits the tag without modifying individual `resource_entries.json` files
+- Collection-level tags are reflected in `export --tags`, bundle filtering, and the Tracker UI
 
 ### Working with Multiple Collections
 

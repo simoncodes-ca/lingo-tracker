@@ -108,7 +108,7 @@ flowchart TD
     TranslationItem -. "lazy on edit (double-click / E key)" .-> TranslationEditorDialog
     TranslationItem -. "lazy on delete (Del key)" .-> ConfirmationDialog2["ConfirmationDialog\n(shared/components/confirmation-dialog)"]
 
-    TranslationEditorDialog["TranslationEditorDialog\n(browser/dialogs/translation-editor)\nCreate / edit resource. Tabbed locale\nfields, similar-translation sidebar,\nfolder picker, status controls."]
+    TranslationEditorDialog["TranslationEditorDialog\n(browser/dialogs/translation-editor)\nCreate / edit resource. Tabbed locale\nfields, similar-translation sidebar,\nfolder picker, status controls.\nChip input for tag editing with\nper-collection autocomplete."]
     TranslationEditorDialog --> SimilarTranslations["SimilarTranslations\n(dialogs/translation-editor/similar-translations.ts)\nLive similarity search as user types"]
     TranslationEditorDialog --> FolderPicker["FolderPicker\n(dialogs/translation-editor/folder-picker)\nTree picker for changing resource folder"]
 
@@ -269,6 +269,8 @@ This keeps dialog modules out of the initial bundle entirely. The pattern is use
 - `ConfirmationDialog` — delete collection, delete resource, delete folder, move folder (from multiple call sites)
 
 `TranslationEditorDialog` opens the `FolderPicker` (a nested dialog via `MatDialog`) if the user wants to move the resource to a different folder. `FolderPicker` in turn calls `BrowserStore.createFolderAt` to create folders inline without leaving the dialog.
+
+The dialog also includes a tag chip input (Material `mat-chip-grid` + `mat-autocomplete`) in the Base Info tab. Autocomplete suggestions are derived client-side as a `computed()` over `BrowserStore.translations()`, scoped to the current collection. Tags are normalized on chip commit (`normalizeTag` from `@simoncodes-ca/domain`) and sent as `tags: string[]` on the existing `PATCH /collections/:name/resources` endpoint.
 
 ---
 

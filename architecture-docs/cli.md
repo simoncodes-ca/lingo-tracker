@@ -50,7 +50,16 @@ All commands are registered in `apps/cli/src/main.ts`. Each row below lists the 
 | `import` | `-f/--format`, `-s/--source`, `-l/--locale`, `-c/--collection`, `--strategy`, `--update-comments`, `--update-tags`, `--preserve-status`, `--create-missing`, `--validate-base`, `--dry-run`, `--verbose` | `importFromJson()` / `importFromXliff()` |
 | `validate` | `--allow-translated`, `--skip-locales` | `validateResources()`, `generateValidationSummary()` |
 | `find-similar` | `--collection`, `--value`, `--max-results` | `searchTranslations()` |
+| `glossary` | `--text`, `--input`, `--output`, `--stdout`, `--collection`, `--locales`, `--include-all`, `--extractor` | `loadResourcesFromCollections()` (matching/extraction done in the command, not core) |
 | `install-skill` | `--collection <spec>` (repeatable), `--dir`, `--token-casing` | No core call — generates a `.claude/` skill file by template |
+
+### `glossary` pipeline
+
+The `glossary` command is intentionally CLI-only (no new core API surface) but reuses the core loader `loadResourcesFromCollections()` (the same flat loader used by `export` and `validate`). Its logic lives in three sibling modules under `apps/cli/src/commands/`:
+
+- `glossary-extractor.ts` — the **extraction seam**. `CandidateExtractor = (block) => Candidate[]`, with a deterministic stopword + unigram/bigram default (`ngramExtractor`). `resolveExtractor(mode)` selects the implementation; `ai` is reserved and throws a clear not-implemented error today. This boundary lets an AI-based extractor replace the n-gram one without touching matching/output.
+- `glossary-matcher.ts` — matches candidates (over `FlatEntry[]`) against base-locale values only, scores (exact > whole-word containment), keeps top-1 per candidate, dedupes across candidates, and applies the per-locale status filter.
+- `glossary.ts` — orchestration: resolve input (`--text` → `--input` → stdin), load each collection's resources via `loadResourcesFromCollections()` (stripping each collection's base locale from `translations`), run extractor → matcher, serialize the header + term-array schema, write to a file or stdout.
 
 For the full description of what each core function does internally, see [core-library.md](core-library.md).
 
@@ -167,6 +176,8 @@ After loading config, most commands call `promptForCollection()` followed by `re
 4. If multiple collections exist and TTY is true, show an interactive `select` prompt.
 
 `resolveCollection()` in `collection-resolver.ts` then validates the selected name against `config.collections`, logs `❌ Collection "name" not found.` if absent, and computes the absolute `translationsFolderPath` by joining `baseDirectory` with `collectionConfig.translationsFolder`.
+
+**Read-only enforcement.** Commands that mutate resources call `resolveWritableCollection()` instead of `resolveCollection()`. It wraps `resolveCollection()` and, if the collection's config has `readOnly: true`, prints `❌ Collection "name" is read-only...`, sets `process.exitCode = 1` (so CI fails), and returns `null`. This is the single CLI choke-point for read-only enforcement — no per-command checks. Read-only commands (`bundle`, `export`, `validate`, `find-similar`, `glossary`) and `delete-collection` keep using plain `resolveCollection()`, since they either don't mutate resources or operate on the collection's registration rather than its contents.
 
 ### Resolution Flowchart
 

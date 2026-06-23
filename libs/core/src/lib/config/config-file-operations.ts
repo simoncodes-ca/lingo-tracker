@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import { normalizeTags } from '@simoncodes-ca/domain';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { CONFIG_FILENAME } from '../../constants';
 import { readLingoConfig, writeJsonFile } from '../file-io/json-file-operations';
@@ -42,6 +43,7 @@ export function createConfigFileOperations(params: ConfigFileParams = {}): Confi
         validateConfig(config);
       }
 
+      normalizeCollectionTags(config);
       return config;
     },
 
@@ -85,6 +87,18 @@ function validateConfig(config: LingoTrackerConfig): void {
 
   if (!config.collections || typeof config.collections !== 'object') {
     throw new Error('Configuration field "collections" must be an object');
+  }
+}
+
+function normalizeCollectionTags(config: LingoTrackerConfig): void {
+  if (!config.collections) return;
+  for (const collection of Object.values(config.collections)) {
+    if (collection.tags !== undefined) {
+      collection.tags = normalizeTags(collection.tags);
+      if (collection.tags.length === 0) {
+        delete collection.tags;
+      }
+    }
   }
 }
 

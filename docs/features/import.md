@@ -56,6 +56,7 @@ Different import workflows require different approaches. The `--strategy` option
 - Preserves existing base values (warns if source differs)
 - Does NOT create new resources (skips missing resources; counted in Resources Skipped, not an error)
 - Does NOT update comments or tags by default
+- Collection-level inherited tags are **not** stored in bundle files — they re-apply automatically based on the destination collection's own config after import
 
 **Typical Workflow**:
 1. Export resources with status `new,stale` to XLIFF
@@ -215,7 +216,7 @@ This ensures translations work correctly even when translators accidentally modi
 
 ## Import Summary
 
-Every completed import writes `import-summary.md` to the translations folder (e.g., `src/assets/i18n/import-summary.md`) with detailed change tracking:
+Every completed import writes a timestamped `lingo-tracker-import-summary-<timestamp>.md` file to the **OS temp directory** (e.g. `/tmp` on macOS/Linux, `%TEMP%` on Windows) and prints the full path to the console. The file is written outside your project tree to avoid polluting your repository or breaking build pipelines that scan `.md` files. It contains detailed change tracking:
 
 - Import statistics (resources imported, created, updated, skipped, failed)
 - Status transitions (e.g., "new → translated", "stale → verified")
@@ -234,7 +235,7 @@ Use `--dry-run` to preview what would be imported without modifying files:
 lingo-tracker import --source translations-es.xliff --locale es --dry-run
 ```
 
-The dry-run summary shows exactly what would happen, using "Would" language to indicate no changes were made. The summary file is not written in dry-run mode, but the path where it would be written is still printed to the console.
+The dry-run summary shows exactly what would happen, using "Would" language to indicate no changes were made. The summary file is not written in dry-run mode, but the temp path where it would be written is still printed to the console.
 
 ## Interactive Mode
 
@@ -266,7 +267,7 @@ LingoTracker supports professional translation workflows:
    ```
 
 4. **Review Import Summary**:
-   - Check `import-summary.md` for statistics and warnings
+   - Check the summary file (path printed to console) for statistics and warnings
    - Review any ICU auto-fixes applied
    - Verify all translations imported successfully
 

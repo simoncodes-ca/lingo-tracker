@@ -29,6 +29,13 @@
       </span>
     </div>
 
+    @if (isReadOnly()) {
+      <div class="readonly-banner" role="status">
+        <mat-icon class="readonly-icon">lock</mat-icon>
+        <span class="readonly-text">{{ TOKENS.BROWSER.TRANSLATIONEDITOR.READONLYNOTICE | transloco }}</span>
+      </div>
+    }
+
     @if (errorMessage()) {
       <div class="error-banner" role="alert">
         <mat-icon class="error-icon">error</mat-icon>
@@ -103,6 +110,43 @@
                 <mat-hint>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.COMMENTHINT | transloco }}</mat-hint>
               </mat-form-field>
 
+              <!-- Tags -->
+              <mat-form-field appearance="outline" class="full-width tags-field">
+                <mat-label>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.LABEL | transloco }}</mat-label>
+                <mat-chip-grid #chipGrid [disabled]="isReadOnly()">
+                  @for (tag of inheritedTagsList(); track tag) {
+                    <mat-chip-row class="chip--inherited" [matTooltip]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.INHERITEDTOOLTIP | transloco" matTooltipPosition="above" [removable]="false">
+                      {{ tag }}
+                    </mat-chip-row>
+                  }
+                  @for (tag of tagsList(); track tag) {
+                    <mat-chip-row (removed)="removeTag(tag)">
+                      {{ tag }}
+                      @if (!isReadOnly()) {
+                        <button matChipRemove [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.REMOVETAGX | transloco : { tag }">
+                          <mat-icon>cancel</mat-icon>
+                        </button>
+                      }
+                    </mat-chip-row>
+                  }
+                </mat-chip-grid>
+                <input
+                  [placeholder]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.ADDPLACEHOLDER | transloco"
+                  [matChipInputFor]="chipGrid"
+                  [matChipInputSeparatorKeyCodes]="tagSeparatorKeyCodes"
+                  [matAutocomplete]="tagAuto"
+                  (matChipInputTokenEnd)="addTag($event)"
+                  (input)="onTagInputChange($event)"
+                  autocomplete="off"
+                />
+                <mat-autocomplete #tagAuto="matAutocomplete" (optionSelected)="addTagFromAutocomplete($event)">
+                  @for (suggestion of filteredTagSuggestions(); track suggestion) {
+                    <mat-option [value]="suggestion">{{ suggestion }}</mat-option>
+                  }
+                </mat-autocomplete>
+                <mat-hint>{{ TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.HINT | transloco }}</mat-hint>
+              </mat-form-field>
+
               <!-- Similar Translations -->
               <app-similar-translations
                 [results]="similarResources()"
@@ -171,7 +215,7 @@
         </mat-tab>
 
         <!-- ───────────────────────────── Tab 3: Change Location ───────────────────────────── -->
-        <mat-tab [label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAB.CHANGELOCATION | transloco">
+        <mat-tab [label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAB.CHANGELOCATION | transloco" [disabled]="isReadOnly()">
           <div class="tab-panel tab-panel--location">
             <!-- Inline description -->
             <p class="location-tab-hint">
@@ -205,20 +249,22 @@
     >
       {{ TOKENS.COMMON.ACTIONS.CANCEL | transloco }}
     </button>
-    <button
-      mat-raised-button
-      color="primary"
-      type="button"
-      (click)="onSubmit()"
-      [disabled]="form.invalid || isSubmitting()"
-      class="submit-button"
-    >
-      @if (isSubmitting()) {
-        <mat-spinner diameter="20" class="submit-spinner"></mat-spinner>
-        {{ TOKENS.BROWSER.TRANSLATIONEDITOR.SAVING | transloco }}
-      } @else {
-        {{ saveButtonLabel() | transloco }}
-      }
-    </button>
+    @if (!isReadOnly()) {
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="form.invalid || isSubmitting()"
+        class="submit-button"
+      >
+        @if (isSubmitting()) {
+          <mat-spinner diameter="20" class="submit-spinner"></mat-spinner>
+          {{ TOKENS.BROWSER.TRANSLATIONEDITOR.SAVING | transloco }}
+        } @else {
+          {{ saveButtonLabel() | transloco }}
+        }
+      </button>
+    }
   </mat-dialog-actions>
 </div>

@@ -66,6 +66,29 @@ interface ResourceEntry {
 }
 ```
 
+**Tag normalization rules** (`libs/domain/src/lib/normalize-tags.ts` is the single source of truth):
+- Lowercased, whitespace replaced with hyphens, non-`[a-z0-9-]` characters stripped
+- Repeated hyphens collapsed; leading/trailing hyphens removed
+- Maximum 50 characters per tag (truncated before cleanup)
+- Duplicates removed (case-insensitive after normalization), first-occurrence wins
+- Tags are coerced on write by `addResource` / `editResource` (core) and on `normalize` (CLI)
+- The Tracker UI chip input normalizes each tag on commit
+
+**Collection-level (inherited) tags:**
+
+Collections can declare `tags?: string[]` in `.lingo-tracker.json` config. These tags are inherited by every resource in the collection at read time — they are never stored on individual `resource_entries.json` files. The merge is performed by `effectiveTags(collectionTags, resourceTags)` in `libs/domain/src/lib/effective-tags.ts`:
+
+```typescript
+effectiveTags(['team-x'], ['feature-a'])  // → ['team-x', 'feature-a']
+effectiveTags(['team-x'], ['team-x', 'ui'])  // → ['team-x', 'ui']  (deduped)
+```
+
+Inherited tags are:
+- **Additive only** — no negative/override syntax; all collection tags apply to all resources
+- **Transparent to export/bundle filtering** — `--tags team-x` matches resources whose collection carries that tag
+- **Not materialized in bundle files** — the destination collection's own config re-applies its tags on import
+- **Displayed distinctly in the Tracker UI** — shown as dashed-border chips with an "Inherited from collection" tooltip; cannot be removed per-resource
+
 Real example from `apps/tracker/src/i18n/browser/dialog/deleteResource/resource_entries.json`:
 
 ```json

@@ -8,7 +8,7 @@ vi.mock('@simoncodes-ca/core', () => ({
 vi.mock('../utils', () => ({
   loadConfiguration: vi.fn(),
   promptForCollection: vi.fn(),
-  resolveCollection: vi.fn(),
+  resolveWritableCollection: vi.fn(),
   ConsoleFormatter: {
     error: vi.fn(),
     success: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('prompts', () => ({
 }));
 
 import { removeLocaleFromCollection } from '@simoncodes-ca/core';
-import { loadConfiguration, promptForCollection, resolveCollection, ConsoleFormatter } from '../utils';
+import { loadConfiguration, promptForCollection, resolveWritableCollection, ConsoleFormatter } from '../utils';
 
 const BASE_CONFIG = {
   baseLocale: 'en',
@@ -48,7 +48,7 @@ describe('removeLocaleCommand', () => {
     vi.clearAllMocks();
     vi.mocked(loadConfiguration).mockReturnValue(LOADED_CONFIG);
     vi.mocked(promptForCollection).mockResolvedValue('main');
-    vi.mocked(resolveCollection).mockReturnValue(RESOLVED_COLLECTION);
+    vi.mocked(resolveWritableCollection).mockReturnValue(RESOLVED_COLLECTION);
   });
 
   it('returns early when loadConfiguration returns null', async () => {
@@ -67,8 +67,8 @@ describe('removeLocaleCommand', () => {
     expect(removeLocaleFromCollection).not.toHaveBeenCalled();
   });
 
-  it('returns early when resolveCollection returns null', async () => {
-    vi.mocked(resolveCollection).mockReturnValue(null);
+  it('returns early when resolveWritableCollection returns null', async () => {
+    vi.mocked(resolveWritableCollection).mockReturnValue(null);
 
     await removeLocaleCommand({ locale: 'fr' });
 

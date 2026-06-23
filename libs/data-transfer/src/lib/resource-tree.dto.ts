@@ -26,6 +26,9 @@ export interface ResourceSummaryDto {
 
   /** Optional tags for categorization/filtering */
   tags?: string[];
+
+  /** Tags inherited from the parent collection config (read-only on the resource) */
+  inheritedTags?: string[];
 }
 
 export interface FolderNodeDto {

@@ -28,5 +28,25 @@
     "ru": "Дополнительные действия для сбора",
     "ja": "収集のためのその他のアクション",
     "de": "Weitere Aktionen zur Sammlung"
+  },
+  "readOnlyBadge": {
+    "source": "Read-only",
+    "comment": "Badge on a collection card indicating the collection is read-only.",
+    "tags": ["collections"],
+    "es": "Read-only",
+    "fr-ca": "Read-only",
+    "ru": "Read-only",
+    "ja": "Read-only",
+    "de": "Read-only"
+  },
+  "readOnlyTooltip": {
+    "source": "This collection is read-only. Its resources can't be modified.",
+    "comment": "Tooltip on the read-only badge on a collection card.",
+    "tags": ["collections"],
+    "es": "This collection is read-only. Its resources can't be modified.",
+    "fr-ca": "This collection is read-only. Its resources can't be modified.",
+    "ru": "This collection is read-only. Its resources can't be modified.",
+    "ja": "This collection is read-only. Its resources can't be modified.",
+    "de": "This collection is read-only. Its resources can't be modified."
   }
 }

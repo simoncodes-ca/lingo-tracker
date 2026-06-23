@@ -9,6 +9,8 @@ export function mapCollectionToDto(collection: LingoTrackerCollection): LingoTra
     baseLocale: collection.baseLocale,
     locales: collection.locales ? [...collection.locales] : undefined,
     translation: collection.translation,
+    readOnly: collection.readOnly,
+    tags: collection.tags ? [...collection.tags] : undefined,
   };
 }
 
@@ -20,5 +22,7 @@ export function mapDtoToCollection(dto: LingoTrackerCollectionDto): LingoTracker
     baseLocale: dto.baseLocale,
     locales: dto.locales ? [...dto.locales] : undefined,
     translation: dto.translation,
+    readOnly: dto.readOnly,
+    tags: dto.tags ? [...dto.tags] : undefined,
   };
 }

@@ -1,6 +1,6 @@
 import prompts from 'prompts';
 import { translateLocale } from '@simoncodes-ca/core';
-import { loadConfiguration, resolveCollection, ConsoleFormatter, ErrorMessages } from '../utils';
+import { loadConfiguration, resolveWritableCollection, ConsoleFormatter, ErrorMessages } from '../utils';
 
 export interface TranslateLocaleOptions {
   collection?: string;
@@ -52,7 +52,7 @@ export async function translateLocaleCommand(options: TranslateLocaleOptions): P
     collectionName = answer.collection as string;
   }
 
-  const collection = resolveCollection(collectionName, config, cwd);
+  const collection = resolveWritableCollection(collectionName, config, cwd);
   if (!collection) return;
 
   // -------------------------------------------------------------------------

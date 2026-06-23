@@ -1,3 +1,4 @@
+export * from './lib/escape-regexp';
 export * from './lib/translation-status';
 export * from './lib/locale-metadata';
 export * from './lib/resource-key';
@@ -8,3 +9,6 @@ export * from './lib/transloco-to-icu';
 export * from './lib/validation-utils';
 export * from './lib/normalize-transloco-syntax';
 export * from './lib/icu-classifier';
+export * from './lib/node-modules';
+export * from './lib/normalize-tags';
+export * from './lib/effective-tags';

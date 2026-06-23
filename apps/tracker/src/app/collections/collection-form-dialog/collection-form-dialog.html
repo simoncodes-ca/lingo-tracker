@@ -81,6 +81,38 @@
           </button>
         </div>
       </section>
+
+      <section class="readonly-section">
+        <mat-checkbox formControlName="readOnly" (change)="onReadOnlyToggle()">
+          {{ TOKENS.COLLECTIONS.DIALOG.READONLYLABEL | transloco }}
+        </mat-checkbox>
+        <p class="readonly-hint">
+          {{ (isNodeModulesPath ? TOKENS.COLLECTIONS.DIALOG.READONLYNODEMODULESHINT : TOKENS.COLLECTIONS.DIALOG.READONLYHINT) | transloco }}
+        </p>
+      </section>
+
+      <!-- Collection tags -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ TOKENS.COLLECTIONS.DIALOG.TAGSLABEL | transloco }}</mat-label>
+        <mat-chip-grid #tagChipGrid>
+          @for (tag of tagsList(); track tag) {
+            <mat-chip-row (removed)="removeCollectionTag(tag)">
+              {{ tag }}
+              <button matChipRemove [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.REMOVETAGX | transloco : { tag }">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip-row>
+          }
+        </mat-chip-grid>
+        <input
+          [placeholder]="TOKENS.COLLECTIONS.DIALOG.TAGSADDPLACEHOLDER | transloco"
+          [matChipInputFor]="tagChipGrid"
+          [matChipInputSeparatorKeyCodes]="tagSeparatorKeyCodes"
+          (matChipInputTokenEnd)="addCollectionTag($event)"
+          autocomplete="off"
+        />
+        <mat-hint>{{ TOKENS.COLLECTIONS.DIALOG.TAGSHINT | transloco }}</mat-hint>
+      </mat-form-field>
     </form>
   </mat-dialog-content>
 

@@ -144,6 +144,38 @@ describe('updateCollection', () => {
     ).rejects.toThrow();
   });
 
+  it('persists normalized tags when provided', async () => {
+    await updateCollection(
+      'myApp',
+      undefined,
+      { translationsFolder: './i18n', tags: ['Team X', 'feature-a', 'Team X'] },
+      { cwd: '/test' },
+    );
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls.at(-1);
+    const writtenConfig = JSON.parse(writeCall?.[1] as string);
+    expect(writtenConfig.collections.myApp.tags).toEqual(['team-x', 'feature-a']);
+  });
+
+  it('clears tags when empty array passed', async () => {
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify(
+        {
+          ...baseConfig,
+          collections: { myApp: { translationsFolder: './i18n', tags: ['team-x'] } },
+        },
+        null,
+        2,
+      ) as SafeAny,
+    );
+
+    await updateCollection('myApp', undefined, { translationsFolder: './i18n', tags: [] }, { cwd: '/test' });
+
+    const writeCall = vi.mocked(fs.writeFileSync).mock.calls.at(-1);
+    const writtenConfig = JSON.parse(writeCall?.[1] as string);
+    expect(writtenConfig.collections.myApp.tags).toBeUndefined();
+  });
+
   it('uses global config locales as baseline when collection has no explicit locales', async () => {
     const configWithoutCollectionLocales = {
       ...baseConfig,

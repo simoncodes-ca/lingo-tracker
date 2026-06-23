@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { CollectionsStore } from './store/collections.store';
@@ -33,6 +34,7 @@ import { NotificationService } from '../shared/notification';
     MatProgressSpinnerModule,
     MatIconModule,
     MatMenuModule,
+    MatTooltipModule,
     TranslocoModule,
     TagList,
   ],

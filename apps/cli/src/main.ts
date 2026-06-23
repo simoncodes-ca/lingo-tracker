@@ -49,6 +49,8 @@ program
   .option('--import-folder <path>', 'dist/lingo-import')
   .option('--base-locale <locale>', 'en')
   .option('--locales <locales...>', 'supported locales')
+  .option('--read-only', 'Mark the collection as read-only (its resources cannot be modified)')
+  .option('--no-read-only', 'Force the collection writable, overriding node_modules auto-detection')
   .action(async (options) => {
     const { addCollectionCommand } = await import('./add-collection/add-collection');
     await addCollectionCommand(options);
@@ -446,6 +448,34 @@ program
     const raw = parseInt(options.maxResults, 10);
     const maxResults = Number.isNaN(raw) || raw < 1 ? 5 : raw;
     await findSimilarCommand({ ...options, maxResults });
+  });
+
+program
+  .command('glossary')
+  .description('Extract translations for terms found in a block of text (e.g. for online help)')
+  .option('--text <text>', 'Inline text block to extract terms from')
+  .option('--input <file>', 'Path to a file whose contents are the input text block')
+  .option('--output <file>', 'Output JSON file path (default: ./lingo-tracker-glossary-<timestamp>.json)')
+  .option('--stdout', 'Print the glossary JSON to stdout instead of writing a file')
+  .option('--collection <name>', 'Limit matching to a single collection (default: all collections)')
+  .option('--locales <list>', 'Comma-separated locales to include (default: all configured locales)')
+  .option('--include-all', 'Include new/stale entries (default: only translated + verified)')
+  .addOption(new Option('--extractor <mode>', 'Term extraction strategy').choices(['ngram', 'ai']).default('ngram'))
+  .action(async (options) => {
+    const { glossaryCommand } = await import('./commands/glossary');
+    await glossaryCommand(options);
+  });
+
+program
+  .command('edit-collection')
+  .description('Edit a collection configuration (currently: manage collection-level tags)')
+  .argument('<name>', 'Collection name')
+  .option('--add-tag <tag>', 'Add a tag to the collection (repeatable)', collect, [])
+  .option('--remove-tag <tag>', 'Remove a tag from the collection (repeatable)', collect, [])
+  .option('--set-tags <tags>', 'Replace all collection tags with a comma-separated list (use "" to clear)')
+  .action(async (name, options) => {
+    const { editCollectionCommand } = await import('./commands/edit-collection');
+    await editCollectionCommand(name, options);
   });
 
 program
