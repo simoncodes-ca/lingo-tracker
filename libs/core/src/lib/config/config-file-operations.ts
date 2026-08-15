@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { normalizeTags } from '@simoncodes-ca/domain';
+import { normalizeProtectedTerms, normalizeTags } from '@simoncodes-ca/domain';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { CONFIG_FILENAME } from '../../constants';
 import { readLingoConfig, writeJsonFile } from '../file-io/json-file-operations';
@@ -44,6 +44,7 @@ export function createConfigFileOperations(params: ConfigFileParams = {}): Confi
       }
 
       normalizeCollectionTags(config);
+      normalizeProtectedTermsInConfig(config);
       return config;
     },
 
@@ -97,6 +98,24 @@ function normalizeCollectionTags(config: LingoTrackerConfig): void {
       collection.tags = normalizeTags(collection.tags);
       if (collection.tags.length === 0) {
         delete collection.tags;
+      }
+    }
+  }
+}
+
+function normalizeProtectedTermsInConfig(config: LingoTrackerConfig): void {
+  if (config.protectedTerms !== undefined) {
+    config.protectedTerms = normalizeProtectedTerms(config.protectedTerms);
+    if (config.protectedTerms.length === 0) {
+      delete config.protectedTerms;
+    }
+  }
+  if (!config.collections) return;
+  for (const collection of Object.values(config.collections)) {
+    if (collection.protectedTerms !== undefined) {
+      collection.protectedTerms = normalizeProtectedTerms(collection.protectedTerms);
+      if (collection.protectedTerms.length === 0) {
+        delete collection.protectedTerms;
       }
     }
   }

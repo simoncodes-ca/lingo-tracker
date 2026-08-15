@@ -165,6 +165,46 @@ describe('CollectionFormDialog — create mode', () => {
     expect(closeArg.config).not.toHaveProperty('locales');
     expect(closeArg.config).not.toHaveProperty('baseLocale');
   });
+
+  it('should add a protected term preserving casing and trimming, deduped case-sensitively', () => {
+    component.addProtectedTerm({ value: ' iPhone ', chipInput: { clear: () => undefined } } as never);
+    component.addProtectedTerm({ value: 'Node.js', chipInput: { clear: () => undefined } } as never);
+    component.addProtectedTerm({ value: 'iPhone', chipInput: { clear: () => undefined } } as never);
+
+    expect(component.protectedTermsList()).toEqual(['iPhone', 'Node.js']);
+  });
+
+  it('should remove a protected term', () => {
+    component.addProtectedTerm({ value: 'iPhone', chipInput: { clear: () => undefined } } as never);
+    component.addProtectedTerm({ value: 'C++', chipInput: { clear: () => undefined } } as never);
+    component.removeProtectedTerm('iPhone');
+
+    expect(component.protectedTermsList()).toEqual(['C++']);
+  });
+
+  it('should include protected terms in the submitted config', async () => {
+    component.form.controls.name.setValue('my-collection');
+    component.form.controls.translationsFolder.setValue('./i18n');
+    component.addProtectedTerm({ value: 'iPhone', chipInput: { clear: () => undefined } } as never);
+
+    await component.onSubmit();
+
+    expect(mockDialogRef.close).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({ protectedTerms: ['iPhone'] }),
+      }),
+    );
+  });
+
+  it('should omit protectedTerms from the submitted config when none added', async () => {
+    component.form.controls.name.setValue('my-collection');
+    component.form.controls.translationsFolder.setValue('./i18n');
+
+    await component.onSubmit();
+
+    const closeArg = mockDialogRef.close.mock.calls[0][0];
+    expect(closeArg.config).not.toHaveProperty('protectedTerms');
+  });
 });
 
 describe('CollectionFormDialog — edit mode', () => {
@@ -180,6 +220,7 @@ describe('CollectionFormDialog — edit mode', () => {
       translationsFolder: './i18n',
       baseLocale: 'en',
       locales: ['en', 'es', 'fr-ca'],
+      protectedTerms: ['iPhone', 'Node.js'],
     },
   };
 
@@ -204,6 +245,21 @@ describe('CollectionFormDialog — edit mode', () => {
 
   it('should pre-populate baseLocale from config', () => {
     expect(component.form.controls.baseLocale.value).toBe('en');
+  });
+
+  it('should pre-populate protected terms from config', () => {
+    expect(component.protectedTermsList()).toEqual(['iPhone', 'Node.js']);
+  });
+
+  it('should return protected terms in the result config', async () => {
+    component.addProtectedTerm({ value: 'C++', chipInput: { clear: () => undefined } } as never);
+    await component.onSubmit();
+
+    expect(mockDialogRef.close).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({ protectedTerms: ['iPhone', 'Node.js', 'C++'] }),
+      }),
+    );
   });
 
   it('should open confirmation dialog when a pre-existing locale is removed on submit', async () => {

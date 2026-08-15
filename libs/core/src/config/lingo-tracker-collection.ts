@@ -20,4 +20,9 @@ export interface LingoTrackerCollection {
   readOnly?: boolean;
   /** Tags inherited by every resource in this collection. Unioned with per-resource tags at read time. */
   tags?: string[];
+  /**
+   * Terms (brand/product names, jargon) kept verbatim and never translated. This
+   * collection-specific list is unioned with the global list at read time.
+   */
+  protectedTerms?: string[];
 }

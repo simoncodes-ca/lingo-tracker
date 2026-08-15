@@ -13,7 +13,7 @@ declare module 'xliff' {
   export interface XliffResource {
     source: string;
     target: string;
-    note?: string;
+    note?: string | string[];
   }
 
   export interface XliffData {

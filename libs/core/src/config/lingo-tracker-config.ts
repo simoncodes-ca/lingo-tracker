@@ -27,4 +27,10 @@ export interface LingoTrackerConfig {
    * Default: true
    */
   transformICUToTransloco?: boolean;
+
+  /**
+   * Terms (brand/product names, jargon) kept verbatim and never translated, applied to
+   * every collection. This global list is unioned with each collection's list at read time.
+   */
+  protectedTerms?: string[];
 }

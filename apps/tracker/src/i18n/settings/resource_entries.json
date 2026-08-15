@@ -1,0 +1,62 @@
+{
+  "title": {
+    "source": "Settings",
+    "comment": "Title of the settings view",
+    "tags": ["settings"],
+    "es": "Ajustes",
+    "fr-ca": "Paramètres",
+    "ru": "Настройки",
+    "ja": "設定",
+    "de": "Einstellungen"
+  },
+  "protectedTermsLabel": {
+    "source": "Global Protected Terms",
+    "comment": "Label for the global protected terms field in settings",
+    "tags": ["settings"],
+    "es": "Términos protegidos a nivel mundial",
+    "fr-ca": "Conditions générales de protection globales",
+    "ru": "Глобальные защищенные условия",
+    "ja": "グローバル保護条項",
+    "de": "Globale Schutzbestimmungen"
+  },
+  "protectedTermsHint": {
+    "source": "Brand names or jargon kept verbatim and never translated across all collections. Press Enter or comma to add.",
+    "comment": "Hint text under the global protected terms field in settings",
+    "tags": ["settings"],
+    "es": "Las marcas o la jerga se conservan tal cual y nunca se traducen en todas las colecciones. Pulse Intro o una coma para añadir.",
+    "fr-ca": "Les marques et le jargon sont conservés tels quels et ne sont jamais traduits dans toutes les collections. Appuyez sur Entrée ou sur la virgule pour ajouter.",
+    "ru": "Названия брендов или терминология сохраняются дословно и никогда не переводятся во все коллекции. Нажмите Enter или запятую для добавления.",
+    "ja": "ブランド名や専門用語は、すべてのコレクションでそのまま使用され、翻訳されることはありません。Enterキーまたはカンマを押して追加してください。",
+    "de": "Markennamen und Fachbegriffe werden unverändert übernommen und nicht in alle Kollektionen übersetzt. Drücken Sie die Eingabetaste oder ein Komma, um etwas hinzuzufügen."
+  },
+  "protectedTermsAddPlaceholder": {
+    "source": "Add protected term…",
+    "comment": "Placeholder inside the protected term chip input in settings",
+    "tags": ["settings"],
+    "es": "Agregar término protegido…",
+    "fr-ca": "Ajouter un terme protégé…",
+    "ru": "Добавить защищенный термин…",
+    "ja": "保護された用語を追加…",
+    "de": "Füge geschützten Begriff hinzu…"
+  },
+  "save": {
+    "source": "Save",
+    "comment": "Save button in settings",
+    "tags": ["settings"],
+    "es": "Ahorrar",
+    "fr-ca": "Sauver",
+    "ru": "Сохранять",
+    "ja": "保存",
+    "de": "Speichern"
+  },
+  "saveSuccess": {
+    "source": "Global settings saved",
+    "comment": "Toast shown after saving settings",
+    "tags": ["settings"],
+    "es": "Configuración global guardada",
+    "fr-ca": "Paramètres globaux enregistrés",
+    "ru": "Сохранены глобальные настройки",
+    "ja": "グローバル設定が保存されました",
+    "de": "Globale Einstellungen gespeichert"
+  }
+}

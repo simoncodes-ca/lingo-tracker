@@ -2170,4 +2170,84 @@ describe('import-from-json', () => {
       }
     });
   });
+
+  describe('protected terms verification', () => {
+    const existingEntries = {
+      welcome: { source: 'Welcome to iPhone' },
+      cancel: { source: 'Cancel' },
+    };
+
+    const existingMeta = {
+      welcome: { en: { checksum: 'c1' } },
+      cancel: { en: { checksum: 'c2' } },
+    };
+
+    beforeEach(() => {
+      vi.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
+        const pathStr = String(filePath);
+        if (pathStr.includes('import.json')) return true;
+        return true;
+      });
+      vi.spyOn(fs, 'readFileSync').mockImplementation((filePath) => {
+        const pathStr = String(filePath);
+        if (pathStr.includes('import.json')) return JSON.stringify(importData);
+        if (pathStr.includes('resource_entries.json')) return JSON.stringify(existingEntries);
+        if (pathStr.includes('tracker_meta.json')) return JSON.stringify(existingMeta);
+        return '{}';
+      });
+    });
+
+    let importData: Record<string, unknown>;
+
+    it('flags an altered protected term as failed and leaves the entry unwritten', () => {
+      importData = {
+        'common.welcome': { value: 'Bienvenido a iphone', baseValue: 'Welcome to iPhone' },
+        'common.cancel': 'Cancelar',
+      };
+
+      const writeSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+
+      const result = importFromJson('/translations', {
+        source: '/import/import.json',
+        locale: 'es',
+        protectedTerms: ['iPhone'],
+      });
+
+      expect(result.resourcesFailed).toBe(1);
+      expect(result.changes.find((c) => c.key === 'common.welcome')?.type).toBe('failed');
+      expect(result.changes.find((c) => c.key === 'common.welcome')?.reason).toContain('Protected term(s) altered');
+      expect(result.errors.some((e) => e.includes('common.welcome') && e.includes('iPhone'))).toBe(true);
+
+      // Valid sibling still imported — resource_entries gets write with cancel only
+      const resourceEntriesCall = writeSpy.mock.calls.find((call) => String(call[0]).includes('resource_entries.json'));
+      const updatedEntries = JSON.parse(String(resourceEntriesCall?.[1]));
+      expect(updatedEntries.cancel.es).toBe('Cancelar');
+      expect(updatedEntries.welcome.es).toBeUndefined();
+    });
+
+    it('passes when the protected term is preserved verbatim', () => {
+      importData = {
+        'common.welcome': 'Bienvenido a iPhone',
+      };
+
+      const writeSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+
+      const result = importFromJson('/translations', {
+        source: '/import/import.json',
+        locale: 'es',
+        protectedTerms: ['iPhone'],
+      });
+
+      expect(result.resourcesFailed).toBe(0);
+      expect(result.resourcesUpdated).toBe(1);
+      expect(result.errors).toHaveLength(0);
+      expect(result.changes.some((c) => c.type === 'failed')).toBe(false);
+
+      const resourceEntriesCall = writeSpy.mock.calls.find((call) => String(call[0]).includes('resource_entries.json'));
+      const updatedEntries = JSON.parse(String(resourceEntriesCall?.[1]));
+      expect(updatedEntries.welcome.es).toBe('Bienvenido a iPhone');
+    });
+  });
 });

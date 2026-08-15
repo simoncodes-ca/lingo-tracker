@@ -113,6 +113,29 @@
         />
         <mat-hint>{{ TOKENS.COLLECTIONS.DIALOG.TAGSHINT | transloco }}</mat-hint>
       </mat-form-field>
+
+      <!-- Protected terms -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ TOKENS.COLLECTIONS.DIALOG.PROTECTEDTERMSLABEL | transloco }}</mat-label>
+        <mat-chip-grid #protectedTermChipGrid>
+          @for (term of protectedTermsList(); track term) {
+            <mat-chip-row (removed)="removeProtectedTerm(term)">
+              {{ term }}
+              <button matChipRemove [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.REMOVETAGX | transloco : { tag: term }">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip-row>
+          }
+        </mat-chip-grid>
+        <input
+          [placeholder]="TOKENS.COLLECTIONS.DIALOG.PROTECTEDTERMSADDPLACEHOLDER | transloco"
+          [matChipInputFor]="protectedTermChipGrid"
+          [matChipInputSeparatorKeyCodes]="tagSeparatorKeyCodes"
+          (matChipInputTokenEnd)="addProtectedTerm($event)"
+          autocomplete="off"
+        />
+        <mat-hint>{{ TOKENS.COLLECTIONS.DIALOG.PROTECTEDTERMSHINT | transloco }}</mat-hint>
+      </mat-form-field>
     </form>
   </mat-dialog-content>
 

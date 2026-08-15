@@ -1301,4 +1301,139 @@ describe('process-resource-group', () => {
       expect(filesModified.size).toBe(0);
     });
   });
+
+  describe('protected terms verification (target locale)', () => {
+    const writeExisting = (entries: Record<string, { source: string }>): void => {
+      if (!existsSync(folderPath)) {
+        mkdirSync(folderPath, { recursive: true });
+      }
+      writeFileSync(entryResourcePath, JSON.stringify(entries));
+      writeFileSync(entryMetaPath, JSON.stringify({}));
+    };
+
+    it('flags an altered protected term as failed, skips writing it, and records an error', () => {
+      writeExisting({ ok: { source: 'Get iPhone' } });
+
+      const filesModified = new Set<string>();
+      const warnings: string[] = [];
+      const errors: string[] = [];
+
+      const group: ResourceGroup = {
+        folderPath,
+        entryResourcePath,
+        entryMetaPath,
+        resources: [{ resource: { key: 'common.buttons.ok', value: 'Obtenez iphone' }, entryKey: 'ok' }],
+      };
+
+      const changes = processResourceGroup(
+        group,
+        'es',
+        'en',
+        { source: 'test.json', locale: 'es', protectedTerms: ['iPhone'] },
+        false,
+        false,
+        filesModified,
+        warnings,
+        errors,
+      );
+
+      expect(changes[0]).toEqual({
+        key: 'common.buttons.ok',
+        type: 'failed',
+        reason: 'Protected term(s) altered: iPhone',
+      });
+      expect(errors).toContain('"common.buttons.ok" Protected term(s) altered: iPhone');
+      expect(filesModified.size).toBe(0);
+    });
+
+    it('passes when the term is preserved verbatim', () => {
+      writeExisting({ ok: { source: 'Get iPhone' } });
+
+      const filesModified = new Set<string>();
+      const warnings: string[] = [];
+      const errors: string[] = [];
+
+      const group: ResourceGroup = {
+        folderPath,
+        entryResourcePath,
+        entryMetaPath,
+        resources: [{ resource: { key: 'common.buttons.ok', value: 'Obtenez iPhone' }, entryKey: 'ok' }],
+      };
+
+      const changes = processResourceGroup(
+        group,
+        'es',
+        'en',
+        { source: 'test.json', locale: 'es', protectedTerms: ['iPhone'] },
+        false,
+        false,
+        filesModified,
+        warnings,
+        errors,
+      );
+
+      expect(changes[0].type).not.toBe('failed');
+      expect(errors).toHaveLength(0);
+      const written = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
+      expect(written.ok.es).toBe('Obtenez iPhone');
+    });
+
+    it('still imports a valid sibling when a term-bearing entry fails', () => {
+      writeExisting({ ok: { source: 'Get iPhone' }, cancel: { source: 'Cancel' } });
+
+      const group: ResourceGroup = {
+        folderPath,
+        entryResourcePath,
+        entryMetaPath,
+        resources: [
+          { resource: { key: 'common.buttons.ok', value: 'Obtenez iphone' }, entryKey: 'ok' },
+          { resource: { key: 'common.buttons.cancel', value: 'Cancelar' }, entryKey: 'cancel' },
+        ],
+      };
+
+      const changes = processResourceGroup(
+        group,
+        'es',
+        'en',
+        { source: 'test.json', locale: 'es', protectedTerms: ['iPhone'] },
+        false,
+        false,
+        new Set<string>(),
+        [],
+      );
+
+      const failed = changes.find((c) => c.key === 'common.buttons.ok');
+      const valid = changes.find((c) => c.key === 'common.buttons.cancel');
+      expect(failed?.type).toBe('failed');
+      expect(valid?.type).toBe('value-changed');
+
+      const written = JSON.parse(readFileSync(entryResourcePath, 'utf8'));
+      expect(written.ok.es).toBeUndefined();
+      expect(written.cancel.es).toBe('Cancelar');
+    });
+
+    it('skips the check for base locale imports', () => {
+      writeExisting({ ok: { source: 'Get iPhone' } });
+
+      const group: ResourceGroup = {
+        folderPath,
+        entryResourcePath,
+        entryMetaPath,
+        resources: [{ resource: { key: 'common.buttons.ok', value: 'Get iphone' }, entryKey: 'ok' }],
+      };
+
+      const changes = processResourceGroup(
+        group,
+        'en',
+        'en',
+        { source: 'test.json', locale: 'en', strategy: 'migration', protectedTerms: ['iPhone'] },
+        false,
+        true,
+        new Set<string>(),
+        [],
+      );
+
+      expect(changes[0].type).toBe('value-changed');
+    });
+  });
 });

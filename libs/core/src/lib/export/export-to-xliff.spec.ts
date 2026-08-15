@@ -60,12 +60,94 @@ describe('export-to-xliff', () => {
     expect(data.resources.translations['common.buttons.ok']).toEqual({
       source: 'OK',
       target: 'Aceptar',
-      note: 'OK button',
+      note: ['OK button'],
     });
 
     expect(data.sourceLanguage).toBe('en');
     expect(data.targetLanguage).toBe('es');
     expect(opts).toEqual({ indent: '  ' });
+  });
+
+  it('should emit a do-not-translate note alongside an existing comment', async () => {
+    mockJsToXliff12.mockImplementation((_data, _opts, cb) => {
+      cb(null, '<xliff>mock content</xliff>');
+    });
+
+    const resources: FilteredResource[] = [
+      {
+        key: 'brand.title',
+        value: 'Inicio iPhone',
+        baseValue: 'Home iPhone',
+        comment: 'Brand heading',
+        status: 'translated',
+        collection: 'App',
+        locale: 'es',
+        protectedTermsFound: ['iPhone'],
+      },
+    ];
+
+    await exportToXliff(resources, defaultOptions, 'en');
+
+    const data = mockJsToXliff12.mock.calls[0][0];
+    expect(data.resources.translations['brand.title']).toEqual({
+      source: 'Home iPhone',
+      target: 'Inicio iPhone',
+      note: ['Brand heading', 'Do not translate: iPhone'],
+    });
+  });
+
+  it('should emit only the do-not-translate note when there is no comment', async () => {
+    mockJsToXliff12.mockImplementation((_data, _opts, cb) => {
+      cb(null, '<xliff>mock content</xliff>');
+    });
+
+    const resources: FilteredResource[] = [
+      {
+        key: 'brand.title',
+        value: 'C++ en directo',
+        baseValue: 'C++ live',
+        status: 'translated',
+        collection: 'App',
+        locale: 'es',
+        protectedTermsFound: ['C++'],
+      },
+    ];
+
+    await exportToXliff(resources, defaultOptions, 'en');
+
+    const data = mockJsToXliff12.mock.calls[0][0];
+    expect(data.resources.translations['brand.title']).toEqual({
+      source: 'C++ live',
+      target: 'C++ en directo',
+      note: ['Do not translate: C++'],
+    });
+  });
+
+  it('should omit the do-not-translate note for base-locale rows and when none found', async () => {
+    mockJsToXliff12.mockImplementation((_data, _opts, cb) => {
+      cb(null, '<xliff>mock content</xliff>');
+    });
+
+    const resources: FilteredResource[] = [
+      {
+        key: 'brand.title',
+        value: 'Home iPhone',
+        baseValue: 'Home iPhone',
+        status: 'translated',
+        collection: 'App',
+        locale: 'en',
+        protectedTermsFound: undefined,
+      },
+    ];
+
+    await exportToXliff(resources, defaultOptions, 'en');
+
+    const data = mockJsToXliff12.mock.calls[0][0];
+    expect(data.resources.translations['brand.title']).toEqual({
+      source: 'Home iPhone',
+      target: 'Home iPhone',
+      note: undefined,
+    });
   });
 
   it('should use custom filename pattern', async () => {

@@ -11,4 +11,6 @@ export interface LingoTrackerCollectionDto {
   readOnly?: boolean;
   /** Tags inherited by every resource in this collection. */
   tags?: string[];
+  /** Terms kept verbatim and never translated, unioned with the global list at read time. */
+  protectedTerms?: string[];
 }

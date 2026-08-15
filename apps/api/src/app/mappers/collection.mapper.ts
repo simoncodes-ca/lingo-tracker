@@ -11,6 +11,7 @@ export function mapCollectionToDto(collection: LingoTrackerCollection): LingoTra
     translation: collection.translation,
     readOnly: collection.readOnly,
     tags: collection.tags ? [...collection.tags] : undefined,
+    protectedTerms: collection.protectedTerms ? [...collection.protectedTerms] : undefined,
   };
 }
 
@@ -24,5 +25,6 @@ export function mapDtoToCollection(dto: LingoTrackerCollectionDto): LingoTracker
     translation: dto.translation,
     readOnly: dto.readOnly,
     tags: dto.tags ? [...dto.tags] : undefined,
+    protectedTerms: dto.protectedTerms ? [...dto.protectedTerms] : undefined,
   };
 }
