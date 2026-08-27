@@ -1,0 +1,22 @@
+{
+  "cannotDelete": {
+    "en": {
+      "checksum": "5d0fa4d535fb72dd1968675cfebbba24"
+    },
+    "fr-ca": {
+      "checksum": "f81334ece5a8eb537e34c20179e41b32",
+      "baseChecksum": "5d0fa4d535fb72dd1968675cfebbba24",
+      "status": "translated"
+    }
+  },
+  "restrictedChildren": {
+    "en": {
+      "checksum": "e26b01de563378a91dde45bfbb41060c"
+    },
+    "fr-ca": {
+      "checksum": "ac7bc6e7db876e9c0930117f25281c13",
+      "baseChecksum": "e26b01de563378a91dde45bfbb41060c",
+      "status": "translated"
+    }
+  }
+}

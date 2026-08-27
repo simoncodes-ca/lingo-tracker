@@ -186,6 +186,7 @@
     "@commitlint/cli": "19.8.0",
     "@commitlint/config-conventional": "19.8.0",
     "@eslint/js": "^9.8.0",
+    "@messageformat/parser": "5.1.1",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
     "@ngneat/spectator": "^22.0.0",

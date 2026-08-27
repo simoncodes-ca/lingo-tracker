@@ -1,0 +1,20 @@
+{
+  "cannotDelete": {
+    "source": "Cannot delete {itemCount, plural, =1 {{itemName}} other {items}}",
+    "comment": "Three-brace run opening a branch body",
+    "tags": [
+      "icu",
+      "edge-case"
+    ],
+    "fr-ca": "Impossible de supprimer {itemCount, plural, =1 {{itemName}} other {les éléments}}"
+  },
+  "restrictedChildren": {
+    "source": "{itemCount, plural, =1 {{itemName} contains} other {Selected items contain}} children of a restricted type:",
+    "comment": "Three-brace run followed by branch text",
+    "tags": [
+      "icu",
+      "edge-case"
+    ],
+    "fr-ca": "{itemCount, plural, =1 {{itemName} contient} other {Les éléments sélectionnés contiennent}} des enfants de type restreint :"
+  }
+}

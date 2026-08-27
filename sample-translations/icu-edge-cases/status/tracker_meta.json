@@ -1,0 +1,12 @@
+{
+  "activeItemCount": {
+    "en": {
+      "checksum": "cf9353550873dc83e7da608e95596c45"
+    },
+    "fr-ca": {
+      "checksum": "c72a95c356b02d8eaa4929e24200df63",
+      "baseChecksum": "cf9353550873dc83e7da608e95596c45",
+      "status": "translated"
+    }
+  }
+}

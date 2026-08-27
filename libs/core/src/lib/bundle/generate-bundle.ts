@@ -11,7 +11,7 @@ import {
   type EntrySelectionRule,
   type TokenCasing,
 } from '../../config/bundle-definition';
-import { effectiveTags, icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
+import { effectiveTags, hasPlaceholderOnlyBranchBody, icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { loadCollectionResources, type FlatResource } from './resource-loader';
 import type { ResourceEntries } from '../../resource/resource-entry';
@@ -253,6 +253,13 @@ function processCollection(
     if (transformICUToTransloco) {
       if (resource.value.includes('{') && !validateICUSyntax(resource.value)) {
         warnings.push(`Key '${resource.key}': value has malformed ICU syntax and was included as-is`);
+      }
+      if (hasPlaceholderOnlyBranchBody(resource.value)) {
+        warnings.push(
+          `Key '${resource.key}': a plural/select branch body that is only a placeholder cannot be bundled for ` +
+            'a Transloco runtime. Move the shared text into the branches:\n' +
+            '  {nameExists, select, hasName {This will delete {name}} other {This will delete this item}}',
+        );
       }
       finalValue = icuToTransloco(resource.value);
     }
