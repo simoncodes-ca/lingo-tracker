@@ -48,6 +48,13 @@
         "pt-br",
         "sv"
       ]
+    },
+    "icuEdgeCases": {
+      "translationsFolder": "sample-translations/icu-edge-cases",
+      "locales": [
+        "en",
+        "fr-ca"
+      ]
     }
   },
   "translation": {

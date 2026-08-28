@@ -82,9 +82,8 @@ export const ICU_SYNTAX_CHARS = new Set<string>(['{', '}', '#', '|', "'"]);
  * @param i - Index of the `'` character to evaluate
  * @param inEscapedSection - Whether the parser is currently inside a quoted section
  * @returns true if the quote should toggle escaped-section state
- * @internal
  */
-function isQuoteToggle(value: string, i: number, inEscapedSection: boolean): boolean {
+export function isQuoteToggle(value: string, i: number, inEscapedSection: boolean): boolean {
   if (value[i] !== "'") {
     return false;
   }

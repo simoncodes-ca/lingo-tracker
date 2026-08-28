@@ -977,5 +977,128 @@ describe('generate-bundle', () => {
         expect(icuToTranslocoModule.icuToTransloco).toHaveBeenCalledWith('Hello {name}');
       });
     });
+
+    describe('placeholder-only branch bodies', () => {
+      const bundleDefinition: BundleDefinition = {
+        bundleName: '{locale}',
+        dist: '/dist/bundles',
+        collections: 'All',
+      };
+
+      const singleCollectionConfig: LingoTrackerConfig = {
+        exportFolder: 'dist/export',
+        importFolder: 'dist/import',
+        baseLocale: 'en',
+        locales: ['en', 'fr'],
+        collections: {
+          default: { translationsFolder: '/translations/default' },
+        },
+      };
+
+      const UNBUNDLABLE_VALUE =
+        'This will delete {nameExists, select, hasName {{name}} other {this item}} and cannot be undone.';
+
+      /** The safe shapes that must never be reported. */
+      const SAFE_VALUES: readonly string[] = [
+        'x {{name} extra}',
+        'x {pre {name}}',
+        'x {{b, plural, one {p} other {q}}}',
+        '{a, plural, one {{b, plural, one {p} other {q}}} other {z}}',
+      ];
+
+      function branchBodyWarnings(warnings: readonly string[]): string[] {
+        return warnings.filter((warning) => warning.includes('cannot be bundled for a Transloco runtime'));
+      }
+
+      it('warns once for a key whose branch body is only a placeholder', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+          { key: 'deleteConfirm', value: UNBUNDLABLE_VALUE },
+        ]);
+
+        const result = await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: singleCollectionConfig,
+          locales: ['en'],
+          transformICUToTransloco: true,
+        });
+
+        const reported = branchBodyWarnings(result.warnings);
+
+        expect(reported).toHaveLength(1);
+        expect(reported[0]).toContain("Key 'deleteConfirm':");
+        expect(reported[0]).toContain('Move the shared text into the branches');
+        expect(reported[0]).not.toContain('malformed');
+      });
+
+      it('warns once per locale', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+          { key: 'deleteConfirm', value: UNBUNDLABLE_VALUE },
+        ]);
+
+        const result = await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: singleCollectionConfig,
+          locales: ['en', 'fr'],
+          transformICUToTransloco: true,
+        });
+
+        expect(branchBodyWarnings(result.warnings)).toHaveLength(2);
+      });
+
+      it('bundles the value unchanged and generates the file', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+          { key: 'deleteConfirm', value: UNBUNDLABLE_VALUE },
+        ]);
+
+        const result = await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: singleCollectionConfig,
+          locales: ['en'],
+          transformICUToTransloco: true,
+        });
+
+        expect(result.filesGenerated).toBe(1);
+
+        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+        const writtenData = JSON.parse(writeCall[1] as string);
+
+        expect(writtenData.deleteConfirm).toBe(UNBUNDLABLE_VALUE);
+      });
+
+      it('does not warn when the ICU transformation is off', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+          { key: 'deleteConfirm', value: UNBUNDLABLE_VALUE },
+        ]);
+
+        const result = await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: singleCollectionConfig,
+          locales: ['en'],
+          transformICUToTransloco: false,
+        });
+
+        expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
+      });
+
+      for (const value of SAFE_VALUES) {
+        it(`does not warn for ${value}`, async () => {
+          vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'safe', value }]);
+
+          const result = await generateBundle({
+            bundleKey: 'main',
+            bundleDefinition,
+            config: singleCollectionConfig,
+            locales: ['en'],
+            transformICUToTransloco: true,
+          });
+
+          expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
+        });
+      }
+    });
   });
 });

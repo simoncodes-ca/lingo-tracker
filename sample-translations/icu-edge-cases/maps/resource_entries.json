@@ -1,0 +1,11 @@
+{
+  "unmatchedFeatures": {
+    "source": "{count} visible map {count, plural, one {feature} other {features}} do not match any asset on {layerCount, plural, one {layer} other {layers}}:",
+    "comment": "Leading placeholder ahead of two plural groups",
+    "tags": [
+      "icu",
+      "edge-case"
+    ],
+    "fr-ca": "{count} entités cartographiques visibles {count, plural, one {ne correspond} other {ne correspondent}} à aucun actif sur {layerCount, plural, one {la couche} other {les couches}} :"
+  }
+}

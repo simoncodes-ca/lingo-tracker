@@ -1,101 +1,6 @@
 import { parse, type Token } from '@messageformat/parser';
 import { describe, it, expect } from 'vitest';
-import { translocoToICU } from './transloco-to-icu';
-
-describe('translocoToICU', () => {
-  describe('values without placeholders', () => {
-    it('returns empty string unchanged', () => {
-      expect(translocoToICU('')).toBe('');
-    });
-
-    it('returns plain text unchanged', () => {
-      expect(translocoToICU('Hello world')).toBe('Hello world');
-    });
-
-    it('returns text with numbers and punctuation unchanged', () => {
-      expect(translocoToICU('Price: $4.99 (inc. tax)')).toBe('Price: $4.99 (inc. tax)');
-    });
-
-    it('returns whitespace-only string unchanged', () => {
-      expect(translocoToICU('   ')).toBe('   ');
-    });
-  });
-
-  describe('single placeholder conversion', () => {
-    it('converts a standalone placeholder', () => {
-      expect(translocoToICU('{{ name }}')).toBe('{name}');
-    });
-
-    it('converts a placeholder at the end of text', () => {
-      expect(translocoToICU('Hello {{ name }}')).toBe('Hello {name}');
-    });
-
-    it('converts a placeholder surrounded by text', () => {
-      expect(translocoToICU('Hello {{ name }}, welcome!')).toBe('Hello {name}, welcome!');
-    });
-
-    it('converts a placeholder at the start of the string', () => {
-      expect(translocoToICU('{{ count }} items selected')).toBe('{count} items selected');
-    });
-  });
-
-  describe('whitespace handling inside braces', () => {
-    it('strips single space on each side', () => {
-      expect(translocoToICU('Hello {{ name }}')).toBe('Hello {name}');
-    });
-
-    it('strips multiple spaces', () => {
-      expect(translocoToICU('Hello {{  name  }}')).toBe('Hello {name}');
-    });
-
-    it('handles no spaces inside braces', () => {
-      expect(translocoToICU('Hello {{name}}')).toBe('Hello {name}');
-    });
-
-    it('handles tab whitespace inside braces', () => {
-      expect(translocoToICU('Hello {{\tname\t}}')).toBe('Hello {name}');
-    });
-  });
-
-  describe('multiple placeholders', () => {
-    it('converts two separate placeholders', () => {
-      expect(translocoToICU('Hello {{ firstName }} {{ lastName }}')).toBe('Hello {firstName} {lastName}');
-    });
-
-    it('converts placeholders separated by text', () => {
-      expect(translocoToICU('{{ count }} of {{ total }} items')).toBe('{count} of {total} items');
-    });
-
-    it('converts adjacent placeholders with no separator', () => {
-      expect(translocoToICU('{{ a }}{{ b }}')).toBe('{a}{b}');
-    });
-
-    it('converts three placeholders', () => {
-      expect(translocoToICU('{{ a }}, {{ b }}, {{ c }}')).toBe('{a}, {b}, {c}');
-    });
-  });
-
-  describe('already-ICU values pass through correctly', () => {
-    it('does not alter single-brace ICU placeholders', () => {
-      expect(translocoToICU('{name}')).toBe('{name}');
-    });
-
-    it('does not alter a plural ICU construct', () => {
-      const plural = '{count, plural, one {# item} other {# items}}';
-      expect(translocoToICU(plural)).toBe(plural);
-    });
-  });
-
-  describe('edge cases', () => {
-    it('does not alter a lone opening brace that is not a Transloco pattern', () => {
-      expect(translocoToICU('use { for sets')).toBe('use { for sets');
-    });
-
-    it('does not alter unclosed double-brace (not a valid Transloco placeholder)', () => {
-      expect(translocoToICU('{{ unclosed')).toBe('{{ unclosed');
-    });
-  });
-});
+import { normalizeTranslocoSyntax } from './normalize-transloco-syntax';
 
 interface ConversionFixture {
   /** Sentence fragment used to name the generated test cases. */
@@ -310,57 +215,57 @@ function argumentNames(tokens: Token[]): string[] {
   return names;
 }
 
-describe('translocoToICU sub-message boundaries', () => {
+describe('normalizeTranslocoSyntax sub-message boundaries', () => {
   for (const fixture of FIXTURES) {
     it(`converts ${fixture.description}`, () => {
-      expect(translocoToICU(fixture.input)).toBe(fixture.expected);
+      expect(normalizeTranslocoSyntax(fixture.input)).toBe(fixture.expected);
     });
   }
 
   it('leaves a placeholder-only select branch body untouched', () => {
     const value = '{nameExists, select, hasName {{name}} other {this item}}';
 
-    expect(translocoToICU(value)).toBe(value);
+    expect(normalizeTranslocoSyntax(value)).toBe(value);
   });
 
   it('converts a placeholder that follows branch text', () => {
-    expect(translocoToICU('=1 {Delete {{itemName}}}')).toBe('=1 {Delete {itemName}}');
+    expect(normalizeTranslocoSyntax('=1 {Delete {{itemName}}}')).toBe('=1 {Delete {itemName}}');
   });
 });
 
-describe('translocoToICU dotted names', () => {
+describe('normalizeTranslocoSyntax dotted names', () => {
   it('converts a dotted placeholder name', () => {
-    expect(translocoToICU('Hello {{ a.b }}')).toBe('Hello {a.b}');
+    expect(normalizeTranslocoSyntax('Hello {{ a.b }}')).toBe('Hello {a.b}');
   });
 
   it('converts a deeply dotted placeholder name', () => {
-    expect(translocoToICU('{{ user.profile.displayName }}')).toBe('{user.profile.displayName}');
+    expect(normalizeTranslocoSyntax('{{ user.profile.displayName }}')).toBe('{user.profile.displayName}');
   });
 
   it('leaves a leading dot unchanged', () => {
-    expect(translocoToICU('{{ .name }}')).toBe('{{ .name }}');
+    expect(normalizeTranslocoSyntax('{{ .name }}')).toBe('{{ .name }}');
   });
 
   it('leaves a trailing dot unchanged', () => {
-    expect(translocoToICU('{{ name. }}')).toBe('{{ name. }}');
+    expect(normalizeTranslocoSyntax('{{ name. }}')).toBe('{{ name. }}');
   });
 
   it('leaves a doubled dot unchanged', () => {
-    expect(translocoToICU('{{ a..b }}')).toBe('{{ a..b }}');
+    expect(normalizeTranslocoSyntax('{{ a..b }}')).toBe('{{ a..b }}');
   });
 });
 
-describe('translocoToICU idempotency', () => {
+describe('normalizeTranslocoSyntax idempotency', () => {
   for (const fixture of FIXTURES) {
     it(`converting ${fixture.description} twice matches converting it once`, () => {
-      const once = translocoToICU(fixture.input);
+      const once = normalizeTranslocoSyntax(fixture.input);
 
-      expect(translocoToICU(once)).toBe(once);
+      expect(normalizeTranslocoSyntax(once)).toBe(once);
     });
   }
 });
 
-describe('translocoToICU ICU parser oracle', () => {
+describe('normalizeTranslocoSyntax ICU parser oracle', () => {
   const PURE_ICU_FIXTURES = FIXTURES.filter((candidate) => isPureICU(candidate.input));
 
   it('covers the fixtures whose braces are all ICU structure', () => {
@@ -373,7 +278,7 @@ describe('translocoToICU ICU parser oracle', () => {
 
   for (const fixture of PURE_ICU_FIXTURES) {
     it(`leaves the ICU structure of ${fixture.description} unchanged`, () => {
-      const converted = translocoToICU(fixture.input);
+      const converted = normalizeTranslocoSyntax(fixture.input);
 
       expect(stripContext(parse(converted))).toEqual(stripContext(parse(fixture.input)));
     });
@@ -381,10 +286,46 @@ describe('translocoToICU ICU parser oracle', () => {
 
   for (const fixture of FIXTURES.filter((candidate) => candidate.survivingArguments !== undefined)) {
     it(`keeps the placeholders of ${fixture.description} as ICU arguments`, () => {
-      const tokens = parseICU(translocoToICU(fixture.input));
+      const tokens = parseICU(normalizeTranslocoSyntax(fixture.input));
 
       expect(tokens).not.toBeNull();
       expect(tokens === null ? [] : argumentNames(tokens)).toEqual(fixture.survivingArguments);
     });
   }
+});
+
+describe('normalizeTranslocoSyntax documented examples', () => {
+  it('returns an empty string unchanged', () => {
+    expect(normalizeTranslocoSyntax('')).toBe('');
+  });
+
+  it('returns plain text unchanged', () => {
+    expect(normalizeTranslocoSyntax('Hello world')).toBe('Hello world');
+  });
+
+  it('converts a placeholder surrounded by text', () => {
+    expect(normalizeTranslocoSyntax('Hello {{ name }}')).toBe('Hello {name}');
+  });
+
+  it('converts two placeholders separated by a space', () => {
+    expect(normalizeTranslocoSyntax('{{ greeting }} {{ name }}')).toBe('{greeting} {name}');
+  });
+
+  it('converts a placeholder with no whitespace inside the braces', () => {
+    expect(normalizeTranslocoSyntax('{{name}}')).toBe('{name}');
+  });
+
+  it('leaves an existing ICU argument beside a placeholder alone', () => {
+    expect(normalizeTranslocoSyntax('{count} items for {{ name }}')).toBe('{count} items for {name}');
+  });
+
+  it('leaves a plural group unchanged', () => {
+    const plural = '{count, plural, one {# item} other {# items}}';
+
+    expect(normalizeTranslocoSyntax(plural)).toBe(plural);
+  });
+
+  it('leaves a multi-word name unchanged', () => {
+    expect(normalizeTranslocoSyntax('{{ first name }}')).toBe('{{ first name }}');
+  });
 });

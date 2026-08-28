@@ -1,0 +1,32 @@
+{
+  "deleteConfirm": {
+    "en": {
+      "checksum": "e54e0e31d56e8532f7ebf8e9b88116dc"
+    },
+    "fr-ca": {
+      "checksum": "6fcbb0e1ba540e1d97d94ce6be40bbd1",
+      "baseChecksum": "e54e0e31d56e8532f7ebf8e9b88116dc",
+      "status": "translated"
+    }
+  },
+  "deleteCountConfirm": {
+    "en": {
+      "checksum": "cdd575e58557f7ee8d16edeb8301f979"
+    },
+    "fr-ca": {
+      "checksum": "f09296eba21ef92311c016d483bb6f81",
+      "baseChecksum": "cdd575e58557f7ee8d16edeb8301f979",
+      "status": "translated"
+    }
+  },
+  "deleteAssociations": {
+    "en": {
+      "checksum": "dba1dc17ba2374163a04709e187ebd8b"
+    },
+    "fr-ca": {
+      "checksum": "dcec8f806ff51c7390c8b412a2cb5d15",
+      "baseChecksum": "dba1dc17ba2374163a04709e187ebd8b",
+      "status": "translated"
+    }
+  }
+}
