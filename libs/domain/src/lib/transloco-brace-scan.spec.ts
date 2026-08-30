@@ -217,8 +217,8 @@ interface ExpansionFixture {
 }
 
 /**
- * The expander reads stored values and emits bundled ones, so every `input` here is in
- * post-conversion ICU form and every `expected` is what a consumer receives.
+ * The expander reads stored values and emits bundled ones. Every `input` here is in
+ * post-conversion ICU form, and every `expected` is what a consumer receives.
  */
 const EXPANSION_FIXTURES: readonly ExpansionFixture[] = [
   {
@@ -232,10 +232,10 @@ const EXPANSION_FIXTURES: readonly ExpansionFixture[] = [
     expected: 'This will delete {nameExists, select, hasName {{{name}}} other {this item}} and cannot be undone.',
   },
   {
-    // The expander rewrites this shape, but `icuToTransloco` routes no `selectordinal` group
-    // to it: the group is read as a plain argument and emitted as `{{ rank }}`, pinned by
+    // The expander rewrites this shape, but `icuToTransloco` routes no `selectordinal`
+    // group to it. It reads the group as a plain argument and emits `{{ rank }}`. The test
     // 'replaces a selectordinal construct with a plain interpolation' in
-    // `icu-to-transloco.spec.ts`. The detector reports the shape for that reason.
+    // `icu-to-transloco.spec.ts` pins that. The detector reports the shape for that reason.
     description: 'a selectordinal branch body that is only a placeholder, which reaches the expander only directly',
     input: '{rank, selectordinal, one {{itemName}} other {#th}}',
     expected: '{rank, selectordinal, one {{{itemName}}} other {#th}}',
@@ -338,10 +338,10 @@ const EXPANSION_FIXTURES: readonly ExpansionFixture[] = [
     input: '{startTime, time, medium}',
     expected: '{startTime, time, medium}',
   },
-  // The expander is total but not balance-preserving: it never throws, and it never checks
-  // that the value's braces are balanced. An unbalanced value is rewritten whenever its
-  // text still qualifies at a position, so the two rows below differ only in whether the
-  // pattern can match — not in whether the value is well formed.
+  // The expander is total but it does not preserve brace balance. It never throws, and it
+  // never tests whether the braces of the value are balanced. It rewrites an unbalanced
+  // value whenever the text still qualifies at a position. The next two rows differ only
+  // in whether the pattern can match, not in whether the value is well formed.
   {
     description: 'an unbalanced value the branch-body pattern cannot match',
     input: '{c, plural, one {{name}',
@@ -365,10 +365,10 @@ interface DetectorFixture {
 
 /**
  * The detector reads stored values, so every entry here is already in its
- * post-conversion form. A row is flagged when its branch body is a `{{…}}` run no bundled
- * form carries: an argument carrying a format, a run that is no parameter name, or any
- * branch body of a `selectordinal` group, which `icuToTransloco` emits as a single
- * interpolation rather than routing to the expander.
+ * post-conversion form. A row is flagged when its branch body is a `{{…}}` run that no
+ * bundled form carries. Three runs qualify: an argument carrying a format, a run that is
+ * no parameter name, and any branch body of a `selectordinal` group. `icuToTransloco`
+ * emits that group as one interpolation and never routes it to the expander.
  */
 const DETECTOR_FIXTURES: readonly DetectorFixture[] = [
   {

@@ -13,16 +13,16 @@
  *                                               branch open + argument open
  * ```
  *
- * Every function here resolves that ambiguity the same way: it walks the value tracking
- * brace nesting and ICU quote state, so at each `{{` it knows whether the first brace
+ * Every function here resolves that ambiguity the same way. It walks the value and tracks
+ * brace nesting and ICU quote state. At each `{{` it then knows whether the first brace
  * opens a branch body.
  *
  * - `convertTranslocoPlaceholders`, the converter, runs inbound on a value being stored.
  *   It rewrites `{{ name }}` to `{name}` and leaves a `{{` that opens a branch body alone.
  * - `expandPlaceholderOnlyBranchBodies`, the expander, runs outbound on a value being
  *   bundled. It wraps a branch body that is nothing but an argument in one extra brace
- *   pair, so Transloco's interpolation pass consumes the argument and leaves the branch
- *   wrapper standing.
+ *   pair. The interpolation pass in Transloco then consumes the argument and leaves the
+ *   branch wrapper standing.
  * - `hasUnbundlableBranchBody`, the detector, is a predicate over a stored value. It
  *   reports a branch body that no bundled form carries to a Transloco runtime.
  *
@@ -71,15 +71,15 @@ function readSubMessageKeyword(value: string, start: number): SubMessageKeyword 
 /**
  * Matches text that holds nothing but a branch selector token and whitespace.
  *
- * A `plural` argument may carry an `offset:N` clause ahead of its first selector, which
- * is argument syntax rather than branch content.
+ * A `plural` argument can carry an `offset:N` clause ahead of its first selector. That
+ * clause is argument syntax, not branch content.
  */
 const SELECTOR_ONLY_PATTERN = /^\s*(?:offset\s*:\s*\d+\s+)?(?:=\d+|\w+)\s*$/;
 
 /**
- * State the scanner keeps for each brace it has seen opened and not yet closed: the
- * keyword of the sub-message argument that brace opened, or null when it opened
- * anything else.
+ * State the scanner keeps for each brace it has opened and not yet closed. The value is
+ * the keyword of the sub-message argument that brace opened. It is null when the brace
+ * opened anything else.
  */
 type OpenBrace = SubMessageKeyword | null;
 
@@ -130,11 +130,14 @@ function readBraceRun(value: string, start: number): BraceRun | null {
 /**
  * Decides whether the first brace of the run at `start` opens an ICU sub-message body.
  *
- * That is true only when the innermost open brace belongs to a `plural` / `select` /
- * `selectordinal` argument and the text back to the preceding `,`, `{` or `}` is
- * nothing but a branch selector token, optionally preceded by a `plural` `offset:N`
- * clause. Any other preceding text is branch content, so both braces of the run belong
- * to the placeholder.
+ * That is true only when both of these hold:
+ *
+ * - The innermost open brace belongs to a `plural`, `select` or `selectordinal` argument.
+ * - The text back to the preceding `,`, `{` or `}` holds nothing but a branch selector
+ *   token. A `plural` `offset:N` clause can come before that token.
+ *
+ * Any other preceding text is branch content, so both braces of the run belong to the
+ * placeholder.
  *
  * @param value - The full message string
  * @param start - Index of the first `{` of the run
@@ -180,8 +183,8 @@ function applyBraceRun(openBraces: OpenBrace[], run: BraceRun): void {
 const STOP_WALK = 'stop-walk';
 
 /**
- * What a caller does with the `{` the walker stopped on: replace `length` characters of
- * input with `text`, or return `STOP_WALK` to end the walk where it stands.
+ * What a caller does with the `{` the walker stopped on. It replaces `length` characters
+ * of input with `text`. It returns `STOP_WALK` to end the walk where it stands.
  * @internal
  */
 type BraceAction = typeof STOP_WALK | { readonly text: string; readonly length: number };
@@ -198,19 +201,18 @@ interface ScanResult {
  * Walks a value left to right, tracking ICU quote state and brace nesting, and hands
  * each unquoted `{` to `onOpenBrace`.
  *
- * This is the one place the scan is written. Every exported function in this module
- * supplies only its `{` decision; quote handling, the brace stack, and the copy of
+ * This is the one place that holds the scan. Every exported function in this module
+ * supplies only its `{` decision. Quote handling, the brace stack, and the copy of
  * everything else are shared, so the three cannot drift apart.
  *
- * A `{` the caller declines is pushed onto the stack with the sub-message keyword of the
- * argument body it opens, then copied through. A `}` pops. The stack is passed to
- * `onOpenBrace` by reference: a caller whose consumed run holds an unequal number of `{`
- * and `}` must apply its own bookkeeping, since the walker skips a consumed run without
- * reading its braces.
+ * A `{` the caller declines goes onto the stack with the sub-message keyword of the
+ * argument body it opens, then gets copied through. A `}` pops. `onOpenBrace` receives
+ * the stack by reference. The walker skips a consumed run without reading its braces. A
+ * caller whose run holds an unequal number of `{` and `}` must do its own bookkeeping.
  *
  * @param value - The full message string
- * @param collectText - Whether to build the rewritten value; a predicate passes false to
- *                      skip the copy it would never read
+ * @param collectText - Whether to build the rewritten value. A predicate passes false to
+ *                      skip the copy it never reads
  * @param onOpenBrace - Called at each unquoted `{`, with the index of that brace and the
  *                      braces open before it. Returns null to decline the position. A
  *                      consumed run must report a `length` of at least one, or the walk
@@ -296,12 +298,12 @@ function scanIcuBraces(
  * Converts Transloco double-brace placeholders to ICU single-brace placeholders,
  * leaving a `{{` that opens an ICU sub-message body untouched.
  *
- * Identifiers may be dotted (`{{ a.b }}`) and may carry whitespace inside the braces,
- * which is trimmed on output. A value with no `{{` is returned unchanged.
+ * An identifier can be dotted (`{{ a.b }}`) and can carry whitespace inside the braces.
+ * The function trims that whitespace on output. A value with no `{{` comes back unchanged.
  *
- * The function never throws. Any brace run it does not recognise — an unbalanced value,
- * a non-identifier such as `{{ some text }}`, a run closed by a single `}` — is copied
- * through byte for byte. Validation is not this function's job.
+ * The function never throws. It copies through byte for byte any brace run it does not
+ * recognize. Three examples: an unbalanced value, a non-identifier such as
+ * `{{ some text }}`, and a run closed by a single `}`. Validation is not its job.
  *
  * Applying the function to its own output produces the same string, so repeated
  * normalization of a stored tree converts nothing further.
@@ -340,7 +342,7 @@ export function convertTranslocoPlaceholders(value: string): string {
     // A run's open and close counts can differ, so the stack needs its own bookkeeping
     applyBraceRun(openBraces, run);
 
-    // The innermost `{{` / `}}` pair is the placeholder; braces outside it are structure
+    // The innermost `{{` / `}}` pair is the placeholder. Braces outside it are structure
     return {
       text: `${'{'.repeat(run.openCount - 2)}{${run.name}}${'}'.repeat(run.closeCount - 2)}`,
       length: run.endIndex - start,
@@ -357,49 +359,53 @@ const TRANSLOCO_INTERPOLATION_PATTERN = /\{\{[^{}]*?\}\}/y;
 /**
  * A branch body that is exactly one bare argument: `{{name}}` or `{{ a.b }}`.
  *
- * Sticky, so it can be anchored at a candidate `{`. Requiring `\s*\w` after the two
- * braces means it cannot start on a run of three, and `\w` excludes the comma of
- * `{{count, number}}`, so an argument carrying a format is not matched. It is strictly
+ * Sticky, so it can be anchored at a candidate `{`. The required `\s*\w` after the two
+ * braces stops it from starting on a run of three. `\w` also excludes the comma of
+ * `{{count, number}}`, so it does not match an argument carrying a format. It is strictly
  * narrower than `TRANSLOCO_INTERPOLATION_PATTERN`.
  */
 const PLACEHOLDER_ONLY_BODY_PATTERN = /\{\{\s*\w+(?:\.\w+)*\s*\}\}/y;
 
 /**
- * Reports whether a normalized ICU value carries a `plural` / `select` /
- * `selectordinal` branch body that no bundled form carries to a Transloco runtime,
- * e.g. `{count, plural, =1 {{n, number}} other {# items}}`.
+ * Reports whether a normalized ICU value carries a `plural`, `select` or `selectordinal`
+ * branch body that no bundled form carries to a Transloco runtime. For example,
+ * `{count, plural, =1 {{n, number}} other {# items}}`.
  *
- * A bundled value reaches the runtime through two passes: `DefaultTranspiler`
- * substitutes `{{…}}` interpolations, then the result is compiled as ICU. Inside a
- * `plural` or `select` group, a branch body that is a bare argument name is encoded
- * as a triple, `=1 {{{itemName}}}`. The interpolation matcher forbids a brace inside
- * its delimiters, so it takes the inner pair only and the outer brace stands as the
- * branch wrapper; the rendered text gains no character. Padding the body to
- * `=1 { {itemName}}` survives both passes as well, at the cost of a space in every
- * rendered string, so the encoding is the brace pair rather than the padding.
+ * A bundled value reaches the runtime through two passes. `DefaultTranspiler` substitutes
+ * the `{{…}}` interpolations. The ICU compiler then reads the result.
  *
- * Three shapes have no encoding, and each is reported:
+ * Inside a `plural` or `select` group, a branch body that is a bare argument name takes
+ * the triple, `=1 {{{itemName}}}`. The interpolation matcher forbids a brace inside its
+ * delimiters, so it takes the inner pair only. The outer brace stands as the branch
+ * wrapper and the rendered text gains no character. Padding the body to
+ * `=1 { {itemName}}` also survives both passes, but it adds a space to every rendered
+ * string, so the encoding is the brace pair.
+ *
+ * Three shapes have no encoding. The predicate reports all three:
  *
  * - A branch body whose `{{…}}` run carries a format, `{{n, number}}`.
- * - A branch body whose `{{…}}` run is no parameter name, `{{some text}}`. On these
- *   two the interpolation pass substitutes an empty string for the run and strands a
- *   branch with no body, and the ICU compiler then rejects the whole message, so the
- *   value renders in no locale. Giving the branch body text beside the argument, or
- *   moving the format out of the branch, puts the position out of the first pass's
- *   reach.
- * - Any branch body of a `selectordinal` group. `icuToTransloco` reads such a group
- *   as a plain argument and emits it as a single interpolation, `{{ rank }}`, so the
- *   expander runs over no part of it and no branch reaches the runtime.
+ * - A branch body whose `{{…}}` run is no parameter name, `{{some text}}`.
+ * - Any branch body of a `selectordinal` group.
  *
- * A `{{` only qualifies when it sits where a branch body begins: the innermost
- * open brace belongs to a sub-message argument and the text back to the preceding
- * `,`, `{` or `}` is nothing but a selector token. That is the same position test
- * the converter and the expander use, so a `{{` at the top level or one that
- * follows branch text is not reported — neither shape strands a branch without a
- * body. Braces inside an ICU quoted section are literal text and are skipped as
- * well.
+ * On the first two, the interpolation pass substitutes an empty string for the run and
+ * strands a branch with no body. The ICU compiler rejects the whole message, so the value
+ * renders in no locale. Two edits put the position out of reach of the first pass. Add
+ * text beside the argument in the branch body, or move the format out of the branch.
  *
- * The function is a pure predicate: it never throws and never modifies the value.
+ * On the third, `icuToTransloco` reads the group as a plain argument and emits one
+ * interpolation, `{{ rank }}`. The expander runs over no part of it, so no branch reaches
+ * the runtime.
+ *
+ * A `{{` qualifies only where a branch body begins. The innermost open brace belongs to a
+ * sub-message argument. The text back to the preceding `,`, `{` or `}` holds nothing but
+ * a selector token.
+ *
+ * The converter and the expander use that same position test. As a result, the predicate
+ * skips a `{{` at the top level and one that follows branch text. Neither shape strands a
+ * branch without a body. Braces inside an ICU quoted section are literal text, and the
+ * walk skips those too.
+ *
+ * The function is a pure predicate. It never throws and never modifies the value.
  *
  * @param value - The stored translation string, already converted to ICU
  * @returns true when the value carries a branch body no bundled form carries
@@ -427,8 +433,8 @@ export function hasUnbundlableBranchBody(value: string): boolean {
     const consumedByInterpolation = TRANSLOCO_INTERPOLATION_PATTERN.test(value);
     PLACEHOLDER_ONLY_BODY_PATTERN.lastIndex = start;
     const isBareArgument = PLACEHOLDER_ONLY_BODY_PATTERN.test(value);
-    // A `selectordinal` group is emitted as one interpolation rather than expanded, so
-    // no branch body of one is wrapped, bare argument or not.
+    // `icuToTransloco` emits a `selectordinal` group as one interpolation and never
+    // expands it, so no branch body of one gets wrapped, bare argument or not.
     const enclosingKeyword = openBraces[openBraces.length - 1];
     const carriedByExpansion = isBareArgument && enclosingKeyword !== 'selectordinal';
 
@@ -441,32 +447,36 @@ export function hasUnbundlableBranchBody(value: string): boolean {
 }
 
 /**
- * Wraps every `plural` / `select` / `selectordinal` branch body that is nothing but
- * an argument in one extra brace pair, turning `=1 {{itemName}}` into
- * `=1 {{{itemName}}}`.
+ * Wraps every `plural`, `select` or `selectordinal` branch body that is nothing but an
+ * argument in one extra brace pair, turning `=1 {{itemName}}` into `=1 {{{itemName}}}`.
  *
- * A bundled value reaches a Transloco consumer through two passes: `DefaultTranspiler`
- * substitutes `{{…}}` interpolations, then the result is compiled as ICU. On the
- * single-brace form the first pass consumes the branch's opening brace along with the
- * argument and strands a branch with no body, which the ICU compiler rejects for the
- * whole message. Transloco's interpolation matcher forbids a brace inside the
- * delimiters, so on the triple it matches the inner pair only and the outer brace
- * survives as the branch wrapper. The rendered text gains no character.
+ * A bundled value reaches a Transloco consumer through two passes. `DefaultTranspiler`
+ * substitutes the `{{…}}` interpolations. The ICU compiler then reads the result.
  *
- * A `{{` only qualifies when it sits where a branch body begins: the innermost open
- * brace belongs to a sub-message argument and the text back to the preceding `,`, `{`
- * or `}` is nothing but a selector token. That is the same position test the converter
- * and the detector use. A branch body carrying text beside the argument, a nested
- * group, or an argument with a format is left alone, as is any `{{` at the top level or
- * inside an ICU quoted section.
+ * On the single-brace form, the first pass consumes the opening brace of the branch
+ * along with the argument. That strands a branch with no body, and the ICU compiler
+ * rejects the whole message. The interpolation matcher forbids a brace inside the
+ * delimiters, so on the triple it matches the inner pair only. The outer brace survives
+ * as the branch wrapper, and the rendered text gains no character.
  *
- * Nested positions need no recursion: the walk over the whole value descends into inner
- * groups on its own. The function never throws and returns the value unchanged when
+ * A `{{` qualifies only where a branch body begins. The innermost open brace belongs to
+ * a sub-message argument. The text back to the preceding `,`, `{` or `}` holds nothing
+ * but a selector token. The converter and the detector use that same position test.
+ *
+ * Four shapes stay untouched:
+ *
+ * - A branch body carrying text beside the argument.
+ * - A nested group.
+ * - An argument with a format.
+ * - Any `{{` at the top level or inside an ICU quoted section.
+ *
+ * Nested positions need no recursion. The walk over the whole value descends into inner
+ * groups on its own. The function never throws, and it returns the value unchanged when
  * nothing qualifies.
  *
- * It is total but not balance-preserving. Brace balance is never checked, so an
- * unbalanced value whose text still qualifies at a position gains the extra pair like
- * any other: `'{c, plural, one {{name}}'` becomes `'{c, plural, one {{{name}}}'`. A
+ * It is total but it does not preserve brace balance. The walk never tests balance, so
+ * an unbalanced value whose text still qualifies at a position gains the extra pair like
+ * any other. `'{c, plural, one {{name}}'` becomes `'{c, plural, one {{{name}}}'`. A
  * caller that needs a balanced result must validate the value first.
  *
  * @param value - The stored translation string, already converted to ICU
@@ -494,10 +504,10 @@ export function expandPlaceholderOnlyBranchBodies(value: string): string {
       return null;
     }
 
-    // Leaving the stack alone is what makes a second pass a no-op: on the emitted
-    // `{{{name}}}` the pattern fails at the outer brace, so that brace is pushed as a
-    // non-sub-message brace and the position test then rejects the inner pair. The
-    // skipped run holds as many `}` as `{`, so the stack stays correct without bookkeeping.
+    // Leaving the stack alone is what makes a second pass a no-op. On the emitted
+    // `{{{name}}}` the pattern fails at the outer brace. That brace goes on the stack as a
+    // non-sub-message brace, and the position test then rejects the inner pair. The
+    // skipped run holds as many `}` as `{`, so the stack stays correct with no bookkeeping.
     return { text: `{${match[0]}}`, length: match[0].length };
   }).text;
 }

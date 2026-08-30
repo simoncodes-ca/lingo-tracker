@@ -8,8 +8,8 @@
  *    parses it as ICU and returns a render function.
  *
  * String equality against the bundled form says nothing about what the consumer
- * sees, because pass 1 can consume braces that pass 2 needs. The helpers below run
- * both passes so a case can assert on the rendered text or on the compile error.
+ * sees, because pass 1 can consume braces that pass 2 needs. The helpers in this file
+ * run both passes, so a case can assert on the rendered text or on the compile error.
  */
 
 import MessageFormat from '@messageformat/core';
@@ -58,9 +58,9 @@ function getValue(obj: RuntimeParams, path: string): unknown {
 /**
  * Replica of `resolveMatcher`
  * (`node_modules/@jsverse/transloco/fesm2022/jsverse-transloco.mjs:187-190`) built
- * from the default `['{{', '}}']` interpolation delimiters. The character class
- * forbids the delimiter characters, so the matcher cannot start on a run of three
- * braces — it matches the inner pair and leaves the outer brace alone.
+ * from the default `['{{', '}}']` interpolation delimiters. The character class forbids
+ * the delimiter characters, so the matcher cannot start on a run of three braces. It
+ * matches the inner pair and leaves the outer brace alone.
  */
 function interpolationMatcher(): RegExp {
   return /\{\{([^{}]*?)\}\}/g;
@@ -72,17 +72,18 @@ function interpolationMatcher(): RegExp {
  * `while` loop proper is `:99-116`).
  *
  * The loop shape is deliberate and must not become `String.replaceAll`. The runtime
- * re-scans the whole string from index 0 after every single substitution, so a
- * substituted value can itself form the next match — inputs `replaceAll` never
- * revisits. `this.interpolationMatcher` is a getter that builds a new `RegExp` on
- * each access, so `lastIndex` never carries forward; calling the factory inside the
- * loop condition reproduces that. The substitution is `parsedValue.replace(match, …)`,
- * which rewrites the *first* occurrence of the matched text rather than the one
- * `exec` located — another difference `replaceAll` erases.
+ * re-scans the whole string from index 0 after every single substitution. A substituted
+ * value can then form the next match, and `replaceAll` never revisits those inputs.
+ *
+ * `this.interpolationMatcher` is a getter that builds a new `RegExp` on each access, so
+ * `lastIndex` never carries forward. Calling the factory inside the loop condition
+ * reproduces that. The substitution is `parsedValue.replace(match, …)`, which rewrites
+ * the *first* occurrence of the matched text rather than the one `exec` located.
+ * `replaceAll` erases that difference too.
  *
  * An unresolved name substitutes an empty string. The runtime first falls back to a
- * nested `translation[match]` lookup; this replica omits that lookup and so behaves
- * as the runtime does with an empty translation object.
+ * nested `translation[match]` lookup. This replica omits that lookup, so it behaves as
+ * the runtime does with an empty translation object.
  */
 function transpileInterpolations(value: string, params: RuntimeParams): string {
   let parsedValue = value;
@@ -155,7 +156,7 @@ function roundTripStoredValue(stored: string, params: RuntimeParams, locale: str
   return renderBundledValue(icuToTransloco(stored), params, locale);
 }
 
-/** Shared by the table row and the standalone case below, so the two cannot drift. */
+/** Shared by the table row and the standalone case that follows, so the two cannot drift. */
 const DELETE_COUNT_PLURAL = '{deleteCount, plural, =1 {Delete {itemName}} other {Delete # items}}?';
 
 interface RoundTripCase {
@@ -179,9 +180,9 @@ const CASES: RoundTripCase[] = [
     expected: { rendered: 'Cannot delete Flood Risk' },
   },
   {
-    // With the argument supplied the branch body is the parameter value; without it the
+    // With the argument supplied, the branch body is the parameter value. Without it, the
     // body is empty. The extra brace pair keeps that an empty *body* rather than an empty
-    // branch, so the message still compiles and the branch renders as nothing.
+    // branch, so the message compiles and the branch renders as nothing.
     name: 'plural branch body that is only an argument renders empty when the argument is missing',
     stored: 'Cannot delete {itemCount, plural, =1 {{itemName}} other {items}}',
     params: { itemCount: 1 },

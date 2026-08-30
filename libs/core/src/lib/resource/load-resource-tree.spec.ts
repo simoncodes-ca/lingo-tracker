@@ -221,7 +221,7 @@ const createMockFileSystem = () => {
 };
 
 /**
- * The fixture map below is keyed on POSIX paths, while the code under test resolves to
+ * The fixture map in this suite is keyed on POSIX paths, while the code under test resolves to
  * platform-native form. Stripping a drive letter and backslashes is the identity on POSIX.
  */
 const toFixtureKey = vi.hoisted(

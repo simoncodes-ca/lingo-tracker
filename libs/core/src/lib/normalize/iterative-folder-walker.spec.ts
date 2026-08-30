@@ -9,8 +9,8 @@ import type { FolderVisit } from './iterative-folder-walker';
 type FakeDirent = Pick<fs.Dirent, 'name' | 'isDirectory'>;
 
 /**
- * The walker joins paths with the platform separator; the fixtures below are written
- * POSIX-style. Replacing backslashes is the identity on POSIX.
+ * The walker joins paths with the platform separator. The fixtures in this suite are
+ * written POSIX-style. Replacing backslashes is the identity on POSIX.
  */
 const posix = (p: string): string => p.replace(/\\/g, '/');
 

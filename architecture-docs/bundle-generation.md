@@ -314,22 +314,26 @@ The conversion rules applied by `icuToTransloco()`:
 | Internal ICU value | Emitted in bundle | Notes |
 |---|---|---|
 | `Hello {name}` | `Hello {{ name }}` | Simple placeholder — double-braced with spaces |
-| `{count, plural, one {# item} other {# items}}` | `{count, plural, one {# item} other {# items}}` | Complex ICU — structure kept; Transloco's messageformat pipe handles it |
-| `{gender, select, male {him} other {them}}` | `{gender, select, male {him} other {them}}` | Complex ICU — structure kept; no branch body is a bare argument |
+| `{count, plural, one {# item} other {# items}}` | `{count, plural, one {# item} other {# items}}` | Structure kept. The messageformat pipe in Transloco handles it. |
+| `{gender, select, male {him} other {them}}` | `{gender, select, male {him} other {them}}` | Structure kept. No branch body is a bare argument. |
 | `{count, plural, =1 {{itemName}} other {# items}}` | `{count, plural, =1 {{{itemName}}} other {# items}}` | Branch body that is one argument — wrapped in an extra brace pair |
 | `{rank, selectordinal, one {{itemName}} other {#th}}` | `{{ rank }}` | `selectordinal` is read as a plain argument, so the whole group is replaced |
 | `It''s {day}` | `It's {day}` | ICU apostrophe escaping unescaped |
 | `'{'name'}'` | `{name}` | ICU quoted section unescaped to literal braces |
 
-**Branch bodies that are one argument.** A Transloco consumer runs two passes over a bundled value: `DefaultTranspiler` substitutes `{{…}}` interpolations, then the result is compiled as ICU. A `plural` or `select` branch body that is nothing but an argument, `=1 {{itemName}}`, loses its branch brace to the first pass, and the ICU compiler then rejects the whole message. `icuToTransloco()` emits the triple, `=1 {{{itemName}}}`, so the interpolation matcher takes the inner pair only and the outer brace stands as the branch wrapper. The rendered text gains no character. The stored value keeps the single-brace form.
+**Branch bodies that are one argument.** A Transloco consumer runs two passes over a bundled value. `DefaultTranspiler` substitutes the `{{…}}` interpolations. The ICU compiler then reads the result.
 
-**Branch bodies the bundler cannot rewrite**: three shapes reach a Transloco runtime through no bundled form.
+A `plural` or `select` branch body that is nothing but an argument, `=1 {{itemName}}`, loses its branch brace to the first pass. The compiler gets a branch with no body and rejects the whole message. `icuToTransloco()` emits the triple, `=1 {{{itemName}}}`. The interpolation matcher takes the inner pair only, and the outer brace stands as the branch wrapper. The rendered text gains no character. The stored value keeps the single-brace form.
+
+**Branch bodies the bundler cannot rewrite.** Three shapes have no bundled form that a Transloco runtime accepts.
 
 - A branch body that is a `{{…}}` run carrying a format, `=1 {{n, number}}`.
 - A branch body that is a `{{…}}` run holding no parameter name, `one {{some text}}`.
-- Any branch body of a `selectordinal` group. `icuToTransloco()` reads such a group as a plain argument and emits it as a single interpolation, so the group's branches are dropped rather than carried.
+- Any branch body of a `selectordinal` group. `icuToTransloco()` reads this group as a plain argument and emits one interpolation, so the branches do not reach the bundle.
 
-On the first two the interpolation pass strands a branch with no body and the ICU compiler rejects the whole message, so the value renders in no locale until the branch body is given text beside the argument or the format is moved out of the branch. `hasUnbundlableBranchBody()` from `@simoncodes-ca/domain` reports all three: a warning is pushed to `GenerateBundleResult.warnings` once per locale, the value is bundled as `icuToTransloco()` emits it, and the exit code stays 0.
+On the first two shapes, the interpolation pass strands a branch with no body. The ICU compiler rejects the whole message, so the value renders in no locale. A value carries only when the branch body holds text beside the argument, or when the format sits outside the branch.
+
+`hasUnbundlableBranchBody()` from `@simoncodes-ca/domain` reports all three shapes. The bundler pushes one warning per locale to `GenerateBundleResult.warnings`, emits the value as `icuToTransloco()` produced it, and exits 0.
 
 **The `transformICUToTransloco` flag** (resolved via CLI override → bundle config → global config → default `true`) controls whether `icuToTransloco()` is called at all. Setting it to `false` emits raw ICU values — useful when the bundle consumer is not Transloco, or when you want to inspect the raw stored values.
 

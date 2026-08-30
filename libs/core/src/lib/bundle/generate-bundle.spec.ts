@@ -1051,8 +1051,8 @@ describe('generate-bundle', () => {
       });
 
       it('runs the real emitter rather than the suite-level pass-through', () => {
-        // Every assertion below about bundled output is only meaningful while the hook above
-        // holds. Under the pass-through they would read back their own input and stay green.
+        // Every assertion about bundled output in this suite holds only while this hook does.
+        // Under the pass-through they would read back their own input and stay green.
         expect(icuToTranslocoModule.icuToTransloco(EXPANDED_VALUE)).toBe(EXPANDED_OUTPUT);
       });
 
@@ -1217,7 +1217,7 @@ describe('generate-bundle', () => {
       /**
        * Reads the stored fixture entries the way `loadCollectionResources` does. The
        * surrounding suite mocks `fs` and `./resource-loader`, so the real loader cannot
-       * reach disk here; this walk stands in for it and reads through the unmocked module.
+       * reach disk here. This walk stands in for it and reads through the unmocked module.
        */
       function loadFixtureResources(translationsFolder: string, locale: string, baseLocale: string): FlatResource[] {
         const resources: FlatResource[] = [];
@@ -1253,7 +1253,7 @@ describe('generate-bundle', () => {
         return resources;
       }
 
-      /** Bundle output nests by key segment; the harness works on whole keys. */
+      /** Bundle output nests by key segment. The harness works on whole keys. */
       function flattenBundle(data: Record<string, unknown>, prefix = ''): Record<string, string> {
         const flat: Record<string, string> = {};
 
@@ -1322,8 +1322,8 @@ describe('generate-bundle', () => {
       });
 
       it('runs the real emitter rather than the suite-level pass-through', () => {
-        // Under the pass-through every assertion below would run against stored ICU, so the
-        // triple would never be exercised and the suite would stay green.
+        // Under the pass-through every assertion in this suite would run against stored
+        // ICU, so nothing would exercise the triple and the suite would stay green.
         expect(icuToTranslocoModule.icuToTransloco('Cannot delete {n, plural, =1 {{itemName}} other {items}}')).toBe(
           'Cannot delete {n, plural, =1 {{{itemName}}} other {items}}',
         );
@@ -1367,8 +1367,9 @@ describe('generate-bundle', () => {
           }
         }
 
-        // The complete warning set, not the branch-body subset: a malformed stored value or an
-        // empty bundle warns too, and either would mean the collection no longer bundles cleanly.
+        // The complete warning set, not the branch-body subset. A malformed stored value or
+        // an empty bundle warns too, and either one means the collection stopped bundling
+        // cleanly.
         expect(warned).toHaveLength(fixtureLocales.length);
         for (const warning of warned) {
           expect(warning).toContain(`Key '${FORMAT_CARRYING_KEY}'`);
