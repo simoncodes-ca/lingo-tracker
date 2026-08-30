@@ -1,9 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { generateBundle, type GenerateBundleParams } from './generate-bundle';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import type { BundleDefinition } from '../../config/bundle-definition';
 import * as resourceLoader from './resource-loader';
+import type { FlatResource } from './resource-loader';
+import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
 
 // Mock fs and resourceLoader modules
 vi.mock('fs');
@@ -53,6 +57,21 @@ describe('generate-bundle', () => {
   });
 
   describe('generateBundle', () => {
+    /**
+     * The surrounding suite stubs icuToTransloco with an identity function, which would
+     * make an assertion on bundled output read back its own input. A block that asserts on
+     * what the emitter produces installs the real implementation over that stub instead.
+     */
+    async function useRealEmitter(): Promise<void> {
+      const domain = await vi.importActual<typeof import('@simoncodes-ca/domain')>('@simoncodes-ca/domain');
+
+      vi.spyOn(icuToTranslocoModule, 'icuToTransloco').mockImplementation(domain.icuToTransloco);
+    }
+
+    function branchBodyWarnings(warnings: readonly string[]): string[] {
+      return warnings.filter((warning) => warning.includes('cannot be carried to a Transloco runtime'));
+    }
+
     it('should generate bundle for all locales by default', async () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: 'main.{locale}',
@@ -1016,17 +1035,8 @@ describe('generate-bundle', () => {
       ];
 
       beforeEach(async () => {
-        // The surrounding suite stubs icuToTransloco with an identity function, which would
-        // make the bundled-output assertions below read back their own input. These cases
-        // are about what the emitter produces, so they run the real implementation.
-        const domain = await vi.importActual<typeof import('@simoncodes-ca/domain')>('@simoncodes-ca/domain');
-
-        vi.spyOn(icuToTranslocoModule, 'icuToTransloco').mockImplementation(domain.icuToTransloco);
+        await useRealEmitter();
       });
-
-      function branchBodyWarnings(warnings: readonly string[]): string[] {
-        return warnings.filter((warning) => warning.includes('cannot be carried to a Transloco runtime'));
-      }
 
       it('runs the real emitter rather than the suite-level pass-through', () => {
         // Every assertion below about bundled output is only meaningful while the hook above
@@ -1168,6 +1178,191 @@ describe('generate-bundle', () => {
           expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
         });
       }
+    });
+
+    describe('the icu-edge-cases fixture collection', () => {
+      /** Repository root, five directories above this spec. */
+      const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..');
+
+      const FIXTURE_COLLECTION = 'icuEdgeCases';
+
+      /** The locales the collection is configured for. Narrowing this set narrows the coverage. */
+      const EXPECTED_FIXTURE_LOCALES: readonly string[] = ['en', 'fr-ca', 'ja'];
+
+      /** The one fixture key whose branch body is an argument carrying a format. */
+      const FORMAT_CARRYING_KEY = 'status.syncedRecordCount';
+
+      interface FixtureConfigFile {
+        readonly baseLocale: string;
+        readonly locales?: string[];
+        readonly collections: Record<string, { readonly translationsFolder: string; readonly locales?: string[] }>;
+      }
+
+      let realFs: typeof import('node:fs');
+      let fixtureConfig: LingoTrackerConfig;
+      let fixtureLocales: string[];
+
+      /**
+       * Reads the stored fixture entries the way `loadCollectionResources` does. The
+       * surrounding suite mocks `fs` and `./resource-loader`, so the real loader cannot
+       * reach disk here; this walk stands in for it and reads through the unmocked module.
+       */
+      function loadFixtureResources(translationsFolder: string, locale: string, baseLocale: string): FlatResource[] {
+        const resources: FlatResource[] = [];
+
+        const walk = (directory: string, keyPrefix: string): void => {
+          for (const dirent of realFs.readdirSync(directory, { withFileTypes: true })) {
+            const childPath = path.join(directory, dirent.name);
+
+            if (dirent.isDirectory()) {
+              walk(childPath, keyPrefix ? `${keyPrefix}.${dirent.name}` : dirent.name);
+              continue;
+            }
+
+            if (dirent.name !== RESOURCE_ENTRIES_FILENAME) continue;
+
+            const entries = JSON.parse(realFs.readFileSync(childPath, 'utf8')) as Record<
+              string,
+              Record<string, unknown>
+            >;
+
+            for (const [entryKey, entry] of Object.entries(entries)) {
+              const value = locale === baseLocale ? entry.source : entry[locale];
+
+              if (typeof value === 'string') {
+                resources.push({ key: keyPrefix ? `${keyPrefix}.${entryKey}` : entryKey, value });
+              }
+            }
+          }
+        };
+
+        walk(path.resolve(REPO_ROOT, translationsFolder), '');
+
+        return resources;
+      }
+
+      /** Bundle output nests by key segment; the harness works on whole keys. */
+      function flattenBundle(data: Record<string, unknown>, prefix = ''): Record<string, string> {
+        const flat: Record<string, string> = {};
+
+        for (const [key, value] of Object.entries(data)) {
+          const fullKey = prefix ? `${prefix}.${key}` : key;
+
+          if (typeof value === 'string') {
+            flat[fullKey] = value;
+          } else if (value && typeof value === 'object') {
+            Object.assign(flat, flattenBundle(value as Record<string, unknown>, fullKey));
+          }
+        }
+
+        return flat;
+      }
+
+      /** Bundles one locale and hands back every warning the run produced, unfiltered. */
+      async function bundleFixtureLocale(
+        locale: string,
+      ): Promise<{ emitted: Record<string, string>; warnings: string[] }> {
+        vi.mocked(fs.writeFileSync).mockClear();
+
+        const result = await generateBundle({
+          bundleKey: 'icu-edge-cases',
+          bundleDefinition: { bundleName: '{locale}', dist: 'dist/fixture-bundles', collections: 'All' },
+          config: fixtureConfig,
+          locales: [locale],
+          transformICUToTransloco: true,
+        });
+
+        expect(result.filesGenerated).toBe(1);
+
+        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+        expect(writeCall).toBeDefined();
+
+        return {
+          emitted: flattenBundle(JSON.parse(String(writeCall?.[1])) as Record<string, unknown>),
+          warnings: result.warnings,
+        };
+      }
+
+      beforeEach(async () => {
+        await useRealEmitter();
+
+        realFs = await vi.importActual<typeof import('node:fs')>('node:fs');
+
+        const rawConfig = JSON.parse(
+          realFs.readFileSync(path.join(REPO_ROOT, '.lingo-tracker.json'), 'utf8'),
+        ) as FixtureConfigFile;
+
+        const collection = rawConfig.collections[FIXTURE_COLLECTION];
+        expect(collection).toBeDefined();
+
+        fixtureLocales = collection?.locales ?? rawConfig.locales ?? [];
+        fixtureConfig = {
+          exportFolder: 'dist/export',
+          importFolder: 'dist/import',
+          baseLocale: rawConfig.baseLocale,
+          locales: fixtureLocales,
+          collections: collection ? { [FIXTURE_COLLECTION]: collection } : {},
+        };
+
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockImplementation(
+          (translationsFolder, locale, baseLocale) => loadFixtureResources(translationsFolder, locale, baseLocale),
+        );
+      });
+
+      it('runs the real emitter rather than the suite-level pass-through', () => {
+        // Under the pass-through every assertion below would run against stored ICU, so the
+        // triple would never be exercised and the suite would stay green.
+        expect(icuToTranslocoModule.icuToTransloco('Cannot delete {n, plural, =1 {{itemName}} other {items}}')).toBe(
+          'Cannot delete {n, plural, =1 {{{itemName}}} other {items}}',
+        );
+      });
+
+      it('produces one file per configured locale, including ja', async () => {
+        expect(fixtureLocales).toEqual(EXPECTED_FIXTURE_LOCALES);
+
+        const result = await generateBundle({
+          bundleKey: 'icu-edge-cases',
+          bundleDefinition: { bundleName: '{locale}', dist: 'dist/fixture-bundles', collections: 'All' },
+          config: fixtureConfig,
+          locales: fixtureLocales,
+          transformICUToTransloco: true,
+        });
+
+        expect(result.filesGenerated).toBe(fixtureLocales.length);
+        expect(result.localesProcessed).toEqual(fixtureLocales);
+      });
+
+      it('carries both branch-body shapes under one key, keyed on the position and not the key', async () => {
+        const base = await bundleFixtureLocale('en');
+        const japanese = await bundleFixtureLocale('ja');
+
+        // The stored source is a placeholder followed by branch text, so it stays as written.
+        expect(base.emitted['errors.restrictedChildren']).toContain('=1 {{itemName} contains}');
+        // The ja value puts a bare placeholder in the same branch, so it gains the brace pair.
+        expect(japanese.emitted['errors.restrictedChildren']).toContain('=1 {{{itemName}}}');
+      });
+
+      it('bundles every value and warns once per locale, only for the format-carrying branch body', async () => {
+        const warned: string[] = [];
+
+        for (const locale of fixtureLocales) {
+          const { emitted, warnings } = await bundleFixtureLocale(locale);
+
+          expect(Object.keys(emitted).length).toBeGreaterThan(0);
+
+          for (const warning of warnings) {
+            warned.push(`${locale}:${warning}`);
+          }
+        }
+
+        // The complete warning set, not the branch-body subset: a malformed stored value or an
+        // empty bundle warns too, and either would mean the collection no longer bundles cleanly.
+        expect(warned).toHaveLength(fixtureLocales.length);
+        for (const warning of warned) {
+          expect(warning).toContain(`Key '${FORMAT_CARRYING_KEY}'`);
+          expect(warning).toContain('cannot be carried to a Transloco runtime');
+        }
+      });
     });
   });
 });

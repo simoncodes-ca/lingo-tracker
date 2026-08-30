@@ -2,28 +2,22 @@
   "deleteConfirm": {
     "source": "This will delete {nameExists, select, hasName {{name}} other {this item}} and cannot be undone.",
     "comment": "Confirmation shown before deleting a single item; the select branch body is only a placeholder",
-    "tags": [
-      "icu",
-      "edge-case"
-    ],
-    "fr-ca": "Cela supprimera {nameExists, select, hasName {{name}} other {cet élément}} et ne peut pas être annulé."
+    "tags": ["icu", "edge-case"],
+    "fr-ca": "Cela supprimera {nameExists, select, hasName {{name}} other {cet élément}} et ne peut pas être annulé.",
+    "ja": "This will delete {nameExists, select, hasName {{name}} other {this item}} and cannot be undone."
   },
   "deleteCountConfirm": {
     "source": "{deleteCount, plural, =1 {Delete {itemName}} other {Delete # items}}?",
     "comment": "Placeholder that follows branch text",
-    "tags": [
-      "icu",
-      "edge-case"
-    ],
-    "fr-ca": "{deleteCount, plural, =1 {Supprimer {itemName}} other {Supprimer # éléments}} ?"
+    "tags": ["icu", "edge-case"],
+    "fr-ca": "{deleteCount, plural, =1 {Supprimer {itemName}} other {Supprimer # éléments}} ?",
+    "ja": "{deleteCount, plural, =1 {Delete {itemName}} other {Delete # items}}?"
   },
   "deleteAssociations": {
     "source": "Deleting <b>{itemDisplayText}</b> will {deleteCount, plural, =1 {also} other {permanently delete # child items, and}} remove any associations.",
     "comment": "Placeholder inside markup ahead of a plural group",
-    "tags": [
-      "icu",
-      "edge-case"
-    ],
-    "fr-ca": "La suppression de <b>{itemDisplayText}</b> va {deleteCount, plural, =1 {aussi} other {supprimer définitivement # éléments enfants, et}} retirer toutes les associations."
+    "tags": ["icu", "edge-case"],
+    "fr-ca": "La suppression de <b>{itemDisplayText}</b> va {deleteCount, plural, =1 {aussi} other {supprimer définitivement # éléments enfants, et}} retirer toutes les associations.",
+    "ja": "Deleting <b>{itemDisplayText}</b> will {deleteCount, plural, =1 {also} other {permanently delete # child items, and}} remove any associations."
   }
 }

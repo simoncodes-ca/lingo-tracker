@@ -3,9 +3,15 @@
   "tui": {
     "enabled": false
   },
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": [],
+    "translationFixtures": ["{workspaceRoot}/sample-translations/**/*", "{workspaceRoot}/.lingo-tracker.json"]
+  },
   "targetDefaults": {
     "test": {
-      "cache": true
+      "cache": true,
+      "inputs": ["default", "^default", "translationFixtures"]
     },
     "@angular/build:application": {
       "cache": true,
@@ -23,7 +29,7 @@
     },
     "@nx/vite:test": {
       "cache": true,
-      "inputs": ["default", "^default"]
+      "inputs": ["default", "^default", "translationFixtures"]
     },
     "@nx/esbuild:esbuild": {
       "cache": true,

@@ -2,19 +2,15 @@
   "cannotDelete": {
     "source": "Cannot delete {itemCount, plural, =1 {{itemName}} other {items}}",
     "comment": "Three-brace run opening a branch body",
-    "tags": [
-      "icu",
-      "edge-case"
-    ],
-    "fr-ca": "Impossible de supprimer {itemCount, plural, =1 {{itemName}} other {les éléments}}"
+    "tags": ["icu", "edge-case"],
+    "fr-ca": "Impossible de supprimer {itemCount, plural, =1 {{itemName}} other {les éléments}}",
+    "ja": "Cannot delete {itemCount, plural, =1 {{itemName}} other {items}}"
   },
   "restrictedChildren": {
     "source": "{itemCount, plural, =1 {{itemName} contains} other {Selected items contain}} children of a restricted type:",
-    "comment": "Three-brace run followed by branch text",
-    "tags": [
-      "icu",
-      "edge-case"
-    ],
-    "fr-ca": "{itemCount, plural, =1 {{itemName} contient} other {Les éléments sélectionnés contiennent}} des enfants de type restreint :"
+    "comment": "Three-brace run followed by branch text in the source; the ja value puts a bare placeholder in the same =1 branch",
+    "tags": ["icu", "edge-case"],
+    "fr-ca": "{itemCount, plural, =1 {{itemName} contient} other {Les éléments sélectionnés contiennent}} des enfants de type restreint :",
+    "ja": "{itemCount, plural, =1 {{itemName}} other {選択したアイテム}}に、制限された種類の子アイテムが含まれています:"
   }
 }

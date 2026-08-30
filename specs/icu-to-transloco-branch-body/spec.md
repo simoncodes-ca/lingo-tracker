@@ -410,16 +410,16 @@ leaves warning, are pinned by real stored data bundled end to end — not only b
 
 ### Acceptance Criteria
 
-- [ ] A value whose branch body is an argument carrying a format exists in the fixture collection and
+- [x] A value whose branch body is an argument carrying a format exists in the fixture collection and
       raises the Phase 3 warning.
-- [ ] `errors.restrictedChildren` carries a `ja` value whose `=1` branch body is the bare placeholder
+- [x] `errors.restrictedChildren` carries a `ja` value whose `=1` branch body is the bare placeholder
       while its `source` keeps placeholder-plus-text, so the two shapes sit under one key and a rule
       keyed on the key rather than the position would fail.
-- [ ] `icuEdgeCases` includes `ja`, and bundling the collection produces a `ja` file.
-- [ ] `normalize` over the fixture collection reports `valuesConverted: 0`.
-- [ ] A test bundles the fixture collection and runs the Phase 1 harness over every emitted value,
+- [x] `icuEdgeCases` includes `ja`, and bundling the collection produces a `ja` file.
+- [x] `normalize` over the fixture collection reports `valuesConverted: 0`.
+- [x] A test bundles the fixture collection and runs the Phase 1 harness over every emitted value,
       under the locale that value was bundled for.
-- [ ] Every added value carries a `comment` naming the shape it pins.
+- [x] Every added value carries a `comment` naming the shape it pins.
 
 ### Files to Create/Modify
 
@@ -430,6 +430,12 @@ leaves warning, are pinned by real stored data bundled end to end — not only b
 - `sample-translations/icu-edge-cases/errors/resource_entries.json` — add the `ja` value on
   `restrictedChildren` *(modify)*
 - `sample-translations/icu-edge-cases/errors/tracker_meta.json` — matching metadata *(modify)*
+- `sample-translations/icu-edge-cases/dialogs/resource_entries.json` — the `ja` values `normalize`
+  seeds *(modify)*
+- `sample-translations/icu-edge-cases/dialogs/tracker_meta.json` — matching metadata *(modify)*
+- `sample-translations/icu-edge-cases/maps/resource_entries.json` — the `ja` value on
+  `unmatchedFeatures` *(modify)*
+- `sample-translations/icu-edge-cases/maps/tracker_meta.json` — matching metadata *(modify)*
 - `libs/core/src/lib/bundle/generate-bundle.spec.ts` — the end-to-end round-trip test over the
   bundled collection *(modify)*
 
@@ -466,8 +472,15 @@ Use the exact selector `=1` in the `ja` value, matching the `source`.
 (`add-resource`, `edit-resource`) so `baseChecksum`, `checksum`, and status are computed the same way
 the rest of the collection's metadata was.
 
-**Adding `ja` to the collection** leaves the other fixture keys without a `ja` value, so they report
-status `new`. That is expected for a fixture collection and is not something to backfill.
+**Adding `ja` to the collection** backfills it everywhere. `ensureLocaleEntryExists` writes the base
+value into every key that has no entry for the new locale, at status `new`, so each fixture key gains
+a `ja` copy of its `source` rather than staying absent.
+
+A seeded copy is valid ICU, but not necessarily valid ICU *for the target locale*. A `plural` group
+names the categories the locale defines, and the set differs per locale: `@messageformat/core`
+defaults to `strictPluralKeys`, and Japanese has only `other`. So a `source` that selects on
+`one`/`other` compiles under `en` and throws under `ja`. Any key whose seeded `ja` copy would throw
+needs a hand translation using the categories `ja` defines.
 
 **Error behaviour.** The end-to-end test asserts that bundling the collection exits 0 and produces
 one file per locale. The format-carrying value must raise its warning without failing the bundle.
@@ -480,9 +493,9 @@ one file per locale. The format-carrying value must raise its warning without fa
 
 ### Deliverables
 
-- [ ] The fixture collection covers the format-carrying residual and both shapes under one key
+- [x] The fixture collection covers the format-carrying residual and both shapes under one key
       across locales.
-- [ ] A single test proves the bundled output of the whole collection reaches a Transloco runtime
+- [x] A single test proves the bundled output of the whole collection reaches a Transloco runtime
       intact.
 
 ---
