@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { join } from 'node:path';
 import * as jsonFileOps from '../file-io/json-file-operations';
 import { exportToJson } from './export-to-json';
 import type { ExportOptions, FilteredResource } from './types';
@@ -62,7 +63,7 @@ describe('export-to-json', () => {
     expect(result.resourcesExported).toBe(3);
 
     expect(jsonFileOps.writeJsonFile).toHaveBeenCalledWith(
-      expect.objectContaining({ filePath: '/dist/export/es.json' }),
+      expect.objectContaining({ filePath: join('/dist/export', 'es.json') }),
     );
 
     const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
@@ -288,7 +289,7 @@ describe('export-to-json', () => {
 
     expect(result.filesCreated).toContain('custom-es.json');
     expect(jsonFileOps.writeJsonFile).toHaveBeenCalledWith(
-      expect.objectContaining({ filePath: '/dist/export/custom-es.json' }),
+      expect.objectContaining({ filePath: join('/dist/export', 'custom-es.json') }),
     );
   });
 });

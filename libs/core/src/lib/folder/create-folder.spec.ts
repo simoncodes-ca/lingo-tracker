@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createFolder } from './create-folder';
 import * as directoryOps from '../file-io/directory-operations';
 
@@ -25,10 +26,10 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/app/translations/apps');
+      expect(result.folderPath).toBe(resolve('/app/translations/apps'));
       expect(result.created).toBe(true);
       expect(directoryOps.ensureDirectoryExists).toHaveBeenCalledWith({
-        directoryPath: '/app/translations/apps',
+        directoryPath: resolve('/app/translations/apps'),
         errorContext: 'Creating folder',
         checkWritable: true,
       });
@@ -44,10 +45,10 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName, parentPath });
 
-      expect(result.folderPath).toBe('/app/translations/apps/common/buttons');
+      expect(result.folderPath).toBe(resolve('/app/translations/apps/common/buttons'));
       expect(result.created).toBe(true);
       expect(directoryOps.ensureDirectoryExists).toHaveBeenCalledWith({
-        directoryPath: '/app/translations/apps/common/buttons',
+        directoryPath: resolve('/app/translations/apps/common/buttons'),
         errorContext: 'Creating folder',
         checkWritable: true,
       });
@@ -62,7 +63,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/app/translations/apps/common/buttons');
+      expect(result.folderPath).toBe(resolve('/app/translations/apps/common/buttons'));
       expect(result.created).toBe(true);
     });
 
@@ -75,7 +76,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/app/translations/apps');
+      expect(result.folderPath).toBe(resolve('/app/translations/apps'));
       expect(result.created).toBe(false);
       expect(directoryOps.ensureDirectoryExists).toHaveBeenCalled();
     });
@@ -119,7 +120,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/app/translations/abc123');
+      expect(result.folderPath).toBe(resolve('/app/translations/abc123'));
     });
 
     it('should accept folder names with dashes', () => {
@@ -131,7 +132,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/app/translations/my-folder');
+      expect(result.folderPath).toBe(resolve('/app/translations/my-folder'));
     });
 
     it('should accept folder names with underscores', () => {
@@ -143,7 +144,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/app/translations/my_folder');
+      expect(result.folderPath).toBe(resolve('/app/translations/my_folder'));
     });
 
     it('should accept complex valid folder names', () => {
@@ -155,7 +156,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/app/translations/my-complex_Folder123');
+      expect(result.folderPath).toBe(resolve('/app/translations/my-complex_Folder123'));
     });
   });
 
@@ -170,7 +171,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName, parentPath });
 
-      expect(result.folderPath).toBe('/app/translations/apps');
+      expect(result.folderPath).toBe(resolve('/app/translations/apps'));
     });
 
     it('should handle parentPath with whitespace only', () => {
@@ -183,7 +184,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName, parentPath });
 
-      expect(result.folderPath).toBe('/app/translations/apps');
+      expect(result.folderPath).toBe(resolve('/app/translations/apps'));
     });
 
     it('should combine parentPath and folderName correctly', () => {
@@ -196,7 +197,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName, parentPath });
 
-      expect(result.folderPath).toBe('/app/translations/apps/common/buttons/ok');
+      expect(result.folderPath).toBe(resolve('/app/translations/apps/common/buttons/ok'));
     });
 
     it('should resolve absolute paths correctly', () => {
@@ -208,7 +209,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toMatch(/translations\/apps$/);
+      expect(result.folderPath).toBe(resolve('translations', 'apps'));
     });
   });
 
@@ -222,7 +223,7 @@ describe('createFolder', () => {
 
       createFolder(translationsFolder, { folderName });
 
-      expect(existsSync).toHaveBeenCalledWith('/app/translations/apps');
+      expect(existsSync).toHaveBeenCalledWith(resolve('/app/translations/apps'));
     });
 
     it('should call ensureDirectoryExists even if folder exists (idempotent)', () => {
@@ -248,7 +249,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/project/translations/apps');
+      expect(result.folderPath).toBe(resolve('/project/translations/apps'));
       expect(result.created).toBe(true);
     });
 
@@ -262,7 +263,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName, parentPath });
 
-      expect(result.folderPath).toBe('/project/translations/apps/common/components/forms/inputs');
+      expect(result.folderPath).toBe(resolve('/project/translations/apps/common/components/forms/inputs'));
       expect(result.created).toBe(true);
     });
 
@@ -275,10 +276,10 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/workspace/i18n/common');
+      expect(result.folderPath).toBe(resolve('/workspace/i18n/common'));
       expect(result.created).toBe(true);
       expect(directoryOps.ensureDirectoryExists).toHaveBeenCalledWith({
-        directoryPath: '/workspace/i18n/common',
+        directoryPath: resolve('/workspace/i18n/common'),
         errorContext: 'Creating folder',
         checkWritable: true,
       });
@@ -295,7 +296,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe('/app/translations/a');
+      expect(result.folderPath).toBe(resolve('/app/translations/a'));
       expect(result.created).toBe(true);
     });
 
@@ -308,7 +309,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName });
 
-      expect(result.folderPath).toBe(`/app/translations/${'a'.repeat(100)}`);
+      expect(result.folderPath).toBe(resolve(`/app/translations/${'a'.repeat(100)}`));
       expect(result.created).toBe(true);
     });
 
@@ -322,7 +323,7 @@ describe('createFolder', () => {
 
       const result = createFolder(translationsFolder, { folderName, parentPath });
 
-      expect(result.folderPath).toBe('/app/translations/level1/level2/level3/level4/level5');
+      expect(result.folderPath).toBe(resolve('/app/translations/level1/level2/level3/level4/level5'));
       expect(result.created).toBe(true);
     });
   });

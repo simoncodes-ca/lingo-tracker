@@ -439,7 +439,11 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/bundles/main.en.json', expect.any(String), 'utf8');
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        path.join('/dist/bundles', 'main.en.json'),
+        expect.any(String),
+        'utf8',
+      );
     });
 
     it('should handle bundle naming with {locale} placeholder in subdirectory', async () => {
@@ -460,7 +464,11 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/bundles/fr/main.json', expect.any(String), 'utf8');
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        path.join('/dist/bundles', 'fr', 'main.json'),
+        expect.any(String),
+        'utf8',
+      );
     });
 
     it('should create output directory if it does not exist', async () => {
@@ -482,7 +490,7 @@ describe('generate-bundle', () => {
 
       await generateBundle(params);
 
-      expect(fs.mkdirSync).toHaveBeenCalledWith('/dist/bundles', {
+      expect(fs.mkdirSync).toHaveBeenCalledWith(path.join('/dist', 'bundles'), {
         recursive: true,
       });
     });
@@ -827,7 +835,11 @@ describe('generate-bundle', () => {
           debugKeysLocale: 'keys',
         });
 
-        expect(fs.writeFileSync).toHaveBeenCalledWith('/dist/bundles/main.keys.json', expect.any(String), 'utf8');
+        expect(fs.writeFileSync).toHaveBeenCalledWith(
+          path.join('/dist/bundles', 'main.keys.json'),
+          expect.any(String),
+          'utf8',
+        );
       });
 
       it('emits a warning and no debug file when the bundle is empty', async () => {

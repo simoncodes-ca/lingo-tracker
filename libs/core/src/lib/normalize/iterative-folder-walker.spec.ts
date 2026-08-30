@@ -8,6 +8,12 @@ import type { FolderVisit } from './iterative-folder-walker';
 
 type FakeDirent = Pick<fs.Dirent, 'name' | 'isDirectory'>;
 
+/**
+ * The walker joins paths with the platform separator; the fixtures below are written
+ * POSIX-style. Replacing backslashes is the identity on POSIX.
+ */
+const posix = (p: string): string => p.replace(/\\/g, '/');
+
 function makeDirectoryDirent(name: string): FakeDirent {
   return { name, isDirectory: () => true };
 }
@@ -23,10 +29,10 @@ function makeFileDirent(name: string): FakeDirent {
 type MockFilesystem = Record<string, FakeDirent[]>;
 
 function installMockFilesystem(mockFs: MockFilesystem): void {
-  vi.mocked(fs.existsSync).mockImplementation((p) => p.toString() in mockFs);
+  vi.mocked(fs.existsSync).mockImplementation((p) => posix(p.toString()) in mockFs);
 
   vi.mocked(fs.readdirSync).mockImplementation((p, _opts) => {
-    const entries = mockFs[p.toString()];
+    const entries = mockFs[posix(p.toString())];
     if (entries === undefined) {
       const error = new Error(`ENOENT: no such file or directory, scandir '${p}'`);
       (error as NodeJS.ErrnoException).code = 'ENOENT';
@@ -70,7 +76,7 @@ describe('walkFolders (mocked fs)', () => {
       const visits = [...walkFolders('/root')];
 
       expect(visits).toHaveLength(1);
-      expect(visits[0].absolutePath).toBe('/root');
+      expect(posix(visits[0].absolutePath)).toBe('/root');
       expect(visits[0].depth).toBe(0);
       expect(visits[0].keyPrefix).toBe('');
       expect(visits[0].subdirectoryNames).toEqual([]);
@@ -91,7 +97,7 @@ describe('walkFolders (mocked fs)', () => {
       const visits = [...walkFolders('/root')];
       const prefixByPath: Record<string, string> = {};
       for (const visit of visits) {
-        prefixByPath[visit.absolutePath] = visit.keyPrefix;
+        prefixByPath[posix(visit.absolutePath)] = visit.keyPrefix;
       }
 
       expect(prefixByPath['/root']).toBe('');
@@ -110,7 +116,7 @@ describe('walkFolders (mocked fs)', () => {
       const visits = [...walkFolders('/root')];
       const depthByPath: Record<string, number> = {};
       for (const visit of visits) {
-        depthByPath[visit.absolutePath] = visit.depth;
+        depthByPath[posix(visit.absolutePath)] = visit.depth;
       }
 
       expect(depthByPath['/root']).toBe(0);
@@ -130,7 +136,7 @@ describe('walkFolders (mocked fs)', () => {
         '/root/shared': [],
       });
 
-      const visitedPaths = [...walkFolders('/root')].map((v) => v.absolutePath);
+      const visitedPaths = [...walkFolders('/root')].map((v) => posix(v.absolutePath));
 
       const rootIndex = visitedPaths.indexOf('/root');
       const appsIndex = visitedPaths.indexOf('/root/apps');
@@ -150,7 +156,7 @@ describe('walkFolders (mocked fs)', () => {
         '/root/b': [],
       });
 
-      const visitedPaths = [...walkFolders('/root')].map((v) => v.absolutePath);
+      const visitedPaths = [...walkFolders('/root')].map((v) => posix(v.absolutePath));
 
       expect(visitedPaths).toContain('/root');
       expect(visitedPaths).toContain('/root/a');
@@ -170,7 +176,7 @@ describe('walkFolders (mocked fs)', () => {
         '/root/.hidden': [],
       });
 
-      const visitedPaths = [...walkFolders('/root')].map((v) => v.absolutePath);
+      const visitedPaths = [...walkFolders('/root')].map((v) => posix(v.absolutePath));
 
       expect(visitedPaths).toContain('/root');
       expect(visitedPaths).toContain('/root/visible');
@@ -185,7 +191,7 @@ describe('walkFolders (mocked fs)', () => {
         '/root/src': [],
       });
 
-      const visitedPaths = [...walkFolders('/root', { skipHidden: false })].map((v) => v.absolutePath);
+      const visitedPaths = [...walkFolders('/root', { skipHidden: false })].map((v) => posix(v.absolutePath));
 
       expect(visitedPaths).toContain('/root/.git');
       expect(visitedPaths).toContain('/root/.git/objects');
@@ -199,7 +205,7 @@ describe('walkFolders (mocked fs)', () => {
         '/root/.hidden': [],
       });
 
-      const rootVisit = [...walkFolders('/root')].find((v) => v.absolutePath === '/root');
+      const rootVisit = [...walkFolders('/root')].find((v) => posix(v.absolutePath) === '/root');
 
       expect(rootVisit?.subdirectoryNames).toEqual(['visible']);
     });
@@ -211,7 +217,7 @@ describe('walkFolders (mocked fs)', () => {
         '/root/.hidden': [],
       });
 
-      const rootVisit = [...walkFolders('/root', { skipHidden: false })].find((v) => v.absolutePath === '/root');
+      const rootVisit = [...walkFolders('/root', { skipHidden: false })].find((v) => posix(v.absolutePath) === '/root');
 
       expect(rootVisit?.subdirectoryNames).toContain('visible');
       expect(rootVisit?.subdirectoryNames).toContain('.hidden');
@@ -231,7 +237,7 @@ describe('walkFolders (mocked fs)', () => {
       const visits = [...walkFolders('/root', { maxDepth: 0 })];
 
       expect(visits).toHaveLength(1);
-      expect(visits[0].absolutePath).toBe('/root');
+      expect(posix(visits[0].absolutePath)).toBe('/root');
     });
 
     it('yields root and immediate children when maxDepth is 1', () => {
@@ -243,7 +249,7 @@ describe('walkFolders (mocked fs)', () => {
       });
 
       const visits = [...walkFolders('/root', { maxDepth: 1 })];
-      const visitedPaths = visits.map((v) => v.absolutePath);
+      const visitedPaths = visits.map((v) => posix(v.absolutePath));
 
       expect(visitedPaths).toContain('/root');
       expect(visitedPaths).toContain('/root/apps');
@@ -274,7 +280,7 @@ describe('walkFolders (mocked fs)', () => {
 
       // maxDepth 1: apps is visited but its children are not descended into
       const visits = [...walkFolders('/root', { maxDepth: 1 })];
-      const appsVisit = visits.find((v) => v.absolutePath === '/root/apps');
+      const appsVisit = visits.find((v) => posix(v.absolutePath) === '/root/apps');
 
       // subdirectoryNames reports what *would* be visited, not what the depth limit blocks
       expect(appsVisit?.subdirectoryNames).toEqual(['buttons', 'forms']);
@@ -295,7 +301,7 @@ describe('walkFolders (mocked fs)', () => {
         '/root/buttons': [],
       });
 
-      const rootVisit = [...walkFolders('/root')].find((v) => v.absolutePath === '/root');
+      const rootVisit = [...walkFolders('/root')].find((v) => posix(v.absolutePath) === '/root');
 
       expect(rootVisit?.dirEntries).toBe(dirEntries);
     });
@@ -315,14 +321,14 @@ describe('walkFolders (mocked fs)', () => {
       const visited: FolderVisit[] = [];
       for (const visit of walkFolders('/root')) {
         visited.push(visit);
-        if (visit.absolutePath === '/root') {
+        if (posix(visit.absolutePath) === '/root') {
           break;
         }
       }
 
       // Only the root should have been collected before break
       expect(visited).toHaveLength(1);
-      expect(visited[0].absolutePath).toBe('/root');
+      expect(posix(visited[0].absolutePath)).toBe('/root');
     });
 
     it('allows partial traversal by breaking after a specific path', () => {
@@ -334,8 +340,8 @@ describe('walkFolders (mocked fs)', () => {
 
       const visited: string[] = [];
       for (const visit of walkFolders('/root')) {
-        visited.push(visit.absolutePath);
-        if (visit.absolutePath === '/root/a') {
+        visited.push(posix(visit.absolutePath));
+        if (posix(visit.absolutePath) === '/root/a') {
           break;
         }
       }

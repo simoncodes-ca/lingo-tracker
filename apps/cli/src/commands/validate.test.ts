@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { join } from 'node:path';
 import { validateCommand } from './validate';
 import * as fs from 'node:fs';
 
@@ -173,11 +174,11 @@ describe('validateCommand', () => {
         [
           {
             name: 'common',
-            path: expect.stringContaining('translations/common'),
+            path: expect.stringContaining(join('translations', 'common')),
           },
           {
             name: 'admin',
-            path: expect.stringContaining('translations/admin'),
+            path: expect.stringContaining(join('translations', 'admin')),
           },
         ],
         ['fr', 'es', 'de'],

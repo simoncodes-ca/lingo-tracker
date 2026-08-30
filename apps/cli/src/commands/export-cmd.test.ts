@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { join } from 'node:path';
 import { exportCommand } from './export-cmd';
 import * as fs from 'node:fs';
 import prompts from 'prompts';
@@ -303,7 +304,7 @@ describe('exportCommand', () => {
         output: 'custom/output',
       });
 
-      expect(mockValidateOutputDirectory).toHaveBeenCalledWith(expect.stringContaining('custom/output'));
+      expect(mockValidateOutputDirectory).toHaveBeenCalledWith(expect.stringContaining(join('custom', 'output')));
     });
 
     it('should filter by tags when provided', async () => {

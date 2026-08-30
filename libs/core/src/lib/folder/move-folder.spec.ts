@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { moveFolder } from './move-folder';
 import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
 import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
@@ -19,7 +19,7 @@ vi.mock('node:fs', () => {
 });
 
 describe('Move Folder', () => {
-  const testDir = '/tmp/test-move-folder';
+  const testDir = resolve('/tmp/test-move-folder');
   let mockFileSystem: Map<string, string>;
   let mockDirectories: Set<string>;
 
