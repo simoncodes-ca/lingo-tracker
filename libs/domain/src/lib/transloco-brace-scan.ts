@@ -331,7 +331,8 @@ export function convertTranslocoPlaceholders(value: string): string {
     return value;
   }
 
-  return scanIcuBraces(value, true, (start, openBraces) => {
+  /** Converts a `{{ name }}` run, leaving alone a leading brace that opens a branch body. */
+  const convertBraceRun = (start: number, openBraces: OpenBrace[]): BraceAction | null => {
     const run = readBraceRun(value, start);
     const structuralBraces = run && opensSubMessageBody(value, start, openBraces) ? 1 : 0;
 
@@ -347,7 +348,9 @@ export function convertTranslocoPlaceholders(value: string): string {
       text: `${'{'.repeat(run.openCount - 2)}{${run.name}}${'}'.repeat(run.closeCount - 2)}`,
       length: run.endIndex - start,
     };
-  }).text;
+  };
+
+  return scanIcuBraces(value, true, convertBraceRun).text;
 }
 
 /**
@@ -427,7 +430,8 @@ export function hasUnbundlableBranchBody(value: string): boolean {
     return false;
   }
 
-  return scanIcuBraces(value, false, (start, openBraces) => {
+  /** Stops the walk at a branch body that no bundled form carries. */
+  const stopAtUnbundlableBody = (start: number, openBraces: OpenBrace[]): BraceAction | null => {
     // Both patterns are sticky, so each is anchored immediately before its own test.
     TRANSLOCO_INTERPOLATION_PATTERN.lastIndex = start;
     const consumedByInterpolation = TRANSLOCO_INTERPOLATION_PATTERN.test(value);
@@ -443,7 +447,9 @@ export function hasUnbundlableBranchBody(value: string): boolean {
     }
 
     return null;
-  }).stopped;
+  };
+
+  return scanIcuBraces(value, false, stopAtUnbundlableBody).stopped;
 }
 
 /**
@@ -496,7 +502,8 @@ export function expandPlaceholderOnlyBranchBodies(value: string): string {
     return value;
   }
 
-  return scanIcuBraces(value, true, (start, openBraces) => {
+  /** Wraps a branch body that is nothing but an argument in one extra brace pair. */
+  const wrapPlaceholderOnlyBody = (start: number, openBraces: OpenBrace[]): BraceAction | null => {
     PLACEHOLDER_ONLY_BODY_PATTERN.lastIndex = start;
     const match = PLACEHOLDER_ONLY_BODY_PATTERN.exec(value);
 
@@ -509,5 +516,7 @@ export function expandPlaceholderOnlyBranchBodies(value: string): string {
     // non-sub-message brace, and the position test then rejects the inner pair. The
     // skipped run holds as many `}` as `{`, so the stack stays correct with no bookkeeping.
     return { text: `{${match[0]}}`, length: match[0].length };
-  }).text;
+  };
+
+  return scanIcuBraces(value, true, wrapPlaceholderOnlyBody).text;
 }
