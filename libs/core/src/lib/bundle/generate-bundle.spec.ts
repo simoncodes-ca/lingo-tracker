@@ -978,7 +978,7 @@ describe('generate-bundle', () => {
       });
     });
 
-    describe('placeholder-only branch bodies', () => {
+    describe('branch bodies the bundler cannot rewrite', () => {
       const bundleDefinition: BundleDefinition = {
         bundleName: '{locale}',
         dist: '/dist/bundles',
@@ -995,8 +995,17 @@ describe('generate-bundle', () => {
         },
       };
 
-      const UNBUNDLABLE_VALUE =
+      /** A branch body that is an argument carrying a format. */
+      const UNBUNDLABLE_VALUE = '{count, plural, =1 {{n, number}} other {# items}}';
+
+      /** A branch body whose double-brace run is not a parameter name. */
+      const UNRESOLVABLE_NAME_VALUE = '{a, plural, one {{some text}} other {z}}';
+
+      /** A branch body that is a bare argument, which the emitter carries as the triple. */
+      const EXPANDED_VALUE =
         'This will delete {nameExists, select, hasName {{name}} other {this item}} and cannot be undone.';
+      const EXPANDED_OUTPUT =
+        'This will delete {nameExists, select, hasName {{{name}}} other {this item}} and cannot be undone.';
 
       /** The safe shapes that must never be reported. */
       const SAFE_VALUES: readonly string[] = [
@@ -1006,13 +1015,28 @@ describe('generate-bundle', () => {
         '{a, plural, one {{b, plural, one {p} other {q}}} other {z}}',
       ];
 
+      beforeEach(async () => {
+        // The surrounding suite stubs icuToTransloco with an identity function, which would
+        // make the bundled-output assertions below read back their own input. These cases
+        // are about what the emitter produces, so they run the real implementation.
+        const domain = await vi.importActual<typeof import('@simoncodes-ca/domain')>('@simoncodes-ca/domain');
+
+        vi.spyOn(icuToTranslocoModule, 'icuToTransloco').mockImplementation(domain.icuToTransloco);
+      });
+
       function branchBodyWarnings(warnings: readonly string[]): string[] {
-        return warnings.filter((warning) => warning.includes('cannot be bundled for a Transloco runtime'));
+        return warnings.filter((warning) => warning.includes('cannot be carried to a Transloco runtime'));
       }
 
-      it('warns once for a key whose branch body is only a placeholder', async () => {
+      it('runs the real emitter rather than the suite-level pass-through', () => {
+        // Every assertion below about bundled output is only meaningful while the hook above
+        // holds. Under the pass-through they would read back their own input and stay green.
+        expect(icuToTranslocoModule.icuToTransloco(EXPANDED_VALUE)).toBe(EXPANDED_OUTPUT);
+      });
+
+      it('warns once for a key whose branch body is an argument carrying a format', async () => {
         vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'deleteConfirm', value: UNBUNDLABLE_VALUE },
+          { key: 'itemCount', value: UNBUNDLABLE_VALUE },
         ]);
 
         const result = await generateBundle({
@@ -1026,14 +1050,37 @@ describe('generate-bundle', () => {
         const reported = branchBodyWarnings(result.warnings);
 
         expect(reported).toHaveLength(1);
-        expect(reported[0]).toContain("Key 'deleteConfirm':");
-        expect(reported[0]).toContain('Move the shared text into the branches');
+        expect(reported[0]).toContain("Key 'itemCount':");
+        expect(reported[0]).toContain('does not render as written');
+        expect(reported[0]).toContain('an argument carrying a format');
+        expect(reported[0]).toContain(`value: ${UNBUNDLABLE_VALUE}`);
         expect(reported[0]).not.toContain('malformed');
+      });
+
+      it('warns for a branch body whose double-brace run is not a parameter name', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+          { key: 'choice', value: UNRESOLVABLE_NAME_VALUE },
+        ]);
+
+        const result = await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: singleCollectionConfig,
+          locales: ['en'],
+          transformICUToTransloco: true,
+        });
+
+        const reported = branchBodyWarnings(result.warnings);
+
+        expect(reported).toHaveLength(1);
+        expect(reported[0]).toContain("Key 'choice':");
+        expect(reported[0]).toContain('a run that is no parameter name');
+        expect(reported[0]).toContain(`value: ${UNRESOLVABLE_NAME_VALUE}`);
       });
 
       it('warns once per locale', async () => {
         vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'deleteConfirm', value: UNBUNDLABLE_VALUE },
+          { key: 'itemCount', value: UNBUNDLABLE_VALUE },
         ]);
 
         const result = await generateBundle({
@@ -1049,7 +1096,7 @@ describe('generate-bundle', () => {
 
       it('bundles the value unchanged and generates the file', async () => {
         vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'deleteConfirm', value: UNBUNDLABLE_VALUE },
+          { key: 'itemCount', value: UNBUNDLABLE_VALUE },
         ]);
 
         const result = await generateBundle({
@@ -1065,12 +1112,12 @@ describe('generate-bundle', () => {
         const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
         const writtenData = JSON.parse(writeCall[1] as string);
 
-        expect(writtenData.deleteConfirm).toBe(UNBUNDLABLE_VALUE);
+        expect(writtenData.itemCount).toBe(UNBUNDLABLE_VALUE);
       });
 
       it('does not warn when the ICU transformation is off', async () => {
         vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'deleteConfirm', value: UNBUNDLABLE_VALUE },
+          { key: 'itemCount', value: UNBUNDLABLE_VALUE },
         ]);
 
         const result = await generateBundle({
@@ -1082,6 +1129,28 @@ describe('generate-bundle', () => {
         });
 
         expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
+      });
+
+      it('bundles a bare-argument branch body as the triple', async () => {
+        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
+          { key: 'deleteConfirm', value: EXPANDED_VALUE },
+        ]);
+
+        const result = await generateBundle({
+          bundleKey: 'main',
+          bundleDefinition,
+          config: singleCollectionConfig,
+          locales: ['en'],
+          transformICUToTransloco: true,
+        });
+
+        expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
+        expect(result.filesGenerated).toBe(1);
+
+        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+        const writtenData = JSON.parse(writeCall[1] as string);
+
+        expect(writtenData.deleteConfirm).toBe(EXPANDED_OUTPUT);
       });
 
       for (const value of SAFE_VALUES) {

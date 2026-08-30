@@ -11,7 +11,7 @@ import {
   type EntrySelectionRule,
   type TokenCasing,
 } from '../../config/bundle-definition';
-import { effectiveTags, hasPlaceholderOnlyBranchBody, icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
+import { effectiveTags, hasUnbundlableBranchBody, icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { loadCollectionResources, type FlatResource } from './resource-loader';
 import type { ResourceEntries } from '../../resource/resource-entry';
@@ -254,11 +254,15 @@ function processCollection(
       if (resource.value.includes('{') && !validateICUSyntax(resource.value)) {
         warnings.push(`Key '${resource.key}': value has malformed ICU syntax and was included as-is`);
       }
-      if (hasPlaceholderOnlyBranchBody(resource.value)) {
+      if (hasUnbundlableBranchBody(resource.value)) {
         warnings.push(
-          `Key '${resource.key}': a plural/select branch body that is only a placeholder cannot be bundled for ` +
-            'a Transloco runtime. Move the shared text into the branches:\n' +
-            '  {nameExists, select, hasName {This will delete {name}} other {This will delete this item}}',
+          `Key '${resource.key}': a branch body cannot be carried to a Transloco runtime, so the bundled ` +
+            'value does not render as written. A branch body survives only as a plain parameter name ' +
+            'inside a plural or select group — not an argument carrying a format, not a run that is no ' +
+            'parameter name, and not inside a selectordinal group. Give the branch body text beside the ' +
+            'argument, or move the format out of the branch:\n' +
+            '  {count, plural, =1 {{n, number} item} other {# items}}\n' +
+            `  value: ${resource.value}`,
         );
       }
       finalValue = icuToTransloco(resource.value);

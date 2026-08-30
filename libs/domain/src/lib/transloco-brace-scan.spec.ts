@@ -1,6 +1,10 @@
 import { parse, type Token } from '@messageformat/parser';
 import { describe, expect, it } from 'vitest';
-import { convertTranslocoPlaceholders, hasPlaceholderOnlyBranchBody } from './transloco-brace-scan';
+import {
+  convertTranslocoPlaceholders,
+  expandPlaceholderOnlyBranchBodies,
+  hasUnbundlableBranchBody,
+} from './transloco-brace-scan';
 
 interface ConversionFixture {
   /** Sentence fragment used to name the generated test cases. */
@@ -149,6 +153,11 @@ const FIXTURES: readonly ConversionFixture[] = [
     survivingArguments: ['itemName'],
   },
   {
+    description: 'a branch body that is an argument carrying a format',
+    input: '{count, plural, =1 {{count, number}} other {# items}}',
+    expected: '{count, plural, =1 {{count, number}} other {# items}}',
+  },
+  {
     description: 'a plural branch body that is only a placeholder, behind an offset clause',
     input: '{itemCount, plural, offset:1 =1 {{itemName}} other {# items}}',
     expected: '{itemCount, plural, offset:1 =1 {{itemName}} other {# items}}',
@@ -192,6 +201,159 @@ const FIXTURES: readonly ConversionFixture[] = [
   },
 ];
 
+interface ExpansionFixture {
+  /** Sentence fragment used to name the generated test cases. */
+  readonly description: string;
+  /** A stored value, already converted to ICU. */
+  readonly input: string;
+  /** The value the expander must emit for a Transloco consumer. */
+  readonly expected: string;
+  /**
+   * Set when the collapse oracle does not apply to this row. The inbound converter trims
+   * whitespace inside the placeholder braces, so a padded value does not collapse back to
+   * the byte-identical stored form.
+   */
+  readonly collapsesToInput?: false;
+}
+
+/**
+ * The expander reads stored values and emits bundled ones, so every `input` here is in
+ * post-conversion ICU form and every `expected` is what a consumer receives.
+ */
+const EXPANSION_FIXTURES: readonly ExpansionFixture[] = [
+  {
+    description: 'a plural branch body that is only a placeholder',
+    input: 'Cannot delete {itemCount, plural, =1 {{itemName}} other {items}}',
+    expected: 'Cannot delete {itemCount, plural, =1 {{{itemName}}} other {items}}',
+  },
+  {
+    description: 'a select branch body that is only a placeholder',
+    input: 'This will delete {nameExists, select, hasName {{name}} other {this item}} and cannot be undone.',
+    expected: 'This will delete {nameExists, select, hasName {{{name}}} other {this item}} and cannot be undone.',
+  },
+  {
+    // The expander rewrites this shape, but `icuToTransloco` routes no `selectordinal` group
+    // to it: the group is read as a plain argument and emitted as `{{ rank }}`, pinned by
+    // 'replaces a selectordinal construct with a plain interpolation' in
+    // `icu-to-transloco.spec.ts`. The detector reports the shape for that reason.
+    description: 'a selectordinal branch body that is only a placeholder, which reaches the expander only directly',
+    input: '{rank, selectordinal, one {{itemName}} other {#th}}',
+    expected: '{rank, selectordinal, one {{{itemName}}} other {#th}}',
+  },
+  {
+    description: 'a placeholder-only branch body nested in another group',
+    input: '{riskCount, plural, =1 {{nameExists, select, hasName {{name}} other {it}}} other {# risks}}',
+    expected: '{riskCount, plural, =1 {{nameExists, select, hasName {{{name}}} other {it}}} other {# risks}}',
+  },
+  {
+    description: 'two placeholder-only branch bodies in one value',
+    input: '{nameExists, select, hasName {{name}} other {{fallback}}}',
+    expected: '{nameExists, select, hasName {{{name}}} other {{{fallback}}}}',
+  },
+  {
+    description: 'a placeholder-only branch body behind an offset clause',
+    input: '{itemCount, plural, offset:1 =1 {{itemName}} other {# items}}',
+    expected: '{itemCount, plural, offset:1 =1 {{{itemName}}} other {# items}}',
+  },
+  {
+    description: 'a branch body that is a placeholder padded with spaces',
+    input: '{nameExists, select, hasName {{ name }} other {this item}}',
+    expected: '{nameExists, select, hasName {{{ name }}} other {this item}}',
+    // The inbound converter leaves branch-body double braces alone, padding included, so
+    // a stored value can hold this shape. Collapsing the expansion trims the padding.
+    collapsesToInput: false,
+  },
+  {
+    description: 'a dotted placeholder as the whole branch body',
+    input: '{nameExists, select, hasName {{item.name}} other {this item}}',
+    expected: '{nameExists, select, hasName {{{item.name}}} other {this item}}',
+  },
+  {
+    description: 'a branch body that opens with a placeholder and continues with text',
+    input: '{itemCount, plural, =1 {{itemName} contains} other {Selected items contain}}',
+    expected: '{itemCount, plural, =1 {{itemName} contains} other {Selected items contain}}',
+  },
+  {
+    description: 'a branch body that opens with text and continues with a placeholder',
+    input: '{deleteCount, plural, =1 {Delete {itemName}} other {Delete # items}}?',
+    expected: '{deleteCount, plural, =1 {Delete {itemName}} other {Delete # items}}?',
+  },
+  {
+    description: 'a branch body that is a nested group',
+    input: '{a, plural, =1 {{b, plural, one {p} other {q}}} other {z}}',
+    expected: '{a, plural, =1 {{b, plural, one {p} other {q}}} other {z}}',
+  },
+  {
+    description: 'a branch body that is an argument carrying a format',
+    input: '{count, plural, =1 {{n, number}} other {# items}}',
+    expected: '{count, plural, =1 {{n, number}} other {# items}}',
+  },
+  {
+    description: 'a non-identifier double brace as the whole branch body',
+    input: '{a, plural, one {{some text}} other {z}}',
+    expected: '{a, plural, one {{some text}} other {z}}',
+  },
+  {
+    description: 'a double brace at the top level',
+    input: 'Hello {{ name }}',
+    expected: 'Hello {{ name }}',
+  },
+  {
+    description: 'a double brace inside an ICU quoted section',
+    input: "Deleting '{{ name }}' cannot be undone.",
+    expected: "Deleting '{{ name }}' cannot be undone.",
+  },
+  {
+    description: 'a double brace inside a quoted section, ahead of a plural group',
+    input: "Deleting '{{ name }}' removes {count, plural, one {# link} other {# links}}.",
+    expected: "Deleting '{{ name }}' removes {count, plural, one {# link} other {# links}}.",
+  },
+  {
+    description: 'plain text',
+    input: 'No placeholders here',
+    expected: 'No placeholders here',
+  },
+  {
+    description: 'a simple ICU argument',
+    input: 'Hello {name}',
+    expected: 'Hello {name}',
+  },
+  {
+    description: 'a plural group with no placeholders',
+    input: '{c, plural, one {# item} other {# items}}',
+    expected: '{c, plural, one {# item} other {# items}}',
+  },
+  {
+    description: 'a number formatter',
+    input: '{price, number, currency}',
+    expected: '{price, number, currency}',
+  },
+  {
+    description: 'a date formatter',
+    input: '{dueDate, date, short}',
+    expected: '{dueDate, date, short}',
+  },
+  {
+    description: 'a time formatter',
+    input: '{startTime, time, medium}',
+    expected: '{startTime, time, medium}',
+  },
+  // The expander is total but not balance-preserving: it never throws, and it never checks
+  // that the value's braces are balanced. An unbalanced value is rewritten whenever its
+  // text still qualifies at a position, so the two rows below differ only in whether the
+  // pattern can match — not in whether the value is well formed.
+  {
+    description: 'an unbalanced value the branch-body pattern cannot match',
+    input: '{c, plural, one {{name}',
+    expected: '{c, plural, one {{name}',
+  },
+  {
+    description: 'an unbalanced value the branch-body pattern still matches',
+    input: '{c, plural, one {{name}}',
+    expected: '{c, plural, one {{{name}}}',
+  },
+];
+
 interface DetectorFixture {
   /** Sentence fragment used to name the generated test case. */
   readonly description: string;
@@ -203,18 +365,21 @@ interface DetectorFixture {
 
 /**
  * The detector reads stored values, so every entry here is already in its
- * post-conversion form.
+ * post-conversion form. A row is flagged when its branch body is a `{{…}}` run no bundled
+ * form carries: an argument carrying a format, a run that is no parameter name, or any
+ * branch body of a `selectordinal` group, which `icuToTransloco` emits as a single
+ * interpolation rather than routing to the expander.
  */
 const DETECTOR_FIXTURES: readonly DetectorFixture[] = [
   {
     description: 'a select branch body that is only a placeholder',
     value: 'This will delete {nameExists, select, hasName {{name}} other {this item}} and cannot be undone.',
-    flagged: true,
+    flagged: false,
   },
   {
     description: 'a plural branch body that is only a placeholder',
     value: '{itemCount, plural, =1 {{itemName}} other {# items}}',
-    flagged: true,
+    flagged: false,
   },
   {
     description: 'a selectordinal branch body that is only a placeholder',
@@ -224,7 +389,7 @@ const DETECTOR_FIXTURES: readonly DetectorFixture[] = [
   {
     description: 'a placeholder-only branch body behind an offset clause',
     value: '{itemCount, plural, offset:1 =1 {{itemName}} other {# items}}',
-    flagged: true,
+    flagged: false,
   },
   {
     description: 'plain text',
@@ -280,6 +445,18 @@ const DETECTOR_FIXTURES: readonly DetectorFixture[] = [
     description: 'a non-identifier double brace as the whole branch body',
     value: '{a, plural, one {{some text}} other {z}}',
     flagged: true,
+  },
+  {
+    description: 'a branch body that is an argument carrying a format',
+    value: '{count, plural, =1 {{count, number}} other {# items}}',
+    flagged: true,
+  },
+  {
+    // The shape the bundle warning tells authors to write instead. It must never be flagged,
+    // or the warning would recommend a value that warns.
+    description: 'the branch body shape the bundle warning recommends',
+    value: '{count, plural, =1 {{n, number} item} other {# items}}',
+    flagged: false,
   },
   {
     description: 'a double brace inside an ICU quoted section',
@@ -433,43 +610,114 @@ describe('convertTranslocoPlaceholders', () => {
   });
 });
 
-describe('hasPlaceholderOnlyBranchBody', () => {
+describe('hasUnbundlableBranchBody', () => {
   for (const fixture of DETECTOR_FIXTURES.filter((candidate) => candidate.flagged)) {
     it(`reports ${fixture.description}`, () => {
-      expect(hasPlaceholderOnlyBranchBody(fixture.value)).toBe(true);
+      expect(hasUnbundlableBranchBody(fixture.value)).toBe(true);
     });
   }
 
   for (const fixture of DETECTOR_FIXTURES.filter((candidate) => !candidate.flagged)) {
     it(`does not report ${fixture.description}`, () => {
-      expect(hasPlaceholderOnlyBranchBody(fixture.value)).toBe(false);
+      expect(hasUnbundlableBranchBody(fixture.value)).toBe(false);
     });
   }
 
   it('returns false for an empty string', () => {
-    expect(hasPlaceholderOnlyBranchBody('')).toBe(false);
+    expect(hasUnbundlableBranchBody('')).toBe(false);
   });
 
   it('returns false for an unbalanced value', () => {
-    expect(hasPlaceholderOnlyBranchBody('{c, plural, one {{name}')).toBe(false);
+    expect(hasUnbundlableBranchBody('{c, plural, one {{name}')).toBe(false);
   });
 
-  it('flags the consumer values whose branch body is only a placeholder once converted', () => {
+  it('flags none of the consumer values once converted', () => {
     const flagged = CONSUMER_FIXTURES.filter((fixture) =>
-      hasPlaceholderOnlyBranchBody(convertTranslocoPlaceholders(fixture.input)),
+      hasUnbundlableBranchBody(convertTranslocoPlaceholders(fixture.input)),
     ).map((fixture) => fixture.description);
 
-    expect(flagged).toEqual([
-      'a select branch body that is only a placeholder',
-      'a three-brace run opening a branch body',
-    ]);
+    expect(flagged).toEqual([]);
   });
 
-  it('is stable under repeated conversion', () => {
-    for (const fixture of DETECTOR_FIXTURES) {
-      const converted = convertTranslocoPlaceholders(fixture.value);
+  for (const fixture of DETECTOR_FIXTURES) {
+    it(`is stable under repeated conversion of ${fixture.description}`, () => {
+      const converted = convertTranslocoPlaceholders(convertTranslocoPlaceholders(fixture.value));
 
-      expect(hasPlaceholderOnlyBranchBody(converted)).toBe(fixture.flagged);
+      expect(hasUnbundlableBranchBody(converted)).toBe(fixture.flagged);
+    });
+  }
+});
+
+describe('expandPlaceholderOnlyBranchBodies', () => {
+  const EXPANDED_FIXTURES = EXPANSION_FIXTURES.filter((fixture) => fixture.expected !== fixture.input);
+  const UNCHANGED_FIXTURES = EXPANSION_FIXTURES.filter((fixture) => fixture.expected === fixture.input);
+
+  describe('expansion', () => {
+    for (const fixture of EXPANSION_FIXTURES) {
+      it(`emits ${fixture.description} in its bundled form`, () => {
+        expect(expandPlaceholderOnlyBranchBodies(fixture.input)).toBe(fixture.expected);
+      });
+    }
+
+    it('returns an empty string unchanged', () => {
+      expect(expandPlaceholderOnlyBranchBodies('')).toBe('');
+    });
+
+    it('leaves a quoted brace literal unchanged at the expander boundary', () => {
+      // Only the expander leaves the quotes standing. Through `icuToTransloco` they are
+      // stripped before the expander runs, so that path emits `{name}` for the same input.
+      expect(expandPlaceholderOnlyBranchBodies("'{'name'}'")).toBe("'{'name'}'");
+    });
+  });
+
+  describe('idempotency', () => {
+    for (const fixture of EXPANSION_FIXTURES) {
+      it(`expanding ${fixture.description} twice matches expanding it once`, () => {
+        const once = expandPlaceholderOnlyBranchBodies(fixture.input);
+
+        expect(expandPlaceholderOnlyBranchBodies(once)).toBe(once);
+      });
+    }
+  });
+
+  describe('ICU parser oracle', () => {
+    const PURE_ICU_EXPANDED = EXPANDED_FIXTURES.filter((candidate) => isPureICU(candidate.input));
+
+    it('covers the branch-body shapes whose braces are all ICU structure', () => {
+      const covered = PURE_ICU_EXPANDED.map((fixture) => fixture.description);
+
+      expect(covered).toContain('a select branch body that is only a placeholder');
+      expect(covered).toContain('a placeholder-only branch body nested in another group');
+      expect(covered).toContain('a placeholder-only branch body behind an offset clause');
+    });
+
+    for (const fixture of EXPANDED_FIXTURES.filter((candidate) => candidate.collapsesToInput !== false)) {
+      it(`collapses ${fixture.description} back to its stored form`, () => {
+        expect(convertTranslocoPlaceholders(fixture.expected)).toBe(fixture.input);
+      });
+    }
+
+    it('collapses a padded branch body back to the stored form with the padding trimmed', () => {
+      expect(convertTranslocoPlaceholders('{nameExists, select, hasName {{{ name }}} other {this item}}')).toBe(
+        '{nameExists, select, hasName {{name}} other {this item}}',
+      );
+    });
+
+    for (const fixture of PURE_ICU_EXPANDED) {
+      it(`keeps the arguments of ${fixture.description} across the round trip`, () => {
+        const tokens = parseICU(convertTranslocoPlaceholders(fixture.expected));
+
+        expect(tokens).not.toBeNull();
+        expect(tokens === null ? [] : argumentNames(tokens)).toEqual(argumentNames(parse(fixture.input)));
+      });
+    }
+
+    for (const fixture of UNCHANGED_FIXTURES.filter((candidate) => isPureICU(candidate.input))) {
+      it(`leaves the ICU structure of ${fixture.description} unchanged`, () => {
+        const expanded = expandPlaceholderOnlyBranchBodies(fixture.input);
+
+        expect(stripContext(parse(expanded))).toEqual(stripContext(parse(fixture.input)));
+      });
     }
   });
 });

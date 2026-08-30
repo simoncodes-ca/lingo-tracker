@@ -186,6 +186,9 @@ importers:
       '@eslint/js':
         specifier: ^9.8.0
         version: 9.36.0
+      '@messageformat/core':
+        specifier: 3.4.0
+        version: 3.4.0
       '@messageformat/parser':
         specifier: 5.1.1
         version: 5.1.1

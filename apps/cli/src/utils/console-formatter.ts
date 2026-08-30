@@ -70,12 +70,21 @@ export const ConsoleFormatter = {
 
   /**
    * Displays an indented message
+   *
+   * A message carrying newlines is indented line by line, so a continuation line keeps
+   * the indentation of the line it belongs to instead of landing flush left.
+   *
    * @param message - Message to display
    * @param level - Indentation level (default: 1, each level = 2 spaces)
    */
   indent(message: string, level = 1): void {
     const spaces = '  '.repeat(level);
-    console.log(`${spaces}${message}`);
+    console.log(
+      message
+        .split('\n')
+        .map((line) => `${spaces}${line}`)
+        .join('\n'),
+    );
   },
 
   /**
