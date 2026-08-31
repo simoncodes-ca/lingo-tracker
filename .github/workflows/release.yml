@@ -12,7 +12,7 @@ permissions:
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUN_ON_VPS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
     steps:
       - name: Mint GitHub App token
         id: app-token

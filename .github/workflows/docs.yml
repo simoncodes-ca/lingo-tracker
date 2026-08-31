@@ -17,7 +17,7 @@ concurrency:
 jobs:
   build-and-deploy:
     name: Build & Deploy Docs
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUN_ON_VPS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
