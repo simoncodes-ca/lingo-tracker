@@ -357,6 +357,37 @@ describe('exportCommand', () => {
       );
     });
 
+    it('should disable augmentation when --no-protect-notes is used', async () => {
+      mockFilterResources.mockReturnValue([
+        {
+          key: 'test',
+          locale: 'fr',
+          value: 'test-fr',
+          baseValue: '',
+          status: 'translated',
+          collection: '',
+        },
+      ]);
+
+      await exportCommand({
+        format: 'json',
+        protectNotes: false,
+      });
+
+      expect(mockFilterResources).toHaveBeenCalledWith(
+        [],
+        expect.any(String),
+        undefined,
+        undefined,
+        expect.objectContaining({ augmentProtectedTerms: false }),
+      );
+      expect(mockExportToJson).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ augmentProtectedTerms: false }),
+        'en',
+      );
+    });
+
     it('should skip locales with no matching resources', async () => {
       mockFilterResources.mockReturnValue([]);
 
