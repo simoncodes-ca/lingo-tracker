@@ -20,4 +20,11 @@ export interface LingoTrackerCollection {
   readOnly?: boolean;
   /** Tags inherited by every resource in this collection. Unioned with per-resource tags at read time. */
   tags?: string[];
+  /**
+   * Path to a JSON file holding this collection's own protected terms, resolved against
+   * the directory holding the config file. Unlike the global list there is no default
+   * path — a collection without this pointer contributes no terms of its own. Its terms
+   * are unioned with the global file at read time.
+   */
+  protectedTermsFile?: string;
 }

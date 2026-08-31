@@ -113,6 +113,38 @@
         />
         <mat-hint>{{ TOKENS.COLLECTIONS.DIALOG.TAGSHINT | transloco }}</mat-hint>
       </mat-form-field>
+
+      <!-- Protected terms. Editable only when the collection points at a terms file. -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ TOKENS.COLLECTIONS.DIALOG.PROTECTEDTERMSLABEL | transloco }}</mat-label>
+        <mat-chip-grid #protectedTermChipGrid [disabled]="!canEditProtectedTerms()">
+          @for (term of protectedTermsList(); track term) {
+            <mat-chip-row (removed)="removeProtectedTerm(term)">
+              {{ term }}
+              <button matChipRemove [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.REMOVETAGX | transloco : { tag: term }">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip-row>
+          }
+        </mat-chip-grid>
+        <input
+          [placeholder]="TOKENS.COLLECTIONS.DIALOG.PROTECTEDTERMSADDPLACEHOLDER | transloco"
+          [matChipInputFor]="protectedTermChipGrid"
+          [matChipInputSeparatorKeyCodes]="tagSeparatorKeyCodes"
+          [disabled]="!canEditProtectedTerms()"
+          (matChipInputTokenEnd)="addProtectedTerm($event)"
+          autocomplete="off"
+        />
+        <mat-hint>{{ TOKENS.COLLECTIONS.DIALOG.PROTECTEDTERMSHINT | transloco }}</mat-hint>
+      </mat-form-field>
+
+      @if (protectedTermsFilePath(); as filePath) {
+        <p class="protected-terms-file">
+          {{ TOKENS.COLLECTIONS.DIALOG.PROTECTEDTERMSFILELABEL | transloco : { file: filePath } }}
+        </p>
+      } @else {
+        <p class="protected-terms-file">{{ TOKENS.COLLECTIONS.DIALOG.PROTECTEDTERMSNOFILE | transloco }}</p>
+      }
     </form>
   </mat-dialog-content>
 

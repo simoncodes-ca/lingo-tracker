@@ -72,6 +72,11 @@ describe('ConsoleFormatter', () => {
       ConsoleFormatter.indent('Not indented', 0);
       expect(consoleLogSpy).toHaveBeenCalledWith('Not indented');
     });
+
+    it('should indent every line of a multi-line message', () => {
+      ConsoleFormatter.indent('First line\nsecond line', 2);
+      expect(consoleLogSpy).toHaveBeenCalledWith('    First line\n    second line');
+    });
   });
 
   describe('keyValue', () => {

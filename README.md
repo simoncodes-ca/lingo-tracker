@@ -40,13 +40,20 @@ When importing translations from external tools or translators, variable and pla
 Experience compile-time guarantees with generated translation key tokens. This feature ensures that your application uses the correct and valid translation keys, along with type completion, adding an extra layer of confidence to your translations. [Learn more](docs/features/bundle-type-generation.md).
 
 ### CLI Support
-LingoTracker provides a comprehensive CLI with commands to add, edit, delete, and move resources, find similar translations, extract help-translation glossaries, normalize metadata, generate bundles, import/export in JSON and XLIFF, and validate resources. All commands support both interactive (TTY) and non-interactive (CI) modes.
+LingoTracker provides a comprehensive CLI. Its commands add, edit, delete, and move resources, and validate them. Others find similar translations, extract help-translation glossaries, manage protected terms, and normalize metadata. The rest generate bundles and import or export in JSON and XLIFF. All commands support both interactive (TTY) and non-interactive (CI) modes.
 
 ### Help Translation Glossary
 Translating online help or documentation? The `glossary` command extracts the UI terms mentioned in a block of help text and emits a JSON glossary of their translations across every locale — so help translators reuse the exact terminology already shipped in your app. Feed it a file, a snippet, or piped stdin. [Learn more](docs/features/glossary.md).
 
 ```bash
 lingo-tracker glossary --input help-page.md
+```
+
+### Protected Terms
+Brand names and jargon should stay unchanged through translation. Keep your protected terms in a JSON file, and LingoTracker marks them on export. JSON exports get a `doNotTranslate` array, and XLIFF exports get a `Do not translate:` note. On import, LingoTracker rejects any translation that came back with a protected term altered. The terms live in a file of their own, so a terminology list of any size stays out of your configuration diffs. [Learn more](docs/features/protected-terms.md).
+
+```bash
+lingo-tracker protected-terms --add iPhone --add "Node.js"
 ```
 
 ### CI/CD Validation

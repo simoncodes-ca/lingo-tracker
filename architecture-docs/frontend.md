@@ -37,6 +37,7 @@ The app shell boots at `/collections`. The translation browser is accessed at `/
 /                         → redirect → /collections
 /collections              → CollectionsManager (lazy)
 /browser/:collectionName  → TranslationBrowser (lazy)
+/settings                 → Settings (lazy)
 ```
 
 ---
@@ -189,7 +190,25 @@ Because `TranslationListStore` is component-provided, each `TranslationList` ins
 
 ### CollectionsStore
 
-`CollectionsStore` is a flat, root-provided signal store (no feature decomposition). It holds `config: LingoTrackerConfigDto | null`, `isLoading`, and `error`. Computed signals derive `collectionEntries`, `collectionEntriesWithLocales`, `hasCollections`, and `collections`. Methods (`loadCollections`, `createCollection`, `updateCollection`, `deleteCollection`) each reload the full config from the API after mutation rather than doing local optimistic updates — collections change rarely, so this keeps the store simple. The `updateCollection` call is async — locale diffing and file-system mutations happen inside `PUT /collections/:name` on the core side; the store simply awaits the response and reloads.
+`CollectionsStore` is a flat, root-provided signal store, with no feature decomposition. It holds `config: LingoTrackerConfigDto | null`, `isLoading`, and `error`. Computed signals derive `collectionEntries`, `collectionEntriesWithLocales`, `hasCollections`, and `collections`.
+
+The store exposes five methods: `loadCollections`, `createCollection`, `updateCollection`, `deleteCollection`, and `updateGlobalConfig`. Each one reloads the full config from the API after it mutates, instead of updating local state optimistically. Collections change rarely, so this keeps the store simple.
+
+`updateCollection` is async. Locale diffing and file-system mutations happen inside `PUT /collections/:name` on the core side. The store awaits the response and reloads.
+
+`updateGlobalConfig` posts the writable top-level fields to `PUT /config`. Today that is the global protected-terms list.
+
+### Protected Terms in the UI
+
+Protected terms live in JSON files on disk rather than in `.lingo-tracker.json`. The UI handles no paths of its own. It edits the terms, and the API decides which file receives them.
+
+**Settings** (`/settings`) seeds a `protectedTermsList` signal from `config().protectedTerms` exactly once. A `#seeded` flag guards the seeding, so a later config refetch leaves edits in progress alone. The user edits terms as Material chips, and `store.updateGlobalConfig({ protectedTerms })` saves them.
+
+A read-only line beneath the field renders `config().protectedTermsFilePath`. Someone who later meets the file in a diff can then see where it came from.
+
+**The collection dialog** does the same for one collection, with one difference. A collection has no default terms file, so `canEditProtectedTerms()` is true only when the collection carries a `protectedTermsFile`. Without one the chips are disabled, and the dialog explains why. The terms have nowhere to go until someone sets the file with the CLI.
+
+The dialog returns `protectedTermsFile` unchanged in its submit payload. It includes `protectedTerms` only when that setting exists. An edit therefore keeps the setting intact, and it sends no terms that the API would reject.
 
 ---
 

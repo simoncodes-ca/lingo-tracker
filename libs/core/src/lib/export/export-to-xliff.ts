@@ -50,15 +50,20 @@ export async function exportToXliff(
         sourceLanguage: baseLocale,
         targetLanguage: locale,
         resources: {
-          translations: {} as Record<string, { source: string; target: string; note?: string }>,
+          translations: {} as Record<string, { source: string; target: string; note?: string | string[] }>,
         },
       };
 
       for (const res of localeResources) {
+        const doNotTranslate = res.protectedTermsFound?.length
+          ? `Do not translate: ${res.protectedTermsFound.join(', ')}`
+          : undefined;
+        const note = [res.comment, doNotTranslate].filter((n): n is string => Boolean(n));
+
         xliffData.resources.translations[res.key] = {
           source: res.baseValue,
           target: res.value,
-          ...(res.comment ? { note: res.comment } : {}),
+          ...(note.length ? { note } : {}),
         };
       }
 

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, DestroyRef, type OnInit, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, DestroyRef, type OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, FormArray, Validators } from '@angular/forms';
@@ -14,7 +14,7 @@ import { MatChipsModule, type MatChipInputEvent } from '@angular/material/chips'
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom } from 'rxjs';
-import { isUnderNodeModules, normalizeTag, validateLocale } from '@simoncodes-ca/domain';
+import { isUnderNodeModules, normalizeProtectedTerms, normalizeTag, validateLocale } from '@simoncodes-ca/domain';
 import type { CollectionFormDialogData } from './collection-form-dialog-data';
 import type { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
@@ -73,6 +73,13 @@ export class CollectionFormDialog implements OnInit {
   readonly addLocaleInput = new FormControl<string>('', { nonNullable: true });
   readonly tagSeparatorKeyCodes = [ENTER, COMMA] as const;
   readonly tagsList = signal<string[]>([]);
+  readonly protectedTermsList = signal<string[]>([]);
+  /** The collection's `protectedTermsFile` pointer, preserved across an edit but not editable here. */
+  readonly protectedTermsFile = signal<string | undefined>(undefined);
+  /** Resolved path of that file, shown read-only so the source of a diff is obvious. */
+  readonly protectedTermsFilePath = signal<string | undefined>(undefined);
+  /** Terms live in a file, so without a pointer there is nowhere to save them — the chips stay disabled. */
+  readonly canEditProtectedTerms = computed(() => this.protectedTermsFile() !== undefined);
 
   #originalLocales: string[] = [];
   /** Tracks whether the user manually toggled read-only, so auto-detection stops overriding it. */
@@ -101,6 +108,9 @@ export class CollectionFormDialog implements OnInit {
       });
 
       this.tagsList.set(this.#data.config.tags ?? []);
+      this.protectedTermsList.set(this.#data.config.protectedTerms ?? []);
+      this.protectedTermsFile.set(this.#data.config.protectedTermsFile);
+      this.protectedTermsFilePath.set(this.#data.config.protectedTermsFilePath);
       // An existing read-only flag is the user's prior choice — don't let auto-detection override it.
       this.#readOnlyTouchedByUser = this.#data.config.readOnly !== undefined;
 
@@ -172,6 +182,22 @@ export class CollectionFormDialog implements OnInit {
     this.tagsList.update((tags) => tags.filter((t) => t !== tag));
   }
 
+  /**
+   * Adds a protected term, trimming and deduping case-sensitively while preserving
+   * the entered casing and punctuation (`iPhone`, `Node.js`, `C++` stay verbatim).
+   */
+  addProtectedTerm(event: MatChipInputEvent): void {
+    const [term] = normalizeProtectedTerms([event.value]);
+    if (term && !this.protectedTermsList().includes(term)) {
+      this.protectedTermsList.update((terms) => [...terms, term]);
+    }
+    event.chipInput?.clear();
+  }
+
+  removeProtectedTerm(term: string): void {
+    this.protectedTermsList.update((terms) => terms.filter((t) => t !== term));
+  }
+
   removeLocale(index: number): void {
     if (this.isEditMode && this.form.controls.locales.at(index).value === this.form.controls.baseLocale.value) {
       return;
@@ -224,6 +250,8 @@ export class CollectionFormDialog implements OnInit {
     const raw = this.form.getRawValue();
     const localesArray = raw.locales;
     const tags = this.tagsList();
+    const protectedTermsFile = this.protectedTermsFile();
+    const protectedTerms = this.protectedTermsList();
     return {
       name: raw.name,
       config: {
@@ -232,6 +260,9 @@ export class CollectionFormDialog implements OnInit {
         ...(raw.baseLocale ? { baseLocale: raw.baseLocale } : {}),
         readOnly: raw.readOnly,
         ...(tags.length > 0 ? { tags } : {}),
+        // The pointer round-trips so an edit never drops it; the terms are only sent when
+        // there is a file to write them to.
+        ...(protectedTermsFile ? { protectedTermsFile, protectedTerms } : {}),
       },
     };
   }

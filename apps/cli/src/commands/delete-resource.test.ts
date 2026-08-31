@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resolve } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { deleteResourceCommand } from './delete-resource';
 import { deleteResource } from '@simoncodes-ca/core';
@@ -50,7 +51,7 @@ describe('deleteResourceCommand', () => {
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+    expect(mockDeleteResource).toHaveBeenCalledWith(resolve('/test/project', 'src/i18n'), {
       keys: ['apps.common.buttons.ok'],
     });
   });
@@ -70,7 +71,7 @@ describe('deleteResourceCommand', () => {
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+    expect(mockDeleteResource).toHaveBeenCalledWith(resolve('/test/project', 'src/i18n'), {
       keys: ['apps.common.buttons.ok', 'apps.common.buttons.cancel', 'apps.common.buttons.save'],
     });
   });
@@ -91,7 +92,7 @@ describe('deleteResourceCommand', () => {
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+    expect(mockDeleteResource).toHaveBeenCalledWith(resolve('/test/project', 'src/i18n'), {
       keys: ['apps.common.buttons.ok', 'apps.common.buttons.cancel', 'apps.common.invalid'],
     });
   });
@@ -142,7 +143,7 @@ describe('deleteResourceCommand', () => {
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+    expect(mockDeleteResource).toHaveBeenCalledWith(resolve('/test/project', 'src/i18n'), {
       keys: ['apps.common.buttons.ok', 'apps.common.buttons.cancel'],
     });
   });
@@ -163,7 +164,7 @@ describe('deleteResourceCommand', () => {
 
     await deleteResourceCommand(options);
 
-    expect(mockDeleteResource).toHaveBeenCalledWith('/test/project/src/i18n', {
+    expect(mockDeleteResource).toHaveBeenCalledWith(resolve('/test/project', 'src/i18n'), {
       keys: ['apps.common.notfound'],
     });
   });

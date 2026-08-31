@@ -35,7 +35,7 @@ libs/core/src/
 │
 ├── config/                       # Config types used at the root of the package
 │   ├── lingo-tracker-config.ts   # LingoTrackerConfig interface
-│   ├── lingo-tracker-collection.ts # Collection config
+│   ├── lingo-tracker-collection.ts # Collection config (incl. protectedTermsFile pointer)
 │   ├── bundle-definition.ts      # BundleDefinition, CollectionBundleDefinition, EntrySelectionRule
 │   └── translation-config.ts     # TranslationConfig (provider name, API key env var)
 │
@@ -52,6 +52,7 @@ libs/core/src/
 ├── collections-manager/          # Collection-level operations (create / delete / update in config)
 │   ├── add-collection.ts         # addCollection()
 │   ├── delete-collection-by-name.ts # deleteCollectionByName()
+│   ├── set-protected-terms.ts    # setGlobal/CollectionProtectedTerms(): write the terms file; setGlobal/CollectionProtectedTermsFile(): move the pointer
 │   └── update-collection.ts      # updateCollection() — async; diffs locale list and calls addLocaleToCollection / removeLocaleFromCollection
 │
 └── lib/                          # Deeper sub-modules
@@ -62,6 +63,10 @@ libs/core/src/
     │   ├── pattern-matcher.ts    # matchesPattern(): glob-style key filtering
     │   ├── tag-filter.ts         # matchesTags(): AND/OR tag filter logic
     │   └── type-generation/      # TypeScript type file generation from bundle keys
+    │
+    ├── config/                   # Config file I/O
+    │   ├── config-file-operations.ts # read/write/update .lingo-tracker.json
+    │   └── protected-terms-file.ts   # Resolve, read, and write protected-terms JSON files (cached per path)
     │
     ├── export/                   # Export pipelines (JSON and XLIFF)
     │   ├── export-common.ts      # loadResourcesFromCollections(): shared resource walker; validateBasePropertyName(): checks reserved keys
@@ -406,7 +411,7 @@ The import pipeline ingests an external translation file for a single locale and
 4. **ICU auto-fix** — `applyICUAutoFixToResources()` repairs malformed ICU placeholder syntax (e.g. wrong brace styles from translation services) using `icuAutoFixer` from `@simoncodes-ca/domain`. Fixes and errors are recorded separately in the result.
 5. **Validate** — `validateImportResources()` checks for duplicate keys and other structural problems before any writes.
 6. **Group by folder** — `groupResourcesByFolder()` batches resources by their target `resource_entries.json` path, so each file is read and written once.
-7. **Process each group** — `processResourceGroup()` reads the existing entries and metadata, applies the imported values according to the chosen [import strategy](glossary.md#import-strategy), calls `determineStatus()` to assign the correct `TranslationStatus` for each entry, and writes both JSON files.
+7. **Process each group** — `processResourceGroup()` reads the existing entries and metadata. It applies the imported values according to the chosen [import strategy](glossary.md#import-strategy). It calls `determineStatus()` to assign each entry the correct `TranslationStatus`, then writes both JSON files. Before it accepts a target-locale value, it runs `findProtectedTermViolations(storedSource, incomingValue, terms)`. A term that appears in the stored source and is missing from the incoming translation fails that entry with `Protected term(s) altered: …`. The rest of the group is unaffected. The caller reads `options.protectedTerms` from disk, so the pipeline itself reads no config.
 8. **Build result** — `buildImportResult()` assembles counts, status transitions, file lists, warnings, errors, ICU fix records, and the `dryRun` flag into an `ImportResult`.
 
 Import strategies control how the merge behaves:
@@ -430,9 +435,41 @@ Export serializes the current resource tree for one locale into an external file
 
 1. **Load resources** — `loadResourcesFromCollections()` in `export-common.ts` walks the translation folder tree via `walkFolders()`, reading every `resource_entries.json` and its paired `tracker_meta.json`. Each entry becomes a `LoadedResource` object carrying `source`, `translations`, `status`, `tags`, `collectionTags`, and `comment`. Collection-level tags are passed in from the caller and stored on each `LoadedResource` for use in tag filtering.
 2. **Filter** — callers may restrict the export by tag or key pattern. Tag filtering uses `effectiveTags(collectionTags, resourceTags)` (from `libs/domain/src/lib/effective-tags.ts`) so resources whose collection has an inherited tag are correctly matched even when they have no per-resource tags.
-3. **Serialize** — JSON export writes a flat or hierarchical JSON file; XLIFF export writes an XLIFF 1.2 document with `<trans-unit>` elements and optional `<note>` elements for comments.
+3. **Annotate protected terms** — `filterResources()` calls `findProtectedTerms(source, effectiveProtectedTerms(global, collection))` on each row. It stores the matches on `FilteredResource.protectedTermsFound`. The caller reads both term lists from disk and passes them in, so the export pipeline itself reads no files. Two cases skip this step and leave the field `undefined`: base-locale rows, and runs with `augmentProtectedTerms: false` (the `--no-protect-notes` flag).
+4. **Serialize** — JSON export writes a flat or hierarchical JSON file. XLIFF export writes an XLIFF 1.2 document with `<trans-unit>` elements, plus optional `<note>` elements for comments. `protectedTermsFound` becomes a `doNotTranslate` array in rich JSON, and a `Do not translate: …` note in XLIFF.
 
 For the full sequence diagram, see [user-flows.md — Import / Export Flow](user-flows.md#2-import--export-flow).
+
+---
+
+## Protected Terms Resolution
+
+**Entry points:** `lib/config/protected-terms-file.ts`
+
+Core owns the resolution of protected terms, because they live in standalone JSON files rather than in `.lingo-tracker.json`.
+
+Domain owns the pure logic: `normalizeProtectedTerms()`, `effectiveProtectedTerms()`, `findProtectedTerms()`, and `findProtectedTermViolations()`. Domain reads no files.
+
+Resolution rules:
+
+| Scope | Pointer | Default when absent |
+|---|---|---|
+| Global | `config.protectedTermsFile` | `.lingo-tracker-protected-terms.json` beside the config |
+| Collection | `collection.protectedTermsFile` | None — the collection contributes no terms |
+
+Core resolves both settings against the directory that holds `.lingo-tracker.json`. It uses an absolute path as it stands.
+
+`readEffectiveProtectedTerms(config, collection, cwd)` returns the combined list. `resolveProtectedTermsForConfig(config, cwd)` reads every scope in one pass, which suits read-only consumers such as the API.
+
+Core caches reads in a module-level `Map` keyed by absolute path. It hands back a copy of each entry, so a caller that mutates the result leaves the cache intact. `writeProtectedTermsFile()` refreshes the entry it wrote, and `clearProtectedTermsFileCache()` drops every entry.
+
+The two failure modes differ on purpose. An **absent** file reads as an empty list, and this is the normal state before the first term is added. Core warns only when the path came from an explicit setting.
+
+**Malformed** content throws. That covers invalid JSON, a payload that is not an array, and an element that is not a string. An empty list here would protect nothing, and altered brand names would reach the resources through import with nobody seeing it.
+
+Writes normalize the list, sort it alphabetically, and end the file with a newline. Adding a term therefore produces a one-line diff.
+
+The pointer-setting functions call `assertWritableProtectedTermsPath()` *before* they mutate the config. A bad path therefore fails first, and the config keeps pointing at a file that can exist.
 
 ---
 

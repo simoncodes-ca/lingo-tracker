@@ -10,7 +10,7 @@ import { setupMockFs, makeBaseConfig } from './locale-spec-helpers';
 
 vi.mock('fs');
 
-const CWD = '/test';
+const CWD = path.resolve('/test');
 const CONFIG_PATH = path.join(CWD, '.lingo-tracker.json');
 const TRANSLATIONS_FOLDER = path.join(CWD, 'src/i18n');
 

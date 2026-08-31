@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { moveResource } from './move-resource';
 import { RESOURCE_ENTRIES_FILENAME } from '../constants';
 import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
@@ -19,7 +19,7 @@ vi.mock('node:fs', () => {
 });
 
 describe('Move Resource', () => {
-  const testDir = '/tmp/test-move-unified';
+  const testDir = resolve('/tmp/test-move-unified');
   // In-memory file system: path -> content (string)
   let mockFileSystem: Map<string, string>;
   // In-memory directories: Set<path>

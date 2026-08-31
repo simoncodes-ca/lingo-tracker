@@ -16,4 +16,9 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./browser/translation-browser').then((m) => m.TranslationBrowser),
     title: 'Translation Browser',
   },
+  {
+    path: 'settings',
+    loadComponent: () => import('./settings/settings').then((m) => m.Settings),
+    title: 'Settings',
+  },
 ];

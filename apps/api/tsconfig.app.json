@@ -2,6 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
+    "composite": true,
+    "declaration": true,
     "module": "commonjs",
     "types": ["node"],
     "experimentalDecorators": true,
@@ -17,13 +19,13 @@
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
   "references": [
     {
-      "path": "../../libs/domain"
+      "path": "../../libs/data-transfer/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/data-transfer"
+      "path": "../../libs/domain/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/core"
+      "path": "../../libs/core/tsconfig.lib.json"
     }
   ]
 }

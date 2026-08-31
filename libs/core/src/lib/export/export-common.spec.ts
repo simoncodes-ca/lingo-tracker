@@ -190,6 +190,76 @@ describe('export-common', () => {
       expect(result).toHaveLength(1);
       expect(result[0].key).toBe('key2');
     });
+
+    it('computes protectedTermsFound from source for non-base locales', () => {
+      const resources: LoadedResource[] = [
+        {
+          key: 'k1',
+          fullKey: 'k1',
+          source: 'Welcome to iPhone',
+          translations: { es: 'Bienvenido' },
+          status: { es: 'new' },
+          collection: 'Core',
+          collectionProtectedTerms: ['iPhone'],
+        },
+      ];
+
+      const result = filterResources(resources, 'es', undefined, undefined, {
+        globalProtectedTerms: ['SimonCodes'],
+        baseLocale: 'en',
+      });
+
+      expect(result[0].protectedTermsFound).toEqual(['iPhone']);
+    });
+
+    it('unions global and collection terms', () => {
+      const resources: LoadedResource[] = [
+        {
+          key: 'k1',
+          fullKey: 'k1',
+          source: 'iPhone by SimonCodes',
+          translations: { es: 'Bienvenido' },
+          status: { es: 'new' },
+          collection: 'Core',
+          collectionProtectedTerms: ['iPhone'],
+        },
+      ];
+
+      const result = filterResources(resources, 'es', undefined, undefined, {
+        globalProtectedTerms: ['SimonCodes'],
+        baseLocale: 'en',
+      });
+
+      expect(result[0].protectedTermsFound).toEqual(['SimonCodes', 'iPhone']);
+    });
+
+    it('leaves protectedTermsFound undefined for the base locale', () => {
+      const result = filterResources(mockResources, 'en', undefined, undefined, {
+        baseLocale: 'en',
+      });
+
+      expect(result[0].protectedTermsFound).toBeUndefined();
+    });
+
+    it('leaves protectedTermsFound undefined when augmentation is disabled', () => {
+      const resources: LoadedResource[] = [
+        {
+          key: 'k1',
+          fullKey: 'k1',
+          source: 'Welcome to iPhone',
+          translations: { es: 'Bienvenido' },
+          status: { es: 'new' },
+          collection: 'Core',
+        },
+      ];
+
+      const result = filterResources(resources, 'es', undefined, undefined, {
+        augmentProtectedTerms: false,
+        baseLocale: 'en',
+      });
+
+      expect(result[0].protectedTermsFound).toBeUndefined();
+    });
   });
 
   describe('validateBasePropertyName', () => {

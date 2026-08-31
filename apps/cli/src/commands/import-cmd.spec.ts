@@ -16,6 +16,7 @@ vi.mock('@simoncodes-ca/core', () => ({
   importFromXliff: vi.fn(),
   detectImportFormat: vi.fn(),
   generateImportSummary: vi.fn(() => '# Import Summary\n\nTest summary'),
+  readEffectiveProtectedTerms: vi.fn(() => []),
 }));
 
 // Mock utilities

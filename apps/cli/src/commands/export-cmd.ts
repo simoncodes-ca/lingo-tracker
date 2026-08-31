@@ -14,6 +14,8 @@ import {
   exportToXliff,
   generateExportSummary,
   type ExportResult,
+  readCollectionProtectedTerms,
+  readGlobalProtectedTerms,
 } from '@simoncodes-ca/core';
 import {
   loadConfiguration,
@@ -42,6 +44,8 @@ export interface ExportCommandOptions {
   filename?: string;
   dryRun?: boolean;
   verbose?: boolean;
+  /** Whether to emit do-not-translate instructions (default true, negation of --no-protect-notes). */
+  protectNotes?: boolean;
 }
 
 export async function exportCommand(options: ExportCommandOptions): Promise<void> {
@@ -113,10 +117,13 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
   // Resolve collections
   const collectionNames = parseCommaSeparatedList(options.collection);
 
+  const globalProtectedTerms = readGlobalProtectedTerms(config, cwd);
+
   const allCollections = Object.entries(config.collections || {}).map(([name, col]) => ({
     name,
     path: col.translationsFolder,
     tags: col.tags,
+    protectedTerms: readCollectionProtectedTerms(col, cwd),
   }));
 
   const collectionsToProcess = allCollections.filter((c) => !collectionNames || collectionNames.includes(c.name));
@@ -153,6 +160,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
       name: c.name,
       path: path.resolve(cwd, c.path),
       tags: c.tags,
+      protectedTerms: c.protectedTerms,
     })),
   );
 
@@ -173,6 +181,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
     includeComment: options.includeComment,
     includeTags: options.includeTags,
     basePropertyName: options.basePropertyName,
+    augmentProtectedTerms: options.protectNotes !== false,
     onProgress: options.verbose ? (msg) => console.log(`   ${msg}`) : undefined,
   };
 
@@ -183,7 +192,11 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
   const allFilesCreated: string[] = [];
 
   for (const locale of targetLocales) {
-    const filtered = filterResources(allResources, locale, statusFilter, tagFilter);
+    const filtered = filterResources(allResources, locale, statusFilter, tagFilter, {
+      globalProtectedTerms,
+      augmentProtectedTerms: options.protectNotes !== false,
+      baseLocale: config.baseLocale,
+    });
 
     if (filtered.length === 0) {
       if (options.verbose) console.log(`   Skipping ${locale}: No matching resources.`);

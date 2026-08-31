@@ -2,6 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
+    "composite": true,
+    "declaration": true,
     "types": []
   },
   "include": ["src/**/*.ts"],
@@ -24,10 +26,10 @@
   ],
   "references": [
     {
-      "path": "../../libs/domain"
+      "path": "../../libs/domain/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/data-transfer"
+      "path": "../../libs/data-transfer/tsconfig.lib.json"
     }
   ]
 }

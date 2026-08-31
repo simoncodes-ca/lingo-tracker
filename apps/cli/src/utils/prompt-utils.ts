@@ -78,11 +78,11 @@ export function isInteractiveTerminal(): boolean {
 /**
  * Options for executing prompts with automatic fallback to validation in non-interactive mode
  */
-export interface PromptExecutionOptions {
+export interface PromptExecutionOptions<TValues extends object = Record<string, unknown>> {
   /** Array of prompts to show in interactive mode */
   questions: prompts.PromptObject[];
   /** Current values (from CLI options) */
-  currentValues: Record<string, unknown>;
+  currentValues: TValues;
   /** Fields that must be present in non-interactive mode */
   requiredFields?: string[];
   /** Name of the operation for error messages (e.g., "Add resource") */
@@ -107,12 +107,15 @@ export interface PromptExecutionOptions {
  *   operationName: 'Add resource'
  * });
  */
-export async function executePromptsWithFallback(params: PromptExecutionOptions): Promise<Record<string, unknown>> {
+export async function executePromptsWithFallback<TValues extends object>(
+  params: PromptExecutionOptions<TValues>,
+): Promise<Record<string, unknown>> {
   const { questions, currentValues, requiredFields, operationName } = params;
+  const values = currentValues as Record<string, unknown>;
 
   // No questions needed - return current values
   if (questions.length === 0) {
-    return currentValues;
+    return values;
   }
 
   // Interactive mode - show prompts
@@ -124,18 +127,16 @@ export async function executePromptsWithFallback(params: PromptExecutionOptions)
       },
     });
 
-    return { ...currentValues, ...result };
+    return { ...values, ...result };
   }
 
   // Non-interactive mode - validate required fields
   if (requiredFields) {
-    const missing = requiredFields.filter(
-      (field) => currentValues[field] === undefined || currentValues[field] === null,
-    );
+    const missing = requiredFields.filter((field) => values[field] === undefined || values[field] === null);
     if (missing.length > 0) {
       throw new Error(`Missing required options in non-interactive mode: ${missing.map((f) => `--${f}`).join(', ')}`);
     }
   }
 
-  return currentValues;
+  return values;
 }

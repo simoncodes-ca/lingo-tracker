@@ -13,24 +13,39 @@
  * @module transloco-to-icu
  */
 
-/**
- * The regex pattern for a single Transloco placeholder.
- * Matches `{{ varName }}` with optional surrounding whitespace inside the braces.
- * Capture group 1 is the trimmed variable name.
- */
-const TRANSLOCO_PLACEHOLDER_PATTERN = /\{\{\s*(\w+)\s*\}\}/g;
+import { convertTranslocoPlaceholders } from './transloco-brace-scan';
 
 /**
  * Converts a string from Transloco double-brace interpolation syntax to ICU
  * single-brace placeholder syntax.
  *
- * Only simple `{{ varName }}` patterns are converted. Values without any
- * Transloco placeholders are returned as-is. The function is safe to call on
- * values that are already in ICU format — they will pass through unchanged
- * because single-brace patterns do not match the `{{ }}` regex.
+ * Only `{{ varName }}` patterns are converted. Values without any Transloco
+ * placeholders are returned as-is, and values that are already in ICU format
+ * pass through unchanged because a single-brace argument is never a Transloco
+ * placeholder.
+ *
+ * The conversion is position-aware. When an ICU `plural` / `select` /
+ * `selectordinal` branch body is exactly one argument, the branch's opening
+ * brace and the argument's opening brace sit next to each other and look like a
+ * Transloco placeholder:
+ *
+ * ```
+ * This will delete {nameExists, select, hasName {{name}} other {this item}}.
+ *                                               ^^
+ *                                               branch open + argument open
+ * ```
+ *
+ * That `{{` is ICU structure and is left alone. A `{{` preceded by branch text,
+ * as in `=1 {Delete {{itemName}}}`, is a genuine placeholder and is converted.
+ * Because nothing is rewritten twice, applying the function to its own output
+ * returns the same string.
+ *
+ * Placeholder names may be dotted (`{{ a.b }}` → `{a.b}`). This is wider than
+ * the plain-identifier form the function accepted previously, and matches what
+ * `normalizeTranslocoSyntax` accepts on the import path.
  *
  * @param value - The translation string, potentially using Transloco syntax
- * @returns The string with all `{{ varName }}` patterns replaced by `{varName}`
+ * @returns The string with all `{{ varName }}` placeholders replaced by `{varName}`
  *
  * @example
  * ```typescript
@@ -45,12 +60,14 @@ const TRANSLOCO_PLACEHOLDER_PATTERN = /\{\{\s*(\w+)\s*\}\}/g;
  *
  * translocoToICU("{{ a }}{{ b }}");
  * // → "{a}{b}"
+ *
+ * translocoToICU("{deleteCount, plural, =1 {Delete {{itemName}}} other {Delete # items}}");
+ * // → "{deleteCount, plural, =1 {Delete {itemName}} other {Delete # items}}"
+ *
+ * translocoToICU("{nameExists, select, hasName {{name}} other {this item}}");
+ * // → unchanged — the first brace opens the `hasName` branch body
  * ```
  */
 export function translocoToICU(value: string): string {
-  if (!value.includes('{{')) {
-    return value;
-  }
-
-  return value.replace(TRANSLOCO_PLACEHOLDER_PATTERN, (_, name: string) => `{${name}}`);
+  return convertTranslocoPlaceholders(value);
 }

@@ -1,10 +1,4 @@
-/**
- * Captures only valid JavaScript identifier characters and dots (for dotted paths).
- * Spaces are intentionally excluded from the capture group — `{{ first name }}` is
- * not a valid Transloco variable and must be left unchanged.
- * Dots must appear between word characters — `.name`, `name.`, and `a..b` are rejected.
- */
-const TRANSLOCO_DOUBLE_BRACE_SOURCE = String.raw`\{\{\s*(\w+(?:\.\w+)*)\s*\}\}`;
+import { convertTranslocoPlaceholders } from './transloco-brace-scan';
 
 /**
  * Converts Transloco double-brace variable syntax to ICU single-brace format.
@@ -17,9 +11,17 @@ const TRANSLOCO_DOUBLE_BRACE_SOURCE = String.raw`\{\{\s*(\w+(?:\.\w+)*)\s*\}\}`;
  * Surrounding whitespace inside the double braces is trimmed, matching how
  * `classifyICUContent` normalizes the same pattern before classification.
  *
- * Complex ICU expressions (those containing commas inside braces, e.g.,
- * `{count, plural, ...}`) are not affected because the pattern only matches
- * `{{ ... }}` with no comma inside — those already use the correct ICU format.
+ * Only valid identifier characters and dots are accepted as a variable name.
+ * `{{ first name }}` is not a valid Transloco variable and is left unchanged,
+ * and dots must appear between word characters, so `.name`, `name.` and `a..b`
+ * are left unchanged too.
+ *
+ * Complex ICU expressions such as `{count, plural, ...}` are not affected: a
+ * single-brace argument is never a Transloco placeholder. Where a `plural` /
+ * `select` / `selectordinal` branch body is exactly one argument, the branch's
+ * opening brace and the argument's opening brace are adjacent — that `{{` is
+ * ICU structure and is left alone, while a `{{` preceded by branch text is a
+ * genuine placeholder and is converted.
  *
  * @param value - A raw translation string that may contain Transloco syntax.
  * @returns The string with all `{{ name }}` occurrences replaced by `{name}`.
@@ -43,8 +45,11 @@ const TRANSLOCO_DOUBLE_BRACE_SOURCE = String.raw`\{\{\s*(\w+(?:\.\w+)*)\s*\}\}`;
  *
  * normalizeTranslocoSyntax('{count, plural, one {# item} other {# items}}');
  * // → '{count, plural, one {# item} other {# items}}'  (unchanged)
+ *
+ * normalizeTranslocoSyntax('{nameExists, select, hasName {{name}} other {this item}}');
+ * // → unchanged — the first brace opens the `hasName` branch body
  * ```
  */
 export function normalizeTranslocoSyntax(value: string): string {
-  return value.replace(new RegExp(TRANSLOCO_DOUBLE_BRACE_SOURCE, 'g'), (_, name: string) => `{${name}}`);
+  return convertTranslocoPlaceholders(value);
 }

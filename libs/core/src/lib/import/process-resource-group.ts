@@ -4,7 +4,7 @@ import type { ImportOptions, ImportChange, ImportedResource } from './types';
 import type { ResourceEntries, ResourceEntry } from '../../resource/resource-entry';
 import type { TrackerMetadata } from '../../resource/tracker-metadata';
 import { calculateChecksum } from '../../resource/checksum';
-import type { LocaleMetadata, TranslationStatus } from '@simoncodes-ca/domain';
+import { findProtectedTermViolations, type LocaleMetadata, type TranslationStatus } from '@simoncodes-ca/domain';
 import type { ResourceGroup } from './resource-grouping';
 import { shouldUseSourceStatus, determineNewResourceStatus, determineUpdatedResourceStatus } from './determine-status';
 
@@ -287,6 +287,7 @@ function handleUnchangedTargetLocaleValue(
  * @param isBaseLocaleImport - Whether this is a base locale import (migration strategy only)
  * @param filesModified - Set that accumulates paths of all modified files (for summary reporting)
  * @param warnings - Array that accumulates non-fatal warnings (e.g., base value mismatches)
+ * @param errors - Optional array that accumulates fatal error messages (e.g., protected-term violations)
  * @returns Array of ImportChange objects describing all changes made to resources in this group
  */
 export function processResourceGroup(
@@ -298,6 +299,7 @@ export function processResourceGroup(
   isBaseLocaleImport: boolean,
   filesModified: Set<string>,
   warnings: string[],
+  errors?: string[],
 ): ImportChange[] {
   const changes: ImportChange[] = [];
 
@@ -349,6 +351,20 @@ export function processResourceGroup(
           `Base value mismatch for "${resource.key}": import has "${resource.baseValue}", ` +
             `LingoTracker has "${existingBase}" - preserving LingoTracker value`,
         );
+      }
+    }
+
+    // Verify protected terms from the stored source appear verbatim in the incoming value.
+    // Base-locale imports never reach here (they are handled by the base-locale branch above).
+    const terms = options.protectedTerms ?? [];
+    if (terms.length > 0) {
+      const storedSource = resourceEntries[entryKey].source ?? '';
+      const violations = findProtectedTermViolations(storedSource, resource.value, terms);
+      if (violations.length > 0) {
+        const reason = `Protected term(s) altered: ${violations.join(', ')}`;
+        errors?.push(`"${resource.key}" ${reason}`);
+        changes.push({ key: resource.key, type: 'failed', reason });
+        continue;
       }
     }
 

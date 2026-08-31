@@ -261,6 +261,7 @@ export async function importFromXliff(translationsFolder: string, options: Impor
       isBaseLocaleImport,
       filesModified,
       warnings,
+      errors,
     );
 
     changes.push(...groupChanges);

@@ -12,6 +12,24 @@ import * as os from 'os';
 import * as path from 'path';
 import { walkFolders } from './iterative-folder-walker';
 
+/**
+ * Creating a symlink needs a privilege the process does not always hold — on Windows it
+ * requires Developer Mode or elevation. Probe once so the symlink cases run wherever the
+ * privilege exists and are skipped only where it is missing.
+ */
+const canCreateSymlinks = ((): boolean => {
+  const probeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lingo-symlink-probe-'));
+
+  try {
+    fs.symlinkSync(probeDir, path.join(probeDir, 'link'));
+    return true;
+  } catch {
+    return false;
+  } finally {
+    fs.rmSync(probeDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+  }
+})();
+
 describe('walkFolders (real filesystem)', () => {
   let tempDir: string;
 
@@ -20,10 +38,10 @@ describe('walkFolders (real filesystem)', () => {
   });
 
   afterEach(() => {
-    fs.rmSync(tempDir, { recursive: true, force: true });
+    fs.rmSync(tempDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
   });
 
-  it('does not follow symlinks to directories (symlinks are not traversed)', () => {
+  it.skipIf(!canCreateSymlinks)('does not follow symlinks to directories (symlinks are not traversed)', () => {
     // Node.js 18+: Dirent.isDirectory() returns false for symlinks, so symlinks to
     // directories are silently skipped before the stack push — they are never followed.
     // Structure: tempDir/child/loop -> tempDir (circular symlink, but never followed)
@@ -45,7 +63,7 @@ describe('walkFolders (real filesystem)', () => {
     expect(visited).toHaveLength(2);
   });
 
-  it('does not follow symlinks to directories even when multiple symlinks exist', () => {
+  it.skipIf(!canCreateSymlinks)('does not follow symlinks to directories even when multiple symlinks exist', () => {
     // Node.js 18+: Dirent.isDirectory() is false for symlinks, so neither link1 nor link2
     // is pushed onto the stack regardless of visitedPaths.
     const realDir = path.join(tempDir, 'real');

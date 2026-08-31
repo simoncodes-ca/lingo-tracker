@@ -220,12 +220,25 @@ const createMockFileSystem = () => {
   ]);
 };
 
+/**
+ * The fixture map in this suite is keyed on POSIX paths, while the code under test resolves to
+ * platform-native form. Stripping a drive letter and backslashes is the identity on POSIX.
+ */
+const toFixtureKey = vi.hoisted(
+  () =>
+    (p: { toString(): string }): string =>
+      p
+        .toString()
+        .replace(/^[A-Za-z]:/, '')
+        .replace(/\\/g, '/'),
+);
+
 vi.mock('node:fs', () => ({
   existsSync: vi.fn((filePath: fs.PathLike) => {
-    return mockFs.has(filePath.toString());
+    return mockFs.has(toFixtureKey(filePath));
   }),
   readFileSync: vi.fn((filePath: fs.PathLike) => {
-    const content = mockFs.get(filePath.toString());
+    const content = mockFs.get(toFixtureKey(filePath));
     if (content === 'directory' || content === undefined) {
       throw new Error(`ENOENT: no such file or directory, open '${filePath}'`);
     }
@@ -235,7 +248,7 @@ vi.mock('node:fs', () => ({
     return filePath.toString();
   }),
   readdirSync: vi.fn((dirPath: fs.PathLike, _options?: any) => {
-    const dirPathStr = dirPath.toString();
+    const dirPathStr = toFixtureKey(dirPath);
     const entries: fs.Dirent[] = [];
 
     for (const [fsPath, type] of mockFs.entries()) {

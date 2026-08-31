@@ -1,6 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { icuToTransloco } from './icu-to-transloco';
-import { unescapeIcuLiterals } from './icu-to-transloco';
+import { describe, expect, it } from 'vitest';
+import { icuToTransloco, unescapeIcuLiterals } from './icu-to-transloco';
 
 describe('icuToTransloco', () => {
   describe('values without placeholders', () => {
@@ -84,6 +83,58 @@ describe('icuToTransloco', () => {
     });
   });
 
+  describe('branch bodies that are only an argument', () => {
+    it('wraps a plural branch body in an extra brace pair', () => {
+      expect(icuToTransloco('Cannot delete {itemCount, plural, =1 {{itemName}} other {items}}')).toBe(
+        'Cannot delete {itemCount, plural, =1 {{{itemName}}} other {items}}',
+      );
+    });
+
+    it('wraps a select branch body in an extra brace pair', () => {
+      const stored = 'This will delete {nameExists, select, hasName {{name}} other {this item}} and cannot be undone.';
+      const expected =
+        'This will delete {nameExists, select, hasName {{{name}}} other {this item}} and cannot be undone.';
+
+      expect(icuToTransloco(stored)).toBe(expected);
+    });
+
+    it('wraps a branch body nested inside another group', () => {
+      const stored = '{riskCount, plural, =1 {{nameExists, select, hasName {{name}} other {it}}} other {# risks}}';
+      const expected = '{riskCount, plural, =1 {{nameExists, select, hasName {{{name}}} other {it}}} other {# risks}}';
+
+      expect(icuToTransloco(stored)).toBe(expected);
+    });
+
+    it('leaves a branch body that continues with text unchanged', () => {
+      const stored = '{itemCount, plural, =1 {{itemName} contains} other {Selected items contain}} children';
+      expect(icuToTransloco(stored)).toBe(stored);
+    });
+
+    it('leaves a branch body that opens with text unchanged', () => {
+      const stored = '{deleteCount, plural, =1 {Delete {itemName}} other {Delete # items}}?';
+      expect(icuToTransloco(stored)).toBe(stored);
+    });
+
+    it('leaves a branch body that is a nested group unchanged', () => {
+      const stored = '{a, plural, =1 {{b, plural, one {p} other {q}}} other {z}}';
+      expect(icuToTransloco(stored)).toBe(stored);
+    });
+
+    it('leaves a branch body whose argument carries a format unchanged', () => {
+      const stored = '{count, plural, =1 {{n, number}} other {# items}}';
+      expect(icuToTransloco(stored)).toBe(stored);
+    });
+
+    it('replaces a selectordinal construct with a plain interpolation', () => {
+      // `parsePlaceholder` recognizes no `selectordinal` head. It reads the group as a simple
+      // argument and emits the whole construct as one interpolation. The expander handles this
+      // branch-body shape, pinned by 'a selectordinal branch body that is only a placeholder,
+      // which reaches the expander only directly' in `transloco-brace-scan.spec.ts`. The
+      // expander never sees the shape through this entry point, so the detector reports it.
+      expect(icuToTransloco('{rank, selectordinal, one {{itemName}} other {#th}}')).toBe('{{ rank }}');
+    });
+  });
+
   describe('mixed simple and complex placeholders', () => {
     it('converts simple placeholder while preserving an adjacent plural', () => {
       const input = 'Hello {name}: {count, plural, one {# item} other {# items}}';
@@ -125,7 +176,7 @@ describe('icuToTransloco', () => {
       expect(icuToTransloco("don't have {count} items")).toBe("don't have {{ count }} items");
     });
 
-    it('unescapes a fully-quoted brace literal when there are no real placeholders', () => {
+    it('unescapes a fully-quoted brace literal end to end, so the quotes never reach the bundle', () => {
       // '{'literal'}' has no real ICU placeholders; should unescape to {literal}
       expect(icuToTransloco("'{'literal'}'")).toBe('{literal}');
     });

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { join } from 'node:path';
 import { exportCommand } from './export-cmd';
 import * as fs from 'node:fs';
 import prompts from 'prompts';
@@ -15,6 +16,8 @@ vi.mock('@simoncodes-ca/core', () => ({
   exportToJson: vi.fn(),
   exportToXliff: vi.fn(),
   generateExportSummary: vi.fn(),
+  readGlobalProtectedTerms: vi.fn(() => []),
+  readCollectionProtectedTerms: vi.fn(() => []),
 }));
 
 import * as core from '@simoncodes-ca/core';
@@ -172,7 +175,13 @@ describe('exportCommand', () => {
       expect(mockLoadResourcesFromCollections).toHaveBeenCalledWith(
         expect.arrayContaining([expect.objectContaining({ name: 'common' })]),
       );
-      expect(mockFilterResources).toHaveBeenCalledWith([], 'fr', ['new', 'stale'], undefined);
+      expect(mockFilterResources).toHaveBeenCalledWith(
+        [],
+        'fr',
+        ['new', 'stale'],
+        undefined,
+        expect.objectContaining({ augmentProtectedTerms: true, baseLocale: 'en' }),
+      );
       expect(mockExportToJson).toHaveBeenCalled();
     });
 
@@ -240,8 +249,20 @@ describe('exportCommand', () => {
       });
 
       // Should filter for fr and es (not base locale 'en')
-      expect(mockFilterResources).toHaveBeenCalledWith([], 'fr', undefined, undefined);
-      expect(mockFilterResources).toHaveBeenCalledWith([], 'es', undefined, undefined);
+      expect(mockFilterResources).toHaveBeenCalledWith(
+        [],
+        'fr',
+        undefined,
+        undefined,
+        expect.objectContaining({ augmentProtectedTerms: true, baseLocale: 'en' }),
+      );
+      expect(mockFilterResources).toHaveBeenCalledWith(
+        [],
+        'es',
+        undefined,
+        undefined,
+        expect.objectContaining({ augmentProtectedTerms: true, baseLocale: 'en' }),
+      );
     });
 
     it('should use default status filter when not provided', async () => {
@@ -261,7 +282,13 @@ describe('exportCommand', () => {
       });
 
       // When status is not provided, it defaults to undefined (not filtered)
-      expect(mockFilterResources).toHaveBeenCalledWith([], expect.any(String), undefined, undefined);
+      expect(mockFilterResources).toHaveBeenCalledWith(
+        [],
+        expect.any(String),
+        undefined,
+        undefined,
+        expect.objectContaining({ augmentProtectedTerms: true, baseLocale: 'en' }),
+      );
     });
 
     it('should handle dry run mode', async () => {
@@ -303,7 +330,7 @@ describe('exportCommand', () => {
         output: 'custom/output',
       });
 
-      expect(mockValidateOutputDirectory).toHaveBeenCalledWith(expect.stringContaining('custom/output'));
+      expect(mockValidateOutputDirectory).toHaveBeenCalledWith(expect.stringContaining(join('custom', 'output')));
     });
 
     it('should filter by tags when provided', async () => {
@@ -323,7 +350,44 @@ describe('exportCommand', () => {
         tags: 'ui,buttons',
       });
 
-      expect(mockFilterResources).toHaveBeenCalledWith([], expect.any(String), undefined, ['ui', 'buttons']);
+      expect(mockFilterResources).toHaveBeenCalledWith(
+        [],
+        expect.any(String),
+        undefined,
+        ['ui', 'buttons'],
+        expect.objectContaining({ augmentProtectedTerms: true, baseLocale: 'en' }),
+      );
+    });
+
+    it('should disable augmentation when --no-protect-notes is used', async () => {
+      mockFilterResources.mockReturnValue([
+        {
+          key: 'test',
+          locale: 'fr',
+          value: 'test-fr',
+          baseValue: '',
+          status: 'translated',
+          collection: '',
+        },
+      ]);
+
+      await exportCommand({
+        format: 'json',
+        protectNotes: false,
+      });
+
+      expect(mockFilterResources).toHaveBeenCalledWith(
+        [],
+        expect.any(String),
+        undefined,
+        undefined,
+        expect.objectContaining({ augmentProtectedTerms: false }),
+      );
+      expect(mockExportToJson).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ augmentProtectedTerms: false }),
+        'en',
+      );
     });
 
     it('should skip locales with no matching resources', async () => {
@@ -647,8 +711,20 @@ describe('exportCommand', () => {
       });
 
       // Should export for fr and es, but not en (base locale)
-      expect(mockFilterResources).toHaveBeenCalledWith([], 'fr', undefined, undefined);
-      expect(mockFilterResources).toHaveBeenCalledWith([], 'es', undefined, undefined);
+      expect(mockFilterResources).toHaveBeenCalledWith(
+        [],
+        'fr',
+        undefined,
+        undefined,
+        expect.objectContaining({ augmentProtectedTerms: true, baseLocale: 'en' }),
+      );
+      expect(mockFilterResources).toHaveBeenCalledWith(
+        [],
+        'es',
+        undefined,
+        undefined,
+        expect.objectContaining({ augmentProtectedTerms: true, baseLocale: 'en' }),
+      );
       expect(mockFilterResources).not.toHaveBeenCalledWith([], 'en', expect.anything(), expect.anything());
     });
 

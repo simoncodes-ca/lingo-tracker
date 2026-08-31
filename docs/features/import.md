@@ -193,6 +193,22 @@ JSON import provides flexible format options for system migrations and integrati
 }
 ```
 
+## Protected Term Verification
+
+LingoTracker checks every incoming translation against the [protected terms](./protected-terms.md) for its collection. Those terms come from two files. LingoTracker combines the global file with the collection's own file.
+
+A term may appear in the stored **source** value and be missing from the incoming translation. That entry then fails:
+
+```
+❌ "app.checkout.title" Protected term(s) altered: iPhone
+```
+
+LingoTracker skips the entry and reports it as failed. The rest of the import continues normally.
+
+LingoTracker matches the source case-insensitively. It requires the translation to hold the term **exactly** as stored. That difference is deliberate, and it is what catches `iPhone` coming back as `iphone` or as `Iphone`.
+
+Base-locale imports skip the check, because a base-locale import defines the source rather than translating it. An import in a project with no protected terms also skips it.
+
 ## ICU Format Auto-Fixing
 
 LingoTracker automatically fixes common ICU message format placeholder errors made by translators:

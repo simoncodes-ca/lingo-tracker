@@ -33,6 +33,7 @@
  * Aggregates numeric fields across an array of result objects.
  *
  * @template T - Type of result objects to aggregate
+ * @template K - Keys of the result objects to sum
  * @param results - Array of result objects to aggregate
  * @param numericFields - Array of field names to sum across results
  * @returns Object with summed values for each specified field
@@ -46,12 +47,12 @@
  * ]);
  * ```
  */
-export function aggregateNumericFields<T extends Record<string, unknown>>(
+export function aggregateNumericFields<T extends object, K extends keyof T>(
   results: T[],
-  numericFields: (keyof T)[],
-): Record<keyof T, number> {
+  numericFields: K[],
+): Record<K, number> {
   // Initialize accumulator with all fields set to 0
-  const initial = Object.fromEntries(numericFields.map((field) => [field, 0])) as Record<keyof T, number>;
+  const initial = Object.fromEntries(numericFields.map((field) => [field, 0])) as Record<K, number>;
 
   // Sum each numeric field across all results
   return results.reduce((accumulator, current) => {

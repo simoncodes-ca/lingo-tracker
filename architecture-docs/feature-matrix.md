@@ -27,9 +27,11 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 | Install AI skill | Yes (`install-skill`) | — | — |
 | **Collections** | | | |
 | Add [collection](glossary.md#collection) | Yes (`add-collection`) | Yes (`POST /collections`) | Yes (Collections Manager dialog) |
-| Edit / rename collection | — | Yes (`PUT /collections/:name`) | Yes (Collections Manager edit dialog — also add/remove locales) |
+| Rename collection | — | Yes (`PUT /collections/:name`) | Yes (Collections Manager edit dialog — also add/remove locales) |
+| Edit collection tags | Yes (`edit-collection --add-tag/--remove-tag/--set-tags`) | Yes (`PUT /collections/:name`) | Yes (Collections Manager edit dialog) |
 | Delete collection | Yes (`delete-collection`) | Yes (`DELETE /collections/:name`) | Yes (Collections Manager delete dialog) |
 | Read global config | — | Yes (`GET /config`) | Yes (reads on startup via `CollectionsStore`) |
+| Update writable global config fields | — | Yes (`PUT /config`) | Yes (Settings page) |
 | **Locales** | | | |
 | Add [locale](glossary.md#base-locale) to collection | Yes (`add-locale`) | Yes (`POST /collections/:name/locales`) | Yes (collection edit dialog — add locale field) |
 | Remove locale from collection | Yes (`remove-locale`) | Yes (`DELETE /collections/:name/locales/:locale`) | Yes (collection edit dialog — remove button per locale; base locale cannot be removed) |
@@ -58,6 +60,10 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 | Generate bundle (locale JSON + optional TS types) | Yes (`bundle`) | — | — |
 | Export resources (XLIFF or JSON) | Yes (`export`) | — | — |
 | Import translations (XLIFF or JSON) | Yes (`import`) | — | — |
+| **[Protected Terms](glossary.md#protected-term)** | | | |
+| List the terms that apply (global or per collection) | Yes (`protected-terms --list`) | Yes (resolved on `GET /config`) | Yes (Settings page, and collection edit dialog) |
+| Add, remove, or replace terms | Yes (`protected-terms --add/--remove/--set`) | Yes (`PUT /config`, and `PUT /collections/:name`) | Yes (chip editors. Collection chips need a terms file first.) |
+| Name the terms file for a scope | Yes (`protected-terms --file`) | Yes (`protectedTermsFile` on `PUT /collections/:name`) | — (shows the resolved path, read-only) |
 | **Validation** | | | |
 | Validate all resources (CI gate) | Yes (`validate`) | — | — |
 | View resource status per locale | — | — | Yes (status badge per locale row in item) |
@@ -74,7 +80,7 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 - **In-memory collection cache** — `CollectionCacheService` is an API-only system. It holds a single-slot, incrementally-updated in-memory tree of the active collection, making browsing fast for the Tracker UI. The CLI bypasses the cache entirely and reads files directly on every invocation. See [`api.md — Collection Cache`](api.md#collection-cache).
 - **Async translation jobs** — The `TranslationJobService` (fire-and-forget job map with UUID-based polling) is API-only. The CLI's `translate-locale` command runs synchronously in-process and prints progress inline.
 - **Batch resource creation** — The `POST /collections/:name/resources` endpoint accepts an array of `CreateResourceDto` objects. The CLI's `add-resource` and the UI's editor dialog only create one resource at a time.
-- **Edit / rename collection** — `PUT /collections/:name` exists only on the API and UI. The CLI has no `edit-collection` command; renaming a collection requires editing `.lingo-tracker.json` manually or using the UI. The `PUT` endpoint (and therefore the UI edit dialog) also handles adding and removing locales — it diffs the submitted locale list against the existing config and internally calls `addLocaleToCollection` / `removeLocaleFromCollection` as needed.
+- **Rename collection** — Renaming exists only on the API and UI. The CLI's `edit-collection` command manages collection-level tags only; renaming a collection requires editing `.lingo-tracker.json` manually or using the UI. The `PUT` endpoint (and therefore the UI edit dialog) also handles adding and removing locales — it diffs the submitted locale list against the existing config and internally calls `addLocaleToCollection` / `removeLocaleFromCollection` as needed.
 
 ### CLI Only
 
