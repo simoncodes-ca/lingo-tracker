@@ -1,7 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { Observable } from 'rxjs';
-import type { LingoTrackerConfigDto, CreateCollectionDto, UpdateCollectionDto } from '@simoncodes-ca/data-transfer';
+import type {
+  LingoTrackerConfigDto,
+  CreateCollectionDto,
+  UpdateCollectionDto,
+  UpdateConfigDto,
+} from '@simoncodes-ca/data-transfer';
 
 /**
  * Service for making API calls related to collections management.
@@ -42,5 +47,12 @@ export class CollectionsApiService {
    */
   deleteCollection(name: string): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${this.apiBase}/collections/${encodeURIComponent(name)}`);
+  }
+
+  /**
+   * Updates supported global config fields (e.g., protected terms).
+   */
+  updateConfig(dto: UpdateConfigDto): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${this.apiBase}/config`, dto);
   }
 }

@@ -5,7 +5,12 @@ import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constant
 import { walkFolders } from '../normalize/iterative-folder-walker';
 import type { ResourceEntries } from '../../resource/resource-entry';
 import type { TrackerMetadata } from '../../resource/tracker-metadata';
-import { effectiveTags, type TranslationStatus } from '@simoncodes-ca/domain';
+import {
+  effectiveTags,
+  effectiveProtectedTerms,
+  findProtectedTerms,
+  type TranslationStatus,
+} from '@simoncodes-ca/domain';
 import type { FilteredResource } from './types';
 
 export interface LoadedResource {
@@ -15,6 +20,7 @@ export interface LoadedResource {
   translations: Record<string, string>;
   tags?: string[];
   collectionTags?: string[];
+  collectionProtectedTerms?: string[];
   comment?: string;
   status: Record<string, TranslationStatus>;
   collection: string;
@@ -54,7 +60,7 @@ export function validateOutputDirectory(directory: string): void {
  * Loads all resources and metadata from a list of collections.
  */
 export function loadResourcesFromCollections(
-  collections: { name: string; path: string; tags?: string[] }[],
+  collections: { name: string; path: string; tags?: string[]; protectedTerms?: string[] }[],
 ): LoadedResource[] {
   const allResources: Map<string, LoadedResource> = new Map();
 
@@ -65,7 +71,7 @@ export function loadResourcesFromCollections(
     }
 
     // The collection.path should point directly to where translations are stored
-    loadFolderResources(collection.path, collection.name, allResources, collection.tags);
+    loadFolderResources(collection.path, collection.name, allResources, collection.tags, collection.protectedTerms);
   }
 
   return Array.from(allResources.values());
@@ -76,6 +82,7 @@ function loadFolderResources(
   collectionName: string,
   allResources: Map<string, LoadedResource>,
   collectionTags?: string[],
+  collectionProtectedTerms?: string[],
 ): void {
   for (const visit of walkFolders(collectionPath, { skipHidden: false })) {
     const entriesPath = path.join(visit.absolutePath, RESOURCE_ENTRIES_FILENAME);
@@ -103,6 +110,7 @@ function loadFolderResources(
           translations: {},
           tags: entry.tags,
           collectionTags,
+          collectionProtectedTerms,
           comment: entry.comment,
           status: {},
           collection: collectionName,
@@ -142,6 +150,11 @@ export function filterResources(
   targetLocale: string,
   statusFilter: TranslationStatus[] | undefined,
   tagFilter: string[] | undefined,
+  protectedTermsOptions?: {
+    globalProtectedTerms?: string[];
+    augmentProtectedTerms?: boolean;
+    baseLocale?: string;
+  },
 ): FilteredResource[] {
   return resources
     .filter((res) => {
@@ -169,14 +182,27 @@ export function filterResources(
 
       return true;
     })
-    .map((res) => ({
-      key: res.fullKey,
-      value: res.translations[targetLocale] || '',
-      baseValue: res.source,
-      comment: res.comment,
-      status: res.status[targetLocale] || 'new',
-      tags: res.tags,
-      collection: res.collection,
-      locale: targetLocale,
-    }));
+    .map((res) => {
+      const augment =
+        protectedTermsOptions?.augmentProtectedTerms !== false &&
+        (!protectedTermsOptions?.baseLocale || targetLocale !== protectedTermsOptions.baseLocale);
+      const protectedTermsFound = augment
+        ? findProtectedTerms(
+            res.source,
+            effectiveProtectedTerms(protectedTermsOptions?.globalProtectedTerms, res.collectionProtectedTerms),
+          )
+        : undefined;
+
+      return {
+        key: res.fullKey,
+        value: res.translations[targetLocale] || '',
+        baseValue: res.source,
+        comment: res.comment,
+        status: res.status[targetLocale] || 'new',
+        tags: res.tags,
+        collection: res.collection,
+        locale: targetLocale,
+        protectedTermsFound,
+      };
+    });
 }

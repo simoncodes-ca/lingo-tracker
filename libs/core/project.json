@@ -11,6 +11,9 @@
       "options": {
         "reportsDirectory": "../../coverage/libs/core"
       }
+    },
+    "build": {
+      "dependsOn": ["^build", "^typecheck"]
     }
   }
 }

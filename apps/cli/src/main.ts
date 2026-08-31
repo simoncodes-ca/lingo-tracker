@@ -206,6 +206,7 @@ program
   .option('--include-status', 'Include translation status (JSON only)', false)
   .option('--include-comment', 'Include comment (JSON only)', false)
   .option('--include-tags', 'Include tags array (JSON only)', false)
+  .option('--no-protect-notes', 'Do not emit do-not-translate instructions for protected terms')
   .option('--base-property-name <name>', 'Property name for base locale value in JSON output (default: baseValue)')
   .option('--filename <pattern>', 'Custom filename pattern')
   .option('--dry-run', 'Show what would be exported without writing files', false)
@@ -476,6 +477,20 @@ program
   .action(async (name, options) => {
     const { editCollectionCommand } = await import('./commands/edit-collection');
     await editCollectionCommand(name, options);
+  });
+
+program
+  .command('protected-terms')
+  .description('Manage protected terms (global or per-collection). Terms are kept verbatim and never translated.')
+  .option('--collection <name>', 'Target collection (absent = global scope)')
+  .option('--add <term>', 'Add a protected term (repeatable)', collect, [])
+  .option('--remove <term>', 'Remove a protected term (repeatable)', collect, [])
+  .option('--set <terms>', 'Replace protected terms with a comma-separated list (use "" to clear)')
+  .option('--list', 'List protected terms (effective union for a collection)')
+  .option('--file <path>', 'Point this scope at a protected terms JSON file (use "" to clear)')
+  .action(async (options) => {
+    const { protectedTermsCommand } = await import('./commands/protected-terms');
+    await protectedTermsCommand(options);
   });
 
 program

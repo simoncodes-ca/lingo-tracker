@@ -120,3 +120,10 @@ mat-dialog-actions {
     color: var(--color-text-secondary);
   }
 }
+
+.protected-terms-file {
+  margin: -8px 0 12px;
+  font-size: 12px;
+  opacity: 0.7;
+  word-break: break-all;
+}

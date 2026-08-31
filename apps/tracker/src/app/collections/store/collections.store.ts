@@ -11,6 +11,7 @@ import type {
   LingoTrackerConfigDto,
   CreateCollectionDto,
   UpdateCollectionDto,
+  UpdateConfigDto,
 } from '@simoncodes-ca/data-transfer';
 
 /**
@@ -204,6 +205,40 @@ export const CollectionsStore = signalStore(
               }),
             );
           }),
+        ),
+      ),
+
+      /**
+       * Updates global configuration fields (e.g., protected terms) and reloads.
+       */
+      updateGlobalConfig: rxMethod<UpdateConfigDto>(
+        pipe(
+          tap(() => patchState(store, { isLoading: true, error: null })),
+          switchMap((dto) =>
+            api.updateConfig(dto).pipe(
+              tap(() => {
+                patchState(store, { isLoading: false });
+              }),
+              switchMap(() => api.getConfig()),
+              tap((configData) => {
+                patchState(store, {
+                  config: configData,
+                  error: null,
+                });
+              }),
+              catchError((error: unknown) => {
+                const errorMessage =
+                  error instanceof Error
+                    ? error.message
+                    : transloco.translate(TRACKER_TOKENS.COLLECTIONS.TOAST.UPDATEFAILED);
+                patchState(store, {
+                  isLoading: false,
+                  error: errorMessage,
+                });
+                return of(null);
+              }),
+            ),
+          ),
         ),
       ),
 

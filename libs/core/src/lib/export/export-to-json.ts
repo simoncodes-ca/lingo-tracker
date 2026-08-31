@@ -172,7 +172,9 @@ function isRichValue(obj: unknown, basePropertyName = 'baseValue'): boolean {
     obj !== null &&
     typeof obj === 'object' &&
     'value' in obj &&
-    Object.keys(obj).every((k) => ['value', basePropertyName, 'comment', 'status', 'tags'].includes(k))
+    Object.keys(obj).every((k) =>
+      ['value', basePropertyName, 'comment', 'status', 'tags', 'doNotTranslate'].includes(k),
+    )
   );
 }
 
@@ -199,6 +201,10 @@ function formatValue(resource: FilteredResource, options: ExportOptions): unknow
 
     if (options.includeTags && resource.tags && resource.tags.length > 0) {
       richObj['tags'] = resource.tags;
+    }
+
+    if (resource.protectedTermsFound?.length) {
+      richObj['doNotTranslate'] = resource.protectedTermsFound;
     }
 
     return richObj;

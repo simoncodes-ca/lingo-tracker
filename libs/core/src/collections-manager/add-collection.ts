@@ -58,6 +58,11 @@ export function addCollection(
       minimalCollection.tags = normalizedTags;
     }
 
+    const protectedTermsFile = collection.protectedTermsFile?.trim();
+    if (protectedTermsFile) {
+      minimalCollection.protectedTermsFile = protectedTermsFile;
+    }
+
     return {
       ...config,
       collections: {

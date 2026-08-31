@@ -395,6 +395,7 @@ export function importFromJson(translationsFolder: string, options: ImportOption
       isBaseLocaleImport,
       filesModified,
       warnings,
+      errors,
     );
 
     changes.push(...groupChanges);

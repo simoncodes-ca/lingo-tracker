@@ -43,6 +43,17 @@
     <div class="collection-pipe collection-pipe--static" aria-hidden="true"></div>
     <locale-picker />
 
+    <!-- Settings -->
+    <button
+      mat-icon-button
+      [routerLink]="['/settings']"
+      [attr.aria-label]="TOKENS.SETTINGS.TITLE | transloco"
+      [matTooltip]="TOKENS.SETTINGS.TITLE | transloco"
+      class="settings-button"
+    >
+      <mat-icon>tune</mat-icon>
+    </button>
+
     <!-- Theme Switcher -->
     <button
       mat-icon-button

@@ -2,6 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
+    "composite": true,
+    "declaration": true,
     "module": "commonjs",
     "types": ["node"]
   },
@@ -22,10 +24,10 @@
   ],
   "references": [
     {
-      "path": "../../libs/domain"
+      "path": "../../libs/domain/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/core"
+      "path": "../../libs/core/tsconfig.lib.json"
     }
   ]
 }

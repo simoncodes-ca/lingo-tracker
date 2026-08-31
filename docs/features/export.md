@@ -29,6 +29,7 @@ lingo-tracker export --format <format> [options]
 | `-t, --tags <tags>` | Filter by tags (comma-separated). Matches against the resource's *effective tags* — the union of per-resource tags and the collection's inherited tags. | None |
 | `-o, --output <path>` | Output directory. Defaults to `exportFolder` from config if set. | `dist/lingo-export` |
 | `--filename <pattern>` | Custom filename pattern. The extension (`.xliff` or `.json`) is appended automatically if omitted. | `<locale>.xliff` or `<locale>.json` |
+| `--no-protect-notes` | Leave protected-term annotations off exported entries. | Annotations on |
 | `--dry-run` | Preview export without writing files. | `false` |
 | `--verbose` | Show detailed progress. | `false` |
 
@@ -109,6 +110,33 @@ lingo-tracker export --format json --include-base --include-comment --base-prope
 ```
 
 The names `value`, `comment`, `status`, and `tags` are reserved — they are existing fields in rich JSON objects and cannot be used as the base property name. Using a reserved name exits with an error before any files are written.
+
+## Protected Term Annotations
+
+Export marks the [protected terms](./protected-terms.md) it finds in each entry's source value. Translators and machine-translation services then know which words to leave unchanged.
+
+In rich JSON, the terms appear under `doNotTranslate`:
+
+```json
+{
+  "app.checkout.title": {
+    "value": "Comprar con iPhone",
+    "doNotTranslate": ["iPhone"]
+  }
+}
+```
+
+In XLIFF, they become a note on the trans-unit:
+
+```xml
+<note>Do not translate: iPhone</note>
+```
+
+The terms that apply come from two files. LingoTracker combines the global protected-terms file with the exported collection's own file.
+
+Matching is case-insensitive and matches whole words only. LingoTracker therefore marks `iPhone` in `Buy an IPHONE`, and leaves it unmarked in `iPhones`.
+
+Base-locale rows stay unmarked, because a base-locale row holds nothing to translate. To turn off marking entirely, pass `--no-protect-notes`.
 
 ## XLIFF Source and Target Language
 

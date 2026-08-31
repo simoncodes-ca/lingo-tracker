@@ -12,7 +12,7 @@ concurrency:
 jobs:
   check:
     name: Lint, Format, Test & Build
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUN_ON_VPS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
 
     steps:
       - name: Checkout
@@ -20,14 +20,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: 'pnpm'
+          package-manager-cache: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Get pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

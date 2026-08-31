@@ -17,6 +17,7 @@ Return to [architecture README](README.md).
 - [ICU vs Transloco Format](#icu-vs-transloco-format)
 - [Translation Status Lifecycle](#translation-status-lifecycle)
 - [Checksum-Driven Staleness Detection](#checksum-driven-staleness-detection)
+- [Protected Terms](#protected-terms)
 
 ---
 
@@ -339,3 +340,51 @@ function shouldMarkStale(currentMetadata: LocaleMetadata, newBaseChecksum: strin
 **Why MD5?** LingoTracker uses MD5 solely as a fast, deterministic, fixed-length content fingerprint — not as a cryptographic security primitive. MD5 produces a 32-character hex digest (`calculateChecksum` uses `node:crypto` via `crypto.createHash('md5').update(value).digest('hex')`). Collision resistance is not required here: the values being hashed are human-readable translation strings, and a collision would at worst suppress a stale detection for one entry. MD5 is faster than SHA-256 for this high-frequency, low-risk use case, and its 32-character output is compact enough to keep `tracker_meta.json` files readable in Git diffs.
 
 See [core-library.md](core-library.md) for the CRUD operations that read, compute, and write these checksums as part of `add-resource`, `edit-resource`, and import flows.
+
+---
+
+## Protected Terms
+
+A protected term is a string that must stay unchanged through translation. Brand names, product names, and jargon all qualify.
+
+A protected term is **not** part of a resource. Nothing about it reaches `resource_entries.json` or `tracker_meta.json`. The list is project configuration. It lives in a standalone JSON file, and LingoTracker applies it to resources at read time.
+
+### Storage
+
+A protected-terms file holds a bare JSON array of strings. Core sorts it alphabetically and ends the file with a newline.
+
+```json
+[
+  "Acme",
+  "C++",
+  "iPhone",
+  "Node.js"
+]
+```
+
+`.lingo-tracker.json` names such a file with `protectedTermsFile`. The setting exists at the global level, and optionally on each collection. Omit it globally and the list falls back to `.lingo-tracker-protected-terms.json` beside the config. A collection has no default. Core resolves every path against the config file's directory.
+
+The list for a resource combines the global file with its collection's file, deduped. This mirrors `effectiveTags(collectionTags, resourceTags)`, one level further up the hierarchy.
+
+### Normalization
+
+`normalizeProtectedTerms()` trims each entry and drops the empty ones. It dedupes **case-sensitively** and keeps the first occurrence of each term. Casing and internal punctuation stay exactly as written.
+
+This deliberately avoids `normalizeTags()`, which lowercases and hyphenates. `normalizeTags()` would turn `iPhone` into `iphone` and `Node.js` into `node-js`. That would destroy the exact thing this feature protects.
+
+### Matching
+
+`buildProtectedTermRegex(term, { caseInsensitive })` escapes the term for use in a regular expression. `Node.js` and `C++` therefore match literally. It then wraps the term in Unicode lookarounds, `(?<![\p{L}\p{N}])…(?![\p{L}\p{N}])`.
+
+A term therefore matches only as a whole word. `iPhone` matches in `Buy an iPhone`. It stays unmatched in `iPhones` and in `myiPhone`.
+
+Two functions use the regular expression, with opposite case sensitivity:
+
+| Function | Case handling | Used by |
+|---|---|---|
+| `findProtectedTerms(value, terms)` | Case-**insensitive** — returns the stored canonical term, not the matched substring | Export annotation |
+| `findProtectedTermViolations(source, translation, terms)` | Source matched case-insensitively; translation matched case-**sensitively** | Import verification |
+
+That difference is the mechanism. LingoTracker flags a source string however it was typed. It then requires the translation to hold the term exactly as stored. This is what catches `iPhone` returning from a translation service as `iphone` or as `Iphone`.
+
+All of this lives in `libs/domain/src/lib/protected-terms.ts`, and all of it is pure. Resolving and reading the files is core's job. See [core-library.md — Protected Terms Resolution](core-library.md#protected-terms-resolution).

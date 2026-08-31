@@ -22,6 +22,13 @@ export interface ExportOptions {
   includeTags?: boolean;
   basePropertyName?: string;
 
+  // Protected terms
+  /**
+   * Whether export carries a structured do-not-translate instruction for
+   * resources whose source contains a protected term. Default true.
+   */
+  augmentProtectedTerms?: boolean;
+
   // Callbacks
   onProgress?: (message: string) => void;
 }
@@ -35,6 +42,8 @@ export interface FilteredResource {
   tags?: string[];
   collection: string; // Source collection
   locale: string; // Target locale
+  /** Protected terms found in this resource's source value (non-base locales only). */
+  protectedTermsFound?: string[];
 }
 
 export interface ExportResult {

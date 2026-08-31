@@ -102,6 +102,11 @@ export async function updateCollection(
       minimalCollection.tags = normalizedTags;
     }
 
+    const protectedTermsFile = collection.protectedTermsFile?.trim();
+    if (protectedTermsFile) {
+      minimalCollection.protectedTermsFile = protectedTermsFile;
+    }
+
     if (isRename) {
       delete config.collections[collectionName];
     }

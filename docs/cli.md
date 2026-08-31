@@ -237,6 +237,69 @@ lingo-tracker edit-collection myApp --set-tags ""
 
 ---
 
+### protected-terms
+
+Manage protected terms. A protected term is a brand name or a piece of jargon that stays unchanged through translation. LingoTracker stores the terms in a JSON file of their own, outside `.lingo-tracker.json`. This command reads and writes that file.
+
+**Usage:**
+
+```bash
+lingo-tracker protected-terms [options]
+```
+
+**Options:**
+
+- `--collection <name>` - Use a collection's own list instead of the global one
+- `--add <term>` - Add a term. Repeatable.
+- `--remove <term>` - Remove a term. Repeatable.
+- `--set <a,b,c>` - Replace the whole list with a comma-separated set. Pass `""` to empty it. Cannot be combined with `--add` or `--remove`.
+- `--list` - Print the terms that apply, and the file that holds them
+- `--file <path>` - Name the protected-terms file for this scope, carrying any existing terms across. Pass `""` to remove the setting.
+
+**Examples:**
+
+List the global terms and their file:
+```bash
+lingo-tracker protected-terms --list
+```
+
+Add terms. The file is created if it is absent:
+```bash
+lingo-tracker protected-terms --add iPhone --add Node.js
+```
+
+Remove a term:
+```bash
+lingo-tracker protected-terms --remove Node.js
+```
+
+Replace the whole list:
+```bash
+lingo-tracker protected-terms --set "iPhone,Node.js,Acme"
+```
+
+Move the list to a different file:
+```bash
+lingo-tracker protected-terms --file config/protected-terms.json
+```
+
+Give a collection its own file, then add to it:
+```bash
+lingo-tracker protected-terms --collection app --file src/i18n/protected-terms.json
+lingo-tracker protected-terms --collection app --add Widget
+```
+
+**Notes:**
+- The global list lives in `.lingo-tracker-protected-terms.json` beside `.lingo-tracker.json` by default. You can use it straight away, with no configuration.
+- A collection has **no** default file. Give it one with `--file` before you add terms to it. Otherwise `--add` fails and tells you so.
+- LingoTracker sorts each file alphabetically and writes one term per line. Adding a term therefore produces a one-line diff.
+- LingoTracker keeps your casing and punctuation exactly. It stores `iPhone`, `Node.js`, and `C++` as you typed them.
+- A malformed terms file produces an error rather than an empty list. See [Protected Terms](./features/protected-terms.md#error-handling).
+
+The [Protected Terms](./features/protected-terms.md) page explains how export and import use the list.
+
+---
+
 ### delete-collection
 
 Delete a translation collection from the project.
@@ -1851,6 +1914,7 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
   "baseLocale": "en",
   "locales": ["en", "fr-ca", "es"],
   "tokenCasing": "upperCase",
+  "protectedTermsFile": "config/protected-terms.json",
   "collections": {
     "Main": {
       "translationsFolder": "apps/web/src/assets/i18n"
@@ -1861,7 +1925,8 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
     },
     "DesignSystem": {
       "translationsFolder": "node_modules/@acme/design-system/i18n",
-      "readOnly": true
+      "readOnly": true,
+      "protectedTermsFile": "node_modules/@acme/design-system/protected-terms.json"
     }
   }
 }
@@ -1871,6 +1936,7 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
 - **Per-collection fields** can override global settings for specific collections
 - **`readOnly`** (optional, per-collection) - When `true`, resource mutations to this collection are blocked across the CLI, API, and UI. The collection can still be unregistered and its config entry edited. Defaults to `true` for `node_modules` paths when added via `add-collection`. See [add-collection](#add-collection) for details.
 - **`tokenCasing`** (optional) - Controls the casing style for generated type token keys. Accepts `"upperCase"` (default, SCREAMING_SNAKE_CASE) or `"camelCase"`. Can be set globally or per-bundle. See [Bundle Type Generation](./features/bundle-type-generation.md) for details. Precedence: CLI flag `--token-casing` > per-bundle config > global config > default (`"upperCase"`)
+- **`protectedTermsFile`** (optional, global and per-collection) - Path to a JSON file that holds protected terms. LingoTracker resolves the path against the directory that contains `.lingo-tracker.json`. Omit it globally and the list falls back to `.lingo-tracker-protected-terms.json`. A collection has no default, so a collection without this setting contributes no terms of its own. LingoTracker adds a collection's terms to the global ones. See [Protected Terms](./features/protected-terms.md) for details.
 
 ---
 

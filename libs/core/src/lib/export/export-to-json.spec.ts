@@ -292,4 +292,44 @@ describe('export-to-json', () => {
       expect.objectContaining({ filePath: join('/dist/export', 'custom-es.json') }),
     );
   });
+
+  describe('protected terms', () => {
+    const protectedResource: FilteredResource = {
+      key: 'brand.title',
+      value: 'Inicio iPhone',
+      baseValue: 'Home iPhone',
+      status: 'translated',
+      collection: 'App',
+      locale: 'es',
+      protectedTermsFound: ['iPhone'],
+    };
+
+    const singleFileContent = (resources: FilteredResource[], options: ExportOptions): Record<string, unknown> => {
+      exportToJson(resources, { ...options, jsonStructure: 'flat' });
+      const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls.at(-1)?.[0];
+      return callArgs.data as Record<string, unknown>;
+    };
+
+    it('adds doNotTranslate in rich mode', () => {
+      const content = singleFileContent([protectedResource], { ...defaultOptions, richJson: true });
+      expect(content['brand.title']).toEqual({ value: 'Inicio iPhone', doNotTranslate: ['iPhone'] });
+    });
+
+    it('keeps plain JSON unchanged (no augmentation)', () => {
+      const content = singleFileContent([protectedResource], defaultOptions);
+      expect(content['brand.title']).toBe('Inicio iPhone');
+    });
+
+    it('omits doNotTranslate when no terms were found', () => {
+      const noTerms = { ...protectedResource, protectedTermsFound: undefined };
+      const content = singleFileContent([noTerms], { ...defaultOptions, richJson: true });
+      expect(content['brand.title']).toEqual({ value: 'Inicio iPhone' });
+    });
+
+    it('omits doNotTranslate for base-locale rows (protectedTermsFound undefined)', () => {
+      const baseRow = { ...protectedResource, locale: 'en', protectedTermsFound: undefined };
+      const content = singleFileContent([baseRow], { ...defaultOptions, richJson: true });
+      expect(content['brand.title']).toEqual({ value: 'Inicio iPhone' });
+    });
+  });
 });

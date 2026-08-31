@@ -46,12 +46,26 @@ All commands are registered in `apps/cli/src/main.ts`. Each row below lists the 
 | `normalize` | `--collection`, `--all`, `--dry-run`, `--json` | `normalize()` |
 | `translate-locale` | `--collection`, `--locale`, `--verbose` | `translateLocale()` |
 | `bundle` | `--name`, `--locale`, `--verbose`, `--token-casing`, `--token-constant-name`, `--no-transform-icu-to-transloco`, `--debug-keys` | `generateBundle()` |
-| `export` | `-f/--format`, `-c/--collection`, `-l/--locale`, `-s/--status`, `-t/--tags`, `-o/--output`, `--structure`, `--rich`, `--include-base`, `--include-status`, `--include-comment`, `--include-tags`, `--base-property-name`, `--filename`, `--dry-run`, `--verbose` | `exportToJson()` / `exportToXliff()` |
+| `export` | `-f/--format`, `-c/--collection`, `-l/--locale`, `-s/--status`, `-t/--tags`, `-o/--output`, `--structure`, `--rich`, `--include-base`, `--include-status`, `--include-comment`, `--include-tags`, `--base-property-name`, `--filename`, `--no-protect-notes`, `--dry-run`, `--verbose` | `exportToJson()` / `exportToXliff()` |
 | `import` | `-f/--format`, `-s/--source`, `-l/--locale`, `-c/--collection`, `--strategy`, `--update-comments`, `--update-tags`, `--preserve-status`, `--create-missing`, `--validate-base`, `--dry-run`, `--verbose` | `importFromJson()` / `importFromXliff()` |
 | `validate` | `--allow-translated`, `--skip-locales` | `validateResources()`, `generateValidationSummary()` |
 | `find-similar` | `--collection`, `--value`, `--max-results` | `searchTranslations()` |
 | `glossary` | `--text`, `--input`, `--output`, `--stdout`, `--collection`, `--locales`, `--include-all`, `--extractor` | `loadResourcesFromCollections()` (matching/extraction done in the command, not core) |
+| `protected-terms` | `--collection`, `--add` (repeatable), `--remove` (repeatable), `--set`, `--list`, `--file` | `setGlobalProtectedTerms()` / `setCollectionProtectedTerms()` / `setGlobalProtectedTermsFile()` / `setCollectionProtectedTermsFile()`, reading via `readGlobalProtectedTerms()` / `readCollectionProtectedTerms()` |
 | `install-skill` | `--collection <spec>` (repeatable), `--dir`, `--token-casing` | No core call — generates a `.claude/` skill file by template |
+
+### `protected-terms` scoping
+
+The command handles `--file` before it writes any term. `--file x.json --add Foo` therefore names the new file first, then writes into it.
+
+Both scopes read through the same core helpers. The command itself parses no terms file.
+
+- **Global** — `readGlobalProtectedTerms(config, cwd)`. When `protectedTermsFile` is absent, this falls back to `.lingo-tracker-protected-terms.json` beside the config.
+- **Collection** — `readCollectionProtectedTerms(collection, cwd)`. This returns an empty list when the collection names no file. A collection has no default path.
+
+`--list` on a collection prints three lists: the global terms, the collection's terms, and `effectiveProtectedTerms()` of the two. It names the resolved file behind each list. Paths inside the project root print as relative paths.
+
+The core layer raises errors for a malformed file, for a collection with no file, and for a missing parent directory. The command catches each one, reports it through `ConsoleFormatter.error`, and calls `process.exit(1)`. It writes no partial result.
 
 ### `glossary` pipeline
 

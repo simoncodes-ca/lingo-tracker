@@ -1,0 +1,58 @@
+<div class="settings-page">
+  <header class="settings-header">
+    <h1 class="settings-title">{{ TOKENS.SETTINGS.TITLE | transloco }}</h1>
+  </header>
+
+  @if (store.isLoading()) {
+    <mat-progress-bar mode="indeterminate" class="settings-progress"></mat-progress-bar>
+  }
+
+  @if (store.error(); as error) {
+    <div class="settings-error" role="alert">{{ error }}</div>
+  }
+
+  <section class="settings-section" aria-labelledby="settings-protected-terms-title">
+    <h2 id="settings-protected-terms-title" class="settings-section-title">
+      {{ TOKENS.SETTINGS.PROTECTEDTERMSLABEL | transloco }}
+    </h2>
+
+    <mat-form-field appearance="outline" class="settings-field">
+      <mat-chip-grid #termChipGrid>
+        @for (term of protectedTermsList(); track term) {
+          <mat-chip-row (removed)="removeProtectedTerm(term)">
+            {{ term }}
+            <button matChipRemove [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.REMOVETAGX | transloco : { tag: term }">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </mat-chip-row>
+        }
+      </mat-chip-grid>
+      <input
+        [placeholder]="TOKENS.SETTINGS.PROTECTEDTERMSADDPLACEHOLDER | transloco"
+        [matChipInputFor]="termChipGrid"
+        [matChipInputSeparatorKeyCodes]="termSeparatorKeyCodes"
+        (matChipInputTokenEnd)="addProtectedTerm($event)"
+        autocomplete="off"
+      />
+      <mat-hint>{{ TOKENS.SETTINGS.PROTECTEDTERMSHINT | transloco }}</mat-hint>
+    </mat-form-field>
+
+    @if (protectedTermsFilePath(); as filePath) {
+      <p class="settings-protected-terms-file">
+        {{ TOKENS.SETTINGS.PROTECTEDTERMSFILELABEL | transloco : { file: filePath } }}
+      </p>
+    }
+
+    <div class="settings-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="save()"
+        [disabled]="store.isLoading()"
+      >
+        {{ TOKENS.SETTINGS.SAVE | transloco }}
+      </button>
+    </div>
+  </section>
+</div>

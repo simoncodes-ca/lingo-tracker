@@ -42,6 +42,12 @@ export interface ImportOptions {
   backup?: boolean;
   /** Base locale code (e.g., 'en'). Defaults to 'en' when not specified. */
   baseLocale?: string;
+  /**
+   * Protected terms (union of global + collection) that must survive translation
+   * verbatim. On import, an entry whose source contains such a term but whose
+   * incoming value altered it is skipped and reported as failed. Unset skips the check.
+   */
+  protectedTerms?: string[];
 
   /** Callbacks */
   onProgress?: (message: string) => void;
