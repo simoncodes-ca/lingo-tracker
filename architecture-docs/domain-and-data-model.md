@@ -263,8 +263,9 @@ LingoTracker uses two formats at different points in the pipeline:
 **The conversion happens at bundle time**, not at write time. When `core` generates a [bundle](glossary.md#bundle), it calls `icuToTransloco()` from `@simoncodes-ca/domain` on each value before writing the output file. The conversion rules are:
 
 - **Simple placeholders** — `{varName}` (no comma inside the braces) → `{{ varName }}`
-- **Complex ICU constructs** — `{count, plural, ...}`, `{gender, select, ...}` — passed through unchanged, because Transloco's messageformat pipe handles these natively
-- **ICU quote escaping** — `''` and `'{'...'}'` syntax is unescaped to produce literal characters in the output
+- **Complex ICU constructs** — `{count, plural, ...}`, `{gender, select, ...}` — keep their structure, because Transloco's messageformat pipe handles these natively
+- **Branch bodies that are one argument** — `{count, plural, =1 {{itemName}} other {# items}}` → `{count, plural, =1 {{{itemName}}} other {# items}}`. Transloco interpolates `{{…}}` before the ICU compiler runs, so the single-brace form loses its branch brace and the compiler rejects the message. The extra brace pair leaves the branch wrapper standing and adds no character to the rendered text. The stored value keeps the single-brace form.
+- **ICU quote escaping** — `''` and `'{'...'}'` syntax is unescaped to produce literal characters in the output, so `'{'name'}'` becomes `{name}` in the bundle
 
 **Going the other direction**: when importing external translation files (XLIFF or JSON), `transloco-to-icu.ts` converts Transloco `{{ varName }}` back to ICU `{varName}` before the values are stored.
 

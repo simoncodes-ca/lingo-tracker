@@ -7,20 +7,28 @@
  *
  * Conversion rules:
  * - Simple `{varName}` placeholders → `{{ varName }}`
- * - Complex ICU constructs (`plural`, `select`, `number`, `date`, `time`) are
- *   passed through unchanged. Transloco can consume ICU plural/select syntax
- *   via the messageformat pipe, so these must not be double-braced.
+ * - Complex ICU constructs (`plural`, `select`, `number`, `date`, `time`) keep their
+ *   structure. Transloco can consume ICU plural/select syntax via the messageformat
+ *   pipe, so these must not be double-braced.
+ * - The one edit inside a complex construct is a branch body that is nothing but an
+ *   argument. It gains one extra brace pair so Transloco's interpolation pass consumes
+ *   the argument and leaves the branch wrapper standing.
  *
  * ICU:       `Hello {name}, you have {count} items`
  * Transloco: `Hello {{ name }}, you have {{ count }} items`
  *
- * ICU plural (unchanged):
+ * ICU plural (structure unchanged):
  *   `{count, plural, one {# item} other {# items}}`
+ *
+ * ICU plural with a branch body that is only an argument:
+ *   `{count, plural, =1 {{itemName}} other {# items}}`
+ *   → `{count, plural, =1 {{{itemName}}} other {# items}}`
  *
  * @module icu-to-transloco
  */
 
 import { extractICUPlaceholders, ICU_SYNTAX_CHARS } from './icu-auto-fixer';
+import { expandPlaceholderOnlyBranchBodies } from './transloco-brace-scan';
 
 /**
  * Converts a raw ICU text segment (as extracted verbatim from the original
@@ -91,8 +99,10 @@ export function unescapeIcuLiterals(text: string): string {
  * double-brace interpolation syntax.
  *
  * Simple `{varName}` placeholders are converted to `{{ varName }}`. Complex
- * ICU expressions (`plural`, `select`, `number`, `date`, `time`) are preserved
- * verbatim because Transloco can handle them via the messageformat integration.
+ * ICU expressions (`plural`, `select`, `number`, `date`, `time`) keep their
+ * structure because Transloco handles them via the messageformat integration,
+ * except that a branch body which is nothing but an argument gains one extra
+ * brace pair so it survives Transloco's interpolation pass.
  *
  * If the value contains no ICU placeholders, or if extraction fails (malformed
  * ICU), the original string is returned unchanged.
@@ -118,6 +128,10 @@ export function unescapeIcuLiterals(text: string): string {
  * // Plural passes through unchanged
  * icuToTransloco("{count, plural, one {# item} other {# items}}");
  * // → "{count, plural, one {# item} other {# items}}"
+ *
+ * // A branch body that is only an argument gains a brace pair
+ * icuToTransloco("{count, plural, =1 {{itemName}} other {# items}}");
+ * // → "{count, plural, =1 {{{itemName}}} other {# items}}"
  *
  * // Mixed: simple converted, plural preserved
  * icuToTransloco("Hello {name}: {count, plural, one {# item} other {# items}}");
@@ -154,8 +168,10 @@ export function icuToTransloco(value: string): string {
     if (placeholder.type === 'simple') {
       result += `{{ ${placeholder.name} }}`;
     } else {
-      // plural, select, number, date, time — pass through as-is
-      result += placeholder.fullText;
+      // plural, select, selectordinal, number, date, time — structure passes through, but a
+      // branch body that is only an argument needs the extra brace pair so Transloco's
+      // interpolation consumes the argument and leaves the branch wrapper standing.
+      result += expandPlaceholderOnlyBranchBodies(placeholder.fullText);
     }
   }
 

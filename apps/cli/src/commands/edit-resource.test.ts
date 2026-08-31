@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resolve } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { editResourceCommand } from './edit-resource';
 import prompts from 'prompts';
@@ -54,7 +55,7 @@ describe('editResourceCommand', () => {
     await editResourceCommand(options);
 
     expect(mockEditResource).toHaveBeenCalledWith(
-      '/test/project/src/i18n',
+      resolve('/test/project', 'src/i18n'),
       expect.objectContaining({
         key: 'apps.common.buttons.ok',
         baseValue: 'OK Updated',
@@ -101,7 +102,7 @@ describe('editResourceCommand', () => {
     await editResourceCommand(options);
 
     expect(mockEditResource).toHaveBeenCalledWith(
-      '/test/project/src/i18n',
+      resolve('/test/project', 'src/i18n'),
       expect.objectContaining({
         comment: 'New comment',
         tags: ['ui', 'buttons'],
@@ -127,7 +128,7 @@ describe('editResourceCommand', () => {
     await editResourceCommand(options);
 
     expect(mockEditResource).toHaveBeenCalledWith(
-      '/test/project/src/i18n',
+      resolve('/test/project', 'src/i18n'),
       expect.objectContaining({
         locales: {
           fr: { value: "D'accord" },
@@ -246,7 +247,7 @@ describe('editResourceCommand', () => {
     );
 
     expect(mockEditResource).toHaveBeenCalledWith(
-      '/test/project/src/i18n',
+      resolve('/test/project', 'src/i18n'),
       expect.objectContaining({
         baseValue: 'Promped Value',
       }),

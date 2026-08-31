@@ -7,6 +7,11 @@
       "checksum": "c5cf536634c2cfc94e1dab8cfb9e9efe",
       "baseChecksum": "47de426fcedc8a6d07334b1b2715d4eb",
       "status": "translated"
+    },
+    "ja": {
+      "checksum": "5ffba574d55a4fabc6d8799e1c2a5d57",
+      "baseChecksum": "47de426fcedc8a6d07334b1b2715d4eb",
+      "status": "translated"
     }
   }
 }

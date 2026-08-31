@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { normalize, resolve } from 'node:path';
 import { groupResourcesByFolder } from './resource-grouping';
 import type { ImportedResource } from './types';
 
@@ -13,16 +14,16 @@ describe('groupResourcesByFolder', () => {
     const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
 
     expect(groups.size).toBe(2);
-    expect(groups.has('src/translations/common')).toBe(true);
-    expect(groups.has('src/translations/errors')).toBe(true);
+    expect(groups.has(normalize('src/translations/common'))).toBe(true);
+    expect(groups.has(normalize('src/translations/errors'))).toBe(true);
 
-    const commonGroup = groups.get('src/translations/common');
+    const commonGroup = groups.get(normalize('src/translations/common'));
     expect(commonGroup).toBeDefined();
     expect(commonGroup?.resources).toHaveLength(2);
     expect(commonGroup?.resources[0].entryKey).toBe('ok');
     expect(commonGroup?.resources[1].entryKey).toBe('cancel');
 
-    const errorsGroup = groups.get('src/translations/errors');
+    const errorsGroup = groups.get(normalize('src/translations/errors'));
     expect(errorsGroup).toBeDefined();
     expect(errorsGroup?.resources).toHaveLength(1);
     expect(errorsGroup?.resources[0].entryKey).toBe('notFound');
@@ -56,10 +57,10 @@ describe('groupResourcesByFolder', () => {
     const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
 
     expect(groups.size).toBe(2);
-    expect(groups.has('src/translations/apps/admin/users/list')).toBe(true);
-    expect(groups.has('src/translations/apps/admin/settings/general')).toBe(true);
+    expect(groups.has(normalize('src/translations/apps/admin/users/list'))).toBe(true);
+    expect(groups.has(normalize('src/translations/apps/admin/settings/general'))).toBe(true);
 
-    const usersListGroup = groups.get('src/translations/apps/admin/users/list');
+    const usersListGroup = groups.get(normalize('src/translations/apps/admin/users/list'));
     expect(usersListGroup).toBeDefined();
     expect(usersListGroup?.resources).toHaveLength(2);
     expect(usersListGroup?.resources[0].entryKey).toBe('title');
@@ -71,11 +72,15 @@ describe('groupResourcesByFolder', () => {
 
     const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
 
-    const commonGroup = groups.get('src/translations/common');
+    const commonGroup = groups.get(normalize('src/translations/common'));
     expect(commonGroup).toBeDefined();
-    expect(commonGroup?.folderPath).toBe('src/translations/common');
-    expect(commonGroup?.entryResourcePath).toBe('/project/src/translations/common/resource_entries.json');
-    expect(commonGroup?.entryMetaPath).toBe('/project/src/translations/common/tracker_meta.json');
+    expect(commonGroup?.folderPath).toBe(normalize('src/translations/common'));
+    expect(commonGroup?.entryResourcePath).toBe(
+      resolve('/project', normalize('src/translations/common'), 'resource_entries.json'),
+    );
+    expect(commonGroup?.entryMetaPath).toBe(
+      resolve('/project', normalize('src/translations/common'), 'tracker_meta.json'),
+    );
   });
 
   it('should handle mixed levels of nesting', () => {
@@ -89,8 +94,8 @@ describe('groupResourcesByFolder', () => {
 
     expect(groups.size).toBe(3);
     expect(groups.has('src/translations')).toBe(true);
-    expect(groups.has('src/translations/common')).toBe(true);
-    expect(groups.has('src/translations/apps/admin')).toBe(true);
+    expect(groups.has(normalize('src/translations/common'))).toBe(true);
+    expect(groups.has(normalize('src/translations/apps/admin'))).toBe(true);
   });
 
   it('should preserve resource metadata', () => {
@@ -107,7 +112,7 @@ describe('groupResourcesByFolder', () => {
 
     const groups = groupResourcesByFolder(resources, 'src/translations', '/project');
 
-    const commonGroup = groups.get('src/translations/common');
+    const commonGroup = groups.get(normalize('src/translations/common'));
     expect(commonGroup).toBeDefined();
     const groupedResource = commonGroup?.resources[0].resource;
 

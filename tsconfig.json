@@ -1,5 +1,13 @@
 {
   "extends": "./tsconfig.base.json",
   "files": [],
-  "references": []
+  "references": [
+    { "path": "./libs/data-transfer/tsconfig.json" },
+    { "path": "./apps/tracker/tsconfig.json" },
+    { "path": "./libs/domain/tsconfig.json" },
+    { "path": "./libs/core/tsconfig.json" },
+    { "path": "./docs-site/tsconfig.json" },
+    { "path": "./apps/api/tsconfig.json" },
+    { "path": "./apps/cli/tsconfig.json" }
+  ]
 }

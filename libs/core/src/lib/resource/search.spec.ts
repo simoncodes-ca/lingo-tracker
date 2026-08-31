@@ -12,7 +12,7 @@ describe('searchTranslations', () => {
   });
 
   afterEach(() => {
-    rmSync(testDir, { recursive: true, force: true });
+    rmSync(testDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
   });
 
   const createTestResource = (path: string, entries: Record<string, any>, meta: Record<string, any>) => {

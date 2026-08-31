@@ -2,10 +2,15 @@
   "activeItemCount": {
     "source": "{count, plural, =0 {There are} =1 {There is} other {There are}} {count} {count, plural, =0 {active items} =1 {active item} other {active items}} in the system.",
     "comment": "Placeholder sitting between two plural groups",
-    "tags": [
-      "icu",
-      "edge-case"
-    ],
-    "fr-ca": "{count, plural, =0 {Il y a} =1 {Il y a} other {Il y a}} {count} {count, plural, =0 {éléments actifs} =1 {élément actif} other {éléments actifs}} dans le système."
+    "tags": ["icu", "edge-case"],
+    "fr-ca": "{count, plural, =0 {Il y a} =1 {Il y a} other {Il y a}} {count} {count, plural, =0 {éléments actifs} =1 {élément actif} other {éléments actifs}} dans le système.",
+    "ja": "{count, plural, =0 {There are} =1 {There is} other {There are}} {count} {count, plural, =0 {active items} =1 {active item} other {active items}} in the system."
+  },
+  "syncedRecordCount": {
+    "source": "Synced {batchCount, plural, =1 {{recordCount, number}} other {# batches}} so far.",
+    "comment": "Branch body that is an argument carrying a format, which the bundler cannot rewrite",
+    "tags": ["icu", "edge-case"],
+    "fr-ca": "Synchronisé {batchCount, plural, =1 {{recordCount, number}} other {# lots}} à ce jour.",
+    "ja": "Synced {batchCount, plural, =1 {{recordCount, number}} other {# batches}} so far."
   }
 }
