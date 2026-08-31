@@ -58,5 +58,15 @@
     "ru": "Сохранены глобальные настройки",
     "ja": "グローバル設定が保存されました",
     "de": "Globale Einstellungen gespeichert"
+  },
+  "protectedTermsFileLabel": {
+    "source": "Stored in {file}",
+    "comment": "Read-only line naming the file the global protected terms are stored in. {file} is a file path.",
+    "tags": ["settings"],
+    "es": "Almacenado en {file}",
+    "fr-ca": "Enregistré dans {file}",
+    "ru": "Хранится в {file}",
+    "ja": "{file} に保存されています",
+    "de": "Gespeichert in {file}"
   }
 }

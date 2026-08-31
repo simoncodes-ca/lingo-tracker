@@ -1,4 +1,14 @@
-import { setCollectionProtectedTerms, setGlobalProtectedTerms } from '@simoncodes-ca/core';
+import { relative } from 'node:path';
+import {
+  readCollectionProtectedTerms,
+  readGlobalProtectedTerms,
+  resolveCollectionProtectedTermsFilePath,
+  resolveGlobalProtectedTermsFilePath,
+  setCollectionProtectedTerms,
+  setCollectionProtectedTermsFile,
+  setGlobalProtectedTerms,
+  setGlobalProtectedTermsFile,
+} from '@simoncodes-ca/core';
 import { effectiveProtectedTerms, normalizeProtectedTerms } from '@simoncodes-ca/domain';
 import { loadConfiguration, ConsoleFormatter } from '../utils';
 
@@ -8,6 +18,14 @@ export interface ProtectedTermsOptions {
   remove?: string[];
   set?: string;
   list?: boolean;
+  /** Path to the protected terms file for this scope. An empty string clears the pointer. */
+  file?: string;
+}
+
+/** Renders an absolute path relative to the project root, for readable output. */
+function displayPath(filePath: string, cwd: string): string {
+  const rel = relative(cwd, filePath);
+  return rel && !rel.startsWith('..') ? rel : filePath;
 }
 
 export async function protectedTermsCommand(options: ProtectedTermsOptions): Promise<void> {
@@ -15,6 +33,7 @@ export async function protectedTermsCommand(options: ProtectedTermsOptions): Pro
   const hasRemove = (options.remove ?? []).length > 0;
   const hasSet = options.set !== undefined;
   const hasList = options.list === true;
+  const hasFile = options.file !== undefined;
 
   if (hasSet && (hasAdd || hasRemove)) {
     ConsoleFormatter.error('--set cannot be combined with --add or --remove');
@@ -22,8 +41,8 @@ export async function protectedTermsCommand(options: ProtectedTermsOptions): Pro
     return;
   }
 
-  if (!hasAdd && !hasRemove && !hasSet && !hasList) {
-    ConsoleFormatter.error('Provide at least one of --add, --remove, --set, or --list');
+  if (!hasAdd && !hasRemove && !hasSet && !hasList && !hasFile) {
+    ConsoleFormatter.error('Provide at least one of --add, --remove, --set, --list, or --file');
     process.exit(1);
     return;
   }
@@ -40,34 +59,69 @@ export async function protectedTermsCommand(options: ProtectedTermsOptions): Pro
     return;
   }
 
-  const globalTerms = normalizeProtectedTerms(config.protectedTerms ?? []);
-  const collectionTerms = collectionName ? normalizeProtectedTerms(collection?.protectedTerms ?? []) : [];
+  // --file runs first so a combined `--file x.json --add Foo` points at the new file, then writes to it.
+  if (hasFile) {
+    const pointer = options.file?.trim() ? options.file.trim() : undefined;
+    try {
+      const result = collectionName
+        ? await setCollectionProtectedTermsFile(collectionName, pointer, { cwd })
+        : setGlobalProtectedTermsFile(pointer, { cwd });
+      ConsoleFormatter.success(result.message);
+    } catch (error) {
+      ConsoleFormatter.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+      return;
+    }
+  }
+
+  // Re-read after a pointer change so subsequent reads and writes target the new file.
+  const currentConfig = hasFile ? loadConfiguration({ exitOnError: false })?.config : config;
+  if (!currentConfig) return;
+  const currentCollection = collectionName ? currentConfig.collections?.[collectionName] : undefined;
+
+  let globalTerms: string[];
+  let collectionTerms: string[];
+  try {
+    globalTerms = readGlobalProtectedTerms(currentConfig, cwd);
+    collectionTerms = currentCollection ? readCollectionProtectedTerms(currentCollection, cwd) : [];
+  } catch (error) {
+    ConsoleFormatter.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+    return;
+  }
+
+  const globalFile = resolveGlobalProtectedTermsFilePath(currentConfig, cwd);
+  const collectionFile = currentCollection
+    ? resolveCollectionProtectedTermsFilePath(currentCollection, cwd)
+    : undefined;
 
   if (hasList) {
     ConsoleFormatter.section('Protected Terms');
     if (collectionName) {
       ConsoleFormatter.keyValue('Scope', `Collection "${collectionName}" (global + collection)`);
+      ConsoleFormatter.keyValue('Global file', displayPath(globalFile, cwd));
       ConsoleFormatter.keyValue('Global', globalTerms.length > 0 ? globalTerms.join(', ') : '(none)');
+      ConsoleFormatter.keyValue('Collection file', collectionFile ? displayPath(collectionFile, cwd) : '(none)');
       ConsoleFormatter.keyValue(
         'Collection-specific',
         collectionTerms.length > 0 ? collectionTerms.join(', ') : '(none)',
       );
       ConsoleFormatter.keyValue(
         'Effective',
-        effectiveProtectedTerms(config.protectedTerms, collection?.protectedTerms).join(', ') || '(none)',
+        effectiveProtectedTerms(globalTerms, collectionTerms).join(', ') || '(none)',
       );
     } else {
       ConsoleFormatter.keyValue('Scope', 'Global');
+      ConsoleFormatter.keyValue('File', displayPath(globalFile, cwd));
       ConsoleFormatter.keyValue('Terms', globalTerms.length > 0 ? globalTerms.join(', ') : '(none)');
     }
   }
 
   if (hasAdd || hasRemove || hasSet) {
-    let next = collectionName ? collectionTerms : globalTerms;
+    let next = collectionName ? [...collectionTerms] : [...globalTerms];
 
     if (hasSet) {
-      const value = options.set ?? '';
-      next = normalizeProtectedTerms(value.split(','));
+      next = normalizeProtectedTerms((options.set ?? '').split(','));
     } else {
       if (hasAdd) {
         for (const term of normalizeProtectedTerms(options.add ?? [])) {
@@ -82,17 +136,21 @@ export async function protectedTermsCommand(options: ProtectedTermsOptions): Pro
       }
     }
 
-    if (collectionName) {
-      await setCollectionProtectedTerms(collectionName, next, { cwd });
-    } else {
-      setGlobalProtectedTerms(next, { cwd });
-    }
+    try {
+      const result = collectionName
+        ? setCollectionProtectedTerms(collectionName, next, { cwd })
+        : setGlobalProtectedTerms(next, { cwd });
 
-    const scopeLabel = collectionName ? `Collection "${collectionName}"` : 'Global';
-    if (next.length === 0) {
-      ConsoleFormatter.success(`${scopeLabel} protected terms cleared`);
-    } else {
-      ConsoleFormatter.success(`${scopeLabel} protected terms updated: ${next.join(', ')}`);
+      const scopeLabel = collectionName ? `Collection "${collectionName}"` : 'Global';
+      const where = `(${displayPath(result.filePath, cwd)})`;
+      if (next.length === 0) {
+        ConsoleFormatter.success(`${scopeLabel} protected terms cleared ${where}`);
+      } else {
+        ConsoleFormatter.success(`${scopeLabel} protected terms updated: ${next.join(', ')} ${where}`);
+      }
+    } catch (error) {
+      ConsoleFormatter.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
     }
   }
 }

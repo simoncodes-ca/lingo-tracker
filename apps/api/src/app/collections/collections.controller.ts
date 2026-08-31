@@ -1,8 +1,28 @@
 import { Controller, Delete, Param, HttpException, HttpStatus, Post, Body, Put } from '@nestjs/common';
-import { addCollection, deleteCollectionByName, updateCollection } from '@simoncodes-ca/core';
+import {
+  addCollection,
+  deleteCollectionByName,
+  setCollectionProtectedTerms,
+  updateCollection,
+} from '@simoncodes-ca/core';
 import { isUnderNodeModules } from '@simoncodes-ca/domain';
 import type { CreateCollectionDto, UpdateCollectionDto } from '@simoncodes-ca/data-transfer';
 import { mapDtoToCollection } from '../mappers/collection.mapper';
+
+/**
+ * Persists a collection's protected terms to its configured file. Terms live in a file
+ * rather than the config, so a collection with no `protectedTermsFile` has nowhere to put
+ * them — `setCollectionProtectedTerms` throws, and the caller turns that into a 400.
+ */
+function writeCollectionProtectedTerms(collectionName: string, terms: string[] | undefined): void {
+  if (terms === undefined) {
+    return;
+  }
+  if (!Array.isArray(terms) || terms.some((term) => typeof term !== 'string')) {
+    throw new HttpException('protectedTerms must be an array of strings', HttpStatus.BAD_REQUEST);
+  }
+  setCollectionProtectedTerms(collectionName, terms);
+}
 
 @Controller('collections')
 export class CollectionsController {
@@ -30,6 +50,7 @@ export class CollectionsController {
         mapped.readOnly = true;
       }
       const result = addCollection(name, mapped);
+      writeCollectionProtectedTerms(name, collection.protectedTerms);
       return { message: result.message };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error creating collection';
@@ -53,6 +74,7 @@ export class CollectionsController {
       const decodedCollectionName = decodeURIComponent(collectionName);
       const { name, collection } = body;
       const result = await updateCollection(decodedCollectionName, name, mapDtoToCollection(collection));
+      writeCollectionProtectedTerms(name ?? decodedCollectionName, collection.protectedTerms);
       return { message: result.message };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Error updating collection';

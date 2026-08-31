@@ -14,6 +14,8 @@ import {
   exportToXliff,
   generateExportSummary,
   type ExportResult,
+  readCollectionProtectedTerms,
+  readGlobalProtectedTerms,
 } from '@simoncodes-ca/core';
 import {
   loadConfiguration,
@@ -115,11 +117,13 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
   // Resolve collections
   const collectionNames = parseCommaSeparatedList(options.collection);
 
+  const globalProtectedTerms = readGlobalProtectedTerms(config, cwd);
+
   const allCollections = Object.entries(config.collections || {}).map(([name, col]) => ({
     name,
     path: col.translationsFolder,
     tags: col.tags,
-    protectedTerms: col.protectedTerms,
+    protectedTerms: readCollectionProtectedTerms(col, cwd),
   }));
 
   const collectionsToProcess = allCollections.filter((c) => !collectionNames || collectionNames.includes(c.name));
@@ -189,7 +193,7 @@ export async function exportCommand(options: ExportCommandOptions): Promise<void
 
   for (const locale of targetLocales) {
     const filtered = filterResources(allResources, locale, statusFilter, tagFilter, {
-      globalProtectedTerms: config.protectedTerms,
+      globalProtectedTerms,
       augmentProtectedTerms: options.protectNotes !== false,
       baseLocale: config.baseLocale,
     });

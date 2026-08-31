@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, effect, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, effect, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,6 +40,8 @@ export class Settings {
 
   readonly termSeparatorKeyCodes = [ENTER, COMMA] as const;
   readonly protectedTermsList = signal<string[]>([]);
+  /** Path of the file the terms are stored in, surfaced read-only so the source of a diff is obvious. */
+  readonly protectedTermsFilePath = computed(() => this.store.config()?.protectedTermsFilePath);
   /** True once the chip list has been seeded; prevents a later config refetch from clobbering edits. */
   readonly #seeded = signal(false);
 

@@ -29,8 +29,11 @@ export interface LingoTrackerConfig {
   transformICUToTransloco?: boolean;
 
   /**
-   * Terms (brand/product names, jargon) kept verbatim and never translated, applied to
-   * every collection. This global list is unioned with each collection's list at read time.
+   * Path to the JSON file holding the global protected terms — brand/product names and
+   * jargon kept verbatim and never translated, applied to every collection. Resolved
+   * against the directory holding this config file. When absent, defaults to
+   * `.lingo-tracker-protected-terms.json` beside the config. The file holds a bare JSON
+   * array of strings and is unioned with each collection's file at read time.
    */
-  protectedTerms?: string[];
+  protectedTermsFile?: string;
 }

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, DestroyRef, type OnInit, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, DestroyRef, type OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, FormArray, Validators } from '@angular/forms';
@@ -74,6 +74,12 @@ export class CollectionFormDialog implements OnInit {
   readonly tagSeparatorKeyCodes = [ENTER, COMMA] as const;
   readonly tagsList = signal<string[]>([]);
   readonly protectedTermsList = signal<string[]>([]);
+  /** The collection's `protectedTermsFile` pointer, preserved across an edit but not editable here. */
+  readonly protectedTermsFile = signal<string | undefined>(undefined);
+  /** Resolved path of that file, shown read-only so the source of a diff is obvious. */
+  readonly protectedTermsFilePath = signal<string | undefined>(undefined);
+  /** Terms live in a file, so without a pointer there is nowhere to save them — the chips stay disabled. */
+  readonly canEditProtectedTerms = computed(() => this.protectedTermsFile() !== undefined);
 
   #originalLocales: string[] = [];
   /** Tracks whether the user manually toggled read-only, so auto-detection stops overriding it. */
@@ -103,6 +109,8 @@ export class CollectionFormDialog implements OnInit {
 
       this.tagsList.set(this.#data.config.tags ?? []);
       this.protectedTermsList.set(this.#data.config.protectedTerms ?? []);
+      this.protectedTermsFile.set(this.#data.config.protectedTermsFile);
+      this.protectedTermsFilePath.set(this.#data.config.protectedTermsFilePath);
       // An existing read-only flag is the user's prior choice — don't let auto-detection override it.
       this.#readOnlyTouchedByUser = this.#data.config.readOnly !== undefined;
 
@@ -242,6 +250,7 @@ export class CollectionFormDialog implements OnInit {
     const raw = this.form.getRawValue();
     const localesArray = raw.locales;
     const tags = this.tagsList();
+    const protectedTermsFile = this.protectedTermsFile();
     const protectedTerms = this.protectedTermsList();
     return {
       name: raw.name,
@@ -251,7 +260,9 @@ export class CollectionFormDialog implements OnInit {
         ...(raw.baseLocale ? { baseLocale: raw.baseLocale } : {}),
         readOnly: raw.readOnly,
         ...(tags.length > 0 ? { tags } : {}),
-        ...(protectedTerms.length > 0 ? { protectedTerms } : {}),
+        // The pointer round-trips so an edit never drops it; the terms are only sent when
+        // there is a file to write them to.
+        ...(protectedTermsFile ? { protectedTermsFile, protectedTerms } : {}),
       },
     };
   }

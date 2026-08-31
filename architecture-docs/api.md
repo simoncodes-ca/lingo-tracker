@@ -35,14 +35,15 @@ All paths are relative to the `/api` global prefix. URL path parameters that con
 
 | Method | Path | Purpose | Request DTO | Response DTO |
 |--------|------|---------|-------------|--------------|
-| `GET` | `/config` | Read global config and all collection configs | — | `LingoTrackerConfigDto` |
+| `GET` | `/config` | Read global config and all collection configs, with protected terms resolved from their files | — | `LingoTrackerConfigDto` |
+| `PUT` | `/config` | Update the writable top-level globals. Today that is `protectedTerms` alone. The handler writes it to the global protected-terms **file**, and leaves `.lingo-tracker.json` untouched. `collections`, `locales`, and `baseLocale` stay excluded on purpose. | `UpdateConfigDto` | `{ message: string }` |
 
 ### Collections
 
 | Method | Path | Purpose | Request DTO | Response DTO |
 |--------|------|---------|-------------|--------------|
 | `POST` | `/collections` | Create a new [collection](glossary.md#collection) | `CreateCollectionDto` | `{ message: string }` |
-| `PUT` | `/collections/:collectionName` | Update a collection's name or settings. When `locales` in the request body differs from the current config, the handler diffs the two lists and adds/removes locale files on disk accordingly (base locale cannot be removed). | `UpdateCollectionDto` | `{ message: string }` |
+| `PUT` | `/collections/:collectionName` | Update a collection's name or settings. When `locales` in the request body differs from the current config, the handler diffs the two lists and adds/removes locale files on disk accordingly (base locale cannot be removed). The handler writes a `protectedTerms` array from the body to the collection's terms file. A collection with no `protectedTermsFile` returns 400. | `UpdateCollectionDto` | `{ message: string }` |
 | `DELETE` | `/collections/:collectionName` | Delete a collection and its config entry | — | `{ message: string }` |
 
 ### Resources
@@ -334,8 +335,14 @@ For the entity types that mappers transform, see [domain-and-data-model.md](doma
 | `resource.mapper.ts` | `CreateResourceDto` → `AddResourceParams` | Flat field-for-field projection; adds `allLocales` when auto-translation is active |
 | `resource-tree.mapper.ts` | `ResourceTreeNode` → `ResourceTreeDto` | Flattens `folderPathSegments[]` array to a dot-delimited `path` string; merges `source` (base locale value) into the `translations` record keyed by the base locale string; extracts per-locale `status` from the `metadata` record |
 | `resource-tree.mapper.ts` | `ResourceTreeEntry` → `ResourceSummaryDto` | Identifies the base locale by the absence of `status` and `baseChecksum` in the metadata entry; produces a flat `{ key, translations, status, comment, tags, inheritedTags }` shape. The `inheritedTags` field carries the parent collection's `tags` so the UI can render them distinctly without re-reading the config. |
-| `collection.mapper.ts` | `LingoTrackerCollectionDto` ↔ `LingoTrackerCollection` | Bidirectional; shallow clone of `locales[]` and `tags[]` arrays to prevent aliasing |
-| `config.mapper.ts` | `LingoTrackerConfig` → `LingoTrackerConfigDto` | Delegates collection mapping to `collection.mapper`; shallow clone of `locales[]` |
+| `collection.mapper.ts` | `LingoTrackerCollectionDto` ↔ `LingoTrackerCollection` | Bidirectional; shallow clone of `locales[]` and `tags[]` arrays to prevent aliasing. Carries the `protectedTermsFile` setting in both directions. Drops resolved `protectedTerms` on the way back to config, because terms live in a file and the controller writes them there separately. |
+| `config.mapper.ts` | `LingoTrackerConfig` → `LingoTrackerConfigDto` | Delegates collection mapping to `collection.mapper`; shallow clone of `locales[]`. Takes an optional `ResolvedProtectedTerms` from the controller, so the mapper itself reads no files. |
 | `search-result.mapper.ts` | `SearchResult` → `SearchResultDto` | Structurally identical types; mapper exists for explicit API boundary documentation |
+
+**Why does `config.mapper.ts` take resolved terms as an argument?** Protected terms live in JSON files outside `.lingo-tracker.json`. Building the DTO therefore requires reading the filesystem.
+
+The mapper keeps no file access. Instead `ConfigController.getConfig()` calls `resolveProtectedTermsForConfig(config)` from core, which reads every scope in one pass, and hands the result to the mapper. The mapper stays a pure projection.
+
+The resolved terms and their file paths then reach the UI as read-only DTO fields, `protectedTerms` and `protectedTermsFilePath`. The writable `protectedTermsFile` setting travels alongside them.
 
 **Why the base locale detection logic in `resource-tree.mapper.ts`?** The `ResourceTreeEntry` domain model stores the base locale value in a dedicated `source` field and tracks its metadata in the same `metadata` record as translations — distinguished by the absence of `status` and `baseChecksum` fields (the base locale has a checksum but no `baseChecksum` to compare against, and no `status` since it is never `new` or `stale` relative to itself). The DTO flattens this into a single `translations` map for simpler frontend consumption. The mapper performs this denormalization at the API boundary so the domain model stays clean.

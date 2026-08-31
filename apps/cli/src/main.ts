@@ -487,6 +487,7 @@ program
   .option('--remove <term>', 'Remove a protected term (repeatable)', collect, [])
   .option('--set <terms>', 'Replace protected terms with a comma-separated list (use "" to clear)')
   .option('--list', 'List protected terms (effective union for a collection)')
+  .option('--file <path>', 'Point this scope at a protected terms JSON file (use "" to clear)')
   .action(async (options) => {
     const { protectedTermsCommand } = await import('./commands/protected-terms');
     await protectedTermsCommand(options);

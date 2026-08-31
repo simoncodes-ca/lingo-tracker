@@ -1,30 +1,47 @@
-import type { LingoTrackerConfig } from '@simoncodes-ca/core';
+import type { LingoTrackerConfig, ResolvedProtectedTerms } from '@simoncodes-ca/core';
 import { mapConfigToDto, mapDtoToConfigUpdate } from './config.mapper';
 import { mapCollectionToDto, mapDtoToCollection } from './collection.mapper';
 
 describe('config.mapper', () => {
   describe('mapConfigToDto', () => {
-    it('maps protectedTerms on the top level and inside collections', () => {
-      const config: LingoTrackerConfig = {
-        exportFolder: 'dist/export',
-        importFolder: 'dist/import',
-        baseLocale: 'en',
-        locales: ['en', 'es'],
-        protectedTerms: ['SimonCodes'],
-        collections: {
-          app: {
-            translationsFolder: './i18n',
-            protectedTerms: ['iPhone'],
-          },
+    const config: LingoTrackerConfig = {
+      exportFolder: 'dist/export',
+      importFolder: 'dist/import',
+      baseLocale: 'en',
+      locales: ['en', 'es'],
+      collections: {
+        app: {
+          translationsFolder: './i18n',
+          protectedTermsFile: 'i18n/terms.json',
         },
-      };
+      },
+    };
 
-      const dto = mapConfigToDto(config);
+    const resolved: ResolvedProtectedTerms = {
+      globalTerms: ['SimonCodes'],
+      globalFilePath: '/project/.lingo-tracker-protected-terms.json',
+      collections: {
+        app: { terms: ['iPhone'], filePath: '/project/i18n/terms.json' },
+      },
+    };
+
+    it('exposes the resolved terms and file paths at both levels', () => {
+      const dto = mapConfigToDto(config, resolved);
+
       expect(dto.protectedTerms).toEqual(['SimonCodes']);
+      expect(dto.protectedTermsFilePath).toBe('/project/.lingo-tracker-protected-terms.json');
       expect(dto.collections.app.protectedTerms).toEqual(['iPhone']);
+      expect(dto.collections.app.protectedTermsFilePath).toBe('/project/i18n/terms.json');
     });
 
-    it('omits protectedTerms when absent', () => {
+    it('keeps the collection pointer so a round-trip cannot drop it', () => {
+      const dto = mapConfigToDto(config, resolved);
+
+      expect(dto.collections.app.protectedTermsFile).toBe('i18n/terms.json');
+      expect(mapDtoToCollection(dto.collections.app).protectedTermsFile).toBe('i18n/terms.json');
+    });
+
+    it('omits protected-terms fields when nothing was resolved', () => {
       const dto = mapConfigToDto({
         exportFolder: 'dist/export',
         importFolder: 'dist/import',
@@ -32,8 +49,22 @@ describe('config.mapper', () => {
         locales: ['en'],
         collections: {},
       });
+
       expect(dto.protectedTerms).toBeUndefined();
+      expect(dto.protectedTermsFilePath).toBeUndefined();
       expect(dto.collections).toEqual({});
+    });
+
+    it('omits an empty term list rather than exposing an empty array', () => {
+      const dto = mapConfigToDto(config, {
+        globalTerms: [],
+        globalFilePath: '/project/.lingo-tracker-protected-terms.json',
+        collections: { app: { terms: [], filePath: undefined } },
+      });
+
+      expect(dto.protectedTerms).toBeUndefined();
+      expect(dto.collections.app.protectedTerms).toBeUndefined();
+      expect(dto.protectedTermsFilePath).toBe('/project/.lingo-tracker-protected-terms.json');
     });
   });
 
@@ -56,19 +87,28 @@ describe('config.mapper', () => {
 });
 
 describe('collection.mapper', () => {
-  it('maps protectedTerms in both directions', () => {
-    const collection = {
-      translationsFolder: './i18n',
-      protectedTerms: ['iPhone', 'C++'],
-    };
+  it('round-trips the protectedTermsFile pointer', () => {
+    const collection = { translationsFolder: './i18n', protectedTermsFile: 'i18n/terms.json' };
 
-    expect(mapCollectionToDto(collection).protectedTerms).toEqual(['iPhone', 'C++']);
-    expect(mapDtoToCollection(mapCollectionToDto(collection)).protectedTerms).toEqual(['iPhone', 'C++']);
+    expect(mapCollectionToDto(collection).protectedTermsFile).toBe('i18n/terms.json');
+    expect(mapDtoToCollection(mapCollectionToDto(collection)).protectedTermsFile).toBe('i18n/terms.json');
   });
 
-  it('omits protectedTerms when absent', () => {
+  it('never writes resolved terms back into the config — they belong in the file', () => {
+    const dto = mapCollectionToDto(
+      { translationsFolder: './i18n', protectedTermsFile: 'i18n/terms.json' },
+      { terms: ['iPhone'], filePath: '/project/i18n/terms.json' },
+    );
+
+    expect(dto.protectedTerms).toEqual(['iPhone']);
+    expect(mapDtoToCollection(dto)).not.toHaveProperty('protectedTerms');
+  });
+
+  it('omits protected-terms fields when the collection has no file', () => {
     const collection = { translationsFolder: './i18n' };
+
     expect(mapCollectionToDto(collection).protectedTerms).toBeUndefined();
-    expect(mapDtoToCollection(mapCollectionToDto(collection)).protectedTerms).toBeUndefined();
+    expect(mapCollectionToDto(collection).protectedTermsFile).toBeUndefined();
+    expect(mapCollectionToDto(collection).protectedTermsFilePath).toBeUndefined();
   });
 });

@@ -30,6 +30,7 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 | Edit / rename collection | — | Yes (`PUT /collections/:name`) | Yes (Collections Manager edit dialog — also add/remove locales) |
 | Delete collection | Yes (`delete-collection`) | Yes (`DELETE /collections/:name`) | Yes (Collections Manager delete dialog) |
 | Read global config | — | Yes (`GET /config`) | Yes (reads on startup via `CollectionsStore`) |
+| Update writable global config fields | — | Yes (`PUT /config`) | Yes (Settings page) |
 | **Locales** | | | |
 | Add [locale](glossary.md#base-locale) to collection | Yes (`add-locale`) | Yes (`POST /collections/:name/locales`) | Yes (collection edit dialog — add locale field) |
 | Remove locale from collection | Yes (`remove-locale`) | Yes (`DELETE /collections/:name/locales/:locale`) | Yes (collection edit dialog — remove button per locale; base locale cannot be removed) |
@@ -58,6 +59,10 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 | Generate bundle (locale JSON + optional TS types) | Yes (`bundle`) | — | — |
 | Export resources (XLIFF or JSON) | Yes (`export`) | — | — |
 | Import translations (XLIFF or JSON) | Yes (`import`) | — | — |
+| **[Protected Terms](glossary.md#protected-term)** | | | |
+| List the terms that apply (global or per collection) | Yes (`protected-terms --list`) | Yes (resolved on `GET /config`) | Yes (Settings page, and collection edit dialog) |
+| Add, remove, or replace terms | Yes (`protected-terms --add/--remove/--set`) | Yes (`PUT /config`, and `PUT /collections/:name`) | Yes (chip editors. Collection chips need a terms file first.) |
+| Name the terms file for a scope | Yes (`protected-terms --file`) | Yes (`protectedTermsFile` on `PUT /collections/:name`) | — (shows the resolved path, read-only) |
 | **Validation** | | | |
 | Validate all resources (CI gate) | Yes (`validate`) | — | — |
 | View resource status per locale | — | — | Yes (status badge per locale row in item) |

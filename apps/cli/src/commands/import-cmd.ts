@@ -11,8 +11,8 @@ import {
   detectImportFormat,
   type ImportResult,
   generateImportSummary,
+  readEffectiveProtectedTerms,
 } from '@simoncodes-ca/core';
-import { effectiveProtectedTerms } from '@simoncodes-ca/domain';
 import {
   loadConfiguration,
   promptForCollection,
@@ -103,7 +103,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
     validateBase: answers.validateBase !== false, // Default true
     dryRun: answers.dryRun || false,
     verbose: answers.verbose || false,
-    protectedTerms: effectiveProtectedTerms(config.protectedTerms, collection.config.protectedTerms),
+    protectedTerms: readEffectiveProtectedTerms(config, collection.config, cwd),
     onProgress: answers.verbose ? (msg: string) => console.log(`  ${msg}`) : undefined,
   };
 

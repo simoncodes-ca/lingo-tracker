@@ -37,6 +37,12 @@
       <mat-hint>{{ TOKENS.SETTINGS.PROTECTEDTERMSHINT | transloco }}</mat-hint>
     </mat-form-field>
 
+    @if (protectedTermsFilePath(); as filePath) {
+      <p class="settings-protected-terms-file">
+        {{ TOKENS.SETTINGS.PROTECTEDTERMSFILELABEL | transloco : { file: filePath } }}
+      </p>
+    }
+
     <div class="settings-actions">
       <button
         mat-raised-button

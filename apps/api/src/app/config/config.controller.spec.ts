@@ -2,11 +2,12 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { HttpException } from '@nestjs/common';
 import { ConfigController } from './config.controller';
 import { ConfigService } from './config.service';
-import { setGlobalProtectedTerms } from '@simoncodes-ca/core';
+import { resolveProtectedTermsForConfig, setGlobalProtectedTerms } from '@simoncodes-ca/core';
 import * as mapper from '../mappers/config.mapper';
 
 jest.mock('@simoncodes-ca/core', () => ({
   setGlobalProtectedTerms: jest.fn(),
+  resolveProtectedTermsForConfig: jest.fn(),
 }));
 
 describe('ConfigController', () => {
@@ -39,18 +40,39 @@ describe('ConfigController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     configService.getConfig.mockReturnValue(baseConfig);
+    (resolveProtectedTermsForConfig as jest.Mock).mockReturnValue({
+      globalTerms: [],
+      globalFilePath: '/project/.lingo-tracker-protected-terms.json',
+      collections: {},
+    });
   });
 
   describe('getConfig', () => {
-    it('exposes protectedTerms on the DTO', () => {
-      configService.getConfig.mockReturnValue({
-        ...baseConfig,
-        protectedTerms: ['iPhone'],
-      });
+    it('passes the terms resolved from disk to the mapper', () => {
+      const resolved = {
+        globalTerms: ['iPhone'],
+        globalFilePath: '/project/.lingo-tracker-protected-terms.json',
+        collections: {},
+      };
+      (resolveProtectedTermsForConfig as jest.Mock).mockReturnValue(resolved);
 
       const mapSpy = jest.spyOn(mapper, 'mapConfigToDto');
       controller.getConfig();
-      expect(mapSpy).toHaveBeenCalledWith({ ...baseConfig, protectedTerms: ['iPhone'] });
+
+      expect(mapSpy).toHaveBeenCalledWith(baseConfig, resolved);
+    });
+
+    it('exposes the resolved terms and their file path on the DTO', () => {
+      (resolveProtectedTermsForConfig as jest.Mock).mockReturnValue({
+        globalTerms: ['iPhone'],
+        globalFilePath: '/project/.lingo-tracker-protected-terms.json',
+        collections: {},
+      });
+
+      const dto = controller.getConfig();
+
+      expect(dto.protectedTerms).toEqual(['iPhone']);
+      expect(dto.protectedTermsFilePath).toBe('/project/.lingo-tracker-protected-terms.json');
     });
   });
 

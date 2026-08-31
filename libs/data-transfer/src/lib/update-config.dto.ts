@@ -6,6 +6,6 @@
  * safe top-level globals here as they become controllable via the UI.
  */
 export interface UpdateConfigDto {
-  /** Global protected terms (terms kept verbatim and never translated). */
+  /** Global protected terms. Written to the global protected-terms file, not into the config. */
   protectedTerms?: string[];
 }

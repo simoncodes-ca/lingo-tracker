@@ -8,6 +8,8 @@ export interface LingoTrackerConfigDto {
   locales: string[];
   collections: Record<string, LingoTrackerCollectionDto>;
   translation?: TranslationConfigDto;
-  /** Terms kept verbatim and never translated, applied to every collection. */
+  /** Resolved global protected terms, read from the protected-terms file. Read-only. */
   protectedTerms?: string[];
+  /** Path of the file the global protected terms are stored in. Read-only; shown in the UI. */
+  protectedTermsFilePath?: string;
 }

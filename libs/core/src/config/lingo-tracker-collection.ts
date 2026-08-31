@@ -21,8 +21,10 @@ export interface LingoTrackerCollection {
   /** Tags inherited by every resource in this collection. Unioned with per-resource tags at read time. */
   tags?: string[];
   /**
-   * Terms (brand/product names, jargon) kept verbatim and never translated. This
-   * collection-specific list is unioned with the global list at read time.
+   * Path to a JSON file holding this collection's own protected terms, resolved against
+   * the directory holding the config file. Unlike the global list there is no default
+   * path — a collection without this pointer contributes no terms of its own. Its terms
+   * are unioned with the global file at read time.
    */
-  protectedTerms?: string[];
+  protectedTermsFile?: string;
 }

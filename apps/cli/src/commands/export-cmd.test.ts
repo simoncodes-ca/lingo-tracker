@@ -16,6 +16,8 @@ vi.mock('@simoncodes-ca/core', () => ({
   exportToJson: vi.fn(),
   exportToXliff: vi.fn(),
   generateExportSummary: vi.fn(),
+  readGlobalProtectedTerms: vi.fn(() => []),
+  readCollectionProtectedTerms: vi.fn(() => []),
 }));
 
 import * as core from '@simoncodes-ca/core';

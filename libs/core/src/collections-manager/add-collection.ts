@@ -1,4 +1,4 @@
-import { normalizeProtectedTerms, normalizeTags } from '@simoncodes-ca/domain';
+import { normalizeTags } from '@simoncodes-ca/domain';
 import type { LingoTrackerCollection } from '../config/lingo-tracker-collection';
 import { updateConfig } from '../lib/config/config-file-operations';
 import { ErrorMessages } from '../lib/errors/error-messages';
@@ -58,9 +58,9 @@ export function addCollection(
       minimalCollection.tags = normalizedTags;
     }
 
-    const normalizedProtectedTerms = normalizeProtectedTerms(collection.protectedTerms ?? []);
-    if (normalizedProtectedTerms.length > 0) {
-      minimalCollection.protectedTerms = normalizedProtectedTerms;
+    const protectedTermsFile = collection.protectedTermsFile?.trim();
+    if (protectedTermsFile) {
+      minimalCollection.protectedTermsFile = protectedTermsFile;
     }
 
     return {

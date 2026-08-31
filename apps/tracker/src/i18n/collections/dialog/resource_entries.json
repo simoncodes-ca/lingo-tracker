@@ -267,5 +267,25 @@
     "ru": "Добавить защищенный термин…",
     "ja": "保護された用語を追加…",
     "de": "Füge geschützten Begriff hinzu…"
+  },
+  "protectedTermsFileLabel": {
+    "source": "Stored in {file}",
+    "comment": "Read-only line naming the file a collection's protected terms are stored in. {file} is a file path.",
+    "tags": ["collections"],
+    "es": "Almacenado en {file}",
+    "fr-ca": "Enregistré dans {file}",
+    "ru": "Хранится в {file}",
+    "ja": "{file} に保存されています",
+    "de": "Gespeichert in {file}"
+  },
+  "protectedTermsNoFile": {
+    "source": "No protected terms file configured for this collection. Set one with the CLI to edit terms here.",
+    "comment": "Shown in place of the protected terms chips when a collection has no protectedTermsFile configured",
+    "tags": ["collections"],
+    "es": "No hay ningún archivo de términos protegidos configurado para esta colección. Configure uno con la CLI para editar los términos aquí.",
+    "fr-ca": "Aucun fichier de termes protégés n'est configuré pour cette collection. Configurez-en un avec l'interface de ligne de commande pour modifier les termes ici.",
+    "ru": "Для этой коллекции не настроен файл защищённых терминов. Настройте его через CLI, чтобы редактировать термины здесь.",
+    "ja": "このコレクションには保護用語ファイルが設定されていません。ここで用語を編集するには、CLI で設定してください。",
+    "de": "Für diese Sammlung ist keine Datei mit geschützten Begriffen konfiguriert. Richten Sie eine über die CLI ein, um Begriffe hier zu bearbeiten."
   }
 }

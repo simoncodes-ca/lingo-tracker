@@ -19,6 +19,7 @@ describe('Settings', () => {
     locales: ['en'],
     collections: {},
     protectedTerms: ['iPhone'],
+    protectedTermsFilePath: '/project/.lingo-tracker-protected-terms.json',
   };
 
   const buildStore = (config: LingoTrackerConfigDto | null, error: string | null = null) => ({
@@ -46,6 +47,26 @@ describe('Settings', () => {
 
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('iPhone');
+  });
+
+  it('names the file the terms are stored in', () => {
+    TestBed.overrideProvider(CollectionsStore, { useValue: buildStore(baseConfig) });
+    fixture = TestBed.createComponent(Settings);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.protectedTermsFilePath()).toBe('/project/.lingo-tracker-protected-terms.json');
+    expect(fixture.nativeElement.querySelector('.settings-protected-terms-file')).not.toBeNull();
+  });
+
+  it('omits the file line when the API reports no path', () => {
+    TestBed.overrideProvider(CollectionsStore, {
+      useValue: buildStore({ ...baseConfig, protectedTermsFilePath: undefined }),
+    });
+    fixture = TestBed.createComponent(Settings);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.settings-protected-terms-file')).toBeNull();
   });
 
   it('save invokes the store updateGlobalConfig with the current terms', () => {
