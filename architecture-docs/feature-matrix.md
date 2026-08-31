@@ -27,7 +27,8 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 | Install AI skill | Yes (`install-skill`) | — | — |
 | **Collections** | | | |
 | Add [collection](glossary.md#collection) | Yes (`add-collection`) | Yes (`POST /collections`) | Yes (Collections Manager dialog) |
-| Edit / rename collection | — | Yes (`PUT /collections/:name`) | Yes (Collections Manager edit dialog — also add/remove locales) |
+| Rename collection | — | Yes (`PUT /collections/:name`) | Yes (Collections Manager edit dialog — also add/remove locales) |
+| Edit collection tags | Yes (`edit-collection --add-tag/--remove-tag/--set-tags`) | Yes (`PUT /collections/:name`) | Yes (Collections Manager edit dialog) |
 | Delete collection | Yes (`delete-collection`) | Yes (`DELETE /collections/:name`) | Yes (Collections Manager delete dialog) |
 | Read global config | — | Yes (`GET /config`) | Yes (reads on startup via `CollectionsStore`) |
 | Update writable global config fields | — | Yes (`PUT /config`) | Yes (Settings page) |
@@ -79,7 +80,7 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 - **In-memory collection cache** — `CollectionCacheService` is an API-only system. It holds a single-slot, incrementally-updated in-memory tree of the active collection, making browsing fast for the Tracker UI. The CLI bypasses the cache entirely and reads files directly on every invocation. See [`api.md — Collection Cache`](api.md#collection-cache).
 - **Async translation jobs** — The `TranslationJobService` (fire-and-forget job map with UUID-based polling) is API-only. The CLI's `translate-locale` command runs synchronously in-process and prints progress inline.
 - **Batch resource creation** — The `POST /collections/:name/resources` endpoint accepts an array of `CreateResourceDto` objects. The CLI's `add-resource` and the UI's editor dialog only create one resource at a time.
-- **Edit / rename collection** — `PUT /collections/:name` exists only on the API and UI. The CLI has no `edit-collection` command; renaming a collection requires editing `.lingo-tracker.json` manually or using the UI. The `PUT` endpoint (and therefore the UI edit dialog) also handles adding and removing locales — it diffs the submitted locale list against the existing config and internally calls `addLocaleToCollection` / `removeLocaleFromCollection` as needed.
+- **Rename collection** — Renaming exists only on the API and UI. The CLI's `edit-collection` command manages collection-level tags only; renaming a collection requires editing `.lingo-tracker.json` manually or using the UI. The `PUT` endpoint (and therefore the UI edit dialog) also handles adding and removing locales — it diffs the submitted locale list against the existing config and internally calls `addLocaleToCollection` / `removeLocaleFromCollection` as needed.
 
 ### CLI Only
 
