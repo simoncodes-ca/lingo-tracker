@@ -5,7 +5,12 @@ sidebar_position: 4
 
 # Validate Feature
 
-The Validate feature provides a comprehensive translation validation system designed to ensure translation completeness and quality before production deployment. It serves as a quality gate in CI/CD pipelines by checking the status of all translation resources across all configured locales and collections.
+The Validate feature provides a comprehensive translation validation system designed to ensure translation completeness and quality before production deployment. It serves as a quality gate in CI/CD pipelines, and answers two independent questions about every resource:
+
+1. **Status** — has a human approved this translation?
+2. **ICU** — does the stored value actually compile for the locale it is stored under?
+
+The second question matters because approval is about wording, not syntax. A value can be marked `verified` and still render nothing at runtime.
 
 ## Overview
 
@@ -31,7 +36,9 @@ lingo-tracker validate [options]
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--allow-translated` | Treat 'translated' status as warning instead of failure | `false` |
-| `--skip-locales <locales>` | Comma-separated list of locales to exclude from validation | None |
+| `--skip-locales <locales>` | Comma-separated list of **target** locales to exclude from validation | None |
+| `--skip-icu` | Do not compile values as ICU for their own locale | `false` |
+| `--require-portable-plurals` | Warn when a base-locale plural selects by category instead of an exact `=N` match | `false` |
 
 ### Exit Codes
 
@@ -50,12 +57,63 @@ The validate command categorizes resources based on their translation status:
 | `verified` | ✅ Success | ✅ Success | Reviewed and approved |
 | *(missing)* | ❌ Failure | ❌ Failure | No status entry for this locale — treated as `new` |
 
+### ICU Validation
+
+Every stored value is compiled under the locale it is stored under, including the base-locale source value. A value that fails to compile is a failure regardless of its status.
+
+Compiling under the *right* locale is the whole point, because plural categories belong to the language:
+
+| Locale | counts selecting `one` |
+|---|---|
+| `en` `de` `es` `nl` `sv` `ar` | 1 |
+| `fr` `pt` | 0 and 1 |
+| `is` | 1, 21, 31, 41 … |
+| `ja` `ko` | none — the category does not exist |
+
+ICU rejects the whole message rather than the offending branch, so the string does not degrade — it renders nothing:
+
+```
+ja  {count, plural, one {1 warning} other {# warnings}}     fails
+ja  {count, plural, other {# warnings}}                     renders
+```
+
+Compiling a whole collection against a single locale reports nothing at all, which is how this kind of breakage sits undetected indefinitely.
+
+Two shapes account for most real failures:
+
+- **A category the locale does not define** — usually a base-locale value copied verbatim into a `ja`/`ko` slot, keeping the `one`/`other` scaffolding.
+- **A translated or malformed selector** — a translator treating the selector as prose (`ein`, `andere`), or dropping the `=` (`1 {…}` where `=1 {…}` was meant).
+
+#### Transloco interpolation
+
+Transloco substitutes `{{ }}` before ICU parses, so a branch body that is a lone placeholder is correctly authored as `=1 {{{name}}}`. Values are normalised from Transloco to ICU syntax before compiling, so these are not reported as broken. No flag is needed.
+
+#### Locales that cannot be checked
+
+A locale code that is not well-formed BCP 47 — `fr_CA` instead of `fr-CA` is the usual cause — makes every value under it uncheckable. The locale is reported once as a configuration problem rather than blamed on each value.
+
+### Portable Plurals in the Base Locale
+
+`--require-portable-plurals` is an opt-in, warning-level rule that flags base-locale values selecting a plural branch by category (`zero`, `one`, `two`, `few`, `many`) rather than by an exact `=N` match:
+
+```
+=1 {1 warning} other {# warnings}     portable
+one {1 warning} other {# warnings}    breaks when copied to ja/ko
+```
+
+The base-locale value is what gets copied into every translation slot, so an unsafe shape there propagates on every import. This rule stops recurrence rather than just reporting it.
+
+It applies to the base locale only — translations keep their own categories, which are correct wherever the locale defines them. It never causes a failure, and because it parses rather than compiles, it still runs alongside `--skip-icu`.
+
+`selectordinal` is deliberately exempt: English ordinal `one` selects 1, 21, 31 …, so rewriting it as `=1` would change behaviour rather than preserve it.
+
 ### Validation Philosophy
 
 1. **Strict by default**: Production deployments should only include verified translations
 2. **Configurable relaxation**: Staging environments may accept translated (but unverified) content
 3. **Never allow incomplete**: New and stale translations always fail validation
 4. **Comprehensive reporting**: Show all issues, not just the first one encountered
+5. **Approval is not syntax**: A value must compile for its own locale no matter who signed off on it
 
 ## How It Works
 

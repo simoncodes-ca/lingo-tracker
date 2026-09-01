@@ -1,4 +1,10 @@
-import type { ResourceValidationResult, ValidationOptions, ResourceValidationDetail } from './types';
+import type {
+  ResourceValidationResult,
+  ValidationOptions,
+  ResourceValidationDetail,
+  IcuValidationDetail,
+  IcuValidationResult,
+} from './types';
 
 /**
  * Maximum number of resources to display in each failure/warning category
@@ -46,6 +52,9 @@ export function generateValidationSummary(result: ResourceValidationResult, opti
   if (result.warnings.length > 0) {
     sections.push(buildWarningsSection(result.warnings, options));
   }
+  if (result.icu) {
+    sections.push(...buildIcuSections(result.icu));
+  }
 
   sections.push(buildFooterSection(result, options));
   return sections.join('\n\n');
@@ -87,7 +96,94 @@ function buildStatisticsSection(result: ResourceValidationResult, options: Valid
 
   lines.push(`  Collections Validated: ${result.collectionsValidated}`);
 
+  // Suppressed when compilation was switched off, where a count of 0 would
+  // read as "nothing needed compiling" rather than "nothing was compiled".
+  if (result.icu && options.icu?.compileValues) {
+    lines.push(`  ICU Values Compiled: ${result.icu.valuesChecked}`);
+  }
+
   return lines.join('\n');
+}
+
+/**
+ * Builds the sections describing the per-locale ICU compilation pass.
+ *
+ * Sections are omitted when they have nothing to say, so a clean ICU pass adds
+ * only the compiled-values count in the statistics section.
+ *
+ * @param icu - The ICU pass result
+ * @returns Zero or more formatted sections
+ * @internal
+ */
+function buildIcuSections(icu: IcuValidationResult): string[] {
+  const sections: string[] = [];
+
+  if (icu.unsupportedLocales.length > 0) {
+    sections.push(buildUnsupportedLocalesSection(icu.unsupportedLocales));
+  }
+  if (icu.failures.length > 0) {
+    sections.push(buildIcuDetailSection(`❌ ICU Failures (${icu.failures.length})`, icu.failures));
+  }
+  if (icu.warnings.length > 0) {
+    sections.push(buildIcuDetailSection(`⚠️  ICU Warnings (${icu.warnings.length})`, icu.warnings));
+  }
+
+  return sections;
+}
+
+/**
+ * Builds a list of ICU details grouped by locale.
+ *
+ * Each entry carries its own explanation, so unlike the status sections the
+ * message is printed alongside the key rather than a shared emoji legend.
+ *
+ * @param heading - Section heading, already including its count
+ * @param details - The ICU details to list
+ * @returns Formatted section string
+ * @internal
+ */
+function buildIcuDetailSection(heading: string, details: readonly IcuValidationDetail[]): string {
+  const lines = [`${heading}:`, '─'.repeat(50)];
+
+  const byLocale = groupByLocale(details);
+
+  for (const [locale, localeDetails] of Object.entries(byLocale).sort()) {
+    lines.push(`  Locale: ${locale} (${localeDetails.length})`);
+
+    for (const detail of localeDetails.slice(0, MAX_RESOURCES_TO_DISPLAY)) {
+      lines.push(`    [${detail.collection}] ${detail.key}`);
+      lines.push(`      ${detail.message}`);
+    }
+
+    const remaining = localeDetails.length - MAX_RESOURCES_TO_DISPLAY;
+    if (remaining > 0) {
+      lines.push(`    ... and ${remaining} more`);
+    }
+
+    lines.push('');
+  }
+
+  return lines.join('\n').trimEnd();
+}
+
+/**
+ * Builds the notice for locales whose values could not be compiled at all.
+ *
+ * This is a configuration problem rather than a translation one, so it is
+ * reported once per locale instead of once per value.
+ *
+ * @param locales - Locale tags the ICU compiler rejected
+ * @returns Formatted section string
+ * @internal
+ */
+function buildUnsupportedLocalesSection(locales: readonly string[]): string {
+  return [
+    `⚠️  ICU Skipped Locales (${locales.length}):`,
+    '─'.repeat(50),
+    `  ${locales.join(', ')}`,
+    '  Not a valid locale tag, so no value could be compiled. Check the locale',
+    "  codes in .lingo-tracker.json — BCP 47 uses a hyphen, as in 'fr-CA'.",
+  ].join('\n');
 }
 
 /**
@@ -207,6 +303,9 @@ function buildFooterSection(result: ResourceValidationResult, options: Validatio
 
   // Count breakdown
   lines.push(`  Total Failures: ${result.failures.length}`);
+  if (result.icu && result.icu.failures.length > 0) {
+    lines.push(`  Total ICU Failures: ${result.icu.failures.length}`);
+  }
   if (options.allowTranslated && result.warnings.length > 0) {
     lines.push(`  Total Warnings: ${result.warnings.length}`);
   }
@@ -228,20 +327,23 @@ function buildFooterSection(result: ResourceValidationResult, options: Validatio
 }
 
 /**
- * Groups resource validation details by locale.
+ * Groups validation details by locale.
  *
- * @param resources - Array of resource validation details
- * @returns Object mapping locale to array of resources
+ * Serves both the status sections and the ICU sections, whose details differ
+ * in payload but agree on carrying a locale.
+ *
+ * @param details - Array of validation details
+ * @returns Object mapping locale to array of details
  * @internal
  */
-function groupByLocale(resources: readonly ResourceValidationDetail[]): Record<string, ResourceValidationDetail[]> {
-  const grouped: Record<string, ResourceValidationDetail[]> = {};
+function groupByLocale<T extends { readonly locale: string }>(details: readonly T[]): Record<string, T[]> {
+  const grouped: Record<string, T[]> = {};
 
-  for (const resource of resources) {
-    if (!grouped[resource.locale]) {
-      grouped[resource.locale] = [];
+  for (const detail of details) {
+    if (!grouped[detail.locale]) {
+      grouped[detail.locale] = [];
     }
-    grouped[resource.locale].push(resource);
+    grouped[detail.locale].push(detail);
   }
 
   return grouped;

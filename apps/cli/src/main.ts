@@ -301,6 +301,16 @@ program
   .description('Verify translation completeness and readiness for production release')
   .option('--allow-translated', 'Treat translated status as warning instead of error', false)
   .option('--skip-locales <locales>', 'Comma-separated list of locales to exclude from validation')
+  .option(
+    '--skip-icu',
+    'Do not compile values as ICU for their own locale (--require-portable-plurals still applies)',
+    false,
+  )
+  .option(
+    '--require-portable-plurals',
+    "Warn when a base-locale plural selects by category (one, few, ...) instead of an exact '=N' match",
+    false,
+  )
   .addHelpText(
     'after',
     `
@@ -314,6 +324,12 @@ Examples:
   # Skip specific locales (e.g. newly-added locale still in progress)
   $ lingo-tracker validate --skip-locales fr
   $ lingo-tracker validate --skip-locales fr,de
+
+  # Status gate only, without compiling values as ICU
+  $ lingo-tracker validate --skip-icu
+
+  # Also warn about base-locale plurals that break when copied to ja/ko
+  $ lingo-tracker validate --require-portable-plurals
 
   # Use in CI pipeline (exits with code 1 on validation failure)
   $ lingo-tracker validate || exit 1
@@ -423,6 +439,13 @@ Exit Codes:
   1  Validation failures found (new/stale/translated resources)
 
 Notes:
+  - Compiles every stored value under its own locale; values that fail are failures
+  - Plural categories are per-language, so a 'verified' value can still fail to compile
+  - The base locale is compiled too: its value is copied into every translation slot
+  - Use --skip-icu to run the status gate alone; it does not disable
+    --require-portable-plurals, which parses rather than compiles
+  - --skip-locales excludes target locales only; the base locale is always
+    compiled, since its value is copied into every translation slot
   - Validates ALL collections and ALL target locales (no filtering) by default
   - Use --skip-locales to exclude specific locales; skipped locales appear in the report
   - Unknown locale values in --skip-locales emit a warning and are ignored
@@ -435,7 +458,12 @@ Notes:
   .action(async (options) => {
     const { validateCommand } = await import('./commands/validate');
     const skipLocales = parseCommaSeparatedList(options.skipLocales) ?? [];
-    await validateCommand({ allowTranslated: options.allowTranslated, skipLocales });
+    await validateCommand({
+      allowTranslated: options.allowTranslated,
+      skipLocales,
+      skipIcu: options.skipIcu,
+      requirePortablePlurals: options.requirePortablePlurals,
+    });
   });
 
 program

@@ -1,5 +1,6 @@
 import { loadResourcesFromCollections, type LoadedResource } from '../export/export-common';
 import type { TranslationStatus } from '@simoncodes-ca/domain';
+import { validateIcuValues } from './validate-icu';
 import type { ValidationOptions, ResourceValidationResult, ResourceValidationDetail, StatusCounts } from './types';
 
 /**
@@ -17,6 +18,11 @@ import type { ValidationOptions, ResourceValidationResult, ResourceValidationDet
  * - 'translated' status → failure (default) or warning (if allowTranslated=true)
  * - 'verified' status → success (translation reviewed and approved)
  * - Missing status/metadata → treated as 'new' (failure)
+ *
+ * When `options.icu` is provided, a second pass compiles every stored value
+ * under the locale it is stored under. Any value that fails to compile is a
+ * failure regardless of its status — plural categories are per-language, so a
+ * value approved by a reviewer can still throw for its own locale.
  *
  * The function validates ALL resources comprehensively before returning results.
  * This ensures teams have complete visibility into translation status across
@@ -91,9 +97,14 @@ export function validateResources(
     }
   }
 
-  const passed = failures.length === 0;
+  // ICU compilation is a separate question from translation status: it asks
+  // whether the stored value renders at all, not whether anyone approved it.
+  const icu = options.icu ? validateIcuValues(loadedResources, targetLocales, options.icu) : undefined;
+
+  const passed = failures.length === 0 && (icu?.failures.length ?? 0) === 0;
 
   return {
+    icu,
     totalResourcesValidated,
     totalUniqueKeys: loadedResources.length,
     localesValidated: targetLocales.length,

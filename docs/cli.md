@@ -1258,15 +1258,18 @@ lingo-tracker validate [options]
 **Options:**
 
 - `--allow-translated` - Treat 'translated' status as warning instead of failure (default: false)
-- `--skip-locales <locales>` - Comma-separated list of locales to exclude from validation (e.g. `fr` or `fr,de`). Useful when a locale has been added to the config but its translations are still in progress. Unknown locales (not in `config.locales`) emit a warning and are ignored. The base locale is silently ignored. If all target locales are skipped, the command exits with code `1`.
+- `--skip-locales <locales>` - Comma-separated list of target locales to exclude from validation (e.g. `fr` or `fr,de`). Useful when a locale has been added to the config but its translations are still in progress. Unknown locales (not in `config.locales`) emit a warning and are ignored. The base locale is silently ignored, and is still compiled by the ICU check. If all target locales are skipped, the command exits with code `1`.
+- `--skip-icu` - Do not compile values as ICU for their own locale (default: false). Does not disable `--require-portable-plurals`, which parses rather than compiles.
+- `--require-portable-plurals` - Warn when a base-locale plural selects a branch by category (`one`, `few`, …) instead of an exact `=N` match (default: false). Warnings never fail the run.
 
 **What Validate Does:**
 
 1. **Loads all resources** from all configured collections
 2. **Checks translation status** for every resource in every target locale
-3. **Collects all validation results** (does not stop at first error)
-4. **Categorizes findings** into failures, warnings, and successes
-5. **Reports comprehensive results** grouped by locale
+3. **Compiles every value as ICU** under the locale it is stored under, including the base locale (unless `--skip-icu`)
+4. **Collects all validation results** (does not stop at first error)
+5. **Categorizes findings** into failures, warnings, and successes
+6. **Reports comprehensive results** grouped by locale
 
 **Validation Rules:**
 
@@ -1277,10 +1280,12 @@ lingo-tracker validate [options]
 | `translated` | ❌ Failure | ⚠️ Warning |
 | `verified` | ✅ Success | ✅ Success |
 
+A value that does not compile as ICU for its own locale is a failure whatever its status says — plural categories are per-language, so `{count, plural, one {…} other {…}}` is valid in `en` and fatal in `ja`, where the `one` category does not exist. Status records that a human approved the wording; it says nothing about the syntax.
+
 **Exit Codes:**
 
 - `0` - All validations passed (all resources verified)
-- `1` - Validation failures found (new/stale resources or translated without `--allow-translated` flag)
+- `1` - Validation failures found (new/stale resources, translated without `--allow-translated`, or values that fail to compile as ICU)
 
 **When to Use Validate:**
 
@@ -1379,6 +1384,18 @@ Skip a locale that is still in progress:
 ```bash
 lingo-tracker validate --skip-locales fr
 lingo-tracker validate --skip-locales fr,de
+```
+
+Status gate only, without compiling values as ICU:
+
+```bash
+lingo-tracker validate --skip-icu
+```
+
+Also warn about base-locale plurals that break when copied to `ja`/`ko`:
+
+```bash
+lingo-tracker validate --require-portable-plurals
 ```
 
 CI/CD Integration Examples:
