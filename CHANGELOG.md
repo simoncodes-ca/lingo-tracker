@@ -1,3 +1,19 @@
+# [0.16.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.15.0...v0.16.0) (2026-08-31)
+
+
+### Bug Fixes
+
+* **core:** build domain declarations before core's dts step ([1580002](https://github.com/simoncodes-ca/lingo-tracker/commit/158000259daa5cd6129d854d6576b5ff85db0bb4))
+* **domain:** emit the branch-body brace pair for a Transloco consumer ([#70](https://github.com/simoncodes-ca/lingo-tracker/issues/70)) ([7ac9ea6](https://github.com/simoncodes-ca/lingo-tracker/commit/7ac9ea69b95c6f8b4f8a5abad93dc233060aeb45))
+* **domain:** make Transloco to ICU conversion position-aware ([#67](https://github.com/simoncodes-ca/lingo-tracker/issues/67)) ([d817a3f](https://github.com/simoncodes-ca/lingo-tracker/commit/d817a3fa21c854d779a8d62888fe917e38936bb9))
+* **tsconfig:** repair project references so typecheck actually runs ([d4013ac](https://github.com/simoncodes-ca/lingo-tracker/commit/d4013acd12904ff656e358f4c551150882a05526))
+
+
+### Features
+
+* **protected-terms:** protect terms from translation across export, import, API, CLI, and UI ([551481d](https://github.com/simoncodes-ca/lingo-tracker/commit/551481d23602166a6c69223cca5c9d983c40c866))
+* **protected-terms:** store protected terms in a JSON file ([7574514](https://github.com/simoncodes-ca/lingo-tracker/commit/75745141de5458c629ccad5fd18d5a501f20adf8))
+
 # [0.15.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.14.4...v0.15.0) (2026-06-23)
 
 

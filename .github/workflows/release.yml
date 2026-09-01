@@ -4,6 +4,13 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      republish_tag:
+        description: >-
+          Recovery only. Publish an already-tagged version to npm whose publish
+          step failed (e.g. v0.16.0). Leave blank for a normal release run.
+        required: false
+        default: ''
 permissions:
   contents: write
   issues: write
@@ -12,7 +19,11 @@ permissions:
 jobs:
   release:
     name: Release
-    runs-on: ${{ vars.RUN_ON_VPS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
+    if: inputs.republish_tag == ''
+    # Must stay GitHub-hosted: npm rejects provenance from self-hosted
+    # runners (422, only github-hosted are supported), so RUN_ON_VPS
+    # deliberately does not apply here.
+    runs-on: ubuntu-latest
     steps:
       - name: Mint GitHub App token
         id: app-token
@@ -72,4 +83,51 @@ jobs:
 
       - name: Publish to npm (trusted publishing)
         if: hashFiles('dist/*.tgz') != ''
+        run: npm publish ./dist/*.tgz --provenance --access public
+
+  republish:
+    name: Republish tag to npm
+    # Recovery path for a release that tagged and pushed but failed at the npm
+    # publish step. Lives in this workflow file because npm trusted publishing
+    # authorizes by workflow filename.
+    if: inputs.republish_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.republish_tag }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Verify tag matches package version
+        run: |
+          pkg="v$(node -p "require('./package.json').version")"
+          if [ "$pkg" != "${{ inputs.republish_tag }}" ]; then
+            echo "::error::package.json is $pkg but tag input is ${{ inputs.republish_tag }}"
+            exit 1
+          fi
+
+      - name: Pack
+        run: npm pack --pack-destination dist
+
+      - name: Publish to npm (trusted publishing)
         run: npm publish ./dist/*.tgz --provenance --access public
