@@ -1,28 +1,12 @@
 import path from 'path';
 import { loadConfiguration } from '../utils';
 import { searchTranslations } from '@simoncodes-ca/core';
+import { normalizedLevenshtein } from '@simoncodes-ca/domain';
 
 export interface FindSimilarOptions {
   collection?: string;
   value?: string;
   maxResults?: number;
-}
-
-function normalizedLevenshtein(a: string, b: string): number {
-  const la = a.length;
-  const lb = b.length;
-  if (la === 0 && lb === 0) return 1;
-  if (la === 0 || lb === 0) return 0;
-  const dp: number[] = Array.from({ length: lb + 1 }, (_, i) => i);
-  for (let i = 1; i <= la; i++) {
-    let prev = i;
-    for (let j = 1; j <= lb; j++) {
-      const temp = dp[j];
-      dp[j] = a[i - 1] === b[j - 1] ? dp[j - 1] : 1 + Math.min(dp[j - 1], dp[j], prev);
-      prev = temp;
-    }
-  }
-  return 1 - dp[lb] / Math.max(la, lb);
 }
 
 export async function findSimilarCommand(options: FindSimilarOptions): Promise<void> {

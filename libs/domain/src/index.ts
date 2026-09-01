@@ -14,3 +14,4 @@ export * from './lib/node-modules';
 export * from './lib/normalize-tags';
 export * from './lib/effective-tags';
 export * from './lib/protected-terms';
+export * from './lib/normalized-levenshtein';
