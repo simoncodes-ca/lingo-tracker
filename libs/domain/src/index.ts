@@ -15,3 +15,5 @@ export * from './lib/normalize-tags';
 export * from './lib/effective-tags';
 export * from './lib/protected-terms';
 export * from './lib/normalized-levenshtein';
+export * from './lib/icu-locale-validation';
+export * from './lib/portable-plural-categories';

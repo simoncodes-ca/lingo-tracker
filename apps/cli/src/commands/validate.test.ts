@@ -182,12 +182,17 @@ describe('validateCommand', () => {
           },
         ],
         ['fr', 'es', 'de'],
-        { allowTranslated: false, skippedLocales: [] },
+        {
+          allowTranslated: false,
+          skippedLocales: [],
+          icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
+        },
       );
 
       expect(mockGenerateValidationSummary).toHaveBeenCalledWith(successResult, {
         allowTranslated: false,
         skippedLocales: [],
+        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
       });
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
@@ -293,6 +298,7 @@ describe('validateCommand', () => {
       expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, {
         allowTranslated: false,
         skippedLocales: [],
+        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
       });
     });
 
@@ -344,6 +350,7 @@ describe('validateCommand', () => {
       expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, {
         allowTranslated: false,
         skippedLocales: [],
+        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
       });
     });
 
@@ -394,6 +401,7 @@ describe('validateCommand', () => {
       expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
         allowTranslated: false,
         skippedLocales: [],
+        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
       });
     });
 
@@ -652,11 +660,13 @@ describe('validateCommand', () => {
       expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
         allowTranslated: true,
         skippedLocales: [],
+        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
       });
 
       expect(mockGenerateValidationSummary).toHaveBeenCalledWith(warningResult, {
         allowTranslated: true,
         skippedLocales: [],
+        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
       });
 
       expect(console.log).toHaveBeenCalledWith('Validation summary output');
@@ -746,6 +756,7 @@ describe('validateCommand', () => {
       expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
         allowTranslated: false,
         skippedLocales: [],
+        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
       });
     });
   });

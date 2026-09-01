@@ -93,6 +93,7 @@ libs/core/src/
     │
     ├── validate/                 # CI/CD validation pipeline
     │   ├── validate-resources.ts # validateResources(): full cross-collection status check
+    │   ├── validate-icu.ts       # validateIcuValues(): compiles each value under its own locale
     │   └── generate-validation-summary.ts # Human-readable validation result summary
     │
     ├── normalize/                # Normalization pipeline

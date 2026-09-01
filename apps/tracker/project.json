@@ -46,7 +46,7 @@
           }
         ],
         "styles": ["apps/tracker/src/styles.scss"],
-        "allowedCommonJsDependencies": ["@messageformat/core"]
+        "allowedCommonJsDependencies": ["@messageformat/core", "@messageformat/parser"]
       },
       "configurations": {
         "production": {

@@ -52,6 +52,8 @@ lingo-tracker/                         # Nx workspace root
 │   │       ├── transloco-to-icu.ts    # Transloco → ICU syntax conversion
 │   │       ├── icu-auto-fixer.ts      # ICU quote-escape repair
 │   │       ├── icu-classifier.ts      # plain / simple-placeholders / complex-icu
+│   │       ├── icu-locale-validation.ts # compiles a value under its own locale
+│   │       ├── portable-plural-categories.ts # locale-dependent plural cases
 │   │       ├── normalize-transloco-syntax.ts  # {{ x }} → {x} normalizer
 │   │       └── validation-utils.ts    # Locale code, key length, conflict checks
 │   ├── core/                          # Node.js business logic (file I/O, crypto)
@@ -143,6 +145,8 @@ graph TD
 | `icu-to-transloco.ts` | Converts ICU `{varName}` to Transloco `{{ varName }}` at bundle time |
 | `transloco-to-icu.ts` | Converts Transloco `{{ varName }}` back to ICU `{varName}` at import time |
 | `icu-classifier.ts` | Classifies a string as `plain`, `simple-placeholders`, or `complex-icu` |
+| `icu-locale-validation.ts` | Compiles a value under the locale it is stored under; reports why it failed |
+| `portable-plural-categories.ts` | Finds plural branches selected by locale-dependent category rather than `=N` |
 | `icu-auto-fixer.ts` | Repairs malformed ICU quote escaping |
 | `validation-utils.ts` | Locale code format checks, key length limits, hierarchical conflict detection |
 
