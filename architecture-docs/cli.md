@@ -48,7 +48,7 @@ All commands are registered in `apps/cli/src/main.ts`. Each row below lists the 
 | `bundle` | `--name`, `--locale`, `--verbose`, `--token-casing`, `--token-constant-name`, `--no-transform-icu-to-transloco`, `--debug-keys` | `generateBundle()` |
 | `export` | `-f/--format`, `-c/--collection`, `-l/--locale`, `-s/--status`, `-t/--tags`, `-o/--output`, `--structure`, `--rich`, `--include-base`, `--include-status`, `--include-comment`, `--include-tags`, `--base-property-name`, `--filename`, `--no-protect-notes`, `--dry-run`, `--verbose` | `exportToJson()` / `exportToXliff()` |
 | `import` | `-f/--format`, `-s/--source`, `-l/--locale`, `-c/--collection`, `--strategy`, `--update-comments`, `--update-tags`, `--preserve-status`, `--create-missing`, `--validate-base`, `--dry-run`, `--verbose` | `importFromJson()` / `importFromXliff()` |
-| `validate` | `--allow-translated`, `--skip-locales` | `validateResources()`, `generateValidationSummary()` |
+| `validate` | `--allow-translated`, `--skip-locales`, `--skip-icu`, `--require-portable-plurals` | `validateResources()`, `generateValidationSummary()` |
 | `find-similar` | `--collection`, `--value`, `--max-results` | `searchTranslations()` |
 | `glossary` | `--text`, `--input`, `--output`, `--stdout`, `--collection`, `--locales`, `--include-all`, `--extractor` | `loadResourcesFromCollections()` (matching/extraction done in the command, not core) |
 | `protected-terms` | `--collection`, `--add` (repeatable), `--remove` (repeatable), `--set`, `--list`, `--file` | `setGlobalProtectedTerms()` / `setCollectionProtectedTerms()` / `setGlobalProtectedTermsFile()` / `setCollectionProtectedTermsFile()`, reading via `readGlobalProtectedTerms()` / `readCollectionProtectedTerms()` |

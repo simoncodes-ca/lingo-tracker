@@ -22,7 +22,21 @@ vi.mock('path', async (importOriginal) => {
 });
 
 import { searchTranslations } from '@simoncodes-ca/core';
+import type { MatchType, SearchResult } from '@simoncodes-ca/core';
 import { loadConfiguration } from '../utils';
+
+/**
+ * Builds a fully typed SearchResult so the mocked searchTranslations return
+ * value stays bound to the real contract and shape drift fails to compile.
+ */
+function searchResult(key: string, matchType: MatchType, baseValue: string): SearchResult {
+  return {
+    key,
+    matchType,
+    translations: { en: baseValue },
+    status: {},
+  };
+}
 
 const BASE_CONFIG = {
   baseLocale: 'en',
@@ -40,83 +54,56 @@ const LOADED_CONFIG = {
   cwd: '/project',
 };
 
-/**
- * The normalizedLevenshtein implementation in find-similar.ts reuses the dp
- * array in-place during the outer loop, which causes it to produce lower-than-
- * expected scores for strings longer than one character.  Concretely:
- *
- *   - Two empty strings        → 1  (handled explicitly)
- *   - One empty string         → 0  (handled explicitly)
- *   - Single identical chars   → 1  (dp[1] = 0 → 1 - 0/1 = 1)
- *   - Two or more characters   → score ≤ 0.5 even for identical strings
- *     e.g. 'hello' vs 'hello' → dp[5] = 3 → 1 - 3/5 = 0.4
- *
- * The 0.8 threshold in findSimilarCommand is therefore only achievable with
- * single-character stored values.  Tests below exercise the real behaviour.
- */
 describe('find-similar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.spyOn(process, 'exit').mockImplementation((code) => {
       throw new Error(`process.exit(${code})`);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // normalizedLevenshtein — tested indirectly via findSimilarCommand output
+  // threshold behaviour — tested indirectly via findSimilarCommand output
   // ---------------------------------------------------------------------------
 
-  describe('normalizedLevenshtein (via findSimilarCommand output)', () => {
+  describe('threshold behaviour (via findSimilarCommand output)', () => {
+    // Absolute scores are covered in libs/domain/src/lib/normalized-levenshtein.spec.ts.
+    // These cases pin only what the command adds on top: case folding, the 0.8
+    // cutoff, and the empty-value fallback.
     beforeEach(() => {
       vi.mocked(loadConfiguration).mockReturnValue(LOADED_CONFIG);
     });
 
-    it('returns 1 for two empty strings (empty query vs empty stored value)', async () => {
-      // The function guards la===0 && lb===0 → 1, but query is trimmed in
-      // findSimilarCommand before calling normalizedLevenshtein; an all-whitespace
-      // query exits early. Test with single-char query vs single-char stored value.
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'x.key', matchType: 'exact-value', translations: { en: 'a' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'a' });
-      // score = 1.0 → 100%
+    it('reports 100% for an identical multi-character stored value', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('common.button.addItem', 'exact-value', 'Add Item')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Add Item' });
+      expect(console.log).toHaveBeenCalledWith('  common.button.addItem → "Add Item" (similarity: 100%)');
+    });
+
+    it('folds case before scoring', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('labels.greeting', 'exact-value', 'Hello World')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'hello world' });
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('(similarity: 100%)'));
     });
 
-    it('returns 0 when stored value is empty (score below 0.8 threshold)', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'x.key', matchType: 'exact-value', translations: { en: '' } },
-      ] as any);
+    it('keeps a candidate sitting exactly on the 0.8 threshold', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('btn.save', 'exact-value', 'saved')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'save' });
+      expect(console.log).toHaveBeenCalledWith('  btn.save → "saved" (similarity: 80%)');
+    });
+
+    it('drops a candidate below the 0.8 threshold', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('btn.delete', 'exact-value', 'delete risk')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'delete' });
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No similar values found'));
+    });
+
+    it('drops a candidate whose base-locale value is missing', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('x.key', 'exact-value', '')]);
       await findSimilarCommand({ collection: 'tracker', value: 'a' });
-      // score = 0 → filtered out
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No similar values found'));
-    });
-
-    it('returns 1 for identical single-character strings (100% similarity)', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'y.key', matchType: 'exact-value', translations: { en: 'z' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'z' });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('(similarity: 100%)'));
-    });
-
-    it('returns low score for completely different strings (below 0.8 threshold)', async () => {
-      // 'hello' vs 'xyz' — different lengths and chars → filtered out
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'z.key', matchType: 'exact-value', translations: { en: 'xyz' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'hello' });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No similar values found'));
-    });
-
-    it('multi-character strings score below 0.8 even when identical', async () => {
-      // 'hello' vs 'hello' scores 0.4 with this implementation — below threshold
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'btn.ok', matchType: 'exact-value', translations: { en: 'hello' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'hello' });
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No similar values found'));
     });
   });
@@ -176,10 +163,7 @@ describe('find-similar', () => {
     });
 
     it('prints "No similar values found" when no candidates pass the 0.8 threshold', async () => {
-      // Multi-character values produce scores < 0.8 with this implementation
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'a.key', matchType: 'exact-value', translations: { en: 'hello world' } },
-      ] as any);
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('a.key', 'exact-value', 'hello world')]);
       await findSimilarCommand({ collection: 'tracker', value: 'hi' });
       expect(console.log).toHaveBeenCalledWith('No similar values found for "hi".');
     });
@@ -190,77 +174,93 @@ describe('find-similar', () => {
       expect(console.log).toHaveBeenCalledWith('No similar values found for "hello".');
     });
 
-    it('prints header and matched results when a single-char candidate is above threshold', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'btn.ok', matchType: 'exact-value', translations: { en: 'x' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'x' });
-      expect(console.log).toHaveBeenCalledWith('Similar values found for "x":');
+    it('prints header and matched results when a candidate is above threshold', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('btn.ok', 'exact-value', 'Ok')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Ok' });
+      expect(console.log).toHaveBeenCalledWith('Similar values found for "Ok":');
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('btn.ok'));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('"x"'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('"Ok"'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('(similarity: 100%)'));
     });
 
     it('formats each result as "  key → \\"value\\" (similarity: N%)"', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'common.ok', matchType: 'exact-value', translations: { en: 'k' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'k' });
-      expect(console.log).toHaveBeenCalledWith('  common.ok → "k" (similarity: 100%)');
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('common.ok', 'exact-value', 'Cancel')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Cancel' });
+      expect(console.log).toHaveBeenCalledWith('  common.ok → "Cancel" (similarity: 100%)');
     });
   });
 
   // ---------------------------------------------------------------------------
-  // findSimilarCommand — filtering by matchType
+  // findSimilarCommand — matchType is not a filter
   // ---------------------------------------------------------------------------
 
-  describe('findSimilarCommand — matchType filtering', () => {
+  describe('findSimilarCommand — matchType handling', () => {
+    // searchTranslations assigns one matchType per entry, key first, so an entry
+    // whose key contains the query is labelled a key match even when its value
+    // matches too. Every candidate is scored on its base value regardless.
     beforeEach(() => {
       vi.mocked(loadConfiguration).mockReturnValue(LOADED_CONFIG);
     });
 
-    it('includes exact-value matchType candidates', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'btn.ok', matchType: 'exact-value', translations: { en: 'v' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'v' });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('btn.ok'));
+    it.each<MatchType>([
+      'exact-value',
+      'partial-value',
+      'exact-key',
+      'partial-key',
+    ])('scores a %s candidate on its base value', async (matchType) => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('btn.connect', matchType, 'Connect')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
+      expect(console.log).toHaveBeenCalledWith('  btn.connect → "Connect" (similarity: 100%)');
     });
 
-    it('includes partial-value matchType candidates', async () => {
+    it.each<MatchType>([
+      'exact-key',
+      'partial-key',
+    ])('still drops a %s candidate whose value is below the threshold', async (matchType) => {
       vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'btn.cancel', matchType: 'partial-value', translations: { en: 'q' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'q' });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('btn.cancel'));
-    });
-
-    it('excludes key-matched candidates (matchType partial-key)', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([
-        // stored value is single char matching query, but matchType is partial-key
-        { key: 'hello.world', matchType: 'partial-key', translations: { en: 'a' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'a' });
+        searchResult('errors.connectTimeout', matchType, 'The connection attempt timed out'),
+      ]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No similar values found'));
     });
 
-    it('excludes key-matched candidates (matchType exact-key)', async () => {
+    it('ranks the key-matched entry first when scores tie', async () => {
+      // searchTranslations orders exact-value above partial-key, so the canonical
+      // key arrives second; on an equal score it should still be listed first.
       vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'a', matchType: 'exact-key', translations: { en: 'a' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'a' });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No similar values found'));
-    });
-
-    it('includes only value-matched results when matchTypes are mixed', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'key.one', matchType: 'exact-key', translations: { en: 'a' } },
-        { key: 'key.two', matchType: 'exact-value', translations: { en: 'a' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'a' });
+        searchResult('dialogs.secondaryAction', 'exact-value', 'Connect'),
+        searchResult('common.button.connect', 'partial-key', 'Connect'),
+      ]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
       const calls = vi.mocked(console.log).mock.calls.map((c) => c[0] as string);
-      expect(calls.some((c) => c.includes('key.one'))).toBe(false);
-      expect(calls.some((c) => c.includes('key.two'))).toBe(true);
+      const canonicalIdx = calls.findIndex((c) => c.includes('common.button.connect'));
+      const otherIdx = calls.findIndex((c) => c.includes('dialogs.secondaryAction'));
+      expect(canonicalIdx).toBeGreaterThan(-1);
+      expect(canonicalIdx).toBeLessThan(otherIdx);
+    });
+
+    it('does not let a key match outrank a strictly better value match', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([
+        searchResult('common.button.connect', 'partial-key', 'Connects'),
+        searchResult('dialogs.secondaryAction', 'exact-value', 'Connect'),
+      ]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
+      const calls = vi.mocked(console.log).mock.calls.map((c) => c[0] as string);
+      const exactIdx = calls.findIndex((c) => c.includes('dialogs.secondaryAction'));
+      const keyIdx = calls.findIndex((c) => c.includes('common.button.connect'));
+      expect(exactIdx).toBeGreaterThan(-1);
+      expect(exactIdx).toBeLessThan(keyIdx);
+    });
+
+    it('returns a key-matched and a value-matched entry holding the same value', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([
+        searchResult('common.button.connect', 'partial-key', 'Connect'),
+        searchResult('dialogs.secondaryAction', 'exact-value', 'Connect'),
+      ]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
+      const calls = vi.mocked(console.log).mock.calls.map((c) => c[0] as string);
+      expect(calls.some((c) => c.includes('common.button.connect'))).toBe(true);
+      expect(calls.some((c) => c.includes('dialogs.secondaryAction'))).toBe(true);
     });
   });
 
@@ -274,34 +274,24 @@ describe('find-similar', () => {
     });
 
     it('sorts results by score descending', async () => {
-      // Use single-char stored values so they pass the 0.8 threshold.
-      // Query 'a': score('a','a') = 1.0 (higher), score('a','b') = 0 (filtered out).
-      // To get two results with different scores we need two single-char values
-      // that both score >= 0.8 when compared to the query.
-      // Only identical single chars score 1.0; different chars score 0.
-      // Use two identical candidates (both score 1.0) — ordering is stable by insertion.
+      // Query 'save': 'saved' scores 0.8, the exact match scores 1.0. The lower
+      // scoring candidate is listed first to prove the sort actually reorders.
       vi.mocked(searchTranslations).mockReturnValue([
-        { key: 'key.first', matchType: 'exact-value', translations: { en: 'a' } },
-        { key: 'key.second', matchType: 'exact-value', translations: { en: 'a' } },
-      ] as any);
-      await findSimilarCommand({ collection: 'tracker', value: 'a' });
+        searchResult('key.near', 'exact-value', 'saved'),
+        searchResult('key.exact', 'exact-value', 'save'),
+      ]);
+      await findSimilarCommand({ collection: 'tracker', value: 'save' });
       const calls = vi.mocked(console.log).mock.calls.map((c) => c[0] as string);
-      const firstIdx = calls.findIndex((c) => c.includes('key.first'));
-      const secondIdx = calls.findIndex((c) => c.includes('key.second'));
-      expect(firstIdx).toBeGreaterThan(-1);
-      expect(secondIdx).toBeGreaterThan(-1);
-      // Both have equal score 1.0; first should appear before second (stable)
-      expect(firstIdx).toBeLessThan(secondIdx);
+      const exactIdx = calls.findIndex((c) => c.includes('key.exact'));
+      const nearIdx = calls.findIndex((c) => c.includes('key.near'));
+      expect(exactIdx).toBeGreaterThan(-1);
+      expect(nearIdx).toBeGreaterThan(-1);
+      expect(exactIdx).toBeLessThan(nearIdx);
     });
 
     it('defaults maxResults to 5', async () => {
-      const manyCandidates = Array.from({ length: 10 }, (_, i) => ({
-        key: `key.${i}`,
-        matchType: 'exact-value' as const,
-        // single char 'a' so score = 1.0 with query 'a'
-        translations: { en: 'a' },
-      }));
-      vi.mocked(searchTranslations).mockReturnValue(manyCandidates as any);
+      const manyCandidates = Array.from({ length: 10 }, (_, i) => searchResult(`key.${i}`, 'exact-value', 'a'));
+      vi.mocked(searchTranslations).mockReturnValue(manyCandidates);
 
       await findSimilarCommand({ collection: 'tracker', value: 'a' });
 
@@ -313,12 +303,8 @@ describe('find-similar', () => {
     });
 
     it('respects custom maxResults', async () => {
-      const manyCandidates = Array.from({ length: 10 }, (_, i) => ({
-        key: `key.${i}`,
-        matchType: 'exact-value' as const,
-        translations: { en: 'a' },
-      }));
-      vi.mocked(searchTranslations).mockReturnValue(manyCandidates as any);
+      const manyCandidates = Array.from({ length: 10 }, (_, i) => searchResult(`key.${i}`, 'exact-value', 'a'));
+      vi.mocked(searchTranslations).mockReturnValue(manyCandidates);
 
       await findSimilarCommand({ collection: 'tracker', value: 'a', maxResults: 3 });
 
@@ -423,9 +409,26 @@ describe('find-similar', () => {
       expect(searchTranslations).toHaveBeenCalledWith(expect.objectContaining({ query: 'hello' }));
     });
 
-    it('calls searchTranslations with maxResults: 50 (broad pre-filter)', async () => {
+    it('requests a candidate budget far larger than the display limit', async () => {
+      // searchTranslations stops walking at maxResults, so the budget must exceed
+      // what is displayed by enough that ranking, not discovery order, decides
+      // which candidates survive.
       await findSimilarCommand({ collection: 'tracker', value: 'hello' });
-      expect(searchTranslations).toHaveBeenCalledWith(expect.objectContaining({ maxResults: 50 }));
+      const [params] = vi.mocked(searchTranslations).mock.calls[0];
+      expect(params.maxResults).toBeGreaterThanOrEqual(500);
+    });
+
+    it('warns when the candidate budget was exhausted, since results may be incomplete', async () => {
+      const full = Array.from({ length: 500 }, (_, i) => searchResult(`key.${i}`, 'exact-value', 'a'));
+      vi.mocked(searchTranslations).mockReturnValue(full);
+      await findSimilarCommand({ collection: 'tracker', value: 'a' });
+      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('only the first 500 candidates'));
+    });
+
+    it('does not warn when the candidate budget was not exhausted', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('key.one', 'exact-value', 'a')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'a' });
+      expect(console.warn).not.toHaveBeenCalled();
     });
 
     it('calls searchTranslations with the resolved baseLocale', async () => {

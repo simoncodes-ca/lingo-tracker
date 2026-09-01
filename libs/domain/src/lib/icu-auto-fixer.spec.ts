@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { extractICUPlaceholders, hasICUPlaceholders, autoFixICUPlaceholders } from './icu-auto-fixer';
+import { describe, expect, it } from 'vitest';
+import { autoFixICUPlaceholders, extractICUPlaceholders, hasICUPlaceholders } from './icu-auto-fixer';
 
 describe('extractICUPlaceholders \u2014 ICU quote escaping', () => {
   it('extracts a placeholder from a string containing a natural apostrophe', () => {
@@ -121,5 +121,35 @@ describe('autoFixICUPlaceholders \u2014 end-to-end regression', () => {
     expect(result.wasFixed).toBe(true);
     expect(result.value).toContain('{count}');
     expect(result.value).not.toContain('{nombre}');
+  });
+});
+
+describe('extractICUPlaceholders — sub-message classification', () => {
+  const CLASSIFICATION_CASES: readonly { value: string; name: string; type: string }[] = [
+    { value: '{count, plural, one {# item} other {# items}}', name: 'count', type: 'plural' },
+    { value: '{gender, select, male {he} other {they}}', name: 'gender', type: 'select' },
+    { value: '{rank, selectordinal, one {#st} other {#th}}', name: 'rank', type: 'selectordinal' },
+  ];
+
+  for (const { value, name, type } of CLASSIFICATION_CASES) {
+    it(`classifies a ${type} group as ${type}`, () => {
+      const result = extractICUPlaceholders(value);
+
+      expect(result.placeholders).toHaveLength(1);
+      expect(result.placeholders[0]?.type).toBe(type);
+      expect(result.placeholders[0]?.name).toBe(name);
+    });
+  }
+});
+
+describe('autoFixICUPlaceholders — sub-message format rewriting', () => {
+  it('rewrites a nested placeholder name inside a selectordinal format', () => {
+    const result = autoFixICUPlaceholders(
+      '{rank, selectordinal, one {#st} other {place {rank}}}',
+      '{rang, selectordinal, one {#er} other {place {rang}}}',
+    );
+
+    expect(result.wasFixed).toBe(true);
+    expect(result.value).toBe('{rank, selectordinal, one {#er} other {place {rank}}}');
   });
 });

@@ -21,6 +21,27 @@ export interface ValidateCommandOptions {
    * the command exits with code 1.
    */
   skipLocales?: readonly string[];
+
+  /**
+   * When true, values are not compiled as ICU under their own locale.
+   *
+   * ICU checking is on by default because a value that does not compile
+   * renders nothing at runtime no matter what its status says. Use this to opt
+   * out where messages are not ICU at all.
+   *
+   * Does not disable `requirePortablePlurals`, which parses rather than
+   * compiles; asking for both runs the portability rule alone.
+   */
+  skipIcu?: boolean;
+
+  /**
+   * When true, base-locale values selecting a plural branch by category
+   * (`one`, `few`, …) rather than by exact `=N` match generate warnings.
+   *
+   * Opt-in: the shape is valid in its own locale, and only becomes a problem
+   * once the base value is copied into a locale that lacks that category.
+   */
+  requirePortablePlurals?: boolean;
 }
 
 /**
@@ -44,6 +65,15 @@ export interface ValidateCommandOptions {
  * - 'translated' status → FAILURE (default) or WARNING (with --allow-translated)
  * - 'verified' status → SUCCESS (translation reviewed and approved)
  * - Missing metadata → treated as 'new' (FAILURE)
+ * - Value does not compile as ICU for its own locale → FAILURE (unless --skip-icu)
+ *
+ * **ICU Validation:**
+ * Status validation asks whether a human approved a translation. It says
+ * nothing about whether the stored value renders. Plural categories are a
+ * property of the language — `one` selects 1 in 'en', 0 and 1 in 'fr', and
+ * does not exist in 'ja' or 'ko' — so a value copied between locales can be
+ * marked 'verified' and still throw. Every value, including the base-locale
+ * source, is compiled under the locale it is stored under.
  *
  * **Exit Codes:**
  * - 0: All validations passed (all resources verified)
@@ -55,7 +85,7 @@ export interface ValidateCommandOptions {
  * - Prevent deployment of incomplete translations
  * - Enforce translation verification requirements
  *
- * @param options - Validation options (allowTranslated flag)
+ * @param options - Validation options (status strictness, locale and ICU flags)
  * @throws Never throws - exits process with appropriate code instead
  *
  * @example
@@ -65,6 +95,9 @@ export interface ValidateCommandOptions {
  *
  * // Relaxed validation - allow translated status with warnings
  * await validateCommand({ allowTranslated: true });
+ *
+ * // Status gate only, no ICU compilation
+ * await validateCommand({ skipIcu: true });
  * ```
  *
  * @example CLI Usage
@@ -74,6 +107,12 @@ export interface ValidateCommandOptions {
  *
  * # Relaxed mode (staging environments)
  * $ lingo-tracker validate --allow-translated
+ *
+ * # Status gate only, without compiling values as ICU
+ * $ lingo-tracker validate --skip-icu
+ *
+ * # Also warn about base-locale plurals that will not survive being copied
+ * $ lingo-tracker validate --require-portable-plurals
  *
  * # In CI pipeline
  * $ lingo-tracker validate || exit 1
@@ -125,9 +164,24 @@ export async function validateCommand(options: ValidateCommandOptions): Promise<
     process.exit(1);
   }
 
+  const compileValues = !options.skipIcu;
+  const requirePortablePlurals = options.requirePortablePlurals ?? false;
+
   const validationOptions = {
     allowTranslated: options.allowTranslated ?? false,
     skippedLocales: effectiveSkipped,
+    // The portability rule is a static parse, not a compilation, so an explicit
+    // request for it is honoured even alongside --skip-icu.
+    icu:
+      compileValues || requirePortablePlurals
+        ? {
+            // The base locale carries the source value copied into every
+            // translation slot, so ICU checks it alongside the targets.
+            baseLocale: config.baseLocale,
+            compileValues,
+            requirePortablePlurals,
+          }
+        : undefined,
   };
 
   const validationResult = validateResources(allCollections, localesToValidate, validationOptions);

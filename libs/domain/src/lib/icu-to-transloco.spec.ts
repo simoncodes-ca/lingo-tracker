@@ -81,6 +81,11 @@ describe('icuToTransloco', () => {
       const time = '{startTime, time, medium}';
       expect(icuToTransloco(time)).toBe(time);
     });
+
+    it('passes through a selectordinal construct unchanged', () => {
+      const selectordinal = '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}';
+      expect(icuToTransloco(selectordinal)).toBe(selectordinal);
+    });
   });
 
   describe('branch bodies that are only an argument', () => {
@@ -125,13 +130,10 @@ describe('icuToTransloco', () => {
       expect(icuToTransloco(stored)).toBe(stored);
     });
 
-    it('replaces a selectordinal construct with a plain interpolation', () => {
-      // `parsePlaceholder` recognizes no `selectordinal` head. It reads the group as a simple
-      // argument and emits the whole construct as one interpolation. The expander handles this
-      // branch-body shape, pinned by 'a selectordinal branch body that is only a placeholder,
-      // which reaches the expander only directly' in `transloco-brace-scan.spec.ts`. The
-      // expander never sees the shape through this entry point, so the detector reports it.
-      expect(icuToTransloco('{rank, selectordinal, one {{itemName}} other {#th}}')).toBe('{{ rank }}');
+    it('wraps a selectordinal branch body in an extra brace pair', () => {
+      expect(icuToTransloco('{rank, selectordinal, one {{itemName}} other {#th}}')).toBe(
+        '{rank, selectordinal, one {{{itemName}}} other {#th}}',
+      );
     });
   });
 

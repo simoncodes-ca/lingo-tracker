@@ -232,11 +232,7 @@ const EXPANSION_FIXTURES: readonly ExpansionFixture[] = [
     expected: 'This will delete {nameExists, select, hasName {{{name}}} other {this item}} and cannot be undone.',
   },
   {
-    // The expander rewrites this shape, but `icuToTransloco` routes no `selectordinal`
-    // group to it. It reads the group as a plain argument and emits `{{ rank }}`. The test
-    // 'replaces a selectordinal construct with a plain interpolation' in
-    // `icu-to-transloco.spec.ts` pins that. The detector reports the shape for that reason.
-    description: 'a selectordinal branch body that is only a placeholder, which reaches the expander only directly',
+    description: 'a selectordinal branch body that is only a placeholder',
     input: '{rank, selectordinal, one {{itemName}} other {#th}}',
     expected: '{rank, selectordinal, one {{{itemName}}} other {#th}}',
   },
@@ -366,9 +362,8 @@ interface DetectorFixture {
 /**
  * The detector reads stored values, so every entry here is already in its
  * post-conversion form. A row is flagged when its branch body is a `{{…}}` run that no
- * bundled form carries. Three runs qualify: an argument carrying a format, a run that is
- * no parameter name, and any branch body of a `selectordinal` group. `icuToTransloco`
- * emits that group as one interpolation and never routes it to the expander.
+ * bundled form carries. Two runs qualify: an argument carrying a format, and a run that
+ * is no parameter name.
  */
 const DETECTOR_FIXTURES: readonly DetectorFixture[] = [
   {
@@ -384,7 +379,7 @@ const DETECTOR_FIXTURES: readonly DetectorFixture[] = [
   {
     description: 'a selectordinal branch body that is only a placeholder',
     value: '{rank, selectordinal, one {{itemName}} other {#th}}',
-    flagged: true,
+    flagged: false,
   },
   {
     description: 'a placeholder-only branch body behind an offset clause',
