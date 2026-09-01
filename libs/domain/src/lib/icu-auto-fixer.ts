@@ -10,6 +10,7 @@
  */
 
 import { escapeRegExp } from './escape-regexp';
+import { isSubMessageKeyword, type SubMessageKeyword } from './icu-sub-message';
 
 /**
  * Represents a placeholder extracted from an ICU message
@@ -23,8 +24,8 @@ interface ICUPlaceholder {
   endPosition: number;
   /** Placeholder name (e.g., "count", "name", "0") */
   name: string;
-  /** Placeholder type (simple, plural, select, number, date, time) */
-  type: 'simple' | 'plural' | 'select' | 'number' | 'date' | 'time';
+  /** Placeholder type (simple, a sub-message keyword, number, date, time) */
+  type: 'simple' | SubMessageKeyword | 'number' | 'date' | 'time';
 }
 
 /**
@@ -283,10 +284,8 @@ function parsePlaceholder(fullText: string, startPosition: number, endPosition: 
 
   let placeholderType: ICUPlaceholder['type'] = 'simple';
 
-  if (type === 'plural') {
-    placeholderType = 'plural';
-  } else if (type === 'select') {
-    placeholderType = 'select';
+  if (isSubMessageKeyword(type)) {
+    placeholderType = type;
   } else if (type === 'number') {
     placeholderType = 'number';
   } else if (type === 'date') {
@@ -808,11 +807,11 @@ function reconstructPlaceholder(basePlaceholder: ICUPlaceholder, translationPlac
     // Use base name and type, but translation's format
     let format = translationParts.length >= 3 ? translationParts[2].trim() : baseParts[2].trim();
 
-    // For plural/select, the format string may contain nested placeholder references
+    // For a sub-message group, the format string may contain nested placeholder references
     // We need to replace the translation's placeholder name with the base placeholder name
     // For example: "one {# elemento} other {# elementos}" might have {numero} references
     // that need to become {count} references
-    if (basePlaceholder.type === 'plural' || basePlaceholder.type === 'select') {
+    if (isSubMessageKeyword(basePlaceholder.type)) {
       // Replace any instances of {translationName} with {baseName} in the format string
       const translationName = translationPlaceholder.name;
       const baseName = basePlaceholder.name;

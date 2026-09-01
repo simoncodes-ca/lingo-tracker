@@ -30,6 +30,7 @@
  */
 
 import { isQuoteToggle } from './icu-auto-fixer';
+import { isSubMessageKeyword, SUB_MESSAGE_KEYWORDS, type SubMessageKeyword } from './icu-sub-message';
 
 /**
  * Matches a run of `{`, an identifier (optionally dotted), and a run of two or more `}`.
@@ -39,16 +40,16 @@ import { isQuoteToggle } from './icu-auto-fixer';
  */
 const BRACE_RUN_PATTERN = /(\{+)\s*(\w+(?:\.\w+)*)\s*(\}\}+)/y;
 
-/** The keyword an ICU argument uses to select a sub-message. */
-type SubMessageKeyword = 'plural' | 'select' | 'selectordinal';
-
 /**
  * Matches the head of an argument body that selects a sub-message, e.g. `count, plural,`.
  * Sticky, so it can be anchored just past the `{` that opened the body.
  *
- * Group 1 is the sub-message keyword.
+ * Group 1 is the sub-message keyword. The alternation is built from
+ * `SUB_MESSAGE_KEYWORDS`, sorted longest first so a keyword that prefixes another —
+ * `select` ahead of `selectordinal` — cannot win the match and strand the rest.
  */
-const SUB_MESSAGE_ARGUMENT_PATTERN = /\s*\w+\s*,\s*(plural|select|selectordinal)\s*,/y;
+const SUB_MESSAGE_ALTERNATION = [...SUB_MESSAGE_KEYWORDS].sort((a, b) => b.length - a.length).join('|');
+const SUB_MESSAGE_ARGUMENT_PATTERN = new RegExp(`\\s*\\w+\\s*,\\s*(${SUB_MESSAGE_ALTERNATION})\\s*,`, 'y');
 
 /**
  * Reads the sub-message keyword of the argument body starting at `start`.
@@ -64,8 +65,9 @@ function readSubMessageKeyword(value: string, start: number): SubMessageKeyword 
   SUB_MESSAGE_ARGUMENT_PATTERN.lastIndex = start;
   const match = SUB_MESSAGE_ARGUMENT_PATTERN.exec(value);
 
-  // The alternation admits the three keywords and nothing else, so group 1 is one of them.
-  return match === null ? null : (match[1] as SubMessageKeyword);
+  // The alternation admits the sub-message keywords and nothing else. The guard proves
+  // that to the compiler rather than asserting it in a comment.
+  return match !== null && isSubMessageKeyword(match[1]) ? match[1] : null;
 }
 
 /**
@@ -377,27 +379,22 @@ const PLACEHOLDER_ONLY_BODY_PATTERN = /\{\{\s*\w+(?:\.\w+)*\s*\}\}/y;
  * A bundled value reaches the runtime through two passes. `DefaultTranspiler` substitutes
  * the `{{…}}` interpolations. The ICU compiler then reads the result.
  *
- * Inside a `plural` or `select` group, a branch body that is a bare argument name takes
+ * Inside a sub-message group, a branch body that is a bare argument name takes
  * the triple, `=1 {{{itemName}}}`. The interpolation matcher forbids a brace inside its
  * delimiters, so it takes the inner pair only. The outer brace stands as the branch
  * wrapper and the rendered text gains no character. Padding the body to
  * `=1 { {itemName}}` also survives both passes, but it adds a space to every rendered
  * string, so the encoding is the brace pair.
  *
- * Three shapes have no encoding. The predicate reports all three:
+ * Two shapes have no encoding. The predicate reports both:
  *
  * - A branch body whose `{{…}}` run carries a format, `{{n, number}}`.
  * - A branch body whose `{{…}}` run is no parameter name, `{{some text}}`.
- * - Any branch body of a `selectordinal` group.
  *
- * On the first two, the interpolation pass substitutes an empty string for the run and
- * strands a branch with no body. The ICU compiler rejects the whole message, so the value
- * renders in no locale. Two edits put the position out of reach of the first pass. Add
- * text beside the argument in the branch body, or move the format out of the branch.
- *
- * On the third, `icuToTransloco` reads the group as a plain argument and emits one
- * interpolation, `{{ rank }}`. The expander runs over no part of it, so no branch reaches
- * the runtime.
+ * On both, the interpolation pass substitutes an empty string for the run and strands a
+ * branch with no body. The ICU compiler rejects the whole message, so the value renders
+ * in no locale. Two edits put the position out of reach of the first pass. Add text
+ * beside the argument in the branch body, or move the format out of the branch.
  *
  * A `{{` qualifies only where a branch body begins. The innermost open brace belongs to a
  * sub-message argument. The text back to the preceding `,`, `{` or `}` holds nothing but
@@ -418,11 +415,11 @@ const PLACEHOLDER_ONLY_BODY_PATTERN = /\{\{\s*\w+(?:\.\w+)*\s*\}\}/y;
  * hasUnbundlableBranchBody('{count, plural, =1 {{n, number}} other {# items}}');
  * // → true
  *
- * hasUnbundlableBranchBody('{rank, selectordinal, one {{itemName}} other {#th}}');
- * // → true — the expander runs over no `selectordinal` group
- *
  * hasUnbundlableBranchBody('{nameExists, select, hasName {{name}} other {this item}}');
  * // → false — `expandPlaceholderOnlyBranchBodies` encodes it as the triple
+ *
+ * hasUnbundlableBranchBody('{rank, selectordinal, one {{itemName}} other {#th}}');
+ * // → false — a `selectordinal` group is encoded the same way
  * ```
  */
 export function hasUnbundlableBranchBody(value: string): boolean {
@@ -436,11 +433,7 @@ export function hasUnbundlableBranchBody(value: string): boolean {
     TRANSLOCO_INTERPOLATION_PATTERN.lastIndex = start;
     const consumedByInterpolation = TRANSLOCO_INTERPOLATION_PATTERN.test(value);
     PLACEHOLDER_ONLY_BODY_PATTERN.lastIndex = start;
-    const isBareArgument = PLACEHOLDER_ONLY_BODY_PATTERN.test(value);
-    // `icuToTransloco` emits a `selectordinal` group as one interpolation and never
-    // expands it, so no branch body of one gets wrapped, bare argument or not.
-    const enclosingKeyword = openBraces[openBraces.length - 1];
-    const carriedByExpansion = isBareArgument && enclosingKeyword !== 'selectordinal';
+    const carriedByExpansion = PLACEHOLDER_ONLY_BODY_PATTERN.test(value);
 
     if (consumedByInterpolation && !carriedByExpansion && opensSubMessageBody(value, start, openBraces)) {
       return STOP_WALK;
