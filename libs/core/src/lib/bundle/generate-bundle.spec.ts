@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as fs from 'fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { generateBundle, type GenerateBundleParams } from './generate-bundle';
-import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
+import * as fs from 'fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BundleDefinition } from '../../config/bundle-definition';
-import * as resourceLoader from './resource-loader';
-import type { FlatResource } from './resource-loader';
+import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
+import { type GenerateBundleParams, generateBundle } from './generate-bundle';
+import type { FlatResource } from './resource-loader';
+import * as resourceLoader from './resource-loader';
 
 // Mock fs and resourceLoader modules
 vi.mock('fs');
@@ -18,8 +18,8 @@ vi.mock('@simoncodes-ca/domain', async (importOriginal) => {
   return { ...original, icuToTransloco: vi.fn((value: string) => value) };
 });
 
-import { generateBundleTypes } from './type-generation/generate-types';
 import * as icuToTranslocoModule from '@simoncodes-ca/domain';
+import { generateBundleTypes } from './type-generation/generate-types';
 
 describe('generate-bundle', () => {
   let mockConfig: LingoTrackerConfig;
@@ -1038,6 +1038,23 @@ describe('generate-bundle', () => {
       const EXPANDED_OUTPUT =
         'This will delete {nameExists, select, hasName {{{name}}} other {this item}} and cannot be undone.';
 
+      /**
+       * `selectordinal` groups the emitter must carry the same way it carries `plural` and
+       * `select`: the structure stands, and a bare-argument branch body gains the triple.
+       */
+      const SELECTORDINAL_CASES: readonly { description: string; stored: string; emitted: string }[] = [
+        {
+          description: 'a selectordinal group with its branches intact',
+          stored: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+          emitted: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+        },
+        {
+          description: 'a bare-argument selectordinal branch body as the triple',
+          stored: '{rank, selectordinal, one {{itemName}} other {#th}}',
+          emitted: '{rank, selectordinal, one {{{itemName}}} other {#th}}',
+        },
+      ];
+
       /** The safe shapes that must never be reported. */
       const SAFE_VALUES: readonly string[] = [
         'x {{name} extra}',
@@ -1174,6 +1191,27 @@ describe('generate-bundle', () => {
 
         expect(writtenData.deleteConfirm).toBe(EXPANDED_OUTPUT);
       });
+
+      for (const { description, stored, emitted } of SELECTORDINAL_CASES) {
+        it(`bundles ${description}`, async () => {
+          vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'rank', value: stored }]);
+
+          const result = await generateBundle({
+            bundleKey: 'main',
+            bundleDefinition,
+            config: singleCollectionConfig,
+            locales: ['en'],
+            transformICUToTransloco: true,
+          });
+
+          expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
+
+          const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
+          const writtenData = JSON.parse(writeCall[1] as string);
+
+          expect(writtenData.rank).toBe(emitted);
+        });
+      }
 
       for (const value of SAFE_VALUES) {
         it(`does not warn for ${value}`, async () => {

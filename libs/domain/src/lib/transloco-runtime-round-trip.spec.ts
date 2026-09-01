@@ -233,6 +233,22 @@ const CASES: RoundTripCase[] = [
     expected: { rendered: '5 item' },
   },
   {
+    name: 'selectordinal group with plain branch bodies renders its ordinal',
+    stored: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+    params: { rank: 1 },
+    locale: 'en',
+    interpolated: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+    expected: { rendered: '1st' },
+  },
+  {
+    name: 'selectordinal branch body that is only an argument renders',
+    stored: '{rank, selectordinal, one {{itemName}} other {#th}}',
+    params: { rank: 1, itemName: 'Flood Risk' },
+    locale: 'en',
+    interpolated: '{rank, selectordinal, one {Flood Risk} other {#th}}',
+    expected: { rendered: 'Flood Risk' },
+  },
+  {
     name: 'branch body that is an argument carrying a format still fails to compile',
     stored: 'x {c, plural, =1 {{n, number}} other {# items}}',
     params: { c: 1, n: 5 },

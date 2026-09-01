@@ -4,21 +4,21 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { effectiveTags, hasUnbundlableBranchBody, icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
 import {
-  hasTypeDistConfigured,
   type BundleDefinition,
   type CollectionBundleDefinition,
   type EntrySelectionRule,
+  hasTypeDistConfigured,
   type TokenCasing,
 } from '../../config/bundle-definition';
-import { effectiveTags, hasUnbundlableBranchBody, icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
-import { loadCollectionResources, type FlatResource } from './resource-loader';
 import type { ResourceEntries } from '../../resource/resource-entry';
-import { matchesPattern } from './pattern-matcher';
-import { matchesTags } from './tag-filter';
 import { buildHierarchy } from './hierarchy-builder';
-import { generateBundleTypes, type GenerateTypesResult } from './type-generation/generate-types';
+import { matchesPattern } from './pattern-matcher';
+import { type FlatResource, loadCollectionResources } from './resource-loader';
+import { matchesTags } from './tag-filter';
+import { type GenerateTypesResult, generateBundleTypes } from './type-generation/generate-types';
 
 export interface GenerateBundleParams {
   readonly bundleKey: string;
@@ -257,10 +257,9 @@ function processCollection(
       if (hasUnbundlableBranchBody(resource.value)) {
         warnings.push(
           `Key '${resource.key}': a branch body cannot be carried to a Transloco runtime, so the bundled ` +
-            'value does not render as written. A branch body survives only as a plain parameter name ' +
-            'inside a plural or select group — not an argument carrying a format, not a run that is no ' +
-            'parameter name, and not inside a selectordinal group. Give the branch body text beside the ' +
-            'argument, or move the format out of the branch:\n' +
+            'value does not render as written. A branch body survives only as a plain parameter name — ' +
+            'not an argument carrying a format, and not a run that is no parameter name. Give the branch ' +
+            'body text beside the argument, or move the format out of the branch:\n' +
             '  {count, plural, =1 {{n, number} item} other {# items}}\n' +
             `  value: ${resource.value}`,
         );
