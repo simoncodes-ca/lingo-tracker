@@ -1,14 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { searchTranslations, searchResourceTree, type SearchParams } from './search';
 import type { ResourceTreeNode } from './load-resource-tree';
-import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 describe('searchTranslations', () => {
-  const testDir = join(__dirname, '__test_translations__');
+  // Outside the workspace, and unique per test. These cases write several hundred
+  // fixture files and delete them again. Under a fixed path inside `src/`, every one of
+  // those writes reached the Nx daemon's file watcher, which recomputed the project graph
+  // mid-run and raced the `afterEach` removal.
+  let testDir: string;
 
   beforeEach(() => {
-    mkdirSync(testDir, { recursive: true });
+    testDir = mkdtempSync(join(tmpdir(), 'lingo-search-'));
   });
 
   afterEach(() => {
