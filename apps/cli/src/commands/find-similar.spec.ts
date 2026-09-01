@@ -59,6 +59,7 @@ describe('find-similar', () => {
     vi.clearAllMocks();
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.spyOn(process, 'exit').mockImplementation((code) => {
       throw new Error(`process.exit(${code})`);
     });
@@ -190,47 +191,76 @@ describe('find-similar', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // findSimilarCommand — filtering by matchType
+  // findSimilarCommand — matchType is not a filter
   // ---------------------------------------------------------------------------
 
-  describe('findSimilarCommand — matchType filtering', () => {
+  describe('findSimilarCommand — matchType handling', () => {
+    // searchTranslations assigns one matchType per entry, key first, so an entry
+    // whose key contains the query is labelled a key match even when its value
+    // matches too. Every candidate is scored on its base value regardless.
     beforeEach(() => {
       vi.mocked(loadConfiguration).mockReturnValue(LOADED_CONFIG);
     });
 
-    it('includes exact-value matchType candidates', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([searchResult('btn.ok', 'exact-value', 'v')]);
-      await findSimilarCommand({ collection: 'tracker', value: 'v' });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('btn.ok'));
+    it.each<MatchType>([
+      'exact-value',
+      'partial-value',
+      'exact-key',
+      'partial-key',
+    ])('scores a %s candidate on its base value', async (matchType) => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('btn.connect', matchType, 'Connect')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
+      expect(console.log).toHaveBeenCalledWith('  btn.connect → "Connect" (similarity: 100%)');
     });
 
-    it('includes partial-value matchType candidates', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([searchResult('btn.cancel', 'partial-value', 'q')]);
-      await findSimilarCommand({ collection: 'tracker', value: 'q' });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('btn.cancel'));
-    });
-
-    it('excludes key-matched candidates (matchType partial-key)', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([searchResult('hello.world', 'partial-key', 'a')]);
-      await findSimilarCommand({ collection: 'tracker', value: 'a' });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No similar values found'));
-    });
-
-    it('excludes key-matched candidates (matchType exact-key)', async () => {
-      vi.mocked(searchTranslations).mockReturnValue([searchResult('a', 'exact-key', 'a')]);
-      await findSimilarCommand({ collection: 'tracker', value: 'a' });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No similar values found'));
-    });
-
-    it('includes only value-matched results when matchTypes are mixed', async () => {
+    it.each<MatchType>([
+      'exact-key',
+      'partial-key',
+    ])('still drops a %s candidate whose value is below the threshold', async (matchType) => {
       vi.mocked(searchTranslations).mockReturnValue([
-        searchResult('key.one', 'exact-key', 'a'),
-        searchResult('key.two', 'exact-value', 'a'),
+        searchResult('errors.connectTimeout', matchType, 'The connection attempt timed out'),
       ]);
-      await findSimilarCommand({ collection: 'tracker', value: 'a' });
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('No similar values found'));
+    });
+
+    it('ranks the key-matched entry first when scores tie', async () => {
+      // searchTranslations orders exact-value above partial-key, so the canonical
+      // key arrives second; on an equal score it should still be listed first.
+      vi.mocked(searchTranslations).mockReturnValue([
+        searchResult('dialogs.secondaryAction', 'exact-value', 'Connect'),
+        searchResult('common.button.connect', 'partial-key', 'Connect'),
+      ]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
       const calls = vi.mocked(console.log).mock.calls.map((c) => c[0] as string);
-      expect(calls.some((c) => c.includes('key.one'))).toBe(false);
-      expect(calls.some((c) => c.includes('key.two'))).toBe(true);
+      const canonicalIdx = calls.findIndex((c) => c.includes('common.button.connect'));
+      const otherIdx = calls.findIndex((c) => c.includes('dialogs.secondaryAction'));
+      expect(canonicalIdx).toBeGreaterThan(-1);
+      expect(canonicalIdx).toBeLessThan(otherIdx);
+    });
+
+    it('does not let a key match outrank a strictly better value match', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([
+        searchResult('common.button.connect', 'partial-key', 'Connects'),
+        searchResult('dialogs.secondaryAction', 'exact-value', 'Connect'),
+      ]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
+      const calls = vi.mocked(console.log).mock.calls.map((c) => c[0] as string);
+      const exactIdx = calls.findIndex((c) => c.includes('dialogs.secondaryAction'));
+      const keyIdx = calls.findIndex((c) => c.includes('common.button.connect'));
+      expect(exactIdx).toBeGreaterThan(-1);
+      expect(exactIdx).toBeLessThan(keyIdx);
+    });
+
+    it('returns a key-matched and a value-matched entry holding the same value', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([
+        searchResult('common.button.connect', 'partial-key', 'Connect'),
+        searchResult('dialogs.secondaryAction', 'exact-value', 'Connect'),
+      ]);
+      await findSimilarCommand({ collection: 'tracker', value: 'Connect' });
+      const calls = vi.mocked(console.log).mock.calls.map((c) => c[0] as string);
+      expect(calls.some((c) => c.includes('common.button.connect'))).toBe(true);
+      expect(calls.some((c) => c.includes('dialogs.secondaryAction'))).toBe(true);
     });
   });
 
@@ -379,9 +409,26 @@ describe('find-similar', () => {
       expect(searchTranslations).toHaveBeenCalledWith(expect.objectContaining({ query: 'hello' }));
     });
 
-    it('calls searchTranslations with maxResults: 50 (broad pre-filter)', async () => {
+    it('requests a candidate budget far larger than the display limit', async () => {
+      // searchTranslations stops walking at maxResults, so the budget must exceed
+      // what is displayed by enough that ranking, not discovery order, decides
+      // which candidates survive.
       await findSimilarCommand({ collection: 'tracker', value: 'hello' });
-      expect(searchTranslations).toHaveBeenCalledWith(expect.objectContaining({ maxResults: 50 }));
+      const [params] = vi.mocked(searchTranslations).mock.calls[0];
+      expect(params.maxResults).toBeGreaterThanOrEqual(500);
+    });
+
+    it('warns when the candidate budget was exhausted, since results may be incomplete', async () => {
+      const full = Array.from({ length: 500 }, (_, i) => searchResult(`key.${i}`, 'exact-value', 'a'));
+      vi.mocked(searchTranslations).mockReturnValue(full);
+      await findSimilarCommand({ collection: 'tracker', value: 'a' });
+      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('only the first 500 candidates'));
+    });
+
+    it('does not warn when the candidate budget was not exhausted', async () => {
+      vi.mocked(searchTranslations).mockReturnValue([searchResult('key.one', 'exact-value', 'a')]);
+      await findSimilarCommand({ collection: 'tracker', value: 'a' });
+      expect(console.warn).not.toHaveBeenCalled();
     });
 
     it('calls searchTranslations with the resolved baseLocale', async () => {

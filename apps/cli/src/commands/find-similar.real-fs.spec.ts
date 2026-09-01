@@ -31,6 +31,7 @@ describe('find-similar (real fs)', () => {
 
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -103,6 +104,65 @@ describe('find-similar (real fs)', () => {
     await findSimilarCommand({ collection: 'main', value: 'delete' });
 
     expect(loggedLines()).toContain('No similar values found for "delete".');
+  });
+
+  it('suggests an entry whose key contains the query text', async () => {
+    // Regression for #75: searchTranslations classifies this entry as a key
+    // match, which used to suppress it before scoring — hiding exactly the
+    // well-named canonical key a caller most wants to reuse.
+    await addResource('common.button.connect', 'Connect');
+
+    await findSimilarCommand({ collection: 'main', value: 'Connect' });
+
+    expect(loggedLines()).toContain('  common.button.connect → "Connect" (similarity: 100%)');
+  });
+
+  it('suggests both a key-matched and a value-matched entry holding the same value', async () => {
+    await addResource('common.button.connect', 'Connect');
+    await addResource('dialogs.secondaryAction', 'Connect');
+
+    await findSimilarCommand({ collection: 'main', value: 'Connect' });
+
+    const lines = loggedLines();
+    expect(lines).toContain('  common.button.connect → "Connect" (similarity: 100%)');
+    expect(lines).toContain('  dialogs.secondaryAction → "Connect" (similarity: 100%)');
+    // The canonical key is listed at least as highly as the coincidental one.
+    expect(lines.indexOf('  common.button.connect → "Connect" (similarity: 100%)')).toBeLessThan(
+      lines.indexOf('  dialogs.secondaryAction → "Connect" (similarity: 100%)'),
+    );
+  });
+
+  it('finds a match that many key hits would otherwise crowd out', async () => {
+    // Regression for the candidate-budget half of #75: searchTranslations stops
+    // walking once it has maxResults hits, so the candidate budget must exceed
+    // the number of hits that precede a real match in the walk. 55 noise entries
+    // are enough to exhaust any budget at or below the old cap of 50, and far
+    // more than the display limit of 5. 'noise' sorts before 'zz', so the match
+    // is walked last.
+    for (let i = 0; i < 55; i++) {
+      await addResource(`noise.cancelVariant${i}`, `Cancel the ${i} pending upload`);
+    }
+    await addResource('zz.dismiss', 'Cancel');
+
+    await findSimilarCommand({ collection: 'main', value: 'Cancel' });
+
+    expect(loggedLines()).toContain('  zz.dismiss → "Cancel" (similarity: 100%)');
+  });
+
+  it('still rejects a key-matched entry whose value is not similar', async () => {
+    // The key contains the query but the value does not resemble it, so the
+    // threshold must still discard it — key hits are scored, not waved through.
+    await addResource('errors.connectTimeout', 'The connection attempt timed out');
+
+    // The entry is reachable on its own value, so the rejection below is the
+    // threshold rejecting it rather than the search never returning it.
+    await findSimilarCommand({ collection: 'main', value: 'The connection attempt timed out' });
+    expect(loggedLines()).toContain('  errors.connectTimeout → "The connection attempt timed out" (similarity: 100%)');
+    vi.mocked(console.log).mockClear();
+
+    await findSimilarCommand({ collection: 'main', value: 'Connect' });
+
+    expect(loggedLines()).toContain('No similar values found for "Connect".');
   });
 
   it('reports no match for a value that was never added', async () => {

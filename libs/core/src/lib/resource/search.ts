@@ -8,6 +8,11 @@ import type { ResourceTreeNode } from './load-resource-tree';
 
 /**
  * Match type for search results.
+ *
+ * An entry carries exactly one match type, and the key is checked first: an
+ * entry whose key contains the query is reported as a key match even when its
+ * value matches the query too. Callers that care about value similarity must
+ * therefore inspect the value themselves rather than filtering on this field.
  */
 export type MatchType = 'exact-key' | 'partial-key' | 'exact-value' | 'partial-value';
 

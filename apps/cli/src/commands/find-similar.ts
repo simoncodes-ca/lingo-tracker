@@ -3,6 +3,17 @@ import { loadConfiguration } from '../utils';
 import { searchTranslations } from '@simoncodes-ca/core';
 import { normalizedLevenshtein } from '@simoncodes-ca/domain';
 
+/**
+ * How many candidates to score. searchTranslations stops walking once it has
+ * this many hits, so the budget must be large enough that ranking, not
+ * discovery order, decides what survives — while still bounding the walk on a
+ * very short query that matches most of the store.
+ */
+const CANDIDATE_LIMIT = 500;
+
+/** Minimum similarity for a candidate to be reported as a match. */
+const THRESHOLD = 0.8;
+
 export interface FindSimilarOptions {
   collection?: string;
   value?: string;
@@ -33,28 +44,42 @@ export async function findSimilarCommand(options: FindSimilarOptions): Promise<v
   const translationsFolder = path.resolve(cwd, collectionConfig.translationsFolder);
   const baseLocale = collectionConfig.baseLocale || config.baseLocale || 'en';
   const query = options.value.trim();
-  const maxResults = options.maxResults ?? 5;
+  const displayLimit = options.maxResults ?? 5;
 
   // Use a broad search to get candidates (pass the whole query for substring pre-filter)
   const candidates = searchTranslations({
     translationsFolder,
     query,
-    maxResults: 50,
+    maxResults: CANDIDATE_LIMIT,
     baseLocale,
   });
 
-  // Score each value-matched candidate with normalized Levenshtein
-  const THRESHOLD = 0.8;
+  // Score every candidate on its base value, whatever its matchType: a key match
+  // pre-empts a value match upstream (see MatchType), so filtering on matchType
+  // discarded the well-named canonical keys this command exists to surface. The
+  // threshold is what separates a real match from a coincidental one.
   const scored = candidates
-    .filter((r) => r.matchType === 'exact-value' || r.matchType === 'partial-value')
     .map((r) => {
       const storedValue = r.translations[baseLocale] ?? '';
       const score = normalizedLevenshtein(query.toLowerCase(), storedValue.toLowerCase());
-      return { key: r.key, value: storedValue, score };
+      const keyMatch = r.matchType === 'exact-key' || r.matchType === 'partial-key';
+      return { key: r.key, value: storedValue, score, keyMatch };
     })
     .filter((r) => r.score >= THRESHOLD)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, maxResults);
+    .sort((a, b) => {
+      // Score decides first: a key hit never outranks a closer value.
+      if (b.score !== a.score) return b.score - a.score;
+      // On a tie, prefer the entry whose key is also named after the query — it
+      // is the canonical, reusable key a caller is looking for.
+      return Number(b.keyMatch) - Number(a.keyMatch);
+    })
+    .slice(0, displayLimit);
+
+  if (candidates.length >= CANDIDATE_LIMIT) {
+    console.warn(
+      `Note: only the first ${CANDIDATE_LIMIT} candidates were compared. Narrow the query for a complete result.`,
+    );
+  }
 
   if (scored.length === 0) {
     console.log(`No similar values found for "${query}".`);
