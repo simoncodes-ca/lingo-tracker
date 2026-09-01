@@ -104,6 +104,12 @@ importers:
       '@jsverse/utils':
         specifier: 1.0.0-beta.5
         version: 1.0.0-beta.5
+      '@messageformat/core':
+        specifier: 3.4.0
+        version: 3.4.0
+      '@messageformat/parser':
+        specifier: 5.1.1
+        version: 5.1.1
       '@nestjs/common':
         specifier: ^11.0.0
         version: 11.1.6(reflect-metadata@0.1.14)(rxjs@7.8.2)
@@ -186,12 +192,6 @@ importers:
       '@eslint/js':
         specifier: ^9.8.0
         version: 9.36.0
-      '@messageformat/core':
-        specifier: 3.4.0
-        version: 3.4.0
-      '@messageformat/parser':
-        specifier: 5.1.1
-        version: 5.1.1
       '@nestjs/schematics':
         specifier: ^11.0.0
         version: 11.0.7(chokidar@4.0.3)(typescript@5.9.2)
@@ -545,7 +545,6 @@ packages:
   '@angular/animations@20.2.4':
     resolution: {integrity: sha512-mXiTlXZgAF4uYonOt7l2w7uvLLTJEk6jqs3H291bYuoDRM8R166UjN7ygAeBmPiJ4TLMyKGkwMQy3b1Vvw4RQA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
-    deprecated: '@angular/animations is deprecated. Use `animate.enter` and `animate.leave` instead. For more information see: https://v22.angular.dev/guide/animations.'
     peerDependencies:
       '@angular/core': 20.2.4
 
