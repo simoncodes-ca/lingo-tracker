@@ -244,6 +244,59 @@ describe('bundleCommand', () => {
       expect(console.log).toHaveBeenCalledWith('  ✅ Locales: en, fr, es');
     });
 
+    it('should suppress progress and success output in quiet mode', async () => {
+      await bundleCommand({ name: 'core', quiet: true });
+
+      expect(console.log).not.toHaveBeenCalled();
+    });
+
+    it('should display warnings in quiet mode', async () => {
+      mockGenerateBundle.mockReturnValue({
+        bundleKey: 'core',
+        filesGenerated: 3,
+        warnings: ['Warning 1'],
+        localesProcessed: ['en', 'fr'],
+      });
+
+      await bundleCommand({ name: 'core', quiet: true });
+
+      expect(console.log).toHaveBeenCalledTimes(1);
+      expect(console.log).toHaveBeenCalledWith('  ⚠️  Warnings: 1');
+      expect(console.log).not.toHaveBeenCalledWith('       - Warning 1');
+    });
+
+    it('should display errors in quiet mode', async () => {
+      mockGenerateBundle.mockImplementation(() => {
+        throw new Error('Bundle generation failed');
+      });
+
+      await bundleCommand({ name: 'core', quiet: true });
+
+      expect(console.log).toHaveBeenCalledTimes(1);
+      expect(console.log).toHaveBeenCalledWith('  ❌ Bundle generation failed');
+    });
+
+    it('should display type generation errors in quiet mode', async () => {
+      mockGenerateBundle.mockReturnValue({
+        bundleKey: 'core',
+        filesGenerated: 3,
+        warnings: [],
+        localesProcessed: ['en'],
+        typeGenerationResult: {
+          bundleKey: 'core',
+          typeDistFile: 'src/generated/core-tokens.ts',
+          keysCount: 0,
+          fileGenerated: false,
+          errorReason: 'Unable to write type file',
+        },
+      });
+
+      await bundleCommand({ name: 'core', quiet: true });
+
+      expect(console.log).toHaveBeenCalledTimes(1);
+      expect(console.log).toHaveBeenCalledWith('  └─ Types: Error (Unable to write type file)');
+    });
+
     it('should display warnings count when warnings exist', async () => {
       mockGenerateBundle.mockReturnValue({
         bundleKey: 'core',
@@ -298,6 +351,31 @@ describe('bundleCommand', () => {
       expect(console.log).toHaveBeenCalledWith('─'.repeat(50));
       expect(console.log).toHaveBeenCalledWith('  Total files generated: 5');
       expect(console.log).toHaveBeenCalledWith('  Total warnings: 1');
+    });
+
+    it('should display warning totals in quiet mode for multiple bundles', async () => {
+      mockGenerateBundle
+        .mockReturnValueOnce({
+          bundleKey: 'core',
+          filesGenerated: 3,
+          warnings: [],
+          localesProcessed: ['en', 'fr', 'es'],
+        })
+        .mockReturnValueOnce({
+          bundleKey: 'admin',
+          filesGenerated: 2,
+          warnings: ['Warning 1'],
+          localesProcessed: ['en', 'fr'],
+        });
+
+      await bundleCommand({ name: 'core,admin', quiet: true });
+
+      expect(console.log).not.toHaveBeenCalledWith('\n📊 Summary (2 bundles)');
+      expect(console.log).not.toHaveBeenCalledWith('  Total files generated: 5');
+      expect(console.log).toHaveBeenCalledWith('  Total warnings: 1');
+      expect(console.log).toHaveBeenCalledWith('  Run with --verbose to see warning details');
+      expect(console.log).toHaveBeenCalledWith('  ⚠️  Warnings: 1');
+      expect(console.log).not.toHaveBeenCalledWith('       - Warning 1');
     });
 
     it('should display type generation success', async () => {

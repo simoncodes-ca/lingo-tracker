@@ -175,6 +175,7 @@ program
   .description('Generate translation bundles for deployment')
   .option('--name <names>', 'Bundle name(s) - single name or comma-separated (e.g., core,admin)')
   .option('--locale <locales>', 'Locale(s) to generate - comma-separated (e.g., en,fr)')
+  .option('--quiet', 'Suppress progress and success output (warnings and errors are still shown)')
   .option('--verbose', 'Show detailed output including warnings')
   .addOption(new Option('--token-casing <casing>', 'Token property key casing').choices(['upperCase', 'camelCase']))
   .option(
