@@ -1,3 +1,18 @@
+# [0.17.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.16.0...v0.17.0) (2026-09-01)
+
+
+### Bug Fixes
+
+* **cli:** stop find-similar discarding entries whose key matches the query ([8cd8559](https://github.com/simoncodes-ca/lingo-tracker/commit/8cd8559d1e61b8793b594f6755cd917ed7af992f)), closes [#74](https://github.com/simoncodes-ca/lingo-tracker/issues/74) [#75](https://github.com/simoncodes-ca/lingo-tracker/issues/75)
+* **deps:** resolve reported dependency vulnerabilities ([207fe3d](https://github.com/simoncodes-ca/lingo-tracker/commit/207fe3d87044db6d081acd68aefe11f331e9377f))
+* **domain:** correct normalizedLevenshtein scoring for identical strings ([8f9f2a4](https://github.com/simoncodes-ca/lingo-tracker/commit/8f9f2a476e2239bc38fa2612a562430f942ca3a4)), closes [#75](https://github.com/simoncodes-ca/lingo-tracker/issues/75) [#74](https://github.com/simoncodes-ca/lingo-tracker/issues/74)
+* **domain:** keep selectordinal branches in bundled output ([d2930cb](https://github.com/simoncodes-ca/lingo-tracker/commit/d2930cbe7b47dac28b1b6086b01d783e39938e19)), closes [#69](https://github.com/simoncodes-ca/lingo-tracker/issues/69)
+
+
+### Features
+
+* **validate:** compile every stored value as ICU for its own locale ([90d829f](https://github.com/simoncodes-ca/lingo-tracker/commit/90d829f934231f46ac6b98ac2d1e8ac1ac4e0e48)), closes [#68](https://github.com/simoncodes-ca/lingo-tracker/issues/68)
+
 # [0.16.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.15.0...v0.16.0) (2026-08-31)
 
 
