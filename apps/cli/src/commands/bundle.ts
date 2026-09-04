@@ -6,6 +6,7 @@ import { loadConfiguration, parseCommaSeparatedList, ConsoleFormatter } from '..
 export interface BundleOptions {
   name?: string;
   locale?: string;
+  quiet?: boolean;
   verbose?: boolean;
   /** CLI-level override for token casing. Takes precedence over all config file values. */
   tokenCasing?: TokenCasing;
@@ -92,9 +93,11 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
       continue;
     }
 
-    console.log('');
-    ConsoleFormatter.progress(`Generating bundle: ${bundleKey}`);
-    if (options.verbose && localeFilter) {
+    if (!options.quiet) {
+      console.log('');
+      ConsoleFormatter.progress(`Generating bundle: ${bundleKey}`);
+    }
+    if (!options.quiet && options.verbose && localeFilter) {
       ConsoleFormatter.indent(`Locales: ${localeFilter.join(', ')}`);
     }
 
@@ -117,30 +120,36 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
         localesProcessed: result.localesProcessed,
       });
 
-      ConsoleFormatter.indent(`✅ Files generated: ${result.filesGenerated}`);
-      ConsoleFormatter.indent(`✅ Locales: ${result.localesProcessed.join(', ')}`);
+      if (!options.quiet) {
+        ConsoleFormatter.indent(`✅ Files generated: ${result.filesGenerated}`);
+        ConsoleFormatter.indent(`✅ Locales: ${result.localesProcessed.join(', ')}`);
+      }
 
       if (result.typeGenerationResult) {
         if (result.typeGenerationResult.fileGenerated) {
-          ConsoleFormatter.indent(
-            `└─ Types: ${result.typeGenerationResult.typeDistFile} (${result.typeGenerationResult.keysCount} keys)`,
-          );
+          if (!options.quiet) {
+            ConsoleFormatter.indent(
+              `└─ Types: ${result.typeGenerationResult.typeDistFile} (${result.typeGenerationResult.keysCount} keys)`,
+            );
+          }
         } else if (result.typeGenerationResult.errorReason) {
           ConsoleFormatter.indent(`└─ Types: Error (${result.typeGenerationResult.errorReason})`);
         } else if (result.typeGenerationResult.skippedReason) {
-          const skippedReasonMessages: Record<string, string> = {
-            'empty-bundle': 'bundle has no keys',
-            'not-configured': 'no typeDistFile configured',
-          };
-          const skippedMessage =
-            skippedReasonMessages[result.typeGenerationResult.skippedReason] ??
-            result.typeGenerationResult.skippedReason;
-          ConsoleFormatter.indent(`└─ Types: Skipped (${skippedMessage})`);
+          if (!options.quiet) {
+            const skippedReasonMessages: Record<string, string> = {
+              'empty-bundle': 'bundle has no keys',
+              'not-configured': 'no typeDistFile configured',
+            };
+            const skippedMessage =
+              skippedReasonMessages[result.typeGenerationResult.skippedReason] ??
+              result.typeGenerationResult.skippedReason;
+            ConsoleFormatter.indent(`└─ Types: Skipped (${skippedMessage})`);
+          }
         }
       } else if (hasTypeDistConfigured(bundleDefinition)) {
         // Should have result if configured, but just in case
         ConsoleFormatter.indent(`└─ Types: Failed (No result returned)`);
-      } else {
+      } else if (!options.quiet) {
         ConsoleFormatter.indent(`└─ Types: Skipped (no typeDistFile configured)`);
       }
 
@@ -182,8 +191,10 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
       },
     );
 
-    ConsoleFormatter.section(`Summary (${totals.bundlesProcessed} bundles)`);
-    ConsoleFormatter.keyValue('Total files generated', totals.filesGenerated);
+    if (!options.quiet) {
+      ConsoleFormatter.section(`Summary (${totals.bundlesProcessed} bundles)`);
+      ConsoleFormatter.keyValue('Total files generated', totals.filesGenerated);
+    }
 
     if (totals.warningsCount > 0) {
       ConsoleFormatter.keyValue('Total warnings', totals.warningsCount);
@@ -194,7 +205,9 @@ export async function bundleCommand(options: BundleOptions): Promise<void> {
 
     const errors = bundleResults.filter((r) => r.error);
     if (errors.length > 0) {
-      console.log('');
+      if (!options.quiet) {
+        console.log('');
+      }
       ConsoleFormatter.warning(`${errors.length} bundle(s) failed to generate`);
     }
   }

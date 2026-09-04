@@ -903,6 +903,7 @@ lingo-tracker bundle [options]
 - `--token-constant-name <name>` - Custom name for the generated TypeScript constant. Must be a valid JavaScript identifier. Only works when targeting a single bundle (via `--name`). Overrides `tokenConstantName` in the bundle config
 - `--no-transform-icu-to-transloco` - Disable ICU to Transloco format conversion in bundle output
 - `--debug-keys [locale]` - Also emit a debug bundle where every value equals its own dot-delimited key. Useful for visually locating untranslated strings at runtime by switching your app to this locale. If no locale code is provided, defaults to `99` (e.g. `main.99.json`). ICU transformation is skipped for the debug bundle.
+- `--quiet` - Suppress progress and success output (warnings and errors are still shown)
 - `--verbose` - Show detailed output including all warnings
 
 **What Bundle Generation Does:**
