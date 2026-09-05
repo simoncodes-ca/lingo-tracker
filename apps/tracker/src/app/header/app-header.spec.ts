@@ -30,14 +30,20 @@ describe('AppHeader', () => {
   };
 
   beforeEach(async () => {
-    // ThemeService reads prefers-color-scheme on construction; jsdom has no matchMedia.
+    // ThemeService reads prefers-color-scheme on construction and the CDK
+    // BreakpointObserver subscribes through the legacy addListener API; jsdom
+    // has no matchMedia at all, so the stub has to answer both.
     window.matchMedia = vi.fn(
-      () =>
+      (query: string) =>
         ({
           matches: false,
-          media: '(prefers-color-scheme: dark)',
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
           addEventListener: vi.fn(),
           removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
         }) as unknown as MediaQueryList,
     );
 
