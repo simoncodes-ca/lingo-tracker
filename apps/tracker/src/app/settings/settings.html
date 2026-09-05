@@ -52,7 +52,10 @@
       <span class="terms-count">{{ TOKENS.SETTINGS.PROTECTEDTERMSCOUNTX | transloco : { count: termCount() } }}</span>
     </div>
 
-    <p class="terms-hint">{{ TOKENS.SETTINGS.PROTECTEDTERMSHINT | transloco }}</p>
+    <div class="terms-note">
+      <mat-icon class="terms-note-icon">info</mat-icon>
+      <p class="terms-note-text">{{ TOKENS.SETTINGS.PROTECTEDTERMSHINT | transloco }}</p>
+    </div>
 
     @if (protectedTermsFilePath(); as filePath) {
       <p class="terms-file">

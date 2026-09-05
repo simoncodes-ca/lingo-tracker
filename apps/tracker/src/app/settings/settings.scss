@@ -103,10 +103,33 @@
   white-space: nowrap;
 }
 
-.terms-hint {
-  margin: var(--spacing-2) 0 0;
-  max-width: 62ch;
-  color: var(--color-text-secondary);
+// Information callout. One flat panel, no accent rule down the side: the tint
+// and the icon already say what kind of block this is.
+.terms-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  margin: var(--spacing-3) 0 0;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--color-info) 28%, transparent);
+  border-radius: var(--border-radius-lg);
+  background: color-mix(in srgb, var(--color-info) 10%, transparent);
+}
+
+.terms-note-icon {
+  flex: none;
+  // Nudged onto the first line's optical centre rather than its box top.
+  margin-top: 1px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: color-mix(in srgb, var(--color-info) 75%, var(--color-text-primary));
+}
+
+.terms-note-text {
+  margin: 0;
+  // Secondary text on a tinted surface takes its cast from that hue, not grey.
+  color: color-mix(in srgb, var(--color-info) 20%, var(--color-text-primary));
   font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
 }
@@ -630,7 +653,7 @@
     padding-block: var(--spacing-4);
   }
 
-  .terms-hint,
+  .terms-note,
   .terms-file {
     display: none;
   }
