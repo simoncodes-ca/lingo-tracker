@@ -46,6 +46,19 @@ pre {
   outline-offset: 2px;
 }
 
+// Browser-supplied surfaces theming: selection, form accents, scrollbars
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
+  color: var(--color-text-primary);
+}
+
+:root {
+  accent-color: var(--color-primary);
+  caret-color: var(--color-primary);
+  scrollbar-color: var(--color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
 // Search term highlighting
 mark.search-highlight {
   background-color: var(--color-highlight);

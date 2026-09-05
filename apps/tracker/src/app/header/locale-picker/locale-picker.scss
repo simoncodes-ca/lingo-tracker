@@ -1,17 +1,34 @@
+// A globe plus a locale code does not fit an icon button's fixed square — the
+// icon was being clipped to a sliver. This is a text button sized to its
+// content, kept to the same height as the icon buttons beside it.
 .locale-button {
-  color: var(--color-text-secondary);
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-1);
-  margin-right: var(--spacing-2);
+  min-width: 0;
+  // Matches the visible state layer of the icon buttons beside it, so all three
+  // hover surfaces sit on one baseline.
+  height: 40px;
+  padding: 0 var(--spacing-2);
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
 
   &:hover {
     color: var(--color-text-primary);
+  }
+
+  .mat-icon {
+    flex: none;
+    margin: 0;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
   }
 
   .locale-code {
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-semibold);
     line-height: 1;
+    letter-spacing: 0.02em;
   }
 }

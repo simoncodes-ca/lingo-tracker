@@ -1,6 +1,36 @@
 <div class="settings-page">
   <header class="settings-header">
     <h1 class="settings-title">{{ TOKENS.SETTINGS.TITLE | transloco }}</h1>
+
+    <!-- On a first run there is nothing to save yet; the bar arrives with the first change. -->
+    @if (!isEmpty() || hasChanges()) {
+      <div class="terms-bar" [class.terms-bar--dirty]="hasChanges()">
+        <p class="terms-bar-status" aria-live="polite">
+          @if (hasChanges()) {
+            <mat-icon class="terms-bar-icon">edit_note</mat-icon>
+            <span>{{ TOKENS.SETTINGS.PROTECTEDTERMSUNSAVEDCHANGESX | transloco : { count: changeCount() } }}</span>
+          } @else {
+            <mat-icon class="terms-bar-icon">check_circle</mat-icon>
+            <span>{{ TOKENS.SETTINGS.PROTECTEDTERMSALLSAVED | transloco }}</span>
+          }
+        </p>
+
+        <div class="terms-bar-actions">
+          <button mat-button type="button" (click)="revertAll()" [disabled]="!hasChanges() || store.isLoading()">
+            {{ TOKENS.SETTINGS.PROTECTEDTERMSREVERTALL | transloco }}
+          </button>
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            (click)="save()"
+            [disabled]="!hasChanges() || store.isLoading()"
+          >
+            {{ TOKENS.SETTINGS.SAVE | transloco }}
+          </button>
+        </div>
+      </div>
+    }
   </header>
 
   @if (store.isLoading()) {
@@ -8,51 +38,228 @@
   }
 
   @if (store.error(); as error) {
-    <div class="settings-error" role="alert">{{ error }}</div>
+    <div class="settings-error" role="alert">
+      <mat-icon class="settings-error-icon">error_outline</mat-icon>
+      <span>{{ error }}</span>
+    </div>
   }
 
-  <section class="settings-section" aria-labelledby="settings-protected-terms-title">
-    <h2 id="settings-protected-terms-title" class="settings-section-title">
-      {{ TOKENS.SETTINGS.PROTECTEDTERMSLABEL | transloco }}
-    </h2>
+  <section class="terms" aria-labelledby="settings-protected-terms-title">
+    <div class="terms-heading">
+      <h2 id="settings-protected-terms-title" class="terms-title">
+        {{ TOKENS.SETTINGS.PROTECTEDTERMSLABEL | transloco }}
+      </h2>
+      <span class="terms-count">{{ TOKENS.SETTINGS.PROTECTEDTERMSCOUNTX | transloco : { count: termCount() } }}</span>
+    </div>
 
-    <mat-form-field appearance="outline" class="settings-field">
-      <mat-chip-grid #termChipGrid>
-        @for (term of protectedTermsList(); track term) {
-          <mat-chip-row (removed)="removeProtectedTerm(term)">
-            {{ term }}
-            <button matChipRemove [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.REMOVETAGX | transloco : { tag: term }">
-              <mat-icon>cancel</mat-icon>
-            </button>
-          </mat-chip-row>
-        }
-      </mat-chip-grid>
-      <input
-        [placeholder]="TOKENS.SETTINGS.PROTECTEDTERMSADDPLACEHOLDER | transloco"
-        [matChipInputFor]="termChipGrid"
-        [matChipInputSeparatorKeyCodes]="termSeparatorKeyCodes"
-        (matChipInputTokenEnd)="addProtectedTerm($event)"
-        autocomplete="off"
-      />
-      <mat-hint>{{ TOKENS.SETTINGS.PROTECTEDTERMSHINT | transloco }}</mat-hint>
-    </mat-form-field>
+    <div class="terms-note">
+      <mat-icon class="terms-note-icon">info</mat-icon>
+      <p class="terms-note-text">{{ TOKENS.SETTINGS.PROTECTEDTERMSHINT | transloco }}</p>
+    </div>
 
     @if (protectedTermsFilePath(); as filePath) {
-      <p class="settings-protected-terms-file">
-        {{ TOKENS.SETTINGS.PROTECTEDTERMSFILELABEL | transloco : { file: filePath } }}
+      <p class="terms-file">
+        <mat-icon class="terms-file-icon">description</mat-icon>
+        <!-- Truncated on narrow screens; the raw path is not translatable content. -->
+        <span [title]="filePath">{{ TOKENS.SETTINGS.PROTECTEDTERMSFILELABEL | transloco : { file: filePath } }}</span>
       </p>
     }
 
-    <div class="settings-actions">
-      <button
-        mat-raised-button
-        color="primary"
-        type="button"
-        (click)="save()"
-        [disabled]="store.isLoading()"
-      >
-        {{ TOKENS.SETTINGS.SAVE | transloco }}
+    <form class="terms-add" (submit)="$event.preventDefault(); addTerm()">
+      <mat-form-field appearance="outline" class="terms-add-field" subscriptSizing="dynamic">
+        <mat-icon matPrefix class="terms-add-icon">add</mat-icon>
+        <input
+          matInput
+          type="text"
+          name="protectedTerm"
+          autocomplete="off"
+          spellcheck="false"
+          [value]="addDraft()"
+          (input)="onAddDraftChange($any($event.target).value)"
+          [placeholder]="TOKENS.SETTINGS.PROTECTEDTERMSADDPLACEHOLDER | transloco"
+          [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSADDARIALABEL | transloco"
+          [attr.aria-invalid]="addError() ? 'true' : null"
+          [attr.aria-describedby]="addError() ? 'settings-add-error' : null"
+        />
+      </mat-form-field>
+      <button mat-flat-button color="primary" type="submit" class="terms-add-button" [disabled]="!canAdd()">
+        {{ TOKENS.SETTINGS.PROTECTEDTERMSADDBUTTON | transloco }}
       </button>
-    </div>
+    </form>
+
+    @if (addError(); as duplicate) {
+      <p class="terms-inline-error" id="settings-add-error" role="alert">
+        <mat-icon class="terms-inline-error-icon">error_outline</mat-icon>
+        <span>{{ TOKENS.SETTINGS.PROTECTEDTERMSDUPLICATEX | transloco : { term: duplicate } }}</span>
+      </p>
+    }
+
+    @if (isEmpty()) {
+      <div class="terms-empty">
+        <mat-icon class="terms-empty-icon">shield</mat-icon>
+        <p class="terms-empty-title">{{ TOKENS.SETTINGS.PROTECTEDTERMSEMPTYTITLE | transloco }}</p>
+        <p class="terms-empty-message">{{ TOKENS.SETTINGS.PROTECTEDTERMSEMPTYMESSAGE | transloco }}</p>
+      </div>
+    } @else {
+      <div class="terms-panel">
+        @if (showFilter()) {
+          <div class="terms-filter">
+            <mat-icon class="terms-filter-icon">search</mat-icon>
+            <input
+              class="terms-filter-input"
+              type="search"
+              autocomplete="off"
+              [value]="filter()"
+              (input)="filter.set($any($event.target).value)"
+              [placeholder]="TOKENS.SETTINGS.PROTECTEDTERMSFILTERPLACEHOLDER | transloco"
+              [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSFILTERPLACEHOLDER | transloco"
+            />
+            @if (isFiltering()) {
+              <button
+                mat-icon-button
+                type="button"
+                class="terms-filter-clear"
+                (click)="clearFilter()"
+                [attr.aria-label]="TOKENS.BROWSER.CLEARSEARCH | transloco"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+        }
+
+        <div class="terms-scroll">
+          @if (hasNoMatches()) {
+            <p class="terms-no-matches" role="status">
+              {{ TOKENS.SETTINGS.PROTECTEDTERMSNOMATCHESX | transloco : { query: filter().trim() } }}
+            </p>
+          } @else {
+            <ul class="terms-list" [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSLISTARIALABEL | transloco">
+          @for (entry of visibleEntries(); track entry.id) {
+            <li
+              #termRow
+              class="term"
+              [attr.data-term-id]="entry.id"
+              [attr.data-status]="statusOf(entry)"
+              [class.term--editing]="editingId() === entry.id"
+            >
+              @if (editingId() === entry.id) {
+                <div class="term-edit">
+                  <input
+                    #editInput
+                    class="term-edit-input"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    [value]="editDraft()"
+                    (input)="onEditDraftChange($any($event.target).value)"
+                    (keydown.enter)="commitEdit(); $event.preventDefault()"
+                    (keydown.escape)="cancelEdit()"
+                    [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSRENAMEARIAX | transloco : { term: entry.value }"
+                    [attr.aria-invalid]="editError() ? 'true' : null"
+                    [attr.aria-describedby]="editError() ? 'settings-edit-error' : null"
+                  />
+                  <div class="term-actions">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="term-action term-action--confirm"
+                      (click)="commitEdit()"
+                      [attr.aria-label]="TOKENS.COMMON.ACTIONS.SAVE | transloco"
+                      [matTooltip]="TOKENS.COMMON.ACTIONS.SAVE | transloco"
+                    >
+                      <mat-icon>check</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="term-action"
+                      (click)="cancelEdit()"
+                      [attr.aria-label]="TOKENS.COMMON.ACTIONS.CANCEL | transloco"
+                      [matTooltip]="TOKENS.COMMON.ACTIONS.CANCEL | transloco"
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                </div>
+                @if (editError(); as duplicate) {
+                  <p class="terms-inline-error term-edit-error" id="settings-edit-error" role="alert">
+                    <mat-icon class="terms-inline-error-icon">error_outline</mat-icon>
+                    <span>{{ TOKENS.SETTINGS.PROTECTEDTERMSDUPLICATEX | transloco : { term: duplicate } }}</span>
+                  </p>
+                }
+              } @else {
+                <div class="term-body">
+                  <span class="term-value">{{ entry.value }}</span>
+
+                  @switch (statusOf(entry)) {
+                    @case ('removed') {
+                      <span class="term-badge term-badge--removed">
+                        {{ TOKENS.SETTINGS.PROTECTEDTERMSBADGEREMOVING | transloco }}
+                      </span>
+                    }
+                    @case ('added') {
+                      <span class="term-badge term-badge--added">
+                        {{ TOKENS.SETTINGS.PROTECTEDTERMSBADGENEW | transloco }}
+                      </span>
+                    }
+                    @case ('edited') {
+                      <span class="term-badge term-badge--edited">
+                        {{ TOKENS.SETTINGS.PROTECTEDTERMSBADGEEDITED | transloco }}
+                      </span>
+                    }
+                  }
+
+                  @if (statusOf(entry) === 'edited' && entry.original) {
+                    <span class="term-was">
+                      {{ TOKENS.SETTINGS.PROTECTEDTERMSWASX | transloco : { term: entry.original } }}
+                    </span>
+                  }
+                </div>
+
+                <div class="term-actions">
+                  @if (entry.removed) {
+                    <button
+                      mat-button
+                      type="button"
+                      class="term-undo"
+                      (click)="restoreTerm(entry)"
+                      [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSRESTOREARIAX | transloco : { term: entry.value }"
+                    >
+                      <mat-icon>undo</mat-icon>
+                      {{ TOKENS.SETTINGS.PROTECTEDTERMSUNDO | transloco }}
+                    </button>
+                  } @else {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="term-action"
+                      (click)="beginEdit(entry)"
+                      [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSEDITARIAX | transloco : { term: entry.value }"
+                      [matTooltip]="TOKENS.COMMON.ACTIONS.EDIT | transloco"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="term-action term-action--remove"
+                      (click)="removeTerm(entry)"
+                      [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSREMOVEARIAX | transloco : { term: entry.value }"
+                      [matTooltip]="TOKENS.COMMON.ACTIONS.DELETE | transloco"
+                    >
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
+                </div>
+              }
+            </li>
+            }
+            </ul>
+          }
+        </div>
+      </div>
+    }
+
   </section>
 </div>

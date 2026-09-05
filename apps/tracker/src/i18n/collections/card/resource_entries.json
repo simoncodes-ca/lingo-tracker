@@ -29,24 +29,74 @@
     "ja": "収集のためのその他のアクション",
     "de": "Weitere Aktionen zur Sammlung"
   },
-  "readOnlyBadge": {
-    "source": "Read-only",
-    "comment": "Badge on a collection card indicating the collection is read-only.",
-    "tags": ["collections"],
-    "es": "Read-only",
-    "fr-ca": "Read-only",
-    "ru": "Read-only",
-    "ja": "Read-only",
-    "de": "Read-only"
-  },
   "readOnlyTooltip": {
     "source": "This collection is read-only. Its resources can't be modified.",
     "comment": "Tooltip on the read-only badge on a collection card.",
     "tags": ["collections"],
-    "es": "This collection is read-only. Its resources can't be modified.",
-    "fr-ca": "This collection is read-only. Its resources can't be modified.",
-    "ru": "This collection is read-only. Its resources can't be modified.",
-    "ja": "This collection is read-only. Its resources can't be modified.",
-    "de": "This collection is read-only. Its resources can't be modified."
+    "es": "Esta colección es de solo lectura. Sus recursos no se pueden modificar.",
+    "fr-ca": "Cette collection est en lecture seule. Ses ressources ne peuvent pas être modifiées.",
+    "ru": "Эта коллекция доступна только для чтения. Её ресурсы нельзя изменить.",
+    "ja": "このコレクションは読み取り専用です。リソースを変更することはできません。",
+    "de": "Diese Sammlung ist schreibgeschützt. Ihre Ressourcen können nicht geändert werden."
+  },
+  "baseLocaleLabel": {
+    "source": "base",
+    "comment": "Short marker on the locale chip that is the collection's base (source) locale",
+    "tags": ["collections"],
+    "es": "base",
+    "fr-ca": "base",
+    "ru": "база",
+    "ja": "基準",
+    "de": "Basis"
+  },
+  "baseLocaleTooltipX": {
+    "source": "{locale} is the base locale every translation is compared against",
+    "comment": "Tooltip on the base-locale chip of a collection card",
+    "tags": ["collections"],
+    "es": "{locale} es el idioma base con el que se compara cada traducción",
+    "fr-ca": "{locale} est la langue de base à laquelle chaque traduction est comparée",
+    "ru": "{locale} — базовая локаль, с которой сравнивается каждый перевод",
+    "ja": "{locale} はすべての翻訳の比較元となるベースロケールです",
+    "de": "{locale} ist die Basissprache, mit der jede Übersetzung verglichen wird"
+  },
+  "moreLocalesX": {
+    "source": "+{count}",
+    "comment": "Overflow chip showing how many further locales a collection has beyond those listed",
+    "tags": ["collections"],
+    "es": "+{count}",
+    "fr-ca": "+{count}",
+    "ru": "+{count}",
+    "ja": "+{count}",
+    "de": "+{count}"
+  },
+  "moreLocalesTooltip": {
+    "source": "Also configured",
+    "comment": "Tooltip heading on the locale overflow chip, followed by the remaining locale codes",
+    "tags": ["collections"],
+    "es": "También configurados",
+    "fr-ca": "Également configurées",
+    "ru": "Также настроены",
+    "ja": "その他の設定済みロケール",
+    "de": "Ebenfalls konfiguriert"
+  },
+  "openAriaLabelX": {
+    "source": "Open collection {name}",
+    "comment": "Accessible label for the clickable collection card",
+    "tags": ["collections"],
+    "es": "Abrir la colección {name}",
+    "fr-ca": "Ouvrir la collection {name}",
+    "ru": "Открыть коллекцию {name}",
+    "ja": "コレクション {name} を開く",
+    "de": "Sammlung {name} öffnen"
+  },
+  "localesAriaLabel": {
+    "source": "Locales",
+    "comment": "Accessible label for the row of locale chips on a collection card",
+    "tags": ["collections"],
+    "es": "Idiomas",
+    "fr-ca": "Langues",
+    "ru": "Локали",
+    "ja": "ロケール",
+    "de": "Regionen"
   }
 }

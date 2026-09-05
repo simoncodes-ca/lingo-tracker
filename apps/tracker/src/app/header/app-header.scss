@@ -101,9 +101,16 @@
   flex: 1 1 auto;
 }
 
-.theme-button {
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  flex-shrink: 0;
+}
+
+.toolbar-action {
   color: var(--color-text-secondary);
-  margin-left: var(--spacing-4);
+  transition: color var(--transition-fast);
 
   &:hover {
     color: var(--color-text-primary);
@@ -197,7 +204,10 @@
 }
 
 .collection-name {
-  flex-shrink: 0;
+  // Shrinkable, so a long collection name yields to the app controls instead of
+  // pushing Settings off the right edge. It already ellipsises.
+  flex-shrink: 1;
+  min-width: 0;
   max-width: 240px;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);

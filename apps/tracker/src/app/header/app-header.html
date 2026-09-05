@@ -39,30 +39,43 @@
       </div>
     }
 
-    <!-- Locale Picker -->
+    <!-- App controls: language, appearance, settings -->
     <div class="collection-pipe collection-pipe--static" aria-hidden="true"></div>
-    <locale-picker />
 
-    <!-- Settings -->
-    <button
-      mat-icon-button
-      [routerLink]="['/settings']"
-      [attr.aria-label]="TOKENS.SETTINGS.TITLE | transloco"
-      [matTooltip]="TOKENS.SETTINGS.TITLE | transloco"
-      class="settings-button"
-    >
-      <mat-icon>tune</mat-icon>
-    </button>
+    <div class="toolbar-actions">
+      <locale-picker />
 
-    <!-- Theme Switcher -->
-    <button
-      mat-icon-button
-      [matMenuTriggerFor]="themeMenu"
-      [attr.aria-label]="TOKENS.THEME.SETTINGS | transloco"
-      class="theme-button"
-    >
-      <mat-icon>settings</mat-icon>
-    </button>
+      <button
+        mat-icon-button
+        [matMenuTriggerFor]="themeMenu"
+        [attr.aria-label]="TOKENS.THEME.CURRENTTHEMEX | transloco: { theme: themeModeToken() | transloco }"
+        [matTooltip]="TOKENS.THEME.CURRENTTHEMEX | transloco: { theme: themeModeToken() | transloco }"
+        class="toolbar-action"
+      >
+        <mat-icon>{{ themeIcon() }}</mat-icon>
+      </button>
+
+      <!--
+        Inert on the settings page itself. `disabledInteractive` keeps it
+        focusable and announces aria-disabled rather than dropping it out of the
+        tab order, and aria-current says why it is inert.
+      -->
+      <button
+        mat-icon-button
+        [routerLink]="['/settings']"
+        routerLinkActive
+        #settingsLink="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [disabled]="settingsLink.isActive"
+        disabledInteractive
+        [attr.aria-current]="settingsLink.isActive ? 'page' : null"
+        [attr.aria-label]="TOKENS.SETTINGS.TITLE | transloco"
+        [matTooltip]="TOKENS.SETTINGS.TITLE | transloco"
+        class="toolbar-action"
+      >
+        <mat-icon>settings</mat-icon>
+      </button>
+    </div>
 
     <mat-menu #themeMenu="matMenu">
       <button mat-menu-item (click)="setTheme('light')" [class.active]="isThemeActive('light')">
