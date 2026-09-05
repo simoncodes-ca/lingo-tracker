@@ -116,5 +116,6 @@
         "testTargetName": "vitest:test"
       }
     }
-  ]
+  ],
+  "analytics": false
 }
