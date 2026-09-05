@@ -167,3 +167,7 @@ vitest.config.*.timestamp*
 .claude/worktrees
 .nx/polygraph
 .nx/self-healing
+
+# Impeccable design skill — machine-local state (config.json is committed)
+.impeccable/config.local.json
+.impeccable/live/
