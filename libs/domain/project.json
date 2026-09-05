@@ -6,8 +6,7 @@
   "tags": [],
   "targets": {
     "test": {
-      "executor": "@nx/vite:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "executor": "@nx/vitest:test",
       "options": {
         "reportsDirectory": "../../coverage/libs/domain"
       }

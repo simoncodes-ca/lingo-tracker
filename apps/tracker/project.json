@@ -98,8 +98,7 @@
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nx/vite:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "executor": "@nx/vitest:test",
       "dependsOn": ["generate-tokens"],
       "options": {
         "reportsDirectory": "../../coverage/apps/tracker"
