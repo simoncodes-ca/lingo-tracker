@@ -29,16 +29,6 @@
     "ja": "収集のためのその他のアクション",
     "de": "Weitere Aktionen zur Sammlung"
   },
-  "readOnlyBadge": {
-    "source": "Read-only",
-    "comment": "Badge on a collection card indicating the collection is read-only.",
-    "tags": ["collections"],
-    "es": "Solo lectura",
-    "fr-ca": "Lecture seule",
-    "ru": "Только чтение",
-    "ja": "読み取り専用",
-    "de": "Schreibgeschützt"
-  },
   "readOnlyTooltip": {
     "source": "This collection is read-only. Its resources can't be modified.",
     "comment": "Tooltip on the read-only badge on a collection card.",

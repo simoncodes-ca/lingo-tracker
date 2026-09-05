@@ -89,36 +89,6 @@
       "status": "translated"
     }
   },
-  "readOnlyBadge": {
-    "en": {
-      "checksum": "d8bd6e60adcc01ce20f509ea6800de8f"
-    },
-    "es": {
-      "checksum": "957e52714a21b0fd5e08372c7b28950a",
-      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
-      "status": "translated"
-    },
-    "fr-ca": {
-      "checksum": "bb19345031fd6613d15757ee42515004",
-      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
-      "status": "translated"
-    },
-    "ru": {
-      "checksum": "c474199cafa80ac74e409f1a7e73369d",
-      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
-      "status": "translated"
-    },
-    "ja": {
-      "checksum": "15bef6c340528605f23d0f6a227c325a",
-      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
-      "status": "translated"
-    },
-    "de": {
-      "checksum": "1040a40dd432b3aa79a8b80494ee3f18",
-      "baseChecksum": "d8bd6e60adcc01ce20f509ea6800de8f",
-      "status": "translated"
-    }
-  },
   "readOnlyTooltip": {
     "en": {
       "checksum": "ee180bd986e2dab87c25b037339bfd5c"
