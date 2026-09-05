@@ -163,3 +163,7 @@ vitest.config.*.timestamp*
 /sample-translations/mock-design-system/
 /.playwright-cli/
 /.playwright/
+
+.claude/worktrees
+.nx/polygraph
+.nx/self-healing

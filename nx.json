@@ -22,14 +22,17 @@
       "cache": true,
       "inputs": [
         "default",
+        "^default",
         "{workspaceRoot}/.eslintrc.json",
         "{workspaceRoot}/.eslintignore",
-        "{workspaceRoot}/eslint.config.mjs"
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*"
       ]
     },
-    "@nx/vite:test": {
+    "@nx/vitest:test": {
       "cache": true,
-      "inputs": ["default", "^default", "translationFixtures"]
+      "inputs": ["default", "^default", "translationFixtures"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"]
     },
     "@nx/esbuild:esbuild": {
       "cache": true,
@@ -42,7 +45,7 @@
       "e2eTestRunner": "none",
       "linter": "eslint",
       "style": "scss",
-      "unitTestRunner": "vitest"
+      "unitTestRunner": "vitest-analog"
     }
   },
   "plugins": [
@@ -105,6 +108,12 @@
       "plugin": "@nx/jest/plugin",
       "options": {
         "targetName": "test"
+      }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testTargetName": "vitest:test"
       }
     }
   ]
