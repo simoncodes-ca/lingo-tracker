@@ -1,7 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { FolderChild, ResourceTreeEntry, ResourceTreeNode, TreeFingerprint } from '@simoncodes-ca/core';
 import * as core from '@simoncodes-ca/core';
-import { extractResourcesRecursively } from '@simoncodes-ca/core';
-import type { ResourceTreeNode, ResourceTreeEntry, FolderChild } from '@simoncodes-ca/core';
+import { computeTreeFingerprint, extractResourcesRecursively, treeFingerprintsMatch } from '@simoncodes-ca/core';
+
+/**
+ * How long a disk fingerprint is trusted before it is recomputed, in milliseconds.
+ *
+ * The scan is stat-only and costs a few milliseconds on a typical collection, but it runs
+ * on read paths, so it is throttled rather than run per request.
+ */
+const DEFAULT_REVALIDATION_INTERVAL_MS = 2000;
 
 export enum CacheStatus {
   NOT_STARTED = 'not-started',
@@ -18,12 +26,22 @@ export interface CachedCollection {
   error?: string;
   totalKeys: number;
   localeCount: number;
+  /** Folder the tree was indexed from, needed to re-scan it later */
+  translationsFolder: string | null;
+  /** Disk state as of the last index or self-write, used to spot outside changes */
+  fingerprint: TreeFingerprint | null;
 }
 
 @Injectable()
 export class CollectionCacheService {
   readonly #logger = new Logger(CollectionCacheService.name);
   #cachedCollection: CachedCollection | null = null;
+  #lastRevalidationAt = 0;
+  #pendingFingerprintRefresh: NodeJS.Timeout | null = null;
+
+  readonly #revalidationIntervalMs = Number(
+    process.env.LINGO_TRACKER_REVALIDATE_INTERVAL_MS ?? DEFAULT_REVALIDATION_INTERVAL_MS,
+  );
 
   getCacheStatus(collectionName: string): CacheStatus {
     if (!this.#cachedCollection || this.#cachedCollection.collectionName !== collectionName) {
@@ -92,6 +110,8 @@ export class CollectionCacheService {
         error,
         totalKeys: status === CacheStatus.READY && tree ? extractResourcesRecursively(tree).length : 0,
         localeCount: status === CacheStatus.READY ? (localeCount ?? 0) : 0,
+        translationsFolder: null,
+        fingerprint: null,
       };
     } else {
       this.#cachedCollection.status = status;
@@ -112,6 +132,8 @@ export class CollectionCacheService {
   }
 
   clearCache(): void {
+    this.#cancelPendingFingerprintRefresh();
+
     if (this.#cachedCollection) {
       this.#logger.log(`Clearing cache for collection: ${this.#cachedCollection.collectionName}`);
       this.#cachedCollection = null;
@@ -155,6 +177,7 @@ export class CollectionCacheService {
     const existingChild = parentNode.children.find((c) => c.name === folderName);
     if (existingChild) {
       this.#logger.log(`Folder "${folderName}" already exists in cache at path "${parentPath || 'root'}"`);
+      this.#scheduleFingerprintRefresh();
       return true;
     }
 
@@ -175,6 +198,7 @@ export class CollectionCacheService {
     parentNode.children.sort((a, b) => a.name.localeCompare(b.name));
 
     this.#logger.log(`Added folder "${folderName}" to cache at path "${parentPath || 'root'}"`);
+    this.#scheduleFingerprintRefresh();
     return true;
   }
 
@@ -227,6 +251,7 @@ export class CollectionCacheService {
       this.#logger.log(`Added resource "${resourceEntry.key}" to cache at path "${folderPath || 'root'}"`);
     }
 
+    this.#scheduleFingerprintRefresh();
     return true;
   }
 
@@ -279,6 +304,7 @@ export class CollectionCacheService {
     }
 
     this.#logger.log(`Removed folder "${folderPath}" from cache`);
+    this.#scheduleFingerprintRefresh();
     return true;
   }
 
@@ -329,6 +355,7 @@ export class CollectionCacheService {
 
     this.#cachedCollection.totalKeys--;
     this.#logger.log(`Removed resource "${resourceKey}" from cache at path "${folderPath || 'root'}"`);
+    this.#scheduleFingerprintRefresh();
     return true;
   }
 
@@ -418,7 +445,97 @@ export class CollectionCacheService {
     destParent.children.sort((a, b) => a.name.localeCompare(b.name));
 
     this.#logger.log(`Moved folder "${sourceFolderPath}" to "${destinationFolderPath || 'root'}" in cache`);
+    this.#scheduleFingerprintRefresh();
     return true;
+  }
+
+  /**
+   * Drops the cache when the translations folder has changed underneath it.
+   *
+   * The app caches a collection's whole tree in memory, so a CLI command, a `git checkout`
+   * or a hand edit would otherwise stay invisible until a restart — a browser refresh does
+   * not help, because it re-reads the same cache. Filesystem watching cannot fix this
+   * portably: inotify never fires for Windows-side writes on a WSL `/mnt/c` mount, and the
+   * same holds for several network and container mounts. So the check happens on read,
+   * against a stat-only fingerprint, throttled so it costs almost nothing.
+   *
+   * @param collectionName - The collection being read
+   * @param translationsFolder - The collection's translations folder
+   * @param cwd - Directory `translationsFolder` is resolved against
+   * @returns true when the cache was dropped and needs re-indexing
+   */
+  revalidate(collectionName: string, translationsFolder: string, cwd?: string): boolean {
+    const cached = this.#cachedCollection;
+
+    if (!cached || cached.collectionName !== collectionName || cached.status !== CacheStatus.READY) {
+      return false;
+    }
+
+    const now = Date.now();
+    if (now - this.#lastRevalidationAt < this.#revalidationIntervalMs) {
+      return false;
+    }
+    this.#lastRevalidationAt = now;
+
+    const fingerprint = computeTreeFingerprint({ translationsFolder, cwd });
+
+    // A write of our own is still waiting for its deferred baseline refresh. Adopt the
+    // fingerprint now instead of reading our own change as somebody else's.
+    if (this.#pendingFingerprintRefresh !== null) {
+      this.#cancelPendingFingerprintRefresh();
+      cached.fingerprint = fingerprint;
+      return false;
+    }
+
+    if (treeFingerprintsMatch(cached.fingerprint, fingerprint)) {
+      return false;
+    }
+
+    this.#logger.log(`Translations folder changed on disk for collection ${collectionName}, dropping cache`);
+    this.clearCache();
+    return true;
+  }
+
+  /**
+   * Re-takes the disk fingerprint so the cache's own writes do not later read as external
+   * changes. Safe to call when no collection is cached.
+   */
+  refreshFingerprint(): void {
+    this.#cancelPendingFingerprintRefresh();
+
+    const cached = this.#cachedCollection;
+    if (!cached?.translationsFolder) {
+      return;
+    }
+
+    cached.fingerprint = computeTreeFingerprint({ translationsFolder: cached.translationsFolder });
+  }
+
+  /**
+   * Queues a fingerprint refresh for the end of the current tick.
+   *
+   * Bulk endpoints mutate the cache once per resource in a synchronous loop, so deferring
+   * collapses a whole batch into a single scan.
+   */
+  #scheduleFingerprintRefresh(): void {
+    if (this.#pendingFingerprintRefresh !== null || !this.#cachedCollection?.translationsFolder) {
+      return;
+    }
+
+    this.#pendingFingerprintRefresh = setTimeout(() => {
+      this.#pendingFingerprintRefresh = null;
+      this.refreshFingerprint();
+    }, 0);
+
+    // A pending refresh must never hold the process open on its own.
+    this.#pendingFingerprintRefresh.unref?.();
+  }
+
+  #cancelPendingFingerprintRefresh(): void {
+    if (this.#pendingFingerprintRefresh !== null) {
+      clearTimeout(this.#pendingFingerprintRefresh);
+      this.#pendingFingerprintRefresh = null;
+    }
   }
 
   async indexCollection(collectionName: string, translationsFolder: string, localeCount?: number): Promise<void> {
@@ -436,6 +553,10 @@ export class CollectionCacheService {
     this.#logger.log(`Starting indexing for collection: ${collectionName}`);
 
     try {
+      // Taken before the load: a write that lands mid-load then disagrees with this
+      // fingerprint, which costs one extra re-index but never loses the change.
+      const fingerprint = computeTreeFingerprint({ translationsFolder });
+
       const tree = core.loadResourceTree({
         translationsFolder,
         path: '',
@@ -456,6 +577,12 @@ export class CollectionCacheService {
       }
 
       this.setCacheStatus(indexingCollectionName, CacheStatus.READY, tree, undefined, localeCount);
+
+      if (this.#cachedCollection) {
+        this.#cachedCollection.translationsFolder = translationsFolder;
+        this.#cachedCollection.fingerprint = fingerprint;
+      }
+      this.#lastRevalidationAt = Date.now();
     } catch (error) {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

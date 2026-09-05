@@ -1,3 +1,6 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { CollectionCacheService, CacheStatus } from './collection-cache.service';
 import * as core from '@simoncodes-ca/core';
@@ -13,6 +16,10 @@ jest.mock('@simoncodes-ca/core', () => {
 });
 
 const mockCore = core as jest.Mocked<typeof core>;
+
+// Revalidation is throttled in production; tests that are not about the throttle need every
+// call to actually scan. Set before the service is constructed, since it reads this once.
+process.env.LINGO_TRACKER_REVALIDATE_INTERVAL_MS = '0';
 
 describe('CollectionCacheService', () => {
   let service: CollectionCacheService;
@@ -457,6 +464,108 @@ describe('CollectionCacheService', () => {
       expect(service.getCacheStatus('Admin')).toBe(CacheStatus.READY);
       expect(service.getCache('Admin')).toEqual(adminTree);
       expect(service.getCacheStatus('Main')).toBe(CacheStatus.NOT_STARTED);
+    });
+  });
+  describe('revalidate', () => {
+    let tempDir: string;
+
+    const writeEntries = (entries: Record<string, unknown>): void => {
+      const folderPath = path.join(tempDir, 'common');
+      fs.mkdirSync(folderPath, { recursive: true });
+      fs.writeFileSync(path.join(folderPath, 'resource_entries.json'), JSON.stringify(entries, null, 2), 'utf8');
+      fs.writeFileSync(path.join(folderPath, 'tracker_meta.json'), JSON.stringify({}, null, 2), 'utf8');
+    };
+
+    const indexTempCollection = async (): Promise<void> => {
+      const mockTree = createMockTree();
+      mockCore.loadResourceTree.mockReturnValue(mockTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      await service.indexCollection('Main', tempDir, 1);
+    };
+
+    beforeEach(() => {
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lingo-cache-revalidate-'));
+      writeEntries({ ok: { source: 'OK' } });
+    });
+
+    afterEach(() => {
+      fs.rmSync(tempDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
+    });
+
+    it('does nothing when no collection is cached', () => {
+      expect(service.revalidate('Main', tempDir)).toBe(false);
+    });
+
+    it('does nothing when the cached collection is a different one', async () => {
+      await indexTempCollection();
+
+      expect(service.revalidate('Admin', tempDir)).toBe(false);
+      expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
+    });
+
+    it('keeps the cache when nothing changed on disk', async () => {
+      await indexTempCollection();
+
+      expect(service.revalidate('Main', tempDir)).toBe(false);
+      expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
+    });
+
+    it('drops the cache when a resource file changed outside the process', async () => {
+      await indexTempCollection();
+
+      writeEntries({ ok: { source: 'OK' }, maybe: { source: 'Maybe' } });
+
+      expect(service.revalidate('Main', tempDir)).toBe(true);
+      expect(service.getCacheStatus('Main')).toBe(CacheStatus.NOT_STARTED);
+    });
+
+    it('drops the cache when a resource folder is removed outside the process', async () => {
+      await indexTempCollection();
+
+      fs.rmSync(path.join(tempDir, 'common'), { recursive: true, force: true });
+
+      expect(service.revalidate('Main', tempDir)).toBe(true);
+      expect(service.getCacheStatus('Main')).toBe(CacheStatus.NOT_STARTED);
+    });
+
+    it('does not read its own write as an outside change', async () => {
+      await indexTempCollection();
+
+      // What an API mutation does: write to disk, then patch the cached tree.
+      writeEntries({ ok: { source: 'OK' }, maybe: { source: 'Maybe' } });
+      service.addResourceToCache('Main', createMockTree().resources[0], '');
+
+      expect(service.revalidate('Main', tempDir)).toBe(false);
+      expect(service.getCacheStatus('Main')).toBe(CacheStatus.READY);
+    });
+
+    it('detects an outside change made after its own write settled', async () => {
+      await indexTempCollection();
+
+      writeEntries({ ok: { source: 'OK' }, maybe: { source: 'Maybe' } });
+      service.addResourceToCache('Main', createMockTree().resources[0], '');
+      service.refreshFingerprint();
+
+      writeEntries({ ok: { source: 'OK' }, maybe: { source: 'Maybe' }, later: { source: 'Later' } });
+
+      expect(service.revalidate('Main', tempDir)).toBe(true);
+    });
+
+    it('scans at most once per revalidation interval', async () => {
+      process.env.LINGO_TRACKER_REVALIDATE_INTERVAL_MS = '60000';
+      const throttledService = new CollectionCacheService();
+      process.env.LINGO_TRACKER_REVALIDATE_INTERVAL_MS = '0';
+
+      const mockTree = createMockTree();
+      mockCore.loadResourceTree.mockReturnValue(mockTree);
+      mockCore.extractResourcesRecursively.mockReturnValue(mockTree.resources);
+      await throttledService.indexCollection('Main', tempDir, 1);
+
+      writeEntries({ ok: { source: 'OK' }, maybe: { source: 'Maybe' } });
+
+      // Indexing takes a fingerprint, so the change is inside the interval that follows.
+      expect(throttledService.revalidate('Main', tempDir)).toBe(false);
+      expect(throttledService.getCacheStatus('Main')).toBe(CacheStatus.READY);
     });
   });
 });

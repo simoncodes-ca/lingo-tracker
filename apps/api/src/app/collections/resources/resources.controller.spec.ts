@@ -116,6 +116,7 @@ describe('ResourcesController', () => {
     getCacheStats: jest.fn(),
     indexCollection: jest.fn(),
     clearCache: jest.fn(),
+    revalidate: jest.fn().mockReturnValue(false),
     addResourceToCache: jest.fn().mockReturnValue(true),
     removeResourceFromCache: jest.fn().mockReturnValue(true),
   };

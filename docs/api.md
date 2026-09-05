@@ -11,6 +11,7 @@ The LingoTracker API provides REST endpoints for managing translation resources,
 
 - **Base URL**: `http://localhost:3030/api`
 - **Default Port**: `3030` (configurable via `LINGO_TRACKER_PORT` environment variable)
+- **Cache revalidation interval**: `2000` ms (configurable via `LINGO_TRACKER_REVALIDATE_INTERVAL_MS` environment variable)
 - **Content-Type**: `application/json`
 - **Response Format**: JSON
 - **CORS**: Enabled with wildcard origin (`*`) in development
@@ -1006,6 +1007,8 @@ interface MoveResourceResponseDto {
 ### Get Resource Tree
 
 Returns the resource tree for a collection, optionally scoped to a sub-path. The tree is built from an in-memory cache — the first request triggers background indexing and returns a `202 Accepted` with a status response until the cache is ready.
+
+The cache is revalidated on read. Before the tree is served, the API takes a stat-only fingerprint of the collection's translations folder and compares it with the one recorded at index time; if they differ, the cache is dropped and re-indexed, so the request answers `202 Accepted` and the next one returns fresh data. This is what makes changes written outside the running app — a `lingo-tracker` CLI command, a `git checkout`, a hand edit — visible on a browser refresh instead of only after a restart. The scan is throttled to once every 2000 ms, configurable via the `LINGO_TRACKER_REVALIDATE_INTERVAL_MS` environment variable.
 
 **Endpoint**: `GET /api/collections/:collectionName/resources/tree`
 
