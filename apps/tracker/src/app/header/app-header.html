@@ -55,9 +55,20 @@
         <mat-icon>{{ themeIcon() }}</mat-icon>
       </button>
 
+      <!--
+        Inert on the settings page itself. `disabledInteractive` keeps it
+        focusable and announces aria-disabled rather than dropping it out of the
+        tab order, and aria-current says why it is inert.
+      -->
       <button
         mat-icon-button
         [routerLink]="['/settings']"
+        routerLinkActive
+        #settingsLink="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [disabled]="settingsLink.isActive"
+        disabledInteractive
+        [attr.aria-current]="settingsLink.isActive ? 'page' : null"
         [attr.aria-label]="TOKENS.SETTINGS.TITLE | transloco"
         [matTooltip]="TOKENS.SETTINGS.TITLE | transloco"
         class="toolbar-action"
