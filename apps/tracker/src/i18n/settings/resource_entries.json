@@ -20,14 +20,14 @@
     "de": "Globale Schutzbestimmungen"
   },
   "protectedTermsHint": {
-    "source": "Brand names and jargon kept verbatim by auto-translation across every collection.",
-    "comment": "Hint text under the global protected terms field in settings",
+    "source": "Terms that must survive translation unchanged, in every collection. Exports flag them for translators; imports reject a translation that altered one.",
+    "comment": "Hint under the global protected terms heading in settings. Names where the list is enforced: export marks the terms for translators, import rejects an altered translation.",
     "tags": ["settings"],
-    "es": "Las marcas y la jerga se conservan textualmente mediante la traducción automática en todas las colecciones.",
-    "fr-ca": "Les noms de marques et le jargon sont conservés textuellement par traduction automatique dans toutes les collections.",
-    "ru": "Названия брендов и терминология сохраняются дословно благодаря автоматическому переводу во всех коллекциях.",
-    "ja": "ブランド名や専門用語は、すべてのコレクションにおいて自動翻訳によって原文のまま維持されます。",
-    "de": "Markennamen und Fachbegriffe werden durch automatische Übersetzung in jeder Kollektion wortgetreu beibehalten."
+    "es": "Términos que deben conservarse sin cambios en todas las colecciones tras la traducción. Las exportaciones los marcan para los traductores; las importaciones rechazan las traducciones que los hayan modificado.",
+    "fr-ca": "Les termes qui doivent absolument demeurer inchangés lors de la traduction, dans chaque collection, sont signalés aux traducteurs lors des exportations ; les importations rejettent toute traduction qui en aurait modifié un.",
+    "ru": "Термины, которые должны оставаться неизменными при переводе в любой коллекции. При экспорте они помечаются для переводчиков; при импорте перевод с изменённым термином отклоняется.",
+    "ja": "翻訳後も変更せずに、すべてのコレクションに必ず含めなければならない用語。エクスポート時には翻訳者向けにこれらの用語がマークされ、インポート時にはこれらの用語が変更された翻訳は拒否される。",
+    "de": "Begriffe, die in jeder Sammlung unverändert übersetzt werden müssen. Exporte kennzeichnen diese Begriffe für Übersetzer; Importe lehnen Übersetzungen ab, die bestehende Begriffe verändert haben."
   },
   "protectedTermsAddPlaceholder": {
     "source": "Add protected term…",
