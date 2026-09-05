@@ -537,8 +537,11 @@
 .terms-bar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--spacing-2);
   flex: none;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .terms-bar-status {
@@ -546,6 +549,7 @@
   align-items: center;
   gap: var(--spacing-1);
   margin: 0;
+  min-width: 0;
   padding: var(--spacing-1) var(--spacing-3);
   border: 1px solid transparent;
   border-radius: var(--border-radius-full);
@@ -553,6 +557,14 @@
   font-size: var(--font-size-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+
+  // A flex child defaults to min-width: auto, which is what let the pill push
+  // the Save button off a 320px viewport instead of truncating.
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   transition: color var(--transition-normal), background var(--transition-normal),
     border-color var(--transition-normal);
 }
@@ -599,6 +611,12 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
+  flex: none;
+  margin-inline-start: auto;
+
+  button {
+    white-space: nowrap;
+  }
 }
 
 // ── Short viewports ──────────────────────────────────────────────────────────
