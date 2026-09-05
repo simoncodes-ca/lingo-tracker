@@ -62,11 +62,18 @@ export class AppHeader {
   });
 
   /**
-   * The switcher wears the theme you are actually looking at, so `system` shows
-   * light or dark rather than a third, abstract glyph. Which *mode* is selected
-   * stays legible: the label names it and the menu checks it.
+   * The switcher wears the *mode* that is selected, not the theme it resolves
+   * to: `system` gets its own glyph so following the OS is visibly distinct
+   * from having pinned light or dark.
    */
-  readonly themeIcon = computed(() => (this.#themeService.effectiveTheme() === 'dark' ? 'dark_mode' : 'light_mode'));
+  readonly themeIcon = computed(
+    () =>
+      ({
+        light: 'light_mode',
+        dark: 'dark_mode',
+        system: 'computer',
+      })[this.#themeService.themeMode()],
+  );
 
   /**
    * The token for the active mode's name. Resolved by the transloco pipe in the

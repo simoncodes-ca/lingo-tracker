@@ -100,26 +100,25 @@ describe('AppHeader', () => {
   });
 
   describe('theme button', () => {
-    it('wears the light icon in the light theme', () => {
+    it('wears the light icon when light is pinned', () => {
       theme.setTheme('light');
       fixture.detectChanges();
 
       expect(iconOf(themeButton())).toBe('light_mode');
     });
 
-    it('wears the dark icon in the dark theme', () => {
+    it('wears the dark icon when dark is pinned', () => {
       theme.setTheme('dark');
       fixture.detectChanges();
 
       expect(iconOf(themeButton())).toBe('dark_mode');
     });
 
-    it('shows the resolved theme on system rather than a third glyph', () => {
+    it('wears the system icon on system, not the theme it resolves to', () => {
       theme.setTheme('system');
       fixture.detectChanges();
 
-      expect(['light_mode', 'dark_mode']).toContain(iconOf(themeButton()));
-      expect(iconOf(themeButton())).toBe(theme.effectiveTheme() === 'dark' ? 'dark_mode' : 'light_mode');
+      expect(iconOf(themeButton())).toBe('computer');
     });
 
     it('names the selected mode, so system stays distinguishable from light', () => {
