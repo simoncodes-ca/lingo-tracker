@@ -20,14 +20,14 @@
     "de": "Globale Schutzbestimmungen"
   },
   "protectedTermsHint": {
-    "source": "Brand names or jargon kept verbatim and never translated across all collections. Press Enter or comma to add.",
+    "source": "Brand names and jargon kept verbatim by auto-translation across every collection.",
     "comment": "Hint text under the global protected terms field in settings",
     "tags": ["settings"],
-    "es": "Las marcas o la jerga se conservan tal cual y nunca se traducen en todas las colecciones. Pulse Intro o una coma para añadir.",
-    "fr-ca": "Les marques et le jargon sont conservés tels quels et ne sont jamais traduits dans toutes les collections. Appuyez sur Entrée ou sur la virgule pour ajouter.",
-    "ru": "Названия брендов или терминология сохраняются дословно и никогда не переводятся во все коллекции. Нажмите Enter или запятую для добавления.",
-    "ja": "ブランド名や専門用語は、すべてのコレクションでそのまま使用され、翻訳されることはありません。Enterキーまたはカンマを押して追加してください。",
-    "de": "Markennamen und Fachbegriffe werden unverändert übernommen und nicht in alle Kollektionen übersetzt. Drücken Sie die Eingabetaste oder ein Komma, um etwas hinzuzufügen."
+    "es": "Las marcas y la jerga se conservan textualmente mediante la traducción automática en todas las colecciones.",
+    "fr-ca": "Les noms de marques et le jargon sont conservés textuellement par traduction automatique dans toutes les collections.",
+    "ru": "Названия брендов и терминология сохраняются дословно благодаря автоматическому переводу во всех коллекциях.",
+    "ja": "ブランド名や専門用語は、すべてのコレクションにおいて自動翻訳によって原文のまま維持されます。",
+    "de": "Markennamen und Fachbegriffe werden durch automatische Übersetzung in jeder Kollektion wortgetreu beibehalten."
   },
   "protectedTermsAddPlaceholder": {
     "source": "Add protected term…",
@@ -68,5 +68,215 @@
     "ru": "Хранится в {file}",
     "ja": "{file} に保存されています",
     "de": "Gespeichert in {file}"
+  },
+  "protectedTermsCountX": {
+    "source": "{ count, plural, =0 {No terms} =1 {1 term} other {{count} terms} }",
+    "comment": "Count badge beside the protected terms section title",
+    "tags": ["settings"],
+    "es": "{ count, plural, =0 {Sin términos} =1 {1 término} other {{count} términos} }",
+    "fr-ca": "{ count, plural, =0 {Aucun terme} =1 {1 terme} other {{count} termes} }",
+    "de": "{ count, plural, =0 {Keine Begriffe} =1 {1 Begriff} other {{count} Begriffe} }",
+    "ja": "{ count, plural, =0 {用語なし} other {{count} 件の用語} }",
+    "ru": "{ count, plural, =0 {Нет терминов} one {{count} термин} few {{count} термина} many {{count} терминов} other {{count} термина} }"
+  },
+  "protectedTermsAddButton": {
+    "source": "Add",
+    "comment": "Button that adds the typed protected term to the list",
+    "tags": ["settings"],
+    "es": "Agregar",
+    "fr-ca": "Ajouter",
+    "ru": "Добавлять",
+    "ja": "追加",
+    "de": "Hinzufügen"
+  },
+  "protectedTermsDuplicateX": {
+    "source": "Already on the list: {term}",
+    "comment": "Inline error when the typed protected term already exists. {term} is the term.",
+    "tags": ["settings"],
+    "es": "Ya está en la lista: {term}",
+    "fr-ca": "Déjà sur la liste : {term}",
+    "ru": "Уже в списке: {term}",
+    "ja": "既にリストに登録済み：{term}",
+    "de": "Bereits auf der Liste: {term}"
+  },
+  "protectedTermsFilterPlaceholder": {
+    "source": "Filter terms",
+    "comment": "Placeholder of the input that filters the protected terms list",
+    "tags": ["settings"],
+    "es": "Términos de filtro",
+    "fr-ca": "Termes de filtrage",
+    "ru": "Фильтр по критериям",
+    "ja": "フィルター条件",
+    "de": "Filterbegriffe"
+  },
+  "protectedTermsEmptyTitle": {
+    "source": "No protected terms yet",
+    "comment": "Title of the empty state when no protected terms exist",
+    "tags": ["settings"],
+    "es": "Aún no hay términos protegidos",
+    "fr-ca": "Aucun terme protégé pour le moment",
+    "ru": "Пока нет защищенных условий.",
+    "ja": "保護された条項はまだありません",
+    "de": "Noch keine geschützten Bedingungen"
+  },
+  "protectedTermsEmptyMessage": {
+    "source": "Add a brand name or piece of jargon and auto-translation will keep it verbatim in every locale.",
+    "comment": "Body of the empty state when no protected terms exist",
+    "tags": ["settings"],
+    "es": "Añade una marca o una expresión técnica y la traducción automática la mantendrá idéntica en todos los idiomas.",
+    "fr-ca": "Ajoutez une marque ou un terme technique, et la traduction automatique le restituera mot à mot dans toutes les langues.",
+    "ru": "Добавьте название бренда или профессиональный жаргон, и автоматический перевод сохранит его дословно во всех языковых версиях.",
+    "ja": "ブランド名や専門用語を追加すると、自動翻訳機能がどの地域でも原文をそのまま再現します。",
+    "de": "Fügen Sie einen Markennamen oder einen Fachbegriff hinzu, und die automatische Übersetzung behält ihn in jeder Region wortgetreu bei."
+  },
+  "protectedTermsNoMatchesX": {
+    "source": "No terms match “{query}”",
+    "comment": "Message when the filter matches no protected terms. {query} is the filter text.",
+    "tags": ["settings"],
+    "es": "No se encontraron términos que coincidan con “{query}”",
+    "fr-ca": "Aucun terme ne correspond à « {query} »",
+    "ru": "Нет терминов, соответствующих \"{query}\"",
+    "ja": "「{query}」に一致する用語はありません。",
+    "de": "Es wurden keine passenden Begriffe für „{query}“ gefunden."
+  },
+  "protectedTermsEditAriaX": {
+    "source": "Edit protected term {term}",
+    "comment": "Accessible label of the edit button on a protected term row. {term} is the term.",
+    "tags": ["settings"],
+    "es": "Editar término protegido {term}",
+    "fr-ca": "Modifier le terme protégé {term}",
+    "ru": "Редактировать защищенный термин {term}",
+    "ja": "保護された用語を編集 {term}",
+    "de": "Bearbeiten Sie den geschützten Begriff {term}"
+  },
+  "protectedTermsRemoveAriaX": {
+    "source": "Remove protected term {term}",
+    "comment": "Accessible label of the remove button on a protected term row. {term} is the term.",
+    "tags": ["settings"],
+    "es": "Eliminar término protegido {term}",
+    "fr-ca": "Supprimer le terme protégé {term}",
+    "ru": "Удалить защищенный термин {term}",
+    "ja": "保護された用語を削除します {term}",
+    "de": "Entferne den geschützten Begriff {term}"
+  },
+  "protectedTermsRestoreAriaX": {
+    "source": "Keep protected term {term}",
+    "comment": "Accessible label of the undo button on a protected term marked for removal. {term} is the term.",
+    "tags": ["settings"],
+    "es": "Mantener el término protegido {term}",
+    "fr-ca": "Conserver le terme protégé {term}",
+    "ru": "Сохраняйте защищенный термин {term}",
+    "ja": "保護された用語を保持します {term}",
+    "de": "Schutzbegriff beibehalten {term}"
+  },
+  "protectedTermsRenameAriaX": {
+    "source": "Rename protected term {term}",
+    "comment": "Accessible label of the text field shown while renaming a protected term. {term} is the term.",
+    "tags": ["settings"],
+    "es": "Cambiar el nombre del término protegido {term}",
+    "fr-ca": "Renommer le terme protégé {term}",
+    "ru": "Переименовать защищенный термин {term}",
+    "ja": "保護された用語の名前を変更します {term}",
+    "de": "geschützten Begriff umbenennen {term}"
+  },
+  "protectedTermsUndo": {
+    "source": "Undo",
+    "comment": "Button that restores a protected term marked for removal",
+    "tags": ["settings"],
+    "es": "Deshacer",
+    "fr-ca": "Défaire",
+    "ru": "Отменить",
+    "ja": "元に戻す",
+    "de": "Rückgängig machen"
+  },
+  "protectedTermsBadgeRemoving": {
+    "source": "Removing",
+    "comment": "Badge on a protected term that will be deleted when changes are saved",
+    "tags": ["settings"],
+    "es": "Eliminando",
+    "fr-ca": "Suppression",
+    "ru": "Удаление",
+    "ja": "削除",
+    "de": "Entfernen"
+  },
+  "protectedTermsBadgeNew": {
+    "source": "New",
+    "comment": "Badge on a protected term that has been added but not yet saved",
+    "tags": ["settings"],
+    "es": "Nuevo",
+    "fr-ca": "Nouveau",
+    "ru": "Новый",
+    "ja": "新しい",
+    "de": "Neu"
+  },
+  "protectedTermsBadgeEdited": {
+    "source": "Edited",
+    "comment": "Badge on a protected term that has been renamed but not yet saved",
+    "tags": ["settings"],
+    "es": "Editado",
+    "fr-ca": "Édité",
+    "ru": "Отредактировано",
+    "ja": "編集済み",
+    "de": "Bearbeitet"
+  },
+  "protectedTermsWasX": {
+    "source": "was {term}",
+    "comment": "Small line under a renamed protected term showing its previous spelling. {term} is the previous term.",
+    "tags": ["settings"],
+    "es": "era {term}",
+    "fr-ca": "était {term}",
+    "ru": "был {term}",
+    "ja": "{term} でした",
+    "de": "war {term}"
+  },
+  "protectedTermsUnsavedChangesX": {
+    "source": "{ count, plural, =1 {1 unsaved change} other {{count} unsaved changes} }",
+    "comment": "Count of pending protected term changes shown in the save bar",
+    "tags": ["settings"],
+    "es": "{ count, plural, =1 {1 cambio sin guardar} other {{count} cambios sin guardar} }",
+    "fr-ca": "{ count, plural, =1 {1 modification non enregistrée} other {{count} modifications non enregistrées} }",
+    "de": "{ count, plural, =1 {1 nicht gespeicherte Änderung} other {{count} nicht gespeicherte Änderungen} }",
+    "ja": "{ count, plural, other {{count} 件の未保存の変更} }",
+    "ru": "{ count, plural, one {{count} несохранённое изменение} few {{count} несохранённых изменения} many {{count} несохранённых изменений} other {{count} несохранённых изменения} }"
+  },
+  "protectedTermsRevertAll": {
+    "source": "Revert all",
+    "comment": "Button that discards every pending protected term change",
+    "tags": ["settings"],
+    "es": "Revertir todo",
+    "fr-ca": "Annuler tout",
+    "ru": "Отменить все",
+    "ja": "すべて元に戻す",
+    "de": "Alle zurücksetzen"
+  },
+  "protectedTermsAllSaved": {
+    "source": "All changes saved",
+    "comment": "Save bar message shown when there are no pending protected term changes",
+    "tags": ["settings"],
+    "es": "Todos los cambios guardados",
+    "fr-ca": "Toutes les modifications ont été enregistrées.",
+    "ru": "Все изменения сохранены",
+    "ja": "すべての変更が保存されました",
+    "de": "Alle Änderungen gespeichert"
+  },
+  "protectedTermsListAriaLabel": {
+    "source": "Protected terms",
+    "comment": "Accessible label of the protected terms list",
+    "tags": ["settings"],
+    "es": "Términos protegidos",
+    "fr-ca": "Conditions protégées",
+    "ru": "Защищенные условия",
+    "ja": "保護された用語",
+    "de": "Geschützte Begriffe"
+  },
+  "protectedTermsAddAriaLabel": {
+    "source": "New protected term",
+    "comment": "Accessible label of the field used to type a new protected term",
+    "tags": ["settings"],
+    "es": "Nuevo término protegido",
+    "fr-ca": "Nouvelle clause protégée",
+    "ru": "Новый защищенный срок",
+    "ja": "新しい保護用語",
+    "de": "Neuer geschützter Begriff"
   }
 }

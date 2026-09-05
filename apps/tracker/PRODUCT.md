@@ -58,7 +58,8 @@ Confirmed capabilities in the UI:
 - One-click auto-translation (Google Translate), preserving ICU placeholders and Transloco
   variables.
 - Collection create/edit; read-only collections are protected across CLI, API, and UI.
-- Settings page manages the protected-terms list (chips, backed by a standalone JSON file).
+- Settings page manages the protected-terms list: an alphabetical list with inline rename,
+  staged add/remove, and an explicit save, backed by a standalone JSON file.
 - Comment and tag popovers; indexing overlay during long operations.
 
 Constraints:
