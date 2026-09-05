@@ -1,0 +1,32 @@
+{
+  "placeholder": {
+    "source": "Filter collections",
+    "comment": "Placeholder for the input that narrows the collection list by name or folder",
+    "tags": ["collections"],
+    "es": "Filtrar colecciones",
+    "fr-ca": "Filtrer les collections",
+    "ru": "Фильтровать коллекции",
+    "ja": "コレクションをフィルタリング",
+    "de": "Sammlungen filtern"
+  },
+  "clear": {
+    "source": "Clear filter",
+    "comment": "Accessible label and tooltip for the button that clears the collection filter",
+    "tags": ["collections"],
+    "es": "Borrar filtro",
+    "fr-ca": "Effacer le filtre",
+    "ru": "Очистить фильтр",
+    "ja": "フィルタをクリア",
+    "de": "Filter löschen"
+  },
+  "noResultsX": {
+    "source": "No collections match \"{query}\".",
+    "comment": "Message shown when the collection filter excludes every collection",
+    "tags": ["collections"],
+    "es": "Ninguna colección coincide con «{query}».",
+    "fr-ca": "Aucune collection ne correspond à « {query} ».",
+    "ru": "Нет коллекций, соответствующих «{query}».",
+    "ja": "「{query}」に一致するコレクションはありません。",
+    "de": "Keine Sammlung stimmt mit „{query}“ überein."
+  }
+}

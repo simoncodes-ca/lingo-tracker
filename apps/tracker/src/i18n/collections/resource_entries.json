@@ -16,5 +16,15 @@
     "ru": "Добавить коллекцию",
     "ja": "コレクションを追加",
     "de": "Sammlung hinzufügen"
+  },
+  "subtitleX": {
+    "source": "{ count, plural, =1 {1 collection} other {{count} collections} }",
+    "comment": "Pluralized count of collections shown under the Collections page title",
+    "tags": ["collections"],
+    "es": "{ count, plural, =1 {1 colección} other {{count} colecciones} }",
+    "fr-ca": "{ count, plural, =1 {1 collection} other {{count} collections} }",
+    "ru": "{ count, plural, one {{count} коллекция} few {{count} коллекции} many {{count} коллекций} other {{count} коллекции} }",
+    "de": "{ count, plural, =1 {1 Sammlung} other {{count} Sammlungen} }",
+    "ja": "{ count, plural, other {{count} 件のコレクション} }"
   }
 }
