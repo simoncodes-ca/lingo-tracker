@@ -7,14 +7,13 @@
     [
       "@semantic-release/npm",
       {
-        "npmPublish": false,
-        "tarballDir": "dist"
+        "npmPublish": false
       }
     ],
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "pnpm nx build cli --skip-nx-cache"
+        "prepareCmd": "pnpm nx build cli --skip-nx-cache && npm pack --pack-destination dist"
       }
     ],
     [

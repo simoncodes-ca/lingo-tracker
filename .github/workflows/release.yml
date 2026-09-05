@@ -81,6 +81,20 @@ jobs:
           HUSKY: '0'
         run: pnpm run release
 
+      # The CLI bundle bakes its --version in at build time, so a tarball packed
+      # before the version bump ships the previous version. Catch that here rather
+      # than on npm.
+      - name: Verify packed CLI reports the released version
+        if: hashFiles('dist/*.tgz') != ''
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          tar xzf ./dist/*.tgz -C "$RUNNER_TEMP" package/dist/apps/cli/main.cjs
+          if ! grep -q "version(\"$version\")" "$RUNNER_TEMP/package/dist/apps/cli/main.cjs"; then
+            echo "::error::packed CLI does not report $version"
+            grep -o 'version("[0-9][^"]*")' "$RUNNER_TEMP/package/dist/apps/cli/main.cjs" | head -1
+            exit 1
+          fi
+
       - name: Publish to npm (trusted publishing)
         if: hashFiles('dist/*.tgz') != ''
         run: npm publish ./dist/*.tgz --provenance --access public
