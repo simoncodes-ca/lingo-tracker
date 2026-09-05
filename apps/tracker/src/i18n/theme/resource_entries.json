@@ -2,8 +2,8 @@
   "light": {
     "source": "Light",
     "comment": "Theme switcher light mode label",
-    "es": "Claro",
-    "fr-ca": "Clair",
+    "es": "Luz",
+    "fr-ca": "Lumière",
     "ru": "Свет",
     "ja": "ライト",
     "de": "Licht"
@@ -34,5 +34,15 @@
     "ru": "Настройки темы",
     "ja": "テーマ設定",
     "de": "Designeinstellungen"
+  },
+  "currentThemeX": {
+    "source": "Theme: {theme}",
+    "comment": "Accessible label and tooltip of the theme switcher in the app header. {theme} is the active mode name (Light, Dark or System).",
+    "tags": ["theme"],
+    "es": "Tema: {theme}",
+    "fr-ca": "Thème : {theme}",
+    "ru": "Тема: {theme}",
+    "ja": "テーマ: {theme}",
+    "de": "Thema: {theme}"
   }
 }

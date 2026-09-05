@@ -60,6 +60,28 @@ export class AppHeader {
     return this.#transloco.translate(TRACKER_TOKENS.HEADER.LOCALESCOUNTX, { count: l });
   });
 
+  /**
+   * The switcher wears the theme you are actually looking at, so `system` shows
+   * light or dark rather than a third, abstract glyph. Which *mode* is selected
+   * stays legible: the label names it and the menu checks it.
+   */
+  readonly themeIcon = computed(() => (this.#themeService.effectiveTheme() === 'dark' ? 'dark_mode' : 'light_mode'));
+
+  /**
+   * The token for the active mode's name. Resolved by the transloco pipe in the
+   * template rather than the service: a computed calling `translate` caches
+   * whatever it got on first read, and first read happens before the
+   * translation file has loaded, so it would keep serving the raw key.
+   */
+  readonly themeModeToken = computed(
+    () =>
+      ({
+        light: TRACKER_TOKENS.THEME.LIGHT,
+        dark: TRACKER_TOKENS.THEME.DARK,
+        system: TRACKER_TOKENS.THEME.SYSTEM,
+      })[this.#themeService.themeMode()],
+  );
+
   setTheme(mode: ThemeMode): void {
     this.#themeService.setTheme(mode);
   }
