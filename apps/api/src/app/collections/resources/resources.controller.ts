@@ -505,6 +505,10 @@ export class ResourcesController {
       const collection = config.collections[decodedCollectionName];
       const translationsFolder = collection.translationsFolder;
 
+      // Pick up changes made outside this process (CLI commands, git checkouts, hand edits)
+      // before trusting the cache.
+      this.#cacheService.revalidate(decodedCollectionName, translationsFolder);
+
       // Check cache status
       const cacheStatus = this.#cacheService.getCacheStatus(decodedCollectionName);
 
@@ -631,10 +635,12 @@ export class ResourcesController {
         throw new NotFoundException(`Collection "${decodedCollectionName}" not found`);
       }
 
+      const collection = config.collections[decodedCollectionName];
+      this.#cacheService.revalidate(decodedCollectionName, collection.translationsFolder);
+
       const cacheStatus = this.#cacheService.getCacheStatus(decodedCollectionName);
 
       // If cache is not started, trigger indexing asynchronously
-      const collection = config.collections[decodedCollectionName];
       if (cacheStatus === CacheStatus.NOT_STARTED) {
         const translationsFolder = collection.translationsFolder;
         const locales = collection.locales ?? config.locales ?? [];
@@ -717,6 +723,7 @@ export class ResourcesController {
       const maxResults = Math.min(dto.maxResults || 100, 500);
 
       // Try to use cached tree for faster search
+      this.#cacheService.revalidate(decodedCollectionName, translationsFolder);
       const cachedTree = this.#cacheService.getCache(decodedCollectionName);
       let searchResults: SearchResult[];
 
