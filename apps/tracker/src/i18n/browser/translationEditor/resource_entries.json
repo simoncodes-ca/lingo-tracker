@@ -10,24 +10,24 @@
     "de": "Dialog schließen"
   },
   "translationKey": {
-    "source": "Translation Key",
+    "source": "Key",
     "comment": "Label for the translation key input field",
     "tags": ["browser"],
-    "es": "Clave de traducción",
-    "fr-ca": "Clé de traduction",
-    "ru": "Ключ перевода",
-    "ja": "翻訳キー",
-    "de": "Übersetzungsschlüssel"
+    "es": "Clave",
+    "fr-ca": "Clé",
+    "ru": "Ключ",
+    "ja": "キー",
+    "de": "Schlüssel"
   },
   "keyHint": {
-    "source": "Entry name only — paste a full dotted key and its folder part moves to Location",
+    "source": "Paste a dotted key and the folder part moves into Location.",
     "comment": "Hint under the translation key field in the editor dialog. Explains that only the last segment lives here, and that pasting a full dot-delimited key moves the prefix into the folder location.",
     "tags": ["browser"],
-    "es": "Solo el nombre de la entrada: pegue una clave completa con puntos y su carpeta pasará a Ubicación",
-    "fr-ca": "Nom de l'entrée seulement — collez une clé complète avec des points et son dossier ira dans Emplacement",
-    "ru": "Только имя записи — вставьте полный ключ с точками, и его папка перейдёт в поле «Папка»",
-    "ja": "エントリ名のみ。ドット区切りの完全なキーを貼り付けると、フォルダー部分は「フォルダー」に移ります",
-    "de": "Nur der Eintragsname — fügen Sie einen vollständigen Schlüssel mit Punkten ein, sein Ordnerteil wandert zu „Ordner“"
+    "es": "Pegue una clave con puntos y la parte de la carpeta pasará a Ubicación.",
+    "fr-ca": "Collez une clé avec des points et la partie dossier ira dans Emplacement.",
+    "ru": "Вставьте ключ с точками — часть с папкой перейдёт в «Расположение».",
+    "ja": "ドット区切りのキーを貼り付けると、フォルダ部分が「場所」に移動します。",
+    "de": "Fügen Sie einen Schlüssel mit Punkten ein; der Ordnerteil wandert in „Speicherort“."
   },
   "baseBadge": {
     "source": "Base",
@@ -90,24 +90,24 @@
     "de": "Eine Basisübersetzung ist erforderlich."
   },
   "commentLabel": {
-    "source": "Comment (Optional)",
+    "source": "Comment",
     "comment": "Label for optional comment field",
     "tags": ["browser"],
-    "es": "Comentario (opcional)",
-    "fr-ca": "Commentaire (facultatif)",
-    "ru": "Комментарий (необязательно)",
-    "ja": "コメント（任意）",
-    "de": "Kommentar (optional)"
+    "es": "Comentario",
+    "fr-ca": "Commentaire",
+    "ru": "Комментарий",
+    "ja": "コメント",
+    "de": "Kommentar"
   },
   "commentPlaceholder": {
-    "source": "Add context for translators...",
+    "source": "Context or instructions, e.g. where this text appears",
     "comment": "Placeholder for comment input field",
     "tags": ["browser"],
-    "es": "Añadir contexto para los traductores...",
-    "fr-ca": "Ajouter du contexte pour les traducteurs...",
-    "ru": "Добавьте контекст для переводчиков...",
-    "ja": "翻訳者向けに背景情報を追加してください...",
-    "de": "Kontext für Übersetzer hinzufügen..."
+    "es": "Contexto o instrucciones, p. ej. dónde aparece este texto",
+    "fr-ca": "Contexte ou consignes, p. ex. où ce texte apparaît",
+    "ru": "Контекст или указания, например где появляется этот текст",
+    "ja": "文脈や指示（例：このテキストが表示される場所）",
+    "de": "Kontext oder Hinweise, z. B. wo dieser Text erscheint"
   },
   "commentHint": {
     "source": "Provide context or instructions for translators",
@@ -140,24 +140,24 @@
     "de": "Speichern..."
   },
   "editTitle": {
-    "source": "Edit Translation",
+    "source": "Edit translation",
     "comment": "Dialog title when editing an existing translation",
     "tags": ["browser"],
     "es": "Editar traducción",
     "fr-ca": "Modifier la traduction",
     "ru": "Редактировать перевод",
-    "ja": "翻訳を編集する",
+    "ja": "翻訳を編集",
     "de": "Übersetzung bearbeiten"
   },
   "createTitle": {
-    "source": "Create Translation",
+    "source": "New translation",
     "comment": "Dialog title when creating a new translation",
     "tags": ["browser"],
-    "es": "Crear traducción",
-    "fr-ca": "Créer une traduction",
-    "ru": "Создать перевод",
-    "ja": "翻訳を作成する",
-    "de": "Übersetzung erstellen"
+    "es": "Nueva traducción",
+    "fr-ca": "Nouvelle traduction",
+    "ru": "Новый перевод",
+    "ja": "新しい翻訳",
+    "de": "Neue Übersetzung"
   },
   "editSubtitle": {
     "source": "Update translation values and metadata",
@@ -180,24 +180,24 @@
     "de": "Füge deiner Sammlung einen neuen Übersetzungseintrag hinzu."
   },
   "updateButton": {
-    "source": "Update Translation",
+    "source": "Save changes",
     "comment": "Submit button label in edit mode",
     "tags": ["browser"],
-    "es": "Actualizar traducción",
-    "fr-ca": "Mise à jour de la traduction",
-    "ru": "Обновить перевод",
-    "ja": "翻訳を更新",
-    "de": "Übersetzung aktualisieren"
+    "es": "Guardar cambios",
+    "fr-ca": "Enregistrer les modifications",
+    "ru": "Сохранить изменения",
+    "ja": "変更を保存",
+    "de": "Änderungen speichern"
   },
   "saveButton": {
-    "source": "Save Translation",
+    "source": "Create translation",
     "comment": "Submit button label in create mode",
     "tags": ["browser"],
-    "es": "Guardar traducción",
-    "fr-ca": "Enregistrer la traduction",
-    "ru": "Сохранить перевод",
-    "ja": "翻訳を保存",
-    "de": "Übersetzung speichern"
+    "es": "Crear traducción",
+    "fr-ca": "Créer la traduction",
+    "ru": "Создать перевод",
+    "ja": "翻訳を作成",
+    "de": "Übersetzung erstellen"
   },
   "keyCopied": {
     "source": "Similar resource key copied",
@@ -318,5 +318,125 @@
     "ru": "Папка задана как {folder} на основе введённого ключа",
     "ja": "入力されたキーからフォルダーを {folder} に設定しました",
     "de": "Ordner aus dem eingegebenen Schlüssel auf {folder} gesetzt"
+  },
+  "createSubtitleX": {
+    "source": "Adds an entry to {collection}. Locales you leave empty are auto-translated after save.",
+    "comment": "Subtitle of the translation editor dialog in create mode; collection is the collection name",
+    "tags": ["browser"],
+    "es": "Añade una entrada a {collection}. Los idiomas que deje vacíos se traducen automáticamente al guardar.",
+    "fr-ca": "Ajoute une entrée à {collection}. Les langues laissées vides sont traduites automatiquement après l’enregistrement.",
+    "ru": "Добавляет запись в {collection}. Локали, оставленные пустыми, переводятся автоматически после сохранения.",
+    "ja": "{collection} にエントリを追加します。空のままのロケールは保存後に自動翻訳されます。",
+    "de": "Fügt {collection} einen Eintrag hinzu. Leer gelassene Sprachen werden nach dem Speichern automatisch übersetzt."
+  },
+  "editSubtitleX": {
+    "source": "Saved to {collection} as a reviewable diff. The key can't be renamed here.",
+    "comment": "Subtitle of the translation editor dialog in edit mode; collection is the collection name",
+    "tags": ["browser"],
+    "es": "Se guarda en {collection} como una diferencia revisable. La clave no se puede renombrar aquí.",
+    "fr-ca": "Enregistré dans {collection} sous forme de différence révisable. La clé ne peut pas être renommée ici.",
+    "ru": "Сохраняется в {collection} как проверяемая разница. Ключ здесь переименовать нельзя.",
+    "ja": "{collection} にレビュー可能な差分として保存されます。ここではキー名を変更できません。",
+    "de": "Wird in {collection} als prüfbares Diff gespeichert. Der Schlüssel kann hier nicht umbenannt werden."
+  },
+  "locationFieldLabel": {
+    "source": "Location",
+    "comment": "Label above the folder location pill in the translation editor dialog",
+    "tags": ["browser"],
+    "es": "Ubicación",
+    "fr-ca": "Emplacement",
+    "ru": "Расположение",
+    "ja": "場所",
+    "de": "Speicherort"
+  },
+  "changeFolder": {
+    "source": "Change",
+    "comment": "Trigger inside the location pill that opens the folder picker popover",
+    "tags": ["browser"],
+    "es": "Cambiar",
+    "fr-ca": "Modifier",
+    "ru": "Изменить",
+    "ja": "変更",
+    "de": "Ändern"
+  },
+  "keySegmentHint": {
+    "source": "one segment, no dots",
+    "comment": "Optional qualifier beside the Key label in the translation editor dialog",
+    "tags": ["browser"],
+    "es": "un solo segmento, sin puntos",
+    "fr-ca": "un seul segment, sans points",
+    "ru": "один сегмент, без точек",
+    "ja": "1 セグメント、ドットなし",
+    "de": "ein Segment, keine Punkte"
+  },
+  "icuHintX": {
+    "source": "ICU placeholders like {placeholder} are preserved through translation.",
+    "comment": "Hint under the English value field; placeholder is a literal example such as {count}",
+    "tags": ["browser"],
+    "es": "Los marcadores ICU como {placeholder} se conservan durante la traducción.",
+    "fr-ca": "Les espaces réservés ICU comme {placeholder} sont conservés lors de la traduction.",
+    "ru": "Плейсхолдеры ICU, такие как {placeholder}, сохраняются при переводе.",
+    "ja": "{placeholder} のような ICU プレースホルダーは翻訳後も保持されます。",
+    "de": "ICU-Platzhalter wie {placeholder} bleiben bei der Übersetzung erhalten."
+  },
+  "commentOptionalHint": {
+    "source": "for translators · asked to confirm if left empty",
+    "comment": "Qualifier beside the Comment label in the translation editor dialog",
+    "tags": ["browser"],
+    "es": "para traductores · se pedirá confirmación si se deja vacío",
+    "fr-ca": "pour les traducteurs · confirmation demandée si laissé vide",
+    "ru": "для переводчиков · при пустом поле запросим подтверждение",
+    "ja": "翻訳者向け · 空のままだと確認を求められます",
+    "de": "für Übersetzer · wird bei leerem Feld nachgefragt"
+  },
+  "needWorkX": {
+    "source": "{count} need work",
+    "comment": "Summary of locales that are new or stale",
+    "tags": ["browser"],
+    "es": "{count} requieren trabajo",
+    "fr-ca": "{count} à retravailler",
+    "ru": "{count} требуют доработки",
+    "ja": "{count} 件が要対応",
+    "de": "{count} benötigen Nacharbeit"
+  },
+  "autoTranslatedX": {
+    "source": "{count} · auto-translated",
+    "comment": "Summary of locales that will be auto-translated after save",
+    "tags": ["browser"],
+    "es": "{count} · traducidos automáticamente",
+    "fr-ca": "{count} · traduits automatiquement",
+    "ru": "{count} · переведено автоматически",
+    "ja": "{count} 件 · 自動翻訳",
+    "de": "{count} · automatisch übersetzt"
+  },
+  "noTranslationYet": {
+    "source": "No translation yet",
+    "comment": "Placeholder in a locale value field that has no translation",
+    "tags": ["browser"],
+    "es": "Aún sin traducción",
+    "fr-ca": "Pas encore de traduction",
+    "ru": "Перевода пока нет",
+    "ja": "まだ翻訳がありません",
+    "de": "Noch keine Übersetzung"
+  },
+  "leaveEmptyToAutoTranslate": {
+    "source": "Leave empty to auto-translate",
+    "comment": "Placeholder in a locale value field in create mode",
+    "tags": ["browser"],
+    "es": "Deje vacío para traducir automáticamente",
+    "fr-ca": "Laissez vide pour traduire automatiquement",
+    "ru": "Оставьте пустым для автоперевода",
+    "ja": "自動翻訳する場合は空のままにします",
+    "de": "Leer lassen für automatische Übersetzung"
+  },
+  "autoTranslateNote": {
+    "source": "Empty locales are filled by auto-translation after you save. Protected terms and ICU placeholders stay untouched.",
+    "comment": "Note at the top of the other-locales drawer in create mode",
+    "tags": ["browser"],
+    "es": "Los idiomas vacíos se completan mediante traducción automática al guardar. Los términos protegidos y los marcadores ICU no se modifican.",
+    "fr-ca": "Les langues vides sont remplies par traduction automatique après l’enregistrement. Les termes protégés et les espaces réservés ICU restent intacts.",
+    "ru": "Пустые локали заполняются автоматическим переводом после сохранения. Защищённые термины и плейсхолдеры ICU остаются без изменений.",
+    "ja": "空のロケールは保存後に自動翻訳で補完されます。保護された用語と ICU プレースホルダーは変更されません。",
+    "de": "Leere Sprachen werden nach dem Speichern automatisch übersetzt. Geschützte Begriffe und ICU-Platzhalter bleiben unverändert."
   }
 }

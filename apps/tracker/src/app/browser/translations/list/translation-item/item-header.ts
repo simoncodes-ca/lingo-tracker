@@ -7,7 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
-import { KeyMarkupPipe } from '../../../../shared/pipes/key-markup.pipe';
+import { KeyMarkupPipe, hasKeyLeaf } from '../../../../shared/pipes/key-markup.pipe';
 import { TagList } from '../../../../shared/tag-list/tag-list.component';
 import { TranslationRollup, type LocaleState } from './translation-rollup';
 import type { ResourceSummaryDto, TranslationStatus } from '@simoncodes-ca/data-transfer';
@@ -125,6 +125,21 @@ export class TranslationItemHeader {
   );
   readonly editActionIcon = computed(() => (this.isReadOnly() ? 'visibility' : 'edit'));
 
+  /**
+   * Accessible name for the edit control. The descriptive "Edit translation" is
+   * a lie in a read-only collection, where the control only opens a viewer, so
+   * the label falls back to the action's own word there.
+   */
+  readonly editActionAriaLabel = computed(() =>
+    this.isReadOnly() ? this.editActionLabel() : TRACKER_TOKENS.BROWSER.TRANSLATIONITEM.EDITARIALABEL,
+  );
+
+  /**
+   * Whether the key has a leaf segment to hold back from the middle ellipsis.
+   * A single-segment key is all head and renders as one span.
+   */
+  readonly hasKeyTail = computed(() => hasKeyLeaf(this.fullKey()));
+
   /** Comment text derived from the translation input */
   readonly comment = computed(() => this.translation().comment);
 
@@ -179,6 +194,42 @@ export class TranslationItemHeader {
 
   onCopyKey(): void {
     this.#listStore.copyKey(this.fullKey());
+  }
+
+  /**
+   * Single click on the key chip copies the key; the second click of a
+   * double-click does not.
+   *
+   * The chip is almost the whole of a compact row's chrome, so it has to carry
+   * both gestures. Of the two ways to keep them apart, deferring the copy behind
+   * a ~250 ms timer was rejected twice over: it makes every copy — by far the
+   * commoner gesture — feel late, and it moves `navigator.clipboard.writeText`
+   * out of the click's user activation, which browsers may then refuse.
+   *
+   * So the copy stays synchronous and the count of clicks in the sequence is read
+   * instead. `event.detail` is 1 for the first click, 2 for the second, and
+   * higher for a triple click; anything past the first is the tail of a gesture
+   * that has already copied, so it is ignored. A double-click therefore copies
+   * exactly once and opens the editor. Enter and Space on the chip fire a click
+   * with `detail === 0` and keep copying.
+   */
+  onKeyChipClick(event: MouseEvent): void {
+    if (event.detail > 1) return;
+    this.onCopyKey();
+  }
+
+  /**
+   * Double-click on the key chip opens the editor.
+   *
+   * The item's own double-click handler deliberately ignores buttons, and in the
+   * compact layout the row is little more than this button and the selectable
+   * value — which leaves the gesture nowhere to land. The chip claims it here and
+   * stops it bubbling, so the row handler cannot fire a second time.
+   */
+  onKeyChipDoubleClick(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.#listStore.editTranslation(this.translation(), this.#collectionName());
   }
 
   onEdit(): void {

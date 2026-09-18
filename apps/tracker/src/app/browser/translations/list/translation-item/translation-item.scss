@@ -77,6 +77,15 @@
     gap: 0;
     margin-bottom: var(--spacing-1);
     padding: var(--spacing-1) var(--spacing-2);
+
+    /*
+     * Width of the key column. Fixed, so every value in the list starts on the
+     * same x — the whole point of the compact mode is a column of strings you
+     * can run an eye down, and a content-sized key gave each row its own left
+     * edge. The percentage is the old share; the floor keeps a key readable and
+     * the ceiling stops a wide panel from spending half its width on addresses.
+     */
+    --compact-key-col: clamp(220px, 34%, 460px);
   }
 
   &[data-density='full'] {
@@ -420,6 +429,17 @@
 
   .compact-annotation .same-as-source {
     padding: calc(var(--spacing-1) / 2 + 1px) var(--spacing-1) calc(var(--spacing-1) / 2);
+  }
+}
+
+@container (max-width: 34rem) {
+  /*
+   * A 220px floor is a third of a 34rem row. The key column gives ground before
+   * the value does, because a clipped key still carries its full text in the
+   * tooltip and the accessible name, where a clipped value carries nothing.
+   */
+  .item-container[data-density='compact'] {
+    --compact-key-col: clamp(120px, 40%, 220px);
   }
 }
 

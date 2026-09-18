@@ -31,31 +31,31 @@
   },
   "addPlaceholder": {
     "en": {
-      "checksum": "9c10f0e2ca34e83dd5048c7ea35bf8a6"
+      "checksum": "2a1f4e1edeb8ea99d0aa591022da9bd1"
     },
     "es": {
-      "checksum": "decbb9c3ecc0b0333d907f1d00de679c",
-      "baseChecksum": "9c10f0e2ca34e83dd5048c7ea35bf8a6",
+      "checksum": "4ffe3472ff6c3e5ed602826047f16632",
+      "baseChecksum": "2a1f4e1edeb8ea99d0aa591022da9bd1",
       "status": "translated"
     },
     "fr-ca": {
-      "checksum": "cf86b0a105a50a7de31eb46cdb8981f4",
-      "baseChecksum": "9c10f0e2ca34e83dd5048c7ea35bf8a6",
+      "checksum": "7e880d2c5a158aba0ca5b56aac7ebf1e",
+      "baseChecksum": "2a1f4e1edeb8ea99d0aa591022da9bd1",
       "status": "translated"
     },
     "ru": {
-      "checksum": "61132e59266792930cefcdf6a3caa8aa",
-      "baseChecksum": "9c10f0e2ca34e83dd5048c7ea35bf8a6",
+      "checksum": "84db04e9983f8b34a1d305f6896d6e51",
+      "baseChecksum": "2a1f4e1edeb8ea99d0aa591022da9bd1",
       "status": "translated"
     },
     "ja": {
-      "checksum": "fa35297e92a1654e5f93d119af9a9b41",
-      "baseChecksum": "9c10f0e2ca34e83dd5048c7ea35bf8a6",
+      "checksum": "2c239b335319e61d404489918b30b5a7",
+      "baseChecksum": "2a1f4e1edeb8ea99d0aa591022da9bd1",
       "status": "translated"
     },
     "de": {
-      "checksum": "9f02ef565730c10882ff4258c7b2b91f",
-      "baseChecksum": "9c10f0e2ca34e83dd5048c7ea35bf8a6",
+      "checksum": "4da976a941cb3d41e253dbe8c5ac36be",
+      "baseChecksum": "2a1f4e1edeb8ea99d0aa591022da9bd1",
       "status": "translated"
     }
   },
@@ -116,6 +116,66 @@
     "de": {
       "checksum": "d1eb62fe5711fecd04afa1150a6ec7c6",
       "baseChecksum": "fbd3fc15976ff12c89e7c48584b388d6",
+      "status": "translated"
+    }
+  },
+  "inheritedHint": {
+    "en": {
+      "checksum": "16d09ee60bf43105a45475bc908ff7d6"
+    },
+    "es": {
+      "checksum": "4e452fc7dc42bab0b9249c307fd58dea",
+      "baseChecksum": "16d09ee60bf43105a45475bc908ff7d6",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "d42573237a0763d278aaeea749c6a77b",
+      "baseChecksum": "16d09ee60bf43105a45475bc908ff7d6",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "43703a1d4c52ad81c8a36f6f5e3e1e3d",
+      "baseChecksum": "16d09ee60bf43105a45475bc908ff7d6",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "506a3c60f2964aab86c62acb2a3626d8",
+      "baseChecksum": "16d09ee60bf43105a45475bc908ff7d6",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "ade1a19637ca89dd9da2b148cfdfd026",
+      "baseChecksum": "16d09ee60bf43105a45475bc908ff7d6",
+      "status": "translated"
+    }
+  },
+  "addShort": {
+    "en": {
+      "checksum": "2efd89b3ccc76b0b03a34196fc6d1c8b"
+    },
+    "es": {
+      "checksum": "6b67e53a1ebc84dfb3cfd86ac815835c",
+      "baseChecksum": "2efd89b3ccc76b0b03a34196fc6d1c8b",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "a1906d0f7470f28198fccd827cb1811a",
+      "baseChecksum": "2efd89b3ccc76b0b03a34196fc6d1c8b",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "560be0e7f30a387ec7275e8018eed177",
+      "baseChecksum": "2efd89b3ccc76b0b03a34196fc6d1c8b",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "3378740420db21b9cf4dfd7d91c5566e",
+      "baseChecksum": "2efd89b3ccc76b0b03a34196fc6d1c8b",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "f95c6a8d2d68a11c54e56cf198038e5a",
+      "baseChecksum": "2efd89b3ccc76b0b03a34196fc6d1c8b",
       "status": "translated"
     }
   }

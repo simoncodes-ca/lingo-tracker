@@ -23,6 +23,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-background);
+  // The base ink for everything that does not name a colour of its own. Without
+  // it the inherited value is the user agent's black, which is close enough to
+  // --color-text-primary on parchment to pass unnoticed in light mode and is
+  // black-on-black in dark mode. The CDK overlay container is a child of <body>,
+  // so dialogs, drawers and menus inherit this too.
+  color: var(--color-text-primary);
 
   // Watercolor paper grain texture overlay
   &::after {
@@ -81,29 +87,51 @@ mark.search-highlight {
 // The CDK puts the panel class on the overlay pane, which is the only element
 // that can carry the dialog's width and height; both call sites now pass this
 // class and nothing else, so there is one place to change the numbers.
-.translation-editor-dialog-panel {
-  width: 700px;
-  max-width: min(700px, calc(100vw - 2 * var(--spacing-8)));
-  max-height: 90vh;
+// Doubled with the pane class, as the collection and bundle dialogs are, so this
+// outranks the CDK's own `max-height: 100%` on `.cdk-overlay-pane`: that 100% has
+// no definite height to resolve against, so without this the panel grows with its
+// content and pushes the footer off the bottom of the viewport.
+.cdk-overlay-pane.translation-editor-dialog-panel {
+  // 980px: the form column plus the 320px context column, as the approved comp.
+  width: 980px;
+  max-width: calc(100vw - 3rem);
+  // Named once here and spent on every layer below, because `inherit` would hand
+  // each layer the border-box ceiling of the one above and ignore the container's
+  // 3px top rule — three pixels of footer, hanging out under the rounded corner.
+  --editor-panel-max-height: min(90vh, calc(100dvh - 2 * var(--spacing-8)));
+  max-height: var(--editor-panel-max-height);
 
-  // Material's dialog container already carries `max-height: inherit`; the
-  // component host repeats the trick so the flex column inside can distribute
-  // the height instead of guessing at chrome heights.
-  app-translation-editor-dialog {
-    display: block;
-    max-height: inherit;
+  // Every layer down to the component has to carry the viewport-based ceiling,
+  // or the panel grows past the footer and takes the primary action off screen.
+  // The two body columns inside the component are then the only things that scroll.
+  .mat-mdc-dialog-container {
+    max-height: var(--editor-panel-max-height);
   }
 
-  // Below the `sm` breakpoint a 700px dialog collapses to whatever 80vw allows
+  .mat-mdc-dialog-inner-container,
+  .mat-mdc-dialog-surface,
+  app-translation-editor-dialog {
+    max-height: calc(var(--editor-panel-max-height) - 3px);
+  }
+
+  app-translation-editor-dialog {
+    display: block;
+  }
+
+  // Below the `sm` breakpoint a wide dialog collapses to whatever 80vw allows
   // — 312px at 390px of viewport, a column too narrow to read a translation in.
   // Material's standard answer at this size is a full-screen dialog, so take
   // the whole screen, drop the floating chrome, and let the editor's own flex
   // column own the height.
   @media (max-width: 639px) {
+    // Re-point the ceiling at the whole screen, so every layer below follows the
+    // panel down here too: they are capped against this variable, not against
+    // whatever the pane happens to measure.
+    --editor-panel-max-height: 100dvh;
     width: 100vw;
+
     max-width: 100vw;
     height: 100dvh;
-    max-height: 100dvh;
 
     .mat-mdc-dialog-container:has(app-translation-editor-dialog) {
       height: 100%;
@@ -116,6 +144,13 @@ mark.search-highlight {
         height: 100%;
         border-radius: 0;
       }
+    }
+
+    // The top rule is gone at this size, so the layers below the container get
+    // the whole screen rather than the screen less a border that isn't there.
+    .mat-mdc-dialog-inner-container,
+    .mat-mdc-dialog-surface {
+      max-height: 100dvh;
     }
 
     app-translation-editor-dialog {
@@ -178,6 +213,100 @@ mark.search-highlight {
 
   app-bundle-form-dialog {
     display: block;
+  }
+}
+
+// The translation editor's location popover. It renders from the editor's own
+// <ng-template>, so its inner wells keep the component's styles; only the panel
+// box lives here, because the CDK attaches it to the overlay container where a
+// component's :host custom properties no longer inherit.
+.cdk-overlay-pane.translation-editor-folder-popover {
+  max-width: calc(100vw - 2 * var(--spacing-6));
+
+  .pop {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 360px;
+    max-width: 100%;
+    padding: var(--spacing-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    background: var(--color-background);
+    box-shadow: var(--shadow-lg);
+    animation: popover-in var(--transition-fast) ease-out;
+  }
+
+  .pop-tree {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: var(--spacing-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+  }
+
+  .pop-foot {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    padding: 6px var(--spacing-1) 2px;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .pop-new {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--spacing-1) var(--spacing-2);
+    border: 0;
+    border-radius: var(--border-radius-md);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font: inherit;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      color: var(--color-text-primary);
+      background: var(--color-background-subtle);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--focus-ring-color);
+      outline-offset: 1px;
+    }
+  }
+
+  .pop-confirm {
+    margin-left: auto;
+  }
+}
+
+[data-theme='dark'] .cdk-overlay-pane.translation-editor-folder-popover .pop {
+  background: var(--color-background-muted);
+}
+
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cdk-overlay-pane.translation-editor-folder-popover .pop {
+    animation: none;
   }
 }
 

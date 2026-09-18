@@ -1,5 +1,10 @@
-<div class="similar-translations-card" [class.has-results]="state() === 'results'">
+<div
+  class="similar-translations-card"
+  [class.similar-translations-card--context]="isContextVariant()"
+  [class.has-results]="state() === 'results'"
+>
   <!-- Header -->
+  @if (!isContextVariant()) {
   <div class="card-header">
     <mat-icon class="header-icon">content_copy</mat-icon>
     <h4 class="header-title">{{ TOKENS.BROWSER.SIMILARTRANSLATIONS.TITLE | transloco }}</h4>
@@ -7,14 +12,15 @@
       <mat-spinner diameter="16" class="header-spinner"></mat-spinner>
     }
   </div>
+  }
 
   <!-- Content -->
   <div class="card-content">
     @switch (state()) {
       @case ('idle') {
-        <p class="state-message idle">
-          {{ TOKENS.BROWSER.SIMILARTRANSLATIONS.IDLE | transloco }}
-        </p>
+        @if (!isContextVariant()) {
+          <p class="state-message idle">{{ TOKENS.BROWSER.SIMILARTRANSLATIONS.IDLE | transloco }}</p>
+        }
       }
       @case ('loading') {
         <p class="state-message loading">
@@ -22,21 +28,28 @@
         </p>
       }
       @case ('empty') {
-        <p class="state-message empty">
-          {{ TOKENS.BROWSER.SIMILARTRANSLATIONS.EMPTY | transloco }}
-        </p>
+        @if (!isContextVariant()) {
+          <p class="state-message empty">{{ TOKENS.BROWSER.SIMILARTRANSLATIONS.EMPTY | transloco }}</p>
+        }
       }
       @case ('results') {
         <div class="results-list">
-          @for (result of displayedResults(); track result.key) {
+          @for (row of displayedRows(); track row.result.key) {
             <button
               type="button"
               class="result-item"
-              (click)="onResultClick(result)"
+              [class.result-item--exact]="row.isExact"
+              (click)="onResultClick(row.result)"
               [title]="TOKENS.COMMON.ACTIONS.CLICKTOCOPY | transloco"
             >
-              <span class="result-key">{{ result.key }}</span>
-              <span class="result-value">{{ getTranslationValue(result) }}</span>
+              <!-- Break only after dots so a key never splits mid-identifier. -->
+              <span class="result-key">
+                @for (segment of row.parentSegments; track $index) {
+                  <span>{{ segment }}</span><i aria-hidden="true">.</i><wbr />
+                }
+                <span>{{ row.leafSegment }}</span>
+              </span>
+              <span class="result-value" [class.result-value--exact]="row.isExact">{{ row.value }}</span>
             </button>
           }
         </div>

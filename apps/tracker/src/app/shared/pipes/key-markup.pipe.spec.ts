@@ -1,7 +1,7 @@
 import { DomSanitizer } from '@angular/platform-browser';
 import { createServiceFactory, type SpectatorService } from '@ngneat/spectator/vitest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { KeyMarkupPipe } from './key-markup.pipe';
+import { KeyMarkupPipe, hasKeyLeaf, keyLeafSplitIndex, type KeyMarkupPart } from './key-markup.pipe';
 
 describe('KeyMarkupPipe', () => {
   let pipe: KeyMarkupPipe;
@@ -10,8 +10,8 @@ describe('KeyMarkupPipe', () => {
 
   const createPipe = createServiceFactory({ service: KeyMarkupPipe });
 
-  const render = (key: string | null | undefined, searchTerm?: string): string => {
-    const result = pipe.transform(key, searchTerm);
+  const render = (key: string | null | undefined, searchTerm?: string, part?: KeyMarkupPart): string => {
+    const result = pipe.transform(key, searchTerm, part);
     return typeof result === 'string' ? result : (sanitizer.sanitize(1, result) ?? '');
   };
 
@@ -72,5 +72,57 @@ describe('KeyMarkupPipe', () => {
 
     expect(output).not.toContain('<img>');
     expect(output).toContain('&lt;img&gt;');
+  });
+
+  /**
+   * The single-line key chip elides the MIDDLE of a key, which CSS cannot do. The
+   * pipe supplies the two halves it needs: a head that may be clipped and a tail
+   * holding the leaf segment that must not be.
+   */
+  describe('head/tail split', () => {
+    it('should put everything but the leaf segment in the head', () => {
+      expect(render('browser.translationEditor.context.allUpToDate', undefined, 'head')).toBe(
+        'browser.<wbr>translation<wbr>Editor.<wbr>context',
+      );
+    });
+
+    it('should put the leaf segment, with its separator, in the tail', () => {
+      expect(render('browser.translationEditor.context.allUpToDate', undefined, 'tail')).toBe(
+        '.<wbr>all<wbr>Up<wbr>To<wbr>Date',
+      );
+    });
+
+    it('should never shorten the split parts, unlike the full rendering', () => {
+      const key = 'browser.translationEditor.context.someExtremelyLongLeafSegmentName.allUpToDate';
+
+      expect(render(key, undefined, 'full')).toContain('...');
+      const rejoined = `${render(key, undefined, 'head')}${render(key, undefined, 'tail')}`;
+      expect(rejoined.replaceAll('<wbr>', '')).toBe(key);
+    });
+
+    it('should render a key with no separator as head only', () => {
+      expect(render('standalone', undefined, 'head')).toBe('standalone');
+      expect(render('standalone', undefined, 'tail')).toBe('');
+    });
+
+    it('should highlight a match that straddles the boundary on both sides of it', () => {
+      const key = 'apps.common.buttons.ok';
+
+      expect(render(key, 'buttons.o', 'head')).toContain('<mark class="search-highlight">buttons</mark>');
+      expect(render(key, 'buttons.o', 'tail')).toContain('<mark class="search-highlight">.<wbr>o</mark>');
+    });
+
+    it('should highlight a match contained in one part only once', () => {
+      expect(render('apps.common.buttons.ok', 'common', 'head')).toBe(
+        'apps.<wbr><mark class="search-highlight">common</mark>.<wbr>buttons',
+      );
+    });
+
+    it('should expose where the split falls', () => {
+      expect(keyLeafSplitIndex('apps.common.ok')).toBe(11);
+      expect(keyLeafSplitIndex('standalone')).toBe('standalone'.length);
+      expect(hasKeyLeaf('apps.ok')).toBe(true);
+      expect(hasKeyLeaf('standalone')).toBe(false);
+    });
   });
 });

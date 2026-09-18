@@ -5,14 +5,17 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
 import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
-import { of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { patchState } from '@ngrx/signals';
+import { of, Subject, throwError } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
 import { NotificationService } from '../../../shared/notification';
 import { BrowserApiService } from '../../services/browser-api.service';
+import { BrowserStore } from '../../store/browser.store';
 import {
   TranslationEditorDialog,
+  TRANSLATION_EDITOR_TITLE_ID,
   type TranslationEditorDialogData,
   type TranslationEditorResult,
 } from './translation-editor-dialog';
@@ -27,6 +30,7 @@ describe('TranslationEditorDialog', () => {
     createResource: Mock;
     updateResource: Mock;
     searchTranslations: Mock;
+    getResourceTree: Mock;
   };
   let mockNotifications: { success: Mock; info: Mock; warning: Mock; error: Mock };
 
@@ -40,6 +44,9 @@ describe('TranslationEditorDialog', () => {
   });
 
   const dialogData = createMockData('create');
+
+  /** Lets the deferred focus task the dialog queues after a confirmation run. */
+  const flushFocus = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
   const createDialog = createComponentFactory({
     component: TranslationEditorDialog,
@@ -85,6 +92,7 @@ describe('TranslationEditorDialog', () => {
       createResource: vi.fn().mockReturnValue(of({})),
       updateResource: vi.fn().mockReturnValue(of({})),
       searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+      getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
     };
 
     mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
@@ -97,9 +105,17 @@ describe('TranslationEditorDialog', () => {
       expect(component).toBeTruthy();
     });
 
+    it('should render the heading the dialog container is labelled by', () => {
+      const heading = spectator.query(`#${TRANSLATION_EDITOR_TITLE_ID}`);
+
+      expect(heading).toBeTruthy();
+      expect(heading?.tagName).toBe('H2');
+      expect(heading?.textContent?.trim()).toBeTruthy();
+    });
+
     it('should display create mode title and subtitle', () => {
       expect(component.dialogTitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CREATETITLE);
-      expect(component.dialogSubtitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CREATESUBTITLE);
+      expect(component.dialogSubtitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.CREATESUBTITLEX);
     });
 
     it('should display edit mode title and subtitle', async () => {
@@ -111,7 +127,7 @@ describe('TranslationEditorDialog', () => {
       renderDialog(editData);
 
       expect(component.dialogTitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.EDITTITLE);
-      expect(component.dialogSubtitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.EDITSUBTITLE);
+      expect(component.dialogSubtitle()).toBe(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.EDITSUBTITLEX);
     });
 
     it('should initialize form controls for all non-base locales', () => {
@@ -390,6 +406,7 @@ describe('TranslationEditorDialog', () => {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({})),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
       };
       mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       renderDialog(dataWithoutFolder);
@@ -544,6 +561,7 @@ describe('TranslationEditorDialog', () => {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({})),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
       };
       mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       renderDialog(editData);
@@ -670,6 +688,7 @@ describe('TranslationEditorDialog', () => {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({})),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
       };
       mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
       renderDialog(createMockData('create'));
@@ -765,6 +784,60 @@ describe('TranslationEditorDialog', () => {
       await component.onSubmit();
 
       expect(dialogRef.close).not.toHaveBeenCalled();
+    });
+
+    it('should focus the comment field when user clicks "Add Comment"', async () => {
+      mockDialog.open.mockReturnValue({ afterClosed: vi.fn().mockReturnValue(of(false)) });
+
+      component.form.controls.key.setValue('test_key');
+      component.form.controls.baseValue.setValue('Test Value');
+      component.form.controls.comment.setValue('');
+
+      await component.onSubmit();
+      // Focus is deferred a task past afterClosed() so the confirmation's focus
+      // trap cannot restore focus to the Save button on top of it.
+      await flushFocus();
+
+      const commentField = spectator.query('#translation-editor-comment');
+      expect(commentField).toBeTruthy();
+      expect(document.activeElement).toBe(commentField);
+    });
+
+    it('should focus the comment field in edit mode when user clicks "Add Comment"', async () => {
+      renderDialog(
+        createMockData('edit', {
+          key: 'test_key',
+          translations: { en: 'Test Value' },
+          status: {},
+          comment: 'Existing comment',
+        }),
+      );
+      mockDialog.open.mockReturnValue({ afterClosed: vi.fn().mockReturnValue(of(false)) });
+
+      component.form.controls.comment.setValue('');
+
+      await component.onSubmit();
+      await flushFocus();
+
+      const commentField = spectator.query('#translation-editor-comment');
+      expect(commentField).toBeTruthy();
+      expect(document.activeElement).toBe(commentField);
+    });
+
+    it('should select any existing comment text when the field is focused', async () => {
+      mockDialog.open.mockReturnValue({ afterClosed: vi.fn().mockReturnValue(of(false)) });
+
+      component.form.controls.key.setValue('test_key');
+      component.form.controls.baseValue.setValue('Test Value');
+      component.form.controls.comment.setValue('   ');
+      spectator.detectChanges();
+
+      await component.onSubmit();
+      await flushFocus();
+
+      const commentField = spectator.query<HTMLTextAreaElement>('#translation-editor-comment');
+      expect(commentField?.selectionStart).toBe(0);
+      expect(commentField?.selectionEnd).toBe(3);
     });
 
     it('should not save when user cancels confirmation dialog', async () => {
@@ -897,6 +970,7 @@ describe('TranslationEditorDialog', () => {
           .fn()
           .mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true, skippedLocales: ['es'] })),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({ afterClosed: () => of(true) }),
@@ -935,6 +1009,7 @@ describe('TranslationEditorDialog', () => {
           .fn()
           .mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true, skippedLocales: [] })),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({ afterClosed: () => of(true) }),
@@ -949,6 +1024,603 @@ describe('TranslationEditorDialog', () => {
 
       const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
       expect(result.skippedLocales).toBeUndefined();
+    });
+  });
+
+  describe('Location popover', () => {
+    it('should stay closed until the location pill is used', () => {
+      expect(component.isFolderPopoverOpen()).toBe(false);
+      expect(document.querySelector('.pop')).toBeNull();
+    });
+
+    it('should open the popover from the location pill', () => {
+      spectator.click('[data-testid="location-pill"]');
+      spectator.detectChanges();
+
+      expect(component.isFolderPopoverOpen()).toBe(true);
+      expect(document.querySelector('.pop')).not.toBeNull();
+    });
+
+    it('should toggle the popover shut on a second click', () => {
+      component.openFolderPopover();
+      spectator.detectChanges();
+
+      component.toggleFolderPopover();
+      spectator.detectChanges();
+
+      expect(component.isFolderPopoverOpen()).toBe(false);
+    });
+
+    it('should stage a folder without committing it', () => {
+      component.openFolderPopover();
+      component.onFolderStaged('common.errors');
+
+      expect(component.stagedFolderPath()).toBe('common.errors');
+      expect(component.selectedFolderPath()).toBe('common.buttons');
+      expect(component.popoverFolderPath()).toBe('common.errors');
+    });
+
+    it('should commit the staged folder and close on confirm', () => {
+      component.openFolderPopover();
+      component.onFolderStaged('common.errors');
+
+      component.confirmStagedFolder();
+
+      expect(component.selectedFolderPath()).toBe('common.errors');
+      expect(component.isFolderPopoverOpen()).toBe(false);
+      expect(component.stagedFolderPath()).toBeNull();
+    });
+
+    it('should keep the current folder when nothing was staged', () => {
+      component.openFolderPopover();
+
+      component.confirmStagedFolder();
+
+      expect(component.selectedFolderPath()).toBe('common.buttons');
+      expect(component.isFolderPopoverOpen()).toBe(false);
+    });
+
+    it('should dismiss the popover instead of the dialog on cancel', async () => {
+      component.openFolderPopover();
+
+      await component.onCancel();
+
+      expect(component.isFolderPopoverOpen()).toBe(false);
+      expect(dialogRef.close).not.toHaveBeenCalled();
+    });
+
+    it('should not open the popover in a read-only collection', () => {
+      renderDialog({ ...createMockData('create'), readOnly: true });
+
+      component.toggleFolderPopover();
+
+      expect(component.isFolderPopoverOpen()).toBe(false);
+    });
+  });
+
+  describe('Other locales drawer', () => {
+    it('should stay closed until the Other locales row is used', () => {
+      expect(component.isLocalesDrawerOpen()).toBe(false);
+      expect(spectator.query('[data-testid="locales-drawer"]')).toBeNull();
+    });
+
+    it('should open the drawer from the Other locales row', () => {
+      spectator.click('[data-testid="other-locales-row"]');
+      spectator.detectChanges();
+
+      expect(component.isLocalesDrawerOpen()).toBe(true);
+      expect(spectator.query('[data-testid="locales-drawer"]')).not.toBeNull();
+    });
+
+    it('should close the drawer from Done', () => {
+      component.openLocalesDrawer();
+      spectator.detectChanges();
+
+      spectator.click('[data-testid="drawer-done"]');
+      spectator.detectChanges();
+
+      expect(component.isLocalesDrawerOpen()).toBe(false);
+      expect(spectator.query('[data-testid="locales-drawer"]')).toBeNull();
+    });
+
+    it('should dismiss the drawer instead of the dialog on cancel', async () => {
+      component.openLocalesDrawer();
+
+      await component.onCancel();
+
+      expect(component.isLocalesDrawerOpen()).toBe(false);
+      expect(dialogRef.close).not.toHaveBeenCalled();
+    });
+
+    it('should not open when the collection has only the base locale', () => {
+      renderDialog({ ...createMockData('create'), availableLocales: ['en'] });
+
+      component.openLocalesDrawer();
+
+      expect(component.isLocalesDrawerOpen()).toBe(false);
+    });
+
+    it('should edit the same FormArray the save path reads', () => {
+      component.openLocalesDrawer();
+      spectator.detectChanges();
+
+      component.setLocaleStatus(0, 'verified');
+
+      expect(component.form.controls.translations.at(0).value.status).toBe('verified');
+    });
+  });
+
+  describe('Context column', () => {
+    it('should split the folder path for the location pill', () => {
+      expect(component.folderSegments()).toEqual(['common', 'buttons']);
+    });
+
+    it('should mark the entry being created in the context tree', () => {
+      component.form.controls.key.setValue('ok');
+      spectator.detectChanges();
+
+      const entry = component.contextTree().find((node) => node.kind === 'entry' && node.name === 'ok');
+      expect(entry?.mark).toBe('new');
+    });
+
+    it('should mark the target folder as the one the entry lands in', () => {
+      expect(component.contextTree().some((node) => node.here === true)).toBe(true);
+    });
+
+    it('should highlight the row of the entry being created, not just pill it', () => {
+      component.form.controls.key.setValue('ok');
+      spectator.detectChanges();
+
+      const rows = spectator.queryAll('[data-testid="context-tree"] .ftree-n--target');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.textContent).toContain('ok');
+    });
+
+    it('should highlight the row of the entry being edited', () => {
+      renderDialog(createMockData('edit', { key: 'ok', translations: { en: 'OK' }, status: {} }));
+      spectator.detectChanges();
+
+      const rows = spectator.queryAll('[data-testid="context-tree"] .ftree-n--target');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.textContent).toContain('ok');
+      expect(rows[0]).not.toHaveClass('ftree-n--taken');
+    });
+
+    it('should not claim a collision before a key is typed', () => {
+      expect(component.keyCollision()).toBe(false);
+    });
+
+    it('should not repeat the full key, which the footer already carries', () => {
+      expect(spectator.query('[data-testid="context-full-key"]')).toBeNull();
+      expect(spectator.query('[data-testid="footer-key"]')).not.toBeNull();
+    });
+
+    it('should summarise only the folder and the similar count', () => {
+      expect(component.contextSummary()).toBe('common.buttons');
+    });
+
+    it('should list only the locales that are new or stale', () => {
+      renderDialog(
+        createMockData('edit', {
+          key: 'ok',
+          translations: { en: 'OK', fr: 'Oui', de: 'Ja' },
+          status: { fr: 'stale', de: 'verified' },
+        }),
+      );
+
+      expect(component.localesNeedingWork().map((locale) => locale.locale)).toEqual(['fr']);
+      const rows = spectator.queryAll('[data-testid="locale-summary"] .lsum-r');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.textContent).toContain('fr');
+      expect(spectator.query('[data-testid="locales-all-up-to-date"]')).toBeNull();
+    });
+
+    it('should show the caught-up line instead of an empty list', () => {
+      renderDialog(
+        createMockData('edit', {
+          key: 'ok',
+          translations: { en: 'OK', fr: 'Oui', de: 'Ja' },
+          status: { fr: 'translated', de: 'verified' },
+        }),
+      );
+
+      expect(component.localesNeedingWork()).toHaveLength(0);
+      expect(spectator.queryAll('[data-testid="locale-summary"] .lsum-r')).toHaveLength(0);
+      expect(spectator.query('[data-testid="locales-all-up-to-date"]')).not.toBeNull();
+    });
+  });
+
+  describe('Key collision', () => {
+    const entry = (key: string): ResourceSummaryDto => ({ key, translations: { en: key }, status: {} });
+
+    /** Puts entries in the folder the browser is showing, the cheapest source. */
+    const seedBrowserFolder = (folderPath: string, keys: string[]): void => {
+      const store = spectator.inject(BrowserStore);
+      patchState(store, { currentFolderPath: folderPath, translations: keys.map(entry) });
+    };
+
+    it('should detect a collision against the entries the browser already holds', () => {
+      seedBrowserFolder('common.buttons', ['ok', 'cancel']);
+
+      component.form.controls.key.setValue('ok');
+      spectator.detectChanges();
+
+      expect(component.keyCollision()).toBe(true);
+      expect(spectator.query('[data-testid="key-collision-error"]')).not.toBeNull();
+    });
+
+    it('should ignore nested resources the browser folds into the folder listing', () => {
+      seedBrowserFolder('common.buttons', ['ok', 'confirm.dialog.title']);
+
+      component.form.controls.key.setValue('confirm');
+      spectator.detectChanges();
+
+      expect(component.keyCollision()).toBe(false);
+      expect(component.contextTree().some((node) => node.name === 'confirm.dialog.title')).toBe(false);
+    });
+
+    it('should compare keys exactly, so case alone is not a collision', () => {
+      seedBrowserFolder('common.buttons', ['ok']);
+
+      component.form.controls.key.setValue('OK');
+      spectator.detectChanges();
+
+      expect(component.keyCollision()).toBe(false);
+    });
+
+    it('should detect a collision in a folder chosen from the popover', () => {
+      mockBrowserApi.getResourceTree.mockImplementation((_collection: string, path: string) =>
+        of({ path, resources: path === 'common.errors' ? [entry('notFound')] : [], children: [] }),
+      );
+
+      component.form.controls.key.setValue('notFound');
+      spectator.detectChanges();
+      expect(component.keyCollision()).toBe(false);
+
+      component.openFolderPopover();
+      component.onFolderStaged('common.errors');
+      component.confirmStagedFolder();
+      spectator.detectChanges();
+
+      expect(mockBrowserApi.getResourceTree).toHaveBeenCalledWith('test-collection', 'common.errors', false);
+      expect(component.keyCollision()).toBe(true);
+    });
+
+    it('should not re-fetch a folder it has already loaded', () => {
+      component.onFolderConfirmed('common.errors');
+      component.onFolderConfirmed('common.buttons');
+      component.onFolderConfirmed('common.errors');
+
+      const errorFolderLoads = mockBrowserApi.getResourceTree.mock.calls.filter((call) => call[1] === 'common.errors');
+      expect(errorFolderLoads).toHaveLength(1);
+    });
+
+    it('should claim nothing while a folder is still loading', () => {
+      const pending = new Subject<unknown>();
+      mockBrowserApi.getResourceTree.mockReturnValue(pending);
+
+      component.onFolderConfirmed('common.errors');
+      component.form.controls.key.setValue('notFound');
+      spectator.detectChanges();
+
+      expect(component.keyCollision()).toBe(false);
+      expect(component.contextTree().some((node) => node.kind === 'entry')).toBe(false);
+
+      pending.next({ path: 'common.errors', resources: [entry('notFound')], children: [] });
+      pending.complete();
+      spectator.detectChanges();
+
+      expect(component.keyCollision()).toBe(true);
+    });
+
+    it('should never collide in edit mode, where the key is locked', () => {
+      renderDialog(createMockData('edit', entry('ok')));
+      seedBrowserFolder('common.buttons', ['ok']);
+      spectator.detectChanges();
+
+      expect(component.keyCollision()).toBe(false);
+      expect(spectator.query('[data-testid="key-collision-error"]')).toBeNull();
+    });
+
+    it('should mark the colliding leaf as an existing entry in the context tree', () => {
+      seedBrowserFolder('common.buttons', ['ok']);
+
+      component.form.controls.key.setValue('ok');
+      spectator.detectChanges();
+
+      const leaf = component.contextTree().find((node) => node.kind === 'entry' && node.name === 'ok');
+      expect(leaf?.mark).toBe('exists');
+      expect(spectator.query('[data-testid="tree-exists-pill"]')).not.toBeNull();
+    });
+
+    it('should mark the colliding row error-coloured rather than accented', () => {
+      seedBrowserFolder('common.buttons', ['ok']);
+
+      component.form.controls.key.setValue('ok');
+      spectator.detectChanges();
+
+      expect(spectator.queryAll('[data-testid="context-tree"] .ftree-n--taken')).toHaveLength(1);
+      expect(spectator.queryAll('[data-testid="context-tree"] .ftree-n--target')).toHaveLength(0);
+    });
+
+    it('should turn the footer key the error colour', () => {
+      seedBrowserFolder('common.buttons', ['ok']);
+
+      component.form.controls.key.setValue('ok');
+      spectator.detectChanges();
+
+      expect(spectator.query('[data-testid="footer-key"]')).toHaveClass('mono--dup');
+    });
+
+    it('should leave the footer key unmarked while the key is free', () => {
+      seedBrowserFolder('common.buttons', ['ok']);
+
+      component.form.controls.key.setValue('cancel');
+      spectator.detectChanges();
+
+      expect(spectator.query('[data-testid="footer-key"]')).not.toHaveClass('mono--dup');
+    });
+
+    it('should take the footer validity glyph back to idle', () => {
+      seedBrowserFolder('common.buttons', ['ok']);
+
+      component.form.controls.key.setValue('ok');
+      component.form.controls.baseValue.setValue('OK');
+      spectator.detectChanges();
+
+      expect(component.form.valid).toBe(true);
+      expect(component.isFormValid()).toBe(false);
+    });
+
+    it('should close with shouldOpenEdit from "Open existing"', async () => {
+      seedBrowserFolder('common.buttons', ['ok']);
+
+      component.form.controls.key.setValue('ok');
+      spectator.detectChanges();
+
+      spectator.click('[data-testid="open-existing"]');
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      expect(result.shouldOpenEdit).toBe(true);
+      expect(result.existingResourceKey).toBe('common.buttons.ok');
+    });
+
+    it('should offer the conflict dialog instead of saving when the key is taken', async () => {
+      seedBrowserFolder('common.buttons', ['ok']);
+
+      component.form.controls.key.setValue('ok');
+      component.form.controls.baseValue.setValue('OK');
+      component.form.controls.comment.setValue('The affirmative button');
+      spectator.detectChanges();
+
+      await component.onSubmit();
+
+      expect(mockBrowserApi.createResource).not.toHaveBeenCalled();
+      expect(mockDialog.open).toHaveBeenCalled();
+      const result = dialogRef.close.mock.calls.at(-1)?.[0] as TranslationEditorResult;
+      expect(result.shouldOpenEdit).toBe(true);
+      expect(result.existingResourceKey).toBe('common.buttons.ok');
+    });
+  });
+
+  describe('Sticky similar values', () => {
+    const hit = (key: string, value: string) => ({ key, translations: { en: value }, status: {} });
+
+    const searchReturns = (results: ReturnType<typeof hit>[]): void => {
+      mockBrowserApi.searchTranslations.mockReturnValue(
+        of({ query: '', results, totalFound: results.length, limited: false }),
+      );
+    };
+
+    /** Types a value and lets the 300ms debounce run out. */
+    const typeAndSettle = (value: string): void => {
+      component.form.controls.baseValue.setValue(value);
+      vi.advanceTimersByTime(300);
+      spectator.detectChanges();
+    };
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should take no space with zero hits', () => {
+      searchReturns([]);
+      typeAndSettle('Discard unsaved changes?');
+
+      expect(component.showSimilarContext()).toBe(false);
+      expect(spectator.query('app-similar-translations')).toBeNull();
+    });
+
+    it('should show hits and pin them while the value is unchanged', () => {
+      searchReturns([hit('common.actions.save', 'Save')]);
+      typeAndSettle('Save changes');
+
+      expect(component.showSimilarContext()).toBe(true);
+
+      // Work elsewhere in the form leaves the pinned block alone.
+      component.form.controls.comment.setValue('A comment');
+      component.addTagValue('browser');
+      vi.advanceTimersByTime(1000);
+      spectator.detectChanges();
+
+      expect(component.similarCount()).toBe(1);
+      expect(spectator.query('app-similar-translations')).not.toBeNull();
+    });
+
+    it('should clear the pinned hits the moment the value changes', () => {
+      searchReturns([hit('common.actions.save', 'Save')]);
+      typeAndSettle('Save changes');
+      expect(component.similarCount()).toBe(1);
+
+      component.form.controls.baseValue.setValue('Save changes now');
+      spectator.detectChanges();
+
+      // Before the debounce has even started to run out.
+      expect(component.similarCount()).toBe(0);
+      expect(component.showSimilarContext()).toBe(false);
+    });
+
+    it('should stay silent below the three-character floor', () => {
+      searchReturns([hit('common.actions.ok', 'OK')]);
+      typeAndSettle('OK');
+
+      expect(mockBrowserApi.searchTranslations).not.toHaveBeenCalled();
+      expect(component.showSimilarContext()).toBe(false);
+    });
+
+    it('should show nothing in edit mode until the value differs, and clear again on revert', () => {
+      vi.useRealTimers();
+      renderDialog(
+        createMockData('edit', { key: 'saveShortcutHint', translations: { en: 'Press Ctrl + Enter' }, status: {} }),
+      );
+      vi.useFakeTimers();
+      searchReturns([hit('common.actions.save', 'Press Ctrl + Enter')]);
+
+      typeAndSettle('Press Ctrl + Enter');
+      expect(mockBrowserApi.searchTranslations).not.toHaveBeenCalled();
+      expect(component.showSimilarContext()).toBe(false);
+
+      typeAndSettle('Press Ctrl + Enter to save');
+      expect(component.showSimilarContext()).toBe(true);
+
+      typeAndSettle('Press Ctrl + Enter');
+      expect(component.showSimilarContext()).toBe(false);
+    });
+
+    it('should single out a hit carrying the identical text', () => {
+      searchReturns([hit('browser.search.clear', 'Clear Search'), hit('common.actions.clearAll', 'Clear All')]);
+      typeAndSettle('clear search');
+
+      expect(component.exactMatchKey()).toBe('browser.search.clear');
+      expect(spectator.query('[data-testid="similar-exact-caption"]')).not.toBeNull();
+    });
+
+    it('should break a suggested key only after its dots', () => {
+      searchReturns([hit('browser.translationEditor.saveShortcutHint', 'Press Ctrl + Enter to save')]);
+      typeAndSettle('Press Ctrl + Enter to save');
+
+      const key = spectator.query('app-similar-translations .result-key');
+      expect(key).toBeDefined();
+      expect(key?.textContent?.trim()).toBe('browser.translationEditor.saveShortcutHint');
+      // One break opportunity per dot, and none inside a segment.
+      expect(key?.querySelectorAll('wbr').length).toBe(2);
+    });
+
+    it('should leave a merely similar hit unmarked', () => {
+      searchReturns([hit('common.actions.clearAll', 'Clear All')]);
+      typeAndSettle('Clear Search');
+
+      expect(component.exactMatchKey()).toBe('');
+      expect(spectator.query('[data-testid="similar-exact-caption"]')).toBeNull();
+    });
+
+    it('should drop hits that only matched on their key', () => {
+      searchReturns([
+        hit('browser.translationEditor.saveButton', 'Create translation'),
+        hit('common.actions.save', 'Save'),
+      ]);
+      typeAndSettle('Save draft');
+
+      expect(component.similarResources().map((result) => result.key)).toEqual(['common.actions.save']);
+      expect(component.similarCount()).toBe(1);
+    });
+
+    it('should ask for more hits than it shows and keep at most ten', () => {
+      searchReturns(Array.from({ length: 25 }, (_, index) => hit(`common.actions.save${index}`, 'Save changes')));
+      typeAndSettle('Save changes');
+
+      expect(mockBrowserApi.searchTranslations).toHaveBeenCalledWith('test-collection', 'Save changes', 25);
+      expect(component.similarCount()).toBe(10);
+    });
+
+    it('should count only the value matches, so the badge and the list agree', () => {
+      searchReturns([
+        hit('browser.translationEditor.saveButton', 'Create translation'),
+        hit('browser.translationEditor.saveAnyway', 'Save Anyway'),
+        hit('common.actions.save', 'Save'),
+      ]);
+      typeAndSettle('Save');
+
+      expect(component.similarCount()).toBe(2);
+      expect(component.similarResources().map((result) => result.key)).toEqual([
+        'browser.translationEditor.saveAnyway',
+        'common.actions.save',
+      ]);
+    });
+  });
+
+  describe('Focus handling', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should move focus into the drawer and hand it back on Done', () => {
+      component.openLocalesDrawer();
+      spectator.detectChanges();
+      vi.advanceTimersByTime(0);
+
+      const drawerField = spectator.query('[data-testid="locales-drawer"] textarea');
+      expect(document.activeElement).toBe(drawerField);
+
+      component.closeLocalesDrawer();
+      spectator.detectChanges();
+      vi.advanceTimersByTime(0);
+
+      expect(document.activeElement).toBe(spectator.query('[data-testid="other-locales-row"]'));
+    });
+
+    it('should hand focus back to the Other locales row when Escape closes the drawer', async () => {
+      component.openLocalesDrawer();
+      spectator.detectChanges();
+      vi.advanceTimersByTime(0);
+
+      await component.onCancel();
+      spectator.detectChanges();
+      vi.advanceTimersByTime(0);
+
+      expect(component.isLocalesDrawerOpen()).toBe(false);
+      expect(document.activeElement).toBe(spectator.query('[data-testid="other-locales-row"]'));
+    });
+
+    it('should move focus to the popover filter and hand it back to the pill', () => {
+      component.openFolderPopover();
+      spectator.detectChanges();
+      vi.advanceTimersByTime(0);
+
+      expect(document.activeElement).toBe(component.folderFilterInput?.nativeElement);
+
+      component.confirmStagedFolder();
+      spectator.detectChanges();
+      vi.advanceTimersByTime(0);
+
+      expect(document.activeElement).toBe(spectator.query('[data-testid="location-pill"]'));
+    });
+
+    it('should dismiss the popover before the drawer before the dialog', async () => {
+      component.openLocalesDrawer();
+      component.openFolderPopover();
+      spectator.detectChanges();
+
+      await component.onCancel();
+      expect(component.isFolderPopoverOpen()).toBe(false);
+      expect(component.isLocalesDrawerOpen()).toBe(true);
+
+      await component.onCancel();
+      expect(component.isLocalesDrawerOpen()).toBe(false);
+      expect(dialogRef.close).not.toHaveBeenCalled();
+
+      await component.onCancel();
+      expect(dialogRef.close).toHaveBeenCalled();
     });
   });
 
@@ -973,6 +1645,7 @@ describe('TranslationEditorDialog', () => {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true })),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
@@ -1017,6 +1690,7 @@ describe('TranslationEditorDialog', () => {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true })),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
@@ -1070,6 +1744,7 @@ describe('TranslationEditorDialog', () => {
           ),
         ),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
@@ -1105,6 +1780,7 @@ describe('TranslationEditorDialog', () => {
         createResource: vi.fn().mockReturnValue(of({})),
         updateResource: vi.fn().mockReturnValue(of({ resolvedKey: 'common.buttons.existing_key', updated: true })),
         searchTranslations: vi.fn().mockReturnValue(of({ results: [], total: 0 })),
+        getResourceTree: vi.fn().mockReturnValue(of({ path: '', resources: [], children: [] })),
       };
       mockDialog = {
         open: vi.fn().mockReturnValue({
@@ -1122,6 +1798,55 @@ describe('TranslationEditorDialog', () => {
       expect(result.success).toBe(true);
       expect(result.key).toBe('existing_key');
       expect(result.baseValue).toBe('Updated Value');
+    });
+  });
+
+  describe('Footer key copy', () => {
+    let mockClipboard: { writeText: Mock };
+
+    beforeEach(() => {
+      mockClipboard = { writeText: vi.fn(() => Promise.resolve()) };
+      Object.defineProperty(navigator, 'clipboard', {
+        value: mockClipboard,
+        writable: true,
+        configurable: true,
+      });
+      renderDialog(createMockData('create'));
+      component.form.controls.key.setValue('ok');
+      spectator.detectChanges();
+    });
+
+    it('should copy the full key and confirm it', async () => {
+      spectator.click('[data-testid="footer-key"]');
+      await Promise.resolve();
+      spectator.detectChanges();
+
+      expect(mockClipboard.writeText).toHaveBeenCalledWith('common.buttons.ok');
+      expect(mockNotifications.success).toHaveBeenCalledWith('Copied to clipboard');
+      expect(component.keyJustCopied()).toBe(true);
+      expect(spectator.query('[data-testid="footer-key"] .footer-key-icon')?.textContent?.trim()).toBe('check');
+    });
+
+    it('should say so when the clipboard refuses', async () => {
+      mockClipboard.writeText = vi.fn(() => Promise.reject(new Error('denied')));
+
+      spectator.click('[data-testid="footer-key"]');
+      await Promise.resolve();
+      spectator.detectChanges();
+
+      expect(mockNotifications.error).toHaveBeenCalledWith('Failed to copy');
+      expect(component.keyJustCopied()).toBe(false);
+    });
+
+    it('should keep the collision colour on the copy button', () => {
+      const store = spectator.inject(BrowserStore);
+      patchState(store, {
+        currentFolderPath: 'common.buttons',
+        translations: [{ key: 'ok', translations: { en: 'OK' }, status: {} }],
+      });
+      spectator.detectChanges();
+
+      expect(spectator.query('[data-testid="footer-key"]')).toHaveClass('mono--dup');
     });
   });
 });

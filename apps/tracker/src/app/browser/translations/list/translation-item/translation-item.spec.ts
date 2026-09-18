@@ -585,3 +585,191 @@ describe('TranslationItem - Full density expansion', () => {
     });
   });
 });
+
+/**
+ * Compact rows are almost entirely the key chip and the selectable value, so the
+ * chip is the only chrome left to carry the row's gestures: single click copies,
+ * double click edits, and the two must not run into each other.
+ */
+describe('TranslationItem - compact key chip', () => {
+  let fixture: ComponentFixture<TranslationItem>;
+  let spectator: Spectator<TranslationItem>;
+  let store: InstanceType<typeof BrowserStore>;
+
+  const longKey: ResourceSummaryDto = {
+    key: 'browser.translationEditor.context.allUpToDate',
+    translations: { en: 'Everything is up to date' },
+    status: {},
+  };
+
+  beforeEach(() => {
+    ({ fixture, store, spectator } = renderTranslationItem());
+    store.setSelectedCollection({ collectionName: 'test', locales: ['en', 'es'], baseLocale: 'en' });
+    store.setDensityMode('compact');
+  });
+
+  function render(translation: ResourceSummaryDto = mockTranslation): void {
+    fixture.componentRef.setInput('translation', translation);
+    fixture.detectChanges();
+  }
+
+  function chip(): HTMLElement {
+    const el = fixture.nativeElement.querySelector('.key-chip');
+    expect(el).not.toBeNull();
+    return el as HTMLElement;
+  }
+
+  /** A real click carries a detail count; the browser raises it per click in a sequence. */
+  function click(el: Element, detail = 1): void {
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, detail }));
+  }
+
+  it('copies the key on a single click', () => {
+    render();
+    const copySpy = vi
+      .spyOn(spectator.inject(TranslationListStore, true), 'copyKey')
+      .mockImplementation(() => undefined);
+
+    click(chip(), 1);
+
+    expect(copySpy).toHaveBeenCalledOnce();
+    expect(copySpy).toHaveBeenCalledWith('common.buttons.save');
+  });
+
+  it('copies the key on Enter, which fires a click with no detail count', () => {
+    render();
+    const copySpy = vi
+      .spyOn(spectator.inject(TranslationListStore, true), 'copyKey')
+      .mockImplementation(() => undefined);
+
+    click(chip(), 0);
+
+    expect(copySpy).toHaveBeenCalledOnce();
+  });
+
+  it('opens the editor on a double-click of the key chip, copying only once', () => {
+    render();
+    const listStore = spectator.inject(TranslationListStore, true);
+    const copySpy = vi.spyOn(listStore, 'copyKey').mockImplementation(() => undefined);
+    const editSpy = vi.spyOn(listStore, 'editTranslation').mockImplementation(() => undefined);
+
+    // The browser's real sequence: click, click, dblclick.
+    const target = chip();
+    click(target, 1);
+    click(target, 2);
+    target.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+
+    expect(editSpy).toHaveBeenCalledOnce();
+    expect(copySpy).toHaveBeenCalledOnce();
+  });
+
+  it('does not open the editor on a double-click of the value', () => {
+    render();
+    const editSpy = vi
+      .spyOn(spectator.inject(TranslationListStore, true), 'editTranslation')
+      .mockImplementation(() => undefined);
+
+    fixture.nativeElement.querySelector('.compact-value')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+
+    expect(editSpy).not.toHaveBeenCalled();
+  });
+
+  it('offers Edit as a visible button in the compact rail', () => {
+    render();
+    const editSpy = vi
+      .spyOn(spectator.inject(TranslationListStore, true), 'editTranslation')
+      .mockImplementation(() => undefined);
+
+    const button = fixture.nativeElement.querySelector('.edit-action');
+    expect(button).not.toBeNull();
+    expect(button?.querySelector('mat-icon')?.textContent?.trim()).toBe('edit');
+
+    button?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+
+    expect(editSpy).toHaveBeenCalledOnce();
+  });
+
+  it('shows the read-only collection a view control instead of an edit control', () => {
+    store.setSelectedCollection({
+      collectionName: 'vendored',
+      locales: ['en', 'es'],
+      baseLocale: 'en',
+      readOnly: true,
+    });
+    store.setDensityMode('compact');
+    render();
+
+    const button = fixture.nativeElement.querySelector('.edit-action');
+    expect(button?.querySelector('mat-icon')?.textContent?.trim()).toBe('visibility');
+  });
+
+  /** Opens the ⋮ menu and returns the labels of its items from the CDK overlay. */
+  function openOverflowMenu(): string[] {
+    const trigger = fixture.nativeElement.querySelector(
+      '.header-actions button[aria-haspopup="menu"], .header-actions button[aria-haspopup]',
+    ) as HTMLElement | null;
+    expect(trigger).not.toBeNull();
+    trigger?.click();
+    fixture.detectChanges();
+
+    return [...document.querySelectorAll('.mat-mdc-menu-item')].map((item) => item.textContent?.trim() ?? '');
+  }
+
+  it('drops Edit from the compact overflow menu now that the rail shows it', () => {
+    render();
+
+    expect(openOverflowMenu().some((label) => label.includes('Edit'))).toBe(false);
+  });
+
+  it('keeps Edit in the full-density overflow menu, which has no rail button', () => {
+    store.setDensityMode('full');
+    render();
+
+    expect(fixture.nativeElement.querySelector('.edit-action')).toBeNull();
+    expect(openOverflowMenu().some((label) => label.includes('Edit'))).toBe(true);
+  });
+
+  describe('middle truncation', () => {
+    it('splits a long key so the leaf segment survives intact', () => {
+      render(longKey);
+
+      const head = fixture.nativeElement.querySelector('.key-text__head');
+      const tail = fixture.nativeElement.querySelector('.key-text__tail');
+      expect(head).not.toBeNull();
+      expect(tail).not.toBeNull();
+
+      // The tail is the part CSS must never clip.
+      expect(tail?.textContent).toBe('.allUpToDate');
+      expect(head?.textContent).toBe('browser.translationEditor.context');
+      // Nothing is elided in the string itself — the column width decides.
+      expect(`${head?.textContent}${tail?.textContent}`).toBe(longKey.key);
+    });
+
+    it('leaves a short key whole, with no ellipsis of its own', () => {
+      render();
+
+      const head = fixture.nativeElement.querySelector('.key-text__head');
+      const tail = fixture.nativeElement.querySelector('.key-text__tail');
+      expect(`${head?.textContent}${tail?.textContent}`).toBe('common.buttons.save');
+      expect(fixture.nativeElement.querySelector('.key-text')?.textContent).not.toContain('…');
+      expect(fixture.nativeElement.querySelector('.key-text')?.textContent).not.toContain('...');
+    });
+
+    it('renders a key with no separator as a head alone', () => {
+      render({ key: 'standalone', translations: { en: 'Alone' }, status: {} });
+
+      expect(fixture.nativeElement.querySelector('.key-text__head')?.textContent).toBe('standalone');
+      expect(fixture.nativeElement.querySelector('.key-text__tail')).toBeNull();
+    });
+
+    it('highlights a search match that straddles the head/tail boundary', () => {
+      store.setSearchQuery('context.allUp');
+      render(longKey);
+
+      const head = fixture.nativeElement.querySelector('.key-text__head');
+      const tail = fixture.nativeElement.querySelector('.key-text__tail');
+      expect(head?.querySelector('mark.search-highlight')?.textContent).toBe('context');
+      expect(tail?.querySelector('mark.search-highlight')?.textContent).toBe('.allUp');
+    });
+  });
+});

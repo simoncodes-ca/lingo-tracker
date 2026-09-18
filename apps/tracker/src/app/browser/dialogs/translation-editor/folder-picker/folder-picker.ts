@@ -60,6 +60,13 @@ export class FolderPicker implements OnInit {
   /** When true, the folder tree is shown immediately and the currentPath ancestors are expanded */
   readonly initiallyExpanded = input(false);
 
+  /**
+   * Hides the picker's own "Folder: path" row. Inside the editor's location
+   * popover the pill that opened the popover already states the path, so a
+   * second copy of it above the tree is noise.
+   */
+  readonly hideHeader = input(false);
+
   readonly isExpanded = signal(false);
   readonly expandedPaths = signal<Set<string>>(new Set());
   readonly selectedPath = signal<string | null>(null);

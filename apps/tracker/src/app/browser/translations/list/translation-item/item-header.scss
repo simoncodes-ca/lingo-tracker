@@ -57,32 +57,94 @@
   min-height: 0;
   padding-inline: 0;
 
+  // A fixed column, not a share of the leftover width. Sized to content, every
+  // row's chip ended somewhere different and the values behind them started on a
+  // ragged edge, which is the one thing a scanning mode cannot afford: the
+  // column of strings is what the eye runs down.
+  //
+  // The button is the cell; the pill is inside it. Filling a 460px cell with
+  // chip fill for `common.ok` would make the shortest keys the loudest objects
+  // on the row, so the background sizes to the text and the button keeps the
+  // full column as its hit area — which also makes the double-click target
+  // generous rather than the width of a word.
   .key-chip {
-    // The key is the row's address, not its content: it holds a share of the
-    // width and yields the rest to the strings.
-    flex: 0 1 auto;
-    max-width: 34%;
-    padding: 2px var(--spacing-2);
+    background: none;
+    // The key and the value shared `--color-text-primary`, which made a row two
+    // equally loud strings and no hierarchy between them. The key is the address,
+    // the value is the material: the address steps back one tone. Secondary ink
+    // holds 5.7:1 on the chip in light and 6.8:1 in dark, and 4.8:1 against the
+    // hover fill, so it is a quieter key rather than a fainter one. Search marks
+    // carry their own colour pair and are unaffected.
+    color: var(--color-text-secondary);
+    flex: 0 0 var(--compact-key-col);
+    justify-content: flex-start;
+    padding: 0;
+
+    &:hover .key-text {
+      background-color: var(--color-neutral-300);
+    }
+
+    // The ring belongs on the pill. Drawn on the button it outlined the whole
+    // empty column, which reads as a focused text field rather than a chip.
+    &:focus-visible {
+      outline: none;
+
+      .key-text {
+        outline: 2px solid var(--focus-ring-color);
+        outline-offset: 2px;
+      }
+    }
   }
 
-  // One line means the key cannot wrap. Truncating from the left keeps the leaf
-  // segment — the part that distinguishes `buttons.ok` from `buttons.cancel` —
-  // instead of the shared prefix every sibling row also has.
-  // Truncate from the LEFT. Every sibling row in a folder shares the same key
-  // prefix, so a right-hand ellipsis eats the one segment that tells them apart
-  // (`buttons.ok` vs `buttons.cancel`). An rtl container overflows at the start;
-  // the ltr child keeps the characters themselves in reading order, which a bare
-  // `direction: rtl` would not.
+  // The pill: hugs its text, never wider than the cell.
   .key-text {
-    direction: rtl;
+    align-items: baseline;
+    background: var(--color-neutral-200);
+    border-radius: var(--border-radius-full);
+    display: flex;
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 0;
+    padding: 2px var(--spacing-2);
+    transition: background-color var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  // Middle ellipsis, which CSS has no property for. The head carries the shared
+  // prefix every sibling row also has, so it is the part that can afford to be
+  // cut; the leaf is what tells `buttons.ok` from `buttons.cancel`, so the tail
+  // never shrinks. Replaces the old `direction: rtl` trick, which could only cut
+  // from the left and so threw away the first segment instead.
+  // The head is the only part that gives ground. It absorbs the whole overflow,
+  // down to a 2ch floor that keeps its ellipsis on screen — squeezed to zero the
+  // head rendered nothing at all, and `.addNewTranslationTooltip` then read as a
+  // key that begins with a dot rather than one with its front cut off.
+  .key-text__head {
+    flex: 0 1 auto;
+    min-width: 2ch;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .key-text__inner {
-    direction: ltr;
-    unicode-bidi: embed;
+  // The leaf never shrinks. `flex-shrink` is emphatically 0 rather than a small
+  // number: shrink is distributed by scaled factor, so even at 1-against-200 the
+  // tail still took a fraction of a pixel — and `text-overflow` spends two whole
+  // characters to fit an ellipsis the moment content exceeds the box by any
+  // amount at all. A 0.03px share of the deficit cost `.autoTranslateNote` its
+  // last two letters. (It is invisible to `scrollWidth`/`clientWidth`, which
+  // round to integers — measure against `Range.getBoundingClientRect()`.)
+  //
+  // The width cap is the one case where the leaf may still be cut: when the leaf
+  // alone is wider than the column, there is no reading of the key that fits, and
+  // an ellipsis is truer than a segment sliced flush at the chip's edge. It
+  // mirrors the head's floor so the two ends can never overlap.
+  .key-text__tail {
+    flex: none;
+    max-width: calc(100% - 2ch);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .copy-icon {

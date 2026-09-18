@@ -1,64 +1,123 @@
-@use '../../../../styles/breakpoints' as bp;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Host & dialog container
-// ─────────────────────────────────────────────────────────────────────────────
-// The outer box — width, max-height and the small-viewport full-screen mode —
-// is owned by `.translation-editor-dialog-panel` in styles.scss, because the CDK
-// appends the overlay pane outside this component. Nothing here restates those
-// numbers; the height simply flows down the pane → container → host chain.
+// The outer box (width, top rule, zero container padding, the <640px full-screen
+// mode) is owned by `.translation-editor-dialog-panel` in styles.scss, because
+// the CDK appends the overlay pane outside this component. Everything here is
+// the inside, and it is the bundle dialog's anatomy with two columns instead of
+// three: form column, then a 320px context column behind a left hairline.
 :host {
   display: block;
-  block-size: 100%;
+  max-height: inherit;
+
+  // Same surface pairing as the bundle and collection dialogs: the panel is one
+  // step lighter than the page so the wells read as set into it, and the context
+  // column sits one step back so the form is the lit part of the room.
+  --dialog-surface: var(--color-background);
+  --dialog-well: var(--color-background);
+  --dialog-aside: var(--color-background-subtle);
 }
 
-// Column layout: header, pre-tab block and actions take their natural height,
-// and the tab content absorbs whatever is left. This replaces a hard-coded
-// content height that overflowed the panel whenever the pre-tab block grew —
-// an error banner or the read-only notice was enough to push the save button
-// off the bottom of the screen.
+:host-context([data-theme='dark']) {
+  --dialog-surface: var(--color-background-subtle);
+  --dialog-well: var(--color-background);
+  --dialog-aside: var(--color-background);
+}
+
+@media (prefers-color-scheme: dark) {
+  :host-context(:root:not([data-theme='light']):not([data-theme='dark'])) {
+    --dialog-surface: var(--color-background-subtle);
+    --dialog-well: var(--color-background);
+    --dialog-aside: var(--color-background);
+  }
+}
+
 .dialog-wrapper {
   display: flex;
   flex-direction: column;
-  block-size: 100%;
-  max-block-size: 100%;
+  max-height: inherit;
+  background: var(--dialog-surface);
+}
+
+.mono {
+  font-family: var(--font-family-mono);
+}
+
+code {
+  font-family: var(--font-family-mono);
+  font-size: 0.95em;
+  color: var(--color-text-primary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Dialog header
+// Header
 // ─────────────────────────────────────────────────────────────────────────────
 
 .dialog-header {
   position: relative;
   flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
   padding: var(--spacing-5) var(--spacing-6) var(--spacing-4);
   border-bottom: 1px solid var(--color-border);
 }
 
-.dialog-header-content {
-  // Reserve right-side space so text doesn't slide under the close button
-  padding-right: var(--spacing-10);
+.dialog-header-tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--border-radius-lg);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  color: var(--color-primary);
+
+  mat-icon {
+    font-size: 19px;
+    width: 19px;
+    height: 19px;
+  }
 }
 
-.mat-dialog-title {
-  margin: 0 0 var(--spacing-1);
+.dialog-header-text {
+  flex: 1;
+  min-width: 0;
+  padding-right: var(--spacing-8);
+}
+
+.dialog-title {
+  margin: 0 0 3px;
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
   line-height: var(--line-height-tight);
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
 }
 
 .dialog-subtitle {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: 13px;
+  line-height: 1.45;
   color: var(--color-text-secondary);
-  line-height: var(--line-height-normal);
 }
 
-.close-button {
+.dialog-close {
   position: absolute;
-  top: var(--spacing-3);
-  right: var(--spacing-3);
+  // The comp's 32px glyph button sits 14px in; this one is Material's 40px box,
+  // so it insets 10px to put the X on the same centre.
+  top: 10px;
+  right: 10px;
   color: var(--color-text-secondary);
   transition: color var(--transition-fast);
 
@@ -68,766 +127,906 @@
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Pre-tab strip: location pill + error banner
+// Two-column body
 // ─────────────────────────────────────────────────────────────────────────────
 
-.dialog-pretab {
-  flex-shrink: 0;
-  padding: var(--spacing-3) var(--spacing-6);
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-background-subtle);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-}
-
-.location-row {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-  flex-wrap: wrap;
-}
-
-.location-label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.location-label-icon {
-  font-size: var(--font-size-base);
-  width: 1rem;
-  height: 1rem;
-  color: var(--color-text-tertiary);
-}
-
-// Pill that shows the current folder path
-.location-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-1) var(--spacing-3);
-  background-color: var(--color-primary-subtle);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
-  border-radius: var(--border-radius-full);
-  max-width: 100%;
-  overflow: hidden;
-}
-
-// A dotted key hands its prefix to this pill, several centimetres from the field
-// the user is typing in. One authored beat so the hand-off is impossible to miss.
-.location-pill--absorbed {
-  animation: location-absorbed 900ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes location-absorbed {
-  from {
-    border-color: var(--color-primary);
-    background-color: color-mix(in srgb, var(--color-primary) 26%, transparent);
-    box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--color-primary) 70%, transparent);
-    transform: translateY(-2px);
-  }
-  to {
-    border-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
-    background-color: var(--color-primary-subtle);
-    box-shadow: 0 0 0 transparent;
-    transform: none;
-  }
-}
-
-// Visually hidden, still announced — the live region that says the same thing.
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.location-pill-icon {
-  font-size: var(--font-size-sm);
-  width: 1rem;
-  height: 1rem;
-  color: var(--color-primary);
-  flex-shrink: 0;
-}
-
-.location-pill-path {
-  font-size: var(--font-size-sm);
-  font-family: var(--font-family-mono);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Error banner
-// ─────────────────────────────────────────────────────────────────────────────
-
-.error-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-3);
-  padding: var(--spacing-3) var(--spacing-4);
-  background-color: color-mix(in srgb, var(--color-error) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
-  border-radius: var(--border-radius-md);
-  color: var(--color-error);
-}
-
-.readonly-banner {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-4);
-  background-color: color-mix(in srgb, var(--color-warning) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-warning) 24%, transparent);
-  border-radius: var(--border-radius-md);
-  color: var(--color-warning-text);
-
-  .readonly-icon {
-    font-size: var(--font-size-lg);
-    width: var(--font-size-lg);
-    height: var(--font-size-lg);
-    flex-shrink: 0;
-  }
-
-  .readonly-text {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    line-height: var(--line-height-normal);
-  }
-}
-
-.error-icon {
-  color: var(--color-error);
-  font-size: var(--font-size-lg);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.error-text {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-normal);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main dialog content — contains the tab group
-// ─────────────────────────────────────────────────────────────────────────────
-
-// `:host` prefix (0,2,0) outranks Material's own `.mat-mdc-dialog-content`
-// (0,1,0) without an `!important`, which is why both overrides below are plain.
-:host .dialog-tab-content {
-  // Override Material's default padding so the tab bar sits flush
-  padding: 0;
-  color: var(--color-text-primary);
-  background-color: var(--color-background);
-  // The height has to stay *definite*: the form, the tab group and Material's
-  // tab body all resolve `height: 100%` against it, and an auto height silently
-  // turns Tab 2's locale list from a scroll region into 1500px of clipped
-  // content. So it keeps a resolved height — but a viewport-relative one, and a
-  // shorter one for the tab that has less to say. The flat 570px it replaces
-  // made every tab reserve the tallest tab's box, painting 350px of nothing
-  // under the folder tree at 1440.
+.two {
+  position: relative;
+  // Takes the height the header and footer leave and no more: with both columns
+  // scrolling inside it, a long context column can never grow the panel past the
+  // viewport ceiling the panel class sets.
   flex: 1 1 auto;
-  min-height: 0;
-  height: min(570px, 62vh);
-
-  // Change Location holds one hint and a tree, and neither needs a percentage
-  // height to resolve against — so this tab sizes to its content and the panel
-  // stops reserving the locale list's box under a two-folder tree.
-  &.dialog-tab-content--short {
-    height: auto;
-    max-height: min(480px, 54vh);
-  }
-  // Disable Material's default overflow:auto so the tab group controls scrolling
-  // internally. Without this, the entire tab group (header + body) scrolls together,
-  // which causes the tab strip and the base locale banner to scroll away.
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-rows: minmax(0, 1fr);
+  // Tall enough that opening the drawer or pinning similar values never resizes
+  // the dialog under the user's hands. Capped against the viewport as well, or
+  // this floor would hold the body open on a short screen and push the footer
+  // past the bottom edge — the one thing the panel's max-height exists to stop.
+  min-height: min(460px, 60vh);
   overflow: hidden;
+  margin: 0;
 }
 
-// The <form> inside .dialog-tab-content has no intrinsic height, which breaks
-// the height chain for any descendant using height: 100%. Propagate the
-// resolved height of the mat-dialog-content container downward so that the
-// mat-tab-group (height: 100%) resolves to a real pixel value.
-.dialog-tab-content form {
-  height: 100%;
+.bd,
+.ctx {
+  min-height: 0;
+  overflow-y: auto;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab group overrides
-// ─────────────────────────────────────────────────────────────────────────────
-
-.editor-tabs {
-  // Fill the full height of the dialog content and establish a flex column so
-  // the tab header and tab body can each be individually sized and positioned.
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-
-  // Tab header strip — must not participate in scrolling. flex-shrink: 0
-  // prevents the header from being compressed when the body needs space.
-  //
-  // Material's answer to labels that outgrow the strip is pagination, which at
-  // 390px scrolled the *selected* tab out of view with nothing left to say
-  // which one it was. Three tabs is a strip, not a list: below 700px the type
-  // shrinks, MDC's 90px tab min-width and 24px side padding go, and the label
-  // is allowed a second line. All three then fit at 390px in every shipped
-  // locale — including "Basisinformationen" and "Базовая информация" — so the
-  // chevrons never appear and the active tab is always the underlined one.
-  ::ng-deep .mat-mdc-tab-header {
-    flex-shrink: 0;
-    border-bottom: 1px solid var(--color-border);
-    background-color: var(--color-background-subtle);
-    padding: 0 var(--spacing-4);
-
-    @media (max-width: 700px) {
-      padding: 0;
-    }
-  }
-
-  ::ng-deep .mat-mdc-tab {
-    @media (max-width: 700px) {
-      min-width: 0;
-      flex-grow: 1;
-      padding: 0 var(--spacing-2);
-      // Room for two lines without the ink bar riding the descenders.
-      height: 58px;
-    }
-  }
-
-  // Individual tab labels
-  ::ng-deep .mat-mdc-tab .mdc-tab__text-label {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
-    letter-spacing: 0;
-
-    @media (max-width: 700px) {
-      font-size: var(--font-size-xs);
-      line-height: var(--line-height-tight);
-      white-space: normal;
-      text-align: center;
-      overflow-wrap: anywhere;
-    }
-  }
-
-  // Active tab label
-  ::ng-deep .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
-    color: var(--color-primary);
-    font-weight: var(--font-weight-semibold);
-  }
-
-  // Active indicator underline
-  ::ng-deep .mat-mdc-tab-indicator .mdc-tab-indicator__content--underline {
-    border-color: var(--color-primary);
-    border-top-width: 2px;
-  }
-
-  // Tab body wrapper — fills remaining height after the header. min-height: 0
-  // is critical: without it, a flex child ignores overflow and expands past its
-  // parent, breaking the scroll containment chain.
-  ::ng-deep .mat-mdc-tab-body-wrapper {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  // Angular Material renders a mat-tab-body host element between
-  // .mat-mdc-tab-body-wrapper and .mat-mdc-tab-body-content. Without an explicit
-  // height it collapses, causing height: 100% on .mat-mdc-tab-body-content to
-  // resolve to zero and silently clipping the tab panel instead of scrolling it.
-  ::ng-deep .mat-mdc-tab-body {
-    height: 100%;
-  }
-
-  // Tab body content — the actual scroll container for most tabs. height: 100%
-  // ensures it fills the wrapper so nested panels using height:100% resolve correctly.
-  ::ng-deep .mat-mdc-tab-body-content {
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab panels — shared base
-// ─────────────────────────────────────────────────────────────────────────────
-
-.tab-panel {
-  padding: var(--spacing-5) var(--spacing-6);
+.bd {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-5);
+  padding: 18px var(--spacing-6) var(--spacing-5);
+  border-right: 1px solid var(--color-border);
+}
+
+.row-3-2 {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: var(--spacing-3);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Utility
+// Notices
 // ─────────────────────────────────────────────────────────────────────────────
 
-.full-width {
-  width: 100%;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab 1 — Base locale info
-// ─────────────────────────────────────────────────────────────────────────────
-
-.tab-panel--base {
-  padding-top: var(--spacing-6);
-}
-
-// Base locale card with primary-coloured left accent
-.base-locale-card {
-  padding: var(--spacing-4);
-  background-color: var(--color-background-subtle);
-  border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-primary);
-  border-radius: var(--border-radius-lg);
-  transition: box-shadow var(--transition-fast);
+.notice {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
 
-  &:focus-within {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 25%, transparent);
+  mat-icon {
+    flex: none;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &--lock {
+    border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+    background: color-mix(in srgb, var(--color-warning) 9%, transparent);
+    color: var(--color-warning-text);
+  }
+
+  &--error {
+    border-color: color-mix(in srgb, var(--color-error) 30%, transparent);
+    background: color-mix(in srgb, var(--color-error) 8%, transparent);
+    color: var(--color-error);
   }
 }
 
-.locale-card-header {
+// ─────────────────────────────────────────────────────────────────────────────
+// Fields (the label-above well; Material outline fields are not used here)
+// ─────────────────────────────────────────────────────────────────────────────
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  // The location field anchors the folder popover.
+  &--anchor {
+    position: relative;
+  }
+}
+
+.field-label {
+  display: flex;
+  // Baseline, not centre: the base-locale chip is taller than the label text,
+  // so centring it would drop its text below the label's baseline.
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+}
+
+.field-label-opt {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.text-input {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-}
-
-.locale-icon {
-  color: var(--color-primary);
-  font-size: var(--font-size-xl);
-  flex-shrink: 0;
-}
-
-.locale-title {
-  margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  flex: 1;
-}
-
-// "BASE" badge — pill style
-.base-badge {
-  padding: var(--spacing-1) var(--spacing-3);
-  background-color: var(--color-primary);
-  color: var(--color-text-inverse);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  border-radius: var(--border-radius-full);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-// Zero out margin — parent card uses gap for spacing
-.comment-field {
-  margin: 0;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab 2 — Other locales
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Fill the entire tab body so we can split scrolling between the fixed
-// reference banner and the scrollable locale cards. The panel itself must not
-// add to the outer scroll — overflow: hidden delegates scrolling inward to
-// .other-locales-section only.
-.tab-panel--locales {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  gap: 0;
-  overflow: hidden;
-}
-
-// Read-only base value reference shown at the top of Tab 2.
-// flex-shrink: 0 ensures it never collapses as a flex child of .tab-panel--locales.
-// Scrolling is handled by .other-locales-section below, not this element.
-.base-value-reference {
-  display: flex;
-  align-items: baseline;
-  gap: var(--spacing-3);
-  padding: var(--spacing-4) var(--spacing-6);
-  margin: var(--spacing-4) var(--spacing-6) 0;
-  background-color: var(--color-background-subtle);
-  border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-primary);
+  min-height: 40px;
+  padding: 0 var(--spacing-3);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--border-radius-md);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  // Scroll-reveal shadow: transitions in when the locale cards list is scrolled,
-  // providing a visual separation between the fixed banner and scrolling content.
-  box-shadow: 0 2px 4px transparent;
-  transition: box-shadow var(--transition-fast);
-
-  &.scrolled {
-    box-shadow: 0 3px 8px color-mix(in srgb, var(--color-text-primary) 16%, transparent);
-  }
-
-  // On very narrow containers, stack label above text
-  @media (max-width: 480px) {
-    flex-direction: column;
-    gap: var(--spacing-1);
-  }
-}
-
-.base-value-reference__label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-primary);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.base-value-reference__icon {
-  font-size: var(--font-size-sm);
-  width: 1rem;
-  height: 1rem;
-}
-
-.base-value-reference__badge {
-  padding: 1px var(--spacing-2);
-  background-color: var(--color-primary);
-  color: var(--color-text-inverse);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  border-radius: var(--border-radius-full);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.base-value-reference__text {
-  font-size: var(--font-size-sm);
+  // The location popover renders from this component's template but lives in the
+  // overlay container, where the :host custom properties do not inherit.
+  background: var(--dialog-well, var(--color-background));
   color: var(--color-text-primary);
-  line-height: var(--line-height-normal);
-  // Prevent very long strings from breaking layout
-  word-break: break-word;
-}
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 
-// Stack of locale translation cards — the only scrollable region in Tab 2.
-// flex: 1 + min-height: 0 is the canonical flexbox pattern for a child that
-// must scroll within a fixed-height flex column parent.
-.other-locales-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
-  padding: var(--spacing-4) var(--spacing-6) var(--spacing-5);
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
-}
+  > mat-icon {
+    flex: none;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--color-text-tertiary);
+  }
 
-// Individual locale card (non-base locales)
-.locale-card {
-  padding: var(--spacing-4);
-  background-color: var(--color-background-subtle);
-  border: 1px solid var(--color-border);
-  border-left: 3px solid var(--color-border);
-  border-radius: var(--border-radius-lg);
-  transition: border-left-color var(--transition-fast), box-shadow var(--transition-fast);
+  input,
+  textarea {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 15px;
+    outline: none;
 
-  &:hover {
-    border-left-color: var(--color-text-tertiary);
+    &::placeholder {
+      color: var(--color-text-placeholder);
+    }
+  }
+
+  input {
+    height: 38px;
+  }
+
+  textarea {
+    resize: none;
+    line-height: var(--line-height-normal);
   }
 
   &:focus-within {
-    border-left-color: var(--color-primary);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 25%, transparent);
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-secondary) 22%, transparent);
   }
 
-  // The locale value field reserves no subscript space of its own — that is
-  // `subscriptSizing="dynamic"` on the field, not a deep override here.
-  .full-width {
-    margin-top: var(--spacing-2);
+  &--mono input,
+  &--mono > span {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+  }
+
+  // Multi-line wells grow with the text rather than scrolling a fixed box.
+  &--area {
+    align-items: flex-start;
+    padding: 9px var(--spacing-3);
+  }
+
+  &--compact {
+    min-height: 34px;
+
+    input {
+      height: 32px;
+      font-size: var(--font-size-sm);
+    }
+  }
+
+  &--invalid,
+  &--invalid:focus-within {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 18%, transparent);
+  }
+
+  &--locked {
+    border-style: dashed;
+    background: transparent;
+    color: var(--color-text-secondary);
   }
 }
 
-// Status select — right-aligned, compact
-:host .status-select {
-  width: 140px;
-  margin-left: auto;
-
-  ::ng-deep .mat-mdc-text-field-wrapper {
-    padding-top: 4px;
-    padding-bottom: 4px;
-  }
-
-  ::ng-deep .mat-mdc-form-field-infix {
-    padding-top: 4px;
-    padding-bottom: 4px;
-    min-height: unset;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab 3 — Change location
-// ─────────────────────────────────────────────────────────────────────────────
-
-.tab-panel--location {
-  // Slightly tighter top padding — the hint text already provides visual lead-in
-  padding-top: var(--spacing-4);
-  gap: var(--spacing-3);
-}
-
-.location-tab-hint {
+.field-hint,
+.field-error {
   margin: 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
   line-height: var(--line-height-normal);
 }
 
-// The FolderPicker is `initiallyExpanded` but the toggle header is still
-// rendered. Hide it so users can't collapse the tree inside this tab.
-.location-folder-picker {
-  ::ng-deep app-folder-picker {
-    .folder-picker {
-      margin-bottom: 0;
-    }
+.field-hint {
+  color: var(--color-text-secondary);
 
-    // Hide the toggle header — the tab itself is the affordance for location
-    .folder-header {
+  &--icon {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+
+    mat-icon {
+      flex: none;
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      margin-top: 2px;
+      color: var(--color-text-tertiary);
+    }
+  }
+
+  // Hints that belong to the location/key row sit under the whole row, not in
+  // one of its two columns, so they get the row's negative gap back.
+  &--row {
+    margin-top: calc(-1 * var(--spacing-4));
+  }
+}
+
+.field-error {
+  color: var(--color-error);
+
+  &--row {
+    margin-top: calc(-1 * var(--spacing-4));
+  }
+
+  // The collision row carries a glyph and a way out, so it lays out as a line
+  // rather than a paragraph.
+  &--icon {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+
+    mat-icon {
+      flex: none;
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+    }
+  }
+}
+
+// "Open existing": the second of the two ways out the error names.
+.field-error-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  // The message wraps; the way out rides its last line rather than floating
+  // beside the first one.
+  align-self: flex-end;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-error);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+
+  mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Location pill
+// ─────────────────────────────────────────────────────────────────────────────
+
+.loc-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--spacing-2) 0 var(--spacing-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--border-radius-md);
+  background: var(--dialog-well);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+  }
+
+  &--open {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-secondary) 22%, transparent);
+  }
+
+  // The prefix of a pasted dotted key lands here; say so for a moment.
+  &--flash {
+    animation: location-absorbed var(--transition-slow) ease-out;
+  }
+}
+
+.loc-pill-lead {
+  flex: none;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-tertiary);
+}
+
+.loc-pill-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  i {
+    font-style: normal;
+    color: var(--color-text-tertiary);
+    padding: 0 3px;
+  }
+}
+
+.loc-pill-change {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: var(--spacing-1);
+  padding: 4px 6px 4px 10px;
+  border-left: 1px solid var(--color-border);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--color-text-tertiary);
+  }
+}
+
+@keyframes location-absorbed {
+  0% {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 26%, transparent);
+  }
+  100% {
+    border-color: var(--color-border-strong);
+    box-shadow: none;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Base-locale tag, locale chip, status pill, status dot
+// ─────────────────────────────────────────────────────────────────────────────
+
+.base-tag {
+  display: inline-flex;
+  // The mono locale code and the small-caps BASE badge are different fonts and
+  // sizes, so they only line up when they share a baseline.
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px var(--spacing-2);
+  border-radius: var(--border-radius-full);
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 35%, transparent);
+  background: color-mix(in srgb, var(--color-secondary) 16%, transparent);
+  color: color-mix(in srgb, var(--color-secondary) 45%, var(--color-text-primary));
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+
+  small {
+    font-family: var(--font-family-body);
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    // Match the code's line box so the badge cannot grow the chip off-centre.
+    line-height: 1.4;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    // The tracking above only sits between glyphs, so trim the trailing gap.
+    margin-right: -0.05em;
+  }
+}
+
+.lc {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: var(--border-radius-full);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.6;
+}
+
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--border-radius-full);
+
+  &--new {
+    background: var(--color-status-new);
+  }
+  &--stale {
+    background: var(--color-status-stale);
+  }
+  &--translated {
+    background: var(--color-status-translated);
+  }
+  &--verified {
+    background: var(--color-status-verified);
+  }
+}
+
+.st {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px var(--spacing-2) 1px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-full);
+  font: inherit;
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: var(--border-radius-full);
+    background: currentColor;
+  }
+
+  // The chevron reads as padding, so trim the trailing space to keep the pill
+  // optically balanced against the leading dot.
+  &:has(.st-chev) {
+    padding-right: 4px;
+  }
+
+  // Only the menu trigger carries a chevron; the menu items reuse `.st` as
+  // plain spans and must stay chip-shaped.
+  .st-chev {
+    flex: none;
+    margin-left: -1px;
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    opacity: 0.8;
+  }
+
+  &:disabled {
+    cursor: default;
+    // Nothing to open when read-only, so drop the affordance and rebalance.
+    padding-right: var(--spacing-2);
+
+    .st-chev {
       display: none;
     }
+  }
 
-    // `initiallyExpanded` keeps this panel rendered, so it needs no forced
-    // display — only the framing the tab context gives it.
-    .folder-picker-content {
-      border: 1px solid var(--color-border);
-      border-radius: var(--border-radius-md);
-      margin-top: 0;
-      overflow-y: auto;
-      // Sized by the tree, between a floor that keeps a two-folder collection
-      // reading as a tree and a ceiling that scales with the viewport instead
-      // of a flat 320px.
-      min-height: 140px;
-      max-height: min(420px, 46vh);
-      padding: var(--spacing-3);
-    }
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+  }
+
+  &--new {
+    color: var(--color-status-new-ink);
+    background: var(--color-status-new-surface);
+    border-color: var(--color-status-new-border);
+  }
+  &--stale {
+    color: var(--color-status-stale-ink);
+    background: var(--color-status-stale-surface);
+    border-color: var(--color-status-stale-border);
+  }
+  &--translated {
+    color: var(--color-status-translated-ink);
+    background: var(--color-status-translated-surface);
+    border-color: var(--color-status-translated-border);
+  }
+  &--verified {
+    color: var(--color-status-verified-ink);
+    background: var(--color-status-verified-surface);
+    border-color: var(--color-status-verified-border);
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Dialog action bar
+// Tags well (the house chip editor)
 // ─────────────────────────────────────────────────────────────────────────────
 
-mat-dialog-actions {
-  flex-shrink: 0;
-  padding: var(--spacing-4) var(--spacing-6);
-  border-top: 1px solid var(--color-border);
-  background-color: var(--color-background);
+.chip-well {
   display: flex;
-  gap: var(--spacing-3);
-  justify-content: flex-end;
+  flex-wrap: wrap;
   align-items: center;
-  // Override Material's built-in min-height to keep it compact
-  min-height: unset;
+  gap: 6px;
+  min-height: 40px;
+  padding: 7px var(--spacing-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--border-radius-md);
+  background: var(--dialog-well);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+
+  &:focus-within {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-secondary) 22%, transparent);
+  }
+
+  &--empty {
+    border-style: dashed;
+  }
 }
 
-.submit-button {
+.chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-2);
-  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  gap: 5px;
+  padding: 2px 6px 2px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-full);
+  background: var(--color-background-subtle);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
 
-  &:not(:disabled):hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+  mat-icon {
+    flex: none;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--color-text-tertiary);
   }
 
-  &:not(:disabled):active {
-    transform: translateY(0);
+  // Inherited from the collection: present, explained, and not removable.
+  &--inherited {
+    padding: 2px 10px 2px 8px;
+    border-style: dashed;
+    color: var(--color-text-secondary);
   }
+}
+
+.chip-remove {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--border-radius-full);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    color: inherit;
+  }
+
+  &:hover {
+    color: var(--color-error);
+    background: color-mix(in srgb, var(--color-error) 12%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 1px;
+  }
+}
+
+.chip-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1 1 140px;
+  min-width: 140px;
+
+  mat-icon {
+    flex: none;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--color-text-secondary);
+  }
+
+  // Once there are chips the add row becomes one more pill in the row.
+  &--pill {
+    flex: 0 1 150px;
+    min-width: 120px;
+    padding: 1px 8px 1px 6px;
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--border-radius-full);
+    color: var(--color-text-secondary);
+  }
+}
+
+.chip-add-input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  border: 0;
+  padding: 0 4px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-text-placeholder);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Other-locales link row
+// ─────────────────────────────────────────────────────────────────────────────
+
+.linkrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px var(--spacing-3) 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    background: var(--color-background-subtle);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+}
+
+.linkrow-lead {
+  flex: none;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-tertiary);
+}
+
+.linkrow-sum {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+
+  .dots {
+    display: inline-flex;
+    gap: 3px;
+  }
+}
+
+.linkrow-go {
+  flex: none;
+  color: var(--color-text-tertiary);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Footer
+// ─────────────────────────────────────────────────────────────────────────────
+
+.dialog-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px var(--spacing-6) 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+
+  mat-icon {
+    flex: none;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--color-success);
+  }
+
+  // The affirmative glyph is earned: while the form is invalid it stays a quiet outline.
+  .footer-meta-icon--idle {
+    color: var(--color-text-tertiary);
+  }
+
+  .mono {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text-primary);
+  }
+
+  // The key is a copy button, so it drops every scrap of button chrome and
+  // keeps the mono line it replaced. Only hover and focus say it is pressable.
+  .footer-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 2px 4px;
+    margin: -2px 0;
+    border: 0;
+    border-radius: var(--border-radius-sm);
+    background: none;
+    font-size: inherit;
+    line-height: inherit;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+
+      .footer-key-text {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .footer-key-icon {
+        opacity: 1;
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+    }
+  }
+
+  .footer-key-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .footer-key-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+    color: inherit;
+    opacity: 0.55;
+  }
+
+  // The key is already taken in the target folder: the footer says so too,
+  // since it is now the only place the full key is spelled out.
+  .mono--dup {
+    color: var(--color-error);
+    text-decoration: underline wavy color-mix(in srgb, var(--color-error) 60%, transparent);
+    text-underline-offset: 3px;
+  }
+
+  // A flex container does not pass its text-decoration down to its items, so the
+  // collision squiggle is drawn on the run of text inside the button.
+  .footer-key.mono--dup .footer-key-text {
+    text-decoration: underline wavy color-mix(in srgb, var(--color-error) 60%, transparent);
+    text-underline-offset: 3px;
+  }
+}
+
+.footer-spacer {
+  flex: 1;
 }
 
 .submit-spinner {
-  display: inline-block;
-}
-
-.cancel-button {
-  color: var(--color-text-secondary);
-  transition: color var(--transition-fast), background-color var(--transition-fast);
-
-  &:not(:disabled):hover {
-    color: var(--color-text-primary);
-    background-color: var(--color-background-muted);
-  }
+  margin-right: var(--spacing-2);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inherited tag chips
+// Responsive
 // ─────────────────────────────────────────────────────────────────────────────
 
-:host ::ng-deep .chip--inherited {
-  opacity: 0.75;
-  border: 1px dashed currentColor;
-  cursor: default;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Reduced motion
-// ─────────────────────────────────────────────────────────────────────────────
-
-@media (prefers-reduced-motion: reduce) {
-  .submit-button,
-  .cancel-button,
-  .close-button {
-    transition: none;
+// Under 1100px the context column goes and its blocks reappear in the disclosure
+// at the bottom of the form. The drawer then covers the whole body.
+@media (max-width: 1099px) {
+  .two {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  // The pill still lands on its new value; only the beat is dropped.
-  .location-pill--absorbed {
-    animation: none;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab labels — validity signal
-// ─────────────────────────────────────────────────────────────────────────────
-
-.tab-label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-2);
-
-  @media (max-width: 700px) {
-    justify-content: center;
-    gap: var(--spacing-1);
-    text-align: center;
-  }
-}
-
-// Marks the tab holding a blocking error, so a rejected save is legible from
-// whichever tab the user happens to be standing on.
-.tab-error-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background-color: var(--color-error);
-  flex-shrink: 0;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 18%, transparent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .locale-card,
-  .base-locale-card,
-  .base-value-reference {
-    transition: none;
-  }
-}
-
-// The locale name is now human-readable, so keep the raw code visible for the
-// developer who thinks in `fr-ca` rather than "French (Canada)".
-.locale-code {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  background-color: color-mix(in srgb, var(--color-text-primary) 6%, transparent);
-  border-radius: var(--border-radius-sm);
-  padding: 0 var(--spacing-1);
-  letter-spacing: 0.02em;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Narrow viewports
-//
-// Below the `sm` breakpoint the panel goes full-screen (see
-// `.translation-editor-dialog-panel` in styles.scss) and every horizontal
-// affordance in here has to survive ~390px of width holding German and Russian
-// copy. Three things break at that width and are fixed together below: the tab
-// strip paginates and hides its own active tab, the locale card header runs the
-// status select off the edge, and the 24px gutters eat a sixth of the line.
-// ─────────────────────────────────────────────────────────────────────────────
-
-@include bp.sm-max {
-  // Full-screen mode: the content area takes everything the chrome leaves,
-  // rather than stopping at the desktop ceiling and stranding blank space.
-  // Full-screen mode: the panel has a definite height of its own, so the flex
-  // column can hand the content area whatever the chrome leaves rather than
-  // stopping at the desktop ceiling and stranding blank space beneath it.
-  :host .dialog-tab-content,
-  :host .dialog-tab-content.dialog-tab-content--short {
-    height: auto;
-    max-height: none;
+  .bd {
+    border-right: 0;
   }
 
+}
+
+@media (max-width: 639px) {
   .dialog-header {
     padding: var(--spacing-4) var(--spacing-4) var(--spacing-3);
   }
 
-  .mat-dialog-title {
-    font-size: var(--font-size-xl);
-  }
-
-  .dialog-pretab {
-    padding: var(--spacing-3) var(--spacing-4);
-    gap: var(--spacing-2);
-  }
-
-  .tab-panel {
+  .bd {
     padding: var(--spacing-4);
     gap: var(--spacing-4);
   }
 
-  .base-value-reference {
-    padding: var(--spacing-3) var(--spacing-4);
-    margin: var(--spacing-3) var(--spacing-4) 0;
+  .row-3-2 {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .other-locales-section {
+  .field-hint--row,
+  .field-error--row {
+    margin-top: calc(-1 * var(--spacing-2));
+  }
+
+  .drawer {
     padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
-    gap: var(--spacing-3);
   }
 
-  .locale-card,
-  .base-locale-card {
-    padding: var(--spacing-3);
+  .dialog-footer {
+    padding: var(--spacing-3) var(--spacing-4) var(--spacing-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer,
+  .disclosure-panel {
+    animation: none;
   }
 
-  // The status select is a peer of the locale name, not a right-hand rail:
-  // at this width it drops onto its own full-width line instead of squeezing
-  // "French (Canada)" into three characters.
-  .locale-card-header {
-    flex-wrap: wrap;
-    row-gap: var(--spacing-2);
+  .loc-pill--flash {
+    animation: none;
   }
 
-  :host .status-select {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  // Both actions get equal weight and a full-width target — there is no room
-  // for a right-aligned pair, and neither is a thumb-friendly hit area at 64px.
-  mat-dialog-actions {
-    padding: var(--spacing-3) var(--spacing-4);
-
-    .cancel-button,
-    .submit-button {
-      flex: 1 1 0;
-      min-height: 44px;
-    }
+  .disclosure-chevron,
+  .linkrow,
+  .text-input,
+  .chip-well {
+    transition: none;
   }
 }

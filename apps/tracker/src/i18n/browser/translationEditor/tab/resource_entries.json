@@ -20,7 +20,7 @@
     "de": "Ordner ändern"
   },
   "otherLocales": {
-    "source": "Other Locales",
+    "source": "Other locales",
     "comment": "Tab label for the other locales section in the editor dialog",
     "tags": ["browser"],
     "es": "Otros idiomas",

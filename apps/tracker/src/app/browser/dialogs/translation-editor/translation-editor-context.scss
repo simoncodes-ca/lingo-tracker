@@ -1,0 +1,510 @@
+// The context column, the other-locales drawer that slides over it, and the
+// disclosure that replaces the column below 1100px. Split out of
+// `translation-editor-dialog.scss` so each sheet stays inside the project's
+// per-component style budget; the two are one stylesheet in every other sense
+// and share the dialog's `--dialog-*` surface variables.
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Context column
+// ─────────────────────────────────────────────────────────────────────────────
+
+.ctx {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  padding: 18px var(--spacing-5) var(--spacing-5);
+  background: var(--dialog-aside);
+}
+
+.blk {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  min-width: 0;
+
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+
+    mat-icon {
+      flex: none;
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: var(--color-text-tertiary);
+    }
+  }
+}
+
+.blk-note {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.blk-cap {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  // Secondary, not tertiary: tertiary is a decorative tint (2.3:1 on the aside
+  // in light, 4.1:1 in dark) and these captions are sentences a user reads.
+  color: var(--color-text-secondary);
+
+  // The exact-duplicate caption is a warning, not a footnote.
+  &--warn {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+// Mini folder tree: where the entry lands, and what is already beside it.
+.ftree {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--spacing-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: var(--dialog-well);
+  font-family: var(--font-family-mono);
+  font-size: 13px;
+}
+
+.ftree-n {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px var(--spacing-2);
+  border-radius: var(--border-radius-sm);
+  color: var(--color-text-primary);
+
+  mat-icon {
+    flex: none;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--color-text-tertiary);
+  }
+
+  &--d1 {
+    padding-left: 26px;
+  }
+  &--d2 {
+    padding-left: 44px;
+  }
+  &--leaf {
+    color: var(--color-text-secondary);
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  // The row that stands for the entries the window does not list.
+  &--more {
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-body);
+    font-size: 12px;
+  }
+
+  &--here {
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    color: var(--color-primary-text);
+    font-weight: var(--font-weight-semibold);
+
+    mat-icon {
+      color: var(--color-primary);
+    }
+  }
+
+  // The entry this dialog is writing. The pill alone was too quiet, so the row
+  // wears the same tint and accent ink the target folder does: one system,
+  // read top to bottom — the folder it lands in, then the entry itself.
+  &--target {
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    color: var(--color-primary-text);
+    font-weight: var(--font-weight-semibold);
+
+    mat-icon {
+      color: var(--color-primary);
+    }
+  }
+
+  // The key is already taken. Same emphasis, error ink: this is not the row
+  // being written, it is the one standing in the way.
+  &--taken {
+    background: color-mix(in srgb, var(--color-error) 10%, transparent);
+    // Error copy on a tinted row, mixed into ink the way the settings and bundle
+    // surfaces mix theirs: raw `--color-error` is a border and glyph colour and
+    // does not carry 13px label text at 4.5:1.
+    color: color-mix(in srgb, var(--color-error) 70%, var(--color-text-primary));
+    font-weight: var(--font-weight-semibold);
+
+    mat-icon {
+      color: var(--color-error);
+    }
+  }
+}
+
+.ftree-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ftree-pill {
+  margin-left: auto;
+  padding: 0 7px;
+  border-radius: var(--border-radius-full);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  color: var(--color-primary-text);
+  font-family: var(--font-family-body);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.02em;
+
+  // The key is taken: the leaf is not a new entry, it is the one already there.
+  &--err {
+    background: color-mix(in srgb, var(--color-error) 12%, transparent);
+    color: var(--color-error);
+  }
+}
+
+// Locale summary
+.lsum {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lsum-r {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: var(--spacing-2);
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+
+  .lc {
+    justify-self: start;
+    font-size: 11px;
+  }
+
+  &:hover {
+    background: var(--color-background-muted);
+  }
+}
+
+.lsum-v {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+
+  &--empty {
+    // Placeholder, not tertiary: this is the "nothing here yet" copy and has to
+    // be read, and --color-text-placeholder is the token measured for that job.
+    color: var(--color-text-placeholder);
+    font-style: italic;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Other-locales drawer: slides over the context column
+// ─────────────────────────────────────────────────────────────────────────────
+
+.drawer {
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: var(--spacing-4) var(--spacing-5) var(--spacing-5);
+  overflow-y: auto;
+  background: var(--dialog-surface);
+  border-left: 1px solid var(--color-border);
+  box-shadow: -12px 0 24px -16px color-mix(in srgb, var(--color-neutral-900) 25%, transparent);
+  animation: drawer-in var(--transition-normal) ease-out;
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+
+  h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 15px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+  }
+}
+
+.drawer-back {
+  flex: none;
+  color: var(--color-text-secondary);
+}
+
+.base-ref {
+  display: flex;
+  // Baseline alignment pins the chip to the first line of the base value, which
+  // stays correct when that value wraps.
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px var(--spacing-3);
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 22%, var(--color-border));
+  border-radius: var(--border-radius-md);
+  background: color-mix(in srgb, var(--color-secondary) 7%, var(--color-background-subtle));
+  font-size: var(--font-size-sm);
+
+  .base-tag {
+    flex: none;
+  }
+}
+
+.base-ref-text {
+  flex: 1;
+  min-width: 0;
+  line-height: var(--line-height-normal);
+  overflow-wrap: anywhere;
+}
+
+.auto-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 9px var(--spacing-3);
+  border: 1px solid color-mix(in srgb, var(--color-info) 30%, transparent);
+  border-radius: var(--border-radius-md);
+  background: var(--color-info-subtle);
+  color: color-mix(in srgb, var(--color-info) 55%, var(--color-text-primary));
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+
+  mat-icon {
+    flex: none;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.lrows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+// Name and status on the first line, the value well spanning both below it, so
+// a long translation wraps instead of squeezing the name.
+.lrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px var(--spacing-2);
+  align-items: center;
+}
+
+.lrow-who {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  // Name left, code chip against the status pill, as the comp has them.
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  min-width: 0;
+
+  b {
+    font-size: 13px;
+    font-weight: var(--font-weight-semibold);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lc {
+    font-size: 11px;
+  }
+}
+
+.lrow .st,
+.lrow .auto-tag {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.lrow-value {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.auto-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: var(--color-text-tertiary);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Context disclosure (only below 1100px)
+// ─────────────────────────────────────────────────────────────────────────────
+
+.disclosure {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+
+  &--open {
+    border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border));
+  }
+}
+
+.ctx-disc {
+  display: none;
+  margin-top: auto;
+}
+
+.disclosure-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px var(--spacing-3) 10px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--color-background-subtle);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: -2px;
+  }
+}
+
+.disclosure-icon {
+  flex: none;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-tertiary);
+}
+
+.disclosure-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.5;
+}
+
+.disclosure-summary {
+  margin-left: auto;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.disclosure-chevron {
+  flex: none;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: var(--color-text-tertiary);
+  transition: transform var(--transition-normal);
+
+  .disclosure--open & {
+    transform: rotate(180deg);
+  }
+}
+
+.disclosure-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) 14px 14px;
+  border-top: 1px solid var(--color-border-subtle);
+  background: color-mix(in srgb, var(--color-background-subtle) 55%, transparent);
+  animation: disclosure-reveal var(--transition-normal) both;
+}
+
+@keyframes disclosure-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Responsive
+//
+// These three rules live beside the classes they override rather than with the
+// rest of the dialog's media queries: this sheet is loaded after the other one,
+// so an override written there would be beaten by the plain rules here.
+// ─────────────────────────────────────────────────────────────────────────────
+
+@media (max-width: 1099px) {
+  .ctx {
+    display: none;
+  }
+
+  .ctx-disc {
+    display: block;
+  }
+
+  // With no column to sit over, the drawer covers the form instead.
+  .drawer {
+    left: 0;
+    width: auto;
+    border-left: 0;
+  }
+}

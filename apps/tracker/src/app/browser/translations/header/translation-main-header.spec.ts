@@ -3,12 +3,14 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
+import { patchState } from '@ngrx/signals';
 import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
 import { NotificationService } from '../../../shared/notification';
-import type { TranslationEditorResult } from '../../dialogs/translation-editor';
+import { TRANSLATION_EDITOR_TITLE_ID, type TranslationEditorResult } from '../../dialogs/translation-editor';
 import { BrowserStore } from '../../store/browser.store';
+import { TranslationEditorLauncher } from '../../services/translation-editor-launcher';
 import { TranslationMainHeader } from './translation-main-header';
 
 describe('TranslationMainHeader', () => {
@@ -22,6 +24,7 @@ describe('TranslationMainHeader', () => {
   };
   let mockDialogRef: { afterClosed: ReturnType<typeof vi.fn> };
   let mockDialog: { open: ReturnType<typeof vi.fn> };
+  let launcherSpy: { openEditor: ReturnType<typeof vi.fn>; openByFullKey: ReturnType<typeof vi.fn> };
 
   const createComponent = createComponentFactory({
     component: TranslationMainHeader,
@@ -31,6 +34,7 @@ describe('TranslationMainHeader', () => {
       provideHttpClientTesting(),
       { provide: NotificationService, useFactory: () => notificationsSpy },
       { provide: MatDialog, useFactory: () => mockDialog },
+      { provide: TranslationEditorLauncher, useFactory: () => launcherSpy },
     ],
   });
 
@@ -38,6 +42,7 @@ describe('TranslationMainHeader', () => {
     notificationsSpy = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
     mockDialogRef = { afterClosed: vi.fn() };
     mockDialog = { open: vi.fn().mockReturnValue(mockDialogRef) };
+    launcherSpy = { openEditor: vi.fn(), openByFullKey: vi.fn() };
 
     spectator = createComponent();
     component = spectator.component;
@@ -52,6 +57,17 @@ describe('TranslationMainHeader', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('handleAddTranslation — dialog configuration', () => {
+    it('should label the dialog container with the editor heading id', () => {
+      mockDialogRef.afterClosed.mockReturnValue(of(undefined));
+
+      component.handleAddTranslation();
+
+      const config = mockDialog.open.mock.calls[0][1];
+      expect(config.ariaLabelledBy).toBe(TRANSLATION_EDITOR_TITLE_ID);
+    });
   });
 
   describe('handleAddTranslation — success notification', () => {
@@ -78,6 +94,34 @@ describe('TranslationMainHeader', () => {
 
       expect(notificationsSpy.success).not.toHaveBeenCalled();
       expect(notificationsSpy.warning).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleAddTranslation — "Open existing"', () => {
+    it('should open the editor on the existing key the create dialog handed back', () => {
+      const store = spectator.inject(BrowserStore);
+      patchState(store, { selectedCollection: 'test-collection' });
+      const result: TranslationEditorResult = {
+        key: 'backButton',
+        baseValue: 'Back',
+        folderPath: 'browser.header',
+        shouldOpenEdit: true,
+        existingResourceKey: 'browser.header.backButton',
+      };
+      mockDialogRef.afterClosed.mockReturnValue(of(result));
+
+      component.handleAddTranslation();
+
+      expect(launcherSpy.openByFullKey).toHaveBeenCalledWith('browser.header.backButton', 'test-collection');
+      expect(notificationsSpy.success).not.toHaveBeenCalled();
+    });
+
+    it('should not route anywhere when the dialog closes normally', () => {
+      mockDialogRef.afterClosed.mockReturnValue(of(undefined));
+
+      component.handleAddTranslation();
+
+      expect(launcherSpy.openByFullKey).not.toHaveBeenCalled();
     });
   });
 

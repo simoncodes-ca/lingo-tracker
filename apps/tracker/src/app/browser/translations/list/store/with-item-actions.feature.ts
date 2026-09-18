@@ -7,8 +7,7 @@ import { NotificationService } from '../../../../shared/notification';
 import { BrowserApiService } from '../../../services/browser-api.service';
 import { BrowserStore } from '../../../store/browser.store';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
-import { TranslationEditorDialog } from '../../../dialogs/translation-editor';
-import type { TranslationEditorDialogData, TranslationEditorResult } from '../../../dialogs/translation-editor';
+import { TranslationEditorLauncher } from '../../../services/translation-editor-launcher';
 import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
 import type { ConfirmationDialogData } from '../../../../shared/components/confirmation-dialog/confirmation-dialog-data';
 import type { ResourceSummaryDto, TranslateResourceResponseDto } from '@simoncodes-ca/data-transfer';
@@ -28,6 +27,7 @@ export function withItemActions() {
       const api = inject(BrowserApiService);
       const browserStore = inject(BrowserStore);
       const dialog = inject(MatDialog);
+      const launcher = inject(TranslationEditorLauncher);
       const destroyRef = inject(DestroyRef);
       const notifications = inject(NotificationService);
       const transloco = inject(TranslocoService);
@@ -51,10 +51,8 @@ export function withItemActions() {
             browserStore.showNestedResources(),
             browserStore.currentFolderPath(),
           );
-          const originalKey = browserStore.isSearchMode() ? translation.key : undefined;
 
-          const dialogData: TranslationEditorDialogData = {
-            mode: 'edit',
+          launcher.openEditor({
             resource: resolveResourceForDialog(
               translation,
               browserStore.isSearchMode(),
@@ -62,47 +60,20 @@ export function withItemActions() {
             ),
             collectionName,
             folderPath,
-            availableLocales: browserStore.availableLocales(),
-            baseLocale: browserStore.baseLocale(),
-            readOnly: browserStore.isReadOnly(),
-          };
-
-          const dialogRef = dialog.open(TranslationEditorDialog, {
-            // Size, max-height and the small-viewport full-screen mode live in
-            // `.translation-editor-dialog-panel` (styles.scss) so the two call
-            // sites don't each carry their own copy of the numbers. `maxWidth`
-            // is overridden only to lift the CDK's inline 80vw default, which
-            // would otherwise beat the stylesheet.
-            panelClass: 'translation-editor-dialog-panel',
-            maxWidth: '100vw',
-            data: dialogData,
-            autoFocus: false,
-            ariaLabelledBy: 'dialog-title',
-            restoreFocus: false,
+            storeKey: translation.key,
+            originalKey: browserStore.isSearchMode() ? translation.key : undefined,
+            onUpdated: (key) => store.flashRecentlyUpdated(key),
           });
+        },
 
-          dialogRef
-            .afterClosed()
-            .pipe(takeUntilDestroyed(destroyRef))
-            .subscribe((result: TranslationEditorResult | undefined) => {
-              if (!result?.success) return;
-              if (!result.resource) return;
-              const cacheKey = originalKey ?? result.key;
-              if (result.folderPath !== folderPath) {
-                browserStore.removeResourceFromCache(cacheKey);
-              } else {
-                const storeResource = { ...result.resource, key: translation.key };
-                browserStore.updateTranslationInCache(storeResource);
-                store.flashRecentlyUpdated(translation.key);
-                notifications.success(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.TRANSLATIONUPDATED));
-                if (result.skippedLocales?.length) {
-                  const skippedList = result.skippedLocales.join(', ');
-                  notifications.warning(
-                    transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, { locales: skippedList }),
-                  );
-                }
-              }
-            });
+        /**
+         * Opens the editor for a full dot-delimited key, moving the browser to the
+         * folder that holds it. The create dialog's "Open existing" ends here: the
+         * user asked for the entry they collided with, not for the folder they
+         * happened to be standing in.
+         */
+        openResourceByKey(fullKey: string, collectionName: string): void {
+          launcher.openByFullKey(fullKey, collectionName, (key) => store.flashRecentlyUpdated(key));
         },
 
         deleteTranslation(translation: ResourceSummaryDto, collectionName: string): void {

@@ -16,15 +16,28 @@
   <button
     class="key-chip"
     type="button"
-    (click)="onCopyKey()"
-    (keydown.enter)="onCopyKey()"
+    (click)="onKeyChipClick($event)"
+    (dblclick)="onKeyChipDoubleClick($event)"
     [matTooltip]="TOKENS.BROWSER.TRANSLATIONITEM.KEYTOOLTIPX | transloco : { key: fullKey() }"
     matTooltipClass="key-chip-tooltip"
     [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.COPYKEYARIALABELX | transloco : { key: fullKey() }"
   >
     <!-- The chip shows a shortened key; the untruncated key is on the tooltip and
-         in the accessible name, so it is readable without copying it out. -->
-    <span class="key-text"><span class="key-text__inner" [innerHTML]="fullKey() | keyMarkup : searchQuery()"></span></span>
+         in the accessible name, so it is readable without copying it out.
+
+         Inline splits the key in two so the MIDDLE can be elided: the head takes
+         the ellipsis, the leaf segment in the tail never shrinks. Band keeps the
+         single span — it may wrap, so it has nothing to elide. -->
+    <span class="key-text">
+      @if (layout() === 'inline') {
+        <span class="key-text__head" [innerHTML]="fullKey() | keyMarkup : searchQuery() : 'head'"></span>
+        @if (hasKeyTail()) {
+          <span class="key-text__tail" [innerHTML]="fullKey() | keyMarkup : searchQuery() : 'tail'"></span>
+        }
+      } @else {
+        <span class="key-text__inner" [innerHTML]="fullKey() | keyMarkup : searchQuery()"></span>
+      }
+    </span>
     <mat-icon class="copy-icon">content_copy</mat-icon>
   </button>
 
@@ -87,6 +100,25 @@
       </button>
     }
 
+    @if (layout() === 'inline') {
+      <!-- Editing is the row's primary action and compact is where people spend
+           their time, so it stops hiding behind the overflow menu. Placed after
+           the comment marker and rollup — which report state — and before ⋮,
+           which collects everything else. Removed from the menu below in this
+           layout: two paths to the same dialog one pixel apart is duplication,
+           not redundancy. -->
+      <button
+        class="edit-action"
+        mat-icon-button
+        type="button"
+        (click)="onEdit()"
+        [matTooltip]="editActionLabel() | transloco"
+        [attr.aria-label]="editActionAriaLabel() | transloco"
+      >
+        <mat-icon>{{ editActionIcon() }}</mat-icon>
+      </button>
+    }
+
     <button
       mat-icon-button
       type="button"
@@ -97,10 +129,13 @@
     </button>
 
     <mat-menu #menu="matMenu">
-      <button mat-menu-item (click)="onEdit()" [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.EDITARIALABEL | transloco">
-        <mat-icon>{{ editActionIcon() }}</mat-icon>
-        <span>{{ editActionLabel() | transloco }}</span>
-      </button>
+      @if (layout() === 'band') {
+        <!-- Inline promotes this to its own icon button in the rail above. -->
+        <button mat-menu-item (click)="onEdit()" [attr.aria-label]="editActionAriaLabel() | transloco">
+          <mat-icon>{{ editActionIcon() }}</mat-icon>
+          <span>{{ editActionLabel() | transloco }}</span>
+        </button>
+      }
       @if (translationEnabled()) {
         <!-- Auto-translate menu item: shows spinner while translating -->
         <button mat-menu-item (click)="onTranslate()" [disabled]="translateDisabled()" [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONITEM.TRANSLATEARIALABEL | transloco">

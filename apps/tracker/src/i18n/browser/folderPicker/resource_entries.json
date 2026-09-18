@@ -128,5 +128,35 @@
     "ru": "Дерево папок",
     "ja": "フォルダーツリー",
     "de": "Ordnerstruktur"
+  },
+  "filterPlaceholder": {
+    "source": "Filter folders…",
+    "comment": "Placeholder of the filter field in the folder picker popover",
+    "tags": ["browser"],
+    "es": "Filtrar carpetas…",
+    "fr-ca": "Filtrer les dossiers…",
+    "ru": "Фильтровать папки…",
+    "ja": "フォルダを絞り込む…",
+    "de": "Ordner filtern…"
+  },
+  "newFolder": {
+    "source": "New folder",
+    "comment": "Link that starts creating a folder from the folder picker popover",
+    "tags": ["browser"],
+    "es": "Nueva carpeta",
+    "fr-ca": "Nouveau dossier",
+    "ru": "Новая папка",
+    "ja": "新しいフォルダ",
+    "de": "Neuer Ordner"
+  },
+  "useThisFolder": {
+    "source": "Use this folder",
+    "comment": "Primary button confirming the folder chosen in the picker popover",
+    "tags": ["browser"],
+    "es": "Usar esta carpeta",
+    "fr-ca": "Utiliser ce dossier",
+    "ru": "Использовать эту папку",
+    "ja": "このフォルダを使用",
+    "de": "Diesen Ordner verwenden"
   }
 }

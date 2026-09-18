@@ -53,7 +53,9 @@
 .state-message {
   margin: 0;
   font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
+  // Secondary, not tertiary: tertiary is a decorative tint (2.3:1 on the card in
+  // light mode) and this is the "searching" / "no results" copy a user reads.
+  color: var(--color-text-secondary);
 
   &.empty {
     color: var(--color-text-secondary);
@@ -96,7 +98,15 @@
   font-family: var(--font-family-mono);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
-  word-break: break-all;
+  // The key carries its own break opportunities (a <wbr /> after every dot), so
+  // wrapping only ever happens between segments — never mid-identifier.
+  word-break: normal;
+  overflow-wrap: anywhere;
+
+  i {
+    font-style: normal;
+    color: var(--color-text-tertiary);
+  }
 }
 
 .result-value {
@@ -106,6 +116,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+
+  // Not similar — identical. The row carries the weight so the eye lands on it
+  // before it reads the caption underneath.
+  &--exact {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+  }
 }
 
 // Show more button
@@ -146,5 +163,75 @@
   .similar-translations-card,
   .result-item {
     transition: none;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Context variant
+//
+// Inside the translation editor's context column the block already carries the
+// heading, the count and the caption, so the card gives up its own chrome and
+// becomes a plain list of rows one hairline apart.
+// ─────────────────────────────────────────────────────────────────────────────
+
+:host:has(.similar-translations-card--context) {
+  margin-top: 0;
+}
+
+.similar-translations-card--context {
+  border-left-width: 1px;
+  border-left-color: var(--color-border);
+  background: var(--color-background);
+
+  &.has-results {
+    border-left-color: var(--color-border);
+  }
+
+  .card-content {
+    padding: 0;
+  }
+
+  .state-message {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-xs);
+  }
+
+  .results-list {
+    gap: 0;
+  }
+
+  .result-item {
+    gap: 2px;
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+
+    + .result-item {
+      border-top: 1px solid var(--color-border-subtle);
+    }
+
+    &:hover {
+      background: var(--color-background-subtle);
+    }
+  }
+
+  .result-key {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+  }
+
+  .result-value {
+    font-size: 13px;
+    color: var(--color-text-primary);
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .show-more-button {
+    margin: 0;
+    border-top: 1px solid var(--color-border-subtle);
+    border-radius: 0;
+    font-size: var(--font-size-xs);
   }
 }

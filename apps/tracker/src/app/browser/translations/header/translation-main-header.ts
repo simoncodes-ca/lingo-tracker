@@ -10,9 +10,11 @@ import { TranslationSearch } from './translation-search/translation-search';
 import { BrowserStore } from '../../store/browser.store';
 import {
   TranslationEditorDialog,
+  TRANSLATION_EDITOR_TITLE_ID,
   type TranslationEditorDialogData,
   type TranslationEditorResult,
 } from '../../dialogs/translation-editor';
+import { TranslationEditorLauncher } from '../../services/translation-editor-launcher';
 import { LocaleFilter } from './locale-filter/locale-filter';
 import { StatusFilter } from './status-filter/status-filter';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
@@ -47,6 +49,7 @@ export class TranslationMainHeader {
   readonly #dialog = inject(MatDialog);
   readonly #notifications = inject(NotificationService);
   readonly #transloco = inject(TranslocoService);
+  readonly #editorLauncher = inject(TranslationEditorLauncher);
   readonly TOKENS = TRACKER_TOKENS;
 
   /** Drives the icon flip animation — true for one animation cycle when toggled */
@@ -105,10 +108,18 @@ export class TranslationMainHeader {
       maxWidth: '100vw',
       data: dialogData,
       autoFocus: false,
-      ariaLabelledBy: 'dialog-title',
+      ariaLabelledBy: TRANSLATION_EDITOR_TITLE_ID,
     });
 
     dialogRef.afterClosed().subscribe((result: TranslationEditorResult | undefined) => {
+      // "Open existing" is a hand-off, not a save: the user hit a key that is
+      // already taken and asked for that entry instead, so the create dialog
+      // closes and the editor opens on the entry they meant.
+      if (result?.shouldOpenEdit && result.existingResourceKey) {
+        this.#editorLauncher.openByFullKey(result.existingResourceKey, dialogData.collectionName);
+        return;
+      }
+
       if (!result?.success) return;
 
       this.store.selectFolder(this.store.currentFolderPath());

@@ -13,6 +13,7 @@ import { NotificationService } from '../../../shared/notification';
 import type { TranslationEditorResult } from '../../dialogs/translation-editor';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { BrowserStore } from '../../store/browser.store';
+import { TranslationEditorLauncher } from '../../services/translation-editor-launcher';
 import { TranslationListStore } from './store/translation-list.store';
 import { TranslationList } from './translation-list';
 
@@ -699,5 +700,48 @@ describe('TranslationList - handleTranslate', () => {
     });
 
     expect(notificationsSpy.warning).toHaveBeenCalledWith(expectedSkippedMessage);
+  });
+});
+
+describe('TranslationList - openResourceByKey', () => {
+  let fixture: ComponentFixture<TranslationList>;
+  let launcherSpy: { openEditor: ReturnType<typeof vi.fn>; openByFullKey: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    launcherSpy = { openEditor: vi.fn(), openByFullKey: vi.fn() };
+
+    fixture = renderList([
+      { provide: NotificationService, useValue: { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() } },
+      { provide: MatDialog, useValue: { open: vi.fn() } },
+      { provide: TranslationEditorLauncher, useValue: launcherSpy },
+    ]);
+    fixture.componentRef.setInput('collectionName', 'my-collection');
+    fixture.detectChanges();
+  });
+
+  it('should hand a full key to the launcher, with a flash callback for the row', () => {
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+
+    listStore.openResourceByKey('browser.header.backButton', 'my-collection');
+
+    expect(launcherSpy.openByFullKey).toHaveBeenCalledWith(
+      'browser.header.backButton',
+      'my-collection',
+      expect.any(Function),
+    );
+
+    const onUpdated = launcherSpy.openByFullKey.mock.calls[0][2] as (key: string) => void;
+    onUpdated('backButton');
+    expect(listStore.recentlyUpdatedKey()).toBe('backButton');
+  });
+
+  it('should open the row editor through the same launcher', () => {
+    const listStore = fixture.debugElement.injector.get(TranslationListStore);
+
+    listStore.editTranslation({ key: 'backButton', translations: { en: 'Back' }, status: {} }, 'my-collection');
+
+    expect(launcherSpy.openEditor).toHaveBeenCalledWith(
+      expect.objectContaining({ collectionName: 'my-collection', storeKey: 'backButton' }),
+    );
   });
 });

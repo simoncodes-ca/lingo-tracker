@@ -1,5 +1,18 @@
 .folder-picker {
   margin-bottom: var(--spacing-6);
+
+  // Headerless: the picker is the whole body of a popover, so it owns no
+  // chrome of its own and gives the gutters back to the tree.
+  &:has(.folder-picker-content:first-child) {
+    margin-bottom: 0;
+
+    .folder-picker-content {
+      border: 0;
+      border-radius: 0;
+      margin-top: 0;
+      padding: 0;
+    }
+  }
 }
 
 .folder-header {
