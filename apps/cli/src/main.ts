@@ -535,6 +535,42 @@ program
   });
 
 program
+  .command('preferred-terminology')
+  .description(
+    'Manage preferred terminology rules. A base-locale value using a discouraged term gets a warning suggesting the preferred term.',
+  )
+  .option('--list', 'List the rules and the file that holds them')
+  .option('--add <discouraged>', 'Add a rule for a discouraged term, or replace the existing one (case-insensitive)')
+  .option('--preferred <preferred>', 'Preferred term for --add (required with --add)')
+  .option('--reason <reason>', 'Optional reason shown with the suggestion (used with --add)')
+  .option('--remove <discouraged>', 'Remove the rule for a discouraged term (case-insensitive)')
+  .addHelpText(
+    'after',
+    `
+Examples:
+  # List rules
+  $ lingo-tracker preferred-terminology --list
+
+  # Add a rule (the file is created if absent)
+  $ lingo-tracker preferred-terminology --add "Expenditure" --preferred "Investment" --reason "Brand voice"
+
+  # Update a rule: --add on an existing discouraged term replaces the whole rule,
+  # so omitting --reason clears any previous reason
+  $ lingo-tracker preferred-terminology --add "expenditure" --preferred "Spending"
+
+  # Remove a rule
+  $ lingo-tracker preferred-terminology --remove "Expenditure"
+
+Rules live in .lingo-tracker-preferred-terminology.json beside .lingo-tracker.json,
+or in the file named by "preferredTerminologyFile" in .lingo-tracker.json.
+`,
+  )
+  .action(async (options) => {
+    const { preferredTerminologyCommand } = await import('./commands/preferred-terminology');
+    await preferredTerminologyCommand(options);
+  });
+
+program
   .command('install-skill')
   .description('Generate a lingo-tracker AI skill configured for this repository')
   .option('--collection <spec>', 'Collection spec: name:bundle:TokenConstant:tokenFilePath (repeatable)', collect, [])

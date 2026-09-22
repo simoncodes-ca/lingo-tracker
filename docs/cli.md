@@ -300,6 +300,51 @@ The [Protected Terms](./features/protected-terms.md) page explains how export an
 
 ---
 
+### preferred-terminology
+
+Manage preferred terminology rules. A rule names a discouraged term, the term to use instead, and an optional reason. When a base-locale value uses a discouraged term, LingoTracker warns and suggests the preferred term. It never blocks. The rules live in a JSON file of their own, and this command reads and writes that file.
+
+**Usage:**
+
+```bash
+lingo-tracker preferred-terminology [options]
+```
+
+**Options:**
+
+- `--list` - Print the rules and the file that holds them
+- `--add <discouraged>` - Add a rule. If a rule for the same discouraged term exists (any casing), replace it. Requires `--preferred`.
+- `--preferred <preferred>` - The preferred term for `--add`
+- `--reason <reason>` - Optional reason for `--add`
+- `--remove <discouraged>` - Remove the rule for a discouraged term (any casing). An unknown term is an error.
+
+`--add` and `--remove` take one term each and cannot be combined in one run.
+
+**Examples:**
+
+List the rules and their file:
+```bash
+lingo-tracker preferred-terminology --list
+```
+
+Add a rule. The file is created if it is absent:
+```bash
+lingo-tracker preferred-terminology --add "Expenditure" --preferred "Investment" --reason "Brand voice"
+```
+
+Remove a rule:
+```bash
+lingo-tracker preferred-terminology --remove "Expenditure"
+```
+
+**Notes:**
+- The file is `.lingo-tracker-preferred-terminology.json` beside `.lingo-tracker.json` by default. Set `preferredTerminologyFile` in `.lingo-tracker.json` to use another path.
+- `--add` on an existing term replaces the whole rule. Leaving out `--reason` clears any previous reason.
+- LingoTracker rejects invalid rules and leaves the file untouched. For example, a preferred term that is itself discouraged is rejected.
+- A malformed rules file makes `--list` report the error. `--add` and `--remove` refuse to run until you fix it, so they never overwrite it.
+
+---
+
 ### delete-collection
 
 Delete a translation collection from the project.
