@@ -52,9 +52,12 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
   const collection = resolveWritableCollection(collectionName, config, cwd);
   if (!collection) return;
 
+  // The collection's own base locale decides which import writes `source` values.
+  const baseLocale = collection.config.baseLocale ?? config.baseLocale ?? 'en';
+
   let answers: Partial<ImportCommandOptions>;
   try {
-    answers = await promptForMissing({ ...options, collection: collectionName }, config);
+    answers = await promptForMissing({ ...options, collection: collectionName }, config, baseLocale);
   } catch (error) {
     if ((error as Error).message === 'Import cancelled') {
       ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Import'));
@@ -97,6 +100,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
     source: answers.source,
     locale: answers.locale,
     collection: collectionName,
+    baseLocale,
     format: answers.format,
     strategy: answers.strategy || 'translation-service',
     updateComments: answers.updateComments,
@@ -164,7 +168,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
   const terminologyConfigWarning = preferredTerminology.error
     ? `Preferred terminology checks skipped: ${preferredTerminology.error}`
     : preferredTerminology.warning;
-  if (terminologyConfigWarning && result.locale === (config.baseLocale ?? 'en')) {
+  if (terminologyConfigWarning && result.locale === baseLocale) {
     result = { ...result, warnings: [terminologyConfigWarning, ...result.warnings] };
   }
 
@@ -205,6 +209,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
 async function promptForMissing(
   options: ImportCommandOptions,
   config: LingoTrackerConfig,
+  baseLocale: string,
 ): Promise<ImportCommandOptions> {
   const answers = { ...options };
 
@@ -276,7 +281,6 @@ async function promptForMissing(
 
   // Get configured locales
   const configuredLocales = config.locales || [];
-  const baseLocale = config.baseLocale || 'en';
 
   // Prompt for import strategy
   if (!answers.strategy) {

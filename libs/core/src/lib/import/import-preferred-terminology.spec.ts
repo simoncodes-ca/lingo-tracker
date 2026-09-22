@@ -150,6 +150,34 @@ describe('preferred terminology on import', () => {
     expect(result.resourcesCreated).toBe(1);
   });
 
+  describe("collection whose base locale differs from the project's", () => {
+    it('warns on an import into that base locale', () => {
+      const source = writeSource('fr.json', JSON.stringify({ 'budget.title': 'Expenditure du mois' }));
+
+      const result = importFromJson(translationsFolder, baseOptions(source, { locale: 'fr', baseLocale: 'fr' }));
+
+      expect(result.warnings).toContain(
+        'Preferred terminology: key "budget.title" — consider "Investment" instead of "Expenditure". Finance style guide',
+      );
+      const entries = JSON.parse(readFileSync(join(translationsFolder, 'budget', 'resource_entries.json'), 'utf8'));
+      expect(entries.title.source).toBe('Expenditure du mois');
+    });
+
+    it("treats the project base locale as a target locale and doesn't warn", () => {
+      seedExisting();
+      const source = writeSource('en.json', JSON.stringify({ 'budget.title': 'Capital expenditure' }));
+
+      const result = importFromJson(
+        translationsFolder,
+        baseOptions(source, { locale: 'en', baseLocale: 'fr', strategy: 'translation-service' }),
+      );
+
+      expect(result.warnings.some((w) => w.startsWith('Preferred terminology'))).toBe(false);
+      const entries = JSON.parse(readFileSync(join(translationsFolder, 'budget', 'resource_entries.json'), 'utf8'));
+      expect(entries.title.en).toBe('Capital expenditure');
+    });
+  });
+
   it('never warns on a target-locale XLIFF import', async () => {
     seedExisting();
     const source = writeSource(
