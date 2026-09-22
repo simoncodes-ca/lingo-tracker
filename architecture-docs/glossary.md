@@ -87,6 +87,20 @@ Explained in context: [`domain-and-data-model.md`](domain-and-data-model.md)
 
 ## P
 
+### Preferred Terminology
+
+A global list of rules. Each rule maps a **discouraged** source-language term to the **preferred** term, with an optional `reason`. LingoTracker warns when a base-locale value uses a discouraged term, and suggests the preferred one. It never blocks. Only an unreadable rule file fails `validate`.
+
+The rules are project configuration rather than resource data. They live in a standalone JSON file, a bare array of rule objects. `.lingo-tracker.json` names that file with `preferredTerminologyFile`. Omit the setting and the rules fall back to `.lingo-tracker-preferred-terminology.json` beside the config. Collections cannot override the rules.
+
+Matching is case-insensitive and whole-word, and it covers only the text a reader sees. ICU arguments and selectors, Transloco placeholders, and tags are skipped. The pure rule and matching functions live in `libs/domain`, so the Tracker UI and core share them.
+
+Contrast with [Protected Term](#protected-term), which keeps a word unchanged in translations and blocks imports that alter it.
+
+Explained in context: [`docs/features/preferred-terminology.md`](../docs/features/preferred-terminology.md)
+
+---
+
 ### Protected Term
 
 A word that must stay unchanged through translation. A brand name, a product name, or a piece of jargon all qualify. `iPhone` stays `iPhone` in every locale.

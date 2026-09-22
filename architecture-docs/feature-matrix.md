@@ -67,6 +67,10 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 | List the terms that apply (global or per collection) | Yes (`protected-terms --list`) | Yes (resolved on `GET /config`) | Yes (Settings page, and collection edit dialog) |
 | Add, remove, or replace terms | Yes (`protected-terms --add/--remove/--set`) | Yes (`PUT /config`, and `PUT /collections/:name`) | Yes (chip editors. Collection chips need a terms file first.) |
 | Name the terms file for a scope | Yes (`protected-terms --file`) | Yes (`protectedTermsFile` on `PUT /collections/:name`) | — (shows the resolved path, read-only) |
+| **[Preferred Terminology](glossary.md#preferred-terminology)** | | | |
+| List the rules | Yes (`preferred-terminology --list`) | Yes (`GET /config`, with the file path and any load error) | Yes (Settings page) |
+| Add, edit, or remove rules | Yes (`preferred-terminology --add/--remove`. `--add` replaces an existing rule.) | Yes (`PUT /config` with the full rule list. Invalid rules return `400` with per-row errors.) | Yes (Settings page rule table) |
+| Warn about discouraged terms in base-locale values | Yes (`add-resource`, `edit-resource`, base-locale `import`, `validate`) | — (create and update responses carry no findings) | Yes (translation editor notes, with a "Use …" fix that does not save) |
 | **Validation** | | | |
 | Validate all resources (CI gate) | Yes (`validate`) | — | — |
 | View resource status per locale | — | — | Yes (status badge per locale row in item) |

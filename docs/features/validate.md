@@ -113,7 +113,7 @@ It applies to the base locale only — translations keep their own categories, w
 
 ### Preferred Terminology
 
-Each collection's base-locale values are scanned for discouraged terms from the preferred terminology file (`.lingo-tracker-preferred-terminology.json` beside `.lingo-tracker.json`, or the file named by `preferredTerminologyFile`). Manage the rules with `lingo-tracker preferred-terminology`.
+Each collection's base-locale values are scanned for discouraged terms from the preferred terminology file (`.lingo-tracker-preferred-terminology.json` beside `.lingo-tracker.json`, or the file named by `preferredTerminologyFile`). Manage the rules with `lingo-tracker preferred-terminology`. The [Preferred Terminology](./preferred-terminology.md) page explains the rules and how matching works.
 
 - **Warnings only.** A finding suggests better wording; it never fails validation or changes the exit code.
 - **Once per key and rule.** A term used three times in one value, in a project with five target locales, is one warning.

@@ -343,6 +343,8 @@ lingo-tracker preferred-terminology --remove "Expenditure"
 - LingoTracker rejects invalid rules and leaves the file untouched. For example, a preferred term that is itself discouraged is rejected.
 - A malformed rules file makes `--list` report the error. `--add` and `--remove` refuse to run until you fix it, so they never overwrite it.
 
+The [Preferred Terminology](./features/preferred-terminology.md) page explains how matching works and where the warnings appear.
+
 ---
 
 ### delete-collection
@@ -525,6 +527,7 @@ lingo-tracker add-resource \
 - In interactive mode, you'll be prompted if you want to provide translations for each configured locale
 - Resources are placed in the appropriate folder based on the key and optional `--target-folder`
 - If a translation's checksum matches the base value's checksum, the status will automatically be set to `new` regardless of the provided status
+- After it stores the resource, the command prints a warning for each [preferred terminology](./features/preferred-terminology.md) rule the base value breaks. The warnings never change the exit code.
 
 ---
 
@@ -660,6 +663,7 @@ lingo-tracker edit-resource \
 - Updating `--base-value` triggers a checksum update and marks all other existing translations as `stale`.
 - Updating a locale value sets its status to `translated` and updates its checksum.
 - If no changes are detected (values match existing), the command reports "No changes detected".
+- When the command changes the base value, it prints a warning for each [preferred terminology](./features/preferred-terminology.md) rule the new value breaks. The warnings never change the exit code.
 
 ---
 
@@ -1331,7 +1335,9 @@ A value that does not compile as ICU for its own locale is a failure whatever it
 **Exit Codes:**
 
 - `0` - All validations passed (all resources verified)
-- `1` - Validation failures found (new/stale resources, translated without `--allow-translated`, or values that fail to compile as ICU)
+- `1` - Validation failures found (new/stale resources, translated without `--allow-translated`, or values that fail to compile as ICU), or the preferred terminology file exists but cannot be loaded
+
+[Preferred terminology](./features/preferred-terminology.md) findings in base-locale values are warnings. They never change the exit code.
 
 **When to Use Validate:**
 
@@ -1999,6 +2005,7 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
 - **Per-collection fields** can override global settings for specific collections
 - **`readOnly`** (optional, per-collection) - When `true`, resource mutations to this collection are blocked across the CLI, API, and UI. The collection can still be unregistered and its config entry edited. Defaults to `true` for `node_modules` paths when added via `add-collection`. See [add-collection](#add-collection) for details.
 - **`tokenCasing`** (optional) - Controls the casing style for generated type token keys. Accepts `"upperCase"` (default, SCREAMING_SNAKE_CASE) or `"camelCase"`. Can be set globally or per-bundle. See [Bundle Type Generation](./features/bundle-type-generation.md) for details. Precedence: CLI flag `--token-casing` > per-bundle config > global config > default (`"upperCase"`)
+- **`preferredTerminologyFile`** (optional, global only) - Path to the JSON file that holds preferred terminology rules. LingoTracker resolves the path against the directory that contains `.lingo-tracker.json`. Omit it and the rules fall back to `.lingo-tracker-preferred-terminology.json`. See [Preferred Terminology](./features/preferred-terminology.md) for details.
 - **`protectedTermsFile`** (optional, global and per-collection) - Path to a JSON file that holds protected terms. LingoTracker resolves the path against the directory that contains `.lingo-tracker.json`. Omit it globally and the list falls back to `.lingo-tracker-protected-terms.json`. A collection has no default, so a collection without this setting contributes no terms of its own. LingoTracker adds a collection's terms to the global ones. See [Protected Terms](./features/protected-terms.md) for details.
 
 ---

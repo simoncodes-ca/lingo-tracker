@@ -9,6 +9,8 @@ The Glossary feature extracts a glossary of relevant translations from a block o
 
 Given a paragraph of base-locale text, the `glossary` command pulls out the meaningful terms, finds the matching translation entries, and writes a JSON glossary containing each term's translations across all locales. That glossary can be handed to whoever (or whatever) translates the help content.
 
+The glossary is a reference that the command generates on demand. It checks nothing. To keep words unchanged in translations, use [protected terms](./protected-terms.md). To flag discouraged wording in your base-locale text, use [preferred terminology](./preferred-terminology.md).
+
 ## Usage
 
 ```bash

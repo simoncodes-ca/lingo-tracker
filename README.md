@@ -40,7 +40,7 @@ When importing translations from external tools or translators, variable and pla
 Experience compile-time guarantees with generated translation key tokens. This feature ensures that your application uses the correct and valid translation keys, along with type completion, adding an extra layer of confidence to your translations. [Learn more](docs/features/bundle-type-generation.md).
 
 ### CLI Support
-LingoTracker provides a comprehensive CLI. Its commands add, edit, delete, and move resources, and validate them. Others find similar translations, extract help-translation glossaries, manage protected terms, and normalize metadata. The rest generate bundles and import or export in JSON and XLIFF. All commands support both interactive (TTY) and non-interactive (CI) modes.
+LingoTracker provides a comprehensive CLI. Its commands add, edit, delete, and move resources, and validate them. Others find similar translations, extract help-translation glossaries, manage protected terms and preferred terminology, and normalize metadata. The rest generate bundles and import or export in JSON and XLIFF. All commands support both interactive (TTY) and non-interactive (CI) modes.
 
 ### Help Translation Glossary
 Translating online help or documentation? The `glossary` command extracts the UI terms mentioned in a block of help text and emits a JSON glossary of their translations across every locale — so help translators reuse the exact terminology already shipped in your app. Feed it a file, a snippet, or piped stdin. [Learn more](docs/features/glossary.md).
@@ -54,6 +54,13 @@ Brand names and jargon should stay unchanged through translation. Keep your prot
 
 ```bash
 lingo-tracker protected-terms --add iPhone --add "Node.js"
+```
+
+### Preferred Terminology
+Retired a term? Map each discouraged term to the preferred one, with an optional reason. LingoTracker then flags the old term in base-locale text. The resource editor shows a note with a one-click fix, and the CLI, base-locale imports, and `validate` print warnings. Nothing is blocked. [Protected terms](docs/features/protected-terms.md) keep words intact through translation, but preferred terminology improves the wording of the source text. [Learn more](docs/features/preferred-terminology.md).
+
+```bash
+lingo-tracker preferred-terminology --add "Expenditure" --preferred "Investment"
 ```
 
 ### CI/CD Validation

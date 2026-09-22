@@ -12,6 +12,8 @@ LingoTracker applies the list in two places.
 - **Export** marks each exported string with the protected terms found in its source. Translators and machine-translation services then see which words to leave alone.
 - **Import** rejects an incoming translation when a protected term from the source is missing from it.
 
+Protected terms are not [preferred terminology](./preferred-terminology.md). Preferred terminology suggests better wording for your base-locale text, and it only warns. Protected terms keep words intact in translations, and import enforces them.
+
 The terms live in a **JSON file** of their own, outside `.lingo-tracker.json`. A terminology list grows to hundreds of entries. It also changes on a different schedule from the rest of your configuration. A separate file keeps your configuration diffs short, and it lets reviewers read the terminology on its own.
 
 ## The file

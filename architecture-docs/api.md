@@ -35,8 +35,8 @@ All paths are relative to the `/api` global prefix. URL path parameters that con
 
 | Method | Path | Purpose | Request DTO | Response DTO |
 |--------|------|---------|-------------|--------------|
-| `GET` | `/config` | Read global config and all collection configs, with protected terms resolved from their files | — | `LingoTrackerConfigDto` |
-| `PUT` | `/config` | Update the writable top-level globals. Today that is `protectedTerms` alone. The handler writes it to the global protected-terms **file**, and leaves `.lingo-tracker.json` untouched. `collections`, `locales`, and `baseLocale` stay excluded on purpose. | `UpdateConfigDto` | `{ message: string }` |
+| `GET` | `/config` | Read global config and all collection configs, with protected terms resolved from their files. Also carries the preferred terminology rules, the rule file path, and any load error or missing-file warning. | — | `LingoTrackerConfigDto` |
+| `PUT` | `/config` | Update the writable top-level globals: `protectedTerms` and `preferredTerminology`. The handler writes each one to its own **file**, and leaves `.lingo-tracker.json` untouched. `preferredTerminology` is the full rule list. The server validates it again and returns `400` with per-row errors when a rule is invalid. `collections`, `locales`, and `baseLocale` stay excluded on purpose. | `UpdateConfigDto` | `{ message: string }` |
 
 ### Collections
 

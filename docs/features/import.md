@@ -223,6 +223,8 @@ The warnings are advisory. The value is imported as-is, nothing is skipped or fa
 - **A broken rule file** (invalid JSON or invalid rules) adds one warning, `Preferred terminology checks skipped: …`, and the import continues without the check.
 - **A missing file** at the default path means no rules. A missing file named explicitly by `preferredTerminologyFile` adds one warning.
 
+The [Preferred Terminology](./preferred-terminology.md) page explains the rules and how matching works.
+
 ## ICU Format Auto-Fixing
 
 LingoTracker automatically fixes common ICU message format placeholder errors made by translators:
