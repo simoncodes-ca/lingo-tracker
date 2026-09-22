@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { resolve } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
-import { editResourceCommand } from './edit-resource';
+import { resolve } from 'node:path';
+import { editResource, loadPreferredTerminology } from '@simoncodes-ca/core';
 import prompts from 'prompts';
-import { editResource } from '@simoncodes-ca/core';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { editResourceCommand } from './edit-resource';
 
 const fsMocks = vi.hoisted(() => ({
   existsSync: vi.fn(),
@@ -24,6 +24,7 @@ vi.mock('@simoncodes-ca/core', async () => {
   return {
     ...actual,
     editResource: vi.fn(),
+    loadPreferredTerminology: vi.fn(() => ({ rules: [], filePath: '/test/project/terms.json' })),
   };
 });
 
@@ -264,5 +265,77 @@ describe('editResourceCommand', () => {
         baseValue: 'Promped Value',
       }),
     );
+  });
+
+  describe('preferred terminology', () => {
+    const rules = [{ discouraged: 'Expenditure', preferred: 'Investment', reason: 'Finance style guide' }];
+
+    beforeEach(() => {
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(JSON.stringify(mockConfig));
+      vi.mocked(loadPreferredTerminology).mockReturnValue({ rules, filePath: '/test/project/terms.json' });
+    });
+
+    const logged = (spy: ReturnType<typeof vi.spyOn>) => spy.mock.calls.map((call) => String(call[0]));
+
+    it('warns about the new base value after a successful edit', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      mockEditResource.mockResolvedValue({ resolvedKey: 'budget.title', updated: true });
+
+      await editResourceCommand({ collection: 'default', key: 'budget.title', baseValue: 'Capital expenditure' });
+
+      expect(logged(logSpy)).toContain('⚠️  Preferred terminology: consider "Investment" instead of "Expenditure"');
+      expect(logged(logSpy)).toContain('  Finance style guide');
+      expect(process.exitCode ?? 0).toBe(0);
+      logSpy.mockRestore();
+    });
+
+    it('does not check when the base value was not part of the edit', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      mockEditResource.mockResolvedValue({ resolvedKey: 'budget.title', updated: true });
+
+      await editResourceCommand({
+        collection: 'default',
+        key: 'budget.title',
+        baseValue: '',
+        locale: 'fr',
+        localeValue: 'Expenditure',
+      });
+
+      expect(loadPreferredTerminology).not.toHaveBeenCalled();
+      expect(logged(logSpy).some((line) => line.includes('Preferred terminology'))).toBe(false);
+      logSpy.mockRestore();
+    });
+
+    it('does not check when nothing changed', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      mockEditResource.mockResolvedValue({
+        resolvedKey: 'budget.title',
+        updated: false,
+        message: 'No changes detected',
+      });
+
+      await editResourceCommand({ collection: 'default', key: 'budget.title', baseValue: 'Capital expenditure' });
+
+      expect(loadPreferredTerminology).not.toHaveBeenCalled();
+      logSpy.mockRestore();
+    });
+
+    it('prints one config warning and skips the check when the rule file is broken', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      vi.mocked(loadPreferredTerminology).mockReturnValue({
+        rules: [],
+        filePath: '/test/project/terms.json',
+        error: 'not valid JSON',
+      });
+      mockEditResource.mockResolvedValue({ resolvedKey: 'budget.title', updated: true });
+
+      await editResourceCommand({ collection: 'default', key: 'budget.title', baseValue: 'Capital expenditure' });
+
+      const lines = logged(logSpy);
+      expect(lines).toContain('⚠️  Preferred terminology checks skipped: not valid JSON');
+      expect(lines.filter((line) => line.includes('Preferred terminology'))).toHaveLength(1);
+      logSpy.mockRestore();
+    });
   });
 });

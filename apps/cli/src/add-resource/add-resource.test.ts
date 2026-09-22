@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { addResourceCommand } from './add-resource';
 import * as fs from 'node:fs';
-import prompts from 'prompts';
 import * as core from '@simoncodes-ca/core';
+import prompts from 'prompts';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as utils from '../utils';
+import { addResourceCommand } from './add-resource';
 
 // Mock prompts to avoid interactive input
 vi.mock('prompts', () => ({
@@ -30,6 +30,7 @@ vi.mock('@simoncodes-ca/core', async () => {
     ...actual,
     CONFIG_FILENAME: '.lingo-tracker.json',
     addResource: vi.fn().mockResolvedValue({ resolvedKey: 'test.key', created: true }),
+    loadPreferredTerminology: vi.fn(() => ({ rules: [], filePath: '/test/.lingo-tracker-preferred-terminology.json' })),
     resolveResourceKey: vi.fn((key: string, targetFolder?: string) => {
       return targetFolder ? `${targetFolder}.${key}` : key;
     }),
@@ -360,6 +361,105 @@ describe('addResourceCommand', () => {
     Object.defineProperty(process.stdout, 'isTTY', {
       value: originalIsTTY,
       writable: true,
+    });
+  });
+
+  describe('preferred terminology', () => {
+    const filePath = '/test/.lingo-tracker-preferred-terminology.json';
+    const config = {
+      collections: { TestCollection: { translationsFolder: 'translations', baseLocale: 'en', locales: ['en', 'fr'] } },
+      baseLocale: 'en',
+      locales: ['en', 'fr'],
+    };
+    let originalIsTTY: boolean | undefined;
+    let logSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      vi.mocked(utils.loadConfiguration).mockReturnValue({
+        config,
+        configPath: '/test/.lingo-tracker.json',
+        cwd: '/test',
+      });
+      vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
+      vi.mocked(utils.resolveWritableCollection).mockReturnValue({
+        name: 'TestCollection',
+        config: config.collections.TestCollection,
+        translationsFolderPath: '/test/translations',
+      });
+      originalIsTTY = process.stdout.isTTY;
+      Object.defineProperty(process.stdout, 'isTTY', { value: false, writable: true });
+      logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      Object.defineProperty(process.stdout, 'isTTY', { value: originalIsTTY, writable: true });
+      logSpy.mockRestore();
+    });
+
+    const add = (value: string) => addResourceCommand({ collection: 'TestCollection', key: 'budget.title', value });
+
+    it('warns once per matching rule after a successful add, with the reason on its own line', async () => {
+      vi.mocked(core.loadPreferredTerminology).mockReturnValue({
+        rules: [
+          { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Finance style guide' },
+          { discouraged: 'e-mail', preferred: 'email' },
+        ],
+        filePath,
+      });
+
+      await add('Expenditure and more expenditure, by e-mail');
+
+      expect(core.addResource).toHaveBeenCalled();
+      expect(core.loadPreferredTerminology).toHaveBeenCalledWith(config, '/test');
+      const lines = logSpy.mock.calls.map((call) => String(call[0]));
+      expect(lines).toContain('⚠️  Preferred terminology: consider "Investment" instead of "Expenditure"');
+      expect(lines).toContain('  Finance style guide');
+      expect(lines).toContain('⚠️  Preferred terminology: consider "email" instead of "e-mail"');
+      expect(lines.filter((line) => line.includes('Preferred terminology:'))).toHaveLength(2);
+      expect(process.exitCode ?? 0).toBe(0);
+    });
+
+    it('prints nothing when the value uses no discouraged term', async () => {
+      vi.mocked(core.loadPreferredTerminology).mockReturnValue({
+        rules: [{ discouraged: 'Expenditure', preferred: 'Investment' }],
+        filePath,
+      });
+
+      await add('Investment summary');
+
+      expect(logSpy.mock.calls.some((call) => String(call[0]).includes('Preferred terminology'))).toBe(false);
+    });
+
+    it('prints one config warning and skips the check when the rule file is broken', async () => {
+      vi.mocked(core.loadPreferredTerminology).mockReturnValue({ rules: [], filePath, error: 'not valid JSON' });
+
+      await add('Expenditure');
+
+      const lines = logSpy.mock.calls.map((call) => String(call[0]));
+      expect(lines).toContain('⚠️  Preferred terminology checks skipped: not valid JSON');
+      expect(lines.filter((line) => line.includes('Preferred terminology'))).toHaveLength(1);
+    });
+
+    it('prints the missing-explicit-file warning', async () => {
+      vi.mocked(core.loadPreferredTerminology).mockReturnValue({
+        rules: [],
+        filePath,
+        warning: 'Preferred terminology file not found: /test/terms.json. Treating as an empty list.',
+      });
+
+      await add('Expenditure');
+
+      expect(logSpy).toHaveBeenCalledWith(
+        '⚠️  Preferred terminology file not found: /test/terms.json. Treating as an empty list.',
+      );
+    });
+
+    it('does not check when the add fails', async () => {
+      vi.mocked(core.addResource).mockRejectedValueOnce(new Error('boom'));
+
+      await add('Expenditure');
+
+      expect(core.loadPreferredTerminology).not.toHaveBeenCalled();
     });
   });
 });

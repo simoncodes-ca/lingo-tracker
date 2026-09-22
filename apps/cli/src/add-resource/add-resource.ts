@@ -1,16 +1,17 @@
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
-import prompts from 'prompts';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
-import { createDefaultTranslations, addResource } from '@simoncodes-ca/core';
-import { type TranslationStatus, resolveResourceKey, splitResolvedKey } from '@simoncodes-ca/domain';
+import { addResource, createDefaultTranslations } from '@simoncodes-ca/core';
+import { resolveResourceKey, splitResolvedKey, type TranslationStatus, translocoToICU } from '@simoncodes-ca/domain';
+import prompts from 'prompts';
 import {
+  ConsoleFormatter,
+  ErrorMessages,
   loadConfiguration,
   parseCommaSeparatedList,
   promptForCollection,
   resolveWritableCollection,
-  ConsoleFormatter,
-  ErrorMessages,
+  warnAboutPreferredTerminology,
 } from '../utils';
 
 export interface AddResourceOptions {
@@ -102,6 +103,10 @@ export async function addResourceCommand(options: AddResourceOptions): Promise<v
     if (result.created) {
       ConsoleFormatter.indent('(newly created)');
     }
+
+    // Advisory: the value is stored either way. Checked against the stored
+    // (ICU-normalized) form, which is what validate and the editor see.
+    warnAboutPreferredTerminology(config, cwd, translocoToICU(answers.value));
   } catch (e: unknown) {
     ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to add resource');
   }

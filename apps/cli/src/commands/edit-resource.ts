@@ -1,14 +1,16 @@
 import { resolve } from 'node:path';
-import type prompts from 'prompts';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
 import { editResource } from '@simoncodes-ca/core';
+import { translocoToICU } from '@simoncodes-ca/domain';
+import type prompts from 'prompts';
 import {
+  ConsoleFormatter,
+  executePromptsWithFallback,
   loadConfiguration,
   parseCommaSeparatedList,
   promptForCollection,
   resolveWritableCollection,
-  ConsoleFormatter,
-  executePromptsWithFallback,
+  warnAboutPreferredTerminology,
 } from '../utils';
 
 export interface EditResourceOptions {
@@ -87,6 +89,11 @@ export async function editResourceCommand(options: EditResourceOptions): Promise
 
     if (result.updated) {
       ConsoleFormatter.success(`Resource "${result.resolvedKey}" updated successfully.`);
+      // Only a base value supplied in this invocation is checked; editing a comment
+      // or a translation should not re-raise advice about untouched wording.
+      if (editOptions.baseValue !== undefined) {
+        warnAboutPreferredTerminology(config, cwd, translocoToICU(editOptions.baseValue));
+      }
     } else {
       ConsoleFormatter.info(result.message || 'No changes detected');
     }
