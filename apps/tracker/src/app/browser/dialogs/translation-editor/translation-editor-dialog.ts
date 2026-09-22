@@ -1,52 +1,59 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  type OnInit,
-  type OnDestroy,
-  type AfterViewInit,
-  signal,
-  computed,
-  HostListener,
-  ViewChild,
-  type ElementRef,
-} from '@angular/core';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { TextFieldModule } from '@angular/cdk/text-field';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators, FormArray } from '@angular/forms';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { HttpErrorResponse } from '@angular/common/http';
+import {
+  type AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  type ElementRef,
+  HostListener,
+  inject,
+  type OnDestroy,
+  type OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatAutocompleteModule, type MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatAutocompleteModule, type MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { OverlayModule } from '@angular/cdk/overlay';
-import { TextFieldModule } from '@angular/cdk/text-field';
-import { NotificationService } from '../../../shared/notification';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type {
-  ResourceSummaryDto,
-  TranslationStatus,
   CreateResourceDto,
   CreateResourceResponseDto,
+  FolderNodeDto,
+  ResourceSummaryDto,
+  SearchResultDto,
+  TranslationStatus,
   UpdateResourceDto,
   UpdateResourceResponseDto,
-  SearchResultDto,
-  FolderNodeDto,
 } from '@simoncodes-ca/data-transfer';
-import { BrowserApiService } from '../../services/browser-api.service';
-import { BrowserStore } from '../../store/browser.store';
-import { HttpErrorResponse } from '@angular/common/http';
+import {
+  applyPreferredTerm,
+  findPreferredTermFindings,
+  isValidSegment,
+  normalizeTag,
+  type PreferredTermRule,
+} from '@simoncodes-ca/domain';
+import { of, Subject } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { CollectionsStore } from '../../../collections/store/collections.store';
 import { ConfirmationDialog } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
 import type { ConfirmationDialogData } from '../../../shared/components/confirmation-dialog/confirmation-dialog-data';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { NotificationService } from '../../../shared/notification';
+import { BrowserApiService } from '../../services/browser-api.service';
+import { BrowserStore } from '../../store/browser.store';
+import { FolderPicker } from './folder-picker/folder-picker';
+import { PreferredTermAdvisories } from './preferred-term-advisories/preferred-term-advisories';
 import { SimilarTranslations } from './similar-translations';
 import { filterSimilarByValue, SIMILAR_SEARCH_MAX_RESULTS } from './similar-value-filter';
-import { FolderPicker } from './folder-picker/folder-picker';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, catchError, takeUntil, tap } from 'rxjs/operators';
-import { of } from 'rxjs';
-import { isValidSegment, normalizeTag } from '@simoncodes-ca/domain';
 
 /**
  * The id of the dialog's heading. The MatDialog container is labelled by this id
@@ -54,6 +61,12 @@ import { isValidSegment, normalizeTag } from '@simoncodes-ca/domain';
  * never drift apart.
  */
 export const TRANSLATION_EDITOR_TITLE_ID = 'translation-editor-title';
+
+/** Id of the preferred-terminology advisories, joined to the base value's `aria-describedby`. */
+export const PREFERRED_TERM_ADVISORIES_ID = 'translation-editor-preferred-terms';
+
+/** Typing pause before preferred-terminology findings refresh; matches the similar search. */
+export const PREFERRED_TERM_DEBOUNCE_MS = 300;
 
 export interface TranslationEditorDialogData {
   mode: 'create' | 'edit';
@@ -127,6 +140,7 @@ export interface TranslationEditorResult {
     FolderPicker,
     TranslocoPipe,
     MatTooltipModule,
+    PreferredTermAdvisories,
   ],
 })
 export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit {
@@ -139,6 +153,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   private readonly browserStore = inject(BrowserStore);
   private readonly notifications = inject(NotificationService);
   private readonly transloco = inject(TranslocoService);
+  readonly #collectionsStore = inject(CollectionsStore);
   private readonly destroy$ = new Subject<void>();
   private readonly baseValueSearch$ = new Subject<string>();
 
@@ -206,6 +221,45 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   readonly #loadedFolderEntries = signal<ReadonlyMap<string, readonly string[]>>(new Map());
   /** Folders whose entries are in flight. A folder in here claims no collision yet. */
   readonly #loadingFolders = signal<ReadonlySet<string>>(new Set());
+
+  /**
+   * The base value preferred terminology is checked against. Lags the field by a
+   * typing pause, except on open and after "Use …", where it is set at once.
+   */
+  readonly #terminologyCheckedValue = signal('');
+
+  /**
+   * Rules from `GET /config`. A rule file that failed to load yields none (D1):
+   * the Settings page reports the error, the editor stays quiet.
+   */
+  readonly #preferredTermRules = computed<readonly PreferredTermRule[]>(() => {
+    const config = this.#collectionsStore.config();
+    if (!config || config.preferredTerminologyError) {
+      return [];
+    }
+    return config.preferredTerminology ?? [];
+  });
+
+  /** One finding per rule the base value breaks. Advice only: never feeds validity. */
+  readonly preferredTermFindings = computed(() => {
+    const rules = this.#preferredTermRules();
+    const value = this.#terminologyCheckedValue();
+    return rules.length > 0 && value ? findPreferredTermFindings(value, rules) : [];
+  });
+
+  readonly preferredTermAdvisoriesId = PREFERRED_TERM_ADVISORIES_ID;
+
+  /**
+   * The base value's `aria-describedby`: the error or ICU hint as before, plus
+   * the advisories while there are any.
+   */
+  readonly baseValueDescribedBy = computed(() => {
+    const ids = [this.showBaseValueError() ? 'translation-editor-base-value-error' : 'translation-editor-icu-hint'];
+    if (this.preferredTermFindings().length > 0) {
+      ids.push(PREFERRED_TERM_ADVISORIES_ID);
+    }
+    return ids.join(' ');
+  });
 
   readonly tagInputText = signal('');
   readonly tagsList = signal<string[]>([]);
@@ -544,6 +598,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     this.#originalFolderPath = this.selectedFolderPath();
 
     this.#setupSimilarResourcesSearch();
+    this.#setupPreferredTermCheck();
 
     if (!this.isEditMode()) {
       this.#setupDottedKeyAbsorption();
@@ -720,6 +775,39 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
           filterSimilarByValue(withoutSelf, searchResults.query || this.baseValueText(), this.data.baseLocale),
         );
       });
+  }
+
+  /**
+   * Findings follow the base value after a typing pause, so the notes do not
+   * flicker per keystroke. An existing value is checked at once, so an entry
+   * that already uses a discouraged term says so as soon as it opens.
+   */
+  #setupPreferredTermCheck(): void {
+    const control = this.form.controls.baseValue;
+    this.#terminologyCheckedValue.set(control.value);
+    control.valueChanges
+      .pipe(debounceTime(PREFERRED_TERM_DEBOUNCE_MS), takeUntil(this.destroy$))
+      .subscribe((value) => this.#terminologyCheckedValue.set(value));
+  }
+
+  /**
+   * "Use …": rewrites the rule's discouraged term to the preferred spelling
+   * through the ordinary value-change path, as if typed, and never saves. The
+   * note goes at once rather than after the debounce, and the caret goes back
+   * to the field because the button it was on no longer exists.
+   */
+  onApplyPreferredTerm(rule: PreferredTermRule): void {
+    if (this.isReadOnly()) {
+      return;
+    }
+    const control = this.form.controls.baseValue;
+    const next = applyPreferredTerm(control.value, rule);
+    if (next !== control.value) {
+      control.markAsDirty();
+      control.setValue(next);
+    }
+    this.#terminologyCheckedValue.set(next);
+    this.#focusOnceRendered(() => this.baseValueInput?.nativeElement);
   }
 
   /**

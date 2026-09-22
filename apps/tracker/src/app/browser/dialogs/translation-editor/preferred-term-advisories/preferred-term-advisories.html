@@ -1,0 +1,37 @@
+<!-- One compact note per matched rule. Not a live region: the field's aria-describedby carries it. -->
+<div
+  class="term-advisories"
+  [id]="advisoryId()"
+  data-testid="preferred-term-advisories"
+>
+  @for (finding of findings(); track finding.rule.discouraged) {
+  <div class="term-advisory" data-testid="preferred-term-advisory">
+    <mat-icon class="term-advisory-icon" aria-hidden="true"
+      >spellcheck</mat-icon
+    >
+    <div class="term-advisory-body">
+      <p class="term-advisory-message">
+        {{ TOKENS.BROWSER.TRANSLATIONEDITOR.PREFERREDTERM.MESSAGEX | transloco:
+        { preferred: finding.rule.preferred, discouraged:
+        finding.rule.discouraged } }}
+      </p>
+      @if (finding.rule.reason) {
+      <p class="term-advisory-reason" data-testid="preferred-term-reason">
+        {{ finding.rule.reason }}
+      </p>
+      }
+    </div>
+    @if (!readOnly()) {
+    <button
+      type="button"
+      class="term-advisory-act"
+      data-testid="preferred-term-use"
+      (click)="applyRule.emit(finding.rule)"
+    >
+      {{ TOKENS.BROWSER.TRANSLATIONEDITOR.PREFERREDTERM.USEX | transloco: {
+      preferred: finding.rule.preferred } }}
+    </button>
+    }
+  </div>
+  }
+</div>

@@ -158,9 +158,7 @@
               TOKENS.BROWSER.TRANSLATIONEDITOR.ENTERTRANSLATIONX | transloco: { locale: baseLocaleName() }
             "
             [attr.aria-invalid]="showBaseValueError()"
-            [attr.aria-describedby]="
-              showBaseValueError() ? 'translation-editor-base-value-error' : 'translation-editor-icu-hint'
-            "
+            [attr.aria-describedby]="baseValueDescribedBy()"
           ></textarea>
         </div>
         @if (showBaseValueError()) {
@@ -177,6 +175,14 @@
               "
             ></span>
           </p>
+        }
+        @if (preferredTermFindings().length > 0) {
+          <app-preferred-term-advisories
+            [findings]="preferredTermFindings()"
+            [advisoryId]="preferredTermAdvisoriesId"
+            [readOnly]="isReadOnly()"
+            (applyRule)="onApplyPreferredTerm($event)"
+          />
         }
       </div>
 

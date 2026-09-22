@@ -91,6 +91,9 @@ export function getTranslocoTestingModule(options: TranslocoTestingOptions = {})
           'Entry name only — paste a full dotted key and its folder part moves to Location',
         'browser.translationEditor.locationFromKeyX': 'Location set to {{ folder }} from the key you entered',
         'browser.translationEditor.baseBadge': 'Base',
+        'browser.translationEditor.preferredTerm.messageX':
+          'Preferred terminology: consider “{{ preferred }}” instead of “{{ discouraged }}”.',
+        'browser.translationEditor.preferredTerm.useX': 'Use “{{ preferred }}”',
         'browser.translationEditor.localeTranslationX': '{{ locale }} Translation',
         'browser.translationEditor.enterTranslationX': 'Enter {{ locale }} translation...',
         'browser.translationEditor.baseValueRequired': 'Base translation is required',

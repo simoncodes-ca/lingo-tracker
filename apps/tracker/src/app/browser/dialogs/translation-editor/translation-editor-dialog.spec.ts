@@ -1,21 +1,25 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal, type WritableSignal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
-import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { patchState } from '@ngrx/signals';
+import type { LingoTrackerConfigDto, ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { of, Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
+import { CollectionsStore } from '../../../collections/store/collections.store';
 import { NotificationService } from '../../../shared/notification';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { BrowserStore } from '../../store/browser.store';
 import {
-  TranslationEditorDialog,
+  PREFERRED_TERM_ADVISORIES_ID,
+  PREFERRED_TERM_DEBOUNCE_MS,
   TRANSLATION_EDITOR_TITLE_ID,
+  TranslationEditorDialog,
   type TranslationEditorDialogData,
   type TranslationEditorResult,
 } from './translation-editor-dialog';
@@ -33,6 +37,7 @@ describe('TranslationEditorDialog', () => {
     getResourceTree: Mock;
   };
   let mockNotifications: { success: Mock; info: Mock; warning: Mock; error: Mock };
+  let mockConfig: WritableSignal<LingoTrackerConfigDto | null>;
 
   const createMockData = (mode: 'create' | 'edit', resource?: ResourceSummaryDto): TranslationEditorDialogData => ({
     mode,
@@ -57,6 +62,7 @@ describe('TranslationEditorDialog', () => {
       { provide: MatDialog, useFactory: () => mockDialog },
       { provide: BrowserApiService, useFactory: () => mockBrowserApi },
       { provide: NotificationService, useFactory: () => mockNotifications },
+      { provide: CollectionsStore, useFactory: () => ({ config: mockConfig }) },
       { provide: MAT_DIALOG_DATA, useValue: dialogData },
     ],
     detectChanges: false,
@@ -96,6 +102,7 @@ describe('TranslationEditorDialog', () => {
     };
 
     mockNotifications = { success: vi.fn(), info: vi.fn(), warning: vi.fn(), error: vi.fn() };
+    mockConfig = signal<LingoTrackerConfigDto | null>(null);
 
     renderDialog(createMockData('create'));
   });
@@ -1847,6 +1854,226 @@ describe('TranslationEditorDialog', () => {
       spectator.detectChanges();
 
       expect(spectator.query('[data-testid="footer-key"]')).toHaveClass('mono--dup');
+    });
+  });
+  describe('Preferred terminology advisories', () => {
+    const expenditure = {
+      discouraged: 'Expenditure',
+      preferred: 'Investment',
+      reason: 'Former financial-planning term.',
+    };
+    const customField = { discouraged: 'Custom Field', preferred: 'Configurable Field' };
+
+    const useRules = (rules: LingoTrackerConfigDto['preferredTerminology'], error?: string): void => {
+      mockConfig.set({
+        baseLocale: 'en',
+        locales: ['en', 'fr', 'de'],
+        collections: {},
+        preferredTerminology: rules,
+        preferredTerminologyError: error,
+      } as LingoTrackerConfigDto);
+    };
+
+    const advisories = (): HTMLElement[] => spectator.queryAll<HTMLElement>('[data-testid="preferred-term-advisory"]');
+    const baseTextarea = (): HTMLTextAreaElement | null =>
+      spectator.query<HTMLTextAreaElement>('#translation-editor-base-value');
+
+    const openEditing = (baseValue: string): void => {
+      renderDialog(createMockData('edit', { key: 'label', translations: { en: baseValue }, status: {} }));
+    };
+
+    const type = (value: string, settle = true): void => {
+      component.form.controls.baseValue.setValue(value);
+      if (settle) {
+        vi.advanceTimersByTime(PREFERRED_TERM_DEBOUNCE_MS);
+      }
+      spectator.detectChanges();
+    };
+
+    beforeEach(() => {
+      useRules([expenditure, customField]);
+      renderDialog(createMockData('create'));
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('should wait for a typing pause before advising', () => {
+      component.form.controls.baseValue.setValue('Capital Expenditure');
+      vi.advanceTimersByTime(PREFERRED_TERM_DEBOUNCE_MS - 1);
+      spectator.detectChanges();
+      expect(advisories()).toHaveLength(0);
+
+      vi.advanceTimersByTime(1);
+      spectator.detectChanges();
+
+      expect(advisories()).toHaveLength(1);
+      expect(advisories()[0].textContent).toContain(
+        'Preferred terminology: consider “Investment” instead of “Expenditure”.',
+      );
+      expect(spectator.query('[data-testid="preferred-term-use"]')?.textContent?.trim()).toBe('Use “Investment”');
+    });
+
+    it('should advise at once when an existing value opens', () => {
+      openEditing('Review the expenditure');
+
+      expect(advisories()).toHaveLength(1);
+    });
+
+    it('should show one advisory per matched rule', () => {
+      type('Expenditure on the Custom Field, and more expenditure');
+
+      expect(advisories()).toHaveLength(2);
+      expect(advisories()[0].textContent).toContain('“Expenditure”');
+      expect(advisories()[1].textContent).toContain('“Custom Field”');
+    });
+
+    it('should show the reason only when the rule has one', () => {
+      type('Expenditure on the Custom Field');
+
+      const [withReason, withoutReason] = advisories();
+      expect(withReason.querySelector('[data-testid="preferred-term-reason"]')?.textContent?.trim()).toBe(
+        'Former financial-planning term.',
+      );
+      expect(withoutReason.querySelector('[data-testid="preferred-term-reason"]')).toBeNull();
+    });
+
+    it('should replace every occurrence on Use without saving', () => {
+      component.form.controls.key.setValue('label');
+      type('Expenditure, expenditure-report and {expenditure} stay');
+
+      spectator.click('[data-testid="preferred-term-use"]');
+      spectator.detectChanges();
+
+      expect(component.form.controls.baseValue.value).toBe('Investment, Investment-report and {expenditure} stay');
+      expect(component.form.controls.baseValue.dirty).toBe(true);
+      expect(mockBrowserApi.createResource).not.toHaveBeenCalled();
+      expect(mockBrowserApi.updateResource).not.toHaveBeenCalled();
+      expect(dialogRef.close).not.toHaveBeenCalled();
+      // Gone without waiting out the debounce.
+      expect(advisories()).toHaveLength(0);
+      expect(spectator.query<HTMLButtonElement>('[data-testid="submit"]')?.disabled).toBe(false);
+      expect(component.isFormValid()).toBe(true);
+    });
+
+    it('should hand focus back to the field after Use', () => {
+      type('Expenditure');
+
+      spectator.click('[data-testid="preferred-term-use"]');
+      vi.advanceTimersByTime(0);
+
+      expect(document.activeElement).toBe(baseTextarea());
+    });
+
+    it('should run the normal value-change flow on Use', () => {
+      type('Total expenditure for the year');
+      mockBrowserApi.searchTranslations.mockClear();
+
+      spectator.click('[data-testid="preferred-term-use"]');
+      vi.advanceTimersByTime(300);
+
+      expect(component.baseValueText()).toBe('Total Investment for the year');
+      expect(mockBrowserApi.searchTranslations).toHaveBeenCalledWith(
+        'test-collection',
+        'Total Investment for the year',
+        expect.any(Number),
+      );
+    });
+
+    it('should leave only the untouched rule after Use', () => {
+      type('Expenditure on the Custom Field');
+
+      spectator.click('[data-testid="preferred-term-use"]');
+      spectator.detectChanges();
+
+      expect(advisories()).toHaveLength(1);
+      expect(advisories()[0].textContent).toContain('“Custom Field”');
+    });
+
+    it('should drop the advisory once the term is removed', () => {
+      type('Expenditure');
+      expect(advisories()).toHaveLength(1);
+
+      type('Investment');
+
+      expect(advisories()).toHaveLength(0);
+    });
+
+    it('should not block saving or make the field invalid', () => {
+      component.form.controls.key.setValue('label');
+      component.form.controls.comment.setValue('A comment');
+      type('Expenditure');
+
+      expect(component.form.controls.baseValue.valid).toBe(true);
+      expect(component.isFormValid()).toBe(true);
+
+      void component.onSubmit();
+
+      expect(mockBrowserApi.createResource).toHaveBeenCalled();
+      expect(mockDialog.open).not.toHaveBeenCalled();
+    });
+
+    it('should render nothing without rules', () => {
+      useRules(undefined);
+      openEditing('Expenditure');
+
+      expect(spectator.query('app-preferred-term-advisories')).toBeNull();
+    });
+
+    it('should render nothing when the rule file failed to load', () => {
+      useRules(undefined, 'Invalid JSON');
+      openEditing('Expenditure');
+
+      expect(spectator.query('app-preferred-term-advisories')).toBeNull();
+    });
+
+    it('should describe the field with the advisories only while they exist', () => {
+      expect(baseTextarea()?.getAttribute('aria-describedby')).toBe('translation-editor-icu-hint');
+
+      type('Expenditure');
+
+      const container = spectator.query(`#${PREFERRED_TERM_ADVISORIES_ID}`);
+      expect(container).not.toBeNull();
+      expect(baseTextarea()?.getAttribute('aria-describedby')).toBe(
+        `translation-editor-icu-hint ${PREFERRED_TERM_ADVISORIES_ID}`,
+      );
+
+      type('Investment');
+
+      expect(baseTextarea()?.getAttribute('aria-describedby')).toBe('translation-editor-icu-hint');
+    });
+
+    it('should keep the base-value error in the description alongside the advisories', () => {
+      type('Expenditure');
+      component.submitAttempted.set(true);
+      component.form.controls.baseValue.setErrors({ required: true });
+      component.formRevision.update((revision) => revision + 1);
+      spectator.detectChanges();
+
+      expect(baseTextarea()?.getAttribute('aria-describedby')).toBe(
+        `translation-editor-base-value-error ${PREFERRED_TERM_ADVISORIES_ID}`,
+      );
+    });
+
+    it('should not announce advisories as a live region', () => {
+      type('Expenditure on the Custom Field');
+
+      const advisoryRoot = spectator.query('app-preferred-term-advisories');
+      expect(advisoryRoot?.querySelector('[aria-live]')).toBeNull();
+      expect(advisoryRoot?.querySelector('[role="status"], [role="alert"], [role="log"]')).toBeNull();
+      expect(advisoryRoot?.closest('[aria-live]')).toBeNull();
+    });
+
+    it('should advise without offering Use when read-only', () => {
+      renderDialog({
+        ...createMockData('edit', { key: 'label', translations: { en: 'Expenditure' }, status: {} }),
+        readOnly: true,
+      });
+
+      expect(advisories()).toHaveLength(1);
+      expect(spectator.query('[data-testid="preferred-term-use"]')).toBeNull();
     });
   });
 });
