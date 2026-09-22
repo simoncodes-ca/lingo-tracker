@@ -90,6 +90,43 @@ describe('validatePreferredTermRules', () => {
     });
   });
 
+  describe('invalid-character', () => {
+    it.each(['{', '}', '<', '>'])('rejects %s in either term', (char) => {
+      expect(validatePreferredTermRules([{ discouraged: `Field${char}`, preferred: `Input ${char}x` }])).toEqual([
+        {
+          index: 0,
+          field: 'discouraged',
+          code: 'invalid-character',
+          message: 'Discouraged term cannot contain "{", "}", "<" or ">".',
+        },
+        {
+          index: 0,
+          field: 'preferred',
+          code: 'invalid-character',
+          message: 'Preferred term cannot contain "{", "}", "<" or ">".',
+        },
+      ]);
+    });
+
+    it('reports only the offending field', () => {
+      expect(validatePreferredTermRules([{ discouraged: 'Field', preferred: '{count} fields' }])).toEqual([
+        expect.objectContaining({ index: 0, field: 'preferred', code: 'invalid-character' }),
+      ]);
+      expect(validatePreferredTermRules([{ discouraged: '<b>Field</b>', preferred: 'Input' }])).toEqual([
+        expect.objectContaining({ index: 0, field: 'discouraged', code: 'invalid-character' }),
+      ]);
+    });
+
+    it('excludes the row from cross-row checks', () => {
+      expect(
+        validatePreferredTermRules([
+          { discouraged: 'Field', preferred: 'Input' },
+          { discouraged: 'Field', preferred: 'Input {x}' },
+        ]),
+      ).toEqual([expect.objectContaining({ index: 1, field: 'preferred', code: 'invalid-character' })]);
+    });
+  });
+
   describe('self-mapping', () => {
     it('rejects a rule mapping a term to itself, case-insensitively', () => {
       expect(validatePreferredTermRules([{ discouraged: 'Email', preferred: 'email' }])).toEqual([

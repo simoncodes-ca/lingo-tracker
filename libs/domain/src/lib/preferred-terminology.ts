@@ -33,7 +33,15 @@ export interface PreferredTermRuleError {
   /** Row in the submitted list. */
   index: number;
   field: 'discouraged' | 'preferred' | 'reason' | 'rule';
-  code: 'empty' | 'self-mapping' | 'duplicate' | 'chain' | 'contains-discouraged' | 'cycle' | 'invalid-type';
+  code:
+    | 'empty'
+    | 'invalid-character'
+    | 'self-mapping'
+    | 'duplicate'
+    | 'chain'
+    | 'contains-discouraged'
+    | 'cycle'
+    | 'invalid-type';
   message: string;
 }
 
@@ -75,6 +83,9 @@ export function normalizePreferredTermRules(rules: readonly PreferredTermRule[])
   });
 }
 
+/** Characters a term may not contain: ICU syntax and tag delimiters. */
+const INVALID_TERM_CHARACTERS = /[{}<>]/;
+
 /** A row that passed the shape checks, reduced to what the cross-row checks compare. */
 interface CheckedRow {
   index: number;
@@ -94,6 +105,9 @@ interface CheckedRow {
  *
  * - `invalid-type` — the row is not an object, or a field is not a string.
  * - `empty` — `discouraged` or `preferred` is blank.
+ * - `invalid-character` — `discouraged` or `preferred` contains `{`, `}`, `<` or `>`.
+ *   ICU syntax and tags are masked from visible text, so such a discouraged term can
+ *   never match, and such a preferred term would corrupt the message when applied.
  * - `duplicate` — `discouraged` repeats an earlier row's (reported on the later row).
  * - `self-mapping` — `preferred` equals the row's own `discouraged`.
  * - `cycle` — following preferred → discouraged from this row leads back to it.
@@ -126,6 +140,14 @@ export function validatePreferredTermRules(rules: readonly unknown[]): Preferred
         shapeOk = false;
       } else if (fieldValue.trim().length === 0) {
         errors.push({ index, field, code: 'empty', message: `${label(field)} is required.` });
+        shapeOk = false;
+      } else if (INVALID_TERM_CHARACTERS.test(fieldValue)) {
+        errors.push({
+          index,
+          field,
+          code: 'invalid-character',
+          message: `${label(field)} cannot contain "{", "}", "<" or ">".`,
+        });
         shapeOk = false;
       }
     }
