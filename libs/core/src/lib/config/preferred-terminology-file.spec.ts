@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, statSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -160,22 +160,49 @@ describe('preferred-terminology-file', () => {
       expect(loadPreferredTerminology(baseConfig(), cwd).rules).toHaveLength(1);
     });
 
-    it('serves a second load from cache and hands back copies', () => {
-      const filePath = write(
-        DEFAULT_PREFERRED_TERMINOLOGY_FILENAME,
-        '[{ "discouraged": "Expenditure", "preferred": "Investment" }]',
-      );
+    it('hands back copies so mutating a result cannot poison the cache', () => {
+      write(DEFAULT_PREFERRED_TERMINOLOGY_FILENAME, '[{ "discouraged": "Expenditure", "preferred": "Investment" }]');
       const first = loadPreferredTerminology(baseConfig(), cwd);
       first.rules[0].preferred = 'Mutated';
       first.rules.push({ discouraged: 'Extra', preferred: 'Row' });
 
-      writeFileSync(filePath, '[]', 'utf8');
-
       expect(loadPreferredTerminology(baseConfig(), cwd).rules).toEqual([
         { discouraged: 'Expenditure', preferred: 'Investment' },
       ]);
-      clearPreferredTerminologyCache();
-      expect(loadPreferredTerminology(baseConfig(), cwd).rules).toEqual([]);
+    });
+
+    it('picks up an external edit made after a cached load', () => {
+      const filePath = write(
+        DEFAULT_PREFERRED_TERMINOLOGY_FILENAME,
+        '[{ "discouraged": "Expenditure", "preferred": "Investment" }]',
+      );
+      expect(loadPreferredTerminology(baseConfig(), cwd).rules).toHaveLength(1);
+      const before = statSync(filePath);
+
+      writeFileSync(
+        filePath,
+        '[{ "discouraged": "Wallet", "preferred": "Account" }, { "discouraged": "Client", "preferred": "Customer" }]',
+        'utf8',
+      );
+      const bumped = new Date(before.mtimeMs + 5000);
+      utimesSync(filePath, bumped, bumped);
+
+      expect(loadPreferredTerminology(baseConfig(), cwd).rules).toEqual([
+        { discouraged: 'Wallet', preferred: 'Account' },
+        { discouraged: 'Client', preferred: 'Customer' },
+      ]);
+    });
+
+    it('returns the missing-file result when the file is deleted after a cached load', () => {
+      const config = baseConfig({ preferredTerminologyFile: 'terms.json' });
+      const filePath = write('terms.json', '[{ "discouraged": "Expenditure", "preferred": "Investment" }]');
+      expect(loadPreferredTerminology(config, cwd).rules).toHaveLength(1);
+
+      unlinkSync(filePath);
+
+      const result = loadPreferredTerminology(config, cwd);
+      expect(result.rules).toEqual([]);
+      expect(result.warning).toContain(filePath);
     });
   });
 

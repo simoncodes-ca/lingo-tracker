@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import {
   normalizePreferredTermRules,
@@ -40,8 +40,24 @@ export class PreferredTerminologyValidationError extends Error {
   }
 }
 
-/** In-process cache keyed by absolute file path; only successful loads are cached, and writes refresh it. */
-const cache = new Map<string, PreferredTermRule[]>();
+/** File identity recorded alongside cached rules; a change in either field means the file was edited. */
+interface FileStamp {
+  mtimeMs: number;
+  size: number;
+}
+
+interface CacheEntry {
+  rules: PreferredTermRule[];
+  stamp: FileStamp;
+}
+
+/**
+ * In-process cache keyed by absolute file path. Only successful loads are cached, and
+ * writes refresh it. Each hit is revalidated against the file's `mtimeMs` and `size`, so
+ * a long-lived process (the API server) picks up hand edits, `git pull`, or deletion on
+ * the next load instead of serving stale rules until restart.
+ */
+const cache = new Map<string, CacheEntry>();
 
 /** Drops every cached preferred-terminology file. Exported for tests and for callers that write out-of-band. */
 export function clearPreferredTerminologyCache(): void {
@@ -78,12 +94,16 @@ export function loadPreferredTerminology(
 ): LoadPreferredTerminologyResult {
   const filePath = resolvePreferredTerminologyFilePath(config, cwd);
 
+  const stamp = readStamp(filePath);
   const cached = cache.get(filePath);
   if (cached) {
-    return { rules: cloneRules(cached), filePath };
+    if (stamp && sameStamp(cached.stamp, stamp)) {
+      return { rules: cloneRules(cached.rules), filePath };
+    }
+    cache.delete(filePath);
   }
 
-  if (!existsSync(filePath)) {
+  if (!stamp) {
     if (config.preferredTerminologyFile !== undefined) {
       return {
         rules: [],
@@ -120,7 +140,7 @@ export function loadPreferredTerminology(
   }
 
   const rules = normalizePreferredTermRules(parsed as PreferredTermRule[]);
-  cache.set(filePath, rules);
+  cache.set(filePath, { rules, stamp });
   return { rules: cloneRules(rules), filePath };
 }
 
@@ -148,12 +168,27 @@ export function writePreferredTerminology(filePath: string, rules: readonly Pref
 
   const sorted = sortPreferredTermRules(normalizePreferredTermRules(rules));
   writeFileSync(filePath, `${JSON.stringify(sorted, null, 2)}\n`, 'utf8');
-  cache.set(filePath, sorted);
+  const stamp = readStamp(filePath);
+  if (stamp) {
+    cache.set(filePath, { rules: sorted, stamp });
+  } else {
+    cache.delete(filePath);
+  }
 }
 
 /** One `row N field: message` entry per error, rows 1-based, joined into a single line. */
 function formatRuleErrors(errors: readonly PreferredTermRuleError[]): string {
   return errors.map((error) => `row ${error.index + 1} ${error.field}: ${error.message}`).join('; ');
+}
+
+/** `mtimeMs` and `size` of the file, or `undefined` when it does not exist. */
+function readStamp(filePath: string): FileStamp | undefined {
+  const stats = statSync(filePath, { throwIfNoEntry: false });
+  return stats ? { mtimeMs: stats.mtimeMs, size: stats.size } : undefined;
+}
+
+function sameStamp(a: FileStamp, b: FileStamp): boolean {
+  return a.mtimeMs === b.mtimeMs && a.size === b.size;
 }
 
 /** Copies rules so a caller mutating the result cannot poison the cache. */
