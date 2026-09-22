@@ -12,6 +12,8 @@ The Validate feature provides a comprehensive translation validation system desi
 
 The second question matters because approval is about wording, not syntax. A value can be marked `verified` and still render nothing at runtime.
 
+Validate also scans base-locale values against the [preferred terminology](#preferred-terminology) rules. That check is advisory: it reports warnings and never fails the run.
+
 ## Overview
 
 The validate command is a CLI-only, non-interactive tool that performs exhaustive validation of your entire translation inventory. Unlike other commands that may focus on subsets of data, validate checks **everything** and collects **all** validation results before reporting. This comprehensive approach ensures you have complete visibility into translation status before release.
@@ -43,7 +45,9 @@ lingo-tracker validate [options]
 ### Exit Codes
 
 - `0` - All validations passed (all resources verified or only warnings)
-- `1` - Validation failures found, OR configuration errors (config file missing or invalid JSON, no collections configured, no target locales configured, all target locales were skipped)
+- `1` - Validation failures found, OR configuration errors (config file missing or invalid JSON, no collections configured, no target locales configured, all target locales were skipped, preferred terminology file exists but cannot be loaded)
+
+Preferred terminology warnings never change the exit code.
 
 ## Validation Rules
 
@@ -107,6 +111,26 @@ It applies to the base locale only — translations keep their own categories, w
 
 `selectordinal` is deliberately exempt: English ordinal `one` selects 1, 21, 31 …, so rewriting it as `=1` would change behaviour rather than preserve it.
 
+### Preferred Terminology
+
+Each collection's base-locale values are scanned for discouraged terms from the preferred terminology file (`.lingo-tracker-preferred-terminology.json` beside `.lingo-tracker.json`, or the file named by `preferredTerminologyFile`). Manage the rules with `lingo-tracker preferred-terminology`.
+
+- **Warnings only.** A finding suggests better wording; it never fails validation or changes the exit code.
+- **Once per key and rule.** A term used three times in one value, in a project with five target locales, is one warning.
+- **Base locale only.** Translations use their own vocabulary and are not scanned. A collection with its own `baseLocale` is scanned in that locale.
+- **A broken file fails.** If the file exists but is not valid JSON or contains invalid rules, validate reports it as a failure and exits `1` — otherwise a typo would silently switch the check off in CI. A missing default file means no rules and no output. A missing file named explicitly by `preferredTerminologyFile` prints a warning and is treated as empty.
+- **No opt-out flag.** Remove the rules, or the file, to stop the check.
+
+```
+⚠️  Preferred terminology warnings (2):
+──────────────────────────────────────────────────
+  [main] budget.summary: consider "Investment" instead of "Expenditure"
+    Finance prefers investment framing
+  [main] contact.help: consider "email" instead of "e-mail"
+```
+
+Findings count towards the summary as `Total Preferred Terminology Warnings`, and a run whose only findings are terminology warnings ends with `✅ Validation passed with warnings.`
+
 ### Validation Philosophy
 
 1. **Strict by default**: Production deployments should only include verified translations
@@ -137,7 +161,7 @@ It applies to the base locale only — translations keep their own categories, w
 
 ### What Doesn't Get Validated
 
-- Base locale (source translations are authoritative by definition)
+- Base locale status (source translations are authoritative by definition; their wording is only checked against preferred terminology, as warnings)
 - ICU message format syntax (use separate linting tools)
 - File structure or JSON validity (handled during resource loading)
 
@@ -557,6 +581,7 @@ The validate feature is implemented across two layers:
 - `types.ts`: Type definitions for validation options, results, and resource details
 - `validate-resources.ts`: Core validation logic and resource status checking
 - `generate-validation-summary.ts`: Summary generation and formatting
+- `validate-terminology.ts`: Preferred terminology scan of base-locale values (rules are loaded by the CLI and passed in)
 
 #### CLI Application (`apps/cli/src/commands/validate.ts`)
 

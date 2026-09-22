@@ -442,10 +442,13 @@ Validation Rules:
   ✏️  translated Has translation but not verified → FAILURE (default)
                                                   → WARNING (--allow-translated)
   ✅ verified   Translation reviewed and approved → SUCCESS
+  ⚠️  terminology Base value uses a discouraged term → WARNING (never fails)
 
 Exit Codes:
-  0  All validations passed (all resources verified)
-  1  Validation failures found (new/stale/translated resources)
+  0  All validations passed (all resources verified); preferred terminology
+     warnings do not change the exit code
+  1  Validation failures found (new/stale/translated resources), or the
+     preferred terminology file exists but cannot be loaded
 
 Notes:
   - Compiles every stored value under its own locale; values that fail are failures
@@ -457,6 +460,10 @@ Notes:
     value; a renamed one ('{name}' translated to '{nombre}') renders as empty
     text rather than raising, so no other check sees it. Use --skip-placeholders
     to turn this off
+  - Scans each collection's base-locale values for discouraged terms from the
+    preferred terminology file (.lingo-tracker-preferred-terminology.json, or
+    preferredTerminologyFile in .lingo-tracker.json). Findings are warnings,
+    reported once per key and rule; a broken file is a failure. No opt-out flag
   - --skip-locales excludes target locales only; the base locale is always
     compiled, since its value is copied into every translation slot
   - Validates ALL collections and ALL target locales (no filtering) by default

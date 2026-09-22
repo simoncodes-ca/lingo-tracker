@@ -1,8 +1,9 @@
-import { loadResourcesFromCollections, type LoadedResource } from '../export/export-common';
 import type { TranslationStatus } from '@simoncodes-ca/domain';
+import { type LoadedResource, loadResourcesFromCollections } from '../export/export-common';
+import type { ResourceValidationDetail, ResourceValidationResult, StatusCounts, ValidationOptions } from './types';
 import { validateIcuValues } from './validate-icu';
 import { validatePlaceholders } from './validate-placeholders';
-import type { ValidationOptions, ResourceValidationResult, ResourceValidationDetail, StatusCounts } from './types';
+import { validateTerminology } from './validate-terminology';
 
 /**
  * Validates translation resources across all collections and locales.
@@ -29,6 +30,10 @@ import type { ValidationOptions, ResourceValidationResult, ResourceValidationDet
  * translation interpolates the same arguments as its base value. A renamed
  * argument renders as empty text rather than raising, so neither of the other
  * two passes can see it.
+ *
+ * When `options.terminology` is provided, a fourth pass scans each collection's
+ * base-locale values for discouraged terms. Its findings are advisory and never
+ * fail validation; only a rule file that could not be loaded does.
  *
  * The function validates ALL resources comprehensively before returning results.
  * This ensures teams have complete visibility into translation status across
@@ -113,12 +118,20 @@ export function validateResources(
     ? validatePlaceholders(loadedResources, targetLocales, options.placeholders.baseLocale)
     : undefined;
 
+  // Terminology is advisory: findings suggest wording and never block. A rule
+  // file that failed to load does block, because then nothing was checked.
+  const terminology = options.terminology ? validateTerminology(loadedResources, options.terminology) : undefined;
+
   const passed =
-    failures.length === 0 && (icu?.failures.length ?? 0) === 0 && (placeholders?.failures.length ?? 0) === 0;
+    failures.length === 0 &&
+    (icu?.failures.length ?? 0) === 0 &&
+    (placeholders?.failures.length ?? 0) === 0 &&
+    terminology?.configError === undefined;
 
   return {
     icu,
     placeholders,
+    terminology,
     totalResourcesValidated,
     totalUniqueKeys: loadedResources.length,
     localesValidated: targetLocales.length,

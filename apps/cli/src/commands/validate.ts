@@ -1,5 +1,5 @@
+import { generateValidationSummary, loadPreferredTerminology, validateResources } from '@simoncodes-ca/core';
 import * as path from 'path';
-import { validateResources, generateValidationSummary } from '@simoncodes-ca/core';
 import { loadConfiguration } from '../utils';
 
 /**
@@ -78,6 +78,8 @@ export interface ValidateCommandOptions {
  * - Missing metadata → treated as 'new' (FAILURE)
  * - Value does not compile as ICU for its own locale → FAILURE (unless --skip-icu)
  * - Translation interpolates different placeholders than its base value → FAILURE (unless --skip-placeholders)
+ * - Base-locale value uses a discouraged term from the preferred-terminology file → WARNING (never fails)
+ * - Preferred-terminology file exists but cannot be loaded → FAILURE
  *
  * **ICU Validation:**
  * Status validation asks whether a human approved a translation. It says
@@ -87,9 +89,15 @@ export interface ValidateCommandOptions {
  * marked 'verified' and still throw. Every value, including the base-locale
  * source, is compiled under the locale it is stored under.
  *
+ * **Preferred Terminology:**
+ * Each collection's base-locale values are scanned for discouraged terms from
+ * the preferred-terminology file. Findings are advisory — reported once per
+ * key and rule, never affecting the exit code. A file that exists but cannot be
+ * loaded is a failure, because then nothing was checked. There is no opt-out flag.
+ *
  * **Exit Codes:**
- * - 0: All validations passed (all resources verified)
- * - 1: Validation failures found OR configuration errors
+ * - 0: All validations passed (all resources verified); terminology warnings allowed
+ * - 1: Validation failures found, unreadable preferred-terminology file, OR configuration errors
  *
  * **Use Cases:**
  * - Pre-release quality gate in CI/CD pipelines
@@ -179,6 +187,19 @@ export async function validateCommand(options: ValidateCommandOptions): Promise<
     process.exit(1);
   }
 
+  // Terminology findings are advisory, but a broken rule file is a failure:
+  // otherwise a typo in the file would silently switch the check off in CI.
+  const preferredTerminology = loadPreferredTerminology(config, cwd);
+  if (preferredTerminology.warning) {
+    console.warn(`⚠️  ${preferredTerminology.warning}`);
+  }
+  const baseLocaleByCollection = Object.fromEntries(
+    Object.entries(config.collections || {}).map(([name, collectionConfig]) => [
+      name,
+      collectionConfig.baseLocale ?? config.baseLocale,
+    ]),
+  );
+
   const compileValues = !options.skipIcu;
   const requirePortablePlurals = options.requirePortablePlurals ?? false;
 
@@ -200,6 +221,16 @@ export async function validateCommand(options: ValidateCommandOptions): Promise<
     // A renamed placeholder renders as empty text instead of raising, so the
     // ICU pass above cannot see it and the status gate has no opinion on it.
     placeholders: options.skipPlaceholders ? undefined : { baseLocale: config.baseLocale },
+    // Omitted when there is nothing to check, so a project without rules sees
+    // no terminology output at all.
+    terminology:
+      preferredTerminology.rules.length > 0 || preferredTerminology.error !== undefined
+        ? {
+            rules: preferredTerminology.rules,
+            loadError: preferredTerminology.error,
+            baseLocaleByCollection,
+          }
+        : undefined,
   };
 
   const validationResult = validateResources(allCollections, localesToValidate, validationOptions);

@@ -1,4 +1,4 @@
-import type { TranslationStatus } from '@simoncodes-ca/domain';
+import type { PreferredTermRule, TranslationStatus } from '@simoncodes-ca/domain';
 
 /**
  * Options for configuring resource validation behavior.
@@ -42,6 +42,103 @@ export interface ValidationOptions {
    * Omit to skip the check.
    */
   readonly placeholders?: PlaceholderValidationOptions;
+
+  /**
+   * When present, base-locale values are scanned for discouraged terms from the
+   * preferred-terminology file.
+   *
+   * A fourth question, and the only advisory one: a finding suggests better
+   * wording and never fails validation. A rule file that could not be loaded
+   * does fail it, since every check it should have run was silently skipped.
+   *
+   * The caller loads the rules; validation never reads the file itself.
+   * Omit to skip the check.
+   */
+  readonly terminology?: TerminologyValidationOptions;
+}
+
+/**
+ * Options controlling the preferred-terminology pass.
+ */
+export interface TerminologyValidationOptions {
+  /**
+   * Rules to scan for. Empty when the file is absent, or when it failed to load.
+   */
+  readonly rules: readonly PreferredTermRule[];
+
+  /**
+   * Why the rule file could not be loaded, when it could not. Reported as a
+   * failure: a broken file means no value was checked.
+   */
+  readonly loadError?: string;
+
+  /**
+   * Effective base locale of each collection, by collection name. Findings are
+   * reported under this locale; a collection missing from the map is reported
+   * under an empty locale.
+   */
+  readonly baseLocaleByCollection: Readonly<Record<string, string>>;
+}
+
+/**
+ * A base-locale value using a discouraged term. One per collection, key, and rule,
+ * however many times the term occurs and however many target locales exist.
+ */
+export interface TerminologyValidationDetail {
+  /**
+   * The full dot-delimited key of the resource (e.g., 'common.buttons.ok').
+   */
+  readonly key: string;
+
+  /**
+   * The collection this resource belongs to.
+   */
+  readonly collection: string;
+
+  /**
+   * The collection's base locale, whose value was scanned.
+   */
+  readonly locale: string;
+
+  /**
+   * The discouraged term, as spelled in the rule.
+   */
+  readonly discouraged: string;
+
+  /**
+   * The suggested replacement, as spelled in the rule.
+   */
+  readonly preferred: string;
+
+  /**
+   * Why the preferred term is preferred, when the rule says.
+   */
+  readonly reason?: string;
+
+  /**
+   * A single-line suggestion, e.g. `consider "Investment" instead of "Expenditure"`.
+   */
+  readonly message: string;
+}
+
+/**
+ * Outcome of the preferred-terminology pass.
+ */
+export interface TerminologyValidationResult {
+  /**
+   * Values using a discouraged term. Advisory: warnings never fail validation.
+   */
+  readonly warnings: readonly TerminologyValidationDetail[];
+
+  /**
+   * Why the rule file could not be loaded, when it could not. Fails validation.
+   */
+  readonly configError?: string;
+
+  /**
+   * How many base-locale values were scanned. Zero when there were no rules to scan for.
+   */
+  readonly valuesChecked: number;
 }
 
 /**
@@ -288,9 +385,15 @@ export interface ResourceValidationResult {
   readonly placeholders?: PlaceholderValidationResult;
 
   /**
+   * Outcome of the preferred-terminology pass, when one was requested.
+   * Undefined when terminology checking was not requested.
+   */
+  readonly terminology?: TerminologyValidationResult;
+
+  /**
    * Whether the validation passed overall (no status failures, no ICU compile
-   * failures, and no placeholder mismatches). Note: warnings do not cause
-   * validation to fail.
+   * failures, no placeholder mismatches, and no unreadable terminology file).
+   * Note: warnings, including terminology findings, do not cause validation to fail.
    */
   readonly passed: boolean;
 }

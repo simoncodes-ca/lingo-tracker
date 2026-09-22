@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { validateResources } from './validate-resources';
-import * as exportCommon from '../export/export-common';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LoadedResource } from '../export/export-common';
+import * as exportCommon from '../export/export-common';
+import { validateResources } from './validate-resources';
 
 // Mock the export-common module
 vi.mock('../export/export-common', async () => {
@@ -564,6 +564,76 @@ describe('validateResources', () => {
       expect(result.totalResourcesValidated).toBe(1000);
       expect(result.successes).toHaveLength(1000);
       expect(result.statusCounts.verified).toBe(1000);
+    });
+  });
+
+  describe('preferred terminology', () => {
+    const rules = [{ discouraged: 'Expenditure', preferred: 'Investment' }];
+    const collections = [
+      { name: 'main', path: '/translations/main' },
+      { name: 'legacy', path: '/translations/legacy' },
+    ];
+
+    const verified = (overrides: Partial<LoadedResource>): LoadedResource => ({
+      key: 'title',
+      fullKey: 'budget.title',
+      source: 'Capital expenditure',
+      translations: { es: 'Gasto de capital', fr: 'Dépenses en capital' },
+      status: { es: 'verified', fr: 'verified' },
+      collection: 'main',
+      ...overrides,
+    });
+
+    it('reports a finding once across every target locale and still passes', () => {
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue([verified({})]);
+
+      const result = validateResources(collections, ['es', 'fr'], {
+        allowTranslated: false,
+        terminology: { rules, baseLocaleByCollection: { main: 'en', legacy: 'en' } },
+      });
+
+      expect(result.passed).toBe(true);
+      expect(result.terminology?.warnings).toHaveLength(1);
+      expect(result.terminology?.warnings[0]).toMatchObject({ key: 'budget.title', locale: 'en' });
+      expect(result.terminology?.valuesChecked).toBe(1);
+    });
+
+    it('scans each collection under its own base locale', () => {
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue([
+        verified({}),
+        verified({ collection: 'legacy', fullKey: 'legacy.title' }),
+      ]);
+
+      const result = validateResources(collections, ['es', 'fr'], {
+        allowTranslated: false,
+        terminology: { rules, baseLocaleByCollection: { main: 'en', legacy: 'en-GB' } },
+      });
+
+      expect(result.terminology?.warnings.map((w) => `${w.collection}:${w.locale}`)).toEqual([
+        'main:en',
+        'legacy:en-GB',
+      ]);
+    });
+
+    it('fails when the rule file could not be loaded', () => {
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue([verified({})]);
+
+      const result = validateResources(collections, ['es', 'fr'], {
+        allowTranslated: false,
+        terminology: { rules: [], loadError: 'broken', baseLocaleByCollection: {} },
+      });
+
+      expect(result.passed).toBe(false);
+      expect(result.terminology?.configError).toBe('broken');
+      expect(result.failures).toHaveLength(0);
+    });
+
+    it('leaves the terminology result undefined when not requested', () => {
+      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue([verified({})]);
+
+      const result = validateResources(collections, ['es', 'fr'], { allowTranslated: false });
+
+      expect(result.terminology).toBeUndefined();
     });
   });
 });

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { validateCommand } from './validate';
 import * as fs from 'node:fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { validateCommand } from './validate';
 
 const fsMocks = vi.hoisted(() => ({
   existsSync: vi.fn(),
@@ -20,9 +20,14 @@ vi.mock('@simoncodes-ca/core', () => ({
   CONFIG_FILENAME: '.lingo-tracker.json',
   validateResources: vi.fn(),
   generateValidationSummary: vi.fn(),
+  loadPreferredTerminology: vi.fn(() => ({
+    rules: [],
+    filePath: '/project/.lingo-tracker-preferred-terminology.json',
+  })),
 }));
 
 import * as core from '@simoncodes-ca/core';
+
 const mockValidateResources = vi.mocked(core.validateResources);
 const mockGenerateValidationSummary = vi.mocked(core.generateValidationSummary);
 

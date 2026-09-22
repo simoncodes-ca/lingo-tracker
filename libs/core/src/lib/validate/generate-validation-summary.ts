@@ -1,9 +1,10 @@
 import type {
-  ResourceValidationResult,
-  ValidationOptions,
-  ResourceValidationDetail,
   IcuValidationDetail,
   IcuValidationResult,
+  ResourceValidationDetail,
+  ResourceValidationResult,
+  TerminologyValidationResult,
+  ValidationOptions,
 } from './types';
 
 /**
@@ -71,6 +72,9 @@ export function generateValidationSummary(result: ResourceValidationResult, opti
       ),
     );
   }
+  if (result.terminology) {
+    sections.push(...buildTerminologySections(result.terminology));
+  }
 
   sections.push(buildFooterSection(result, options));
   return sections.join('\n\n');
@@ -120,6 +124,12 @@ function buildStatisticsSection(result: ResourceValidationResult, options: Valid
 
   if (result.placeholders) {
     lines.push(`  Placeholders Compared: ${result.placeholders.valuesChecked}`);
+  }
+
+  // Suppressed when there were no rules, where a count of 0 would read as
+  // "nothing used a discouraged term" rather than "nothing was scanned".
+  if (result.terminology && result.terminology.configError === undefined && options.terminology?.rules.length) {
+    lines.push(`  Terminology Values Scanned: ${result.terminology.valuesChecked}`);
   }
 
   return lines.join('\n');
@@ -185,6 +195,54 @@ function buildDetailSection(heading: string, details: readonly ExplainedDetail[]
   }
 
   return lines.join('\n').trimEnd();
+}
+
+/**
+ * Builds the sections describing the preferred-terminology pass.
+ *
+ * An unreadable rule file is a failure and gets its own section. Findings are
+ * advisory and listed flat rather than by locale — only base-locale values are
+ * scanned, so every finding would share one locale per collection anyway. Both
+ * sections are omitted when empty, so a project without rules sees nothing.
+ *
+ * @param terminology - The terminology pass result
+ * @returns Zero or more formatted sections
+ * @internal
+ */
+function buildTerminologySections(terminology: TerminologyValidationResult): string[] {
+  const sections: string[] = [];
+
+  if (terminology.configError !== undefined) {
+    sections.push(
+      [
+        '❌ Preferred terminology file error:',
+        '─'.repeat(50),
+        `  ${terminology.configError}`,
+        '  No value was checked for preferred terminology. Fix the file, or',
+        '  remove it, and run validate again.',
+      ].join('\n'),
+    );
+  }
+
+  if (terminology.warnings.length > 0) {
+    const lines = [`⚠️  Preferred terminology warnings (${terminology.warnings.length}):`, '─'.repeat(50)];
+
+    for (const warning of terminology.warnings.slice(0, MAX_RESOURCES_TO_DISPLAY)) {
+      lines.push(`  [${warning.collection}] ${warning.key}: ${warning.message}`);
+      if (warning.reason) {
+        lines.push(`    ${warning.reason}`);
+      }
+    }
+
+    const remaining = terminology.warnings.length - MAX_RESOURCES_TO_DISPLAY;
+    if (remaining > 0) {
+      lines.push(`  ... and ${remaining} more`);
+    }
+
+    sections.push(lines.join('\n'));
+  }
+
+  return sections;
 }
 
 /**
@@ -330,15 +388,22 @@ function buildFooterSection(result: ResourceValidationResult, options: Validatio
   if (result.placeholders && result.placeholders.failures.length > 0) {
     lines.push(`  Total Placeholder Failures: ${result.placeholders.failures.length}`);
   }
+  if (result.terminology?.configError !== undefined) {
+    lines.push('  Preferred Terminology File: failed to load');
+  }
   if (options.allowTranslated && result.warnings.length > 0) {
     lines.push(`  Total Warnings: ${result.warnings.length}`);
+  }
+  const terminologyWarnings = result.terminology?.warnings.length ?? 0;
+  if (terminologyWarnings > 0) {
+    lines.push(`  Total Preferred Terminology Warnings: ${terminologyWarnings}`);
   }
   lines.push(`  Total Successes: ${result.successes.length}`);
 
   // Final verdict
   lines.push('');
   if (result.passed) {
-    if (result.warnings.length > 0) {
+    if (result.warnings.length > 0 || terminologyWarnings > 0) {
       lines.push('✅ Validation passed with warnings.');
     } else {
       lines.push('✅ Validation passed successfully!');

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { join } from 'node:path';
-import { validateCommand } from './validate';
 import * as fs from 'node:fs';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { validateCommand } from './validate';
 
 const fsMocks = vi.hoisted(() => ({
   existsSync: vi.fn(),
@@ -21,11 +21,17 @@ vi.mock('@simoncodes-ca/core', () => ({
   CONFIG_FILENAME: '.lingo-tracker.json',
   validateResources: vi.fn(),
   generateValidationSummary: vi.fn(),
+  loadPreferredTerminology: vi.fn(() => ({
+    rules: [],
+    filePath: '/project/.lingo-tracker-preferred-terminology.json',
+  })),
 }));
 
 import * as core from '@simoncodes-ca/core';
+
 const mockValidateResources = vi.mocked(core.validateResources);
 const mockGenerateValidationSummary = vi.mocked(core.generateValidationSummary);
+const mockLoadPreferredTerminology = vi.mocked(core.loadPreferredTerminology);
 
 describe('validateCommand', () => {
   const mockConfig = {
@@ -1216,6 +1222,119 @@ describe('validateCommand', () => {
       await validateCommand({ allowTranslated: true });
 
       expect(process.exit).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('preferred terminology', () => {
+    const filePath = '/project/.lingo-tracker-preferred-terminology.json';
+    const rules = [{ discouraged: 'Expenditure', preferred: 'Investment' }];
+    const passingResult = {
+      totalResourcesValidated: 6,
+      totalUniqueKeys: 2,
+      localesValidated: 3,
+      collectionsValidated: 2,
+      statusCounts: { new: 0, translated: 0, stale: 0, verified: 6 },
+      failures: [],
+      warnings: [],
+      successes: [],
+      passed: true,
+    };
+
+    it('loads the rules and passes them with each collection base locale', async () => {
+      vi.mocked(fs.readFileSync).mockReturnValue(
+        JSON.stringify({
+          ...mockConfig,
+          collections: {
+            common: { translationsFolder: 'translations/common' },
+            legacy: { translationsFolder: 'translations/legacy', baseLocale: 'en-GB' },
+          },
+        }),
+      );
+      mockLoadPreferredTerminology.mockReturnValueOnce({ rules, filePath });
+      mockValidateResources.mockReturnValue(passingResult);
+
+      await validateCommand({});
+
+      expect(mockLoadPreferredTerminology).toHaveBeenCalledWith(
+        expect.objectContaining({ baseLocale: 'en' }),
+        expect.any(String),
+      );
+      expect(mockValidateResources).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.any(Array),
+        expect.objectContaining({
+          terminology: { rules, loadError: undefined, baseLocaleByCollection: { common: 'en', legacy: 'en-GB' } },
+        }),
+      );
+    });
+
+    it('does not fail when the only problems are terminology findings', async () => {
+      mockLoadPreferredTerminology.mockReturnValueOnce({ rules, filePath });
+      mockValidateResources.mockReturnValue({
+        ...passingResult,
+        terminology: {
+          warnings: [
+            {
+              key: 'budget.title',
+              collection: 'common',
+              locale: 'en',
+              discouraged: 'Expenditure',
+              preferred: 'Investment',
+              message: 'consider "Investment" instead of "Expenditure"',
+            },
+          ],
+          valuesChecked: 2,
+        },
+      });
+
+      await validateCommand({});
+
+      expect(process.exit).not.toHaveBeenCalled();
+    });
+
+    it('passes a load error through and exits 1 when validation reports it', async () => {
+      mockLoadPreferredTerminology.mockReturnValueOnce({ rules: [], filePath, error: 'not valid JSON' });
+      mockValidateResources.mockReturnValue({
+        ...passingResult,
+        passed: false,
+        terminology: { warnings: [], configError: 'not valid JSON', valuesChecked: 0 },
+      });
+
+      await validateCommand({});
+
+      expect(mockValidateResources).toHaveBeenCalledWith(
+        expect.any(Array),
+        expect.any(Array),
+        expect.objectContaining({
+          terminology: expect.objectContaining({ rules: [], loadError: 'not valid JSON' }),
+        }),
+      );
+      expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it('prints the missing-explicit-file warning and skips the check', async () => {
+      mockLoadPreferredTerminology.mockReturnValueOnce({
+        rules: [],
+        filePath,
+        warning: 'Preferred terminology file not found: /project/terms.json. Treating as an empty list.',
+      });
+      mockValidateResources.mockReturnValue(passingResult);
+
+      await validateCommand({});
+
+      expect(console.warn).toHaveBeenCalledWith(
+        '⚠️  Preferred terminology file not found: /project/terms.json. Treating as an empty list.',
+      );
+      expect(mockValidateResources.mock.calls[0]?.[2].terminology).toBeUndefined();
+      expect(process.exit).not.toHaveBeenCalled();
+    });
+
+    it('omits the check entirely when there are no rules', async () => {
+      mockValidateResources.mockReturnValue(passingResult);
+
+      await validateCommand({});
+
+      expect(mockValidateResources.mock.calls[0]?.[2].terminology).toBeUndefined();
     });
   });
 });
