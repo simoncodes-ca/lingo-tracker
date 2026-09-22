@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { importCommand, type ImportCommandOptions } from './import-cmd';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { type ImportCommandOptions, importCommand } from './import-cmd';
 
 const fsMocks = vi.hoisted(() => ({
   existsSync: vi.fn(),
@@ -41,6 +41,10 @@ vi.mock('@simoncodes-ca/core', () => ({
   detectImportFormat: vi.fn(),
   generateImportSummary: vi.fn(() => '# Import Summary\n\nTest summary'),
   readEffectiveProtectedTerms: vi.fn(() => []),
+  loadPreferredTerminology: vi.fn(() => ({
+    rules: [],
+    filePath: '/test/project/.lingo-tracker-preferred-terminology.json',
+  })),
 }));
 
 // Mock utilities
@@ -76,8 +80,8 @@ vi.mock('../utils', () => ({
 }));
 
 // Import the mocked functions
-import { importFromJson, importFromXliff, detectImportFormat } from '@simoncodes-ca/core';
-import { loadConfiguration, promptForCollection, resolveWritableCollection, ConsoleFormatter } from '../utils';
+import { detectImportFormat, importFromJson, importFromXliff, loadPreferredTerminology } from '@simoncodes-ca/core';
+import { ConsoleFormatter, loadConfiguration, promptForCollection, resolveWritableCollection } from '../utils';
 
 describe('import-cmd', () => {
   const baseConfig = {
@@ -483,6 +487,52 @@ describe('import-cmd', () => {
         'Target locale is required. Use --locale or run in interactive mode.',
       );
       expect(importFromJson).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Preferred terminology', () => {
+    const filePath = '/test/project/.lingo-tracker-preferred-terminology.json';
+    const rules = [{ discouraged: 'Expenditure', preferred: 'Investment' }];
+
+    it('passes the loaded rules to the import', async () => {
+      vi.mocked(loadPreferredTerminology).mockReturnValueOnce({ rules, filePath });
+      vi.mocked(importFromJson).mockReturnValue({ ...baseImportResult, locale: 'en', warnings: [] } as never);
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+      await importCommand({ source: '/test/import.json', locale: 'en', format: 'json', strategy: 'migration' });
+
+      expect(loadPreferredTerminology).toHaveBeenCalledWith(baseConfig, '/test/project');
+      expect(importFromJson).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ preferredTerminology: rules }),
+      );
+    });
+
+    it('adds one config warning on a base-locale import when the rule file is broken', async () => {
+      vi.mocked(loadPreferredTerminology).mockReturnValueOnce({ rules: [], filePath, error: 'not valid JSON' });
+      vi.mocked(importFromJson).mockReturnValue({ ...baseImportResult, locale: 'en', warnings: [] } as never);
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+      await importCommand({ source: '/test/import.json', locale: 'en', format: 'json', strategy: 'migration' });
+
+      expect(importFromJson).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ preferredTerminology: [] }),
+      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Warnings (1)'));
+      expect(console.log).toHaveBeenCalledWith(
+        expect.stringContaining('Preferred terminology checks skipped: not valid JSON'),
+      );
+    });
+
+    it('says nothing about a broken rule file on a target-locale import', async () => {
+      vi.mocked(loadPreferredTerminology).mockReturnValueOnce({ rules: [], filePath, error: 'not valid JSON' });
+      vi.mocked(importFromJson).mockReturnValue({ ...baseImportResult, locale: 'es', warnings: [] } as never);
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+      await importCommand({ source: '/test/import.json', locale: 'es', format: 'json' });
+
+      expect(console.log).not.toHaveBeenCalledWith(expect.stringContaining('Preferred terminology'));
     });
   });
 });

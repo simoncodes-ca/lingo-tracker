@@ -1,26 +1,27 @@
-import * as path from 'path';
-import * as fs from 'fs';
-import prompts from 'prompts';
 import {
-  type LingoTrackerConfig,
-  type ImportOptions,
+  detectImportFormat,
+  generateImportSummary,
   type ImportFormat,
+  type ImportOptions,
+  type ImportResult,
   type ImportStrategy,
   importFromJson,
   importFromXliff,
-  detectImportFormat,
-  type ImportResult,
-  generateImportSummary,
+  type LingoTrackerConfig,
+  loadPreferredTerminology,
   readEffectiveProtectedTerms,
 } from '@simoncodes-ca/core';
+import * as fs from 'fs';
+import * as path from 'path';
+import prompts from 'prompts';
 import {
-  loadConfiguration,
-  promptForCollection,
-  resolveWritableCollection,
+  buildSummaryPath,
   ConsoleFormatter,
   ErrorMessages,
   isInteractiveTerminal,
-  buildSummaryPath,
+  loadConfiguration,
+  promptForCollection,
+  resolveWritableCollection,
 } from '../utils';
 
 export const LARGE_FILE_SIZE_THRESHOLD = 5;
@@ -89,6 +90,8 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
     // File size check is non-critical, continue with import
   }
 
+  const preferredTerminology = loadPreferredTerminology(config, cwd);
+
   // Update options with answers
   const finalOptions: ImportOptions = {
     source: answers.source,
@@ -104,6 +107,9 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
     dryRun: answers.dryRun || false,
     verbose: answers.verbose || false,
     protectedTerms: readEffectiveProtectedTerms(config, collection.config, cwd),
+    // Only consulted on base-locale imports. A broken file yields no rules, so the
+    // check is skipped and a config warning is added once the import has run.
+    preferredTerminology: preferredTerminology.rules,
     onProgress: answers.verbose ? (msg: string) => console.log(`  ${msg}`) : undefined,
   };
 
@@ -151,6 +157,15 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
   } catch (error) {
     ConsoleFormatter.error(`Import failed: ${(error as Error).message}`);
     return;
+  }
+
+  // Terminology is only checked when importing into the base locale, so a rule file
+  // problem only matters then. Surfaced through the result so it reaches the summary.
+  const terminologyConfigWarning = preferredTerminology.error
+    ? `Preferred terminology checks skipped: ${preferredTerminology.error}`
+    : preferredTerminology.warning;
+  if (terminologyConfigWarning && result.locale === (config.baseLocale ?? 'en')) {
+    result = { ...result, warnings: [terminologyConfigWarning, ...result.warnings] };
   }
 
   // Log elapsed time in verbose mode

@@ -209,6 +209,20 @@ LingoTracker matches the source case-insensitively. It requires the translation 
 
 Base-locale imports skip the check, because a base-locale import defines the source rather than translating it. An import in a project with no protected terms also skips it.
 
+## Preferred Terminology Warnings
+
+A base-locale import (`--strategy migration` into the base locale) checks every value it writes against the preferred terminology rules (`.lingo-tracker-preferred-terminology.json`, or the file named by `preferredTerminologyFile`). Each discouraged term found adds one warning, whichever way it is capitalized and however often it occurs in the value:
+
+```
+Preferred terminology: key "budget.title" — consider "Investment" instead of "Expenditure". Finance style guide
+```
+
+The warnings are advisory. The value is imported as-is, nothing is skipped or failed, and the exit code is unchanged. A dry run reports the same warnings.
+
+- **Target-locale imports are never checked.** Translations use their own vocabulary.
+- **A broken rule file** (invalid JSON or invalid rules) adds one warning, `Preferred terminology checks skipped: …`, and the import continues without the check.
+- **A missing file** at the default path means no rules. A missing file named explicitly by `preferredTerminologyFile` adds one warning.
+
 ## ICU Format Auto-Fixing
 
 LingoTracker automatically fixes common ICU message format placeholder errors made by translators:

@@ -1,12 +1,18 @@
 import { existsSync } from 'node:fs';
-import { readJsonFile, writeJsonFile } from '../file-io/json-file-operations';
-import type { ImportOptions, ImportChange, ImportedResource } from './types';
+import {
+  findPreferredTermFindings,
+  findProtectedTermViolations,
+  type LocaleMetadata,
+  type TranslationStatus,
+} from '@simoncodes-ca/domain';
+import { calculateChecksum } from '../../resource/checksum';
 import type { ResourceEntries, ResourceEntry } from '../../resource/resource-entry';
 import type { TrackerMetadata } from '../../resource/tracker-metadata';
-import { calculateChecksum } from '../../resource/checksum';
-import { findProtectedTermViolations, type LocaleMetadata, type TranslationStatus } from '@simoncodes-ca/domain';
+import { readJsonFile, writeJsonFile } from '../file-io/json-file-operations';
+import { describePreferredTermRule } from '../validate/validate-terminology';
+import { determineNewResourceStatus, determineUpdatedResourceStatus, shouldUseSourceStatus } from './determine-status';
 import type { ResourceGroup } from './resource-grouping';
-import { shouldUseSourceStatus, determineNewResourceStatus, determineUpdatedResourceStatus } from './determine-status';
+import type { ImportChange, ImportedResource, ImportOptions } from './types';
 
 // ---------------------------------------------------------------------------
 // Internal context shared across all handlers in one processResourceGroup call
@@ -263,6 +269,25 @@ function handleUnchangedTargetLocaleValue(
 }
 
 // ---------------------------------------------------------------------------
+// Preferred terminology (base-locale imports only)
+// ---------------------------------------------------------------------------
+
+/**
+ * Adds one warning per discouraged term in a base value this import wrote, or would
+ * write in a dry run. Advisory: the value is imported regardless.
+ */
+function warnAboutPreferredTerminology(change: ImportChange, options: ImportOptions, warnings: string[]): void {
+  const rules = options.preferredTerminology ?? [];
+  if (rules.length === 0 || change.newValue === undefined) return;
+  if (change.type === 'failed' || change.type === 'skipped') return;
+
+  for (const { rule } of findPreferredTermFindings(change.newValue, rules)) {
+    const reason = rule.reason ? `. ${rule.reason}` : '';
+    warnings.push(`Preferred terminology: key "${change.key}" — ${describePreferredTermRule(rule)}${reason}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Public entry point
 // ---------------------------------------------------------------------------
 
@@ -298,7 +323,8 @@ function handleUnchangedTargetLocaleValue(
  * @param dryRun - When true, performs all operations except file writes
  * @param isBaseLocaleImport - Whether this is a base locale import (migration strategy only)
  * @param filesModified - Set that accumulates paths of all modified files (for summary reporting)
- * @param warnings - Array that accumulates non-fatal warnings (e.g., base value mismatches)
+ * @param warnings - Array that accumulates non-fatal warnings (e.g., base value mismatches, and
+ *                   preferred-terminology findings on base-locale imports)
  * @param errors - Optional array that accumulates fatal error messages (e.g., protected-term violations)
  * @returns Array of ImportChange objects describing all changes made to resources in this group
  */
@@ -346,12 +372,16 @@ export function processResourceGroup(
         });
         continue;
       }
-      changes.push(handleNewResource(ctx, resource, entryKey, isBaseLocaleImport));
+      const created = handleNewResource(ctx, resource, entryKey, isBaseLocaleImport);
+      if (isBaseLocaleImport) warnAboutPreferredTerminology(created, options, warnings);
+      changes.push(created);
       continue;
     }
 
     if (isBaseLocaleImport) {
-      changes.push(handleBaseLocaleUpdate(ctx, resource, entryKey));
+      const updated = handleBaseLocaleUpdate(ctx, resource, entryKey);
+      warnAboutPreferredTerminology(updated, options, warnings);
+      changes.push(updated);
       continue;
     }
 

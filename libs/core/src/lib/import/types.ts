@@ -1,4 +1,4 @@
-import type { TranslationStatus } from '@simoncodes-ca/domain';
+import type { PreferredTermRule, TranslationStatus } from '@simoncodes-ca/domain';
 
 /**
  * Supported import formats
@@ -48,6 +48,13 @@ export interface ImportOptions {
    * incoming value altered it is skipped and reported as failed. Unset skips the check.
    */
   protectedTerms?: string[];
+  /**
+   * Preferred-terminology rules. On a base-locale import, every value written (or,
+   * in a dry run, that would be written) is scanned, and each discouraged term found
+   * adds one entry to `warnings`. Advisory only: nothing is skipped or failed.
+   * Ignored for target-locale imports. Unset or empty skips the check.
+   */
+  preferredTerminology?: readonly PreferredTermRule[];
 
   /** Callbacks */
   onProgress?: (message: string) => void;
