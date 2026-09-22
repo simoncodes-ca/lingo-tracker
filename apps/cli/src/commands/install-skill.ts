@@ -151,6 +151,14 @@ npx lingo-tracker delete-resource \\
   --yes
 \`\`\`
 
+### Preferred terminology (project-wide)
+\`\`\`bash
+npx lingo-tracker preferred-terminology --list
+npx lingo-tracker preferred-terminology --add "<discouraged term>" --preferred "<preferred term>" --reason "<optional reason>"
+npx lingo-tracker preferred-terminology --remove "<discouraged term>"
+\`\`\`
+Base-locale values that use a discouraged term get a warning suggesting the preferred term.
+
 ### Other useful commands
 \`\`\`bash
 npx lingo-tracker normalize --collection ${primary.name}

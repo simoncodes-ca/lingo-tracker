@@ -86,6 +86,15 @@ describe('substituteSkillTemplate (single collection)', () => {
     );
   });
 
+  it('contains the preferred-terminology list, add and remove commands', () => {
+    const output = substituteSkillTemplate(template, singleCollection);
+    expect(output).toContain('npx lingo-tracker preferred-terminology --list');
+    expect(output).toContain(
+      'npx lingo-tracker preferred-terminology --add "<discouraged term>" --preferred "<preferred term>"',
+    );
+    expect(output).toContain('npx lingo-tracker preferred-terminology --remove "<discouraged term>"');
+  });
+
   it('contains the bundle command with the correct bundle name', () => {
     expect(substituteSkillTemplate(template, singleCollection)).toContain('npx lingo-tracker bundle --name my-bundle');
   });
