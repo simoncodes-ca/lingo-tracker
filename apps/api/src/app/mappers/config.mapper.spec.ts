@@ -86,6 +86,60 @@ describe('config.mapper', () => {
       expect('bundles' in dto).toBe(false);
     });
 
+    it('maps loaded preferred terminology rules and file path', () => {
+      const dto = mapConfigToDto(config, resolved, undefined, {
+        rules: [
+          { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Planning term.' },
+          { discouraged: 'E-mail', preferred: 'email' },
+        ],
+        filePath: '/project/.lingo-tracker-preferred-terminology.json',
+      });
+
+      expect(dto.preferredTerminology).toEqual([
+        { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Planning term.' },
+        { discouraged: 'E-mail', preferred: 'email' },
+      ]);
+      expect(dto.preferredTerminology?.[1]).not.toHaveProperty('reason');
+      expect(dto.preferredTerminologyFilePath).toBe('/project/.lingo-tracker-preferred-terminology.json');
+      expect('preferredTerminologyError' in dto).toBe(false);
+      expect('preferredTerminologyWarning' in dto).toBe(false);
+    });
+
+    it('omits an empty rule list but keeps the file path', () => {
+      const dto = mapConfigToDto(config, resolved, undefined, {
+        rules: [],
+        filePath: '/project/.lingo-tracker-preferred-terminology.json',
+      });
+
+      expect('preferredTerminology' in dto).toBe(false);
+      expect(dto.preferredTerminologyFilePath).toBe('/project/.lingo-tracker-preferred-terminology.json');
+    });
+
+    it('maps a load error and a missing-file warning to their own fields', () => {
+      const broken = mapConfigToDto(config, resolved, undefined, {
+        rules: [],
+        filePath: '/project/terms.json',
+        error: 'Preferred terminology file is not valid JSON',
+      });
+      const missing = mapConfigToDto(config, resolved, undefined, {
+        rules: [],
+        filePath: '/project/terms.json',
+        warning: 'Preferred terminology file not found',
+      });
+
+      expect(broken.preferredTerminologyError).toBe('Preferred terminology file is not valid JSON');
+      expect('preferredTerminologyWarning' in broken).toBe(false);
+      expect(missing.preferredTerminologyWarning).toBe('Preferred terminology file not found');
+      expect('preferredTerminologyError' in missing).toBe(false);
+    });
+
+    it('omits every preferred-terminology field when nothing was loaded', () => {
+      const dto = mapConfigToDto(config, resolved);
+
+      expect('preferredTerminology' in dto).toBe(false);
+      expect('preferredTerminologyFilePath' in dto).toBe(false);
+    });
+
     it('exposes projectName only when provided', () => {
       expect(mapConfigToDto(config, undefined, 'lingo-tracker').projectName).toBe('lingo-tracker');
       expect('projectName' in mapConfigToDto(config)).toBe(false);
@@ -95,6 +149,11 @@ describe('config.mapper', () => {
   describe('mapDtoToConfigUpdate', () => {
     it('maps protectedTerms', () => {
       expect(mapDtoToConfigUpdate({ protectedTerms: ['iPhone'] })).toEqual({ protectedTerms: ['iPhone'] });
+    });
+
+    it('maps preferredTerminology', () => {
+      const rules = [{ discouraged: 'Expenditure', preferred: 'Investment' }];
+      expect(mapDtoToConfigUpdate({ preferredTerminology: rules })).toEqual({ preferredTerminology: rules });
     });
 
     it('returns an empty update when no writable fields present', () => {
