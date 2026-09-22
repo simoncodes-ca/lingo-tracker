@@ -1,5 +1,5 @@
-import type { LingoTrackerCollection } from './lingo-tracker-collection';
 import type { BundleDefinition, TokenCasing } from './bundle-definition';
+import type { LingoTrackerCollection } from './lingo-tracker-collection';
 import type { TranslationConfig } from './translation-config';
 
 /**
@@ -36,4 +36,14 @@ export interface LingoTrackerConfig {
    * array of strings and is unioned with each collection's file at read time.
    */
   protectedTermsFile?: string;
+
+  /**
+   * Path to the JSON file holding the preferred terminology rules — discouraged
+   * base-locale terms, each mapped to the term the product uses instead. Resolved against
+   * the directory holding this config file. When absent, defaults to
+   * `.lingo-tracker-preferred-terminology.json` beside the config. The file holds a bare
+   * JSON array of `{ discouraged, preferred, reason? }` objects. There is one global file;
+   * collections cannot override it.
+   */
+  preferredTerminologyFile?: string;
 }
