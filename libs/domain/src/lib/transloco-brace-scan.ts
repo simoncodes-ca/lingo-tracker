@@ -356,6 +356,57 @@ export function convertTranslocoPlaceholders(value: string): string {
 }
 
 /**
+ * Converts Transloco double-brace placeholders to ICU single-brace placeholders without
+ * changing the length of the value, so every index into the result is also an index
+ * into the input.
+ *
+ * It recognizes exactly the runs `convertTranslocoPlaceholders` converts. Instead of
+ * deleting the placeholder's extra `{` and `}`, it overwrites each with a space, which
+ * ICU accepts inside an argument: `{{ name }}` becomes `{  name  }`. Parsing the result
+ * yields the same tokens as parsing the converted value, but with `ctx.offset` values
+ * that point into the raw input. Callers that report positions — highlighting, in-place
+ * replacement — parse this form rather than the converted one.
+ *
+ * @param value - The translation string, potentially using Transloco syntax
+ * @returns A string of the same length with genuine `{{ name }}` placeholders reduced to
+ *          single-brace ICU arguments
+ *
+ * @example
+ * ```typescript
+ * maskTranslocoPlaceholders('Hello {{ name }}!');
+ * // → 'Hello {  name  }!'
+ *
+ * maskTranslocoPlaceholders('{nameExists, select, hasName {{name}} other {this item}}');
+ * // → unchanged — the first brace opens the `hasName` branch body
+ * ```
+ */
+export function maskTranslocoPlaceholders(value: string): string {
+  if (!value.includes('{{')) {
+    return value;
+  }
+
+  /** Blanks the placeholder's own brace pair, leaving structural braces and the name in place. */
+  const maskBraceRun = (start: number, openBraces: OpenBrace[]): BraceAction | null => {
+    const run = readBraceRun(value, start);
+    const structuralBraces = run && opensSubMessageBody(value, start, openBraces) ? 1 : 0;
+
+    if (!run || run.openCount - structuralBraces < 2) {
+      return null;
+    }
+
+    applyBraceRun(openBraces, run);
+
+    const inner = value.substring(start + run.openCount, run.endIndex - run.closeCount);
+    return {
+      text: `${'{'.repeat(run.openCount - 1)} ${inner} ${'}'.repeat(run.closeCount - 1)}`,
+      length: run.endIndex - start,
+    };
+  };
+
+  return scanIcuBraces(value, true, maskBraceRun).text;
+}
+
+/**
  * Transloco's own interpolation matcher: `{{`, no braces between, `}}`.
  * Sticky, so it can be anchored at a candidate `{{`.
  */

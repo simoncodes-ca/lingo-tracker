@@ -4,6 +4,7 @@ import {
   convertTranslocoPlaceholders,
   expandPlaceholderOnlyBranchBodies,
   hasUnbundlableBranchBody,
+  maskTranslocoPlaceholders,
 } from './transloco-brace-scan';
 
 interface ConversionFixture {
@@ -603,6 +604,34 @@ describe('convertTranslocoPlaceholders', () => {
       });
     }
   });
+});
+
+describe('maskTranslocoPlaceholders', () => {
+  it('blanks the placeholder braces without changing length', () => {
+    expect(maskTranslocoPlaceholders('Hello {{ name }}!')).toBe('Hello {  name  }!');
+    expect(maskTranslocoPlaceholders('{{name}}')).toBe('{ name }');
+  });
+
+  it('returns a value without placeholders unchanged', () => {
+    expect(maskTranslocoPlaceholders('')).toBe('');
+    expect(maskTranslocoPlaceholders('{count, plural, one {# item} other {# items}}')).toBe(
+      '{count, plural, one {# item} other {# items}}',
+    );
+  });
+
+  for (const fixture of [...FIXTURES, ...CONSUMER_FIXTURES]) {
+    it(`keeps length and parses like the converted value: ${fixture.description}`, () => {
+      const masked = maskTranslocoPlaceholders(fixture.input);
+      expect(masked).toHaveLength(fixture.input.length);
+
+      const converted = parseICU(convertTranslocoPlaceholders(fixture.input));
+      const maskedTokens = parseICU(masked);
+      expect(maskedTokens === null).toBe(converted === null);
+      if (converted !== null && maskedTokens !== null) {
+        expect(stripContext(maskedTokens)).toEqual(stripContext(converted));
+      }
+    });
+  }
 });
 
 describe('hasUnbundlableBranchBody', () => {
