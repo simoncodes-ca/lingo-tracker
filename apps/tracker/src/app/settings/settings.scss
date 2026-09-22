@@ -1,6 +1,9 @@
 :host {
   display: block;
   height: 100%;
+  // Two sections share the page, so the page scrolls; the header (and its save bar)
+  // stays pinned while each section's list keeps its own bounded scroller.
+  overflow-y: auto;
 }
 
 .settings-page {
@@ -10,14 +13,20 @@
   // The app has no global border-box reset, so the padding below would otherwise
   // be added on top of the full height and push the column past the viewport.
   box-sizing: border-box;
-  height: 100%;
+  min-height: 100%;
   padding: var(--spacing-6) var(--spacing-6) var(--spacing-6);
   max-width: 720px;
   margin: 0 auto;
-  overflow: hidden;
 }
 
 .settings-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-block: calc(-1 * var(--spacing-3));
+  padding-block: var(--spacing-3);
+  // Matches the app content surface, so the pinned header reads as part of the page.
+  background: var(--color-background-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -62,8 +71,7 @@
 .terms {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
 
   // An opaque twin of the panel fill, so the scroll shadows below have something
   // solid to fade into. color-mix with `transparent` cannot be used for that.
@@ -219,6 +227,7 @@
 .terms-scroll {
   flex: 1 1 auto;
   min-height: 120px;
+  max-height: min(24rem, 50vh);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-color: var(--color-border-strong) transparent;
@@ -642,6 +651,170 @@
   }
 }
 
+// ── Preferred terminology ────────────────────────────────────────────────────
+
+.rules {
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.rules-load-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid color-mix(in srgb, var(--color-error) 35%, transparent);
+  border-radius: var(--border-radius-lg);
+  color: color-mix(in srgb, var(--color-error) 65%, var(--color-text-primary));
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+.rules-load-error-text {
+  margin: 0;
+}
+
+.rules-load-error-detail {
+  margin: var(--spacing-1) 0 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  word-break: break-word;
+}
+
+.rules-missing-file {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-1);
+  margin: var(--spacing-2) 0 0;
+  color: color-mix(in srgb, var(--color-warning) 42%, var(--color-text-primary));
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+}
+
+.rule {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  align-items: start;
+  gap: var(--spacing-1) var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-2) var(--spacing-2) var(--spacing-3);
+  border-top: 1px solid var(--color-border-subtle);
+  transition: background var(--transition-fast);
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  &:focus-within {
+    background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  }
+}
+
+.rule[data-status='added'] {
+  background: color-mix(in srgb, var(--color-success) 9%, transparent);
+}
+
+.rule[data-status='edited'] {
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+}
+
+.rules-header {
+  padding-block: var(--spacing-2);
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-background-muted) 55%, transparent);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+}
+
+.rules-list {
+  max-height: min(28rem, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.rule-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rule-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  caret-color: var(--color-primary);
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 1px;
+    border-color: var(--color-secondary);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--color-error);
+  }
+}
+
+.rule-input--reason {
+  font-family: inherit;
+}
+
+.rule-arrow {
+  // Pinned to the input line, so an error growing a cell does not drag it down.
+  align-self: start;
+  margin-top: calc((var(--font-size-sm) * 1.2 + 2 * var(--spacing-2) + 2px - 16px) / 2);
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-tertiary);
+}
+
+.rules-header > :nth-child(1),
+.rules-header > :nth-child(3),
+.rules-header > :nth-child(4) {
+  // Line the labels up with the text inside the inputs below them.
+  padding-inline-start: calc(var(--spacing-3) + 1px);
+}
+
+.rules-header > :nth-child(2) {
+  width: 16px;
+}
+
+.rules-header > :nth-child(5) {
+  width: 34px;
+}
+
+.rule-error {
+  margin-top: var(--spacing-1);
+}
+
+.rule-remove {
+  align-self: start;
+}
+
+.rules-actions {
+  display: flex;
+  margin-top: var(--spacing-3);
+}
+
+.rules-add .mat-icon {
+  margin-inline-end: var(--spacing-1);
+}
+
 // ── Short viewports ──────────────────────────────────────────────────────────
 // Landscape phones and short desktop windows. The section title already says what
 // this list is, so the explanatory hint and the file path give up their rows to
@@ -672,6 +845,38 @@
 @media (max-width: 599px) {
   .settings-page {
     padding: var(--spacing-4) var(--spacing-4) var(--spacing-5);
+  }
+
+  // Rules stack: discouraged → preferred on one line, the reason beneath.
+  .rule {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'discouraged arrow preferred remove'
+      'reason reason reason reason';
+  }
+
+  .rule > :nth-child(1) {
+    grid-area: discouraged;
+  }
+
+  .rule > :nth-child(2) {
+    grid-area: arrow;
+  }
+
+  .rule > :nth-child(3) {
+    grid-area: preferred;
+  }
+
+  .rule > :nth-child(4) {
+    grid-area: reason;
+  }
+
+  .rule > :nth-child(5) {
+    grid-area: remove;
+  }
+
+  .rules-header > :nth-child(4) {
+    display: none;
   }
 
   .terms-add-button {

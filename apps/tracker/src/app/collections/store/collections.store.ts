@@ -1,19 +1,20 @@
-import { computed } from '@angular/core';
-import { signalStore, withState, withComputed, withMethods, patchState } from '@ngrx/signals';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, tap, switchMap, catchError, of } from 'rxjs';
-import { inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { computed, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
-import { CollectionsApiService } from '../services/collections-api.service';
-import { withBundlesFeature } from './features/with-bundles.feature';
-import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import type {
+  CreateCollectionDto,
   LingoTrackerCollectionDto,
   LingoTrackerConfigDto,
-  CreateCollectionDto,
+  PreferredTermRuleErrorDto,
   UpdateCollectionDto,
   UpdateConfigDto,
 } from '@simoncodes-ca/data-transfer';
+import { catchError, of, pipe, switchMap, tap } from 'rxjs';
+import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
+import { CollectionsApiService } from '../services/collections-api.service';
+import { withBundlesFeature } from './features/with-bundles.feature';
 
 /**
  * State interface for the Collections store.
@@ -27,6 +28,21 @@ interface CollectionsState {
 
   /** Error message if an operation fails */
   error: string | null;
+
+  /**
+   * Per-row preferred-terminology errors from the last failed `updateGlobalConfig`, indexed
+   * by row of the submitted list. Empty unless the server rejected the rules with a 400.
+   */
+  configRuleErrors: PreferredTermRuleErrorDto[];
+}
+
+/** Extracts the `errors` array of a 400 `{ message, errors }` body from `PUT /api/config`, if present. */
+function extractRuleErrors(error: unknown): PreferredTermRuleErrorDto[] {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 400) return [];
+  const body: unknown = error.error;
+  if (typeof body !== 'object' || body === null) return [];
+  const errors = (body as { errors?: unknown }).errors;
+  return Array.isArray(errors) ? (errors as PreferredTermRuleErrorDto[]) : [];
 }
 
 /**
@@ -36,6 +52,7 @@ const initialState: CollectionsState = {
   config: null,
   isLoading: false,
   error: null,
+  configRuleErrors: [],
 };
 
 /**
@@ -214,7 +231,7 @@ export const CollectionsStore = signalStore(
        */
       updateGlobalConfig: rxMethod<UpdateConfigDto>(
         pipe(
-          tap(() => patchState(store, { isLoading: true, error: null })),
+          tap(() => patchState(store, { isLoading: true, error: null, configRuleErrors: [] })),
           switchMap((dto) =>
             api.updateConfig(dto).pipe(
               tap(() => {
@@ -235,6 +252,7 @@ export const CollectionsStore = signalStore(
                 patchState(store, {
                   isLoading: false,
                   error: errorMessage,
+                  configRuleErrors: extractRuleErrors(error),
                 });
                 return of(null);
               }),

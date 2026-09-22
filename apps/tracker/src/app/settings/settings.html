@@ -2,13 +2,14 @@
   <header class="settings-header">
     <h1 class="settings-title">{{ TOKENS.SETTINGS.TITLE | transloco }}</h1>
 
-    <!-- On a first run there is nothing to save yet; the bar arrives with the first change. -->
-    @if (!isEmpty() || hasChanges()) {
-      <div class="terms-bar" [class.terms-bar--dirty]="hasChanges()">
+    <!-- On a first run there is nothing to save yet; the bar arrives with the first change.
+         It covers both lists: one Save sends whichever of them changed. -->
+    @if (showSaveBar()) {
+      <div class="terms-bar" [class.terms-bar--dirty]="hasAnyChanges()">
         <p class="terms-bar-status" aria-live="polite">
-          @if (hasChanges()) {
+          @if (hasAnyChanges()) {
             <mat-icon class="terms-bar-icon">edit_note</mat-icon>
-            <span>{{ TOKENS.SETTINGS.PROTECTEDTERMSUNSAVEDCHANGESX | transloco : { count: changeCount() } }}</span>
+            <span>{{ TOKENS.SETTINGS.PROTECTEDTERMSUNSAVEDCHANGESX | transloco : { count: totalChangeCount() } }}</span>
           } @else {
             <mat-icon class="terms-bar-icon">check_circle</mat-icon>
             <span>{{ TOKENS.SETTINGS.PROTECTEDTERMSALLSAVED | transloco }}</span>
@@ -16,15 +17,16 @@
         </p>
 
         <div class="terms-bar-actions">
-          <button mat-button type="button" (click)="revertAll()" [disabled]="!hasChanges() || store.isLoading()">
+          <button mat-button type="button" (click)="revertAll()" [disabled]="!hasAnyChanges() || store.isLoading()">
             {{ TOKENS.SETTINGS.PROTECTEDTERMSREVERTALL | transloco }}
           </button>
           <button
             mat-flat-button
             color="primary"
             type="button"
+            class="settings-save"
             (click)="save()"
-            [disabled]="!hasChanges() || store.isLoading()"
+            [disabled]="!canSave()"
           >
             {{ TOKENS.SETTINGS.SAVE | transloco }}
           </button>
@@ -261,5 +263,158 @@
       </div>
     }
 
+  </section>
+
+  <!-- Preferred terminology: one editable row per rule, validated live with the domain check the server runs. -->
+  <section class="terms rules" aria-labelledby="settings-preferred-terminology-title">
+    <div class="terms-heading">
+      <h2 id="settings-preferred-terminology-title" class="terms-title">
+        {{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.TITLE | transloco }}
+      </h2>
+      <span class="terms-count">{{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.COUNTX | transloco : { count: ruleCount() } }}</span>
+    </div>
+
+    <div class="terms-note">
+      <mat-icon class="terms-note-icon">info</mat-icon>
+      <p class="terms-note-text">{{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.HINT | transloco }}</p>
+    </div>
+
+    @if (preferredTerminologyFilePath(); as filePath) {
+      <p class="terms-file">
+        <mat-icon class="terms-file-icon">description</mat-icon>
+        <span [title]="filePath">{{ TOKENS.SETTINGS.PROTECTEDTERMSFILELABEL | transloco : { file: filePath } }}</span>
+      </p>
+    }
+
+    @if (preferredTerminologyError(); as loadError) {
+      <div class="rules-load-error" role="alert">
+        <mat-icon class="settings-error-icon">error_outline</mat-icon>
+        <div>
+          <p class="rules-load-error-text">{{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.LOADERROR | transloco }}</p>
+          <!-- Raw server detail (file path, parser message); not translatable content. -->
+          <p class="rules-load-error-detail">{{ loadError }}</p>
+        </div>
+      </div>
+    } @else if (preferredTerminologyWarning()) {
+      <p class="rules-missing-file" role="status">
+        <mat-icon class="terms-file-icon">info</mat-icon>
+        <span>{{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.MISSINGFILE | transloco }}</span>
+      </p>
+    }
+
+    @if (!terminology.isEmpty()) {
+      <div class="terms-panel rules-panel">
+        <!-- Visual column headers; each input carries its own row-specific label for assistive tech. -->
+        <div class="rule rules-header" aria-hidden="true">
+          <span>{{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.DISCOURAGEDCOLUMN | transloco }}</span>
+          <span></span>
+          <span>{{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.PREFERREDCOLUMN | transloco }}</span>
+          <span>{{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.REASONCOLUMN | transloco }}</span>
+          <span></span>
+        </div>
+        <ul class="terms-list rules-list" [attr.aria-label]="TOKENS.SETTINGS.PREFERREDTERMINOLOGY.LISTARIALABEL | transloco">
+          @for (view of terminology.rowViews(); track view.row.id) {
+            <li class="rule" [attr.data-status]="view.status" [attr.data-rule-id]="view.row.id">
+              <div class="rule-cell">
+                <input
+                  #ruleInput
+                  class="rule-input"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  [id]="ruleInputId(view.row.id, 'discouraged')"
+                  [value]="view.row.discouraged"
+                  (input)="onRuleInput(view.row.id, 'discouraged', $any($event.target).value)"
+                  (blur)="terminology.touch(view.row.id, 'discouraged')"
+                  [attr.aria-label]="TOKENS.SETTINGS.PREFERREDTERMINOLOGY.DISCOURAGEDARIAX | transloco : { row: view.position }"
+                  [attr.aria-invalid]="view.errors.discouraged ? 'true' : null"
+                  [attr.aria-describedby]="view.errors.discouraged ? ruleErrorId(view.row.id, 'discouraged') : null"
+                />
+                @if (view.errors.discouraged; as error) {
+                  <p class="terms-inline-error rule-error" [id]="ruleErrorId(view.row.id, 'discouraged')">
+                    {{ RULE_ERROR_TOKENS[error.code] | transloco : error.params }}
+                  </p>
+                }
+              </div>
+
+              <mat-icon class="rule-arrow" aria-hidden="true">arrow_forward</mat-icon>
+
+              <div class="rule-cell">
+                <input
+                  #ruleInput
+                  class="rule-input"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  [id]="ruleInputId(view.row.id, 'preferred')"
+                  [value]="view.row.preferred"
+                  (input)="onRuleInput(view.row.id, 'preferred', $any($event.target).value)"
+                  (blur)="terminology.touch(view.row.id, 'preferred')"
+                  [attr.aria-label]="TOKENS.SETTINGS.PREFERREDTERMINOLOGY.PREFERREDARIAX | transloco : { row: view.position }"
+                  [attr.aria-invalid]="view.errors.preferred ? 'true' : null"
+                  [attr.aria-describedby]="view.errors.preferred ? ruleErrorId(view.row.id, 'preferred') : null"
+                />
+                @if (view.errors.preferred; as error) {
+                  <p class="terms-inline-error rule-error" [id]="ruleErrorId(view.row.id, 'preferred')">
+                    {{ RULE_ERROR_TOKENS[error.code] | transloco : error.params }}
+                  </p>
+                }
+              </div>
+
+              <div class="rule-cell">
+                <input
+                  #ruleInput
+                  class="rule-input rule-input--reason"
+                  type="text"
+                  autocomplete="off"
+                  [id]="ruleInputId(view.row.id, 'reason')"
+                  [value]="view.row.reason"
+                  (input)="onRuleInput(view.row.id, 'reason', $any($event.target).value)"
+                  (blur)="terminology.touch(view.row.id, 'reason')"
+                  [placeholder]="TOKENS.SETTINGS.PREFERREDTERMINOLOGY.REASONPLACEHOLDER | transloco"
+                  [attr.aria-label]="TOKENS.SETTINGS.PREFERREDTERMINOLOGY.REASONARIAX | transloco : { row: view.position }"
+                  [attr.aria-invalid]="view.errors.reason ? 'true' : null"
+                  [attr.aria-describedby]="view.errors.reason ? ruleErrorId(view.row.id, 'reason') : null"
+                />
+                @if (view.errors.reason; as error) {
+                  <p class="terms-inline-error rule-error" [id]="ruleErrorId(view.row.id, 'reason')">
+                    {{ RULE_ERROR_TOKENS[error.code] | transloco : error.params }}
+                  </p>
+                }
+              </div>
+
+              <button
+                mat-icon-button
+                type="button"
+                class="term-action term-action--remove rule-remove"
+                (click)="terminology.removeRow(view.row.id)"
+                [attr.aria-label]="
+                  view.row.discouraged.trim()
+                    ? (TOKENS.SETTINGS.PREFERREDTERMINOLOGY.REMOVEARIAX | transloco : { term: view.row.discouraged.trim() })
+                    : (TOKENS.SETTINGS.PREFERREDTERMINOLOGY.REMOVEEMPTYARIAX | transloco : { row: view.position })
+                "
+                [matTooltip]="TOKENS.COMMON.ACTIONS.DELETE | transloco"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    } @else if (!preferredTerminologyError()) {
+      <!-- A broken file already has its banner; an empty state beneath it would contradict it. -->
+      <div class="terms-empty">
+        <mat-icon class="terms-empty-icon">spellcheck</mat-icon>
+        <p class="terms-empty-title">{{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.EMPTYTITLE | transloco }}</p>
+        <p class="terms-empty-message">{{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.EMPTYMESSAGE | transloco }}</p>
+      </div>
+    }
+
+    <div class="rules-actions">
+      <button mat-stroked-button type="button" class="rules-add" (click)="addRule()">
+        <mat-icon>add</mat-icon>
+        {{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ADDBUTTON | transloco }}
+      </button>
+    </div>
   </section>
 </div>

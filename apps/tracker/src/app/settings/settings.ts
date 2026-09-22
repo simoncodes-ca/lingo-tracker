@@ -1,25 +1,26 @@
+import { CommonModule } from '@angular/common';
 import {
-  Component,
   ChangeDetectionStrategy,
-  type ElementRef,
-  inject,
-  effect,
-  signal,
+  Component,
   computed,
+  type ElementRef,
+  effect,
+  inject,
+  signal,
   untracked,
   viewChildren,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoModule } from '@jsverse/transloco';
 import { normalizeProtectedTerms } from '@simoncodes-ca/domain';
-import { CollectionsStore } from '../collections/store/collections.store';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
+import { CollectionsStore } from '../collections/store/collections.store';
+import { PreferredTerminologyDraft, type RuleField, type RuleFieldError } from './preferred-terminology-draft';
 
 /**
  * One row of the protected-terms editor. `original` is the value as last saved —
@@ -38,13 +39,27 @@ const FILTER_THRESHOLD = 8;
 
 const compareTerms = (a: string, b: string): number => a.localeCompare(b, undefined, { sensitivity: 'base' });
 
+/** Translation token for each rule error code. */
+const RULE_ERROR_TOKENS: Record<RuleFieldError['code'], string> = {
+  empty: TRACKER_TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ERROR.EMPTY,
+  'invalid-character': TRACKER_TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ERROR.INVALIDCHARACTER,
+  'self-mapping': TRACKER_TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ERROR.SELFMAPPING,
+  duplicate: TRACKER_TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ERROR.DUPLICATEX,
+  chain: TRACKER_TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ERROR.CHAINX,
+  'contains-discouraged': TRACKER_TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ERROR.CONTAINSDISCOURAGEDX,
+  cycle: TRACKER_TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ERROR.CYCLEX,
+  'invalid-type': TRACKER_TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ERROR.INVALIDTYPE,
+};
+
 /**
- * Settings view. Currently exposes the global protected-terms list, written
- * through `PUT /api/config`. Structured so other global fields can be added
- * later without rework. Never exposes collections/locales/baseLocale editing.
+ * Settings view. Exposes the global protected-terms list and the preferred-terminology
+ * rules, both written through `PUT /api/config`. Never exposes
+ * collections/locales/baseLocale editing.
  *
  * Edits are staged: adds, renames and removals are held as pending row state and
- * only reach the API on Save, so every change is visible and reversible first.
+ * only reach the API on Save, so every change is visible and reversible first. One
+ * save bar covers both lists; a save sends only the lists that changed, so saving
+ * protected terms never rewrites a terminology file that failed to load.
  */
 @Component({
   selector: 'app-settings',
@@ -71,6 +86,18 @@ export class Settings {
 
   private readonly editInputs = viewChildren<ElementRef<HTMLInputElement>>('editInput');
   private readonly termRows = viewChildren<ElementRef<HTMLElement>>('termRow');
+  private readonly ruleInputs = viewChildren<ElementRef<HTMLInputElement>>('ruleInput');
+
+  /** Staged preferred-terminology edits. */
+  readonly terminology = new PreferredTerminologyDraft();
+  readonly RULE_ERROR_TOKENS = RULE_ERROR_TOKENS;
+  readonly preferredTerminologyFilePath = computed(() => this.store.config()?.preferredTerminologyFilePath);
+  readonly preferredTerminologyError = computed(() => this.store.config()?.preferredTerminologyError);
+  readonly preferredTerminologyWarning = computed(() => this.store.config()?.preferredTerminologyWarning);
+  /** Rules with a discouraged term; a blank row just added is not a rule yet. */
+  readonly ruleCount = computed(() => this.terminology.rulesToSave().filter((rule) => rule.discouraged).length);
+  /** Row whose discouraged input takes focus once rendered — a newly added rule, or the first invalid one. */
+  readonly #focusRuleInput = signal<string | null>(null);
 
   readonly entries = signal<TermEntry[]>([]);
   readonly addDraft = signal('');
@@ -122,6 +149,15 @@ export class Settings {
 
   readonly hasChanges = computed(() => this.changeCount() > 0);
   readonly isEmpty = computed(() => this.entries().length === 0);
+
+  /** Changes across both lists, for the page save bar. */
+  readonly totalChangeCount = computed(() => this.changeCount() + this.terminology.changeCount());
+  readonly hasAnyChanges = computed(() => this.totalChangeCount() > 0);
+  readonly showSaveBar = computed(() => !this.isEmpty() || !this.terminology.isEmpty() || this.hasAnyChanges());
+  /** Save stays enabled while terminology errors are still hidden, so clicking it can reveal them. */
+  readonly canSave = computed(
+    () => this.hasAnyChanges() && !this.store.isLoading() && !this.terminology.hasVisibleErrors(),
+  );
   readonly showFilter = computed(() => this.entries().length > FILTER_THRESHOLD);
   readonly isFiltering = computed(() => this.filter().trim().length > 0);
   readonly hasNoMatches = computed(() => !this.isEmpty() && this.isFiltering() && this.visibleEntries().length === 0);
@@ -136,8 +172,26 @@ export class Settings {
       const config = this.store.config();
       if (!config) return;
       untracked(() => {
-        if (!this.#seeded() || this.#awaitingSave()) this.#seed(config.protectedTerms ?? []);
+        if (!this.#seeded() || this.#awaitingSave()) {
+          this.#seed(config.protectedTerms ?? []);
+          this.terminology.seed(config.preferredTerminology ?? []);
+        }
       });
+    });
+
+    // A save rejected with per-row errors maps them back onto the rows that were sent.
+    effect(() => {
+      const errors = this.store.configRuleErrors();
+      if (errors.length === 0) return;
+      untracked(() => this.terminology.applyServerErrors(errors));
+    });
+
+    effect(() => {
+      const target = this.#focusRuleInput();
+      const input = this.ruleInputs().find((ref) => ref.nativeElement.id === target);
+      if (target === null || !input) return;
+      input.nativeElement.focus();
+      this.#focusRuleInput.set(null);
     });
 
     // A failed save never refetches, so release the save latch on the error instead.
@@ -287,19 +341,60 @@ export class Settings {
 
   revertAll(): void {
     this.#seed(this.store.config()?.protectedTerms ?? []);
+    this.terminology.revert();
     this.filter.set('');
+  }
+
+  /** DOM id of a rule input, shared by its label wiring, its error and focus requests. */
+  ruleInputId(rowId: number, field: RuleField): string {
+    return `settings-rule-${rowId}-${field}`;
+  }
+
+  ruleErrorId(rowId: number, field: RuleField): string {
+    return `${this.ruleInputId(rowId, field)}-error`;
+  }
+
+  addRule(): void {
+    const id = this.terminology.addRow();
+    this.#focusRuleInput.set(this.ruleInputId(id, 'discouraged'));
+  }
+
+  onRuleInput(rowId: number, field: RuleField, value: string): void {
+    this.terminology.updateField(rowId, field, value);
   }
 
   clearFilter(): void {
     this.filter.set('');
   }
 
+  /**
+   * Sends every changed list in one request. Invalid terminology blocks the whole save —
+   * nothing is half-applied — and reveals errors still hidden on untouched fields.
+   */
   save(): void {
-    if (!this.hasChanges()) return;
+    if (!this.hasAnyChanges()) return;
+    if (this.terminology.hasChanges() && this.terminology.hasErrors()) {
+      this.terminology.revealErrors();
+      this.#focusFirstInvalidRule();
+      return;
+    }
     this.cancelEdit();
     this.#awaitingSave.set(true);
     // Errors from a failed save surface via the store error signal (rendered in the template).
-    this.store.updateGlobalConfig({ protectedTerms: this.termsToSave() });
+    this.store.updateGlobalConfig({
+      ...(this.hasChanges() && { protectedTerms: this.termsToSave() }),
+      ...(this.terminology.hasChanges() && { preferredTerminology: this.terminology.beginSave() }),
+    });
+  }
+
+  #focusFirstInvalidRule(): void {
+    for (const view of this.terminology.rowViews()) {
+      const field = (['discouraged', 'preferred', 'reason'] as const).find((candidate) => view.errors[candidate]);
+      if (field) {
+        this.#focusRuleInput.set(this.ruleInputId(view.row.id, field));
+        return;
+      }
+    }
   }
 
   #patch(id: number, patch: Partial<Omit<TermEntry, 'id'>>): void {

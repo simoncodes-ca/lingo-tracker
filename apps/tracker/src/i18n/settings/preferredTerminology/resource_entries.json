@@ -1,0 +1,182 @@
+{
+  "title": {
+    "source": "Preferred Terminology",
+    "comment": "Settings section heading for the list of discouraged terms and their preferred replacements",
+    "tags": ["settings"],
+    "es": "Preferred Terminology",
+    "fr-ca": "Preferred Terminology",
+    "ru": "Preferred Terminology",
+    "ja": "Preferred Terminology",
+    "de": "Preferred Terminology"
+  },
+  "hint": {
+    "source": "Base-locale text that uses a discouraged term gets a suggestion to use the preferred term instead. It is advice only: nothing is blocked.",
+    "comment": "Explanatory note under the Preferred Terminology heading in Settings",
+    "tags": ["settings"],
+    "es": "Base-locale text that uses a discouraged term gets a suggestion to use the preferred term instead. It is advice only: nothing is blocked.",
+    "fr-ca": "Base-locale text that uses a discouraged term gets a suggestion to use the preferred term instead. It is advice only: nothing is blocked.",
+    "ru": "Base-locale text that uses a discouraged term gets a suggestion to use the preferred term instead. It is advice only: nothing is blocked.",
+    "ja": "Base-locale text that uses a discouraged term gets a suggestion to use the preferred term instead. It is advice only: nothing is blocked.",
+    "de": "Base-locale text that uses a discouraged term gets a suggestion to use the preferred term instead. It is advice only: nothing is blocked."
+  },
+  "countX": {
+    "source": "{ count, plural, =0 {No rules} =1 {1 rule} other {{count} rules} }",
+    "comment": "Badge next to the Preferred Terminology heading showing how many rules a save would write",
+    "tags": ["settings"],
+    "es": "{ count, plural, =0 {No rules} =1 {1 rule} other {{count} rules} }",
+    "fr-ca": "{ count, plural, =0 {No rules} =1 {1 rule} other {{count} rules} }",
+    "ru": "{ count, plural, =0 {No rules} =1 {1 rule} other {{count} rules} }",
+    "ja": "{ count, plural, =0 {No rules} =1 {1 rule} other {{count} rules} }",
+    "de": "{ count, plural, =0 {No rules} =1 {1 rule} other {{count} rules} }"
+  },
+  "discouragedColumn": {
+    "source": "Discouraged term",
+    "comment": "Column header above the discouraged-term inputs (the old term authors should stop using)",
+    "tags": ["settings"],
+    "es": "Discouraged term",
+    "fr-ca": "Discouraged term",
+    "ru": "Discouraged term",
+    "ja": "Discouraged term",
+    "de": "Discouraged term"
+  },
+  "preferredColumn": {
+    "source": "Preferred term",
+    "comment": "Column header above the preferred-term inputs (the term to use instead)",
+    "tags": ["settings"],
+    "es": "Preferred term",
+    "fr-ca": "Preferred term",
+    "ru": "Preferred term",
+    "ja": "Preferred term",
+    "de": "Preferred term"
+  },
+  "reasonColumn": {
+    "source": "Reason (optional)",
+    "comment": "Column header above the optional reason inputs explaining why a term is discouraged",
+    "tags": ["settings"],
+    "es": "Reason (optional)",
+    "fr-ca": "Reason (optional)",
+    "ru": "Reason (optional)",
+    "ja": "Reason (optional)",
+    "de": "Reason (optional)"
+  },
+  "reasonPlaceholder": {
+    "source": "Why the change?",
+    "comment": "Placeholder in the optional reason input of a preferred terminology rule",
+    "tags": ["settings"],
+    "es": "Why the change?",
+    "fr-ca": "Why the change?",
+    "ru": "Why the change?",
+    "ja": "Why the change?",
+    "de": "Why the change?"
+  },
+  "discouragedAriaX": {
+    "source": "Discouraged term, rule {row}",
+    "comment": "Screen-reader label for the discouraged-term input of rule number {{ row }}",
+    "tags": ["settings"],
+    "es": "Discouraged term, rule {row}",
+    "fr-ca": "Discouraged term, rule {row}",
+    "ru": "Discouraged term, rule {row}",
+    "ja": "Discouraged term, rule {row}",
+    "de": "Discouraged term, rule {row}"
+  },
+  "preferredAriaX": {
+    "source": "Preferred term, rule {row}",
+    "comment": "Screen-reader label for the preferred-term input of rule number {{ row }}",
+    "tags": ["settings"],
+    "es": "Preferred term, rule {row}",
+    "fr-ca": "Preferred term, rule {row}",
+    "ru": "Preferred term, rule {row}",
+    "ja": "Preferred term, rule {row}",
+    "de": "Preferred term, rule {row}"
+  },
+  "reasonAriaX": {
+    "source": "Reason, rule {row}",
+    "comment": "Screen-reader label for the optional reason input of rule number {{ row }}",
+    "tags": ["settings"],
+    "es": "Reason, rule {row}",
+    "fr-ca": "Reason, rule {row}",
+    "ru": "Reason, rule {row}",
+    "ja": "Reason, rule {row}",
+    "de": "Reason, rule {row}"
+  },
+  "addButton": {
+    "source": "Add rule",
+    "comment": "Button that appends a new blank preferred terminology rule row",
+    "tags": ["settings"],
+    "es": "Add rule",
+    "fr-ca": "Add rule",
+    "ru": "Add rule",
+    "ja": "Add rule",
+    "de": "Add rule"
+  },
+  "removeAriaX": {
+    "source": "Remove rule {term}",
+    "comment": "Screen-reader label for the button removing the rule whose discouraged term is {{ term }}",
+    "tags": ["settings"],
+    "es": "Remove rule {term}",
+    "fr-ca": "Remove rule {term}",
+    "ru": "Remove rule {term}",
+    "ja": "Remove rule {term}",
+    "de": "Remove rule {term}"
+  },
+  "removeEmptyAriaX": {
+    "source": "Remove empty rule {row}",
+    "comment": "Screen-reader label for the button removing rule number {{ row }}, which has no discouraged term yet",
+    "tags": ["settings"],
+    "es": "Remove empty rule {row}",
+    "fr-ca": "Remove empty rule {row}",
+    "ru": "Remove empty rule {row}",
+    "ja": "Remove empty rule {row}",
+    "de": "Remove empty rule {row}"
+  },
+  "listAriaLabel": {
+    "source": "Preferred terminology rules",
+    "comment": "Screen-reader label for the list of preferred terminology rules",
+    "tags": ["settings"],
+    "es": "Preferred terminology rules",
+    "fr-ca": "Preferred terminology rules",
+    "ru": "Preferred terminology rules",
+    "ja": "Preferred terminology rules",
+    "de": "Preferred terminology rules"
+  },
+  "emptyTitle": {
+    "source": "No preferred terminology yet",
+    "comment": "Empty-state title when no preferred terminology rules exist",
+    "tags": ["settings"],
+    "es": "No preferred terminology yet",
+    "fr-ca": "No preferred terminology yet",
+    "ru": "No preferred terminology yet",
+    "ja": "No preferred terminology yet",
+    "de": "No preferred terminology yet"
+  },
+  "emptyMessage": {
+    "source": "Add a term your product no longer uses and the term that replaced it. Authors get a suggestion whenever base-locale text uses the old one.",
+    "comment": "Empty-state message when no preferred terminology rules exist",
+    "tags": ["settings"],
+    "es": "Add a term your product no longer uses and the term that replaced it. Authors get a suggestion whenever base-locale text uses the old one.",
+    "fr-ca": "Add a term your product no longer uses and the term that replaced it. Authors get a suggestion whenever base-locale text uses the old one.",
+    "ru": "Add a term your product no longer uses and the term that replaced it. Authors get a suggestion whenever base-locale text uses the old one.",
+    "ja": "Add a term your product no longer uses and the term that replaced it. Authors get a suggestion whenever base-locale text uses the old one.",
+    "de": "Add a term your product no longer uses and the term that replaced it. Authors get a suggestion whenever base-locale text uses the old one."
+  },
+  "loadError": {
+    "source": "The preferred terminology file could not be read, so no rules are in force. Saving replaces it with the rules below.",
+    "comment": "Error banner when the preferred terminology file is broken; the raw error detail is shown beneath it",
+    "tags": ["settings"],
+    "es": "The preferred terminology file could not be read, so no rules are in force. Saving replaces it with the rules below.",
+    "fr-ca": "The preferred terminology file could not be read, so no rules are in force. Saving replaces it with the rules below.",
+    "ru": "The preferred terminology file could not be read, so no rules are in force. Saving replaces it with the rules below.",
+    "ja": "The preferred terminology file could not be read, so no rules are in force. Saving replaces it with the rules below.",
+    "de": "The preferred terminology file could not be read, so no rules are in force. Saving replaces it with the rules below."
+  },
+  "missingFile": {
+    "source": "The configured preferred terminology file does not exist yet. Saving creates it.",
+    "comment": "Note when the config points at a preferred terminology file that does not exist",
+    "tags": ["settings"],
+    "es": "The configured preferred terminology file does not exist yet. Saving creates it.",
+    "fr-ca": "The configured preferred terminology file does not exist yet. Saving creates it.",
+    "ru": "The configured preferred terminology file does not exist yet. Saving creates it.",
+    "ja": "The configured preferred terminology file does not exist yet. Saving creates it.",
+    "de": "The configured preferred terminology file does not exist yet. Saving creates it."
+  }
+}

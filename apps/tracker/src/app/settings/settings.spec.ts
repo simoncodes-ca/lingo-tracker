@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
-import type { LingoTrackerConfigDto } from '@simoncodes-ca/data-transfer';
+import type { LingoTrackerConfigDto, PreferredTermRuleErrorDto } from '@simoncodes-ca/data-transfer';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTranslocoTestingModule } from '../../testing/transloco-testing.module';
 import { CollectionsStore } from '../collections/store/collections.store';
@@ -28,6 +28,7 @@ describe('Settings', () => {
     config: signal(config),
     error: signal(error),
     isLoading: signal(false),
+    configRuleErrors: signal<PreferredTermRuleErrorDto[]>([]),
     updateGlobalConfig: updateGlobalConfigMock,
   });
 
@@ -355,6 +356,7 @@ describe('Settings', () => {
         config,
         error: signal(null),
         isLoading: signal(false),
+        configRuleErrors: signal<PreferredTermRuleErrorDto[]>([]),
         updateGlobalConfig: updateGlobalConfigMock,
       });
 
@@ -372,6 +374,7 @@ describe('Settings', () => {
         config,
         error: signal(null),
         isLoading: signal(false),
+        configRuleErrors: signal<PreferredTermRuleErrorDto[]>([]),
         updateGlobalConfig: updateGlobalConfigMock,
       });
 
@@ -383,6 +386,361 @@ describe('Settings', () => {
 
       expect(component.hasChanges()).toBe(false);
       expect(component.termsToSave()).toEqual(['C++', 'iPhone', 'Node.js']);
+    });
+  });
+
+  describe('preferred terminology', () => {
+    const TERMINOLOGY_PATH = '/project/.lingo-tracker-preferred-terminology.json';
+    const terminologyConfig: LingoTrackerConfigDto = {
+      ...baseConfig,
+      preferredTerminology: [
+        { discouraged: 'E-mail', preferred: 'email' },
+        { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Current planning term.' },
+      ],
+      preferredTerminologyFilePath: TERMINOLOGY_PATH,
+    };
+
+    const host = (): HTMLElement => fixture.nativeElement;
+    const ruleRows = () => Array.from(host().querySelectorAll<HTMLElement>('li.rule'));
+    const ruleInput = (row: number, field: 'discouraged' | 'preferred' | 'reason'): HTMLInputElement => {
+      const input =
+        ruleRows()[row]?.querySelectorAll<HTMLInputElement>('input.rule-input')[
+          ['discouraged', 'preferred', 'reason'].indexOf(field)
+        ];
+      expect(input).toBeDefined();
+      return input as HTMLInputElement;
+    };
+    const type = (row: number, field: 'discouraged' | 'preferred' | 'reason', value: string) => {
+      const input = ruleInput(row, field);
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      spectator.detectChanges();
+    };
+    const blur = (row: number, field: 'discouraged' | 'preferred' | 'reason') => {
+      ruleInput(row, field).dispatchEvent(new Event('blur'));
+      spectator.detectChanges();
+    };
+    const errorFor = (row: number, field: 'discouraged' | 'preferred' | 'reason') => {
+      const id = ruleInput(row, field).getAttribute('aria-describedby');
+      return id ? (host().querySelector(`#${id}`)?.textContent?.trim() ?? null) : null;
+    };
+    const saveButton = (): HTMLButtonElement => {
+      const button = host().querySelector<HTMLButtonElement>('button.settings-save');
+      expect(button).not.toBeNull();
+      return button as HTMLButtonElement;
+    };
+    const clickAdd = () => {
+      host().querySelector<HTMLButtonElement>('button.rules-add')?.click();
+      spectator.detectChanges();
+      spectator.flushEffects();
+    };
+
+    it('renders one row per rule with the backing file path', () => {
+      render(terminologyConfig);
+
+      expect(ruleRows()).toHaveLength(2);
+      expect(ruleInput(0, 'discouraged').value).toBe('E-mail');
+      expect(ruleInput(1, 'preferred').value).toBe('Investment');
+      expect(ruleInput(1, 'reason').value).toBe('Current planning term.');
+      expect(host().querySelector(`.rules [title="${TERMINOLOGY_PATH}"]`)).not.toBeNull();
+    });
+
+    it('labels inputs per row and names the term on the remove button', () => {
+      render(terminologyConfig);
+
+      expect(ruleInput(1, 'discouraged').getAttribute('aria-label')).toBe(
+        'settings.preferredTerminology.discouragedAriaX',
+      );
+      const remove = ruleRows()[1]?.querySelector('button.rule-remove');
+      expect(remove?.getAttribute('aria-label')).toBe('settings.preferredTerminology.removeAriaX');
+    });
+
+    it('shows the empty state when there are no rules', () => {
+      render(baseConfig);
+
+      expect(ruleRows()).toHaveLength(0);
+      expect(host().textContent).toContain('settings.preferredTerminology.emptyTitle');
+    });
+
+    it('adds a blank row and focuses its discouraged input', () => {
+      render(terminologyConfig);
+
+      clickAdd();
+
+      expect(ruleRows()).toHaveLength(3);
+      expect(document.activeElement).toBe(ruleInput(2, 'discouraged'));
+      expect(component.terminology.changeCount()).toBe(1);
+    });
+
+    it('does not show "required" on a blank new row until a field is touched', () => {
+      render(terminologyConfig);
+      clickAdd();
+
+      expect(errorFor(2, 'discouraged')).toBeNull();
+      expect(errorFor(2, 'preferred')).toBeNull();
+
+      type(2, 'discouraged', 'Cost');
+      expect(errorFor(2, 'preferred')).toBeNull();
+
+      blur(2, 'preferred');
+      expect(errorFor(2, 'preferred')).toBe('settings.preferredTerminology.error.empty');
+    });
+
+    it('edits a rule and counts it as a change', () => {
+      render(terminologyConfig);
+
+      type(1, 'preferred', 'Capital');
+
+      expect(component.terminology.rulesToSave()[1]).toEqual({
+        discouraged: 'Expenditure',
+        preferred: 'Capital',
+        reason: 'Current planning term.',
+      });
+      expect(component.terminology.changeCount()).toBe(1);
+      expect(ruleRows()[1]?.getAttribute('data-status')).toBe('edited');
+    });
+
+    it('removes a rule', () => {
+      render(terminologyConfig);
+
+      (ruleRows()[0]?.querySelector('button.rule-remove') as HTMLButtonElement).click();
+      spectator.detectChanges();
+
+      expect(ruleRows()).toHaveLength(1);
+      expect(component.terminology.rulesToSave()).toEqual([
+        { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Current planning term.' },
+      ]);
+      expect(component.terminology.changeCount()).toBe(1);
+    });
+
+    it('flags a duplicate discouraged term inline', () => {
+      render(terminologyConfig);
+      clickAdd();
+
+      type(2, 'preferred', 'Spend');
+      type(2, 'discouraged', 'expenditure');
+
+      expect(errorFor(2, 'discouraged')).toBe('settings.preferredTerminology.error.duplicateX');
+      expect(ruleInput(2, 'discouraged').getAttribute('aria-invalid')).toBe('true');
+    });
+
+    it('flags a chain on the preferred term', () => {
+      render(terminologyConfig);
+      clickAdd();
+
+      type(2, 'discouraged', 'Spend');
+      type(2, 'preferred', 'Expenditure');
+
+      expect(errorFor(2, 'preferred')).toBe('settings.preferredTerminology.error.chainX');
+    });
+
+    it('flags a preferred term containing a discouraged term', () => {
+      render(terminologyConfig);
+
+      type(1, 'preferred', 'Capital expenditure');
+
+      expect(errorFor(1, 'preferred')).toBe('settings.preferredTerminology.error.containsDiscouragedX');
+    });
+
+    it('flags an existing rule when a new row turns it into a chain', () => {
+      render(terminologyConfig);
+      clickAdd();
+
+      type(2, 'discouraged', 'Investment');
+      type(2, 'preferred', 'Capital');
+
+      expect(errorFor(1, 'preferred')).toBe('settings.preferredTerminology.error.chainX');
+    });
+
+    it('describes errors with the terms involved', () => {
+      render(terminologyConfig);
+      clickAdd();
+      type(2, 'discouraged', 'Spend');
+      type(2, 'preferred', 'Expenditure');
+
+      expect(component.terminology.rowViews()[2]?.errors.preferred).toEqual({
+        code: 'chain',
+        params: { term: 'Expenditure', preferred: 'Investment' },
+      });
+    });
+
+    it('keeps Save disabled until something changes', () => {
+      render(terminologyConfig);
+
+      expect(saveButton().disabled).toBe(true);
+
+      type(0, 'reason', 'House style.');
+
+      expect(saveButton().disabled).toBe(false);
+    });
+
+    it('disables Save while an error is showing', () => {
+      render(terminologyConfig);
+
+      type(1, 'preferred', 'expenditure');
+
+      expect(saveButton().disabled).toBe(true);
+    });
+
+    it('reveals hidden errors instead of saving a blank new row', () => {
+      render(terminologyConfig);
+      clickAdd();
+      expect(saveButton().disabled).toBe(false);
+
+      saveButton().click();
+      spectator.detectChanges();
+      spectator.flushEffects();
+
+      expect(updateGlobalConfigMock).not.toHaveBeenCalled();
+      expect(errorFor(2, 'discouraged')).toBe('settings.preferredTerminology.error.empty');
+      expect(errorFor(2, 'preferred')).toBe('settings.preferredTerminology.error.empty');
+      expect(saveButton().disabled).toBe(true);
+      expect(document.activeElement).toBe(ruleInput(2, 'discouraged'));
+    });
+
+    it('saves the normalized list and leaves protected terms out when they did not change', () => {
+      render(terminologyConfig);
+      clickAdd();
+      type(2, 'discouraged', '  Cost ');
+      type(2, 'preferred', 'Price');
+      type(2, 'reason', '   ');
+
+      saveButton().click();
+
+      expect(updateGlobalConfigMock).toHaveBeenCalledWith({
+        preferredTerminology: [
+          { discouraged: 'E-mail', preferred: 'email' },
+          { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Current planning term.' },
+          { discouraged: 'Cost', preferred: 'Price' },
+        ],
+      });
+    });
+
+    it('sends both lists in one request when both changed', () => {
+      render(terminologyConfig);
+      component.onAddDraftChange('C++');
+      component.addTerm();
+      type(0, 'preferred', 'Email');
+
+      component.save();
+
+      expect(updateGlobalConfigMock).toHaveBeenCalledWith({
+        protectedTerms: ['C++', 'iPhone', 'Node.js'],
+        preferredTerminology: [
+          { discouraged: 'E-mail', preferred: 'Email' },
+          { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Current planning term.' },
+        ],
+      });
+    });
+
+    it('re-seeds rows from the reloaded config after a save, in the server order', () => {
+      const config = signal<LingoTrackerConfigDto>(terminologyConfig);
+      renderStore({
+        config,
+        error: signal(null),
+        isLoading: signal(false),
+        configRuleErrors: signal<PreferredTermRuleErrorDto[]>([]),
+        updateGlobalConfig: updateGlobalConfigMock,
+      });
+      clickAdd();
+      type(2, 'discouraged', 'Cost');
+      type(2, 'preferred', 'Price');
+
+      component.save();
+      config.set({
+        ...terminologyConfig,
+        preferredTerminology: [
+          { discouraged: 'Cost', preferred: 'Price' },
+          ...(terminologyConfig.preferredTerminology ?? []),
+        ],
+      });
+      spectator.detectChanges();
+      spectator.flushEffects();
+      spectator.detectChanges();
+
+      expect(ruleRows().map((row) => row.querySelector<HTMLInputElement>('input')?.value)).toEqual([
+        'Cost',
+        'E-mail',
+        'Expenditure',
+      ]);
+      expect(component.terminology.hasChanges()).toBe(false);
+    });
+
+    it('maps server errors onto the submitted rows and clears one when its field is edited', () => {
+      const configRuleErrors = signal<PreferredTermRuleErrorDto[]>([]);
+      renderStore({
+        config: signal<LingoTrackerConfigDto | null>(terminologyConfig),
+        error: signal<string | null>(null),
+        isLoading: signal(false),
+        configRuleErrors,
+        updateGlobalConfig: updateGlobalConfigMock,
+      });
+      type(1, 'reason', 'Changed.');
+      component.save();
+
+      configRuleErrors.set([{ index: 1, field: 'preferred', code: 'self-mapping', message: 'server says no' }]);
+      spectator.flushEffects();
+      spectator.detectChanges();
+
+      expect(errorFor(1, 'preferred')).toBe('settings.preferredTerminology.error.selfMapping');
+      expect(errorFor(0, 'preferred')).toBeNull();
+
+      type(1, 'preferred', 'Capital');
+
+      expect(errorFor(1, 'preferred')).toBeNull();
+    });
+
+    it('shows a banner when the terminology file failed to load, and still allows saving a fix', () => {
+      render({
+        ...baseConfig,
+        preferredTerminologyFilePath: TERMINOLOGY_PATH,
+        preferredTerminologyError: 'Preferred terminology file is not valid JSON',
+      });
+
+      const banner = host().querySelector('.rules-load-error');
+      expect(banner?.getAttribute('role')).toBe('alert');
+      expect(banner?.textContent).toContain('settings.preferredTerminology.loadError');
+      expect(banner?.textContent).toContain('Preferred terminology file is not valid JSON');
+      expect(host().textContent).not.toContain('settings.preferredTerminology.emptyTitle');
+
+      clickAdd();
+      type(0, 'discouraged', 'Cost');
+      type(0, 'preferred', 'Price');
+      saveButton().click();
+
+      expect(updateGlobalConfigMock).toHaveBeenCalledWith({
+        preferredTerminology: [{ discouraged: 'Cost', preferred: 'Price' }],
+      });
+    });
+
+    it('does not rewrite a broken terminology file when only protected terms are saved', () => {
+      render({ ...baseConfig, preferredTerminologyError: 'broken' });
+      component.onAddDraftChange('C++');
+      component.addTerm();
+
+      component.save();
+
+      expect(updateGlobalConfigMock).toHaveBeenCalledWith({ protectedTerms: ['C++', 'iPhone', 'Node.js'] });
+    });
+
+    it('notes a missing explicit file without an error banner', () => {
+      render({ ...baseConfig, preferredTerminologyWarning: 'Preferred terminology file not found' });
+
+      expect(host().querySelector('.rules-load-error')).toBeNull();
+      expect(host().textContent).toContain('settings.preferredTerminology.missingFile');
+    });
+
+    it('reverts terminology edits with Revert all', () => {
+      render(terminologyConfig);
+      type(0, 'preferred', 'Email');
+      clickAdd();
+
+      component.revertAll();
+      spectator.detectChanges();
+
+      expect(ruleRows()).toHaveLength(2);
+      expect(ruleInput(0, 'preferred').value).toBe('email');
+      expect(component.hasAnyChanges()).toBe(false);
     });
   });
 });
