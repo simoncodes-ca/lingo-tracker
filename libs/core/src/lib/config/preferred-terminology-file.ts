@@ -23,7 +23,7 @@ export interface LoadPreferredTerminologyResult {
   rules: PreferredTermRule[];
   /** Absolute path of the file, whether or not it exists yet. */
   filePath: string;
-  /** Set when the file exists but cannot be used: malformed JSON, wrong shape, or invalid rules. */
+  /** Set when the file exists but cannot be used: unreadable, malformed JSON, wrong shape, or invalid rules. */
   error?: string;
   /** Set when an explicitly configured file does not exist. */
   warning?: string;
@@ -94,7 +94,14 @@ export function loadPreferredTerminology(
 ): LoadPreferredTerminologyResult {
   const filePath = resolvePreferredTerminologyFilePath(config, cwd);
 
-  const stamp = readStamp(filePath);
+  let stamp: FileStamp | undefined;
+  try {
+    stamp = readStamp(filePath);
+  } catch (error) {
+    cache.delete(filePath);
+    return { rules: [], filePath, error: unreadableFileError(filePath, error) };
+  }
+
   const cached = cache.get(filePath);
   if (cached) {
     if (stamp && sameStamp(cached.stamp, stamp)) {
@@ -114,12 +121,22 @@ export function loadPreferredTerminology(
     return { rules: [], filePath };
   }
 
+  let contents: string;
+  try {
+    contents = readFileSync(filePath, 'utf8');
+  } catch (error) {
+    return { rules: [], filePath, error: unreadableFileError(filePath, error) };
+  }
+
   let parsed: unknown;
   try {
-    parsed = JSON.parse(readFileSync(filePath, 'utf8'));
+    parsed = JSON.parse(contents);
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    return { rules: [], filePath, error: `Preferred terminology file is not valid JSON: ${filePath} (${detail})` };
+    return {
+      rules: [],
+      filePath,
+      error: `Preferred terminology file is not valid JSON: ${filePath} (${errorDetail(error)})`,
+    };
   }
 
   if (!Array.isArray(parsed)) {
@@ -168,7 +185,13 @@ export function writePreferredTerminology(filePath: string, rules: readonly Pref
 
   const sorted = sortPreferredTermRules(normalizePreferredTermRules(rules));
   writeFileSync(filePath, `${JSON.stringify(sorted, null, 2)}\n`, 'utf8');
-  const stamp = readStamp(filePath);
+  // The write succeeded; failing to stat it afterwards only costs the cache entry.
+  let stamp: FileStamp | undefined;
+  try {
+    stamp = readStamp(filePath);
+  } catch {
+    stamp = undefined;
+  }
   if (stamp) {
     cache.set(filePath, { rules: sorted, stamp });
   } else {
@@ -181,10 +204,30 @@ function formatRuleErrors(errors: readonly PreferredTermRuleError[]): string {
   return errors.map((error) => `row ${error.index + 1} ${error.field}: ${error.message}`).join('; ');
 }
 
-/** `mtimeMs` and `size` of the file, or `undefined` when it does not exist. */
+function unreadableFileError(filePath: string, error: unknown): string {
+  return `Preferred terminology file cannot be read: ${filePath} (${errorDetail(error)})`;
+}
+
+function errorDetail(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * `mtimeMs` and `size` of the file, or `undefined` when it does not exist. Throws on any
+ * other stat failure (EACCES, ENOTDIR, ELOOP, ...); a pointer through a regular file is a
+ * misconfiguration, not a missing file.
+ */
 function readStamp(filePath: string): FileStamp | undefined {
-  const stats = statSync(filePath, { throwIfNoEntry: false });
-  return stats ? { mtimeMs: stats.mtimeMs, size: stats.size } : undefined;
+  // Not `throwIfNoEntry: false`: Node folds ENOTDIR into "no entry" there too.
+  try {
+    const stats = statSync(filePath);
+    return { mtimeMs: stats.mtimeMs, size: stats.size };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return undefined;
+    }
+    throw error;
+  }
 }
 
 function sameStamp(a: FileStamp, b: FileStamp): boolean {

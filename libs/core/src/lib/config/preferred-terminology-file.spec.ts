@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, statSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, unlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -110,6 +110,30 @@ describe('preferred-terminology-file', () => {
       expect(result.rules).toEqual([]);
       expect(result.error).toContain('not valid JSON');
       expect(result.error).toContain(filePath);
+    });
+
+    it('reports a pointer through a regular file as an unreadable file, without throwing', () => {
+      write('somefile.json', '[]');
+      const config = baseConfig({ preferredTerminologyFile: 'somefile.json/rules.json' });
+
+      const result = loadPreferredTerminology(config, cwd);
+
+      expect(result.rules).toEqual([]);
+      expect(result.warning).toBeUndefined();
+      expect(result.error).toContain('cannot be read');
+      expect(result.error).toContain(join(cwd, 'somefile.json/rules.json'));
+      expect(result.error).toContain('ENOTDIR');
+    });
+
+    it('reports a directory at the file path as an unreadable file, not as invalid JSON', () => {
+      mkdirSync(join(cwd, DEFAULT_PREFERRED_TERMINOLOGY_FILENAME));
+
+      const result = loadPreferredTerminology(baseConfig(), cwd);
+
+      expect(result.rules).toEqual([]);
+      expect(result.error).toContain('cannot be read');
+      expect(result.error).not.toContain('not valid JSON');
+      expect(result.error).toContain('EISDIR');
     });
 
     it('reports a non-array payload as an error', () => {
