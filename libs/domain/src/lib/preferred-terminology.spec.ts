@@ -269,6 +269,30 @@ describe('extractVisibleTextRanges', () => {
     ]);
   });
 
+  it('masks a tag whose quoted attribute value contains ">"', () => {
+    expect(visibleText('<a title="x > Expenditure">Text</a>')).toEqual(['Text']);
+    expect(visibleText("<a title='x > Expenditure'>Text</a>")).toEqual(['Text']);
+  });
+
+  it('masks tags whose name starts with a non-ASCII letter, "_" or ":"', () => {
+    expect(visibleText('<étiquette title="Expenditure">Text</étiquette>')).toEqual(['Text']);
+    expect(visibleText('<_x a="Expenditure">A</_x><:y b="Expenditure">B</:y>')).toEqual(['A', 'B']);
+  });
+
+  it('keeps a "<" that does not open a tag visible', () => {
+    expect(visibleText('a < b')).toEqual(['a < b']);
+    expect(visibleText('5 <3 and 2 > 1')).toEqual(['5 <3 and 2 > 1']);
+  });
+
+  it('does not let an unclosed tag or quote swallow the rest of the value', () => {
+    expect(visibleText('<b title="Expenditure Text <i>more</i>')).toEqual(['<b title="Expenditure Text ', 'more']);
+    expect(visibleText('<b Expenditure text')).toEqual(['<b Expenditure text']);
+  });
+
+  it('ignores apostrophes in text outside tags', () => {
+    expect(visibleText("It's <b>Expenditure</b>, isn't it")).toEqual(["It's ", 'Expenditure', ", isn't it"]);
+  });
+
   it('falls back to masking braces and tags when ICU parsing fails', () => {
     expect(visibleText('Broken {count, plural, one {x} and <b>more</b> text')).toEqual(['Broken ']);
     expect(visibleText('Oops {first name} then <i>text</i>')).toEqual(['Oops ', ' then ', 'text']);

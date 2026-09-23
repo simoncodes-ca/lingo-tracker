@@ -281,8 +281,14 @@ function buildPreferredTermRegex(term: string): RegExp {
   return new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(term)}(?![\\p{L}\\p{N}_])`, 'giu');
 }
 
-/** HTML/XML tags (attributes included) and comments. */
-const TAG_PATTERN = /<!--[\s\S]*?-->|<\/?[A-Za-z][^<>]*>/g;
+/**
+ * HTML/XML tags (attributes included) and comments. A tag name starts with a letter in
+ * any script, `_` or `:`, so `a < b` and `5 <3` stay text. Quoted attribute values are
+ * scanned through their closing quote, so a `>` inside one does not end the tag. No part
+ * of a tag, quoted values included, may contain `<`, so an unclosed tag or quote never
+ * swallows the markup after it.
+ */
+const TAG_PATTERN = /<!--[\s\S]*?-->|<\/?[\p{L}_:][^<>"']*(?:(?:"[^"<]*"|'[^'<]*')[^<>"']*)*>/gu;
 
 /**
  * Returns the spans of `value` a reader sees, as offsets into the raw value, sorted and
