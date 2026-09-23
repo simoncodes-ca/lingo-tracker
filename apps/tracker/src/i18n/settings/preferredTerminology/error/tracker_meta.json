@@ -29,36 +29,6 @@
       "status": "new"
     }
   },
-  "invalidCharacter": {
-    "en": {
-      "checksum": "eac0c8a97f4aeaab52231c20d5ca833c"
-    },
-    "es": {
-      "checksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "baseChecksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "status": "new"
-    },
-    "fr-ca": {
-      "checksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "baseChecksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "status": "new"
-    },
-    "ru": {
-      "checksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "baseChecksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "status": "new"
-    },
-    "ja": {
-      "checksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "baseChecksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "status": "new"
-    },
-    "de": {
-      "checksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "baseChecksum": "eac0c8a97f4aeaab52231c20d5ca833c",
-      "status": "new"
-    }
-  },
   "selfMapping": {
     "en": {
       "checksum": "9de9f90b231bb1669f774cce8c22f841"
@@ -236,6 +206,36 @@
     "de": {
       "checksum": "598cba41c17504cef57c0a1224d47c94",
       "baseChecksum": "598cba41c17504cef57c0a1224d47c94",
+      "status": "new"
+    }
+  },
+  "invalidCharacter": {
+    "en": {
+      "checksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c"
+    },
+    "es": {
+      "checksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
+      "baseChecksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
+      "status": "new"
+    },
+    "fr-ca": {
+      "checksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
+      "baseChecksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
+      "status": "new"
+    },
+    "ru": {
+      "checksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
+      "baseChecksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
+      "status": "new"
+    },
+    "ja": {
+      "checksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
+      "baseChecksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
+      "status": "new"
+    },
+    "de": {
+      "checksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
+      "baseChecksum": "8e1b8cc8fe4fd447eba9e2886eb42f1c",
       "status": "new"
     }
   }

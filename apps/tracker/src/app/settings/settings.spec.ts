@@ -1,9 +1,13 @@
 import { signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideTranslocoMessageformat } from '@jsverse/transloco-messageformat';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
 import type { LingoTrackerConfigDto, PreferredTermRuleErrorDto } from '@simoncodes-ca/data-transfer';
+import { icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import ruleErrorEntries from '../../i18n/settings/preferredTerminology/error/resource_entries.json';
+import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
 import { getTranslocoTestingModule } from '../../testing/transloco-testing.module';
 import { CollectionsStore } from '../collections/store/collections.store';
 import { Settings } from './settings';
@@ -741,6 +745,51 @@ describe('Settings', () => {
       expect(ruleRows()).toHaveLength(2);
       expect(ruleInput(0, 'preferred').value).toBe('email');
       expect(component.hasAnyChanges()).toBe(false);
+    });
+
+    describe('rule error messages', () => {
+      /** The app renders through the messageformat transpiler, so every stored value must be valid ICU. */
+      it('stores every rule error as valid ICU in every locale', () => {
+        for (const [key, entry] of Object.entries(ruleErrorEntries)) {
+          for (const [field, value] of Object.entries(entry)) {
+            if (field === 'comment' || field === 'tags') continue;
+            expect(validateICUSyntax(value as string), `${key} (${field}): ${value}`).toBe(true);
+          }
+        }
+      });
+
+      const createWithMessageformat = createComponentFactory({
+        component: Settings,
+        imports: [
+          NoopAnimationsModule,
+          getTranslocoTestingModule({
+            langs: {
+              en: {
+                // The bundled form, as `lingo-tracker bundle` writes it.
+                [TRACKER_TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ERROR.INVALIDCHARACTER]: icuToTransloco(
+                  ruleErrorEntries.invalidCharacter.source,
+                ),
+              },
+            },
+          }),
+        ],
+        providers: [provideTranslocoMessageformat()],
+        detectChanges: false,
+      });
+
+      it('renders the invalid-character error with its literal braces', () => {
+        spectator = createWithMessageformat({
+          providers: [{ provide: CollectionsStore, useValue: buildStore(terminologyConfig) }],
+        });
+        fixture = spectator.fixture;
+        component = spectator.component;
+        spectator.detectChanges();
+        spectator.flushEffects();
+
+        type(0, 'discouraged', 'E-{mail}');
+
+        expect(errorFor(0, 'discouraged')).toBe('Cannot contain { } < or >');
+      });
     });
   });
 });

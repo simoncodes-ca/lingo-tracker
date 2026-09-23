@@ -9,16 +9,6 @@
     "ja": "Required",
     "de": "Required"
   },
-  "invalidCharacter": {
-    "source": "Cannot contain { } < or >",
-    "comment": "Inline error when a term contains ICU or HTML syntax characters",
-    "tags": ["settings"],
-    "es": "Cannot contain { } < or >",
-    "fr-ca": "Cannot contain { } < or >",
-    "ru": "Cannot contain { } < or >",
-    "ja": "Cannot contain { } < or >",
-    "de": "Cannot contain { } < or >"
-  },
   "selfMapping": {
     "source": "Must differ from the discouraged term",
     "comment": "Inline error when the preferred term equals its own discouraged term (case-insensitive)",
@@ -78,5 +68,15 @@
     "ru": "Must be text",
     "ja": "Must be text",
     "de": "Must be text"
+  },
+  "invalidCharacter": {
+    "source": "Cannot contain '{' '}' < or >",
+    "comment": "Inline error when a term contains ICU or HTML syntax characters",
+    "tags": ["settings"],
+    "es": "Cannot contain '{' '}' < or >",
+    "fr-ca": "Cannot contain '{' '}' < or >",
+    "ru": "Cannot contain '{' '}' < or >",
+    "ja": "Cannot contain '{' '}' < or >",
+    "de": "Cannot contain '{' '}' < or >"
   }
 }
