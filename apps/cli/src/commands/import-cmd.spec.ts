@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import prompts from 'prompts';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type ImportCommandOptions, importCommand } from './import-cmd';
 
 const fsMocks = vi.hoisted(() => ({
@@ -81,7 +82,13 @@ vi.mock('../utils', () => ({
 
 // Import the mocked functions
 import { detectImportFormat, importFromJson, importFromXliff, loadPreferredTerminology } from '@simoncodes-ca/core';
-import { ConsoleFormatter, loadConfiguration, promptForCollection, resolveWritableCollection } from '../utils';
+import {
+  ConsoleFormatter,
+  isInteractiveTerminal,
+  loadConfiguration,
+  promptForCollection,
+  resolveWritableCollection,
+} from '../utils';
 
 describe('import-cmd', () => {
   const baseConfig = {
@@ -487,6 +494,51 @@ describe('import-cmd', () => {
         'Target locale is required. Use --locale or run in interactive mode.',
       );
       expect(importFromJson).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Interactive locale prompt', () => {
+    beforeEach(() => {
+      vi.mocked(isInteractiveTerminal).mockReturnValue(true);
+      vi.mocked(prompts).mockResolvedValue({ locale: 'de' });
+      vi.mocked(importFromJson).mockReturnValue({ ...baseImportResult, locale: 'de', warnings: [] } as never);
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      vi.mocked(isInteractiveTerminal).mockReturnValue(false);
+    });
+
+    /** Choices of the target-locale prompt. */
+    const offeredLocales = (): unknown => {
+      const question = vi
+        .mocked(prompts)
+        .mock.calls.map(([asked]) => asked)
+        .find((asked) => !Array.isArray(asked) && asked.name === 'locale');
+      return question && !Array.isArray(question) ? question.choices : undefined;
+    };
+
+    it("offers the collection's own locales, minus its base locale", async () => {
+      vi.mocked(promptForCollection).mockResolvedValue('docs');
+      vi.mocked(resolveWritableCollection).mockReturnValue({
+        name: 'docs',
+        config: { translationsFolder: 'src/docs-translations', baseLocale: 'fr', locales: ['fr', 'de'] },
+        translationsFolderPath: '/test/project/src/docs-translations',
+      });
+
+      await importCommand({ source: '/test/import.json', format: 'json', strategy: 'translation-service' });
+
+      expect(offeredLocales()).toEqual([{ title: 'de', value: 'de' }]);
+      expect(importFromJson).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ locale: 'de' }));
+    });
+
+    it('offers the project locales for a collection without its own', async () => {
+      await importCommand({ source: '/test/import.json', format: 'json', strategy: 'translation-service' });
+
+      expect(offeredLocales()).toEqual([
+        { title: 'es', value: 'es' },
+        { title: 'fr', value: 'fr' },
+      ]);
     });
   });
 

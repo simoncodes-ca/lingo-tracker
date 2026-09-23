@@ -7,7 +7,6 @@ import {
   type ImportStrategy,
   importFromJson,
   importFromXliff,
-  type LingoTrackerConfig,
   loadPreferredTerminology,
   readEffectiveProtectedTerms,
 } from '@simoncodes-ca/core';
@@ -54,10 +53,11 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
 
   // The collection's own base locale decides which import writes `source` values.
   const baseLocale = collection.config.baseLocale ?? config.baseLocale ?? 'en';
+  const locales = collection.config.locales ?? config.locales ?? [];
 
   let answers: Partial<ImportCommandOptions>;
   try {
-    answers = await promptForMissing({ ...options, collection: collectionName }, config, baseLocale);
+    answers = await promptForMissing({ ...options, collection: collectionName }, locales, baseLocale);
   } catch (error) {
     if ((error as Error).message === 'Import cancelled') {
       ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Import'));
@@ -208,7 +208,7 @@ export async function importCommand(options: ImportCommandOptions): Promise<void
 
 async function promptForMissing(
   options: ImportCommandOptions,
-  config: LingoTrackerConfig,
+  configuredLocales: readonly string[],
   baseLocale: string,
 ): Promise<ImportCommandOptions> {
   const answers = { ...options };
@@ -278,9 +278,6 @@ async function promptForMissing(
 
     answers.format = formatAnswer.format;
   }
-
-  // Get configured locales
-  const configuredLocales = config.locales || [];
 
   // Prompt for import strategy
   if (!answers.strategy) {
