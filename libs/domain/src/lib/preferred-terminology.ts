@@ -467,14 +467,23 @@ export function findPreferredTermFindings(value: string, rules: readonly Preferr
 }
 
 /**
- * Replaces every visible occurrence of the rule's discouraged term with `rule.preferred`,
- * verbatim. Arguments, placeholders and tags are never touched. Returns `value`
- * unchanged when nothing matches.
+ * Replaces every visible occurrence of the rule's discouraged term with `rule.preferred`.
+ * Arguments, placeholders and tags are never touched. Returns `value` unchanged when
+ * nothing matches.
+ *
+ * The preferred term is inserted verbatim, except inside plural/selectordinal branch text
+ * (a `select` nested in one included), where a bare `#` would become the count. There,
+ * when the preferred term contains `#`, the branch's literal text is re-quoted with ICU
+ * apostrophe quoting so the term reads back exactly as written. Values that do not parse
+ * as ICU are always edited verbatim.
  *
  * @example
  * ```typescript
  * applyPreferredTerm('Expenditure for {expenditure}', { discouraged: 'Expenditure', preferred: 'Investment' });
  * // → 'Investment for {expenditure}'
+ *
+ * applyPreferredTerm('{n, plural, other {Old item}}', { discouraged: 'Old', preferred: 'C#' });
+ * // → "{n, plural, other {C'#' item}}"
  * ```
  */
 export function applyPreferredTerm(value: string, rule: PreferredTermRule): string {
@@ -483,10 +492,153 @@ export function applyPreferredTerm(value: string, rule: PreferredTermRule): stri
     return value;
   }
 
+  const pluralContent = rule.preferred.includes('#') ? pluralContentRanges(value) : [];
+  const edits: Array<PreferredTermRange & { text: string }> = [];
+  for (const content of pluralContent) {
+    const inside = finding.ranges.filter((range) => content.start <= range.start && range.end <= content.end);
+    if (inside.length > 0) {
+      edits.push({ ...content, text: requoteWithReplacements(value, content, inside, rule.preferred) });
+    }
+  }
+  for (const range of finding.ranges) {
+    if (!edits.some((edit) => edit.start <= range.start && range.end <= edit.end)) {
+      edits.push({ ...range, text: rule.preferred });
+    }
+  }
+
   let result = value;
-  for (let i = finding.ranges.length - 1; i >= 0; i--) {
-    const { start, end } = finding.ranges[i];
-    result = result.slice(0, start) + rule.preferred + result.slice(end);
+  for (const edit of edits.sort((a, b) => b.start - a.start)) {
+    result = result.slice(0, edit.start) + edit.text + result.slice(edit.end);
   }
   return result;
+}
+
+/**
+ * Raw spans of the literal content tokens where `#` is the count placeholder: plural and
+ * selectordinal branch text, and the text of any select nested in one. Mirrors
+ * `@messageformat/parser` in its default, non-strict mode. Empty when `value` does not
+ * parse as ICU.
+ */
+function pluralContentRanges(value: string): PreferredTermRange[] {
+  const ranges: PreferredTermRange[] = [];
+  const walk = (tokens: readonly Token[], inPlural: boolean): void => {
+    for (const token of tokens) {
+      if (token.type === 'content') {
+        if (inPlural && token.ctx) {
+          ranges.push({ start: token.ctx.offset, end: token.ctx.offset + token.ctx.text.length });
+        }
+      } else if (token.type === 'plural' || token.type === 'selectordinal' || token.type === 'select') {
+        const branchInPlural = inPlural || token.type !== 'select';
+        for (const branch of token.cases) {
+          walk(branch.tokens, branchInPlural);
+        }
+      }
+    }
+  };
+
+  try {
+    walk(parse(maskTranslocoPlaceholders(value)), false);
+  } catch {
+    return [];
+  }
+  return ranges;
+}
+
+/**
+ * Rebuilds one plural-context content token: decodes its raw text to the literal a reader
+ * sees, swaps each matched span for `preferred`, and re-encodes the result.
+ */
+function requoteWithReplacements(
+  value: string,
+  content: PreferredTermRange,
+  matches: readonly PreferredTermRange[],
+  preferred: string,
+): string {
+  const { literal, rawToLiteral } = decodeIcuLiteral(value.slice(content.start, content.end));
+
+  let replaced = literal;
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const start = rawToLiteral[matches[i].start - content.start];
+    const end = rawToLiteral[matches[i].end - content.start];
+    replaced = replaced.slice(0, start) + preferred + replaced.slice(end);
+  }
+  return encodePluralIcuLiteral(replaced);
+}
+
+/** `'{…}'`, `'}…'` or `'#…'` up to a closing apostrophe not followed by another; as in `@messageformat/parser`. */
+const ICU_QUOTED_PATTERN = /'[{}#](?:[^']|'')*'(?!')/uy;
+
+/**
+ * Decodes the raw text of one content token (no bare `{`, `}` or `#`) to its literal,
+ * with the literal offset at each raw offset. `''` reads as `'`; a quoted section reads
+ * as its contents.
+ */
+function decodeIcuLiteral(raw: string): { literal: string; rawToLiteral: number[] } {
+  let literal = '';
+  const rawToLiteral: number[] = [];
+  let i = 0;
+  while (i < raw.length) {
+    if (raw.startsWith("''", i)) {
+      rawToLiteral.push(literal.length, literal.length + 1);
+      literal += "'";
+      i += 2;
+      continue;
+    }
+
+    ICU_QUOTED_PATTERN.lastIndex = i;
+    const quoted = ICU_QUOTED_PATTERN.exec(raw);
+    if (quoted) {
+      const end = i + quoted[0].length - 1;
+      rawToLiteral.push(literal.length);
+      for (i++; i < end; i++) {
+        rawToLiteral.push(literal.length);
+        if (raw.startsWith("''", i)) {
+          rawToLiteral.push(literal.length + 1);
+          i++;
+        }
+        literal += raw[i];
+      }
+      rawToLiteral.push(literal.length);
+      i++;
+      continue;
+    }
+
+    rawToLiteral.push(literal.length);
+    literal += raw[i];
+    i++;
+  }
+  rawToLiteral.push(literal.length);
+  return { literal, rawToLiteral };
+}
+
+/**
+ * Encodes a literal as plural-context ICU text that parses back to exactly the literal.
+ * Each run of `{`, `}` and `#` is quoted, taking in any apostrophes that follow it so the
+ * closing quote is never followed by another. An apostrophe is doubled wherever a single
+ * one would start a quote, pair with its neighbour, or sit last before a following token.
+ */
+function encodePluralIcuLiteral(literal: string): string {
+  const isSyntax = (char: string | undefined): boolean => char === '{' || char === '}' || char === '#';
+
+  let out = '';
+  let i = 0;
+  while (i < literal.length) {
+    const char = literal[i];
+    if (isSyntax(char)) {
+      let quoted = '';
+      while (i < literal.length && (isSyntax(literal[i]) || literal[i] === "'")) {
+        quoted += literal[i] === "'" ? "''" : literal[i];
+        i++;
+      }
+      out += `'${quoted}'`;
+    } else if (char === "'") {
+      const next = literal[i + 1];
+      out += next === undefined || next === "'" || isSyntax(next) ? "''" : "'";
+      i++;
+    } else {
+      out += char;
+      i++;
+    }
+  }
+  return out;
 }

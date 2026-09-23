@@ -1,3 +1,4 @@
+import { parse, type Token } from '@messageformat/parser';
 import { describe, expect, it } from 'vitest';
 import {
   applyPreferredTerm,
@@ -411,5 +412,73 @@ describe('applyPreferredTerm', () => {
 
   it('returns the value unchanged when nothing matches', () => {
     expect(applyPreferredTerm('Expenditures', expenditure)).toBe('Expenditures');
+  });
+
+  describe('a preferred term containing "#"', () => {
+    const cSharp: PreferredTermRule = { discouraged: 'Old', preferred: 'C#' };
+
+    /** The literal text of the first branch of the top-level select/plural, as the ICU parser reads it. */
+    const firstBranch = (message: string): Token[] => {
+      const [root] = parse(message);
+      if (root?.type !== 'plural' && root?.type !== 'select' && root?.type !== 'selectordinal') {
+        throw new Error(`Not a select or plural: ${message}`);
+      }
+      return root.cases[0].tokens;
+    };
+
+    it('quotes "#" inside a plural branch so it stays literal', () => {
+      const result = applyPreferredTerm('{count, plural, other {Old item}}', cSharp);
+
+      expect(result).toBe("{count, plural, other {C'#' item}}");
+      expect(firstBranch(result)).toEqual([expect.objectContaining({ type: 'content', value: 'C# item' })]);
+    });
+
+    it('quotes "#" inside a selectordinal branch', () => {
+      const result = applyPreferredTerm('{n, selectordinal, other {Old}}', cSharp);
+
+      expect(firstBranch(result)).toEqual([expect.objectContaining({ type: 'content', value: 'C#' })]);
+    });
+
+    it('quotes "#" inside a select nested in a plural branch, where "#" is still the count', () => {
+      const result = applyPreferredTerm('{count, plural, other {{g, select, a {Old x} other {y}}}}', cSharp);
+
+      expect(result).toBe("{count, plural, other {{g, select, a {C'#' x} other {y}}}}");
+      const [select] = firstBranch(result);
+      expect(select?.type === 'select' ? select.cases[0].tokens : []).toEqual([
+        expect.objectContaining({ type: 'content', value: 'C# x' }),
+      ]);
+    });
+
+    it('inserts "#" verbatim outside plural branches', () => {
+      expect(applyPreferredTerm('Old item', cSharp)).toBe('C# item');
+      expect(applyPreferredTerm('{g, select, a {Old} other {x}}', cSharp)).toBe('{g, select, a {C#} other {x}}');
+      expect(applyPreferredTerm('{count, plural, other {# x}} Old', cSharp)).toBe('{count, plural, other {# x}} C#');
+    });
+
+    it('inserts verbatim when the value does not parse as ICU', () => {
+      expect(applyPreferredTerm('Old {count, plural, other {x}', cSharp)).toBe('C# {count, plural, other {x}');
+    });
+
+    it('keeps apostrophes around and inside the term literal', () => {
+      const quotedWord = applyPreferredTerm("{count, plural, other {'Old' item}}", cSharp);
+      expect(firstBranch(quotedWord)).toEqual([expect.objectContaining({ type: 'content', value: "'C#' item" })]);
+
+      const apostropheTerm = applyPreferredTerm('{count, plural, other {Old item}}', {
+        discouraged: 'Old',
+        preferred: "It's '#1'",
+      });
+      expect(firstBranch(apostropheTerm)).toEqual([
+        expect.objectContaining({ type: 'content', value: "It's '#1' item" }),
+      ]);
+    });
+
+    it('keeps existing quoting and the count placeholder elsewhere in the branch', () => {
+      const result = applyPreferredTerm("{count, plural, other {# Old, it''s '{x}'}}", cSharp);
+
+      expect(firstBranch(result)).toEqual([
+        expect.objectContaining({ type: 'octothorpe' }),
+        expect.objectContaining({ type: 'content', value: " C#, it's {x}" }),
+      ]);
+    });
   });
 });
