@@ -45,14 +45,15 @@
   color: var(--color-text-secondary);
 }
 
-// The fix rides the first line, like the key collision's "Open existing".
+// The fix rides the first line, like the key collision's "Open existing", but
+// reads as a button: people were mistaking the bare text for part of the note.
 .term-advisory-act {
   flex: none;
-  margin: 0;
-  padding: 0 2px;
-  border: 0;
+  margin: -1px 0;
+  padding: 2px var(--spacing-2);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 55%, transparent);
   border-radius: var(--border-radius-sm);
-  background: none;
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
   color: inherit;
   font-family: inherit;
   font-size: inherit;
@@ -62,12 +63,16 @@
   cursor: pointer;
 
   &:hover {
-    text-decoration: underline;
+    border-color: color-mix(in srgb, var(--color-warning) 75%, transparent);
+    background: color-mix(in srgb, var(--color-warning) 28%, transparent);
   }
 
   &:focus-visible {
     outline: 2px solid var(--focus-ring-color);
     outline-offset: 1px;
-    text-decoration: underline;
+  }
+
+  &:active {
+    background: color-mix(in srgb, var(--color-warning) 36%, transparent);
   }
 }
