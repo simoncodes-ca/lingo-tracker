@@ -115,6 +115,13 @@ export class Settings {
   readonly #seeded = signal(false);
   /** Set while a save is in flight so the next config arrival is treated as the new baseline. */
   readonly #awaitingSave = signal(false);
+  /**
+   * Locks both editors until the first config seeds them, and while a save is in flight: each
+   * of those config arrivals reseeds both lists, so an edit made in either window would be lost.
+   * The save latch marks the save, not `store.isLoading()`, which clears once the write lands —
+   * before the refetch that reseeds arrives.
+   */
+  readonly editingLocked = computed(() => !this.#seeded() || this.#awaitingSave());
   #nextId = 0;
   /** Row to reveal once it has rendered, so an added term is never added off-screen. */
   readonly #scrollToId = signal<number | null>(null);
@@ -156,7 +163,8 @@ export class Settings {
   readonly showSaveBar = computed(() => !this.isEmpty() || !this.terminology.isEmpty() || this.hasAnyChanges());
   /** Save stays enabled while terminology errors are still hidden, so clicking it can reveal them. */
   readonly canSave = computed(
-    () => this.hasAnyChanges() && !this.store.isLoading() && !this.terminology.hasVisibleErrors(),
+    () =>
+      this.hasAnyChanges() && !this.store.isLoading() && !this.editingLocked() && !this.terminology.hasVisibleErrors(),
   );
   readonly showFilter = computed(() => this.entries().length > FILTER_THRESHOLD);
   readonly isFiltering = computed(() => this.filter().trim().length > 0);

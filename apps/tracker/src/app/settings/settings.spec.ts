@@ -672,9 +672,10 @@ describe('Settings', () => {
 
     it('maps server errors onto the submitted rows and clears one when its field is edited', () => {
       const configRuleErrors = signal<PreferredTermRuleErrorDto[]>([]);
+      const error = signal<string | null>(null);
       renderStore({
         config: signal<LingoTrackerConfigDto | null>(terminologyConfig),
-        error: signal<string | null>(null),
+        error,
         isLoading: signal(false),
         configRuleErrors,
         updateGlobalConfig: updateGlobalConfigMock,
@@ -682,6 +683,7 @@ describe('Settings', () => {
       type(1, 'reason', 'Changed.');
       component.save();
 
+      error.set('server says no');
       configRuleErrors.set([{ index: 1, field: 'preferred', code: 'self-mapping', message: 'server says no' }]);
       spectator.flushEffects();
       spectator.detectChanges();
@@ -745,6 +747,149 @@ describe('Settings', () => {
       expect(ruleRows()).toHaveLength(2);
       expect(ruleInput(0, 'preferred').value).toBe('email');
       expect(component.hasAnyChanges()).toBe(false);
+    });
+
+    describe('editing lock', () => {
+      const addRuleButton = (): HTMLButtonElement => {
+        const button = host().querySelector<HTMLButtonElement>('button.rules-add');
+        expect(button).not.toBeNull();
+        return button as HTMLButtonElement;
+      };
+      const protectedAddInput = (): HTMLInputElement => {
+        const input = host().querySelector<HTMLInputElement>('.terms-add input');
+        expect(input).not.toBeNull();
+        return input as HTMLInputElement;
+      };
+      /** Every control that changes either list: rule inputs, rule and term buttons, the term add field. */
+      const editControls = () =>
+        Array.from(
+          host().querySelectorAll<HTMLInputElement | HTMLButtonElement>(
+            'input.rule-input, button.rule-remove, button.rules-add, .terms-add input, .term-action, .term-undo',
+          ),
+        );
+      const buildPendingStore = () => ({
+        config: signal<LingoTrackerConfigDto | null>(terminologyConfig),
+        error: signal<string | null>(null),
+        isLoading: signal(false),
+        configRuleErrors: signal<PreferredTermRuleErrorDto[]>([]),
+        updateGlobalConfig: updateGlobalConfigMock,
+      });
+      const settle = () => {
+        spectator.detectChanges();
+        spectator.flushEffects();
+        spectator.detectChanges();
+      };
+
+      it('keeps both lists read-only until the config has loaded', () => {
+        const store = { ...buildPendingStore(), config: signal<LingoTrackerConfigDto | null>(null) };
+        renderStore(store);
+
+        expect(component.editingLocked()).toBe(true);
+        expect(addRuleButton().disabled).toBe(true);
+        expect(protectedAddInput().disabled).toBe(true);
+
+        store.config.set(terminologyConfig);
+        settle();
+
+        expect(component.editingLocked()).toBe(false);
+        expect(addRuleButton().disabled).toBe(false);
+        expect(editControls().every((control) => !control.disabled)).toBe(true);
+      });
+
+      it('does not let a rule be added before the config seeds the list', () => {
+        const store = { ...buildPendingStore(), config: signal<LingoTrackerConfigDto | null>(null) };
+        renderStore(store);
+
+        clickAdd();
+
+        expect(ruleRows()).toHaveLength(0);
+        expect(component.terminology.isEmpty()).toBe(true);
+
+        store.config.set(terminologyConfig);
+        settle();
+
+        expect(ruleRows()).toHaveLength(2);
+        expect(component.terminology.hasChanges()).toBe(false);
+      });
+
+      it('locks every edit control while a save is in flight and unlocks once the reloaded config arrives', () => {
+        const store = buildPendingStore();
+        renderStore(store);
+        type(0, 'preferred', 'Email');
+
+        saveButton().click();
+        spectator.detectChanges();
+
+        expect(updateGlobalConfigMock).toHaveBeenCalled();
+        expect(editControls().length).toBeGreaterThan(0);
+        expect(editControls().every((control) => control.disabled)).toBe(true);
+        expect(saveButton().disabled).toBe(true);
+
+        // A rule cannot be started that the post-save reseed would wipe.
+        clickAdd();
+        expect(ruleRows()).toHaveLength(2);
+
+        // The store clears its loading flag once the write lands, before the refetch: still locked.
+        store.isLoading.set(true);
+        spectator.detectChanges();
+        store.isLoading.set(false);
+        spectator.detectChanges();
+        expect(addRuleButton().disabled).toBe(true);
+
+        store.config.set({
+          ...terminologyConfig,
+          preferredTerminology: [
+            { discouraged: 'E-mail', preferred: 'Email' },
+            { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Current planning term.' },
+          ],
+        });
+        settle();
+
+        expect(editControls().every((control) => !control.disabled)).toBe(true);
+        expect(ruleInput(0, 'preferred').value).toBe('Email');
+      });
+
+      it('unlocks after a failed save and keeps the unsaved edits', () => {
+        const store = buildPendingStore();
+        renderStore(store);
+        type(0, 'preferred', 'Email');
+
+        saveButton().click();
+        spectator.detectChanges();
+        expect(addRuleButton().disabled).toBe(true);
+
+        store.error.set('update failed');
+        settle();
+
+        expect(editControls().every((control) => !control.disabled)).toBe(true);
+        expect(ruleInput(0, 'preferred').value).toBe('Email');
+        expect(component.terminology.changeCount()).toBe(1);
+      });
+
+      it('keeps an edit made once a save has completed when a later config refetch arrives', () => {
+        const store = buildPendingStore();
+        renderStore(store);
+        type(0, 'preferred', 'Email');
+        saveButton().click();
+        const saved = {
+          ...terminologyConfig,
+          preferredTerminology: [
+            { discouraged: 'E-mail', preferred: 'Email' },
+            { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Current planning term.' },
+          ],
+        };
+        store.config.set(saved);
+        settle();
+
+        clickAdd();
+        type(2, 'discouraged', 'Cost');
+        type(2, 'preferred', 'Price');
+        store.config.set({ ...saved });
+        settle();
+
+        expect(ruleRows()).toHaveLength(3);
+        expect(component.terminology.rulesToSave()[2]).toEqual({ discouraged: 'Cost', preferred: 'Price' });
+      });
     });
 
     describe('rule error messages', () => {

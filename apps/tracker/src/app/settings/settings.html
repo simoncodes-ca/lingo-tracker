@@ -17,7 +17,7 @@
         </p>
 
         <div class="terms-bar-actions">
-          <button mat-button type="button" (click)="revertAll()" [disabled]="!hasAnyChanges() || store.isLoading()">
+          <button mat-button type="button" (click)="revertAll()" [disabled]="!hasAnyChanges() || store.isLoading() || editingLocked()">
             {{ TOKENS.SETTINGS.PROTECTEDTERMSREVERTALL | transloco }}
           </button>
           <button
@@ -77,6 +77,7 @@
           autocomplete="off"
           spellcheck="false"
           [value]="addDraft()"
+          [disabled]="editingLocked()"
           (input)="onAddDraftChange($any($event.target).value)"
           [placeholder]="TOKENS.SETTINGS.PROTECTEDTERMSADDPLACEHOLDER | transloco"
           [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSADDARIALABEL | transloco"
@@ -84,7 +85,7 @@
           [attr.aria-describedby]="addError() ? 'settings-add-error' : null"
         />
       </mat-form-field>
-      <button mat-flat-button color="primary" type="submit" class="terms-add-button" [disabled]="!canAdd()">
+      <button mat-flat-button color="primary" type="submit" class="terms-add-button" [disabled]="!canAdd() || editingLocked()">
         {{ TOKENS.SETTINGS.PROTECTEDTERMSADDBUTTON | transloco }}
       </button>
     </form>
@@ -225,6 +226,7 @@
                       mat-button
                       type="button"
                       class="term-undo"
+                      [disabled]="editingLocked()"
                       (click)="restoreTerm(entry)"
                       [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSRESTOREARIAX | transloco : { term: entry.value }"
                     >
@@ -236,6 +238,7 @@
                       mat-icon-button
                       type="button"
                       class="term-action"
+                      [disabled]="editingLocked()"
                       (click)="beginEdit(entry)"
                       [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSEDITARIAX | transloco : { term: entry.value }"
                       [matTooltip]="TOKENS.COMMON.ACTIONS.EDIT | transloco"
@@ -246,6 +249,7 @@
                       mat-icon-button
                       type="button"
                       class="term-action term-action--remove"
+                      [disabled]="editingLocked()"
                       (click)="removeTerm(entry)"
                       [attr.aria-label]="TOKENS.SETTINGS.PROTECTEDTERMSREMOVEARIAX | transloco : { term: entry.value }"
                       [matTooltip]="TOKENS.COMMON.ACTIONS.DELETE | transloco"
@@ -324,6 +328,7 @@
                   spellcheck="false"
                   [id]="ruleInputId(view.row.id, 'discouraged')"
                   [value]="view.row.discouraged"
+                  [disabled]="editingLocked()"
                   (input)="onRuleInput(view.row.id, 'discouraged', $any($event.target).value)"
                   (blur)="terminology.touch(view.row.id, 'discouraged')"
                   [attr.aria-label]="TOKENS.SETTINGS.PREFERREDTERMINOLOGY.DISCOURAGEDARIAX | transloco : { row: view.position }"
@@ -348,6 +353,7 @@
                   spellcheck="false"
                   [id]="ruleInputId(view.row.id, 'preferred')"
                   [value]="view.row.preferred"
+                  [disabled]="editingLocked()"
                   (input)="onRuleInput(view.row.id, 'preferred', $any($event.target).value)"
                   (blur)="terminology.touch(view.row.id, 'preferred')"
                   [attr.aria-label]="TOKENS.SETTINGS.PREFERREDTERMINOLOGY.PREFERREDARIAX | transloco : { row: view.position }"
@@ -369,6 +375,7 @@
                   autocomplete="off"
                   [id]="ruleInputId(view.row.id, 'reason')"
                   [value]="view.row.reason"
+                  [disabled]="editingLocked()"
                   (input)="onRuleInput(view.row.id, 'reason', $any($event.target).value)"
                   (blur)="terminology.touch(view.row.id, 'reason')"
                   [placeholder]="TOKENS.SETTINGS.PREFERREDTERMINOLOGY.REASONPLACEHOLDER | transloco"
@@ -387,6 +394,7 @@
                 mat-icon-button
                 type="button"
                 class="term-action term-action--remove rule-remove"
+                [disabled]="editingLocked()"
                 (click)="terminology.removeRow(view.row.id)"
                 [attr.aria-label]="
                   view.row.discouraged.trim()
@@ -411,7 +419,7 @@
     }
 
     <div class="rules-actions">
-      <button mat-stroked-button type="button" class="rules-add" (click)="addRule()">
+      <button mat-stroked-button type="button" class="rules-add" [disabled]="editingLocked()" (click)="addRule()">
         <mat-icon>add</mat-icon>
         {{ TOKENS.SETTINGS.PREFERREDTERMINOLOGY.ADDBUTTON | transloco }}
       </button>
