@@ -68,11 +68,18 @@ export function clearPreferredTerminologyCache(): void {
  * Absolute path of the preferred-terminology file: the config's
  * `preferredTerminologyFile` pointer resolved against `cwd` (the directory holding the
  * config file), falling back to the default filename. Absolute pointers are used as-is.
+ *
+ * Throws a descriptive `Error` when the pointer is neither a string nor unset (`null`
+ * counts as unset): `.lingo-tracker.json` is hand-edited and not schema-validated.
  */
 export function resolvePreferredTerminologyFilePath(
   config: Pick<LingoTrackerConfig, 'preferredTerminologyFile'>,
   cwd: string = process.cwd(),
 ): string {
+  const pointerError = invalidPointerError(config);
+  if (pointerError) {
+    throw new Error(pointerError);
+  }
   const pointer = config.preferredTerminologyFile ?? DEFAULT_PREFERRED_TERMINOLOGY_FILENAME;
   return isAbsolute(pointer) ? pointer : resolve(cwd, pointer);
 }
@@ -84,14 +91,19 @@ export function resolvePreferredTerminologyFilePath(
  * Never throws. A missing file at the default path reads as an empty list — the normal
  * state before any rule has been added. A missing file at an explicit pointer also
  * reads as empty but sets `warning`, since a pointer at nothing is usually a typo.
- * Malformed JSON, a non-array payload, or any rule failing validation sets `error` and
- * returns no rules: terminology checks are advisory, so callers warn and skip them
- * rather than abort, except `validate`, which reports a broken file as a failure.
+ * A non-string pointer, malformed JSON, a non-array payload, or any rule failing
+ * validation sets `error` and returns no rules: terminology checks are advisory, so
+ * callers warn and skip them rather than abort, except `validate`, which reports a
+ * broken file as a failure.
  */
 export function loadPreferredTerminology(
   config: Pick<LingoTrackerConfig, 'preferredTerminologyFile'>,
   cwd: string = process.cwd(),
 ): LoadPreferredTerminologyResult {
+  const pointerError = invalidPointerError(config);
+  if (pointerError) {
+    return { rules: [], filePath: resolve(cwd, DEFAULT_PREFERRED_TERMINOLOGY_FILENAME), error: pointerError };
+  }
   const filePath = resolvePreferredTerminologyFilePath(config, cwd);
 
   let stamp: FileStamp | undefined;
@@ -111,7 +123,7 @@ export function loadPreferredTerminology(
   }
 
   if (!stamp) {
-    if (config.preferredTerminologyFile !== undefined) {
+    if (config.preferredTerminologyFile != null) {
       return {
         rules: [],
         filePath,
@@ -197,6 +209,16 @@ export function writePreferredTerminology(filePath: string, rules: readonly Pref
   } else {
     cache.delete(filePath);
   }
+}
+
+/** Error message for a `preferredTerminologyFile` that is set but not a string; `undefined` when usable. */
+function invalidPointerError(config: Pick<LingoTrackerConfig, 'preferredTerminologyFile'>): string | undefined {
+  const pointer: unknown = config.preferredTerminologyFile;
+  if (pointer === undefined || pointer === null || typeof pointer === 'string') {
+    return undefined;
+  }
+  const type = Array.isArray(pointer) ? 'array' : typeof pointer;
+  return `"preferredTerminologyFile" in .lingo-tracker.json must be a string path (got ${type})`;
 }
 
 /** One `row N field: message` entry per error, rows 1-based, joined into a single line. */

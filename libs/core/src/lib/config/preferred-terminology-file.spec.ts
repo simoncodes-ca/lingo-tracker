@@ -57,6 +57,12 @@ describe('preferred-terminology-file', () => {
         resolvePreferredTerminologyFilePath(baseConfig({ preferredTerminologyFile: '/etc/terms.json' }), cwd),
       ).toBe('/etc/terms.json');
     });
+
+    it('throws a descriptive error for a non-string pointer', () => {
+      expect(() =>
+        resolvePreferredTerminologyFilePath(baseConfig({ preferredTerminologyFile: 42 as never }), cwd),
+      ).toThrow('"preferredTerminologyFile" in .lingo-tracker.json must be a string path (got number)');
+    });
   });
 
   describe('loadPreferredTerminology', () => {
@@ -123,6 +129,40 @@ describe('preferred-terminology-file', () => {
       expect(result.error).toContain('cannot be read');
       expect(result.error).toContain(join(cwd, 'somefile.json/rules.json'));
       expect(result.error).toContain('ENOTDIR');
+    });
+
+    it.each([
+      ['a number', 42, 'number'],
+      ['a boolean', true, 'boolean'],
+      ['an object', {}, 'object'],
+      ['an array', [], 'array'],
+    ])('reports %s pointer as an error with no rules, without throwing', (_label, pointer, type) => {
+      const config = baseConfig({ preferredTerminologyFile: pointer as never });
+
+      const result = loadPreferredTerminology(config, cwd);
+
+      expect(result.rules).toEqual([]);
+      expect(result.warning).toBeUndefined();
+      expect(result.filePath).toBe(resolve(cwd, DEFAULT_PREFERRED_TERMINOLOGY_FILENAME));
+      expect(result.error).toBe(
+        `"preferredTerminologyFile" in .lingo-tracker.json must be a string path (got ${type})`,
+      );
+    });
+
+    it('treats a null pointer like an unset one', () => {
+      const config = baseConfig({ preferredTerminologyFile: null as never });
+
+      const result = loadPreferredTerminology(config, cwd);
+
+      expect(result).toEqual({ rules: [], filePath: resolve(cwd, DEFAULT_PREFERRED_TERMINOLOGY_FILENAME) });
+    });
+
+    it('reports an empty pointer, which resolves to the config directory, as an unreadable file', () => {
+      const result = loadPreferredTerminology(baseConfig({ preferredTerminologyFile: '' }), cwd);
+
+      expect(result.rules).toEqual([]);
+      expect(result.error).toContain('cannot be read');
+      expect(result.error).toContain('EISDIR');
     });
 
     it('reports a directory at the file path as an unreadable file, not as invalid JSON', () => {

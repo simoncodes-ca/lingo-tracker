@@ -289,6 +289,19 @@ describe('ConfigController', () => {
         expect(error.getStatus()).toBe(400);
         expect(error.getResponse()).toBe('Cannot write preferred terminology file — directory does not exist: /nope');
       });
+
+      it('answers a malformed file pointer in the config with 400 and writes nothing', () => {
+        const message = '"preferredTerminologyFile" in .lingo-tracker.json must be a string path (got number)';
+        (resolvePreferredTerminologyFilePath as jest.Mock).mockImplementationOnce(() => {
+          throw new Error(message);
+        });
+
+        const error = catchHttpException(() => controller.updateConfig({ preferredTerminology: rules }));
+
+        expect(error.getStatus()).toBe(400);
+        expect(error.getResponse()).toBe(message);
+        expect(writePreferredTerminology).not.toHaveBeenCalled();
+      });
     });
 
     it('throws HttpException with status 400 when the update fails', () => {
