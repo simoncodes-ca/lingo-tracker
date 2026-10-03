@@ -12,6 +12,14 @@ vi.mock('@simoncodes-ca/core', async (importOriginal) => {
 });
 
 const mockEditCollectionTags = vi.mocked(editCollectionTags);
+const originalArgv = process.argv;
+
+async function runCli(...args: string[]): Promise<void> {
+  process.argv = ['node', 'lingo-tracker', 'edit-collection', 'myApp', ...args];
+  vi.resetModules();
+  await import('../main');
+  await vi.waitFor(() => expect(process.exitCode).toBeDefined());
+}
 
 describe('editCollectionCommand', () => {
   const mockConfig = {
@@ -36,7 +44,28 @@ describe('editCollectionCommand', () => {
   });
 
   afterEach(() => {
+    process.argv = originalArgv;
     process.exitCode = undefined;
+  });
+
+  it('passes a trimmed --set-tags comma list to core', async () => {
+    await runCli('--set-tags', 'a, b');
+    expect(mockEditCollectionTags).toHaveBeenCalledWith(expect.objectContaining({ name: 'myApp' }), {
+      add: [],
+      remove: [],
+      set: ['a', 'b'],
+    });
+    expect(process.exitCode).toBe(0);
+  });
+
+  it('passes an explicitly empty --set-tags list through the real registration', async () => {
+    await runCli('--set-tags', '');
+    expect(mockEditCollectionTags).toHaveBeenCalledWith(expect.objectContaining({ name: 'myApp' }), {
+      add: [],
+      remove: [],
+      set: [],
+    });
+    expect(process.exitCode).toBe(0);
   });
 
   it('passes the stored collection with the new tags and the project root', async () => {
@@ -94,22 +123,22 @@ describe('editCollectionCommand', () => {
 
   it('replaces all tags with --set-tags', async () => {
     mockEditCollectionTags.mockReturnValueOnce(['alpha', 'beta']);
-    await editCollectionCommand('myApp', { setTags: 'alpha, beta' });
+    await editCollectionCommand('myApp', { setTags: ['alpha', 'beta'] });
 
     expect(mockEditCollectionTags).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'myApp', sourceConfig: mockConfig, projectRoot: '/test/project' }),
-      { add: undefined, remove: undefined, set: ['alpha', ' beta'] },
+      { add: undefined, remove: undefined, set: ['alpha', 'beta'] },
     );
     expect(console.log).toHaveBeenCalledWith('✅ Collection "myApp" tags updated: alpha, beta');
   });
 
   it('clears all tags when --set-tags is empty string', async () => {
     mockEditCollectionTags.mockReturnValueOnce([]);
-    await editCollectionCommand('myApp', { setTags: '' });
+    await editCollectionCommand('myApp', { setTags: [] });
 
     expect(mockEditCollectionTags).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'myApp', sourceConfig: mockConfig, projectRoot: '/test/project' }),
-      { add: undefined, remove: undefined, set: [''] },
+      { add: undefined, remove: undefined, set: [] },
     );
     expect(console.log).toHaveBeenCalledWith('✅ Collection "myApp" tags cleared');
   });
@@ -120,7 +149,7 @@ describe('editCollectionCommand', () => {
         problem: 'tag-conflict',
       });
     });
-    await editCollectionCommand('myApp', { setTags: 'foo', addTag: ['bar'] });
+    await editCollectionCommand('myApp', { setTags: ['foo'], addTag: ['bar'] });
     expect(mockEditCollectionTags).toHaveBeenCalledOnce();
     expect(console.error).toHaveBeenCalledWith('❌ --set-tags cannot be combined with --add-tag or --remove-tag');
     expect(process.exitCode).toBe(1);
@@ -132,7 +161,7 @@ describe('editCollectionCommand', () => {
         problem: 'tag-conflict',
       });
     });
-    await editCollectionCommand('myApp', { setTags: 'foo', removeTag: ['existing-tag'] });
+    await editCollectionCommand('myApp', { setTags: ['foo'], removeTag: ['existing-tag'] });
     expect(mockEditCollectionTags).toHaveBeenCalledOnce();
     expect(console.error).toHaveBeenCalledWith('❌ --set-tags cannot be combined with --add-tag or --remove-tag');
     expect(process.exitCode).toBe(1);

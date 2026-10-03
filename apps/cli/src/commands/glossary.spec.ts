@@ -136,7 +136,7 @@ describe('glossaryCommand', () => {
 
   it('keeps stdout to the JSON payload with --stdout: warnings and the status line go to stderr', async () => {
     vi.mocked(buildGlossary).mockReturnValue({ ...RESULT, locales: [] });
-    await glossaryCommand({ text: 'Save', stdout: true, locales: 'en' });
+    await glossaryCommand({ text: 'Save', stdout: true, locales: ['en'] });
     expect(console.error).toHaveBeenCalledWith(
       '⚠️  No target locales to include (only the base locale is configured or requested).',
     );
@@ -146,7 +146,7 @@ describe('glossaryCommand', () => {
   });
 
   it('maps --locales to a trimmed list for core', async () => {
-    await glossaryCommand({ text: 'Save', locales: 'fr, es,  ' });
+    await glossaryCommand({ text: 'Save', locales: ['fr', 'es'] });
     expect(buildGlossary).toHaveBeenCalledWith(
       expect.any(Array),
       'Save',

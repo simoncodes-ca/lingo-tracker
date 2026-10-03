@@ -1,7 +1,8 @@
+import { hasFsErrorCode } from '@simoncodes-ca/core';
 import fs from 'fs';
 import path from 'path';
-import { hasFsErrorCode } from '@simoncodes-ca/core';
 import { type Ask, defineCommand } from '../runner/command-runner';
+import { requiredText } from '../utils';
 
 export interface CollectionSpec {
   name: string;
@@ -43,25 +44,25 @@ async function promptForCollections(ask: Ask): Promise<CollectionSpec[]> {
         type: 'text',
         name: 'name',
         message: 'Collection name (e.g., trackerResources)',
-        validate: (v: string) => v.trim().length > 0 || 'Required',
+        validate: requiredText,
       },
       {
         type: 'text',
         name: 'bundle',
         message: 'Bundle name (e.g., tracker)',
-        validate: (v: string) => v.trim().length > 0 || 'Required',
+        validate: requiredText,
       },
       {
         type: 'text',
         name: 'tokenConstant',
         message: 'Token constant name (e.g., TRACKER_TOKENS)',
-        validate: (v: string) => v.trim().length > 0 || 'Required',
+        validate: requiredText,
       },
       {
         type: 'text',
         name: 'tokenFilePath',
         message: 'Token file path (e.g., src/i18n-types/tracker-resources.ts)',
-        validate: (v: string) => v.trim().length > 0 || 'Required',
+        validate: requiredText,
       },
     ]);
 

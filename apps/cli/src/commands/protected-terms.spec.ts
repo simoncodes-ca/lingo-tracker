@@ -1,3 +1,5 @@
+import { Command } from 'commander';
+import { commaListOption } from '../runner/options';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -49,8 +51,17 @@ describe('protectedTermsCommand (real core)', () => {
     process.exitCode = undefined;
   });
 
+  it('writes a trimmed --set comma list', async () => {
+    const cli = new Command();
+    commaListOption({ flags: '--set <terms>' })(cli);
+    cli.parse(['--set', 'a, b'], { from: 'user' });
+    await protectedTermsCommand(cli.opts<{ set?: string[] }>());
+    expect(readJson(globalPath())).toEqual(['a', 'b']);
+    expect(process.exitCode).toBe(0);
+  });
+
   it('errors when --set is combined with --add', async () => {
-    await protectedTermsCommand({ set: 'iPhone', add: ['C++'] });
+    await protectedTermsCommand({ set: ['iPhone'], add: ['C++'] });
     expect(ConsoleFormatter.error).toHaveBeenCalledWith('--set cannot be combined with --add or --remove');
     expect(process.exitCode).toBe(1);
   });
@@ -92,11 +103,11 @@ describe('protectedTermsCommand (real core)', () => {
   });
   it('passes replacements to core', async () => {
     writeFileSync(globalPath(), '["C++"]');
-    await protectedTermsCommand({ set: 'iPhone, Node.js' });
+    await protectedTermsCommand({ set: ['iPhone', 'Node.js'] });
     expect(readJson(globalPath())).toEqual(['iPhone', 'Node.js']);
   });
   it('prints a cleared list', async () => {
-    await protectedTermsCommand({ set: '' });
+    await protectedTermsCommand({ set: [] });
     expect(readJson(globalPath())).toEqual([]);
     expect(ConsoleFormatter.success).toHaveBeenCalledWith(
       'Global protected terms cleared (.lingo-tracker-protected-terms.json)',

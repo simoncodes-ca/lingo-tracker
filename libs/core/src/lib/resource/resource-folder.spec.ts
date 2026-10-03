@@ -1,7 +1,8 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import * as domain from '@simoncodes-ca/domain';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { calculateChecksum } from './checksum';
 import { openResourceFolder, translationLocales } from './resource-folder';
 
@@ -24,6 +25,7 @@ describe('ResourceFolder', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     rmSync(dir, { recursive: true, force: true });
   });
 
@@ -301,12 +303,101 @@ describe('ResourceFolder', () => {
   });
 
   describe('normalizeEntry', () => {
+    it('converts the base and every translation once, counting changed values and seeded locales', () => {
+      const source = { source: 'Hello {{ name }}!', fr: 'Bonjour {{ name }} !', es: 'Hola {name}' };
+      writePair({ hello: source }, {});
+      const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
+      const stored = folder.get('hello')?.entry;
+      const convert = vi.spyOn(domain, 'translocoToICU');
+
+      expect(folder.normalizeEntry('hello', ['fr', 'de'])).toEqual({
+        valuesConverted: 2,
+        tagsNormalized: 0,
+        localesAdded: 1,
+        changed: true,
+      });
+      expect(convert).toHaveBeenCalledTimes(3);
+      expect(folder.get('hello')?.entry).toEqual({
+        source: 'Hello {name}!',
+        fr: 'Bonjour {name} !',
+        es: 'Hola {name}',
+        de: 'Hello {name}!',
+      });
+      expect(folder.get('hello')?.meta?.['de']).toEqual({
+        checksum: md5('Hello {name}!'),
+        baseChecksum: md5('Hello {name}!'),
+        status: 'new',
+      });
+      expect(stored?.source).toBe('Hello {{ name }}!');
+      expect(source.source).toBe('Hello {{ name }}!');
+    });
+
+    it('counts a converted stray base-locale value before dropping it', () => {
+      writePair(
+        { hello: { source: 'Hello {name}', en: 'Hello {{ name }}' } },
+        {
+          hello: { en: { checksum: md5('Hello {name}') } },
+        },
+      );
+      const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
+      expect(folder.normalizeEntry('hello', [])).toEqual({
+        valuesConverted: 1,
+        tagsNormalized: 0,
+        localesAdded: 0,
+        changed: true,
+      });
+      expect(folder.get('hello')).toEqual({
+        entry: { source: 'Hello {name}' },
+        meta: { en: { checksum: md5('Hello {name}') } },
+      });
+    });
+
+    it('normalizes tags once and drops a tag list that normalizes to nothing', () => {
+      writePair({ ok: { source: 'OK', tags: ['UI', 'Buttons', 'ui'] }, empty: { source: 'OK', tags: ['!!!'] } }, {});
+      const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
+      expect(folder.normalizeEntry('ok', [])).toEqual({
+        valuesConverted: 0,
+        tagsNormalized: 1,
+        localesAdded: 0,
+        changed: true,
+      });
+      expect(folder.get('ok')?.entry).toEqual({ source: 'OK', tags: ['ui', 'buttons'] });
+      expect(folder.normalizeEntry('empty', [])).toEqual({
+        valuesConverted: 0,
+        tagsNormalized: 1,
+        localesAdded: 0,
+        changed: true,
+      });
+      expect(folder.get('empty')?.entry).toEqual({ source: 'OK' });
+    });
+
+    it('reports nothing for an entry that is already normalized', () => {
+      const entry = { source: 'OK', fr: 'Oui', comment: 'Button', tags: ['ui'] };
+      writePair(
+        { ok: entry },
+        {
+          ok: {
+            en: { checksum: md5('OK') },
+            fr: { checksum: md5('Oui'), baseChecksum: md5('OK'), status: 'translated' },
+          },
+        },
+      );
+      const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
+      expect(folder.normalizeEntry('ok', ['fr'])).toEqual({
+        valuesConverted: 0,
+        tagsNormalized: 0,
+        localesAdded: 0,
+        changed: false,
+      });
+      expect(folder.get('ok')?.entry).toEqual(entry);
+    });
+
     it('preserves an explicit translated status on an identical copy', () => {
       const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
       folder.setBase('ok', 'OK');
       folder.setTranslation('ok', 'fr', 'OK', 'translated');
 
-      folder.normalizeEntry('ok', { source: 'OK', fr: 'OK' }, ['fr']);
+      folder.normalizeEntry('ok', ['fr']);
 
       expect(folder.get('ok')?.meta?.['fr']?.status).toBe('translated');
     });
@@ -323,9 +414,9 @@ describe('ResourceFolder', () => {
       );
       const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
 
-      const report = folder.normalizeEntry('ok', { source: 'OK', fr: 'Oui', de: 'OK' }, ['fr', 'de', 'es']);
+      const report = folder.normalizeEntry('ok', ['fr', 'de', 'es']);
 
-      expect(report).toEqual({ localesAdded: 1, changed: true });
+      expect(report).toEqual({ valuesConverted: 0, tagsNormalized: 0, localesAdded: 1, changed: true });
       expect(folder.get('ok')).toEqual({
         entry: { source: 'OK', fr: 'Oui', de: 'OK', es: 'OK' },
         meta: {
@@ -351,7 +442,9 @@ describe('ResourceFolder', () => {
       );
       const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
 
-      expect(folder.normalizeEntry('ok', { source: 'OK', fr: 'Oui', es: 'Vale', de: 'Ja' }, ['fr'])).toEqual({
+      expect(folder.normalizeEntry('ok', ['fr'])).toEqual({
+        valuesConverted: 0,
+        tagsNormalized: 0,
         localesAdded: 0,
         changed: false,
       });
@@ -375,7 +468,12 @@ describe('ResourceFolder', () => {
       );
       const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
 
-      expect(folder.normalizeEntry('ok', { source, fr: 'Bonjour {name}', es: legacy }, ['fr']).changed).toBe(true);
+      expect(folder.normalizeEntry('ok', ['fr'])).toEqual({
+        valuesConverted: 1,
+        tagsNormalized: 0,
+        localesAdded: 0,
+        changed: true,
+      });
       expect(folder.get('ok')?.entry['es']).toBe('Hola {name}');
       expect(folder.get('ok')?.meta?.['es']).toEqual({
         checksum: md5('Hola {name}'),
@@ -401,7 +499,9 @@ describe('ResourceFolder', () => {
       it.each(['verified', 'translated'])('%s becomes stale with the current baseChecksum', (status) => {
         const folder = drifted('Oui', status);
 
-        expect(folder.normalizeEntry('ok', { source: 'OK', fr: 'Oui' }, ['fr'])).toEqual({
+        expect(folder.normalizeEntry('ok', ['fr'])).toEqual({
+          valuesConverted: 0,
+          tagsNormalized: 0,
           localesAdded: 0,
           changed: true,
         });
@@ -414,13 +514,13 @@ describe('ResourceFolder', () => {
 
       it('becomes new when its value is a copy of the base', () => {
         const folder = drifted('OK', 'translated');
-        folder.normalizeEntry('ok', { source: 'OK', fr: 'OK' }, ['fr']);
+        folder.normalizeEntry('ok', ['fr']);
         expect(folder.get('ok')?.meta?.['fr']?.status).toBe('new');
       });
 
       it('stays new when it was new', () => {
         const folder = drifted('Oui', 'new');
-        folder.normalizeEntry('ok', { source: 'OK', fr: 'Oui' }, ['fr']);
+        folder.normalizeEntry('ok', ['fr']);
         expect(folder.get('ok')?.meta?.['fr']).toEqual({
           checksum: md5('Oui'),
           baseChecksum: md5('OK'),
@@ -430,8 +530,10 @@ describe('ResourceFolder', () => {
 
       it('is idempotent: a second run changes nothing', () => {
         const folder = drifted('Oui', 'verified');
-        folder.normalizeEntry('ok', { source: 'OK', fr: 'Oui' }, ['fr']);
-        expect(folder.normalizeEntry('ok', { source: 'OK', fr: 'Oui' }, ['fr'])).toEqual({
+        folder.normalizeEntry('ok', ['fr']);
+        expect(folder.normalizeEntry('ok', ['fr'])).toEqual({
+          valuesConverted: 0,
+          tagsNormalized: 0,
           localesAdded: 0,
           changed: false,
         });
@@ -451,7 +553,7 @@ describe('ResourceFolder', () => {
       );
       const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
 
-      expect(folder.normalizeEntry('ok', { source: 'OK', fr: 'Oui' }, ['fr']).changed).toBe(false);
+      expect(folder.normalizeEntry('ok', ['fr']).changed).toBe(false);
       expect(folder.get('ok')?.meta?.['fr']?.status).toBe('verified');
     });
 
@@ -468,7 +570,7 @@ describe('ResourceFolder', () => {
       );
       const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
 
-      folder.normalizeEntry('save', { source: 'Save changes', fr: 'Enregistrer', es: 'Save changes' }, ['fr', 'es']);
+      folder.normalizeEntry('save', ['fr', 'es']);
 
       expect(folder.get('save')?.meta).toEqual({
         en: { checksum: md5('Save changes') },
@@ -477,7 +579,7 @@ describe('ResourceFolder', () => {
       });
     });
 
-    it('stores the given values, drops a stray base-locale property and reports no change when consistent', () => {
+    it('normalizes tags, drops a stray base-locale property and reports no change when consistent', () => {
       writePair(
         { ok: { source: 'OK', en: 'OK', fr: 'Oui', tags: ['UI'] } },
         {
@@ -489,12 +591,16 @@ describe('ResourceFolder', () => {
       );
       const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
 
-      expect(folder.normalizeEntry('ok', { source: 'OK', en: 'OK', fr: 'Oui', tags: ['ui'] }, ['fr'])).toEqual({
+      expect(folder.normalizeEntry('ok', ['fr'])).toEqual({
+        valuesConverted: 0,
+        tagsNormalized: 1,
         localesAdded: 0,
         changed: true,
       });
       expect(folder.get('ok')?.entry).toEqual({ source: 'OK', fr: 'Oui', tags: ['ui'] });
-      expect(folder.normalizeEntry('ok', { source: 'OK', fr: 'Oui', tags: ['ui'] }, ['fr'])).toEqual({
+      expect(folder.normalizeEntry('ok', ['fr'])).toEqual({
+        valuesConverted: 0,
+        tagsNormalized: 0,
         localesAdded: 0,
         changed: false,
       });
@@ -502,9 +608,9 @@ describe('ResourceFolder', () => {
 
     it('rejects an unknown key', () => {
       writePair({}, {});
-      expect(() =>
-        openResourceFolder(folderPath, { baseLocale: 'en' }).normalizeEntry('nope', { source: 'x' }, []),
-      ).toThrow('Resource entry not found: nope');
+      expect(() => openResourceFolder(folderPath, { baseLocale: 'en' }).normalizeEntry('nope', [])).toThrow(
+        'Resource entry not found: nope',
+      );
     });
   });
 
@@ -537,6 +643,30 @@ describe('ResourceFolder', () => {
     it('returns undefined when the entry is missing', () => {
       writePair({ ok: { source: 'OK' } }, {});
       expect(openResourceFolder(folderPath, { baseLocale: 'en' }).treeEntry('missing')).toBeUndefined();
+    });
+  });
+
+  describe('hasMissingFiles', () => {
+    it.each([true, false])('reports missing entries whether metadata exists (%s)', (metaPresent) => {
+      if (metaPresent) writeFileSync(join(folderPath, 'tracker_meta.json'), '{}');
+      const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
+      expect(folder.hasMissingFiles()).toBe(true);
+    });
+
+    it('tracks a missing metadata file through dry saves, writes and removal', () => {
+      writeFileSync(join(folderPath, 'resource_entries.json'), JSON.stringify({ ok: { source: 'OK' } }));
+      const folder = openResourceFolder(folderPath, { baseLocale: 'en' });
+      expect(folder.hasMissingFiles()).toBe(true);
+      expect(folder.save({ dryRun: true }).created).toEqual([join(folderPath, 'tracker_meta.json')]);
+      expect(folder.hasMissingFiles()).toBe(true);
+      folder.save();
+      expect(folder.hasMissingFiles()).toBe(false);
+      expect(openResourceFolder(folderPath, { baseLocale: 'en' }).hasMissingFiles()).toBe(false);
+      folder.remove('ok');
+      folder.save({ dryRun: true });
+      expect(folder.hasMissingFiles()).toBe(false);
+      folder.save();
+      expect(folder.hasMissingFiles()).toBe(true);
     });
   });
 

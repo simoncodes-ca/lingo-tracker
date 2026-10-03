@@ -37,15 +37,15 @@ export class BundleJobService {
       progress: { ...state.progress },
       ...(state.result && { result: state.result }),
     }),
-    { errorBeforeTimestamps: true },
+    { jobName: 'Bundle', errorBeforeTimestamps: true },
   );
 
   constructor(logger: Logger) {
     this.#logger = logger;
   }
 
-  /** Validates synchronously, then registers a pending job and returns its ID. */
-  startJob(params: StartBundleJobParams): string {
+  /** Validates synchronously, then registers a pending job and returns its snapshot. */
+  startJob(params: StartBundleJobParams): BundleGenerateJobDto {
     const prepared = prepareBundleRun({
       source: 'saved',
       bundleKey: params.bundleName,
@@ -79,7 +79,7 @@ export class BundleJobService {
     });
   }
 
-  getJob(jobId: string): BundleGenerateJobDto | undefined {
+  getJob(jobId: string): BundleGenerateJobDto {
     return this.#jobs.get(jobId);
   }
 }

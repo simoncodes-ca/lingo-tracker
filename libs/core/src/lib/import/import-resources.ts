@@ -1,5 +1,6 @@
 import { importStrategyPolicy, resolveAllReferences } from '@simoncodes-ca/domain';
 import type { Collection } from '../config/open-collection';
+import { groupByFolder } from '../resource/folder-batch';
 import { assertTranslationStatus } from '../resource/translation-status-input';
 import { applyICUAutoFixToResources } from './apply-icu-auto-fix';
 import { openImportSession, sessionResult } from './import-session';
@@ -7,7 +8,6 @@ import { validateImportResources } from './import-validation';
 import { loadBaseLocaleValues } from './load-base-locale-values';
 import { normalizeTranslocoSyntaxInResources } from './normalize-transloco-syntax';
 import { processResourceGroup } from './process-resource-group';
-import { groupResourcesByFolder } from './resource-grouping';
 import type { ImportedResource, ImportResult, ImportRunOptions } from './types';
 
 /**
@@ -39,7 +39,6 @@ export function importResources(
   }
   const session = openImportSession(collection, options);
   const { strategy, dryRun, verbose, onProgress } = session.options;
-  const { translationsFolder } = collection;
 
   let prepared = [...resources];
   if (importStrategyPolicy(strategy).resolvesReferences) {
@@ -51,7 +50,7 @@ export function importResources(
   prepared = normalizeTranslocoSyntaxInResources(prepared);
 
   if (verbose) onProgress?.('Checking for ICU placeholder issues...');
-  const baseValues = loadBaseLocaleValues(prepared, translationsFolder, collection.baseLocale);
+  const baseValues = loadBaseLocaleValues(prepared, collection);
   const autoFix = applyICUAutoFixToResources({
     resources: prepared,
     getBaseValue: (key) => baseValues.get(key),
@@ -66,9 +65,9 @@ export function importResources(
   session.errors.push(...validation.errors);
   session.changes.push(...validation.failedChanges);
 
-  for (const group of groupResourcesByFolder(validation.validResources, translationsFolder).values()) {
+  for (const group of groupByFolder(collection, validation.validResources, (resource) => resource.key)) {
     if (verbose) {
-      for (const { resource } of group.resources) onProgress?.(`Processing: ${resource.key}`);
+      for (const { item: resource } of group.members) onProgress?.(`Processing: ${resource.key}`);
     }
     processResourceGroup(session, group);
   }

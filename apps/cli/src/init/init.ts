@@ -1,18 +1,18 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type prompts from 'prompts';
-import type { InitOptions } from '../types/init-options.js';
 import {
   CONFIG_FILENAME,
   DEFAULT_CONFIG,
   initConfig,
-  type LingoTrackerConfig,
   type LingoTrackerCollection,
+  type LingoTrackerConfig,
   type TranslationConfig,
 } from '@simoncodes-ca/core';
 import type { BundleDefinition, TokenCasing } from '@simoncodes-ca/domain';
+import type prompts from 'prompts';
 import { type Answers, defineCommand, requireOptions } from '../runner/command-runner';
-import { ConsoleFormatter } from '../utils';
+import type { InitOptions } from '../types/init-options.js';
+import { ConsoleFormatter, collectionSetupQuestions, requiredText } from '../utils';
 
 const DEFAULT_BUNDLE_DIST = './src/assets/i18n';
 const DEFAULT_BUNDLE_NAME = '{locale}';
@@ -102,64 +102,7 @@ function buildBundleDefinition(bundleAnswers: BundleAnswers): BundleDefinition {
 }
 
 function buildQuestions(options: InitOptions): prompts.PromptObject[] {
-  const questions: prompts.PromptObject[] = [];
-
-  if (!options.collectionName) {
-    questions.push({
-      type: 'text',
-      name: 'collectionName',
-      message: 'Collection name',
-      initial: 'Main',
-      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
-    });
-  }
-
-  if (!options.translationsFolder) {
-    questions.push({
-      type: 'text',
-      name: 'translationsFolder',
-      message: 'Path to translations folder',
-      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
-    });
-  }
-
-  if (!options.exportFolder) {
-    questions.push({
-      type: 'text',
-      name: 'exportFolder',
-      message: 'Export folder',
-      initial: DEFAULT_CONFIG.exportFolder,
-    });
-  }
-
-  if (!options.importFolder) {
-    questions.push({
-      type: 'text',
-      name: 'importFolder',
-      message: 'Import folder',
-      initial: DEFAULT_CONFIG.importFolder,
-    });
-  }
-
-  if (!options.baseLocale) {
-    questions.push({
-      type: 'text',
-      name: 'baseLocale',
-      message: 'Base locale',
-      initial: DEFAULT_CONFIG.baseLocale,
-      validate: (val) => (val && val.trim().length > 0 ? true : 'Required'),
-    });
-  }
-
-  if (!options.locales) {
-    questions.push({
-      type: 'list',
-      name: 'locales',
-      message: 'Supported locales (comma-separated)',
-      initial: 'en,fr-ca,es,de',
-      separator: ',',
-    });
-  }
+  const questions = collectionSetupQuestions(options, { collectionName: 'Main' });
 
   if (options.setupBundle === undefined) {
     questions.push({
@@ -240,7 +183,7 @@ function buildQuestions(options: InitOptions): prompts.PromptObject[] {
       name: 'translationProvider',
       message: 'Translation provider',
       initial: 'google-translate',
-      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
+      validate: requiredText,
     });
   }
 
@@ -250,7 +193,7 @@ function buildQuestions(options: InitOptions): prompts.PromptObject[] {
       name: 'translationApiKeyEnv',
       message: 'Environment variable name for the API key',
       initial: 'GOOGLE_TRANSLATE_API_KEY',
-      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
+      validate: requiredText,
     });
   }
 

@@ -1,21 +1,16 @@
-import { resolve } from 'node:path';
 import type { Collection } from '../config/open-collection';
-import type { RunOutcome } from '../run-outcome';
-import { withMoveOutcome } from '../resource/move-outcome';
-import {
-  FolderMoveIntoDescendantError,
-  FolderNotFoundError,
-  InvalidCollectionFolderError,
-} from '../errors/lingo-tracker-error';
+import { FolderNotFoundError, InvalidCollectionFolderError } from '../errors/lingo-tracker-error';
 import { describeFolderProblem } from '../resource/collection-folders';
 import { sweepKeys } from '../resource/collection-sweep';
 import { inspectFolderAddress, resolveFolderAddress, validateFolderAddress } from '../resource/folder-address';
-import { planMove } from '../resource/move-plan';
+import { pruneEmptyFolders } from '../resource/folder-pruning';
 import { type MoveOptions, type MoveOptionsWithConfig, resolveMoveDestination } from '../resource/move-destination';
+import { withMoveOutcome } from '../resource/move-outcome';
+import { planMove } from '../resource/move-plan';
 import { mergeRelocation } from '../resource/move-resource';
 import { relocateEntries } from '../resource/relocate-entries';
-import { pruneEmptyFolders } from '../resource/folder-pruning';
-import type { MutationSink } from '../resource/resource-mutation';
+import { resolveMutationSink, type MutationSink } from '../resource/resource-mutation';
+import type { RunOutcome } from '../run-outcome';
 
 export interface MoveFolderParams {
   /** The source folder path to move (dot-delimited like "apps.common.buttons") */
@@ -95,7 +90,6 @@ export async function moveFolder(
 ): Promise<MoveFolderResult> {
   const { sourceFolderPath, destinationFolderPath, override = false, nestUnderDestination = true } = params;
   const destinationCollection = resolveMoveDestination(collection, params.toCollection, options);
-  const sameCollection = resolve(destinationCollection.translationsFolder) === resolve(collection.translationsFolder);
 
   const result: Omit<MoveFolderResult, 'outcome'> = {
     movedCount: 0,
@@ -110,15 +104,14 @@ export async function moveFolder(
   // The root is a valid destination.
   validateFolderAddress(destinationFolderPath, 'destination folder path');
 
-  // Prevent moving a folder into its own descendant
-  if (destinationFolderPath.startsWith(`${sourceFolderPath}.`) && sameCollection) {
-    throw new FolderMoveIntoDescendantError(sourceFolderPath, destinationFolderPath);
-  }
-
-  const selection = { kind: 'folder' as const, path: sourceFolderPath, nestUnderDestination, sameCollection };
-  const noOp = planMove({ ...selection, keys: [] }, destinationFolderPath);
-  if (noOp.warnings.length > 0) {
-    result.warnings.push(...noOp.warnings);
+  const plan = planMove({
+    source: collection,
+    destination: destinationCollection,
+    selection: { kind: 'folder', path: sourceFolderPath, nestUnderDestination },
+    destinationPath: destinationFolderPath,
+  });
+  if (plan.kind === 'refused') {
+    result.warnings.push(plan.warning());
     return withMoveOutcome(result);
   }
 
@@ -152,19 +145,17 @@ export async function moveFolder(
     result.warnings.push('No resources found in source folder. Nothing to move.');
     // Still remove the empty folder
     try {
-      pruneSource(collection, sourceFolderPath, result, options.onMutation);
+      pruneSource(collection, sourceFolderPath, result, resolveMutationSink(collection, options));
     } catch (error) {
       result.errors.push(`Failed to delete empty source folder: ${errorMessage(error)}`);
     }
     return withMoveOutcome(result);
   }
 
-  const { relocations } = planMove({ ...selection, keys: resourceKeys }, destinationFolderPath);
-
   // One Entry Relocation for the whole tree: each folder is read and written once.
-  const relocation = relocateEntries(collection, destinationCollection, relocations, {
+  const relocation = relocateEntries(plan.forKeys(resourceKeys), {
     override,
-    onMutation: options.onMutation,
+    onMutation: resolveMutationSink(collection, options),
   });
   mergeRelocation(result, relocation);
 
@@ -179,7 +170,7 @@ export async function moveFolder(
   // Only remove the source folder when every resource in it was moved
   if (keptKeys.length === 0 && result.errors.length === 0) {
     try {
-      pruneSource(collection, sourceFolderPath, result, options.onMutation);
+      pruneSource(collection, sourceFolderPath, result, resolveMutationSink(collection, options));
     } catch (error) {
       result.warnings.push(`Resources moved but failed to delete source folder: ${errorMessage(error)}`);
     }

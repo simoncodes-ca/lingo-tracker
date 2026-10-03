@@ -1,11 +1,9 @@
-import { existsSync } from 'node:fs';
 import type { Collection } from '../config/open-collection';
 import { ReadOnlyCollectionError } from '../errors/lingo-tracker-error';
 import type { CollectionFolderProblem } from '../resource/collection-folders';
 import { sweepCollection } from '../resource/collection-sweep';
 import { pruneEmptyFolders } from '../resource/folder-pruning';
 import type { ResourceFolder } from '../resource/resource-folder';
-import { normalizeEntryValues } from './normalize-entry';
 
 export interface NormalizeOptions {
   /** Report what would change without writing anything. */
@@ -33,7 +31,7 @@ type Counters = {
  * Normalizes every folder of a writable collection's Collection Sweep (hidden folders are not
  * part of the collection and are left alone):
  * - makes `resource_entries.json` and `tracker_meta.json` exist wherever there are entries,
- * - converts Transloco `{{ x }}` syntax to ICU and normalizes tags (`normalizeEntryValues`),
+ * - converts Transloco `{{ x }}` syntax to ICU and normalizes tags through `ResourceFolder.normalizeEntry`,
  * - recomputes checksums, re-applies the Staleness rule and seeds the collection's missing
  *   target locales, through `ResourceFolder.normalizeEntry`,
  * - removes empty folders afterwards.
@@ -59,10 +57,6 @@ export async function normalize(collection: Collection, options: NormalizeOption
 
   const problems: CollectionFolderProblem[] = [];
 
-  if (!existsSync(collection.translationsFolder)) {
-    return { ...counters, foldersRemoved: 0, dryRun, problems };
-  }
-
   for (const { folder, problem } of sweepCollection(collection)) {
     if (problem) {
       problems.push(problem);
@@ -86,26 +80,17 @@ function normalizeFolder(folder: ResourceFolder, collection: Collection, dryRun:
 
   let folderChanged = false;
   for (const key of folder.keys()) {
-    const stored = folder.get(key);
-    if (!stored) continue;
-
-    const values = normalizeEntryValues(stored.entry);
-    // The helper converts for counters; normalizeEntry converts the raw values again to enforce the write boundary.
-    const rawValues = { ...stored.entry };
-    if (values.entry.tags === undefined) delete rawValues.tags;
-    else rawValues.tags = values.entry.tags;
-    const report = folder.normalizeEntry(key, rawValues, collection.targetLocales);
+    const report = folder.normalizeEntry(key, collection.targetLocales);
 
     counters.entriesProcessed++;
     counters.localesAdded += report.localesAdded;
-    counters.valuesConverted += values.valuesConverted;
-    counters.tagsNormalized += values.tagsNormalized;
+    counters.valuesConverted += report.valuesConverted;
+    counters.tagsNormalized += report.tagsNormalized;
     if (report.changed) folderChanged = true;
   }
 
   // Normalize guarantees both files exist, so a missing file is written even without changes.
-  const filesMissing = !existsSync(folder.entriesPath) || !existsSync(folder.metaPath);
-  if (!folderChanged && !filesMissing) {
+  if (!folderChanged && !folder.hasMissingFiles()) {
     return;
   }
 

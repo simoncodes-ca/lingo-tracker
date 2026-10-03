@@ -13,13 +13,15 @@ import {
   collectionOption,
   collectionSetupOptions,
   option,
-  parseValidateOptions,
+  commaListOption,
   repeatableListOption,
   resourceFieldOptions,
   setupBundleOption,
   tokenCasingOption,
   yesOption,
 } from './runner/options';
+import { parseValidateOptions } from './commands/validate-options';
+import { parseMaxResults } from './commands/find-similar-options';
 import { registerCommand } from './runner/register-command';
 
 const program = new Command();
@@ -130,7 +132,7 @@ registerCommand(program, {
   description: 'Delete one or more translation resources from a collection',
   options: [
     collectionOption('Name of the collection'),
-    option({
+    commaListOption({
       flags: '--key <keys>',
       description: 'Resource key(s) - single key or comma-separated (e.g., key1,key2,key3)',
     }),
@@ -166,6 +168,7 @@ registerCommand(program, {
     option({ flags: '--all', description: 'Normalize all collections' }),
     option({ flags: '--dry-run', description: 'Preview changes without applying them' }),
     option({ flags: '--json', description: 'Output results as JSON' }),
+    yesOption,
   ],
   load: () => import('./commands/normalize').then((module) => module.normalizeCommand),
 });
@@ -185,11 +188,14 @@ registerCommand(program, {
   name: 'bundle',
   description: 'Generate translation bundles for deployment',
   options: [
-    option({
+    commaListOption({
       flags: '--name <names>',
       description: 'Bundle name(s) - single name or comma-separated (e.g., core,admin)',
     }),
-    option({ flags: '--locale <locales>', description: 'Locale(s) to generate - comma-separated (e.g., en,fr)' }),
+    commaListOption({
+      flags: '--locale <locales>',
+      description: 'Locale(s) to generate - comma-separated (e.g., en,fr)',
+    }),
     option({
       flags: '--quiet',
       description: 'Suppress progress and success output (warnings and errors are still shown)',
@@ -218,14 +224,18 @@ registerCommand(program, {
   description: 'Export translation resources to XLIFF or JSON',
   options: [
     option({ flags: '-f, --format <format>', description: 'Export format (xliff | json)' }),
-    option({ flags: '-c, --collection <names>', description: 'Specific collection(s) to export (comma-separated)' }),
-    option({ flags: '-l, --locale <locales>', description: 'Target locale(s) to export (comma-separated)' }),
-    option({
+    commaListOption({
+      flags: '-c, --collection <names>',
+      description: 'Specific collection(s) to export (comma-separated)',
+    }),
+    commaListOption({ flags: '-l, --locale <locales>', description: 'Target locale(s) to export (comma-separated)' }),
+    commaListOption({
       flags: '-s, --status <statuses>',
+      empty: 'preserve',
       description: 'Filter by translation status (comma-separated)',
       helpDefault: EXPORT_DEFAULTS.status,
     }),
-    option({ flags: '-t, --tags <tags>', description: 'Filter by tags (comma-separated)' }),
+    commaListOption({ flags: '-t, --tags <tags>', description: 'Filter by tags (comma-separated)' }),
     option({ flags: '-o, --output <path>', description: 'Output directory path' }),
     option({
       flags: '--structure <type>',
@@ -334,7 +344,7 @@ registerCommand(program, {
       description: 'Treat translated status as warning instead of error',
       defaultValue: false,
     }),
-    option({
+    commaListOption({
       flags: '--skip-locales <locales>',
       description: 'Comma-separated list of locales to exclude from validation',
     }),
@@ -369,13 +379,7 @@ registerCommand(program, {
       flags: '--max-results <n>',
       description: 'Maximum number of results to return (default: 5)',
       helpDefault: '5',
-      parse: (value) => {
-        const maxResults = parseInt(value, 10);
-        if (Number.isNaN(maxResults)) {
-          throw new Error(`--max-results must be a number, got "${value}"`);
-        }
-        return maxResults;
-      },
+      parse: parseMaxResults,
     }),
   ],
   load: () => import('./commands/find-similar').then((module) => module.findSimilarCommand),
@@ -394,7 +398,7 @@ registerCommand(program, {
     }),
     option({ flags: '--stdout', description: 'Print the glossary JSON to stdout instead of writing a file' }),
     collectionOption('Limit matching to a single collection (default: all collections)'),
-    option({
+    commaListOption({
       flags: '--locales <list>',
       description: 'Comma-separated locales to include (default: all configured locales)',
     }),
@@ -411,8 +415,9 @@ registerCommand(program, {
   options: [
     repeatableListOption('--add-tag <tag>', 'Add a tag to the collection (repeatable)'),
     repeatableListOption('--remove-tag <tag>', 'Remove a tag from the collection (repeatable)'),
-    option({
+    commaListOption({
       flags: '--set-tags <tags>',
+      empty: 'clear',
       description: 'Replace all collection tags with a comma-separated list (use "" to clear)',
     }),
   ],
@@ -432,8 +437,9 @@ registerCommand(program, {
     collectionOption('Target collection (absent = global scope)'),
     repeatableListOption('--add <term>', 'Add a protected term (repeatable)'),
     repeatableListOption('--remove <term>', 'Remove a protected term (repeatable)'),
-    option({
+    commaListOption({
       flags: '--set <terms>',
+      empty: 'clear',
       description: 'Replace protected terms with a comma-separated list (use "" to clear)',
     }),
     option({ flags: '--list', description: 'List protected terms (effective union for a collection)' }),

@@ -1,6 +1,4 @@
-import { join } from 'node:path';
-import { validateKey, validateTargetFolder, resolveResourceKey, splitResolvedKey } from '@simoncodes-ca/domain';
-import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import { resolveResourceKey, splitResolvedKey, validateKey, validateTargetFolder } from '@simoncodes-ca/domain';
 import { InvalidResourceKeyError } from '../errors/lingo-tracker-error';
 import { resolveFolderAddress } from './folder-address';
 
@@ -13,10 +11,6 @@ export interface ResolvedResourcePaths {
   readonly folderPathSegments: readonly string[];
   /** Full path to the folder containing the resource files */
   readonly folderPath: string;
-  /** Full path to resource_entries.json */
-  readonly resourceEntriesPath: string;
-  /** Full path to tracker_meta.json */
-  readonly trackerMetaPath: string;
 }
 
 export interface ResourcePathResolutionParams {
@@ -31,15 +25,15 @@ export interface ResourcePathResolutionParams {
 }
 
 /**
- * Resolves a resource key to all necessary file system paths.
+ * Resolves a resource key to its entry key and folder address.
  *
  * This function encapsulates the logic for:
  * 1. Combining targetFolder and key into a resolved key
  * 2. Splitting the resolved key into folder path and entry key
- * 3. Resolving absolute paths for resource files
+ * 3. Resolving the absolute folder path
  *
  * @param params - Path resolution parameters
- * @returns Object containing all resolved paths
+ * @returns The folder address, resolved full key, entry key, and folder path segments
  *
  * @example
  * ```typescript
@@ -55,8 +49,6 @@ export interface ResourcePathResolutionParams {
  * // entryKey: "ok"
  * // folderPathSegments: ["apps", "common", "buttons"]
  * // folderPath: "/app/translations/apps/common/buttons"
- * // resourceEntriesPath: "/app/translations/apps/common/buttons/resource_entries.json"
- * // trackerMetaPath: "/app/translations/apps/common/buttons/tracker_meta.json"
  * ```
  */
 export function resolveResourcePaths(params: ResourcePathResolutionParams): ResolvedResourcePaths {
@@ -66,16 +58,12 @@ export function resolveResourcePaths(params: ResourcePathResolutionParams): Reso
   const { folderPath: folderPathSegments, entryKey } = splitResolvedKey(resolvedKey);
 
   const folderPath = resolveFolderAddress(translationsFolder, folderPathSegments.join('.'), cwd);
-  const resourceEntriesPath = join(folderPath, RESOURCE_ENTRIES_FILENAME);
-  const trackerMetaPath = join(folderPath, TRACKER_META_FILENAME);
 
   return {
     resolvedKey,
     entryKey,
     folderPathSegments,
     folderPath,
-    resourceEntriesPath,
-    trackerMetaPath,
   };
 }
 

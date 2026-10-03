@@ -2,13 +2,13 @@
   <!-- Header: coral tile, title, one-line subtitle, close. Same anatomy as the collection dialog. -->
   <header class="dialog-header">
     <div class="dialog-header-tile" aria-hidden="true">
-      <mat-icon>{{ isEditMode ? 'inventory_2' : 'add_box' }}</mat-icon>
+      <mat-icon>{{ model.isEditMode ? 'inventory_2' : 'add_box' }}</mat-icon>
     </div>
     <div class="dialog-header-text">
       <h2 id="bundle-dialog-title" class="dialog-title">
-        {{ (isEditMode ? TOKENS.BUNDLES.DIALOG.EDITTITLE : TOKENS.BUNDLES.DIALOG.CREATETITLE) | transloco }}
+        {{ (model.isEditMode ? TOKENS.BUNDLES.DIALOG.EDITTITLE : TOKENS.BUNDLES.DIALOG.CREATETITLE) | transloco }}
       </h2>
-      @if (isEditMode) {
+      @if (model.isEditMode) {
         <!-- The file name is app-supplied markup, never translator input, so innerHTML only carries our own <code>. -->
         <p class="dialog-subtitle" [innerHTML]="TOKENS.BUNDLES.DIALOG.EDITSUBTITLEX | transloco: { file: configFileMarkup }"></p>
       } @else {
@@ -28,25 +28,25 @@
     </button>
   </header>
 
-  <form class="md" [formGroup]="form" (ngSubmit)="onSubmit()">
+  <form class="md" [formGroup]="model.form" (ngSubmit)="onSubmit()">
     <!-- ───────────── Rail ───────────── -->
     <nav class="rail" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.ARIALABEL | transloco">
       <button
         type="button"
         class="rail-item"
         data-testid="rail-output"
-        [class.rail-item--on]="isActive('output')"
-        [attr.aria-current]="isActive('output') ? 'true' : null"
-        (click)="activate('output')"
+        [class.rail-item--on]="model.isActive('output')"
+        [attr.aria-current]="model.isActive('output') ? 'true' : null"
+        (click)="model.activate('output')"
       >
         <mat-icon aria-hidden="true">output</mat-icon>
         <span class="rail-stack">
           <span class="rail-label">{{ TOKENS.BUNDLES.DIALOG.SECTIONS.OUTPUT | transloco }}</span>
-          <span class="rail-sub" [class.rail-sub--empty]="!outputSummary()">{{
-            outputSummary() || (placeholderPattern | transloco)
+          <span class="rail-sub" [class.rail-sub--empty]="!model.outputSummary()">{{
+            model.outputSummary() || (placeholderPattern | transloco)
           }}</span>
         </span>
-        @if (sectionErrors().has('output')) {
+        @if (model.sectionErrors().has('output')) {
           <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
         }
       </button>
@@ -55,46 +55,46 @@
         type="button"
         class="rail-item"
         data-testid="rail-collections"
-        [class.rail-item--on]="isActive('collections')"
-        [attr.aria-current]="isActive('collections') ? 'true' : null"
-        (click)="activate('collections')"
+        [class.rail-item--on]="model.isActive('collections')"
+        [attr.aria-current]="model.isActive('collections') ? 'true' : null"
+        (click)="model.activate('collections')"
       >
         <mat-icon aria-hidden="true">folder_copy</mat-icon>
         <span class="rail-stack">
           <span class="rail-label">{{ TOKENS.BUNDLES.DIALOG.SECTIONS.COLLECTIONS | transloco }}</span>
-          @if (form.controls.allCollections.value) {
+          @if (model.form.controls.allCollections.value) {
             <span class="rail-sub rail-sub--prose">{{ TOKENS.BUNDLES.DIALOG.SECTIONS.EVERYCOLLECTION | transloco }}</span>
           }
         </span>
-        @if (sectionErrors().has('collections')) {
+        @if (model.sectionErrors().has('collections')) {
           <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
         } @else {
-          <span class="rail-count">{{ collectionCount() }}</span>
+          <span class="rail-count">{{ model.collectionCount() }}</span>
         }
       </button>
 
-      @if (!form.controls.allCollections.value) {
-        @for (group of form.controls.collections.controls; track group; let index = $index) {
+      @if (!model.form.controls.allCollections.value) {
+        @for (group of model.form.controls.collections.controls; track group; let index = $index) {
           <button
             type="button"
             class="rail-item rail-item--child"
             [attr.data-testid]="'rail-coll-' + index"
-            [class.rail-item--on]="isActiveCollection(index)"
-            [attr.aria-current]="isActiveCollection(index) ? 'true' : null"
-            (click)="activateCollection(index)"
+            [class.rail-item--on]="model.isActiveCollection(index)"
+            [attr.aria-current]="model.isActiveCollection(index) ? 'true' : null"
+            (click)="model.activateCollection(index)"
           >
             <mat-icon aria-hidden="true">folder</mat-icon>
             <span class="rail-stack">
               <span class="rail-label">{{ group.controls.name.value }}</span>
             </span>
-            @if (hasCollectionError(index)) {
+            @if (model.hasCollectionError(index)) {
               <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
             } @else {
               <span class="rail-count">
                 {{
                   group.controls.allEntries.value
                     ? (TOKENS.BUNDLES.DIALOG.SECTIONS.ALLENTRIES | transloco)
-                    : (TOKENS.BUNDLES.DIALOG.SECTIONS.RULESCOUNTX | transloco: { count: ruleCount(group) })
+                    : (TOKENS.BUNDLES.DIALOG.SECTIONS.RULESCOUNTX | transloco: { count: model.ruleCount(group) })
                 }}
               </span>
             }
@@ -106,15 +106,15 @@
           class="rail-item rail-item--add"
           data-testid="rail-add-collection"
           [matMenuTriggerFor]="addCollectionMenu"
-          [disabled]="availableCollections().length === 0"
-          [matTooltip]="availableCollections().length === 0 ? (TOKENS.BUNDLES.DIALOG.SECTIONS.NOCOLLECTIONSLEFT | transloco) : ''"
+          [disabled]="model.availableCollections().length === 0"
+          [matTooltip]="model.availableCollections().length === 0 ? (TOKENS.BUNDLES.DIALOG.SECTIONS.NOCOLLECTIONSLEFT | transloco) : ''"
         >
           <mat-icon aria-hidden="true">add</mat-icon>
           <span class="rail-label">{{ TOKENS.BUNDLES.DIALOG.SECTIONS.ADDCOLLECTION | transloco }}</span>
         </button>
         <mat-menu #addCollectionMenu="matMenu" class="bundle-add-collection-menu">
-          @for (name of availableCollections(); track name) {
-            <button mat-menu-item type="button" (click)="addCollection(name)">
+          @for (name of model.availableCollections(); track name) {
+            <button mat-menu-item type="button" (click)="model.addCollection(name)">
               <mat-icon>folder</mat-icon>
               <span>{{ name }}</span>
             </button>
@@ -128,22 +128,22 @@
         type="button"
         class="rail-item"
         data-testid="rail-types"
-        [class.rail-item--on]="isActive('types')"
-        [attr.aria-current]="isActive('types') ? 'true' : null"
-        (click)="activate('types')"
+        [class.rail-item--on]="model.isActive('types')"
+        [attr.aria-current]="model.isActive('types') ? 'true' : null"
+        (click)="model.activate('types')"
       >
         <mat-icon aria-hidden="true">data_object</mat-icon>
         <span class="rail-stack">
           <span class="rail-label">{{ TOKENS.BUNDLES.DIALOG.SECTIONS.TYPES | transloco }}</span>
-          @if (form.controls.typesEnabled.value) {
-            <span class="rail-sub" [class.rail-sub--empty]="!typeFileName()">{{
-              typeFileName() || (placeholderTypeFile | transloco)
+          @if (model.form.controls.typesEnabled.value) {
+            <span class="rail-sub" [class.rail-sub--empty]="!model.typeFileName()">{{
+              model.typeFileName() || (placeholderTypeFile | transloco)
             }}</span>
           } @else {
             <span class="rail-sub rail-sub--prose">{{ TOKENS.BUNDLES.DIALOG.OFF | transloco }}</span>
           }
         </span>
-        @if (sectionErrors().has('types')) {
+        @if (model.sectionErrors().has('types')) {
           <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
         }
       </button>
@@ -152,9 +152,9 @@
         type="button"
         class="rail-item"
         data-testid="rail-options"
-        [class.rail-item--on]="isActive('options')"
-        [attr.aria-current]="isActive('options') ? 'true' : null"
-        (click)="activate('options')"
+        [class.rail-item--on]="model.isActive('options')"
+        [attr.aria-current]="model.isActive('options') ? 'true' : null"
+        (click)="model.activate('options')"
       >
         <mat-icon aria-hidden="true">tune</mat-icon>
         <span class="rail-stack">
@@ -166,7 +166,7 @@
 
     <!-- ───────────── Pane ───────────── -->
     <div class="pane" data-testid="pane">
-      @switch (activeKind()) {
+      @switch (model.activeKind()) {
         <!-- Output -->
         @case ('output') {
           <div class="pane-head">
@@ -178,14 +178,14 @@
 
           <div class="field">
             <label class="field-label" for="bundle-name">{{ TOKENS.BUNDLES.DIALOG.OUTPUT.NAMELABEL | transloco }}</label>
-            @if (isEditMode) {
+            @if (model.isEditMode) {
               <div class="text-input text-input--locked" id="bundle-name" data-testid="name-locked">
                 <mat-icon aria-hidden="true">lock</mat-icon>
-                <span>{{ form.controls.name.value }}</span>
+                <span>{{ model.form.controls.name.value }}</span>
               </div>
               <p class="field-hint" [innerHTML]="TOKENS.BUNDLES.DIALOG.OUTPUT.NAMELOCKEDX | transloco: { bundles: bundlesKeyMarkup }"></p>
             } @else {
-              <div class="text-input" [class.text-input--invalid]="showError(form.controls.name)">
+              <div class="text-input" [class.text-input--invalid]="model.showError(model.form.controls.name)">
                 <input
                   id="bundle-name"
                   type="text"
@@ -194,17 +194,17 @@
                   spellcheck="false"
                   required
                   [placeholder]="TOKENS.BUNDLES.DIALOG.OUTPUT.NAMEPLACEHOLDER | transloco"
-                  [attr.aria-invalid]="showError(form.controls.name)"
-                  [attr.aria-describedby]="showError(form.controls.name) ? 'bundle-name-error' : null"
+                  [attr.aria-invalid]="model.showError(model.form.controls.name)"
+                  [attr.aria-describedby]="model.showError(model.form.controls.name) ? 'bundle-name-error' : null"
                 />
               </div>
-              @if (showError(form.controls.name, 'required')) {
+              @if (model.showError(model.form.controls.name, 'required')) {
                 <p id="bundle-name-error" class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.NAMEREQUIRED | transloco }}</p>
-              } @else if (showError(form.controls.name, 'pattern')) {
+              } @else if (model.showError(model.form.controls.name, 'pattern')) {
                 <p id="bundle-name-error" class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.NAMECHARSET | transloco }}</p>
-              } @else if (showError(form.controls.name, 'nameExists')) {
+              } @else if (model.showError(model.form.controls.name, 'nameExists')) {
                 <p id="bundle-name-error" class="field-error" role="alert">
-                  {{ TOKENS.BUNDLES.DIALOG.VALIDATION.NAMEEXISTSX | transloco: { name: form.controls.name.value.trim() } }}
+                  {{ TOKENS.BUNDLES.DIALOG.VALIDATION.NAMEEXISTSX | transloco: { name: model.form.controls.name.value.trim() } }}
                 </p>
               }
             }
@@ -213,7 +213,7 @@
           <div class="row-3-2">
             <div class="field">
               <label class="field-label" for="bundle-dist">{{ TOKENS.BUNDLES.DIALOG.OUTPUT.FOLDERLABEL | transloco }}</label>
-              <div class="text-input text-input--mono" [class.text-input--invalid]="showError(form.controls.dist)">
+              <div class="text-input text-input--mono" [class.text-input--invalid]="model.showError(model.form.controls.dist)">
                 <mat-icon aria-hidden="true">folder</mat-icon>
                 <input
                   id="bundle-dist"
@@ -223,18 +223,18 @@
                   spellcheck="false"
                   required
                   [placeholder]="TOKENS.BUNDLES.DIALOG.OUTPUT.FOLDERPLACEHOLDER | transloco"
-                  [attr.aria-invalid]="showError(form.controls.dist)"
-                  [attr.aria-describedby]="showError(form.controls.dist) ? 'bundle-dist-error' : null"
+                  [attr.aria-invalid]="model.showError(model.form.controls.dist)"
+                  [attr.aria-describedby]="model.showError(model.form.controls.dist) ? 'bundle-dist-error' : null"
                 />
               </div>
-              @if (showError(form.controls.dist)) {
+              @if (model.showError(model.form.controls.dist)) {
                 <p id="bundle-dist-error" class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.DISTREQUIRED | transloco }}</p>
               }
             </div>
 
             <div class="field">
               <label class="field-label" for="bundle-pattern">{{ TOKENS.BUNDLES.DIALOG.OUTPUT.PATTERNLABEL | transloco }}</label>
-              <div class="text-input text-input--mono" [class.text-input--invalid]="showError(form.controls.bundleName)">
+              <div class="text-input text-input--mono" [class.text-input--invalid]="model.showError(model.form.controls.bundleName)">
                 <input
                   id="bundle-pattern"
                   type="text"
@@ -243,14 +243,14 @@
                   spellcheck="false"
                   required
                   [placeholder]="TOKENS.BUNDLES.DIALOG.OUTPUT.PATTERNPLACEHOLDER | transloco"
-                  [attr.aria-invalid]="showError(form.controls.bundleName)"
-                  [attr.aria-describedby]="showError(form.controls.bundleName) ? 'bundle-pattern-error' : 'bundle-pattern-hint'"
+                  [attr.aria-invalid]="model.showError(model.form.controls.bundleName)"
+                  [attr.aria-describedby]="model.showError(model.form.controls.bundleName) ? 'bundle-pattern-error' : 'bundle-pattern-hint'"
                 />
                 <span class="text-input-trail" aria-hidden="true">.json</span>
               </div>
-              @if (showError(form.controls.bundleName, 'required')) {
+              @if (model.showError(model.form.controls.bundleName, 'required')) {
                 <p id="bundle-pattern-error" class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.PATTERNREQUIRED | transloco }}</p>
-              } @else if (showError(form.controls.bundleName, 'missingLocale')) {
+              } @else if (model.showError(model.form.controls.bundleName, 'missingLocale')) {
                 <p id="bundle-pattern-error" class="field-error" role="alert">
                   {{ TOKENS.BUNDLES.DIALOG.VALIDATION.PATTERNLOCALE | transloco: { locale: localePlaceholder } }}
                 </p>
@@ -258,7 +258,7 @@
             </div>
           </div>
 
-          @if (patternFiles().length > 0) {
+          @if (model.patternFiles().length > 0) {
             <p id="bundle-pattern-hint" class="field-hint field-hint--icon">
               <mat-icon aria-hidden="true">description</mat-icon>
               <span [innerHTML]="TOKENS.BUNDLES.DIALOG.OUTPUT.WRITESHINTX | transloco: writesHintParams()"></span>
@@ -275,12 +275,12 @@
             </div>
           </div>
 
-          <div class="switch-row" [class.switch-row--on]="form.controls.allCollections.value">
+          <div class="switch-row" [class.switch-row--on]="model.form.controls.allCollections.value">
             <div class="switch-tile" aria-hidden="true"><mat-icon>done_all</mat-icon></div>
             <div class="switch-text">
               <span class="switch-label" id="all-collections-label">{{ TOKENS.BUNDLES.DIALOG.COLLECTIONS.INCLUDEALLLABEL | transloco }}</span>
               <span class="switch-description" id="all-collections-description">
-                {{ TOKENS.BUNDLES.DIALOG.COLLECTIONS.INCLUDEALLHINTX | transloco: { count: allCollectionNames().length } }}
+                {{ TOKENS.BUNDLES.DIALOG.COLLECTIONS.INCLUDEALLHINTX | transloco: { count: model.allCollectionNames().length } }}
               </span>
             </div>
             <mat-slide-toggle
@@ -288,20 +288,20 @@
               formControlName="allCollections"
               color="primary"
               hideIcon
-              (change)="onAllCollectionsToggle()"
+              (change)="model.onAllCollectionsToggle()"
               aria-labelledby="all-collections-label"
               aria-describedby="all-collections-description"
             ></mat-slide-toggle>
           </div>
 
-          @if (!form.controls.allCollections.value) {
+          @if (!model.form.controls.allCollections.value) {
             <ul class="coll-list" data-testid="collection-list">
-              @for (group of form.controls.collections.controls; track group; let index = $index) {
+              @for (group of model.form.controls.collections.controls; track group; let index = $index) {
                 <li class="coll-row">
                   <button
                     type="button"
                     class="coll-row-button"
-                    (click)="activateCollection(index)"
+                    (click)="model.activateCollection(index)"
                     [attr.aria-label]="TOKENS.BUNDLES.DIALOG.COLLECTIONS.OPENARIAX | transloco: { name: group.controls.name.value }"
                   >
                     <mat-icon class="coll-row-lead" aria-hidden="true">folder</mat-icon>
@@ -310,7 +310,7 @@
                       @if (group.controls.allEntries.value) {
                         {{ TOKENS.BUNDLES.DIALOG.COLLECTIONS.SUMMARYALLENTRIES | transloco }}
                       } @else {
-                        {{ TOKENS.BUNDLES.DIALOG.SECTIONS.RULESCOUNTX | transloco: { count: ruleCount(group) } }}
+                        {{ TOKENS.BUNDLES.DIALOG.SECTIONS.RULESCOUNTX | transloco: { count: model.ruleCount(group) } }}
                       }
                       @if (group.controls.bundledKeyPrefix.value.trim()) {
                         · <span [innerHTML]="TOKENS.BUNDLES.DIALOG.COLLECTIONS.SUMMARYPREFIXX | transloco: { prefix: codeMarkup(group.controls.bundledKeyPrefix.value.trim()) }"></span>
@@ -319,7 +319,7 @@
                         · {{ TOKENS.BUNDLES.DIALOG.COLLECTIONS.SUMMARYOVERRIDES | transloco }}
                       }
                     </span>
-                    @if (hasCollectionError(index)) {
+                    @if (model.hasCollectionError(index)) {
                       <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
                     }
                     <mat-icon class="coll-row-chevron" aria-hidden="true">chevron_right</mat-icon>
@@ -332,21 +332,21 @@
                   class="coll-row-button"
                   data-testid="pane-add-collection"
                   [matMenuTriggerFor]="addCollectionMenuPane"
-                  [disabled]="availableCollections().length === 0"
+                  [disabled]="model.availableCollections().length === 0"
                 >
                   <mat-icon class="coll-row-lead" aria-hidden="true">add</mat-icon>
                   <span class="coll-row-name">{{ TOKENS.BUNDLES.DIALOG.SECTIONS.ADDCOLLECTION | transloco }}</span>
                   <span class="coll-row-summary">
-                    @if (availableCollections().length === 0) {
+                    @if (model.availableCollections().length === 0) {
                       {{ TOKENS.BUNDLES.DIALOG.SECTIONS.NOCOLLECTIONSLEFT | transloco }}
                     } @else {
-                      {{ TOKENS.BUNDLES.DIALOG.COLLECTIONS.AVAILABLECOUNTX | transloco: { count: availableCollections().length } }}
+                      {{ TOKENS.BUNDLES.DIALOG.COLLECTIONS.AVAILABLECOUNTX | transloco: { count: model.availableCollections().length } }}
                     }
                   </span>
                 </button>
                 <mat-menu #addCollectionMenuPane="matMenu" class="bundle-add-collection-menu">
-                  @for (name of availableCollections(); track name) {
-                    <button mat-menu-item type="button" (click)="addCollection(name)">
+                  @for (name of model.availableCollections(); track name) {
+                    <button mat-menu-item type="button" (click)="model.addCollection(name)">
                       <mat-icon>folder</mat-icon>
                       <span>{{ name }}</span>
                     </button>
@@ -354,7 +354,7 @@
                 </mat-menu>
               </li>
             </ul>
-            @if (showError(form.controls.collections, 'collectionsEmpty')) {
+            @if (model.showError(model.form.controls.collections, 'collectionsEmpty')) {
               <p class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.COLLECTIONSEMPTY | transloco }}</p>
             }
           }
@@ -362,14 +362,14 @@
 
         <!-- One collection -->
         @case ('collection') {
-          @if (activeCollectionGroup(); as group) {
+          @if (model.activeCollectionGroup(); as group) {
             <div [formGroup]="group" class="pane-section">
               <div class="pane-head">
                 <div class="pane-head-text">
                   <h3>{{ group.controls.name.value }}</h3>
                   <p>{{ TOKENS.BUNDLES.DIALOG.COLLECTION.DESCRIPTION | transloco }}</p>
                 </div>
-                <button mat-button type="button" class="pane-head-action" data-testid="remove-collection" (click)="removeCollection(activeCollectionIndex())">
+                <button mat-button type="button" class="pane-head-action" data-testid="remove-collection" (click)="model.removeCollection(model.activeCollectionIndex())">
                   <mat-icon>remove_circle_outline</mat-icon>
                   {{ TOKENS.BUNDLES.DIALOG.COLLECTION.REMOVE | transloco }}
                 </button>
@@ -421,7 +421,7 @@
                   <div class="rules" role="list" aria-labelledby="bundle-rules-label">
                     @for (rule of group.controls.rules.controls; track rule; let ruleIndex = $index) {
                       <div class="rule" role="listitem" [formGroupName]="ruleIndex">
-                        <div class="text-input text-input--mono text-input--compact" [class.text-input--invalid]="showError(rule.controls.matchingPattern)">
+                        <div class="text-input text-input--mono text-input--compact" [class.text-input--invalid]="model.showError(rule.controls.matchingPattern)">
                           <input
                             type="text"
                             formControlName="matchingPattern"
@@ -429,7 +429,7 @@
                             spellcheck="false"
                             [placeholder]="TOKENS.BUNDLES.DIALOG.COLLECTION.PATTERNPLACEHOLDER | transloco"
                             [attr.aria-label]="TOKENS.BUNDLES.DIALOG.COLLECTION.KEYPATTERNLABEL | transloco"
-                            [attr.aria-invalid]="showError(rule.controls.matchingPattern)"
+                            [attr.aria-invalid]="model.showError(rule.controls.matchingPattern)"
                           />
                         </div>
 
@@ -439,7 +439,7 @@
                               <button
                                 type="button"
                                 class="tag-operator"
-                                (click)="toggleTagOperator(rule)"
+                                (click)="model.toggleTagOperator(rule)"
                                 [attr.aria-label]="TOKENS.BUNDLES.DIALOG.COLLECTION.TOGGLEOPERATORARIA | transloco"
                                 [attr.aria-pressed]="rule.controls.matchingTagOperator.value === 'All'"
                               >
@@ -455,7 +455,7 @@
                               <button
                                 type="button"
                                 class="tag-chip-remove"
-                                (click)="removeRuleTag(rule, tag)"
+                                (click)="model.removeRuleTag(rule, tag)"
                                 [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.REMOVETAGX | transloco: { tag }"
                               >
                                 <mat-icon>close</mat-icon>
@@ -466,14 +466,15 @@
                             <mat-icon class="tags-well-icon" aria-hidden="true">sell</mat-icon>
                           }
                           <input
-                            #tagInput
                             type="text"
                             class="tags-input"
                             autocomplete="off"
                             autocapitalize="off"
                             spellcheck="false"
-                            (keydown)="onTagInputKeydown($event, rule, tagInput)"
-                            (blur)="commitTagInput(rule, tagInput)"
+                            [appChipInput]="rule.controls.matchingTags.value"
+                            [commitOnBlur]="true"
+                            (chipAdd)="model.addRuleTag(rule, $event)"
+                            (chipRemove)="model.removeRuleTag(rule, $event)"
                             [placeholder]="rule.controls.matchingTags.value.length === 0 ? (TOKENS.BUNDLES.DIALOG.COLLECTION.ANYTAG | transloco) : ''"
                             [attr.aria-label]="TOKENS.BUNDLES.DIALOG.COLLECTION.TAGSLABEL | transloco"
                           />
@@ -483,7 +484,7 @@
                           mat-icon-button
                           type="button"
                           class="rule-remove"
-                          (click)="removeRule(group, ruleIndex)"
+                          (click)="model.removeRule(group, ruleIndex)"
                           [attr.aria-label]="TOKENS.BUNDLES.DIALOG.COLLECTION.REMOVERULEARIAX | transloco: { index: ruleIndex + 1 }"
                         >
                           <mat-icon>close</mat-icon>
@@ -492,14 +493,14 @@
                     }
                   </div>
 
-                  <button type="button" class="rule-add" data-testid="add-rule" (click)="addRule(group)">
+                  <button type="button" class="rule-add" data-testid="add-rule" (click)="model.addRule(group)">
                     <mat-icon aria-hidden="true">add</mat-icon>
                     {{ TOKENS.BUNDLES.DIALOG.COLLECTION.ADDRULE | transloco }}
                   </button>
 
-                  @if (showError(group.controls.rules, 'rulesEmpty')) {
+                  @if (model.showError(group.controls.rules, 'rulesEmpty')) {
                     <p class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.RULESEMPTY | transloco }}</p>
-                  } @else if (submitAttempted() && group.controls.rules.invalid) {
+                  } @else if (model.submitAttempted() && group.controls.rules.invalid) {
                     <p class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.RULEPATTERNREQUIRED | transloco }}</p>
                   }
                 </div>
@@ -517,7 +518,7 @@
             </div>
           </div>
 
-          <div class="switch-row" [class.switch-row--on]="form.controls.typesEnabled.value">
+          <div class="switch-row" [class.switch-row--on]="model.form.controls.typesEnabled.value">
             <div class="switch-tile" aria-hidden="true"><mat-icon>data_object</mat-icon></div>
             <div class="switch-text">
               <span class="switch-label" id="types-label">{{ TOKENS.BUNDLES.DIALOG.TYPES.SWITCHLABEL | transloco }}</span>
@@ -533,11 +534,11 @@
             ></mat-slide-toggle>
           </div>
 
-          @if (form.controls.typesEnabled.value) {
+          @if (model.form.controls.typesEnabled.value) {
             <div class="sub-fields">
               <div class="field">
                 <label class="field-label" for="bundle-type-file">{{ TOKENS.BUNDLES.DIALOG.TYPES.FILELABEL | transloco }}</label>
-                <div class="text-input text-input--mono" [class.text-input--invalid]="showError(form.controls.typeDistFile)">
+                <div class="text-input text-input--mono" [class.text-input--invalid]="model.showError(model.form.controls.typeDistFile)">
                   <mat-icon aria-hidden="true">description</mat-icon>
                   <input
                     id="bundle-type-file"
@@ -546,13 +547,13 @@
                     autocomplete="off"
                     spellcheck="false"
                     [placeholder]="TOKENS.BUNDLES.DIALOG.TYPES.FILEPLACEHOLDER | transloco"
-                    [attr.aria-invalid]="showError(form.controls.typeDistFile)"
-                    [attr.aria-describedby]="showError(form.controls.typeDistFile) ? 'bundle-type-file-error' : null"
+                    [attr.aria-invalid]="model.showError(model.form.controls.typeDistFile)"
+                    [attr.aria-describedby]="model.showError(model.form.controls.typeDistFile) ? 'bundle-type-file-error' : null"
                   />
                 </div>
-                @if (showError(form.controls.typeDistFile, 'required')) {
+                @if (model.showError(model.form.controls.typeDistFile, 'required')) {
                   <p id="bundle-type-file-error" class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.TYPEFILEREQUIRED | transloco }}</p>
-                } @else if (showError(form.controls.typeDistFile, 'notTypeScript')) {
+                } @else if (model.showError(model.form.controls.typeDistFile, 'notTypeScript')) {
                   <p id="bundle-type-file-error" class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.TYPEFILETS | transloco }}</p>
                 }
               </div>
@@ -566,11 +567,11 @@
                     [mono]="true"
                     labelledBy="bundle-casing-label"
                   />
-                  @if (form.controls.tokenCasing.value === 'inherit') {
+                  @if (model.form.controls.tokenCasing.value === 'inherit') {
                     <p class="field-hint">{{ TOKENS.BUNDLES.DIALOG.INHERITHINT | transloco }}</p>
                   } @else {
                     <p class="field-hint">
-                      <span [innerHTML]="TOKENS.BUNDLES.DIALOG.OVERRIDEHINTX | transloco: { value: codeMarkup(projectTokenCasing()) }"></span>
+                      <span [innerHTML]="TOKENS.BUNDLES.DIALOG.OVERRIDEHINTX | transloco: { value: codeMarkup(model.projectTokenCasing()) }"></span>
                     </p>
                   }
                 </div>
@@ -579,19 +580,19 @@
                     {{ TOKENS.BUNDLES.DIALOG.TYPES.CONSTANTLABEL | transloco }}
                     <span class="field-label-opt">{{ TOKENS.BUNDLES.DIALOG.OPTIONAL | transloco }}</span>
                   </label>
-                  <div class="text-input text-input--mono" [class.text-input--invalid]="showError(form.controls.tokenConstantName)">
+                  <div class="text-input text-input--mono" [class.text-input--invalid]="model.showError(model.form.controls.tokenConstantName)">
                     <input
                       id="bundle-constant"
                       type="text"
                       formControlName="tokenConstantName"
                       autocomplete="off"
                       spellcheck="false"
-                      [placeholder]="derivedConstantName()"
-                      [attr.aria-invalid]="showError(form.controls.tokenConstantName)"
-                      [attr.aria-describedby]="showError(form.controls.tokenConstantName) ? 'bundle-constant-error' : 'bundle-constant-hint'"
+                      [placeholder]="model.derivedConstantName()"
+                      [attr.aria-invalid]="model.showError(model.form.controls.tokenConstantName)"
+                      [attr.aria-describedby]="model.showError(model.form.controls.tokenConstantName) ? 'bundle-constant-error' : 'bundle-constant-hint'"
                     />
                   </div>
-                  @if (showError(form.controls.tokenConstantName, 'invalidIdentifier')) {
+                  @if (model.showError(model.form.controls.tokenConstantName, 'invalidIdentifier')) {
                     <p id="bundle-constant-error" class="field-error" role="alert">{{ TOKENS.BUNDLES.DIALOG.VALIDATION.CONSTANTNAME | transloco }}</p>
                   } @else {
                     <p id="bundle-constant-hint" class="field-hint">{{ TOKENS.BUNDLES.DIALOG.TYPES.CONSTANTHINT | transloco }}</p>
@@ -611,7 +612,7 @@
             </div>
           </div>
 
-          <div class="switch-row" [class.switch-row--on]="icuChecked()">
+          <div class="switch-row" [class.switch-row--on]="model.icuChecked()">
             <div class="switch-tile" aria-hidden="true"><mat-icon>swap_horiz</mat-icon></div>
             <div class="switch-text">
               <span class="switch-label" id="icu-label">{{ TOKENS.BUNDLES.DIALOG.OPTIONS.ICULABEL | transloco }}</span>
@@ -625,13 +626,13 @@
               class="switch-control"
               color="primary"
               hideIcon
-              [checked]="icuChecked()"
-              (change)="setIcu($event.checked)"
+              [checked]="model.icuChecked()"
+              (change)="model.setIcu($event.checked)"
               aria-labelledby="icu-label"
               aria-describedby="icu-description"
             ></mat-slide-toggle>
           </div>
-          @if (form.controls.transformICUToTransloco.value === 'inherit') {
+          @if (model.form.controls.transformICUToTransloco.value === 'inherit') {
             <p class="field-hint field-hint--icon">
               <mat-icon aria-hidden="true">info</mat-icon>
               <span>{{ TOKENS.BUNDLES.DIALOG.INHERITHINT | transloco }}</span>
@@ -640,7 +641,7 @@
             <p class="field-hint field-hint--icon">
               <mat-icon aria-hidden="true">info</mat-icon>
               <span>
-                {{ TOKENS.BUNDLES.DIALOG.OVERRIDEHINTX | transloco: { value: (projectIcuTransform() ? TOKENS.BUNDLES.DIALOG.ON : TOKENS.BUNDLES.DIALOG.OFF) | transloco } }}
+                {{ TOKENS.BUNDLES.DIALOG.OVERRIDEHINTX | transloco: { value: (model.projectIcuTransform() ? TOKENS.BUNDLES.DIALOG.ON : TOKENS.BUNDLES.DIALOG.OFF) | transloco } }}
               </span>
             </p>
           }
@@ -658,11 +659,11 @@
         >
           <mat-icon class="disclosure-icon" aria-hidden="true">visibility</mat-icon>
           <span class="disclosure-title">{{ TOKENS.BUNDLES.DIALOG.PREVIEW.DISCLOSURETITLE | transloco }}</span>
-          <span class="disclosure-summary">{{ TOKENS.BUNDLES.DIALOG.FOOTER.FILESCOUNTX | transloco: { count: previewFileCount() } }}</span>
+          <span class="disclosure-summary">{{ TOKENS.BUNDLES.DIALOG.FOOTER.FILESCOUNTX | transloco: { count: model.previewFileCount() } }}</span>
           <mat-icon class="disclosure-chevron" aria-hidden="true">expand_more</mat-icon>
         </button>
         @if (previewOpen()) {
-          <div id="bundle-preview-panel" class="disclosure-panel preview" [attr.aria-busy]="previewStale()" [class.preview--stale]="previewStale()">
+          <div id="bundle-preview-panel" class="disclosure-panel preview" [attr.aria-busy]="model.previewStale()" [class.preview--stale]="model.previewStale()">
             <ng-container *ngTemplateOutlet="previewBlocks" />
           </div>
         }
@@ -674,16 +675,16 @@
       class="prev col preview"
       data-testid="preview-column"
       [attr.aria-label]="TOKENS.BUNDLES.DIALOG.PREVIEW.ARIALABEL | transloco"
-      [attr.aria-busy]="previewStale()"
-      [class.preview--stale]="previewStale()"
+      [attr.aria-busy]="model.previewStale()"
+      [class.preview--stale]="model.previewStale()"
     >
       <ng-container *ngTemplateOutlet="previewBlocks" />
     </aside>
   </form>
 
-  @if (submitErrors().length > 0) {
+  @if (model.submitErrors().length > 0) {
     <div class="submit-errors" role="alert" data-testid="submit-errors">
-      @for (message of submitErrors(); track message) {
+      @for (message of model.submitErrors(); track message) {
         <p class="field-error">{{ message }}</p>
       }
     </div>
@@ -692,13 +693,13 @@
   <!-- ───────────── Footer ───────────── -->
   <footer class="dialog-footer">
     <div class="footer-meta" data-testid="footer-meta">
-      <mat-icon aria-hidden="true" [class.footer-meta-icon--idle]="!form.valid">{{
-        form.valid ? 'check_circle' : 'radio_button_unchecked'
+      <mat-icon aria-hidden="true" [class.footer-meta-icon--idle]="!model.form.valid">{{
+        model.form.valid ? 'check_circle' : 'radio_button_unchecked'
       }}</mat-icon>
       <span>
-        {{ TOKENS.BUNDLES.DIALOG.FOOTER.COLLECTIONSCOUNTX | transloco: { count: collectionCount() } }}
-        · {{ TOKENS.BUNDLES.DIALOG.FOOTER.FILESCOUNTX | transloco: { count: previewFileCount() } }}
-        · {{ TOKENS.BUNDLES.DIALOG.FOOTER.TYPESX | transloco: { state: (form.controls.typesEnabled.value ? TOKENS.BUNDLES.DIALOG.ON : TOKENS.BUNDLES.DIALOG.OFF) | transloco } }}
+        {{ TOKENS.BUNDLES.DIALOG.FOOTER.COLLECTIONSCOUNTX | transloco: { count: model.collectionCount() } }}
+        · {{ TOKENS.BUNDLES.DIALOG.FOOTER.FILESCOUNTX | transloco: { count: model.previewFileCount() } }}
+        · {{ TOKENS.BUNDLES.DIALOG.FOOTER.TYPESX | transloco: { state: (model.form.controls.typesEnabled.value ? TOKENS.BUNDLES.DIALOG.ON : TOKENS.BUNDLES.DIALOG.OFF) | transloco } }}
       </span>
     </div>
     <div class="footer-spacer"></div>
@@ -706,7 +707,7 @@
       {{ TOKENS.COMMON.ACTIONS.CANCEL | transloco }}
     </button>
     <button mat-flat-button color="primary" type="button" data-testid="submit" (click)="onSubmit()" [disabled]="saving()">
-      {{ (isEditMode ? TOKENS.BUNDLES.DIALOG.FOOTER.SAVECHANGES : TOKENS.BUNDLES.DIALOG.FOOTER.CREATE) | transloco }}
+      {{ (model.isEditMode ? TOKENS.BUNDLES.DIALOG.FOOTER.SAVECHANGES : TOKENS.BUNDLES.DIALOG.FOOTER.CREATE) | transloco }}
     </button>
   </footer>
 </div>
@@ -715,11 +716,11 @@
 <ng-template #previewBlocks>
   <section class="preview-block">
     <h4><mat-icon aria-hidden="true">visibility</mat-icon>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.WILLWRITE | transloco }}</h4>
-    @if (previewTree().length === 0) {
+    @if (model.previewTree().length === 0) {
       <p class="preview-note">{{ TOKENS.BUNDLES.DIALOG.PREVIEW.WAITING | transloco }}</p>
     } @else {
       <ul class="tree" data-testid="preview-tree">
-        @for (folder of previewTree(); track folder.path) {
+        @for (folder of model.previewTree(); track folder.path) {
           <li class="tree-folder">
             <span class="tree-dir">
               <mat-icon aria-hidden="true">folder_open</mat-icon>
@@ -753,35 +754,35 @@
 
   <section class="preview-block">
     <h4><mat-icon aria-hidden="true">functions</mat-icon>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.DRYRUN | transloco }}</h4>
-    @if (previewStatus() === 'error') {
+    @if (model.previewStatus() === 'error') {
       <p class="preview-note" data-testid="counts-unavailable">{{ TOKENS.BUNDLES.DIALOG.PREVIEW.COUNTSUNAVAILABLE | transloco }}</p>
-    } @else if (dryRun(); as result) {
+    } @else if (model.dryRun(); as result) {
       <dl class="kv" data-testid="dry-run">
         <dt>{{ TOKENS.BUNDLES.DIALOG.SECTIONS.COLLECTIONS | transloco }}</dt>
-        <dd class="num">{{ collectionCount() }}</dd>
+        <dd class="num">{{ model.collectionCount() }}</dd>
         <dt>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.KEYSPERLOCALE | transloco }}</dt>
-        <dd class="num">≈ {{ keysPerLocale() }}</dd>
+        <dd class="num">≈ {{ model.keysPerLocale() }}</dd>
         <dt>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.CONFLICTS | transloco }}</dt>
         <dd>
           <span class="num">{{ result.conflictsCount }}</span>
-          @if (result.conflictsCount > 0 && hasOverride()) {
+          @if (result.conflictsCount > 0 && model.hasOverride()) {
             · {{ TOKENS.BUNDLES.DIALOG.PREVIEW.RESOLVEDBYOVERRIDE | transloco }}
           }
         </dd>
         <dt>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.LOCALES | transloco }}</dt>
         <dd class="num">{{ result.locales.length }}</dd>
       </dl>
-      @if (hierarchicalConflicts().length > 0) {
+      @if (model.hierarchicalConflicts().length > 0) {
         <p class="preview-error" role="alert" data-testid="hierarchical-conflicts">
           <mat-icon aria-hidden="true">error_outline</mat-icon>
-          <span>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.HIERARCHICALCONFLICTSX | transloco: { keys: hierarchicalConflictList() } }}</span>
+          <span>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.HIERARCHICALCONFLICTSX | transloco: { keys: model.hierarchicalConflictList() } }}</span>
         </p>
       }
       <p class="preview-caption">{{ TOKENS.BUNDLES.DIALOG.PREVIEW.CAPTION | transloco }}</p>
     } @else {
       <dl class="kv kv--skeleton" data-testid="dry-run-skeleton" aria-hidden="true">
         <dt>{{ TOKENS.BUNDLES.DIALOG.SECTIONS.COLLECTIONS | transloco }}</dt>
-        <dd class="num">{{ collectionCount() }}</dd>
+        <dd class="num">{{ model.collectionCount() }}</dd>
         <dt>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.KEYSPERLOCALE | transloco }}</dt>
         <dd>—</dd>
         <dt>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.CONFLICTS | transloco }}</dt>
@@ -792,8 +793,8 @@
     }
   </section>
 
-  @if (dryRun(); as result) {
-    @if (previewStatus() !== 'error') {
+  @if (model.dryRun(); as result) {
+    @if (model.previewStatus() !== 'error') {
       <section class="preview-block">
         <h4><mat-icon aria-hidden="true">key</mat-icon>{{ TOKENS.BUNDLES.DIALOG.PREVIEW.EXAMPLEKEY | transloco }}</h4>
         @if (result.exampleKey; as example) {
@@ -813,7 +814,7 @@
               <div class="example-line">
                 <mat-icon aria-hidden="true">data_object</mat-icon>
                 <b data-testid="example-token-path">
-                  @for (part of tokenPathParts(); track $index) {
+                  @for (part of model.tokenPathParts(); track $index) {
                     <span>{{ part }}</span><wbr />
                   }
                 </b>

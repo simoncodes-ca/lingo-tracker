@@ -182,7 +182,7 @@ graph TD
 
 Controllers and the exception filter construct HTTP responses. Core errors declare domain facts. The API owns all HTTP statuses and message transforms.
 
-`@RouteCollection()` (`collections/route-collection.ts`) supplies an `OpenedCollection` with the config snapshot and project root to each resource, folder, and locale handler. Its injectable `RouteCollectionPipe` reads the current config once through `ConfigService` (a thin wrapper over core `loadConfig()` that returns Nest exceptions for missing or malformed config), calls core `openCollection()`, and maps source-collection missing or read-only errors to Nest 404 or 403 exceptions. The pipe also runs in test modules without the app-level exception filter, so it must return the same HTTP body there. Handlers delegate business operations to `@simoncodes-ca/core` (see [core-library.md](core-library.md)), apply mappers at the boundary, and pass `CollectionIndex.sink` as `onMutation` to each core write. Express decodes route params once and controllers use them verbatim. For cross-collection moves, resource and folder handlers pass the opened source `Collection`, the plain `toCollection` name from the DTO, and its config in the last options argument; core resolves the destination with that snapshot. Which locales get what on create or edit is core's [locale seeding](glossary.md#locale-seeding), not the controller's.
+`@RouteCollection()` (`collections/route-collection.ts`) supplies an `OpenedCollection` with the config snapshot and project root to each resource, folder, and locale handler. Its injectable `RouteCollectionPipe` reads the current config once through `ConfigService` (a thin wrapper over core `loadConfig()` that returns Nest exceptions for missing or malformed config), calls core `openCollection()`, and maps source-collection missing or read-only errors to Nest 404 or 403 exceptions. The pipe also runs in test modules without the app-level exception filter, so it must return the same HTTP body there. The pipe attaches `CollectionIndex.sink` when it opens a writable handle. Handlers delegate business operations to `@simoncodes-ca/core` (see [core-library.md](core-library.md)), which inherits that sink, and apply response mappers at the boundary. Express decodes route params once and controllers use them verbatim. For cross-collection moves, resource and folder handlers pass the opened source `Collection`, the plain `toCollection` name from the DTO, and its config in the last options argument; core resolves the destination with that snapshot. Which locales get what on create or edit is core's [locale seeding](glossary.md#locale-seeding), not the controller's.
 
 Config-writing routes use `ConfigService.openProject()` or an opened collection to pass the request's config snapshot to core's guarded write. `PUT /config` opens the config through `ConfigService` for both protected terms and preferred terminology, so missing and malformed config use the same mapped read errors as other routes. Core errors reach the global exception filter (see [Error Mapping](#error-mapping)).
 
@@ -261,11 +261,11 @@ This means a single `node apps/api/main.js` process serves both the UI and the A
 tree(collection: Collection, path?: string): TreeRead;          // { status: 'ready', tree | null } | { status: 'not-started' | 'indexing' | 'error' }
 searchPage(collection: Collection, request: SearchRequest): SearchPage; // ranked page with true totalFound
 status(collection: Collection): CacheStatusDto;                  // for GET .../cache/status
-readonly sink: MutationSink;                                 // passed to core as onMutation
+readonly sink: MutationSink;                                 // attached to writable collections as onMutation
 apply(changes: readonly ResourceMutation[]): void;              // used by sink and tests
 ```
 
-Controllers do not know how the index works. They read with `tree()`, `searchPage()` and `status()`, and pass `sink` as `onMutation` to each core write. These items are internal to the index:
+Controllers do not know how the index works. They read with `tree()`, `searchPage()` and `status()`. Writable collections carry `sink` as their default `onMutation`, so core writes inherit it. These items are internal to the index:
 
 - **Indexing.** `tree()` indexes a collection that is not indexed or whose last attempt failed. `status()` indexes only a collection that is not indexed, and reports `error` as it is. Both report the state that they found, so the first read answers `not-started` (and `/tree` returns `202`). `searchPage()` never starts indexing. It runs [Resource Search](glossary.md#resource-search) over `treeResources(tree)` when the collection is indexed, and over the disk (`readCollection(collection).resources`) until then. On the disk path it logs the folders the reader could not read with one `Logger.warn` per problem, using `describeFolderProblem` with the collection name. The tree loader also sends problems through `onProblem` to this logger; core does not print them. Direct resource and folder operations reject linked addresses with `InvalidCollectionFolderError` (`invalid`, HTTP 400); folder move/delete refusals name the operation and target. Both sources give the same results, because the same matcher ranks every match before the limit applies. `searchRequestFromQuery` in `search-result.mapper.ts` maps `mode=similar` to core's `similar-value` and parses `maxResults` with `Number`. It calls `normalizeSearchRequest` with default 100. Core caps valid limits at 500. A blank query returns an empty page. Core `searchPage` reports `limited` and the true `totalFound` before slicing; `totalFound` was previously the returned page size when limited.
 - **Revalidation.** Before each read, a ready entry compares a stat-only disk fingerprint (`computeTreeFingerprint`) with the fingerprint from its last index or own write. If they differ, the entry is dropped and indexed again. This makes CLI commands, `git checkout` and hand edits visible without a restart. Filesystem watching is not used, because inotify does not fire for Windows-side writes on a WSL `/mnt/c` mount, and the same is true for some network and container mounts. The check runs at most once per `LINGO_TRACKER_REVALIDATE_INTERVAL_MS` (default 2000 ms) for each entry.
@@ -313,7 +313,7 @@ reindex or failed patch
 
 ### Writes: Resource Mutations
 
-Each core write, including `addResources`, `moveResources`, and `translateLocale`, accepts `onMutation` in its last object argument. Controllers and the translation job service pass `CollectionIndex.sink`. Core delivers each mutation synchronously after its disk operation returns or throws, so the index follows disk order even when requests overlap. A successful Resource Folder save delivers an `upsert` or `remove`; one that throws delivers `reindex`, since one JSON file may already be on disk. Earlier completed batch items remain delivered if a later item fails. The sink catches and logs any index error, so indexing cannot fail a write. There is no rollback. The index matches mutations by absolute `translationsFolder`, including both sides of a cross-collection move.
+Each core write with mutation support, including `addResources`, `moveResources`, and `translateLocale`, accepts `onMutation` in its last object argument. `openCollection` also accepts a default sink and exposes it on the returned `Collection`. One core helper, `resolveMutationSink`, selects `options.onMutation ?? collection.onMutation`, so explicit callbacks still win. `RouteCollectionPipe` attaches `CollectionIndex.sink` when it opens a writable collection; resource, folder, and locale controllers inherit it. Collection update and delete routes open their own handles with the same sink, preserving their registration-specific access rules. `createCollection` now reports a benign `reindex` mutation for the newly registered folder after its config write. The translation job service receives the same writable route collection and inherits its sink. Core delivers each mutation synchronously after its disk operation returns or throws, so the index follows disk order even when requests overlap. A successful Resource Folder save delivers an `upsert` or `remove`; one that throws delivers `reindex`, since one JSON file may already be on disk. Earlier completed batch items remain delivered if a later item fails. The sink catches and logs any index error, so indexing cannot fail a write. There is no rollback. The index matches mutations by absolute `translationsFolder`, including both sides of a cross-collection move.
 
 | Mutation | Delivered by | Index action |
 |---|---|---|
@@ -321,11 +321,13 @@ Each core write, including `addResources`, `moveResources`, and `translateLocale
 | `remove` (key) | `deleteResource`, `moveResource` / `moveResources` / `moveFolder` (source), `editResource` with a `moveTo` (source) | Remove the entry. Missing entry → drop the collection. |
 | `add-folder` (path) | `createFolder` | Create the folder node (and missing parents). |
 | `remove-folder` (path) | `deleteFolder`, `moveFolder` (every removed source folder, deepest first) | Remove the folder node. Missing folder → drop the collection. |
-| `reindex` | `addLocaleToCollection`, `removeLocaleFromCollection`, `updateCollection`, `deleteCollection`, `translateLocale`; a move, folder create/delete, or Resource Folder save whose write failed part-way | Drop the collection. Every folder's metadata changed, or the change is not known. |
+| `reindex` | `addLocaleToCollection`, `removeLocaleFromCollection`, `updateCollection`, `deleteCollection`, `translateLocale`, API `createCollection`; a move, folder create/delete, or Resource Folder save whose write failed part-way | Drop the collection. Every folder's metadata changed, or the change is not known. |
 
-A relocation delivers a `remove` for every moved key first, then an `upsert` for every moved key. A folder move then delivers `remove-folder` for each folder it removes, deepest first. Removes come first because one batch can move an entry into a key that another entry of the same batch leaves (`a.*` to `a.b`). Thus the index follows partial moves, merges into an existing folder, and `nestUnderDestination: false` in the same way as the disk. The translate-locale job passes the same sink to core.
+A relocation delivers a `remove` for every moved key first, then an `upsert` for every moved key. A folder move then delivers `remove-folder` for each folder it removes, deepest first. Removes come first because one batch can move an entry into a key that another entry of the same batch leaves (`a.*` to `a.b`). Thus the index follows partial moves, merges into an existing folder, and `nestUnderDestination: false` in the same way as the disk. The translate-locale job inherits the sink from its opened route collection.
 
-The remaining gap is for writes outside the API, such as CLI commands or direct file edits. They do not pass the index sink, so the index sees them only through disk-fingerprint revalidation.
+A metadata-derived HTTP spec exercises every POST, PUT, PATCH, and DELETE route in the collections controllers against a real temporary project and checks that the Collection Index receives mutations for the route collection’s absolute translations folder and both folders of cross-collection moves. Translation calls replace only the external provider and await job completion. A new writing route requires a successful fixture to keep this invariant covered.
+
+The remaining gap is for writes outside the API, such as CLI commands or direct file edits. The CLI opens collections without a sink, so its core writes have no mutation consumer. The API index sees CLI writes and direct file edits through disk-fingerprint revalidation.
 
 ### Polling Flow from the Frontend
 
@@ -381,14 +383,14 @@ sequenceDiagram
     UI->>RC: POST /translate-locale { locale: "fr" }
     RC->>JS: startJob(collection, locale)
     JS->>JS: Job Registry creates UUID and queues job (status: "pending")
-    JS-->>RC: jobId
+    JS-->>RC: pending TranslateLocaleJobDto
     RC-->>UI: 202 Accepted TranslateLocaleJobDto\n{ jobId, status: "pending", ... }
 
     JS->>Core: translateLocale(collection, { targetLocale, onProgress }) [when earlier translations settle]
 
     loop Poll until status is "completed" or "failed"
         UI->>RC: GET /translate-locale/{jobId}
-        RC->>JS: getJob(jobId)
+        RC->>JS: getJob(jobId, collectionName)
         JS-->>RC: TranslateLocaleJobDto
         RC-->>UI: 200 OK\n{ status: "running", translatedCount: N, ... }
     end
@@ -400,7 +402,9 @@ sequenceDiagram
     RC-->>UI: 200 OK\n{ status: "completed", translatedCount: N, skippedCount: M }
 ```
 
-**Starting a job.** The handler receives the collection from `@RouteCollection()`, then calls core `assertCanTranslateLocale(collection, locale)` synchronously before `startJob(collection, locale)`. The precondition raises typed errors for disabled auto-translation (422), the base locale (400), or a locale outside the collection's configured locales (400). The job calls `translateLocale(collection, { targetLocale, onProgress, onMutation: index.sink })`. Core delivers a `reindex` after every folder save attempt, including a partial failure, before the job is marked completed or failed. A run with no saved folder delivers none.
+**Starting a job.** The handler receives the collection from `@RouteCollection()`, then calls core `assertCanTranslateLocale(collection, locale)` synchronously before `startJob(collection, locale)`. The precondition raises typed errors for disabled auto-translation (422), the base locale (400), or a locale outside the collection's configured locales (400). The job calls `translateLocale(collection, { targetLocale, onProgress })`, inheriting `collection.onMutation`. Core delivers a `reindex` after every folder save attempt, including a partial failure, before the job is marked completed or failed. A run with no saved folder delivers none.
+
+**Start and lookup protocol.** Registry `start` returns the initial pending DTO snapshot directly. The services return it to controllers, which use `@HttpCode(202)` and Nest's return handling. Registry `get` returns a fresh snapshot or raises API-local `JobNotFoundError` (kind `not-found`). Translation lookup supplies the route collection as an owner check; a wrong owner has the same 404 as an unknown or evicted ID. The filter maps kind `not-found` to Nest's `NotFoundException`, preserving `{ statusCode: 404, message, error: "Not Found" }` and the existing bundle/translation job messages. Bundle preparation stays in the bundle service; translation preconditions stay in the controller.
 
 **Job lifecycle states:** `pending` → `running` → `completed` | `failed`. The [Job Registry](glossary.md#job-registry) owns the map, queue, timestamps, error text, and DTO snapshots for both services. Each service has one registry instance: translations run serially with translations, and bundles run serially with bundles. A bundle and a translation may run concurrently. Bundle generation reads resource folders and writes its configured `dist` and optional type output; translation writes resource folders. Their usual output paths do not overlap, so this avoids two jobs writing the same files. Output paths are configurable and are not checked for overlap; a bundle may also read resources while translation writes them. Finished jobs older than 30 minutes are evicted on the next start; when the count would exceed 100, the oldest finished jobs are evicted first. Queued and running jobs are never evicted. If the process restarts, all jobs are lost and the UI must re-issue any in-progress operations.
 
@@ -418,7 +422,7 @@ sequenceDiagram
 
 ## Mapper Layer
 
-The mapper layer enforces the boundary between `@simoncodes-ca/core`'s domain models and `@simoncodes-ca/data-transfer`'s DTOs. All transformation happens in `apps/api/src/app/mappers/`, except the create and update requests: their fields map one to one onto the core parameters, so the resources controller copies them inline. No controller accesses a raw domain model object directly in its response, and no core function receives a DTO as its argument. Bundle definitions are the one exception: `BundleDefinitionDto` is an alias of the domain `BundleDefinition`, so the bundles controller passes it to core as it is.
+The mapper layer enforces the boundary between `@simoncodes-ca/core`'s domain models and `@simoncodes-ca/data-transfer`'s DTOs. Response transformations happen in `apps/api/src/app/mappers/`. Request DTOs whose types already match core inputs pass through directly, including resource creation, deletion, move operations, and folder requests. Update requests still adapt `locales` to core `translations` inline. Controllers map domain responses to DTOs. Bundle definitions are the one exception: `BundleDefinitionDto` is an alias of the domain `BundleDefinition`, so the bundles controller passes it to core as it is.
 
 For the entity types that mappers transform, see [domain-and-data-model.md](domain-and-data-model.md).
 

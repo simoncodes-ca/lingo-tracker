@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import type { Collection } from '../config/open-collection';
 import type { ResourceTreeEntry } from './load-resource-tree';
 
 /**
@@ -28,6 +29,14 @@ export type MutationSink = (mutation: ResourceMutation) => void;
 export interface MutationSinkOptions {
   /** Called as soon as a change may be on disk, whether or not the write then completes. */
   readonly onMutation?: MutationSink;
+}
+
+/** An explicit write callback overrides the collection's default consumer. */
+export function resolveMutationSink(
+  collection: Pick<Collection, 'translationsFolder' | 'onMutation'>,
+  options: MutationSinkOptions = {},
+): MutationSink | undefined {
+  return options.onMutation ?? collection.onMutation;
 }
 
 /** Reports a completed folder save, or reindexes after a save that may have written one file. */

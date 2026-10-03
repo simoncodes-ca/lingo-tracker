@@ -1,5 +1,4 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideTrackerHttpClient, toApiError } from '../../../shared/api-error/api-error';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { Provider } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
@@ -14,11 +13,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { collectionSettings } from '../../../../testing/collection-settings';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
+import { provideTrackerHttpClient, toApiError } from '../../../shared/api-error/api-error';
 import { NotificationService } from '../../../shared/notification';
 import type { EditorOutcome } from '../../dialogs/translation-editor';
 import { BrowserApiService } from '../../services/browser-api.service';
-import { BrowserStore } from '../../store/browser.store';
 import { TranslationEditorLauncher } from '../../services/translation-editor-launcher';
+import { BrowserStore } from '../../store/browser.store';
 import { TranslationListStore } from './store/translation-list.store';
 import { TranslationList } from './translation-list';
 
@@ -106,7 +106,7 @@ describe('TranslationList - Copy to Clipboard', () => {
 
     const listStore = fixture.debugElement.injector.get(TranslationListStore);
     listStore.copyKey(summary('common.buttons.save', 'Save'));
-    await Promise.resolve(); // Wait for clipboard promise to resolve
+    await vi.waitFor(() => expect(notificationsSpy.success).toHaveBeenCalledWith('Copied to clipboard'));
 
     expect(mockClipboard.writeText).toHaveBeenCalledWith('common.buttons.save');
     expect(notificationsSpy.success).toHaveBeenCalledWith('Copied to clipboard');
@@ -120,7 +120,7 @@ describe('TranslationList - Copy to Clipboard', () => {
 
     const listStore = fixture.debugElement.injector.get(TranslationListStore);
     listStore.copyKey(summary('test.key', 'Test'));
-    await Promise.resolve(); // Wait for clipboard promise to reject
+    await vi.waitFor(() => expect(notificationsSpy.error).toHaveBeenCalledWith('Failed to copy'));
 
     expect(notificationsSpy.error).toHaveBeenCalledWith('Failed to copy');
   });

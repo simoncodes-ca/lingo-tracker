@@ -4,6 +4,7 @@ import type { LingoTrackerCollection } from '../../config/lingo-tracker-collecti
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import type { TranslationConfig } from '../../config/translation-config';
 import { CollectionNotFoundError, ReadOnlyCollectionError } from '../errors/lingo-tracker-error';
+import type { MutationSink } from '../resource/resource-mutation';
 import { resolvePreferredTerminologyFile } from './preferred-terminology-file';
 import { resolveCollectionProtectedTermsFilePath, resolveGlobalProtectedTermsFile } from './protected-terms-file';
 import type { TermFile } from './term-file';
@@ -14,6 +15,8 @@ import type { TermFile } from './term-file';
  * shared inheritance comes from domain's {@link inheritCollectionSettings}.
  */
 export interface Collection {
+  /** Default consumer of mutations from writes against this collection. */
+  readonly onMutation?: MutationSink;
   readonly name: string;
   /** Absolute path of the collection's translations folder. */
   readonly translationsFolder: string;
@@ -64,6 +67,8 @@ export interface OpenCollectionOptions {
   readonly cwd?: string;
   /** Refuse a read-only collection. Set this for operations that change resources. */
   readonly writable?: boolean;
+  /** Default consumer for writes; an operation can override it with its own callback. */
+  readonly onMutation?: MutationSink;
   /**
    * Open a collection for deletion only. A missing or non-string `translationsFolder` becomes
    * an empty path; other malformed fields are still resolved normally and may fail.
@@ -92,11 +97,12 @@ export function openCollection(
     throw new ReadOnlyCollectionError(name);
   }
 
-  const cwd = options.cwd ?? process.cwd();
+  const { cwd = process.cwd(), onMutation } = options;
   const collectionTermsPath = resolveCollectionProtectedTermsFilePath(raw, cwd);
 
   return {
     name,
+    onMutation,
     sourceConfig: config,
     projectRoot: cwd,
     translationsFolder:

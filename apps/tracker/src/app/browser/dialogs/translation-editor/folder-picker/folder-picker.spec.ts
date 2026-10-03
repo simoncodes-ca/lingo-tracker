@@ -1,16 +1,16 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import { of, Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
+import { toApiError } from '../../../../shared/api-error/api-error';
 import { NotificationService } from '../../../../shared/notification';
 import { BrowserStore } from '../../../store/browser.store';
 import { decideCreateFolder } from '../../../store/folder-write-feedback';
 import { FolderPicker } from './folder-picker';
-import { of, Subject } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
-import { toApiError } from '../../../../shared/api-error/api-error';
 
 describe('FolderPicker', () => {
   let component: FolderPicker;
@@ -307,6 +307,45 @@ describe('FolderPicker', () => {
       expect(notifications.success).not.toHaveBeenCalled();
     });
 
+    it('closes the draft and clears its error when its create outlives the browser session', () => {
+      const error = toApiError(new HttpErrorResponse({ status: 409, error: { message: 'Already exists' } }));
+      mockStore.createFolder.mockReturnValueOnce(of(decideCreateFolder({ kind: 'refused', error })));
+      const late = new Subject<ReturnType<typeof decideCreateFolder>>();
+      mockStore.createFolder.mockReturnValueOnce(late);
+      const created = vi.fn();
+      component.folderCreated.subscribe(created);
+      component.onAddFolder('common');
+      component.onFolderNameConfirmed('new');
+      component.onFolderNameConfirmed('retry');
+
+      late.next(decideCreateFolder({ kind: 'stale-session' }));
+
+      expect(component.isCreatingFolder()).toBe(false);
+      expect(component.isAddingFolder()).toBe(false);
+      expect(component.addFolderParentPath()).toBeNull();
+      expect(component.createError()).toBeNull();
+      expect(created).not.toHaveBeenCalled();
+      expect(spectator.inject(NotificationService).error).not.toHaveBeenCalled();
+    });
+
+    it('keeps a toast refusal out of the inline draft error while leaving the input open', () => {
+      const error = toApiError(new HttpErrorResponse({ status: 409, error: { message: 'Already exists' } }));
+      const outcome = decideCreateFolder({ kind: 'refused', error });
+      mockStore.createFolder.mockReturnValueOnce(of(outcome));
+      component.onAddFolder('common');
+      component.onFolderNameConfirmed('new');
+      mockStore.createFolder.mockReturnValueOnce(
+        of({ ...outcome, feedback: { tone: 'error', placement: 'toast', token: 'unused', detail: 'Try again' } }),
+      );
+
+      component.onFolderNameConfirmed('retry');
+
+      expect(component.isAddingFolder()).toBe(true);
+      expect(component.addFolderParentPath()).toBe('common');
+      expect(component.createError()).toBeNull();
+      expect(spectator.inject(NotificationService).error).toHaveBeenCalledWith('Try again');
+    });
+
     it('keeps picker expansion separate from the browser tree', () => {
       component.onExpandToggle('common');
       expect(component.expandedPaths()).toEqual(new Set(['common']));
@@ -330,8 +369,7 @@ describe('FolderPicker', () => {
     });
 
     it('should reset folder creation state on cancel', () => {
-      component.isAddingFolder.set(true);
-      component.addFolderParentPath.set('common');
+      component.onAddFolder('common');
 
       component.onFolderNameCancelled();
 

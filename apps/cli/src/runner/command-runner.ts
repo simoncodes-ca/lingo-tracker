@@ -11,9 +11,13 @@ import {
 } from '@simoncodes-ca/core';
 import * as path from 'path';
 import prompts from 'prompts';
+import { parseCommaSeparatedList } from '../utils/string-parsers';
 import { ConsoleFormatter } from '../utils/console-formatter';
 import { type Selection, selectionPrompt } from '../utils/prompt-utils';
+import { CommandCancelledError } from './command-cancelled-error';
 import { isInteractiveTerminal } from './terminal';
+
+export { CommandCancelledError } from './command-cancelled-error';
 
 /**
  * What a command needs opened before it runs.
@@ -143,24 +147,14 @@ export interface CommandSpec<
    * missing. `run` sees them typed as present.
    */
   readonly required?: readonly Required[];
+  /** Text prompt fields that use the same comma parser as flag definitions. */
+  readonly commaListAnswers?: readonly (keyof Options & string)[];
   /** Formats a command error without replacing the original error seen by the runner. */
   readonly formatError?: (error: unknown, duringRun: boolean) => string | undefined;
   /** The core call(s) and the output. Throw to fail with `❌ <message>`. */
   readonly run: (
     ctx: CommandContext<Options, Need, WithConfig, Required>,
   ) => Promise<CommandResult> | Promise<void> | CommandResult | void;
-}
-
-/**
- * Thrown to end a command as cancelled: the runner prints `❌ <name> cancelled.` and
- * exits 0. The runner throws it when a prompt is cancelled; a command throws it when the
- * user declines a confirmation.
- */
-export class CommandCancelledError extends Error {
-  constructor() {
-    super('Cancelled');
-    this.name = 'CommandCancelledError';
-  }
 }
 
 /**
@@ -263,7 +257,14 @@ async function execute<
 
     await spec.preflight?.({ ...promptContext, options });
     const questions = spec.prompts ? await spec.prompts(options, promptContext) : [];
-    const merged: Options = interactive && questions.length > 0 ? { ...options, ...(await ask(questions)) } : options;
+    const merged: Options =
+      interactive && questions.length > 0 ? { ...options, ...(await ask(questions)) } : { ...options };
+    for (const field of spec.commaListAnswers ?? []) {
+      const value = merged[field];
+      if (typeof value === 'string') {
+        Object.assign(merged, { [field]: parseCommaSeparatedList(value) });
+      }
+    }
     requireOptions(merged, spec.required ?? [], interactive);
     // requireOptions has just checked what CheckedAnswers claims; the type cannot follow it.
     const answers = merged as CheckedAnswers<Options, Required>;

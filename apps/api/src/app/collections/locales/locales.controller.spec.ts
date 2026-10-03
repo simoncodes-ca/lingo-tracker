@@ -35,7 +35,10 @@ describe('LocalesController', () => {
   };
 
   const collectionFor = (name: string): core.OpenedCollection =>
-    new RouteCollectionPipe(localesModule.get<ConfigService>(ConfigService)).transform({ name, writable: true });
+    new RouteCollectionPipe(
+      localesModule.get<ConfigService>(ConfigService),
+      mockIndex as unknown as CollectionIndex,
+    ).transform({ name, writable: true });
 
   const mockIndex = { sink: jest.fn() };
 
@@ -87,7 +90,6 @@ describe('LocalesController', () => {
       expect(core.addLocaleToCollection).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'test-collection' }),
         'de',
-        expect.objectContaining({ onMutation: mockIndex.sink }),
       );
       // The mutations are for the index; the response is unchanged.
       expect(result).toEqual(mockResult);
@@ -174,7 +176,6 @@ describe('LocalesController', () => {
       expect(core.removeLocaleFromCollection).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'test-collection' }),
         'fr',
-        expect.objectContaining({ onMutation: mockIndex.sink }),
       );
       // The mutations are for the index; the response is unchanged.
       expect(result).toEqual(mockResult);
@@ -249,7 +250,6 @@ describe('LocalesController', () => {
       expect(core.removeLocaleFromCollection).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'test-collection' }),
         'fr',
-        expect.objectContaining({ onMutation: mockIndex.sink }),
       );
     });
   });

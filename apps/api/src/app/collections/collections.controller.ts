@@ -1,5 +1,12 @@
+import { resolve } from 'node:path';
 import { Controller, Delete, Param, Post, Put } from '@nestjs/common';
-import { addCollection, deleteCollection, openCollection, updateCollection } from '@simoncodes-ca/core';
+import {
+  addCollection,
+  deleteCollection,
+  openCollection,
+  reindexMutation,
+  updateCollection,
+} from '@simoncodes-ca/core';
 import type { CreateCollectionDto, UpdateCollectionDto } from '@simoncodes-ca/data-transfer';
 import { CollectionIndex } from '../cache/collection-index.service';
 import { ConfigService } from '../config/config.service';
@@ -20,8 +27,11 @@ export class CollectionsController {
   /** Core's typed errors (for example `CollectionNotFoundError`, 404) reach the global exception filter. */
   @Delete(':collectionName')
   async deleteCollection(@Param('collectionName') collectionName: string): Promise<{ message: string }> {
-    const current = openCollection(this.#configService.getConfig(), collectionName, { forDeletion: true });
-    const result = deleteCollection(current, { onMutation: this.#index.sink });
+    const current = openCollection(this.#configService.getConfig(), collectionName, {
+      forDeletion: true,
+      onMutation: this.#index.sink,
+    });
+    const result = deleteCollection(current);
     return { message: result.message };
   }
 
@@ -34,9 +44,12 @@ export class CollectionsController {
   async createCollection(@ValidBody(createCollectionBody) body: CreateCollectionDto): Promise<{ message: string }> {
     const { name, collection } = body;
     const mapped = mapDtoToCollection(collection);
-    const result = addCollection(this.#configService.openProject(), name, mapped, {
+    const project = this.#configService.openProject();
+    const result = addCollection(project, name, mapped, {
       protectedTerms: collection.protectedTerms,
     });
+    // A newly registered folder may have an index entry from an earlier registration.
+    this.#index.sink(reindexMutation(resolve(project.projectRoot, mapped.translationsFolder)));
     return { message: result.message };
   }
 
@@ -54,10 +67,9 @@ export class CollectionsController {
   ): Promise<{ message: string }> {
     const { name, collection } = body;
     const patch = mapDtoToCollection(collection);
-    const current = openCollection(this.#configService.getConfig(), collectionName);
+    const current = openCollection(this.#configService.getConfig(), collectionName, { onMutation: this.#index.sink });
     const result = await updateCollection(current, name, patch, {
       protectedTerms: collection.protectedTerms,
-      onMutation: this.#index.sink,
     });
     return { message: result.message };
   }

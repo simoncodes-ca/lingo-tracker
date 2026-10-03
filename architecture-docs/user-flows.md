@@ -164,7 +164,7 @@ sequenceDiagram
     Core->>Core: validateImportResources() — keys, conflicts, empty values, duplicates
 
     Note over Core: Group and write per folder
-    Core->>Core: groupResourcesByFolder() — batch by resource folder
+    Core->>Core: groupByFolder() in resource/folder-batch.ts — batch by resource folder
     loop For each folder batch: processResourceGroup(session, group)
         Core->>FS: openResourceFolder() — read both files
         Core->>Domain: resolveImportStatus(strategy, oldStatus, …)

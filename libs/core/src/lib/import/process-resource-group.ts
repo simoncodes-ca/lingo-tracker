@@ -1,4 +1,3 @@
-import { dirname } from 'node:path';
 import {
   findProtectedTermViolations,
   honouredImportSourceStatus,
@@ -6,11 +5,11 @@ import {
   resolveImportStatus,
   type TranslationStatus,
 } from '@simoncodes-ca/domain';
-import { calculateChecksum } from '../resource/checksum';
 import type { ProjectTerms } from '../config/project-terms';
+import { calculateChecksum } from '../resource/checksum';
+import type { FolderGroup } from '../resource/folder-batch';
 import { openResourceFolder, type ResourceFolder } from '../resource/resource-folder';
 import type { ImportSession, ResolvedImportOptions } from './import-session';
-import type { ResourceGroup } from './resource-grouping';
 import type { ImportChange, ImportedResource } from './types';
 
 // ---------------------------------------------------------------------------
@@ -258,18 +257,18 @@ function warnAboutPreferredTerminology(change: ImportChange, terms: ProjectTerms
  * Appends one change per resource to `session.changes`; warnings, errors (protected-term
  * violations) and written files go to the session too.
  */
-export function processResourceGroup(session: ImportSession, group: ResourceGroup): void {
+export function processResourceGroup(session: ImportSession, group: FolderGroup<ImportedResource>): void {
   const { options, terms, isBaseLocaleImport, changes, warnings, errors } = session;
   const { baseLocale } = session.collection;
 
   let folder: ResourceFolder;
   try {
-    folder = openResourceFolder(dirname(group.entryResourcePath), {
+    folder = openResourceFolder(group.folderPath, {
       baseLocale,
       translationsFolder: session.collection.translationsFolder,
     });
   } catch (error) {
-    for (const { resource } of group.resources) {
+    for (const { item: resource } of group.members) {
       changes.push({ key: resource.key, type: 'failed', reason: `Failed to read resource files: ${error}` });
     }
     return;
@@ -277,7 +276,7 @@ export function processResourceGroup(session: ImportSession, group: ResourceGrou
 
   const ctx: GroupContext = { locale: options.locale, baseLocale, options, folder, dataModified: false };
 
-  for (const { resource, entryKey } of group.resources) {
+  for (const { item: resource, entryKey } of group.members) {
     const stored = folder.get(entryKey);
 
     if (!stored) {

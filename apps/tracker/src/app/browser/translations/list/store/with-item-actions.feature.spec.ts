@@ -5,9 +5,9 @@ import { TranslocoService } from '@jsverse/transloco';
 import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
-import { collectionSettings } from '../../../../../testing/collection-settings';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
+import { collectionSettings } from '../../../../../testing/collection-settings';
+import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
 import { toApiError } from '../../../../shared/api-error/api-error';
 import { NotificationService } from '../../../../shared/notification';
 import { BrowserApiService } from '../../../services/browser-api.service';
@@ -268,10 +268,16 @@ describe('TranslationListStore item actions', () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
 
     actions.copyKey(entry);
-    await Promise.resolve();
+    await vi.waitFor(() =>
+      expect(notifications.success).toHaveBeenCalledWith(
+        TestBed.inject(TranslocoService).translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD),
+      ),
+    );
 
     expect(writeText).toHaveBeenCalledWith('common.save');
-    expect(notifications.success).toHaveBeenCalled();
+    expect(notifications.success).toHaveBeenCalledWith(
+      TestBed.inject(TranslocoService).translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD),
+    );
   });
 
   it('reports clipboard failure', async () => {
@@ -281,9 +287,15 @@ describe('TranslationListStore item actions', () => {
     });
 
     actions.copyKey(entry);
-    await Promise.resolve();
+    await vi.waitFor(() =>
+      expect(notifications.error).toHaveBeenCalledWith(
+        TestBed.inject(TranslocoService).translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED),
+      ),
+    );
 
-    expect(notifications.error).toHaveBeenCalled();
+    expect(notifications.error).toHaveBeenCalledWith(
+      TestBed.inject(TranslocoService).translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED),
+    );
   });
 
   it('opens the entry for edit and flashes a saved row', async () => {

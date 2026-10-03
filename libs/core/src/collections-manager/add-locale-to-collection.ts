@@ -2,7 +2,7 @@ import type { OpenedCollection } from '../lib/config/open-collection';
 import { BaseLocaleImmutableError, LocaleAlreadyExistsError } from '../lib/errors/lingo-tracker-error';
 import type { MutationSinkOptions } from '../lib/resource/resource-mutation';
 import { assertValidLocale } from './assert-valid-locale';
-import { changeCollection } from './update-collection';
+import { changeCollection } from './collection-change';
 
 export interface AddLocaleToCollectionResult {
   readonly message: string;

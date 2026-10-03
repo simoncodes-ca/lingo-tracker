@@ -1,10 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { DEFAULT_CONFIG } from '@simoncodes-ca/core';
+import { describe, expect, it, vi } from 'vitest';
+import { type Ask, CommandCancelledError } from '../runner/command-runner';
+import type { InitOptions } from '../types/init-options';
 import {
-  parseNameSelection,
+  collectionSetupQuestions,
+  confirmOrCancel,
+  missingTextQuestions,
   parseListSelection,
+  parseNameSelection,
+  requiredText,
+  type Selection,
   selectionNames,
   selectionPrompt,
-  type Selection,
 } from './prompt-utils';
 
 const ALL_ITEMS_SENTINEL = '__ALL__';
@@ -196,4 +203,149 @@ describe('parseNameSelection', () => {
       expect(parseNameSelection(flag, answer)).toEqual(expected);
     });
   }
+});
+
+describe('missingTextQuestions', () => {
+  it.each([
+    { label: 'absent', options: {}, expected: [{ type: 'text', name: 'value', message: 'Value' }] },
+    {
+      label: 'undefined',
+      options: { value: undefined },
+      expected: [{ type: 'text', name: 'value', message: 'Value' }],
+    },
+    { label: 'present', options: { value: 'provided' }, expected: [] },
+    { label: 'empty string', options: { value: '' }, expected: [{ type: 'text', name: 'value', message: 'Value' }] },
+    { label: 'whitespace flag', options: { value: ' ' }, expected: [] },
+  ])('$label option', ({ options, expected }) => {
+    expect(missingTextQuestions<{ value?: string }>(options, [{ name: 'value', message: 'Value' }])).toEqual(expected);
+  });
+
+  it.each([
+    { value: '', expected: 'Required' },
+    { value: '  ', expected: 'Required' },
+    { value: 'valid', expected: true },
+    { value: ' valid ', expected: true },
+  ])('validates required text "$value"', ({ value, expected }) => {
+    const questions = missingTextQuestions<{ value?: string }>({}, [
+      { name: 'value', message: 'Value', required: true },
+    ]);
+    expect(questions[0]?.validate).toBe(requiredText);
+    expect(requiredText(value)).toBe(expected);
+  });
+
+  it('keeps field order, initial values and custom validation', () => {
+    const validate = (value: string) => value === 'allowed' || 'Not allowed';
+    expect(
+      missingTextQuestions({ first: undefined, supplied: 'flag', last: undefined }, [
+        { name: 'first', message: 'First', initial: 'default', required: true },
+        { name: 'supplied', message: 'Supplied' },
+        { name: 'last', message: 'Last', required: true, validate },
+      ]),
+    ).toEqual([
+      { type: 'text', name: 'first', message: 'First', initial: 'default', validate: requiredText },
+      { type: 'text', name: 'last', message: 'Last', validate },
+    ]);
+  });
+});
+
+describe('collectionSetupQuestions', () => {
+  it.each([
+    { label: 'add-collection', defaults: {}, nameInitial: {} },
+    { label: 'init', defaults: { collectionName: 'Main' }, nameInitial: { initial: 'Main' } },
+  ])('preserves $label messages, order and defaults', ({ defaults, nameInitial }) => {
+    expect(collectionSetupQuestions({}, defaults)).toEqual([
+      { type: 'text', name: 'collectionName', message: 'Collection name', ...nameInitial, validate: requiredText },
+      { type: 'text', name: 'translationsFolder', message: 'Path to translations folder', validate: requiredText },
+      { type: 'text', name: 'exportFolder', message: 'Export folder', initial: DEFAULT_CONFIG.exportFolder },
+      { type: 'text', name: 'importFolder', message: 'Import folder', initial: DEFAULT_CONFIG.importFolder },
+      {
+        type: 'text',
+        name: 'baseLocale',
+        message: 'Base locale',
+        initial: DEFAULT_CONFIG.baseLocale,
+        validate: requiredText,
+      },
+      {
+        type: 'list',
+        name: 'locales',
+        message: 'Supported locales (comma-separated)',
+        initial: 'en,fr-ca,es,de',
+        separator: ',',
+      },
+    ]);
+  });
+
+  const cases: { label: string; options: InitOptions; names: string[] }[] = [
+    {
+      label: 'all supplied',
+      options: {
+        collectionName: 'main',
+        translationsFolder: 'translations',
+        exportFolder: 'export',
+        importFolder: 'import',
+        baseLocale: 'fr',
+        locales: ['fr'],
+      },
+      names: [],
+    },
+    {
+      label: 'empty text flags',
+      options: { collectionName: '', translationsFolder: '', exportFolder: '', importFolder: '', baseLocale: '' },
+      names: ['collectionName', 'translationsFolder', 'exportFolder', 'importFolder', 'baseLocale', 'locales'],
+    },
+    {
+      label: 'partial flags',
+      options: { collectionName: 'main', baseLocale: 'fr' },
+      names: ['translationsFolder', 'exportFolder', 'importFolder', 'locales'],
+    },
+    {
+      label: 'empty locale array is supplied',
+      options: { locales: [] },
+      names: ['collectionName', 'translationsFolder', 'exportFolder', 'importFolder', 'baseLocale'],
+    },
+  ];
+  it.each(cases)('$label', ({ options, names }) => {
+    expect(collectionSetupQuestions(options).map((question) => question.name)).toEqual(names);
+  });
+});
+
+describe('confirmOrCancel', () => {
+  it.each([
+    { label: 'confirmed', answer: { confirmed: true }, cancelled: false },
+    { label: 'declined', answer: { confirmed: false }, cancelled: true },
+    { label: 'missing answer', answer: {}, cancelled: true },
+    { label: 'truthy answer is not consent', answer: { confirmed: 'yes' }, cancelled: true },
+  ])('$label', async ({ answer, cancelled }) => {
+    const ask = vi.fn<Ask>().mockResolvedValue(answer);
+    const beforeAsk = vi.fn();
+    const result = confirmOrCancel({ ask, interactive: true, message: 'Are you sure?', beforeAsk });
+    if (cancelled) await expect(result).rejects.toBeInstanceOf(CommandCancelledError);
+    else await expect(result).resolves.toBeUndefined();
+    expect(ask).toHaveBeenCalledExactlyOnceWith({
+      type: 'confirm',
+      name: 'confirmed',
+      message: 'Are you sure?',
+      initial: false,
+    });
+    expect(beforeAsk).toHaveBeenCalledOnce();
+    expect(beforeAsk.mock.invocationCallOrder[0]).toBeLessThan(ask.mock.invocationCallOrder[0]);
+  });
+
+  it.each([
+    { label: '--yes', interactive: true, yes: true },
+    { label: 'non-interactive', interactive: false, yes: false },
+    { label: 'non-interactive with --yes', interactive: false, yes: true },
+  ])('skips $label confirmation and explanation', async ({ interactive, yes }) => {
+    const ask = vi.fn<Ask>();
+    const beforeAsk = vi.fn();
+    await expect(confirmOrCancel({ ask, interactive, yes, message: 'Confirm', beforeAsk })).resolves.toBeUndefined();
+    expect(ask).not.toHaveBeenCalled();
+    expect(beforeAsk).not.toHaveBeenCalled();
+  });
+
+  it('propagates a prompt cancellation from the runner', async () => {
+    const error = new CommandCancelledError();
+    const ask = vi.fn<Ask>().mockRejectedValue(error);
+    await expect(confirmOrCancel({ ask, interactive: true, yes: false, message: 'Confirm' })).rejects.toBe(error);
+  });
 });

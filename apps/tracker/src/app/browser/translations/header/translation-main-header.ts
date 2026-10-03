@@ -1,16 +1,17 @@
-import { Component, ChangeDetectionStrategy, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { TranslationSearch } from './translation-search/translation-search';
-import { BrowserStore } from '../../store/browser.store';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { injectMidpointFlip } from '../../../shared/timed-transients';
 import { TranslationEditorLauncher } from '../../services/translation-editor-launcher';
+import { BrowserStore } from '../../store/browser.store';
+import type { DensityMode } from '../../types/density-mode';
 import { LocaleFilter } from './locale-filter/locale-filter';
 import { StatusFilter } from './status-filter/status-filter';
-import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
-import type { DensityMode } from '../../types/density-mode';
+import { TranslationSearch } from './translation-search/translation-search';
 
 const DENSITY_ANIMATION_DURATION_MS = 250;
 
@@ -41,37 +42,12 @@ export class TranslationMainHeader {
   readonly TOKENS = TRACKER_TOKENS;
 
   /** Drives the icon flip animation — true for one animation cycle when toggled */
-  readonly isDensityToggleFlipping = signal(false);
-
-  #densityFlipMidTimeout: ReturnType<typeof setTimeout> | undefined;
-  #densityFlipEndTimeout: ReturnType<typeof setTimeout> | undefined;
-
-  readonly #destroyRef = inject(DestroyRef);
-
-  constructor() {
-    this.#destroyRef.onDestroy(() => {
-      if (this.#densityFlipMidTimeout) clearTimeout(this.#densityFlipMidTimeout);
-      if (this.#densityFlipEndTimeout) clearTimeout(this.#densityFlipEndTimeout);
-    });
-  }
+  readonly #densityFlip = injectMidpointFlip(DENSITY_ANIMATION_DURATION_MS);
+  readonly isDensityToggleFlipping = this.#densityFlip.active;
 
   handleDensityToggle(): void {
-    if (this.#densityFlipMidTimeout) clearTimeout(this.#densityFlipMidTimeout);
-    if (this.#densityFlipEndTimeout) clearTimeout(this.#densityFlipEndTimeout);
-
     const nextMode: DensityMode = this.store.densityMode() === 'compact' ? 'full' : 'compact';
-
-    this.isDensityToggleFlipping.set(true);
-
-    this.#densityFlipMidTimeout = setTimeout(() => {
-      this.store.setDensityMode(nextMode);
-      this.#densityFlipMidTimeout = undefined;
-    }, DENSITY_ANIMATION_DURATION_MS / 2);
-
-    this.#densityFlipEndTimeout = setTimeout(() => {
-      this.isDensityToggleFlipping.set(false);
-      this.#densityFlipEndTimeout = undefined;
-    }, DENSITY_ANIMATION_DURATION_MS);
+    this.#densityFlip.trigger(() => this.store.setDensityMode(nextMode));
   }
 
   handleSortDirectionToggle(): void {

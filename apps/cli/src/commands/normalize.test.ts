@@ -1,6 +1,3 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import prompts from 'prompts';
-import { normalizeCommand } from './normalize';
 import {
   type LingoTrackerConfig,
   loadConfig,
@@ -8,7 +5,10 @@ import {
   normalize,
   normalizeCollections,
 } from '@simoncodes-ca/core';
+import prompts from 'prompts';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isInteractiveTerminal } from '../runner/terminal';
+import { normalizeCommand } from './normalize';
 
 vi.mock('prompts', () => ({
   default: vi.fn(),
@@ -414,6 +414,13 @@ describe('normalizeCommand', () => {
       expect(normalize).not.toHaveBeenCalled();
       expect(errored()).toContain('❌ Normalize cancelled.');
       expect(process.exitCode).toBe(0);
+    });
+
+    it('skips the --all confirmation with --yes', async () => {
+      await normalizeCommand({ all: true, yes: true });
+
+      expect(prompts).not.toHaveBeenCalled();
+      expect(normalize).toHaveBeenCalledTimes(1);
     });
 
     it('choosing "All collections" asks for confirmation, then normalizes the writable ones', async () => {

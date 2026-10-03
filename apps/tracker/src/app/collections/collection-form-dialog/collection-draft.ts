@@ -1,5 +1,7 @@
 import type { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 import { isUnderNodeModules, validateLocale } from '@simoncodes-ca/domain';
+import { prepareProtectedTermAdd } from '../../shared/protected-terms/protected-term-add';
+import { addTagToList, removeTagFromList } from '../../shared/tag-list-edit';
 import type { CollectionFormDialogData } from './collection-form-dialog-data';
 
 /** The collection form's values and the original choices needed to decide an edit. */
@@ -128,6 +130,26 @@ export function withFolder(draft: CollectionDraft, translationsFolder: string): 
 
 export function withUserReadOnly(draft: CollectionDraft, readOnly: boolean): CollectionDraft {
   return { ...draft, readOnly, readOnlyTouchedByUser: true };
+}
+
+/** A normalized, deduplicated tag; the same draft for an empty or duplicate one. */
+export function withTag(draft: CollectionDraft, raw: string): CollectionDraft {
+  const tags = addTagToList(draft.tags, raw);
+  return tags === draft.tags ? draft : { ...draft, tags: [...tags] };
+}
+
+export function withoutTag(draft: CollectionDraft, tag: string): CollectionDraft {
+  return { ...draft, tags: [...removeTagFromList(draft.tags, tag)] };
+}
+
+/** A protected term by the shared add rule; stored terms stay verbatim, and a blank or duplicate changes nothing. */
+export function withProtectedTerm(draft: CollectionDraft, raw: string): CollectionDraft {
+  const result = prepareProtectedTermAdd(draft.protectedTerms, raw);
+  return result.kind === 'added' ? { ...draft, protectedTerms: [...draft.protectedTerms, result.term] } : draft;
+}
+
+export function withoutProtectedTerm(draft: CollectionDraft, term: string): CollectionDraft {
+  return { ...draft, protectedTerms: draft.protectedTerms.filter((existing) => existing !== term) };
 }
 
 export function toCollectionResult(draft: CollectionDraft): CollectionDraftResult {

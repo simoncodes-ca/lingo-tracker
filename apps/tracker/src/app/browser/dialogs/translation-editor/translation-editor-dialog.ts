@@ -34,18 +34,21 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { CollectionsStore } from '../../../collections/store/collections.store';
+import { ChipInput } from '../../../shared/chip-input/chip-input';
+import { copyToClipboard } from '../../../shared/clipboard';
 import { injectConfirm } from '../../../shared/confirm';
 import { NotificationService } from '../../../shared/notification';
 import { hasSearchLength } from '../../../shared/search/search-minimum';
+import { injectFlash, injectRestartableDelay } from '../../../shared/timed-transients';
 import { statusLabelTokenFor } from '../../../shared/translation-status/translation-status-presentation';
 import { injectFeedback } from '../../feedback';
 import { FolderPeek } from '../../services/folder-peek';
 import { SimilarValues } from '../../services/similar-values';
 import { BrowserStore } from '../../store/browser.store';
 import { filterFolderTree } from '../../store/folder-tree.utils';
-import { editorTagSuggestions } from './editor-entry-sources';
 import { EditorAdvisories, filteredEditorTagSuggestions } from './editor-advisories';
 import { EditorEntryForm } from './editor-entry-form';
+import { editorTagSuggestions } from './editor-entry-sources';
 import { EditorLocation } from './editor-location';
 import { type EditorOutcome, type EditorSubmitDecision, EditorSubmitSession } from './editor-submit';
 import { FolderPicker } from './folder-picker/folder-picker';
@@ -105,6 +108,7 @@ export type { EditorOutcome } from './editor-submit';
     TranslocoPipe,
     MatTooltipModule,
     PreferredTermAdvisories,
+    ChipInput,
   ],
 })
 export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit {
@@ -136,8 +140,8 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   @ViewChild('folderFilterInput') folderFilterInput?: ElementRef<HTMLInputElement>;
   @ViewChild('drawerFirstControl') drawerFirstControl?: ElementRef<HTMLElement>;
 
-  #locationFlashTimer: ReturnType<typeof setTimeout> | undefined;
-  #keyCopiedTimer: ReturnType<typeof setTimeout> | undefined;
+  readonly #resetLocationFlash = injectRestartableDelay(900);
+  readonly #keyCopiedFlash = injectFlash(1500);
 
   readonly errorMessage = signal<string | null>(null);
   readonly #entryForm = new EditorEntryForm();
@@ -153,7 +157,7 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   /** Set once the user attempts to save, so errors surface on untouched fields too. */
   readonly submitAttempted = signal(false);
   /** True for a moment after the footer key is copied, so the button can confirm it. */
-  readonly keyJustCopied = signal(false);
+  readonly keyJustCopied = this.#keyCopiedFlash.active;
 
   /** The folder picker popover anchored to the location pill. */
   readonly isFolderPopoverOpen = signal(false);
@@ -443,8 +447,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
   }
 
   ngOnDestroy(): void {
-    clearTimeout(this.#locationFlashTimer);
-    clearTimeout(this.#keyCopiedTimer);
     this.destroy$.next();
     this.destroy$.complete();
     this.#advisories.destroy();
@@ -518,11 +520,10 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
       this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.LOCATIONFROMKEYX, { folder: folderPath }),
     );
 
-    clearTimeout(this.#locationFlashTimer);
     this.locationAbsorbedFlash.set(false);
     // Let the class drop for a frame so a second paste re-runs the animation.
     requestAnimationFrame(() => this.locationAbsorbedFlash.set(true));
-    this.#locationFlashTimer = setTimeout(() => this.locationAbsorbedFlash.set(false), 900);
+    this.#resetLocationFlash(() => this.locationAbsorbedFlash.set(false));
   }
 
   // Escape is handled through `dialogRef.keydownEvents()` in
@@ -688,22 +689,6 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     this.stagedFolderPath.set(folder.fullPath);
   }
 
-  /** Enter and comma commit the typed tag; Backspace on an empty field removes the last one. */
-  onTagKeydown(event: KeyboardEvent, input: HTMLInputElement): void {
-    if (event.key === 'Enter' || event.key === ',') {
-      event.preventDefault();
-      this.addTagValue(input.value);
-      input.value = '';
-      return;
-    }
-    if (event.key === 'Backspace' && input.value === '') {
-      const tags = this.tagsList();
-      if (tags.length > 0) {
-        this.removeTag(tags[tags.length - 1]);
-      }
-    }
-  }
-
   addTagValue(rawValue: string): void {
     this.#entryForm.addTag(rawValue);
     this.tagInputText.set('');
@@ -750,33 +735,20 @@ export class TranslationEditorDialog implements OnInit, OnDestroy, AfterViewInit
     this.#copyToClipboard(
       this.fullKeyPreview(),
       this.transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD),
-      () => this.#flashKeyCopied(),
+      () => this.#keyCopiedFlash.trigger(),
     );
-  }
-
-  #flashKeyCopied(): void {
-    clearTimeout(this.#keyCopiedTimer);
-    this.keyJustCopied.set(true);
-    this.#keyCopiedTimer = setTimeout(() => this.keyJustCopied.set(false), 1500);
   }
 
   #copyToClipboard(text: string, successMessage: string, onCopied?: () => void): void {
     const failedMessage = this.transloco.translate(TRACKER_TOKENS.BROWSER.TRANSLATIONEDITOR.COPYFAILED);
-
-    if (!navigator.clipboard?.writeText) {
-      this.notifications.error(failedMessage);
-      return;
-    }
-
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
+    void copyToClipboard(text).then((outcome) => {
+      if (outcome === 'copied') {
         this.notifications.success(successMessage);
         onCopied?.();
-      })
-      .catch(() => {
+      } else {
         this.notifications.error(failedMessage);
-      });
+      }
+    });
   }
 
   async onSubmit(): Promise<void> {

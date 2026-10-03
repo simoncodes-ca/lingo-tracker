@@ -3,11 +3,25 @@ import { patchState, signalStoreFeature, type, withComputed, withMethods, withSt
 import type { FolderNodeDto, ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { splitResolvedKey } from '@simoncodes-ca/domain';
 import { catchError, defer, finalize, from, map, type Observable, of, switchMap, tap } from 'rxjs';
-import type { Feedback } from '../../feedback';
 import { BrowserApiService } from '../../services/browser-api.service';
 import { extractFolderNameFromPath } from '../../utils/folder-path.utils';
-import { cancelFolderDraft, startFolderDraft } from '../folder-draft';
+import {
+  cancelFolderDraft,
+  dismissFolderDraftError,
+  type FolderDraft,
+  initialFolderDraft,
+  settleFolderDraft,
+  startFolderDraft,
+} from '../folder-draft';
 import { folderDrop } from '../folder-drop';
+import { planFolderMove, planFolderMoveRollback } from '../folder-move-plan';
+import {
+  findFolderInTree,
+  insertFolderIntoTree,
+  parentFolderPath,
+  prunePathsUnder,
+  removeFolderFromTree,
+} from '../folder-tree.utils';
 import {
   type CreateFolderOutcome,
   type CreateFolderResult,
@@ -24,29 +38,10 @@ import {
   type RequestedFolderDeleteOutcome,
   type RequestedFolderMoveOutcome,
 } from '../folder-write-feedback';
-import { planFolderMove, planFolderMoveRollback } from '../folder-move-plan';
-import {
-  findFolderInTree,
-  insertFolderIntoTree,
-  parentFolderPath,
-  prunePathsUnder,
-  removeFolderFromTree,
-} from '../folder-tree.utils';
 import { captureSession } from '../session-guard';
 import { refused } from '../write-refusal';
 
-export interface FolderWritesState {
-  isAddingFolder: boolean;
-  addFolderParentPath: string | null;
-  /**
-   * The refusal of the last `confirmFolderDraft`, shown under the still-open draft's input
-   * until the name is edited (`dismissFolderCreateError`), the draft is cancelled or restarted,
-   * a create succeeds, or another collection opens. The session reset is the
-   * validity rule: a refusal that arrives after the session closed is never written.
-   */
-  folderCreateError: Feedback | null;
-  /** Identifies the current add-folder draft; a start or a cancel replaces it. */
-  folderDraftId: number;
+export interface FolderWritesState extends FolderDraft {
   newlyCreatedFolderPath: string | null;
   isDeletingFolder: boolean;
   deletingFolderPath: string | null;
@@ -54,10 +49,7 @@ export interface FolderWritesState {
 }
 
 export const initialFolderWritesState: FolderWritesState = {
-  isAddingFolder: false,
-  addFolderParentPath: null,
-  folderCreateError: null,
-  folderDraftId: 0,
+  ...initialFolderDraft,
   newlyCreatedFolderPath: null,
   isDeletingFolder: false,
   deletingFolderPath: null,
@@ -255,18 +247,15 @@ export function withFolderWritesFeature<_>() {
       return {
         startAddingFolder(parentPath: string | null): void {
           if (!store.isReadOnly()) {
-            patchState(store, startFolderDraft(parentPath), {
-              folderCreateError: null,
-              folderDraftId: store.folderDraftId() + 1,
-            });
+            patchState(store, (state) => startFolderDraft(state, parentPath));
           }
         },
         cancelAddingFolder(): void {
-          patchState(store, cancelFolderDraft(), { folderCreateError: null, folderDraftId: store.folderDraftId() + 1 });
+          patchState(store, cancelFolderDraft);
         },
         /** Retires a create refusal, once the user edits the refused name. */
         dismissFolderCreateError(): void {
-          patchState(store, { folderCreateError: null });
+          patchState(store, dismissFolderDraftError);
         },
         /** Creates a folder with no effect on the add-folder draft (the picker keeps its own). */
         createFolder(folderName: string, parentPath: string | null): Observable<CreateFolderOutcome> {
@@ -285,9 +274,7 @@ export function withFolderWritesFeature<_>() {
             return createFolderResult(folderName, parentPath).pipe(
               map(decideCreateFolder),
               tap((outcome) => {
-                if (outcome.kind === 'stale-session' || store.folderDraftId() !== draftId) return;
-                if (outcome.kind === 'refused') patchState(store, { folderCreateError: outcome.feedback });
-                else patchState(store, cancelFolderDraft(), { folderCreateError: null });
+                patchState(store, (state) => settleFolderDraft(state, draftId, outcome));
               }),
             );
           });

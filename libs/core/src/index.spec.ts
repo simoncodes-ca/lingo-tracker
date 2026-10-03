@@ -93,6 +93,7 @@ describe('core public surface', () => {
       'planProjectTermsUpdate',
       'prepareBundleRun',
       'readCollection',
+      'reindexMutation',
       'removeLocaleFromCollection',
       'resolveProtectedTermsForConfig',
       'runExport',

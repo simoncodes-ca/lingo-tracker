@@ -26,6 +26,8 @@ export { DEFAULT_BASE_LOCALE, findCollectionEntry, inheritCollectionSettings } f
 export { effectiveTags } from './lib/effective-tags';
 // Utilities
 export { escapeRegExp } from './lib/escape-regexp';
+// Folder paths
+export { isDescendantFolderPath } from './lib/folder-path';
 // ICU/Transloco: conversion, classification, placeholder repair and ICU checks
 export { type ArgumentMismatch, compareIcuArguments } from './lib/icu-arguments';
 export {

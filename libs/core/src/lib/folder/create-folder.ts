@@ -1,7 +1,12 @@
 import type { Collection } from '../config/open-collection';
 import { ensureDirectoryExists } from '../file-io/directory-operations';
 import { folderAddressExists, resolveFolderAddress, validateFolderAddress } from '../resource/folder-address';
-import { folderMutation, type MutationSinkOptions, reindexMutation } from '../resource/resource-mutation';
+import {
+  resolveMutationSink,
+  folderMutation,
+  type MutationSinkOptions,
+  reindexMutation,
+} from '../resource/resource-mutation';
 
 export interface CreateFolderParams {
   /** The folder name to create (dot-delimited path segments) */
@@ -91,11 +96,12 @@ export function createFolder(
     });
   } catch (error) {
     if (!alreadyExists && folderAddressExists(translationsFolder, fullDotPath)) {
-      options.onMutation?.(reindexMutation(translationsFolder));
+      resolveMutationSink(collection, options)?.(reindexMutation(translationsFolder));
     }
     throw error;
   }
-  if (!alreadyExists) options.onMutation?.(folderMutation('add-folder', translationsFolder, fullDotPath));
+  if (!alreadyExists)
+    resolveMutationSink(collection, options)?.(folderMutation('add-folder', translationsFolder, fullDotPath));
 
   return {
     folderAddress: fullDotPath,

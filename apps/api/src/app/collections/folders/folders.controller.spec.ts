@@ -52,7 +52,10 @@ describe('FoldersController', () => {
   };
 
   const collectionFor = (name: string): core.Collection =>
-    new RouteCollectionPipe(_configService).transform({ name, writable: true });
+    new RouteCollectionPipe(_configService, mockIndex as unknown as CollectionIndex).transform({
+      name,
+      writable: true,
+    });
 
   const mockIndex = { sink: jest.fn() };
 
@@ -114,14 +117,8 @@ describe('FoldersController', () => {
           name: 'test-collection',
           translationsFolder: resolve('./translations/test'),
         }),
-        {
-          sourceFolderPath: 'apps.common.buttons',
-          destinationFolderPath: 'apps.shared',
-          override: undefined,
-          nestUnderDestination: undefined,
-          toCollection: undefined,
-        },
-        expect.objectContaining({ onMutation: mockIndex.sink }),
+        moveFolderDto,
+        { config: mockConfig },
       );
 
       expect(result).toEqual({
@@ -155,14 +152,8 @@ describe('FoldersController', () => {
           name: 'test-collection',
           translationsFolder: resolve('./translations/test'),
         }),
-        {
-          sourceFolderPath: 'apps.buttons',
-          destinationFolderPath: 'apps.actions',
-          override: true,
-          nestUnderDestination: undefined,
-          toCollection: undefined,
-        },
-        expect.objectContaining({ onMutation: mockIndex.sink }),
+        moveFolderDto,
+        { config: mockConfig },
       );
 
       expect(result.movedCount).toBe(3);
@@ -192,14 +183,8 @@ describe('FoldersController', () => {
           name: 'test-collection',
           translationsFolder: resolve('./translations/test'),
         }),
-        {
-          sourceFolderPath: 'apps.buttons',
-          destinationFolderPath: 'shared.buttons',
-          override: undefined,
-          nestUnderDestination: undefined,
-          toCollection: 'another-collection',
-        },
-        expect.objectContaining({ onMutation: mockIndex.sink, config: mockConfig }),
+        moveFolderDto,
+        expect.objectContaining({ config: mockConfig }),
       );
 
       expect(result.movedCount).toBe(2);
@@ -353,7 +338,7 @@ describe('FoldersController', () => {
       expect(core.moveFolder).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'a%25b', translationsFolder: resolve('./translations/percent') }),
         expect.any(Object),
-        expect.objectContaining({ onMutation: mockIndex.sink }),
+        expect.any(Object),
       );
     });
   });
@@ -378,7 +363,6 @@ describe('FoldersController', () => {
       expect(core.createFolder).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'test-collection', translationsFolder: resolve('./translations/test') }),
         { folderName: 'buttons', parentPath: 'apps.common' },
-        expect.objectContaining({ onMutation: mockIndex.sink }),
       );
 
       expect(result.created).toBe(true);
@@ -399,11 +383,7 @@ describe('FoldersController', () => {
 
       expect(result.folder.fullPath).toBe('buttons');
       expect(result.folder.tree.path).toBe('buttons');
-      expect(core.createFolder).toHaveBeenCalledWith(
-        expect.any(Object),
-        { folderName: 'buttons', parentPath: '  ' },
-        expect.objectContaining({ onMutation: mockIndex.sink }),
-      );
+      expect(core.createFolder).toHaveBeenCalledWith(expect.any(Object), { folderName: 'buttons', parentPath: '  ' });
     });
 
     it('lets an invalid folder name propagate; the exception filter answers 400', async () => {
@@ -442,7 +422,6 @@ describe('FoldersController', () => {
       expect(core.deleteFolder).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'test-collection', translationsFolder: resolve('./translations/test') }),
         { folderPath: 'apps.common.buttons' },
-        expect.objectContaining({ onMutation: mockIndex.sink }),
       );
 
       expect(result).toEqual({ deleted: true, folderPath: 'apps.common.buttons', resourcesDeleted: 5 });

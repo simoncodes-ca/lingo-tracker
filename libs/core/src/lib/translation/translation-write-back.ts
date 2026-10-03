@@ -2,7 +2,12 @@ import { type LocaleMetadata, needsTranslation, type TranslationStatus } from '@
 import type { Collection } from '../config/open-collection';
 import { calculateChecksum } from '../resource/checksum';
 import { openResourceFolder, type ResourceFolder, type ResourceFolderEntry } from '../resource/resource-folder';
-import { type MutationSinkOptions, type ResourceMutation, saveReporting } from '../resource/resource-mutation';
+import {
+  resolveMutationSink,
+  type MutationSinkOptions,
+  type ResourceMutation,
+  saveReporting,
+} from '../resource/resource-mutation';
 
 /** The entry as read before the provider call; what a write is compared against. */
 export interface TranslationSnapshot {
@@ -63,7 +68,7 @@ function isStale(current: ResourceFolderEntry | undefined, locale: string, snaps
  * already sent reindex through saveReporting.
  */
 export function writeBackTranslations(
-  collection: Pick<Collection, 'baseLocale' | 'translationsFolder'>,
+  collection: Pick<Collection, 'baseLocale' | 'translationsFolder' | 'onMutation'>,
   folderPath: string,
   pending: readonly PendingTranslation[],
   options: TranslationWriteBackOptions,
@@ -81,7 +86,9 @@ export function writeBackTranslations(
     written.push(translation);
   }
   if (written.length > 0) {
-    saveReporting(folder, collection.translationsFolder, options.onMutation, () => options.saved(folder, written));
+    saveReporting(folder, collection.translationsFolder, resolveMutationSink(collection, options), () =>
+      options.saved(folder, written),
+    );
   }
   return { folder, written, skipped };
 }

@@ -9,6 +9,7 @@ export type { ExportCommandOptions } from './export-options';
 export const exportCommand = defineCommand<ExportCommandOptions>()({
   name: 'Export',
   collection: 'many',
+  commaListAnswers: ['tags'],
   many: { select: exportSelection },
   // Locale choices require opened collections only in interactive mode.
   prompts: (options, { config, collections, interactive }) =>

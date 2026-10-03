@@ -1,6 +1,7 @@
-import * as path from 'path';
 import { CONFIG_FILENAME, deleteCollection } from '@simoncodes-ca/core';
-import { CommandCancelledError, defineCommand } from '../runner/command-runner';
+import * as path from 'path';
+import { defineCommand } from '../runner/command-runner';
+import { confirmOrCancel } from '../utils';
 
 export interface DeleteCollectionOptions {
   collectionName?: string;
@@ -18,18 +19,13 @@ export const deleteCollectionCommand = defineCommand<DeleteCollectionOptions>()(
   collection: 'deletable',
   collectionOption: 'collectionName',
   run: async ({ collection, cwd, answers, interactive, ask }) => {
-    if (!answers.yes && interactive) {
-      const folder = path.relative(cwd, collection.translationsFolder) || '.';
-      const { confirmed } = await ask({
-        type: 'confirm',
-        name: 'confirmed',
-        message: `Delete collection "${collection.name}" (translations folder: ${folder})? It is removed from ${CONFIG_FILENAME}; its files are kept.`,
-        initial: false,
-      });
-      if (confirmed !== true) {
-        throw new CommandCancelledError();
-      }
-    }
+    const folder = path.relative(cwd, collection.translationsFolder) || '.';
+    await confirmOrCancel({
+      ask,
+      interactive,
+      yes: answers.yes,
+      message: `Delete collection "${collection.name}" (translations folder: ${folder})? It is removed from ${CONFIG_FILENAME}; its files are kept.`,
+    });
 
     const result = deleteCollection(collection);
     console.log(result.message);

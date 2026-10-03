@@ -23,6 +23,7 @@ Return to [architecture README](README.md).
 - [Testing Commands](#testing-commands)
 - [Shared Utilities](#shared-utilities)
   - [Selection (`prompt-utils.ts`)](#selection-prompt-utilsts)
+  - [Prompt helpers](#prompt-helpers)
   - [Output Formatting (`console-formatter.ts`)](#output-formatting-console-formatterts)
   - [String Parsers (`string-parsers.ts`)](#string-parsers-string-parsersts)
 
@@ -44,7 +45,7 @@ All commands are registered in `apps/cli/src/main.ts`. Each row below lists the 
 | `edit-resource` | `--collection`, `--key` (full key), `--base-value`, `--comment`, `--tags`, `--target-folder` (moves the entry into this folder; core `moveTo`), `--locale`, `--locale-value` | `editResource()` |
 | `delete-resource` | `--collection`, `--key`, `--yes` | `deleteResource()` |
 | `move` | `--collection`, `--source`, `--dest`, `--dest-collection`, `--override` | `moveResource()` for one key or pattern. Core resolves the plain `--dest-collection` name with `config` and the CLI `cwd`; `--dest` is then a key in that collection. An unknown or read-only destination exits 1. The missing-destination line says `Destination collection "x" not found`; the read-only line keeps the core message. It is never prompted for. Core keeps values, checksums, and statuses for shared locales, drops unconfigured locales, and seeds missing target locales as new copies of the base. A base-locale mismatch returns an error. |
-| `normalize` | `--collection`, `--all`, `--dry-run`, `--json` | `normalize()` |
+| `normalize` | `--collection`, `--all`, `--dry-run`, `--json`, `--yes` | `normalize()` |
 | `translate-locale` | `--collection`, `--locale`, `--verbose` | `translateLocale(collection, { targetLocale, onProgress })` (through the [Translator](glossary.md#translator)); the summary prints `Skipped (needs human translation)` for complex ICU, lost placeholders and dropped protected terms |
 | `bundle` | `--name`, `--locale`, `--quiet`, `--verbose`, `--token-casing`, `--token-constant-name`, `--no-transform-icu-to-transloco`, `--debug-keys` | `generateBundles()` (with the project `cwd`) |
 | `export` | `-f/--format`, `-c/--collection`, `-l/--locale`, `-s/--status`, `-t/--tags`, `-o/--output`, `--structure`, `--rich`, `--include-base`, `--include-status`, `--include-comment`, `--include-tags`, `--base-property-name`, `--filename`, `--no-protect-notes`, `--dry-run`, `--verbose` | `runExport()` |
@@ -142,6 +143,8 @@ export const addLocaleCommand = defineCommand<AddLocaleOptions>()({
 `defineCommand<Options>()` is curried: the options type is given, and the rest is inferred from the spec. The spec fields:
 
 Command modules retain their explicit `Options` interfaces. Those interfaces also describe prompt answers and conditional values that Commander flag definitions cannot infer; keeping them makes the runner context and `required` checks precise. `CommandRegistration<Options>` takes `{ name, description, options, argument?, helpText?, load, mapOptions? }`. The type of the loaded handler fixes `Options`; `mapOptions` handles raw Commander values only where conversion is needed. An option definition takes a Commander `Command`, registers a fresh option, and returns nothing. `option({ flags, description?, defaultValue?, helpDefault?, parse? })` distinguishes parsed defaults from `helpDefault`, which prints a default label without setting a Commander value. Import and export help labels read the same defaults as their command resolution; update-switch labels read core's strategy defaults. Choice and custom parser failures still come from Commander or the existing parser, before the lazy command import.
+
+`commaListOption({ flags, description?, helpDefault?, empty? })` declares a comma-separated flag. Commander passes a trimmed `string[]` with empty items removed to the handler; raw empty optional flags (`""`) and absent flags become undefined, preserving prompt and required-option gates. Non-empty inputs with no items (such as `" , "`) retain `[]` and count as supplied flags. `empty: 'clear'` preserves `[]` for replacement flags. `empty: 'preserve'` returns `{ kind: 'empty', input }` for deferred diagnostics. Export reads this explicit empty state to reject `--status` after collection resolution, before core validation and advisories. Command `Options` interfaces use arrays for these fields; status also permits the explicit empty state. Replacement flags retain `[]` to clear stored lists; optional filters apply their existing empty-input defaults. `commaListAnswers` names text prompt fields (resource tags, deletion keys, and export tags) for the runner to convert with the same `parseCommaSeparatedList` function before required checks and selection. `commands/validate-options.ts` owns validate defaults; `commands/find-similar-options.ts` owns the existing `parseInt` conversion for `--max-results`.
 
 | Field | Meaning |
 |---|---|
@@ -413,9 +416,17 @@ The Command Runner and the interactive rule live in `apps/cli/src/runner/` ([Com
 
 ### Selection (`prompt-utils.ts`)
 
-[Selection](glossary.md#selection) represents one, several, or all named items. `selectionPrompt` requires `mode: 'single' | 'multiple'` and keeps the existing all-choice order and defaults. `parseNameSelection` retains a literal single-name flag. `parseListSelection` parses comma-separated flags and multiple prompt answers. Both functions give flags precedence and decode the private all sentinel. Empty input returns `undefined` for command defaults and errors, while `selectionNames` maps all to `undefined` for core filters.
+[Selection](glossary.md#selection) represents one, several, or all named items. `selectionPrompt` requires `mode: 'single' | 'multiple'` and keeps the existing all-choice order and defaults. `parseNameSelection` retains a literal single-name flag. `parseListSelection` consumes parsed list flags and resolves multiple prompt answers; it also accepts comma strings for utility callers. Both functions give flags precedence and decode the private all sentinel. Empty input returns `undefined` for command defaults and errors, while `selectionNames` maps all to `undefined` for core filters.
 
 Normalize and glossary retain literal single-name flags. Bundle and export parse comma-separated flags. Export refuses empty multiselect answers, while bundle treats empty input as all. Normalize requires a collection or an explicit all choice and confirms all interactively. Export passes selected locale arrays directly to core.
+
+### Prompt helpers
+
+`missingTextQuestions(options, fields)` builds text questions for missing flags, including empty strings. Each field specifies its name, message, optional initial value, and validator. Required text fields use `requiredText` unless a custom validator is supplied. The runner still checks each command's `required` list.
+
+`collectionSetupQuestions` supplies the six shared collection questions for `init` and `add-collection`. It preserves their messages and initial values, including the `Main` name for `init` only.
+
+`confirmOrCancel` asks a confirmation with an initial value of false. It skips the question and its explanation for `--yes` or non-interactive mode. A decline throws `CommandCancelledError`, which the runner reports with exit code 0. Confirms that select configuration values remain in their commands. Normalize has no `--yes` flag, so its all-collections confirmation always appears in an interactive terminal.
 
 ### Output Formatting (`console-formatter.ts`)
 
@@ -436,7 +447,7 @@ Normalize and glossary retain literal single-name flags. Bundle and export parse
 
 ### String Parsers (`string-parsers.ts`)
 
-`parseCommaSeparatedList(input)` — splits a comma-separated string into a trimmed, non-empty `string[]`. Returns `undefined` for empty or missing input. Used by commands that accept multi-value flags like `--locale en,fr,de` and `--key key1,key2`.
+`parseCommaSeparatedList(input)` — splits a comma-separated string into a trimmed, non-empty `string[]`. Returns `undefined` for empty or missing input. Used by `commaListOption` at flag registration and by the runner for `commaListAnswers` text prompts. Empty text prompt answers become undefined. List flag definitions can opt into explicit empty values for clearing or deferred diagnostics.
 
 ---
 

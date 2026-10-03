@@ -3,14 +3,15 @@ import { join } from 'node:path';
 import {
   applyBaseChange,
   isUntranslatedCopy,
+  normalizeTags,
   recordTranslation,
-  translocoToICU,
   type TranslationStatus,
+  translocoToICU,
 } from '@simoncodes-ca/domain';
 import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
 import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../file-io/json-file-operations';
-import { assertCollectionFolderPath } from './folder-address';
 import { calculateChecksum } from './checksum';
+import { assertCollectionFolderPath } from './folder-address';
 import type { ResourceTreeEntry } from './load-resource-tree';
 import type { ResourceEntries, ResourceEntry } from './resource-entry';
 import type { ResourceEntryMetadata } from './resource-entry-metadata';
@@ -30,14 +31,14 @@ import { assertTranslationStatus } from './translation-status-input';
 export interface ResourceFolder {
   /** Absolute or cwd-relative folder path this instance was opened with. */
   readonly folderPath: string;
-  readonly entriesPath: string;
-  readonly metaPath: string;
 
   has(key: string): boolean;
   /** Returns the stored entry and its metadata (`meta` is `undefined` when tracker_meta has no record). */
   get(key: string): ResourceFolderEntry | undefined;
   keys(): string[];
   isEmpty(): boolean;
+  /** Whether either file was missing when opened or after the last non-dry save. */
+  hasMissingFiles(): boolean;
   /**
    * The entry as the API/UI sees it. `undefined` when the entry is missing.
    * An entry without a metadata record gets `metadata: {}` (no locale has a status).
@@ -86,7 +87,7 @@ export interface ResourceFolder {
     options?: { readonly targetLocales?: readonly string[] },
   ): void;
   /**
-   * Replaces an existing entry's values with `values` and makes its metadata true again:
+   * Normalizes an existing entry's values and tags and makes its metadata true again:
    * - a stray base-locale property is dropped (the base value lives in `source`),
    * - every translation of a `targetLocales` locale is re-recorded with a current checksum and its
    *   stored status (a translation without metadata counts as `new`, as the reader and validate count it),
@@ -95,12 +96,12 @@ export interface ResourceFolder {
    *   translation stays `new`) and gets the current `baseChecksum`,
    * - the base value goes through the Staleness rule when it changed,
    * - each of `targetLocales` the entry has no value for is seeded as a `new` copy of the base, and
-   * - values of other (non-target) locales are stored as given; their metadata is left alone.
+   * - non-target values are also converted to ICU; only their converted checksums are updated.
    *
    * The normalize operation's write path.
-   * @returns the number of locales seeded, and whether the stored entry or its metadata changed
+   * @returns counts of converted values, normalized tag lists and seeded locales, and whether anything changed
    */
-  normalizeEntry(key: string, values: Readonly<ResourceEntry>, targetLocales: readonly string[]): NormalizeEntryReport;
+  normalizeEntry(key: string, targetLocales: readonly string[]): NormalizeEntryReport;
   /**
    * Adds `locale` to every entry that has no value for it, as a copy of the base value with status `new`.
    * @returns number of entries seeded
@@ -132,6 +133,10 @@ export interface EntryDetails {
 }
 
 export interface NormalizeEntryReport {
+  /** Base and translation values whose Transloco syntax became ICU, including non-target locales. */
+  readonly valuesConverted: number;
+  /** 1 when the tag list changed; otherwise 0. */
+  readonly tagsNormalized: number;
   readonly localesAdded: number;
   /** True when the stored entry or its metadata differs from what the folder held before the call. */
   readonly changed: boolean;
@@ -172,14 +177,20 @@ export function openResourceFolder(folderPath: string, options: OpenResourceFold
   return new FileResourceFolder(folderPath, options.baseLocale, options.translationsFolder);
 }
 
+/** Checks presence without reading either file, for operations that require existing storage. */
+export function resourceFolderPresence(folderPath: string): { folder: boolean; entries: boolean } {
+  const folder = existsSync(folderPath);
+  return { folder, entries: folder && existsSync(join(folderPath, RESOURCE_ENTRIES_FILENAME)) };
+}
+
 /** Own-property check, so keys like "constructor" are not mistaken for entries (lib es2020 has no Object.hasOwn). */
 function hasOwn(target: object, key: string): boolean {
   return Object.getOwnPropertyDescriptor(target, key) !== undefined;
 }
 
 class FileResourceFolder implements ResourceFolder {
-  readonly entriesPath: string;
-  readonly metaPath: string;
+  private readonly entriesPath: string;
+  private readonly metaPath: string;
   private readonly entries: ResourceEntries;
   private readonly meta: TrackerMetadata;
   private entriesExist: boolean;
@@ -215,6 +226,10 @@ class FileResourceFolder implements ResourceFolder {
     return this.keys().length === 0;
   }
 
+  hasMissingFiles(): boolean {
+    return !this.entriesExist || !this.metaExists;
+  }
+
   treeEntry(key: string): ResourceTreeEntry | undefined {
     const stored = this.get(key);
     if (!stored) return undefined;
@@ -237,7 +252,11 @@ class FileResourceFolder implements ResourceFolder {
   }
 
   setBase(key: string, value: string): boolean {
-    value = translocoToICU(value);
+    return this.setBaseICU(key, translocoToICU(value));
+  }
+
+  /** Internal writes receive values already converted at the public boundary. */
+  private setBaseICU(key: string, value: string): boolean {
     const checksum = calculateChecksum(value);
     const entry = this.has(key) ? this.entries[key] : undefined;
     const entryMeta = this.metaOf(key);
@@ -289,12 +308,15 @@ class FileResourceFolder implements ResourceFolder {
   }
 
   setTranslation(key: string, locale: string, value: string, status?: TranslationStatus): void {
+    this.setTranslationICU(key, locale, translocoToICU(value), status);
+  }
+
+  private setTranslationICU(key: string, locale: string, value: string, status?: TranslationStatus): void {
     if (status !== undefined) assertTranslationStatus(status);
     if (locale === this.baseLocale) {
       throw new Error(`Cannot set a translation for the base locale "${locale}"; use setBase`);
     }
     const entry = this.requireEntry(key);
-    value = translocoToICU(value);
     entry[locale] = value;
 
     const entryMeta = this.metaOf(key);
@@ -370,17 +392,32 @@ class FileResourceFolder implements ResourceFolder {
     }
   }
 
-  normalizeEntry(key: string, values: Readonly<ResourceEntry>, targetLocales: readonly string[]): NormalizeEntryReport {
-    this.requireEntry(key);
+  normalizeEntry(key: string, targetLocales: readonly string[]): NormalizeEntryReport {
+    const values = this.requireEntry(key);
     const before = JSON.stringify(this.get(key));
     const previousMeta = this.metaOf(key);
-    const baseChecksum = previousMeta[this.baseLocale]?.checksum ?? calculateChecksum(translocoToICU(values.source));
-
-    const entry: ResourceEntry = { ...values, source: translocoToICU(values.source) };
-    for (const locale of translationLocales(entry)) {
-      const value = entry[locale];
-      if (typeof value === 'string') entry[locale] = translocoToICU(value);
+    const entry: ResourceEntry = { ...values };
+    let valuesConverted = 0;
+    for (const prop of ['source', ...translationLocales(entry)]) {
+      const value = entry[prop];
+      if (typeof value !== 'string') continue;
+      const converted = translocoToICU(value);
+      if (converted !== value) {
+        entry[prop] = converted;
+        valuesConverted++;
+      }
     }
+    let tagsNormalized = 0;
+    if (Array.isArray(entry.tags) && entry.tags.length > 0) {
+      const tags = normalizeTags(entry.tags);
+      if (!sameTags(entry.tags, tags)) {
+        if (tags.length > 0) entry.tags = tags;
+        else delete entry.tags;
+        tagsNormalized = 1;
+      }
+    }
+    const baseChecksum = previousMeta[this.baseLocale]?.checksum ?? calculateChecksum(entry.source);
+
     if (this.baseLocale !== 'source') delete entry[this.baseLocale];
     this.entries[key] = entry;
 
@@ -393,9 +430,9 @@ class FileResourceFolder implements ResourceFolder {
       const madeFromOlderBase =
         status !== 'new' && previous?.baseChecksum !== undefined && previous.baseChecksum !== baseChecksum;
       const driftedStatus = isUntranslatedCopy(calculateChecksum(value), baseChecksum) ? 'new' : 'stale';
-      this.setTranslation(key, locale, value, madeFromOlderBase ? driftedStatus : status);
+      this.setTranslationICU(key, locale, value, madeFromOlderBase ? driftedStatus : status);
     }
-    this.setBase(key, entry.source);
+    this.setBaseICU(key, entry.source);
     for (const locale of translationLocales(entry)) {
       if (targetLocales.includes(locale)) continue;
       const raw = values[locale];
@@ -408,10 +445,10 @@ class FileResourceFolder implements ResourceFolder {
 
     let localesAdded = 0;
     for (const locale of targetLocales) {
-      if (this.seedEntryLocale(key, locale)) localesAdded++;
+      if (this.seedEntryLocale(key, locale, entry.source)) localesAdded++;
     }
 
-    return { localesAdded, changed: JSON.stringify(this.get(key)) !== before };
+    return { valuesConverted, tagsNormalized, localesAdded, changed: JSON.stringify(this.get(key)) !== before };
   }
 
   seedLocale(locale: string): number {
@@ -475,12 +512,12 @@ class FileResourceFolder implements ResourceFolder {
   }
 
   /** The one seeding rule: a missing `locale` becomes a copy of the base value with status `new`. */
-  private seedEntryLocale(key: string, locale: string): boolean {
+  private seedEntryLocale(key: string, locale: string, normalizedBase?: string): boolean {
     const entry = this.entries[key];
     if (typeof entry !== 'object' || entry === null || typeof entry.source !== 'string') return false;
     if (locale === this.baseLocale || typeof entry[locale] === 'string') return false;
 
-    this.setTranslation(key, locale, entry.source, 'new');
+    this.setTranslationICU(key, locale, normalizedBase ?? translocoToICU(entry.source), 'new');
     return true;
   }
 

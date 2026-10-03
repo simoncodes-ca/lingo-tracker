@@ -1,12 +1,27 @@
-import type { ResourceMutation } from './resource-mutation';
 import { chmodSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { writeJsonFile } from '../file-io/json-file-operations';
-import { readCollection } from './read-collection';
 import { seedResources, testCollection, useTempDir, writeFolderFiles } from '../../testing/temp-dir.spec-helpers';
+import type { Collection } from '../config/open-collection';
+import { writeJsonFile } from '../file-io/json-file-operations';
 import { calculateChecksum } from './checksum';
-import { relocateEntries } from './relocate-entries';
+import { planMove } from './move-plan';
+import { readCollection } from './read-collection';
+import { type Relocation, relocateEntries } from './relocate-entries';
+import type { ResourceMutation } from './resource-mutation';
+
+/** Custom batches exercise relocation itself; collection facts still come from Move Plan. */
+function batchPlan(source: Collection, destination: Collection, relocations: readonly Relocation[]) {
+  const first = relocations[0];
+  if (!first) throw new Error('Expected a non-empty relocation fixture');
+  const plan = planMove({
+    source,
+    destination,
+    selection: { kind: 'key', key: first.from },
+    destinationPath: first.to,
+  });
+  return { ...plan, relocations };
+}
 
 const collected: ResourceMutation[] = [];
 const onMutation = (mutation: ResourceMutation): void => {
@@ -39,13 +54,11 @@ describe('relocateEntries (real fs)', () => {
     vi.mocked(writeJsonFile).mockClear();
 
     const result = relocateEntries(
-      main(),
-      main(),
-      [
+      batchPlan(main(), main(), [
         { from: 'common.a', to: 'shared.a' },
         { from: 'common.b', to: 'shared.b' },
         { from: 'common.c', to: 'shared.c' },
-      ],
+      ]),
       { onMutation },
     );
 
@@ -78,7 +91,9 @@ describe('relocateEntries (real fs)', () => {
       },
     });
 
-    const [moved] = relocateEntries(main(), main(), [{ from: 'common.ok', to: 'shared.ok' }], { onMutation }).moved;
+    const [moved] = relocateEntries(batchPlan(main(), main(), [{ from: 'common.ok', to: 'shared.ok' }]), {
+      onMutation,
+    }).moved;
 
     expect(moved?.entry).toMatchObject({ source: 'OK', comment: 'Button', tags: ['ui'], translations: { fr: 'Bien' } });
     expect(moved?.entry.metadata['fr']?.status).toBe('verified');
@@ -90,13 +105,15 @@ describe('relocateEntries (real fs)', () => {
   it('treats a taken destination as a collision, or replaces it with override', () => {
     seedResources(main(), { 'common.ok': { source: 'OK' }, 'shared.ok': { source: 'Taken' } });
 
-    const refused = relocateEntries(main(), main(), [{ from: 'common.ok', to: 'shared.ok' }], { onMutation });
+    const refused = relocateEntries(batchPlan(main(), main(), [{ from: 'common.ok', to: 'shared.ok' }]), {
+      onMutation,
+    });
     expect(refused.moved).toEqual([]);
     expect(refused.collisions).toEqual([{ from: 'common.ok', to: 'shared.ok' }]);
     expect(collected).toEqual([]);
     expect(keysOf(main().translationsFolder).sort()).toEqual(['common.ok', 'shared.ok']);
 
-    const replaced = relocateEntries(main(), main(), [{ from: 'common.ok', to: 'shared.ok' }], {
+    const replaced = relocateEntries(batchPlan(main(), main(), [{ from: 'common.ok', to: 'shared.ok' }]), {
       onMutation,
       override: true,
     });
@@ -109,13 +126,11 @@ describe('relocateEntries (real fs)', () => {
     seedResources(main(), { 'a.k': { source: 'Outer' }, 'a.b.k': { source: 'Inner' }, 'x.dup': { source: 'Dup' } });
 
     const result = relocateEntries(
-      main(),
-      main(),
-      [
+      batchPlan(main(), main(), [
         { from: 'a.k', to: 'a.b.k' },
         { from: 'a.b.k', to: 'a.b.b.k' },
         { from: 'x.dup', to: 'a.b.b.k' },
-      ],
+      ]),
       { onMutation },
     );
 
@@ -134,12 +149,10 @@ describe('relocateEntries (real fs)', () => {
 
     // q.one cannot move to r.one, so p.one cannot take q.one's place.
     const result = relocateEntries(
-      main(),
-      main(),
-      [
+      batchPlan(main(), main(), [
         { from: 'p.one', to: 'q.one' },
         { from: 'q.one', to: 'r.one' },
-      ],
+      ]),
       { onMutation },
     );
 
@@ -151,12 +164,10 @@ describe('relocateEntries (real fs)', () => {
     seedResources(main(), { 'p.x': { source: 'P' }, 'q.x': { source: 'Q' } });
 
     const result = relocateEntries(
-      main(),
-      main(),
-      [
+      batchPlan(main(), main(), [
         { from: 'p.x', to: 'q.x' },
         { from: 'q.x', to: 'p.x' },
-      ],
+      ]),
       { onMutation },
     );
 
@@ -183,12 +194,10 @@ describe('relocateEntries (real fs)', () => {
       try {
         // a sends to a/b, and a/b sends to a/b/b, which cannot be written.
         const result = relocateEntries(
-          main(),
-          main(),
-          [
+          batchPlan(main(), main(), [
             { from: 'a.k', to: 'a.b.k' },
             { from: 'a.b.k', to: 'a.b.b.k' },
-          ],
+          ]),
           { onMutation },
         );
 
@@ -215,7 +224,9 @@ describe('relocateEntries (real fs)', () => {
       chmodSync(join(target.translationsFolder, 'common'), 0o500);
 
       try {
-        const result = relocateEntries(main(), target, [{ from: 'common.ok', to: 'common.ok' }], { onMutation });
+        const result = relocateEntries(batchPlan(main(), target, [{ from: 'common.ok', to: 'common.ok' }]), {
+          onMutation,
+        });
 
         expect(result.moved).toEqual([]);
         expect(collected).toEqual([
@@ -244,7 +255,7 @@ describe('relocateEntries (real fs)', () => {
     });
     let result: ReturnType<typeof relocateEntries>;
     try {
-      result = relocateEntries(main(), target, [{ from: 'common.ok', to: 'common.ok' }], { onMutation });
+      result = relocateEntries(batchPlan(main(), target, [{ from: 'common.ok', to: 'common.ok' }]), { onMutation });
     } finally {
       writer.mockImplementation(actual.writeJsonFile);
     }
@@ -262,7 +273,7 @@ describe('relocateEntries (real fs)', () => {
       'common.ok': { source: 'OK', translations: { fr: { value: 'Bien', status: 'verified' }, es: 'Vale' } },
     });
 
-    const result = relocateEntries(source, target, [{ from: 'common.ok', to: 'common.ok' }], { onMutation });
+    const result = relocateEntries(batchPlan(source, target, [{ from: 'common.ok', to: 'common.ok' }]), { onMutation });
 
     const entry = result.moved[0]?.entry;
     expect(entry?.translations).toEqual({ fr: 'Bien', de: 'OK' });
@@ -282,7 +293,7 @@ describe('relocateEntries (real fs)', () => {
     seedResources(main(), { 'common.ok': { source: 'OK' } });
     const french = testCollection(join(root(), 'fr'), { name: 'fr', baseLocale: 'fr', locales: ['fr', 'en'] });
 
-    const result = relocateEntries(main(), french, [{ from: 'common.ok', to: 'common.ok' }], { onMutation });
+    const result = relocateEntries(batchPlan(main(), french, [{ from: 'common.ok', to: 'common.ok' }]), { onMutation });
 
     expect(result.moved).toEqual([]);
     expect(result.errors[0]).toContain('base locale');
@@ -294,15 +305,13 @@ describe('relocateEntries (real fs)', () => {
     writeFolderFiles(main().translationsFolder, 'broken', { entries: '{ not json' });
 
     const result = relocateEntries(
-      main(),
-      main(),
-      [
+      batchPlan(main(), main(), [
         { from: 'common..bad', to: 'shared.bad' },
         { from: 'common.missing', to: 'shared.missing' },
         { from: 'common.ok', to: 'broken.ok' },
         { from: 'common.fine', to: 'common.fine' },
         { from: 'common.ok', to: 'shared.ok' },
-      ],
+      ]),
       { onMutation },
     );
 

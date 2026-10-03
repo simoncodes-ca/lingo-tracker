@@ -12,8 +12,8 @@ import { exitForRunOutcome } from '../runner/run-outcome';
 import { ConsoleFormatter, parseListSelection, parseNameSelection, selectionNames, selectionPrompt } from '../utils';
 
 export interface BundleOptions {
-  name?: string;
-  locale?: string;
+  name?: string[];
+  locale?: string[];
   quiet?: boolean;
   verbose?: boolean;
   /** CLI-level override for token casing. Takes precedence over all config file values. */

@@ -97,6 +97,25 @@ describe('TranslationEditorDialog', () => {
   const dialogData = createMockData('create');
 
   /** Lets the deferred focus task the dialog queues after a confirmation run. */
+  describe('Tag input', () => {
+    it('should reset the typed-text signal on Enter even when the text is blank', () => {
+      spectator.detectChanges();
+      const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input.chip-add-input');
+      expect(input).not.toBeNull();
+      if (!input) return;
+
+      input.value = '   ';
+      input.dispatchEvent(new Event('input'));
+      expect(component.tagInputText()).toBe('   ');
+
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', cancelable: true }));
+
+      expect(component.tagInputText()).toBe('');
+      expect(input.value).toBe('');
+      expect(component.tagsList()).toEqual([]);
+    });
+  });
+
   const flushFocus = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
   const createDialog = createComponentFactory({
@@ -1552,7 +1571,7 @@ describe('TranslationEditorDialog', () => {
 
     it('should copy the full key and confirm it', async () => {
       spectator.click('[data-testid="footer-key"]');
-      await Promise.resolve();
+      await vi.waitFor(() => expect(mockNotifications.success).toHaveBeenCalledWith('Copied to clipboard'));
       spectator.detectChanges();
 
       expect(mockClipboard.writeText).toHaveBeenCalledWith('common.buttons.ok');
@@ -1565,7 +1584,7 @@ describe('TranslationEditorDialog', () => {
       mockClipboard.writeText = vi.fn(() => Promise.reject(new Error('denied')));
 
       spectator.click('[data-testid="footer-key"]');
-      await Promise.resolve();
+      await vi.waitFor(() => expect(mockNotifications.error).toHaveBeenCalledWith('Failed to copy'));
       spectator.detectChanges();
 
       expect(mockNotifications.error).toHaveBeenCalledWith('Failed to copy');

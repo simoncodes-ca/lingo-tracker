@@ -1,20 +1,21 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslocoService } from '@jsverse/transloco';
 import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { splitResolvedKey } from '@simoncodes-ca/domain';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
-import { NotificationService } from '../../shared/notification';
 import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
+import { NotificationService } from '../../shared/notification';
+import { injectRestartableDelay } from '../../shared/timed-transients';
 import {
   type EditorOutcome,
-  TranslationEditorDialog,
   TRANSLATION_EDITOR_TITLE_ID,
+  TranslationEditorDialog,
   type TranslationEditorDialogData,
 } from '../dialogs/translation-editor';
-import { FolderPeek } from './folder-peek';
 import { BrowserStore } from '../store/browser.store';
 import { captureSession, withinSession } from '../store/session-guard';
+import { FolderPeek } from './folder-peek';
 import { resourceMovedToast } from './resource-moved-toast';
 
 /** A create's skipped-locales warning waits out the success toast, so the two do not overlap. */
@@ -40,7 +41,7 @@ export class TranslationEditorLauncher {
   readonly #browserStore = inject(BrowserStore);
   readonly #notifications = inject(NotificationService);
   readonly #transloco = inject(TranslocoService);
-  #createWarning: ReturnType<typeof setTimeout> | undefined;
+  readonly #scheduleCreateWarning = injectRestartableDelay(CREATE_WARNING_DELAY_MS);
 
   /** Opens the editor to create an entry in the folder the list shows. */
   openCreate(): Promise<EditorOutcome> {
@@ -160,12 +161,10 @@ export class TranslationEditorLauncher {
   #warnSkippedAfterCreate(skippedLocales: string[]): void {
     if (skippedLocales.length === 0) return;
     const locales = skippedLocales.join(', ');
-    clearTimeout(this.#createWarning);
-    this.#createWarning = setTimeout(() => {
+    this.#scheduleCreateWarning(() => {
       this.#notifications.warning(
         this.#transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.AUTOTRANSLATIONSKIPPEDX, { locales }),
       );
-      this.#createWarning = undefined;
-    }, CREATE_WARNING_DELAY_MS);
+    });
   }
 }

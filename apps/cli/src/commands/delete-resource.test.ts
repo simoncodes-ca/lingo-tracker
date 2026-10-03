@@ -45,7 +45,7 @@ describe('deleteResourceCommand', () => {
   });
 
   it('deletes a single resource and exits 0', async () => {
-    await deleteResourceCommand({ collection: 'default', key: 'apps.common.buttons.ok', yes: true });
+    await deleteResourceCommand({ collection: 'default', key: ['apps.common.buttons.ok'], yes: true });
 
     expect(mockDeleteResource).toHaveBeenCalledWith(expectedCollection, { keys: ['apps.common.buttons.ok'] });
     expect(process.exitCode).toBe(0);
@@ -54,7 +54,7 @@ describe('deleteResourceCommand', () => {
   it('trims comma-separated keys and drops empty ones', async () => {
     await deleteResourceCommand({
       collection: 'default',
-      key: 'apps.common.buttons.ok,  , apps.common.buttons.cancel,  ',
+      key: ['apps.common.buttons.ok', 'apps.common.buttons.cancel'],
       yes: true,
     });
 
@@ -69,7 +69,7 @@ describe('deleteResourceCommand', () => {
       errors: [{ key: 'apps.common.invalid', error: 'Resource not found' }],
     });
 
-    await deleteResourceCommand({ collection: 'default', key: 'apps.common.ok,apps.common.invalid', yes: true });
+    await deleteResourceCommand({ collection: 'default', key: ['apps.common.ok', 'apps.common.invalid'], yes: true });
 
     expect(mockDeleteResource).toHaveBeenCalledWith(expectedCollection, {
       keys: ['apps.common.ok', 'apps.common.invalid'],
@@ -85,7 +85,7 @@ describe('deleteResourceCommand', () => {
       errors: [{ key: 'apps.common.notfound', error: 'Resource not found' }],
     });
 
-    await deleteResourceCommand({ collection: 'default', key: 'apps.common.notfound', yes: true });
+    await deleteResourceCommand({ collection: 'default', key: ['apps.common.notfound'], yes: true });
 
     expect(mockDeleteResource).toHaveBeenCalledWith(expectedCollection, { keys: ['apps.common.notfound'] });
     expect(console.error).toHaveBeenCalledWith('⚠️  No resources were deleted.');
@@ -95,7 +95,7 @@ describe('deleteResourceCommand', () => {
   it('deletes several comma-separated keys in one call', async () => {
     await deleteResourceCommand({
       collection: 'default',
-      key: 'apps.common.buttons.ok, apps.common.buttons.cancel, apps.common.buttons.save',
+      key: ['apps.common.buttons.ok', 'apps.common.buttons.cancel', 'apps.common.buttons.save'],
       yes: true,
     });
 
@@ -110,7 +110,7 @@ describe('deleteResourceCommand', () => {
       throw new Error('disk full');
     });
 
-    await deleteResourceCommand({ collection: 'default', key: 'a.b', yes: true });
+    await deleteResourceCommand({ collection: 'default', key: ['a.b'], yes: true });
 
     expect(console.error).toHaveBeenCalledWith('❌ disk full');
     expect(process.exitCode).toBe(1);
@@ -121,14 +121,14 @@ describe('deleteResourceCommand', () => {
       throw new ConfigNotFoundError('/test/project/.lingo-tracker.json');
     });
 
-    await deleteResourceCommand({ collection: 'default', key: 'a.b', yes: true });
+    await deleteResourceCommand({ collection: 'default', key: ['a.b'], yes: true });
 
     expect(mockDeleteResource).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(1);
   });
 
   it('exits 1 without deleting when the collection does not exist', async () => {
-    await deleteResourceCommand({ collection: 'nonexistent', key: 'a.b', yes: true });
+    await deleteResourceCommand({ collection: 'nonexistent', key: ['a.b'], yes: true });
 
     expect(mockDeleteResource).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith('❌ Collection "nonexistent" not found');
@@ -149,7 +149,7 @@ describe('deleteResourceCommand', () => {
     });
 
     it('asks for the key, then for confirmation', async () => {
-      mockPrompts.mockResolvedValueOnce({ key: 'a.b' }).mockResolvedValueOnce({ confirmed: true });
+      mockPrompts.mockResolvedValueOnce({ key: ' a.b, , ' }).mockResolvedValueOnce({ confirmed: true });
 
       await deleteResourceCommand({ collection: 'default' });
 
@@ -160,7 +160,7 @@ describe('deleteResourceCommand', () => {
     it('declining the confirmation cancels with exit 0', async () => {
       mockPrompts.mockResolvedValueOnce({ confirmed: false });
 
-      await deleteResourceCommand({ collection: 'default', key: 'a.b' });
+      await deleteResourceCommand({ collection: 'default', key: ['a.b'] });
 
       expect(mockDeleteResource).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith('❌ Delete resource cancelled.');
@@ -168,7 +168,7 @@ describe('deleteResourceCommand', () => {
     });
 
     it('--yes skips the confirmation', async () => {
-      await deleteResourceCommand({ collection: 'default', key: 'a.b', yes: true });
+      await deleteResourceCommand({ collection: 'default', key: ['a.b'], yes: true });
 
       expect(mockPrompts).not.toHaveBeenCalled();
       expect(mockDeleteResource).toHaveBeenCalled();

@@ -5,7 +5,7 @@ import type { Collection } from '../config/open-collection';
 import { hasFsErrorCode } from '../file-io/fs-error';
 import { type CollectionFolderProblem, type CollectionFolderVisit, walkCollectionFolders } from './collection-folders';
 import { validateFolderAddress } from './folder-address';
-import { folderMutation, type MutationSinkOptions } from './resource-mutation';
+import { resolveMutationSink, folderMutation, type MutationSinkOptions } from './resource-mutation';
 
 /** The only non-collection files that pruning may delete. */
 export const PRUNABLE_OS_JUNK_FILES = ['.DS_Store', 'Thumbs.db', 'desktop.ini'] as const;
@@ -75,7 +75,10 @@ export function pruneEmptyFolders(collection: Collection, options: PruneOptions 
     removedPaths.add(absolutePath);
     result.removed.push(folderPath);
     if (!options.dryRun) {
-      options.onMutation?.(folderMutation('remove-folder', collection.translationsFolder, folderPath));
+      resolveMutationSink(
+        collection,
+        options,
+      )?.(folderMutation('remove-folder', collection.translationsFolder, folderPath));
     }
   }
   return result;

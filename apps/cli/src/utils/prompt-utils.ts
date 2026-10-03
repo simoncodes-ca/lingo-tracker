@@ -1,4 +1,8 @@
+import { DEFAULT_CONFIG } from '@simoncodes-ca/core';
 import type prompts from 'prompts';
+import { CommandCancelledError } from '../runner/command-cancelled-error';
+import type { Ask } from '../runner/command-runner';
+import type { InitOptions } from '../types/init-options';
 import { parseCommaSeparatedList } from './string-parsers';
 
 /** The CLI choice of one, several, or all named items. */
@@ -44,8 +48,13 @@ export function parseNameSelection(flagValue: string | undefined, answerValue?: 
 }
 
 /** Resolves a comma-list flag or prompt answer. A supplied flag takes precedence, including an empty flag. */
-export function parseListSelection(flagValue: string | undefined, answerValue?: unknown): Selection | undefined {
-  if (flagValue !== undefined) return namedSelection(parseCommaSeparatedList(flagValue));
+export function parseListSelection(
+  flagValue: string[] | string | undefined,
+  answerValue?: unknown,
+): Selection | undefined {
+  if (flagValue !== undefined) {
+    return namedSelection(typeof flagValue === 'string' ? parseCommaSeparatedList(flagValue) : flagValue);
+  }
   return parsePromptSelection(answerValue);
 }
 
@@ -67,4 +76,86 @@ function namedSelection(names: string[] | undefined): Selection | undefined {
 /** Maps a Selection to core's optional name filter: undefined means all. */
 export function selectionNames(selection: Selection | undefined): string[] | undefined {
   return selection?.kind === 'some' ? selection.names : undefined;
+}
+
+/** The required text rule, also used by conditional text prompts. */
+export function requiredText(value: string): true | 'Required' {
+  return value && value.trim().length > 0 ? true : 'Required';
+}
+
+interface TextField<Name extends string> {
+  readonly name: Name;
+  readonly message: string;
+  readonly required?: boolean;
+  readonly initial?: prompts.PromptObject['initial'];
+  readonly validate?: prompts.PromptObject['validate'];
+}
+
+/** Empty strings are missing, matching the commands' existing text prompt rule. */
+export function missingTextQuestions<Options extends object>(
+  options: Options,
+  fields: readonly TextField<keyof Options & string>[],
+): prompts.PromptObject[] {
+  return fields
+    .filter((field) => !options[field.name])
+    .map(({ required, validate: customValidate, ...field }) => {
+      const validate = customValidate ?? (required ? requiredText : undefined);
+      return {
+        type: 'text',
+        ...field,
+        ...(validate === undefined ? {} : { validate }),
+      };
+    });
+}
+
+/** Shared collection questions; init alone supplies the existing name default. */
+export function collectionSetupQuestions(
+  options: InitOptions,
+  defaults: { readonly collectionName?: string } = {},
+): prompts.PromptObject[] {
+  const questions = missingTextQuestions(options, [
+    {
+      name: 'collectionName',
+      message: 'Collection name',
+      required: true,
+      ...(defaults.collectionName === undefined ? {} : { initial: defaults.collectionName }),
+    },
+    { name: 'translationsFolder', message: 'Path to translations folder', required: true },
+    { name: 'exportFolder', message: 'Export folder', initial: DEFAULT_CONFIG.exportFolder },
+    { name: 'importFolder', message: 'Import folder', initial: DEFAULT_CONFIG.importFolder },
+    { name: 'baseLocale', message: 'Base locale', initial: DEFAULT_CONFIG.baseLocale, required: true },
+  ]);
+  if (!options.locales) {
+    questions.push({
+      type: 'list',
+      name: 'locales',
+      message: 'Supported locales (comma-separated)',
+      initial: 'en,fr-ca,es,de',
+      separator: ',',
+    });
+  }
+  return questions;
+}
+
+interface ConfirmationOptions {
+  readonly ask: Ask;
+  readonly interactive: boolean;
+  readonly yes?: boolean;
+  readonly message: string;
+  /** Explain the action only when the confirmation will be asked. */
+  readonly beforeAsk?: () => void;
+}
+
+/** A decline cancels; explicit consent and non-interactive mode skip the question. */
+export async function confirmOrCancel({
+  ask,
+  interactive,
+  yes,
+  message,
+  beforeAsk,
+}: ConfirmationOptions): Promise<void> {
+  if (yes || !interactive) return;
+  beforeAsk?.();
+  const answer = await ask({ type: 'confirm', name: 'confirmed', message, initial: false });
+  if (answer.confirmed !== true) throw new CommandCancelledError();
 }

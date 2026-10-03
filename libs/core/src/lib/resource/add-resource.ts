@@ -10,9 +10,9 @@ import {
   seedLocales,
   withTranslatorProblems,
 } from './locale-seeding';
+import { type OpenedResourceEntry, openResourceEntry } from './resource-entry';
 import { type ResolvedResourcePaths, validateAndResolvePaths } from './resource-file-paths';
-import { openResourceFolder, type ResourceFolder } from './resource-folder';
-import { type MutationSink, type MutationSinkOptions, saveReporting, upsertMutation } from './resource-mutation';
+import { resolveMutationSink, type MutationSink, type MutationSinkOptions } from './resource-mutation';
 import { assertTranslationStatus } from './translation-status-input';
 
 type ResourceTranslationInput = Pick<ResourceTranslation, 'locale' | 'value'> & { readonly status?: TranslationStatus };
@@ -104,7 +104,7 @@ export async function addResource(
     collection,
     await prepareResourceAdd(collection, resolved, options),
     onExisting,
-    options.onMutation,
+    resolveMutationSink(collection, options),
   );
 }
 
@@ -114,7 +114,7 @@ export function resolveResourceAdd(
   params: AddResourceParams,
   onExisting: ExistingResourcePolicy,
 ): ResolvedResourceAdd {
-  const { baseLocale, translationsFolder } = collection;
+  const { translationsFolder } = collection;
   const paths = validateAndResolvePaths({ key: params.key, translationsFolder, targetFolder: params.targetFolder });
   assertCollectionLocales(
     collection,
@@ -123,7 +123,7 @@ export function resolveResourceAdd(
   for (const translation of params.translations ?? []) {
     if (translation.status !== undefined) assertTranslationStatus(translation.status);
   }
-  const existed = openResourceFolder(paths.folderPath, { baseLocale, translationsFolder }).has(paths.entryKey);
+  const existed = openResourceEntry(collection, paths.resolvedKey).exists();
   if (existed && onExisting === 'fail') throw new ResourceAlreadyExistsError(paths.resolvedKey);
   return { params, paths };
 }
@@ -156,13 +156,9 @@ export async function prepareResourceAdd(
   };
 }
 
-function checkWriteConflict(
-  folder: ResourceFolder,
-  paths: ResolvedResourcePaths,
-  onExisting: ExistingResourcePolicy,
-): boolean {
-  const created = !folder.has(paths.entryKey);
-  if (!created && onExisting === 'fail') throw new ResourceAlreadyExistsError(paths.resolvedKey);
+function checkWriteConflict(entry: OpenedResourceEntry, onExisting: ExistingResourcePolicy): boolean {
+  const created = !entry.exists();
+  if (!created && onExisting === 'fail') throw new ResourceAlreadyExistsError(entry.resolvedKey);
   return created;
 }
 
@@ -172,11 +168,7 @@ export function assertPreparedResourceCanWrite(
   prepared: PreparedResourceAdd,
   onExisting: ExistingResourcePolicy,
 ): void {
-  const folder = openResourceFolder(prepared.paths.folderPath, {
-    baseLocale: collection.baseLocale,
-    translationsFolder: collection.translationsFolder,
-  });
-  checkWriteConflict(folder, prepared.paths, onExisting);
+  checkWriteConflict(openResourceEntry(collection, prepared.paths.resolvedKey), onExisting);
 }
 
 /** Stores an already prepared entry through the same Resource Folder path as a single add. */
@@ -186,23 +178,23 @@ export function writePreparedResourceAdd(
   onExisting: ExistingResourcePolicy,
   onMutation?: MutationSink,
 ): AddResourceResult {
-  const { paths, params, baseValue, translations } = prepared;
-  const { translationsFolder, baseLocale } = collection;
-  const folder = openResourceFolder(paths.folderPath, { baseLocale, translationsFolder });
-  const created = checkWriteConflict(folder, paths, onExisting);
-  ensureDirectoryExists({ directoryPath: paths.folderPath, errorContext: 'Creating resource folder' });
+  const { params, baseValue, translations } = prepared;
+  const resource = openResourceEntry(collection, prepared.paths.resolvedKey);
+  const { folder } = resource;
+  const created = checkWriteConflict(resource, onExisting);
+  ensureDirectoryExists({ directoryPath: folder.folderPath, errorContext: 'Creating resource folder' });
 
   // setEntry clears the entry in place, so an existing key keeps its position in the file.
-  folder.setEntry(paths.entryKey, { source: baseValue }, {});
-  folder.setBase(paths.entryKey, baseValue);
-  folder.setDetails(paths.entryKey, {
+  folder.setEntry(resource.entryKey, { source: baseValue }, {});
+  folder.setBase(resource.entryKey, baseValue);
+  folder.setDetails(resource.entryKey, {
     comment: params.comment || undefined,
     tags: normalizeTags([...(params.tags ?? [])]),
   });
   for (const { locale, value, status } of translations) {
-    folder.setTranslation(paths.entryKey, locale, value, status);
+    folder.setTranslation(resource.entryKey, locale, value, status);
   }
-  const stored = folder.get(paths.entryKey);
+  const stored = folder.get(resource.entryKey);
   const storedTranslations: ResourceTranslation[] = translations.map((translation) => {
     const status = stored?.meta?.[translation.locale]?.status;
     if (status === undefined) throw new Error(`Missing status for locale "${translation.locale}"`);
@@ -210,12 +202,10 @@ export function writePreparedResourceAdd(
     if (typeof value !== 'string') throw new Error(`Missing value for locale "${translation.locale}"`);
     return { locale: translation.locale, value, status };
   });
-  saveReporting(folder, translationsFolder, onMutation, () => [
-    upsertMutation(translationsFolder, paths.resolvedKey, folder.treeEntry(paths.entryKey)),
-  ]);
+  resource.save(onMutation);
 
   return {
-    resolvedKey: paths.resolvedKey,
+    resolvedKey: resource.resolvedKey,
     created,
     translations: storedTranslations,
     ...(prepared.skippedLocales !== undefined && { skippedLocales: prepared.skippedLocales }),

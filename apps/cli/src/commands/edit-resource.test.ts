@@ -101,7 +101,7 @@ describe('editResourceCommand', () => {
       collection: 'default',
       key: 'apps.common.buttons.ok',
       comment: 'New comment',
-      tags: 'ui, buttons',
+      tags: ['ui', 'buttons'],
     };
 
     await editResourceCommand(options);

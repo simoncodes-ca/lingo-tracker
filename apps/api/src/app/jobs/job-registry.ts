@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Logger } from '@nestjs/common';
+import { JobNotFoundError } from './job-not-found.error';
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed';
 
@@ -36,18 +37,24 @@ export class JobRegistry<TState extends object, TFields extends { status: JobSta
   readonly #jobs = new Map<string, Job<TState>>();
   readonly #project: (state: TState, status: JobStatus) => TFields;
   readonly #errorBeforeTimestamps: boolean;
+  readonly #jobName: string;
   #queue: Promise<void> = Promise.resolve();
 
   constructor(
     project: (state: TState, status: JobStatus) => TFields,
-    options: { errorBeforeTimestamps?: boolean } = {},
+    options: {
+      /** Used only to build the not-found message, e.g. "Bundle job". */
+      jobName: string;
+      errorBeforeTimestamps?: boolean;
+    },
   ) {
     this.#project = project;
+    this.#jobName = options.jobName;
     this.#errorBeforeTimestamps = options.errorBeforeTimestamps ?? false;
   }
 
-  /** Registers a pending job and returns its UUID before execution starts. */
-  start(run: JobRun<TState>): string {
+  /** Registers a pending job and returns its snapshot before execution starts. */
+  start(run: JobRun<TState>): JobSnapshot<TFields> {
     this.#evictFinishedJobs();
     const jobId = randomUUID();
     const job: Job<TState> = { jobId, status: 'pending', state: run.initial };
@@ -74,13 +81,19 @@ export class JobRegistry<TState extends object, TFields extends { status: JobSta
         Logger.error(`Job ${jobId} error reporter failed`, error);
       });
 
-    return jobId;
+    return this.#snapshot(job);
   }
 
-  /** Returns a new DTO snapshot, or undefined after eviction or for an unknown ID. */
-  get(jobId: string): JobSnapshot<TFields> | undefined {
+  /** Returns a new snapshot, or throws the same not-found error for a missing or wrong-owner job. */
+  get(jobId: string, options: { owner?: (state: TState) => boolean } = {}): JobSnapshot<TFields> {
     const job = this.#jobs.get(jobId);
-    if (!job) return undefined;
+    if (!job || (options.owner && !options.owner(job.state))) {
+      throw new JobNotFoundError(jobId, this.#jobName);
+    }
+    return this.#snapshot(job);
+  }
+
+  #snapshot(job: Job<TState>): JobSnapshot<TFields> {
     return {
       jobId: job.jobId,
       ...this.#project(job.state, job.status),

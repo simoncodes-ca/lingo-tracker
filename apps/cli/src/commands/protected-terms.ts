@@ -13,7 +13,7 @@ export interface ProtectedTermsOptions {
   collection?: string;
   add?: string[];
   remove?: string[];
-  set?: string;
+  set?: string[];
   list?: boolean;
   /** Path to the protected terms file for this scope. An empty string clears the pointer. */
   file?: string;
@@ -53,7 +53,7 @@ export const protectedTermsCommand = defineCommand<ProtectedTermsOptions>()({
           edit: {
             add: options.add,
             remove: options.remove,
-            ...(hasSet && { set: options.set?.split(',') ?? [] }),
+            ...(hasSet && { set: options.set ?? [] }),
           },
           list: hasList,
           ...(hasFile && { file: options.file }),

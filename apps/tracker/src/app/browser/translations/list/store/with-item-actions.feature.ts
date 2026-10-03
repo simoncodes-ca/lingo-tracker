@@ -1,15 +1,16 @@
-import { inject, DestroyRef } from '@angular/core';
+import { DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import { TranslocoService } from '@jsverse/transloco';
-import { NotificationService } from '../../../../shared/notification';
-import { BrowserStore } from '../../../store/browser.store';
-import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
-import { injectFeedback } from '../../../feedback';
-import { firstValueFrom, tap } from 'rxjs';
-import { TranslationEditorLauncher } from '../../../services/translation-editor-launcher';
-import { injectConfirm, type ConfirmationSpec } from '../../../../shared/confirm';
+import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
 import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import { firstValueFrom, tap } from 'rxjs';
+import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
+import { copyToClipboard } from '../../../../shared/clipboard';
+import { type ConfirmationSpec, injectConfirm } from '../../../../shared/confirm';
+import { NotificationService } from '../../../../shared/notification';
+import { injectFeedback } from '../../../feedback';
+import { TranslationEditorLauncher } from '../../../services/translation-editor-launcher';
+import { BrowserStore } from '../../../store/browser.store';
 
 export function withItemActions() {
   return signalStoreFeature(
@@ -32,14 +33,13 @@ export function withItemActions() {
 
       return {
         copyKey(translation: ResourceSummaryDto): void {
-          if (!navigator.clipboard?.writeText) {
-            notifications.error(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED));
-            return;
-          }
-          navigator.clipboard
-            .writeText(translation.fullKey)
-            .then(() => notifications.success(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD)))
-            .catch(() => notifications.error(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED)));
+          void copyToClipboard(translation.fullKey).then((outcome) => {
+            if (outcome === 'copied') {
+              notifications.success(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD));
+            } else {
+              notifications.error(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED));
+            }
+          });
         },
 
         /** Opens the editor on a row; a save that keeps the entry in this list flashes its row. */

@@ -1,7 +1,7 @@
 import { moveResource } from '@simoncodes-ca/core';
 import { defineCommand } from '../runner/command-runner';
 import { exitForRunOutcome } from '../runner/run-outcome';
-import { ConsoleFormatter } from '../utils';
+import { ConsoleFormatter, missingTextQuestions } from '../utils';
 
 export interface MoveResourceOptions {
   collection?: string;
@@ -11,33 +11,14 @@ export interface MoveResourceOptions {
   override?: boolean;
 }
 
-const required = (val: string) => (val && val.trim().length > 0 ? true : 'Required');
-
 export const moveResourceCommand = defineCommand<MoveResourceOptions>()({
   name: 'Move resource',
   collection: 'writable',
-  prompts: (options) => [
-    ...(options.source
-      ? []
-      : [
-          {
-            type: 'text' as const,
-            name: 'source',
-            message: 'Source key or pattern (e.g. common.buttons.ok or common.buttons.*)',
-            validate: required,
-          },
-        ]),
-    ...(options.dest
-      ? []
-      : [
-          {
-            type: 'text' as const,
-            name: 'dest',
-            message: 'Destination key (e.g. common.actions.ok)',
-            validate: required,
-          },
-        ]),
-  ],
+  prompts: (options) =>
+    missingTextQuestions(options, [
+      { name: 'source', message: 'Source key or pattern (e.g. common.buttons.ok or common.buttons.*)', required: true },
+      { name: 'dest', message: 'Destination key (e.g. common.actions.ok)', required: true },
+    ]),
   required: ['source', 'dest'],
   run: async ({ collection, config, cwd, answers }) => {
     const params = { source: answers.source, destination: answers.dest, override: answers.override };

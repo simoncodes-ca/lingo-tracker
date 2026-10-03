@@ -24,6 +24,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
 import { SearchInput } from '../../../shared/components/search-input';
 import { injectConfirm } from '../../../shared/confirm';
+import { injectMidpointFlip } from '../../../shared/timed-transients';
 import { injectFeedback } from '../../feedback';
 import { BrowserStore } from '../../store/browser.store';
 import { folderDrop } from '../../store/folder-drop';
@@ -111,10 +112,8 @@ export class FolderTree {
   readonly isValidRootDropTarget = computed(() => this.#rootDropDecision().canLand);
 
   /** Drives the icon flip animation — true for one animation frame when toggled */
-  readonly isNestedToggleFlipping = signal(false);
-
-  #nestedFlipMidTimeout: ReturnType<typeof setTimeout> | undefined;
-  #nestedFlipEndTimeout: ReturnType<typeof setTimeout> | undefined;
+  readonly #nestedFlip = injectMidpointFlip(NESTED_ANIMATION_DURATION_MS);
+  readonly isNestedToggleFlipping = this.#nestedFlip.active;
 
   /** Signal exposing whether a folder is being added */
   readonly isAddingFolder = this.store.isAddingFolder;
@@ -153,8 +152,6 @@ export class FolderTree {
     });
 
     this.#destroyRef.onDestroy(() => {
-      if (this.#nestedFlipMidTimeout) clearTimeout(this.#nestedFlipMidTimeout);
-      if (this.#nestedFlipEndTimeout) clearTimeout(this.#nestedFlipEndTimeout);
       this.#stopAutoScroll();
     });
   }
@@ -243,20 +240,7 @@ export class FolderTree {
    * when the element is edge-on and invisible, so the new icon is never seen rotating.
    */
   setNestedResources(value: boolean): void {
-    if (this.#nestedFlipMidTimeout) clearTimeout(this.#nestedFlipMidTimeout);
-    if (this.#nestedFlipEndTimeout) clearTimeout(this.#nestedFlipEndTimeout);
-
-    this.isNestedToggleFlipping.set(true);
-
-    this.#nestedFlipMidTimeout = setTimeout(() => {
-      this.store.setNestedResources(value);
-      this.#nestedFlipMidTimeout = undefined;
-    }, NESTED_ANIMATION_DURATION_MS / 2);
-
-    this.#nestedFlipEndTimeout = setTimeout(() => {
-      this.isNestedToggleFlipping.set(false);
-      this.#nestedFlipEndTimeout = undefined;
-    }, NESTED_ANIMATION_DURATION_MS);
+    this.#nestedFlip.trigger(() => this.store.setNestedResources(value));
   }
 
   /**

@@ -1,5 +1,6 @@
 import { ForbiddenException, HttpException, NotFoundException } from '@nestjs/common';
 import type { LingoTrackerConfig } from '@simoncodes-ca/core';
+import { CollectionIndex } from '../cache/collection-index.service';
 import { ConfigService } from '../config/config.service';
 import { RouteCollectionPipe, routeCollectionRef } from './route-collection';
 
@@ -18,7 +19,11 @@ describe('RouteCollection', () => {
     },
   };
   const getConfig = jest.fn(() => config);
-  const pipe = new RouteCollectionPipe({ getConfig } as unknown as ConfigService);
+  const sink = jest.fn();
+  const pipe = new RouteCollectionPipe(
+    { getConfig } as unknown as ConfigService,
+    { sink } as unknown as CollectionIndex,
+  );
   const open = (name: string, method: string, writable?: boolean) =>
     pipe.transform(
       routeCollectionRef(writable === undefined ? {} : { writable }, { method, params: { collectionName: name } }),
@@ -38,6 +43,11 @@ describe('RouteCollection', () => {
   it('opens a read-only collection on GET and reads config once', () => {
     expect(open('vendor', 'GET').readOnly).toBe(true);
     expect(getConfig).toHaveBeenCalledTimes(1);
+  });
+
+  it('attaches the index sink only when opening a writable route collection', () => {
+    expect(open('a%b', 'POST').onMutation).toBe(sink);
+    expect(open('a%b', 'GET').onMutation).toBeUndefined();
   });
 
   it('refuses a write to a read-only collection with the core message', () => {

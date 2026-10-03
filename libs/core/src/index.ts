@@ -227,6 +227,7 @@ export {
   type ResourceTreeEntry,
   type ResourceTreeNode,
   readCollection,
+  reindexMutation,
   saveReporting,
   type SearchableResource,
   type SearchMode,

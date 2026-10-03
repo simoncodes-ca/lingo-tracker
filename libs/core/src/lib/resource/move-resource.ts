@@ -1,13 +1,14 @@
+import { resolveMutationSink } from './resource-mutation';
 import { validateKey } from '@simoncodes-ca/domain';
 import type { Collection } from '../config/open-collection';
 import type { RunOutcome } from '../run-outcome';
-import { withMoveOutcome } from './move-outcome';
-import { type MoveOptions, type MoveOptionsWithConfig, resolveMoveDestination } from './move-destination';
 import { describeFolderProblem } from './collection-folders';
 import { sweepKeys } from './collection-sweep';
 import { folderAddressExists } from './folder-address';
-import { planMove } from './move-plan';
-import { type Relocation, type RelocationResult, relocateEntries } from './relocate-entries';
+import { type MoveOptions, type MoveOptionsWithConfig, resolveMoveDestination } from './move-destination';
+import { withMoveOutcome } from './move-outcome';
+import { type MoveSelection, planMove } from './move-plan';
+import { type RelocationResult, relocateEntries } from './relocate-entries';
 
 export interface MoveResourceParams {
   /** Full source key, or a prefix pattern ending with `*` (`common.buttons.*`). */
@@ -52,18 +53,24 @@ export async function moveResource(
   const destinationCollection = resolveMoveDestination(collection, params.toCollection, options);
   const result: Omit<MoveResourceResult, 'outcome'> = { movedCount: 0, warnings: [], errors: [] };
 
-  let relocations: Relocation[];
+  let selection: Exclude<MoveSelection, { readonly kind: 'folder' }>;
   if (source.endsWith('*')) {
-    const expanded = expandPattern(collection, source, destination, result);
+    const expanded = expandPattern(collection, source, result);
     if (!expanded) return withMoveOutcome(result);
-    relocations = expanded;
+    selection = expanded;
   } else {
-    relocations = [...planMove({ kind: 'key', key: source }, destination).relocations];
+    selection = { kind: 'key', key: source };
   }
 
-  const relocation = relocateEntries(collection, destinationCollection, relocations, {
+  const plan = planMove({
+    source: collection,
+    destination: destinationCollection,
+    selection,
+    destinationPath: destination,
+  });
+  const relocation = relocateEntries(plan, {
     override,
-    onMutation: options.onMutation,
+    onMutation: resolveMutationSink(collection, options),
   });
   return withMoveOutcome(mergeRelocation(result, relocation));
 }
@@ -84,15 +91,14 @@ function collisionWarning(destinationKey: string): string {
 }
 
 /**
- * The relocations of a `prefix.*` pattern: every key the Collection Sweep finds under the prefix,
- * moved under `destinationKey`. `undefined` (with the reason in `result`) when nothing can move.
+ * Select every key the Collection Sweep finds under a `prefix.*` pattern.
+ * `undefined` (with the reason in `result`) when nothing can move.
  */
 function expandPattern(
   collection: Collection,
   pattern: string,
-  destinationKey: string,
   result: Omit<MoveResourceResult, 'outcome'>,
-): Relocation[] | undefined {
+): Extract<MoveSelection, { readonly kind: 'pattern' }> | undefined {
   const prefix = pattern.slice(0, -1); // remove '*'
   const cleanPrefix = prefix.endsWith('.') ? prefix.slice(0, -1) : prefix;
 
@@ -113,5 +119,5 @@ function expandPattern(
   const { keys, problems } = sweepKeys(collection, { startPath: cleanPrefix });
   result.errors.push(...problems.map((problem) => describeFolderProblem(problem)));
 
-  return [...planMove({ kind: 'pattern', prefix: cleanPrefix, keys }, destinationKey).relocations];
+  return { kind: 'pattern', prefix: cleanPrefix, keys };
 }

@@ -1,30 +1,35 @@
+import { CommonModule } from '@angular/common';
 import {
-  Component,
   ChangeDetectionStrategy,
-  input,
-  output,
-  signal,
+  Component,
   computed,
   inject,
+  input,
   type OnInit,
+  output,
+  signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
-import { PickerFolderNode } from './picker-folder-node/picker-folder-node';
-import { BrowserStore } from '../../../store/browser.store';
-import { type Feedback, injectFeedback } from '../../../feedback';
-import { TranslocoService } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { injectFeedback } from '../../../feedback';
+import { BrowserStore } from '../../../store/browser.store';
+import {
+  cancelFolderDraft,
+  dismissFolderDraftError,
+  initialFolderDraft,
+  settleFolderDraft,
+  startFolderDraft,
+} from '../../../store/folder-draft';
 import {
   collectAncestorPaths,
   collectVisibleFolderPaths,
   parentFolderPath,
   toggleExpandedPath,
 } from '../../../store/folder-tree.utils';
-import { startFolderDraft, cancelFolderDraft, type FolderDraft } from '../../../store/folder-draft';
+import { PickerFolderNode } from './picker-folder-node/picker-folder-node';
 
 /**
  * Folder picker component for the Translation Editor Dialog.
@@ -77,8 +82,9 @@ export class FolderPicker implements OnInit {
   readonly expandedPaths = signal<Set<string>>(new Set());
   readonly selectedPath = signal<string | null>(null);
   readonly focusedPath = signal<string | null>(null);
-  readonly isAddingFolder = signal(false);
-  readonly addFolderParentPath = signal<string | null>(null);
+  readonly #draft = signal(initialFolderDraft);
+  readonly isAddingFolder = computed(() => this.#draft().isAddingFolder);
+  readonly addFolderParentPath = computed(() => this.#draft().addFolderParentPath);
   readonly isCreatingFolder = signal(false);
 
   /**
@@ -88,9 +94,8 @@ export class FolderPicker implements OnInit {
    * the dialog. The store keeps the refusal for a create made from its own draft only, so the
    * picker holds this one itself.
    */
-  readonly #createFeedback = signal<Feedback | null>(null);
   readonly createError = computed(() => {
-    const feedback = this.#createFeedback();
+    const feedback = this.#draft().folderCreateError;
     return feedback ? this.#feedback.text(feedback) : null;
   });
 
@@ -146,24 +151,12 @@ export class FolderPicker implements OnInit {
     this.focusedPath.set(null);
   }
 
-  private setDraft(draft: FolderDraft): void {
-    this.isAddingFolder.set(draft.isAddingFolder);
-    this.addFolderParentPath.set(draft.addFolderParentPath);
-  }
-
-  /** Identifies the current draft; a start or a cancel replaces it, so a late response can tell. */
-  #draftId = 0;
-
   onCreateFirstFolder(): void {
-    this.#draftId++;
-    this.#createFeedback.set(null);
-    this.setDraft(startFolderDraft(''));
+    this.#draft.update((draft) => startFolderDraft(draft, ''));
   }
 
   onAddFolder(parentPath: string): void {
-    this.#draftId++;
-    this.#createFeedback.set(null);
-    this.setDraft(startFolderDraft(parentPath));
+    this.#draft.update((draft) => startFolderDraft(draft, parentPath));
     // Auto-expand the parent folder to show the inline input
     this.expandedPaths.update((expanded) => new Set(expanded).add(parentPath));
   }
@@ -175,31 +168,28 @@ export class FolderPicker implements OnInit {
     }
 
     this.isCreatingFolder.set(true);
-    const draftId = this.#draftId;
+    const draftId = this.#draft().folderDraftId;
 
     this.#store.createFolder(folderName, parentPath || null).subscribe((outcome) => {
       this.isCreatingFolder.set(false);
-      const isCurrentDraft = draftId === this.#draftId;
-      // A refusal keeps the draft open so the name can be corrected under its input.
-      if (isCurrentDraft && outcome.kind !== 'refused') this.setDraft(cancelFolderDraft());
+      this.#draft.update((draft) => settleFolderDraft(draft, draftId, outcome));
+      // The picker has no session reset, so close its draft to discard the previous collection's parent.
+      if (outcome.kind === 'stale-session' && draftId === this.#draft().folderDraftId) this.onFolderNameCancelled();
       if (outcome.kind === 'created') {
         this.folderCreated.emit(outcome.folder);
         this.selectedPath.set(outcome.folder.fullPath);
         if (parentPath) this.expandedPaths.update((expanded) => new Set(expanded).add(parentPath));
       }
-      if (isCurrentDraft) this.#createFeedback.set(outcome.feedback?.placement === 'inline' ? outcome.feedback : null);
       this.#feedback.toast(outcome.feedback);
     });
   }
 
   onFolderNameEdited(): void {
-    this.#createFeedback.set(null);
+    this.#draft.update(dismissFolderDraftError);
   }
 
   onFolderNameCancelled(): void {
-    this.#draftId++;
-    this.#createFeedback.set(null);
-    this.setDraft(cancelFolderDraft());
+    this.#draft.update(cancelFolderDraft);
   }
 
   onExpandToggle(folderPath: string): void {

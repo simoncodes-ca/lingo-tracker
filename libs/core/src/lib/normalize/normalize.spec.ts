@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { normalize } from './normalize';
-import { calculateChecksum } from '../resource/checksum';
-import { ReadOnlyCollectionError } from '../errors/lingo-tracker-error';
-import { readCollection } from '../resource/read-collection';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { seedResources, testCollection, useTempDir, writeFolderFiles } from '../../testing/temp-dir.spec-helpers';
+import { ReadOnlyCollectionError } from '../errors/lingo-tracker-error';
+import { calculateChecksum } from '../resource/checksum';
+import { readCollection } from '../resource/read-collection';
+import { normalize } from './normalize';
 
 const md5 = calculateChecksum;
 
@@ -237,8 +237,20 @@ describe('normalize', () => {
   });
 
   it('returns zero counts for a missing translations folder', async () => {
-    const result = await normalize(testCollection(join(dir(), 'missing')));
-    expect(result).toMatchObject({ entriesProcessed: 0, filesCreated: 0, foldersRemoved: 0 });
+    for (const dryRun of [false, true]) {
+      const result = await normalize(testCollection(join(dir(), 'missing')), { dryRun });
+      expect(result).toEqual({
+        entriesProcessed: 0,
+        localesAdded: 0,
+        valuesConverted: 0,
+        tagsNormalized: 0,
+        filesCreated: 0,
+        filesUpdated: 0,
+        foldersRemoved: 0,
+        dryRun,
+        problems: [],
+      });
+    }
   });
 
   it('skips a folder with invalid JSON, returns it as a problem and leaves it untouched', async () => {

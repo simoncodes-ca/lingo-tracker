@@ -834,6 +834,9 @@ lingo-tracker normalize [options]
 - `--all` - Normalize all collections in the project
 - `--dry-run` - Preview changes without applying them (reports what would be changed)
 - `--json` - Output results as JSON (useful for scripts and automation)
+- `--yes` - Skip the confirmation prompt (useful for scripts)
+
+In interactive mode, normalizing all collections asks for confirmation unless `--yes` is given. Declining cancels with exit code 0.
 
 **What Normalization Does:**
 
@@ -2043,7 +2046,7 @@ All commands read from `.lingo-tracker.json` in the project root. This file is c
 All commands support non-interactive mode for use in CI/CD pipelines. To ensure non-interactive behavior:
 
 1. Provide all required options via command-line flags
-2. Use the `--yes` flag for commands that require confirmation (like `delete-resource`)
+2. Use the `--yes` flag for commands that require confirmation (like `delete-resource` and `normalize --all`)
 3. The CLI auto-detects TTY and will throw an error if required options are missing in non-interactive environments
 
 **Example CI/CD workflow:**

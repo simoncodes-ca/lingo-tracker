@@ -1,11 +1,17 @@
-import { InvalidCollectionFolderError } from '../errors/lingo-tracker-error';
-import { resolve } from 'node:path';
 import { validateKey } from '@simoncodes-ca/domain';
 import type { Collection } from '../config/open-collection';
+import { InvalidCollectionFolderError } from '../errors/lingo-tracker-error';
+import { openFolders } from './folder-batch';
 import type { ResourceTreeEntry } from './load-resource-tree';
-import { resolveResourcePaths } from './resource-file-paths';
-import { openResourceFolder, type ResourceFolder, type ResourceFolderEntry } from './resource-folder';
-import { reindexMutation, removeMutation, type MutationSinkOptions, upsertMutation } from './resource-mutation';
+import type { MovePlan } from './move-plan';
+import type { ResourceFolder, ResourceFolderEntry } from './resource-folder';
+import {
+  resolveMutationSink,
+  type MutationSinkOptions,
+  reindexMutation,
+  removeMutation,
+  upsertMutation,
+} from './resource-mutation';
 
 /**
  * Entry Relocation — the one way entries move between keys, within a collection or into another.
@@ -75,35 +81,23 @@ interface Planned {
  * Moves entries from `source` to `destination` (the same collection, or another) by the rules above.
  * Never throws for one relocation; failures are reported in the result.
  */
-export function relocateEntries(
-  source: Collection,
-  destination: Collection,
-  relocations: readonly Relocation[],
-  options: RelocateEntriesOptions = {},
-): RelocationResult {
+export function relocateEntries(movePlan: MovePlan, options: RelocateEntriesOptions = {}): RelocationResult {
   const override = options.override ?? false;
-  const crossCollection = resolve(source.translationsFolder) !== resolve(destination.translationsFolder);
+  const { source, destination, relocations, sameCollection } = movePlan;
   const errors: string[] = [];
 
-  if (crossCollection && source.baseLocale !== destination.baseLocale) {
+  if (!sameCollection && source.baseLocale !== destination.baseLocale) {
     errors.push(
       `Cannot move resources from collection "${source.name}" (base locale "${source.baseLocale}") to "${destination.name}" (base locale "${destination.baseLocale}")`,
     );
     return { moved: [], collisions: [], errors };
   }
 
-  const folders = new Map<string, ResourceFolder>();
+  const sourceFolders = openFolders(source);
+  const destinationFolders = sameCollection ? sourceFolders : openFolders(destination);
   const slot = (collection: Collection, key: string): Slot => {
-    const paths = resolveResourcePaths({ key, translationsFolder: collection.translationsFolder });
-    let folder = folders.get(paths.folderPath);
-    if (!folder) {
-      folder = openResourceFolder(paths.folderPath, {
-        baseLocale: collection.baseLocale,
-        translationsFolder: collection.translationsFolder,
-      });
-      folders.set(paths.folderPath, folder);
-    }
-    return { folder, entryKey: paths.entryKey, id: `${paths.folderPath}\u0000${paths.entryKey}` };
+    const { folder, entryKey, folderPath } = (collection === source ? sourceFolders : destinationFolders).entryAt(key);
+    return { folder, entryKey, id: `${folderPath}\u0000${entryKey}` };
   };
 
   // 1. Read every entry to move.
@@ -151,7 +145,7 @@ export function relocateEntries(
   for (const { from } of pending) {
     from.folder.remove(from.entryKey);
   }
-  const fit = crossCollection ? { targetLocales: destination.targetLocales } : undefined;
+  const fit = sameCollection ? undefined : { targetLocales: destination.targetLocales };
   for (const { to, stored } of pending) {
     to.folder.setEntry(to.entryKey, stored.entry, stored.meta ?? {}, fit);
   }
@@ -164,8 +158,8 @@ export function relocateEntries(
   } catch (error) {
     errors.push(`Failed to write the move: ${error instanceof Error ? error.message : String(error)}`);
     // Some folders may be written: the index reads both collections again.
-    options.onMutation?.(reindexMutation(destination.translationsFolder));
-    if (crossCollection) options.onMutation?.(reindexMutation(source.translationsFolder));
+    resolveMutationSink(source, options)?.(reindexMutation(destination.translationsFolder));
+    if (!sameCollection) resolveMutationSink(source, options)?.(reindexMutation(source.translationsFolder));
     return { moved: [], collisions, errors };
   }
 
@@ -175,8 +169,9 @@ export function relocateEntries(
     if (entry) moved.push({ from: relocation.from, to: relocation.to, entry });
   }
 
-  for (const { from } of moved) options.onMutation?.(removeMutation(source.translationsFolder, from));
-  for (const { to, entry } of moved) options.onMutation?.(upsertMutation(destination.translationsFolder, to, entry));
+  for (const { from } of moved) resolveMutationSink(source, options)?.(removeMutation(source.translationsFolder, from));
+  for (const { to, entry } of moved)
+    resolveMutationSink(source, options)?.(upsertMutation(destination.translationsFolder, to, entry));
   return { moved, collisions, errors };
 }
 

@@ -51,6 +51,7 @@ describe('domain public surface', () => {
       'importStrategyPolicy',
       'importableLocales',
       'inheritCollectionSettings',
+      'isDescendantFolderPath',
       'isEmptyValue',
       'isIcuLocaleSupported',
       'isImportStrategy',

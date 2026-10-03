@@ -5,7 +5,7 @@ import { ConsoleFormatter } from '../utils';
 export interface EditCollectionOptions {
   addTag?: string[];
   removeTag?: string[];
-  setTags?: string;
+  setTags?: string[];
 }
 
 const tagEditWording: Record<CollectionTagEditProblem, string> = {
@@ -24,7 +24,7 @@ const run = defineCommand<EditCollectionOptions & { name: string }>()({
       currentTags = editCollectionTags(collection, {
         add: answers.addTag,
         remove: answers.removeTag,
-        set: answers.setTags?.split(','),
+        set: answers.setTags,
       });
     } catch (error) {
       if (error instanceof InvalidCollectionError && error.problem !== undefined) {

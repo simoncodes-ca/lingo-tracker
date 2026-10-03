@@ -1,3 +1,4 @@
+import { resolveMutationSink } from './resource-mutation';
 import type { Collection } from '../config/open-collection';
 import type { TerminologyFinding, TerminologyFindings } from '../config/project-terms';
 import { ResourceAlreadyExistsError } from '../errors/lingo-tracker-error';
@@ -64,7 +65,12 @@ export async function addResources(
   const findings: TerminologyFinding[] = [];
   const problems = new Set<string>();
   for (const candidate of prepared) {
-    const result = writePreparedResourceAdd(collection, candidate, onExisting, options.onMutation);
+    const result = writePreparedResourceAdd(
+      collection,
+      candidate,
+      onExisting,
+      resolveMutationSink(collection, options),
+    );
     if (result.created) entriesCreated++;
     for (const locale of result.skippedLocales ?? []) skippedLocales.add(locale);
     findings.push(...result.terminology.findings);

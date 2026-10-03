@@ -3,7 +3,7 @@ import * as path from 'path';
 import { buildGlossary, type Collection, describeFolderProblem, GlossaryExtractorError } from '@simoncodes-ca/core';
 import { type CommandResult, defineCommand } from '../runner/command-runner';
 import { hasPipedStdin } from '../runner/terminal';
-import { ConsoleFormatter, parseCommaSeparatedList, parseNameSelection } from '../utils';
+import { ConsoleFormatter, parseNameSelection } from '../utils';
 
 export interface GlossaryCommandOptions {
   /** Inline text snippet to extract from. */
@@ -17,7 +17,7 @@ export interface GlossaryCommandOptions {
   /** Limit matching to a single collection (default: all collections). */
   collection?: string;
   /** Comma-separated locales to include (default: opened collections' target locales). */
-  locales?: string;
+  locales?: string[];
   /** Include new/stale entries (default: only translated + verified). */
   includeAll?: boolean;
   /** Extraction strategy (default: ngram). */
@@ -68,7 +68,7 @@ function buildWithFlagWording(collections: Collection[], block: string, options:
   try {
     return buildGlossary(collections, block, {
       extractor: options.extractor,
-      locales: parseCommaSeparatedList(options.locales),
+      locales: options.locales?.length ? options.locales : undefined,
       includeAll: options.includeAll,
     });
   } catch (error) {

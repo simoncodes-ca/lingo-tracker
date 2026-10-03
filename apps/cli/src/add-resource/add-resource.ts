@@ -1,9 +1,8 @@
 import type { AddResourceParams, AddResourceResult, Collection } from '@simoncodes-ca/core';
 import { addResource, ResourceAlreadyExistsError } from '@simoncodes-ca/core';
 import { TRANSLATION_STATUSES } from '@simoncodes-ca/domain';
-import type prompts from 'prompts';
-import { type Ask, CommandCancelledError, defineCommand } from '../runner/command-runner';
-import { ConsoleFormatter, parseCommaSeparatedList, printTerminologyFindings } from '../utils';
+import { type Ask, defineCommand } from '../runner/command-runner';
+import { ConsoleFormatter, confirmOrCancel, missingTextQuestions, printTerminologyFindings } from '../utils';
 
 interface TranslationInput {
   locale: string;
@@ -16,46 +15,25 @@ export interface AddResourceOptions {
   key?: string;
   value?: string;
   comment?: string;
-  tags?: string;
+  tags?: string[];
   targetFolder?: string;
   override?: boolean;
   /** Raw `--translations` JSON: an array of `{ locale, value, status }`. Parsed in `run`. */
   translations?: string;
 }
 
-const nonEmpty = (val: string) => (val && val.trim().length > 0 ? true : 'Required');
-
 export const addResourceCommand = defineCommand<AddResourceOptions>()({
   name: 'Add resource',
   collection: 'writable',
-  prompts: (options) => {
-    const questions: prompts.PromptObject[] = [];
-    if (!options.key) {
-      questions.push({
-        type: 'text',
-        name: 'key',
-        message: 'Resource key (dot-delimited, e.g., apps.common.buttons.ok)',
-        validate: nonEmpty,
-      });
-    }
-    if (!options.value) {
-      questions.push({ type: 'text', name: 'value', message: 'Base value (source text)', validate: nonEmpty });
-    }
-    if (!options.comment) {
-      questions.push({ type: 'text', name: 'comment', message: 'Comment (optional, press enter to skip)' });
-    }
-    if (!options.tags) {
-      questions.push({ type: 'text', name: 'tags', message: 'Tags (optional, comma-separated)' });
-    }
-    if (!options.targetFolder) {
-      questions.push({
-        type: 'text',
-        name: 'targetFolder',
-        message: 'Target folder (optional, dot-delimited override)',
-      });
-    }
-    return questions;
-  },
+  commaListAnswers: ['tags'],
+  prompts: (options) =>
+    missingTextQuestions(options, [
+      { name: 'key', message: 'Resource key (dot-delimited, e.g., apps.common.buttons.ok)', required: true },
+      { name: 'value', message: 'Base value (source text)', required: true },
+      { name: 'comment', message: 'Comment (optional, press enter to skip)' },
+      { name: 'tags', message: 'Tags (optional, comma-separated)' },
+      { name: 'targetFolder', message: 'Target folder (optional, dot-delimited override)' },
+    ]),
   required: ['key', 'value'],
   run: async ({ collection, answers, interactive, ask }) => {
     const { key, value } = answers;
@@ -67,7 +45,7 @@ export const addResourceCommand = defineCommand<AddResourceOptions>()({
         ? await promptForTranslations(collection, value, ask)
         : undefined;
 
-    const tagsArray = parseCommaSeparatedList(answers.tags) ?? [];
+    const tagsArray = answers.tags ?? [];
 
     // Locales without a supplied translation are seeded by core (auto-translated or copied as `new`).
     const params = {
@@ -88,13 +66,11 @@ export const addResourceCommand = defineCommand<AddResourceOptions>()({
         ConsoleFormatter.error(error.message, ['Use --override to replace it, or edit-resource to change it.']);
         return { exitCode: 1 };
       }
-      const confirm = await ask({
-        type: 'confirm',
-        name: 'value',
+      await confirmOrCancel({
+        ask,
+        interactive,
         message: `Resource "${error.key}" already exists. Override?`,
-        initial: false,
       });
-      if (confirm.value !== true) throw new CommandCancelledError();
       result = await addResource(collection, params, { onExisting: 'replace' });
     }
 

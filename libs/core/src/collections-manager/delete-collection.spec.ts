@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { LingoTrackerConfig } from '../config/lingo-tracker-config';
 import { CONFIG_FILENAME } from '../constants';
@@ -70,6 +70,27 @@ describe('deleteCollection', () => {
     const mutations: ResourceMutation[] = [];
     deleteCollection(open(), { onMutation: (mutation) => mutations.push(mutation) });
     expect(mutations).toEqual([{ kind: 'reindex', translationsFolder: join(tempDir(), 'translations/main') }]);
+  });
+
+  it('reports the resolved collection path through a symlinked project root', () => {
+    const actualProject = join(tempDir(), 'actual');
+    const linkedProject = join(tempDir(), 'linked');
+    mkdirSync(join(actualProject, 'translations/main'), { recursive: true });
+    symlinkSync(actualProject, linkedProject, 'dir');
+    writeFileSync(join(actualProject, CONFIG_FILENAME), JSON.stringify(config()));
+    const mutations: ResourceMutation[] = [];
+    const collection = openCollection(loadConfig({ cwd: linkedProject }), 'main', {
+      cwd: linkedProject,
+      forDeletion: true,
+      onMutation: (mutation) => mutations.push(mutation),
+    });
+    const expectedFolder = resolve(linkedProject, 'translations/main');
+    expect(realpathSync(expectedFolder)).not.toBe(expectedFolder);
+
+    deleteCollection(collection);
+
+    expect(mutations).toEqual([{ kind: 'reindex', translationsFolder: expectedFolder }]);
+    expect(collection.translationsFolder).toBe(expectedFolder);
   });
 
   it('deletes a registration without a translations folder without reindexing', () => {

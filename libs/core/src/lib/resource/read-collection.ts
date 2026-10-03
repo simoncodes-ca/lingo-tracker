@@ -1,6 +1,8 @@
-import { CoreOperationError } from '../errors/lingo-tracker-error';
+import { join } from 'node:path';
 import { effectiveTags } from '@simoncodes-ca/domain';
+import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
 import type { Collection } from '../config/open-collection';
+import { CoreOperationError } from '../errors/lingo-tracker-error';
 import {
   type CollectionFolderProblem,
   type CollectionFolderVisit,
@@ -144,7 +146,9 @@ function readFolder(
   for (const entryKey of folder.keys()) {
     const stored = folder.get(entryKey);
     if (typeof stored?.entry !== 'object' || stored.entry === null) {
-      throw new CoreOperationError(`Resource entry "${entryKey}" in ${folder.entriesPath} is not an object`);
+      throw new CoreOperationError(
+        `Resource entry "${entryKey}" in ${join(folder.folderPath, RESOURCE_ENTRIES_FILENAME)} is not an object`,
+      );
     }
     const entry = folder.treeEntry(entryKey);
     if (!entry) continue;

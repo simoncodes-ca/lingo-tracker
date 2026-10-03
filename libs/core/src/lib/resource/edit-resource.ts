@@ -20,9 +20,8 @@ import type { ResourceTreeEntry } from './load-resource-tree';
 import { assertCollectionLocales, seedLocales, withTranslatorProblems } from './locale-seeding';
 import { planMove } from './move-plan';
 import { relocateEntries } from './relocate-entries';
-import { resolveResourcePaths, validateAndResolvePaths } from './resource-file-paths';
-import { openResourceFolder } from './resource-folder';
-import { type MutationSink, type MutationSinkOptions, saveReporting, upsertMutation } from './resource-mutation';
+import { openResourceEntry } from './resource-entry';
+import { resolveMutationSink, type MutationSink, type MutationSinkOptions, upsertMutation } from './resource-mutation';
 import { assertTranslationStatus } from './translation-status-input';
 
 /** What to change on an entry. `undefined` leaves a field alone. */
@@ -96,11 +95,11 @@ export async function editResource(
   options: EditResourceOptions = {},
 ): Promise<EditResourceResult> {
   const { baseLocale, translationsFolder } = collection;
-  const paths = validateAndResolvePaths({ key, translationsFolder });
-  const folder = openResourceFolder(paths.folderPath, { baseLocale, translationsFolder });
-  const current = folder.get(paths.entryKey);
+  const resource = openResourceEntry(collection, key);
+  const { folder } = resource;
+  const current = resource.get();
   if (!current?.meta) {
-    throw new ResourceNotFoundError(paths.resolvedKey);
+    throw new ResourceNotFoundError(resource.resolvedKey);
   }
 
   const requestedTranslations = Object.entries(changes.translations ?? {});
@@ -113,9 +112,10 @@ export async function editResource(
     translations.map(([locale]) => locale),
   );
 
-  const destination = changes.moveTo === undefined ? undefined : resolveDestination(collection, paths, changes.moveTo);
+  const destination =
+    changes.moveTo === undefined ? undefined : resolveDestination(collection, resource, changes.moveTo);
 
-  const entryKey = paths.entryKey;
+  const entryKey = resource.entryKey;
   // Live view of the stored entry: it reflects every change made through `folder`.
   const { entry } = current;
   const previousBase = entry.source;
@@ -150,14 +150,12 @@ export async function editResource(
   }
 
   if (!hasChanges && !destination) {
-    return { resolvedKey: paths.resolvedKey, updated: false, message: 'No changes detected' };
+    return { resolvedKey: resource.resolvedKey, updated: false, message: 'No changes detected' };
   }
 
   // Two-phase write: the edit is saved before auto-translation, so it is kept if the provider fails.
   if (hasChanges) {
-    saveReporting(folder, translationsFolder, options.onMutation, () => [
-      upsertMutation(translationsFolder, paths.resolvedKey, folder.treeEntry(entryKey)),
-    ]);
+    resource.save(resolveMutationSink(collection, options));
   }
 
   let updatedFolder = folder;
@@ -188,13 +186,13 @@ export async function editResource(
       const snapshot = snapshots.get(translation.locale);
       return snapshot ? [{ entryKey, ...translation, snapshot }] : [];
     });
-    const writeBack = writeBackTranslations(collection, paths.folderPath, pending, {
-      onMutation: options.onMutation,
-      saved: (folder) => [upsertMutation(translationsFolder, paths.resolvedKey, folder.treeEntry(entryKey))],
+    const writeBack = writeBackTranslations(collection, folder.folderPath, pending, {
+      onMutation: resolveMutationSink(collection, options),
+      saved: (folder) => [upsertMutation(translationsFolder, resource.resolvedKey, folder.treeEntry(entryKey))],
     });
     updatedFolder = writeBack.folder;
     if (!updatedFolder.has(entryKey)) {
-      throw new ResourceNotFoundError(paths.resolvedKey);
+      throw new ResourceNotFoundError(resource.resolvedKey);
     }
     if (seeding.skippedLocales !== undefined) {
       const skipped = [...new Set([...seeding.skippedLocales, ...writeBack.skipped.map(({ locale }) => locale)])];
@@ -203,8 +201,10 @@ export async function editResource(
     translatorProblems = seeding.problems;
   }
 
-  const moved = destination ? moveEntry(collection, paths.resolvedKey, destination, options.onMutation) : undefined;
-  const resolvedKey = moved?.resolvedKey ?? paths.resolvedKey;
+  const moved = destination
+    ? moveEntry(collection, resource.resolvedKey, destination, resolveMutationSink(collection, options))
+    : undefined;
+  const resolvedKey = moved?.resolvedKey ?? resource.resolvedKey;
   const updatedEntry = moved?.entry ?? updatedFolder.treeEntry(entryKey);
   if (!updatedEntry) {
     throw new ResourceNotFoundError(resolvedKey);
@@ -239,18 +239,17 @@ function resolveDestination(
   } catch (error) {
     throw new InvalidResourceKeyError(source.entryKey, error instanceof Error ? error.message : String(error));
   }
-  const [relocation] = planMove({ kind: 'entry', key: source.resolvedKey }, moveTo).relocations;
+  const [relocation] = planMove({
+    source: collection,
+    destination: collection,
+    selection: { kind: 'entry', key: source.resolvedKey },
+    destinationPath: moveTo,
+  }).relocations;
   if (!relocation || relocation.to === source.resolvedKey) {
     return undefined;
   }
 
-  const paths = resolveResourcePaths({ key: relocation.to, translationsFolder: collection.translationsFolder });
-  if (
-    openResourceFolder(paths.folderPath, {
-      baseLocale: collection.baseLocale,
-      translationsFolder: collection.translationsFolder,
-    }).has(paths.entryKey)
-  ) {
+  if (openResourceEntry(collection, relocation.to).exists()) {
     throw new ResourceAlreadyExistsError(relocation.to);
   }
   return relocation.to;
@@ -269,7 +268,13 @@ function moveEntry(
   destinationKey: string,
   onMutation?: MutationSink,
 ): { resolvedKey: string; entry: ResourceTreeEntry } {
-  const relocation = relocateEntries(collection, collection, [{ from: sourceKey, to: destinationKey }], { onMutation });
+  const plan = planMove({
+    source: collection,
+    destination: collection,
+    selection: { kind: 'key', key: sourceKey },
+    destinationPath: destinationKey,
+  });
+  const relocation = relocateEntries(plan, { onMutation });
   if (relocation.collisions.length > 0) {
     throw new ResourceAlreadyExistsError(destinationKey);
   }

@@ -9,6 +9,10 @@ import {
   withAddedLocale,
   withFolder,
   withoutLocale,
+  withoutProtectedTerm,
+  withoutTag,
+  withProtectedTerm,
+  withTag,
   withUserReadOnly,
 } from './collection-draft';
 
@@ -124,6 +128,28 @@ describe('Collection Draft', () => {
       },
     });
     expect(withFolder(draft, './node_modules/pkg').readOnly).toBe(false);
+  });
+
+  it('adds a normalized tag once and removes every matching tag', () => {
+    const draft = toCollectionDraft({ mode: 'create' });
+    const tagged = withTag(draft, ' Design System ');
+    expect(tagged.tags).toEqual(['design-system']);
+    expect(withTag(tagged, 'design-system')).toBe(tagged);
+    expect(withTag(tagged, '  ')).toBe(tagged);
+    expect(withoutTag(tagged, 'design-system').tags).toEqual([]);
+  });
+
+  it('adds protected terms trimmed and deduplicated case-sensitively, and keeps stored terms verbatim', () => {
+    const draft = toCollectionDraft({
+      mode: 'edit',
+      config: { translationsFolder: './i18n', protectedTerms: ['iPhone', ' a'] },
+    });
+    const added = withProtectedTerm(withProtectedTerm(draft, '  C++ '), 'C++');
+    expect(added.protectedTerms).toEqual(['iPhone', ' a', 'C++']);
+    expect(withProtectedTerm(added, 'iPhone')).toBe(added);
+    expect(withProtectedTerm(added, ' ')).toBe(added);
+    expect(withProtectedTerm(added, 'iphone').protectedTerms).toEqual(['iPhone', ' a', 'C++', 'iphone']);
+    expect(withoutProtectedTerm(added, 'iPhone').protectedTerms).toEqual([' a', 'C++']);
   });
 
   it('builds the exact empty create payload without a base locale or terms', () => {

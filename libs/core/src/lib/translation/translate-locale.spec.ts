@@ -252,6 +252,55 @@ describe('translateLocale', () => {
       expect(read(RESOURCE_ENTRIES_FILENAME, 'second').cancel.fr).toBe('[fr] Cancel');
     });
 
+    it('counts each resource once when a later folder in the same batch fails', async () => {
+      const target = withBatchSize(5);
+      seedResources(target, {
+        'first.ok': { source: 'OK' },
+        'second.cancel': { source: 'Cancel' },
+        'second.close': { source: 'Close' },
+        'second.items': { source: '{count, plural, one {# item} other {# items}}' },
+      });
+      const actual = await vi.importActual<typeof import('../file-io/json-file-operations')>(
+        '../file-io/json-file-operations',
+      );
+      const writer = vi.mocked(writeJsonFile);
+      writer.mockImplementation((options) => {
+        if (options.filePath.endsWith(join('second', RESOURCE_ENTRIES_FILENAME))) {
+          throw new Error('second write failed');
+        }
+        actual.writeJsonFile(options);
+      });
+      const progress: TranslateLocaleProgress[] = [];
+      try {
+        const result = await translateLocale(target, {
+          targetLocale: 'fr',
+          provider: new InMemoryTranslationProvider(),
+          onProgress: (event) => progress.push(event),
+        });
+        expect(result).toMatchObject({ totalResources: 4, translatedCount: 1, failedCount: 3, skippedCount: 0 });
+        expect(result.translatedCount + result.failedCount + result.skippedCount).toBe(result.totalResources);
+        expect(result.failures).toEqual([
+          { key: 'second.cancel', error: 'second write failed' },
+          { key: 'second.close', error: 'second write failed' },
+          { key: 'second.items', error: 'second write failed' },
+        ]);
+        expect(result.skippedKeys).toEqual([]);
+        expect(read(RESOURCE_ENTRIES_FILENAME, 'first').ok.fr).toBe('[fr] OK');
+        expect(progress).toEqual([
+          {
+            totalResources: 4,
+            translatedCount: 1,
+            failedCount: 3,
+            skippedCount: 0,
+            currentBatch: 1,
+            totalBatches: 1,
+          },
+        ]);
+      } finally {
+        writer.mockImplementation(actual.writeJsonFile);
+      }
+    });
+
     it('reports saved folders through onMutation before a later failure', async () => {
       seedResources(collection(), { 'first.ok': { source: 'OK' }, 'second.cancel': { source: 'Cancel' } });
       const reported: ResourceMutation[] = [];

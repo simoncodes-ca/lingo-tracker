@@ -1,74 +1,13 @@
-import type prompts from 'prompts';
-import { CONFIG_FILENAME, addCollection, DEFAULT_CONFIG } from '@simoncodes-ca/core';
+import { addCollection, CONFIG_FILENAME, DEFAULT_CONFIG } from '@simoncodes-ca/core';
 import { isUnderNodeModules } from '@simoncodes-ca/domain';
-import type { InitOptions } from '../types/init-options.js';
 import { type Ask, defineCommand } from '../runner/command-runner';
-import { ConsoleFormatter } from '../utils';
+import type { InitOptions } from '../types/init-options.js';
+import { ConsoleFormatter, collectionSetupQuestions } from '../utils';
 
 export const addCollectionCommand = defineCommand<InitOptions>()({
   name: 'Add collection',
   collection: 'none',
-  prompts: (options) => {
-    const questions: prompts.PromptObject[] = [];
-
-    if (!options.collectionName) {
-      questions.push({
-        type: 'text',
-        name: 'collectionName',
-        message: 'Collection name',
-        validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
-      });
-    }
-
-    if (!options.translationsFolder) {
-      questions.push({
-        type: 'text',
-        name: 'translationsFolder',
-        message: 'Path to translations folder',
-        validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
-      });
-    }
-
-    if (!options.exportFolder) {
-      questions.push({
-        type: 'text',
-        name: 'exportFolder',
-        message: 'Export folder',
-        initial: DEFAULT_CONFIG.exportFolder,
-      });
-    }
-
-    if (!options.importFolder) {
-      questions.push({
-        type: 'text',
-        name: 'importFolder',
-        message: 'Import folder',
-        initial: DEFAULT_CONFIG.importFolder,
-      });
-    }
-
-    if (!options.baseLocale) {
-      questions.push({
-        type: 'text',
-        name: 'baseLocale',
-        message: 'Base locale',
-        initial: DEFAULT_CONFIG.baseLocale,
-        validate: (val) => (val && val.trim().length > 0 ? true : 'Required'),
-      });
-    }
-
-    if (!options.locales) {
-      questions.push({
-        type: 'list',
-        name: 'locales',
-        message: 'Supported locales (comma-separated)',
-        initial: 'en,fr-ca,es,de',
-        separator: ',',
-      });
-    }
-
-    return questions;
-  },
+  prompts: (options) => collectionSetupQuestions(options),
   required: ['collectionName', 'translationsFolder'],
   // Core refuses a duplicate name (CollectionAlreadyExistsError) and defaults a folder under
   // node_modules to read-only when the flag is left unset.

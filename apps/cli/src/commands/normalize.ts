@@ -5,15 +5,16 @@ import {
   normalizeCollections,
   ReadOnlyCollectionError,
 } from '@simoncodes-ca/core';
-import { CommandCancelledError, defineCommand } from '../runner/command-runner';
+import { defineCommand } from '../runner/command-runner';
 import { exitForRunOutcome } from '../runner/run-outcome';
-import { ConsoleFormatter, parseNameSelection, selectionPrompt } from '../utils';
+import { ConsoleFormatter, confirmOrCancel, parseNameSelection, selectionPrompt } from '../utils';
 
 export interface NormalizeOptions {
   collection?: string;
   all?: boolean;
   dryRun?: boolean;
   json?: boolean;
+  yes?: boolean;
 }
 
 export const normalizeCommand = defineCommand<NormalizeOptions>()({
@@ -29,10 +30,14 @@ export const normalizeCommand = defineCommand<NormalizeOptions>()({
           : parseNameSelection(answers.collection, answers.collectionOrAll);
       // Normalize requires a name or an explicit all choice.
       if (!selection) throw new Error('Missing required option in non-interactive mode: --collection or --all');
-      if (selection.kind === 'all' && interactive) {
-        ConsoleFormatter.warning('This will normalize ALL collections in your project.');
-        const confirmed = await ask({ type: 'confirm', name: 'confirmed', message: 'Are you sure?', initial: false });
-        if (confirmed.confirmed !== true) throw new CommandCancelledError();
+      if (selection.kind === 'all') {
+        await confirmOrCancel({
+          ask,
+          interactive,
+          yes: answers.yes,
+          message: 'Are you sure?',
+          beforeAsk: () => ConsoleFormatter.warning('This will normalize ALL collections in your project.'),
+        });
       }
       return selection;
     },

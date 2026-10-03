@@ -1,3 +1,9 @@
+/** An explicitly empty list whose original input is needed for a deferred diagnostic. */
+export interface ExplicitEmptyList {
+  readonly kind: 'empty';
+  readonly input: string;
+}
+
 /**
  * Parses a comma-separated string into an array of trimmed, non-empty strings.
  * Returns undefined if input is undefined or empty.

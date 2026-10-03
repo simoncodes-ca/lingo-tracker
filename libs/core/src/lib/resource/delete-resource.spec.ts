@@ -1,8 +1,9 @@
 import * as fs from 'node:fs';
 import { resolve } from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Collection } from '../config/open-collection';
 import { deleteResource } from './delete-resource';
+import * as resourceEntry from './resource-entry';
 import type { ResourceMutation } from './resource-mutation';
 
 const collected: ResourceMutation[] = [];
@@ -33,6 +34,82 @@ describe('deleteResource', () => {
     vi.clearAllMocks();
     vi.mocked(fs.lstatSync).mockReturnValue({ isSymbolicLink: () => false } as fs.Stats);
     collected.length = 0;
+  });
+
+  describe('Resource Entry deletion diagnostics', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('requires an entry before removing and emits no mutation when it is missing', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockReturnValue('{}');
+      const result = deleteResource(collection, { keys: ['missing'] }, { onMutation });
+      expect(result.entriesDeleted).toBe(0);
+      expect(result.errors).toEqual([{ key: 'missing', error: 'Resource not found: missing' }]);
+      expect(collected).toEqual([]);
+    });
+
+    it('retains the missing folder diagnostic when opened for deletion', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      const result = deleteResource(collection, { keys: ['apps.ok'] }, { onMutation });
+      expect(result.entriesDeleted).toBe(0);
+      expect(result.errors).toEqual([{ key: 'apps.ok', error: 'Folder not found: apps' }]);
+      expect(collected).toEqual([]);
+    });
+
+    it('requires the entries file before reading malformed metadata for deletion', () => {
+      vi.mocked(fs.existsSync).mockImplementation((path) => !path.toString().endsWith('resource_entries.json'));
+      vi.mocked(fs.readFileSync).mockReturnValue('{ invalid');
+      const result = deleteResource(collection, { keys: ['ok'] }, { onMutation });
+      expect(result.entriesDeleted).toBe(0);
+      expect(result.errors).toEqual([{ key: 'ok', error: 'Resource not found: ok' }]);
+      expect(fs.readFileSync).not.toHaveBeenCalled();
+      expect(collected).toEqual([]);
+    });
+
+    it('retains the unreadable folder diagnostic for deletion', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockReturnValue('{ invalid');
+      const result = deleteResource(collection, { keys: ['apps.ok'] }, { onMutation });
+      expect(result.entriesDeleted).toBe(0);
+      expect(result.errors).toEqual([
+        { key: 'apps.ok', error: 'Failed to delete resource apps.ok: folder apps has unreadable resource files' },
+      ]);
+      expect(collected).toEqual([]);
+    });
+
+    it('wraps a failed remove and emits no mutation', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockReturnValue('{}');
+      const resource = resourceEntry.openResourceEntry(collection, 'ok');
+      vi.spyOn(resource.folder, 'remove').mockImplementation(() => {
+        throw new Error('update failed');
+      });
+      vi.spyOn(resourceEntry, 'openResourceEntry').mockReturnValue(resource);
+      const result = deleteResource(collection, { keys: ['ok'] }, { onMutation });
+      expect(result.entriesDeleted).toBe(0);
+      expect(result.errors).toEqual([{ key: 'ok', error: 'Failed to delete resource ok: could not update folder .' }]);
+      expect(collected).toEqual([]);
+    });
+
+    it('reports reindex and preserves the delete write diagnostic on a failed save', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockImplementation((path) =>
+        path.toString().endsWith('resource_entries.json') ? JSON.stringify({ ok: { source: 'Bonjour' } }) : '{}',
+      );
+      const resource = resourceEntry.openResourceEntry(collection, 'apps.ok');
+      vi.spyOn(resource.folder, 'save').mockImplementation(() => {
+        throw new Error('write failed');
+      });
+      vi.spyOn(resourceEntry, 'openResourceEntry').mockReturnValue(resource);
+      const result = deleteResource(collection, { keys: ['apps.ok'] }, { onMutation });
+      expect(result.entriesDeleted).toBe(0);
+      expect(result.errors).toEqual([
+        { key: 'apps.ok', error: 'Failed to delete resource apps.ok: could not write folder apps' },
+      ]);
+      expect(collected).toEqual([{ kind: 'reindex', translationsFolder: resolve('translations') }]);
+    });
   });
 
   it('delivers removes around a failed key save', () => {

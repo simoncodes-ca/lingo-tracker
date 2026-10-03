@@ -1,3 +1,4 @@
+import { isDescendantFolderPath } from '@simoncodes-ca/domain';
 import type { DragData } from '../types/drag-data';
 import { parentFolderPath } from './folder-tree.utils';
 
@@ -18,7 +19,7 @@ export function folderDrop(
     const source = drag.path;
     if (!source) return { canLand: false, noOp: null };
     if (source === targetPath) return { canLand: false, noOp: 'same-folder' };
-    if (targetPath.startsWith(`${source}.`)) return { canLand: false, noOp: null };
+    if (isDescendantFolderPath(source, targetPath)) return { canLand: false, noOp: null };
     if ((parentFolderPath(source) ?? '') === targetPath)
       return { canLand: targetPath !== '', noOp: 'already-at-location' };
     return { canLand: true, noOp: null };

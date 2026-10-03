@@ -1,4 +1,5 @@
-import { resolveResourcePaths } from '../resource/resource-file-paths';
+import type { Collection } from '../config/open-collection';
+import { groupByFolder } from '../resource/folder-batch';
 import { openResourceFolder } from '../resource/resource-folder';
 import type { ImportedResource } from './types';
 
@@ -9,37 +10,18 @@ import type { ImportedResource } from './types';
  * for ICU auto-fixing during import operations.
  *
  * @param resources - Array of imported resources to load base values for
- * @param translationsFolder - Absolute path of the translations folder
+ * @param collection - The opened collection
  * @returns Map of resource keys to their base locale values
  */
-export function loadBaseLocaleValues(
-  resources: ImportedResource[],
-  translationsFolder: string,
-  baseLocale: string,
-): Map<string, string> {
+export function loadBaseLocaleValues(resources: ImportedResource[], collection: Collection): Map<string, string> {
   const baseValues = new Map<string, string>();
 
-  // Group by folder to minimize file reads
-  const folderToKeys = new Map<string, Array<{ key: string; entryKey: string }>>();
-
-  for (const resource of resources) {
-    const { folderPath, entryKey } = resolveResourcePaths({ key: resource.key, translationsFolder });
-
-    let folderKeys = folderToKeys.get(folderPath);
-    if (!folderKeys) {
-      folderKeys = [];
-      folderToKeys.set(folderPath, folderKeys);
-    }
-
-    folderKeys.push({ key: resource.key, entryKey });
-  }
-
-  // Load base values from each folder
-  for (const [folderPath, keys] of folderToKeys.entries()) {
+  // This read phase is separate from the later import write phase.
+  for (const { folderPath, members } of groupByFolder(collection, resources, (resource) => resource.key)) {
     try {
-      const folder = openResourceFolder(folderPath, { baseLocale, translationsFolder });
+      const folder = openResourceFolder(folderPath, collection);
 
-      for (const { key, entryKey } of keys) {
+      for (const { key, entryKey } of members) {
         const source = folder.get(entryKey)?.entry.source;
         if (source) {
           baseValues.set(key, source);

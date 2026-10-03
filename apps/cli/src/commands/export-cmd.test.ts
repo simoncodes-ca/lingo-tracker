@@ -180,7 +180,7 @@ describe('exportCommand', () => {
 
   describe('non-interactive mode', () => {
     it.each(['', ' , '])('rejects an empty --status value (%j)', async (status) => {
-      await exportCommand({ format: 'json', status });
+      await exportCommand({ format: 'json', status: { kind: 'empty', input: status } });
 
       expect(console.error).toHaveBeenCalledWith(
         `❌ Invalid --status "${status}". Valid statuses: new, translated, stale, verified`,
@@ -190,7 +190,7 @@ describe('exportCommand', () => {
     });
 
     it('keeps the empty-status diagnostic before an invalid base property and prints no advisory', async () => {
-      await exportCommand({ format: 'json', status: '', basePropertyName: 'status' });
+      await exportCommand({ format: 'json', status: [], basePropertyName: 'status' });
       expect(console.error).toHaveBeenCalledWith(
         '❌ Invalid --status "". Valid statuses: new, translated, stale, verified',
       );
@@ -207,7 +207,7 @@ describe('exportCommand', () => {
       vi.mocked(core.openCollection).mockImplementationOnce(() => {
         throw new LocaleFileError(message, 'CORE_OPERATION_ERROR');
       });
-      await exportCommand({ format: 'json', status: '', collection: 'common' });
+      await exportCommand({ format: 'json', status: [], collection: ['common'] });
       expect(vi.mocked(console.error).mock.calls).toEqual([[`❌ ${message}`]]);
       expect(mockRunExport).not.toHaveBeenCalled();
       expect(process.exitCode).toBe(1);
@@ -215,7 +215,7 @@ describe('exportCommand', () => {
 
     it('rejects an unknown export status as a usage error', async () => {
       mockRunExport.mockRejectedValueOnce(new core.InvalidTranslationStatusError('verifed'));
-      await exportCommand({ format: 'json', status: 'new,verifed' });
+      await exportCommand({ format: 'json', status: ['new', 'verifed'] });
 
       expect(console.error).toHaveBeenCalledWith(
         '❌ Invalid translation status "verifed". Valid statuses: new, translated, stale, verified',
@@ -230,9 +230,9 @@ describe('exportCommand', () => {
     it('should export the chosen collection and locale to JSON', async () => {
       await exportCommand({
         format: 'json',
-        collection: 'common',
-        locale: 'fr',
-        status: 'new,stale',
+        collection: ['common'],
+        locale: ['fr'],
+        status: ['new', 'stale'],
       });
 
       expect(exportedCollections()).toEqual(['common']);
@@ -250,9 +250,9 @@ describe('exportCommand', () => {
     it('should export to XLIFF with all required options', async () => {
       await exportCommand({
         format: 'xliff',
-        collection: 'common',
-        locale: 'fr',
-        status: 'new,stale',
+        collection: ['common'],
+        locale: ['fr'],
+        status: ['new', 'stale'],
       });
 
       expect(mockRunExport).toHaveBeenCalledWith(expect.any(Array), expect.objectContaining({ format: 'xliff' }));
@@ -316,7 +316,7 @@ describe('exportCommand', () => {
     it('should filter by tags when provided', async () => {
       await exportCommand({
         format: 'json',
-        tags: 'ui,buttons',
+        tags: ['ui', 'buttons'],
       });
 
       expect(mockRunExport).toHaveBeenCalledWith(
@@ -354,7 +354,7 @@ describe('exportCommand', () => {
     it('should exit 1 for an unknown collection', async () => {
       await exportCommand({
         format: 'json',
-        collection: 'common,nonexistent',
+        collection: ['common', 'nonexistent'],
       });
 
       expect(console.error).toHaveBeenCalledWith('❌ Collection "nonexistent" not found');
@@ -383,7 +383,7 @@ describe('exportCommand', () => {
     });
 
     it('should export a collection named twice only once', async () => {
-      await exportCommand({ format: 'json', collection: 'common,common' });
+      await exportCommand({ format: 'json', collection: ['common', 'common'] });
 
       expect(exportedCollections()).toEqual(['common']);
     });
@@ -391,7 +391,7 @@ describe('exportCommand', () => {
     it('should warn when no target locales selected', async () => {
       await exportCommand({
         format: 'json',
-        locale: 'en', // base locale is filtered out
+        locale: ['en'], // base locale is filtered out
       });
 
       expect(console.error).toHaveBeenCalledWith('⚠️  No target locales selected.');
@@ -402,7 +402,7 @@ describe('exportCommand', () => {
   });
 
   it('keeps export empty-answer errors even when a flag exists', async () => {
-    const options = { format: 'json' as const, collection: 'common', collections: [] };
+    const options = { format: 'json' as const, collection: ['common'], collections: [] };
     await exportCommand(options);
     expect(mockRunExport).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith('❌ Select at least one collection.');
@@ -421,7 +421,7 @@ describe('exportCommand', () => {
     ]) {
       it(`refuses empty prompt selection: ${message}`, async () => {
         vi.mocked(prompts).mockResolvedValue({ collections, locales });
-        await exportCommand({ format: 'json', status: 'new' });
+        await exportCommand({ format: 'json', status: ['new'] });
         expect(mockRunExport).not.toHaveBeenCalled();
         expect(console.error).toHaveBeenCalledWith(`❌ ${message}`);
         expect(process.exitCode).toBe(1);
@@ -430,7 +430,7 @@ describe('exportCommand', () => {
 
     it('keeps all precedence within collection and locale multiselect answers', async () => {
       vi.mocked(prompts).mockResolvedValue({ collections: ['common', '__ALL__'], locales: ['fr', '__ALL__'] });
-      await exportCommand({ format: 'json', status: 'new' });
+      await exportCommand({ format: 'json', status: ['new'] });
       expect(exportedCollections()).toEqual(['common', 'admin']);
       expect(mockRunExport).toHaveBeenCalledWith(expect.any(Array), expect.objectContaining({ locales: undefined }));
       expect(process.exitCode).toBe(0);
@@ -803,7 +803,7 @@ describe('exportCommand', () => {
     it('should warn when --base-property-name is set without --include-base', async () => {
       await exportCommand({
         format: 'json',
-        locale: 'fr',
+        locale: ['fr'],
         basePropertyName: 'original',
         includeBase: false,
       });
@@ -818,7 +818,7 @@ describe('exportCommand', () => {
 
       await exportCommand({
         format: 'json',
-        locale: 'fr',
+        locale: ['fr'],
         basePropertyName: 'value',
         includeBase: true,
       });
@@ -831,7 +831,7 @@ describe('exportCommand', () => {
     it('should pass basePropertyName through to the run', async () => {
       await exportCommand({
         format: 'json',
-        locale: 'fr',
+        locale: ['fr'],
         basePropertyName: 'original',
         includeBase: true,
       });

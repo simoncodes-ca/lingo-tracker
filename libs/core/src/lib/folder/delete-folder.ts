@@ -4,7 +4,12 @@ import { InvalidCollectionFolderError, FolderNotFoundError } from '../errors/lin
 import { walkCollectionFolders } from '../resource/collection-folders';
 import { sweepCollection } from '../resource/collection-sweep';
 import { inspectFolderAddress, validateFolderAddress } from '../resource/folder-address';
-import { folderMutation, reindexMutation, type MutationSinkOptions } from '../resource/resource-mutation';
+import {
+  resolveMutationSink,
+  folderMutation,
+  reindexMutation,
+  type MutationSinkOptions,
+} from '../resource/resource-mutation';
 
 export interface DeleteFolderParams {
   /** The folder path to delete (dot-delimited path like "apps.common.buttons") */
@@ -71,10 +76,10 @@ export function deleteFolder(
   try {
     rmSync(absoluteFolderPath, { recursive: true, force: true });
   } catch (error) {
-    options.onMutation?.(reindexMutation(translationsFolder));
+    resolveMutationSink(collection, options)?.(reindexMutation(translationsFolder));
     throw error;
   }
-  options.onMutation?.(folderMutation('remove-folder', translationsFolder, folderPath));
+  resolveMutationSink(collection, options)?.(folderMutation('remove-folder', translationsFolder, folderPath));
 
   return {
     folderPath,

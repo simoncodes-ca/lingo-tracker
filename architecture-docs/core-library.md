@@ -55,7 +55,8 @@ libs/core/src/
 │   ├── delete-collection.ts         # deleteCollection()
 │   ├── locale-files.ts           # seedLocaleFiles() / dropLocaleFiles(): the translation-file side of a locale change
 │   ├── set-protected-terms.ts    # setGlobal/CollectionProtectedTerms(): write the terms file; setGlobal/CollectionProtectedTermsFile(): move the pointer
-│   └── update-collection.ts      # updateCollection() — validates, seeds/purges locale files, then one config write through the Collection Entry
+│   ├── collection-change.ts      # changeCollection(): refusals, locale files, config/terms steps and mutation reporting
+│   └── update-collection.ts      # updateCollection(): public wrapper for Collection Change
 │
 └── lib/                          # Deeper sub-modules
     ├── bundle/                   # Bundle generation pipeline
@@ -101,7 +102,6 @@ libs/core/src/
     │   ├── parse-xliff-import.ts # parseXliffImport(): XLIFF 1.2 adapter
     │   ├── import-session.ts     # ImportSession: settings + accumulated changes, warnings, errors, files
     │   ├── process-resource-group.ts # Applies one folder's resources (internal)
-    │   ├── resource-grouping.ts  # groupResourcesByFolder(): batches resources by target path
     │   ├── apply-icu-auto-fix.ts # applyICUAutoFixToResources(): repairs malformed placeholders
     │   ├── normalize-transloco-syntax.ts # {{ x }} → {x} before storage
     │   ├── load-base-locale-values.ts    # Reads current base values for the auto-fix
@@ -117,7 +117,6 @@ libs/core/src/
     │
     ├── normalize/                # Normalization pipeline
     │   ├── normalize.ts          # normalize(collection): main entry point
-    │   ├── normalize-entry.ts    # normalizeEntryValues(): Transloco → ICU and tag cleanup (pure)
     │   └── normalize-collections.ts # normalizeCollections(): selected collections, events and totals
     │
     ├── translation/              # Machine translation: the Translator and the operations that use it
@@ -131,12 +130,13 @@ libs/core/src/
     │   └── placeholder-protector.ts      # protectPlaceholders() / restorePlaceholders()
     │
     ├── resource/                 # Resource CRUD, Folder Address, folder files, and collection read models
+    │   ├── folder-batch.ts       # groupByFolder() / openFolders(): batch access by full key
     │   ├── folder-address.ts     # validate, resolve and check folder addresses
     │   ├── add-resource.ts       # addResource()
     │   ├── edit-resource.ts      # editResource()
     │   ├── delete-resource.ts    # deleteResource()
     │   ├── move-resource.ts      # moveResource()
-    │   ├── move-plan.ts          # planMove(): pure source-to-destination key calculation
+    │   ├── move-plan.ts          # planMove(): pure move refusals, collection identity, and destination keys
     │   ├── relocate-entries.ts   # Entry Relocation used by moves
     │   ├── checksum.ts           # MD5 checksums
     │   ├── resource-folder.ts    # openResourceFolder(): the Resource Folder (entries + metadata as a unit)
@@ -294,6 +294,11 @@ The write side is the [Collection Entry](glossary.md#collection-entry) (`lib/con
 
 `addCollection`, `editCollectionTags`, project-term pointer changes, and every locale change write collection records through the Collection Entry. `addCollection(project, name, collection, { protectedTerms? })` and `updateCollection(openedCollection, newName, patch, { protectedTerms?, onMutation? })` validate protected terms and the resulting entry, including its file pointer, before writing. They write config, then terms; the two writes are not atomic, so a failure during the terms write leaves the config entry in place. A refused precondition changes neither file. `editCollectionTags(openedCollection, { add?, remove?, set? })` takes arrays for every supplied list, checks the edit, and returns normalized tags. `initConfig(config, { cwd? })` refuses an existing config with `InvalidConfigError`, validates through `createConfigFileOperations().create()` and uses an exclusive file create, so a concurrent creator cannot be overwritten; it produces the same JSON bytes as the old CLI init path. `updateCollection`, `addLocaleToCollection`, and `removeLocaleFromCollection` share one locale-change path: validate the request, read every folder before writing, seed added locales, purge removed locales, then write the minimized config once with `patchCollectionEntry`. Add/remove compute the target locale list from the collection's effective locales. An unreadable folder leaves config and files unchanged. A base locale, old or new, is never seeded or purged. A changed collection record delivers reindex mutations for its old and new translations folders, with duplicate paths removed. `deleteCollection` can remove a malformed registration whose `translationsFolder` is missing or is not a string. It delivers a reindex mutation only when that field is a string. The [Import run](glossary.md#import-run) and the [Export run](glossary.md#export-run) take `Collection` objects, so they read the base locale and locales from there and never read the config file. The resource and folder operations (`addResource`, `editResource`, `deleteResource`, `moveResource`, `translateExistingResource`, `createFolder`, `deleteFolder`, `moveFolder`) take the opened `Collection` as their first parameter too, so no caller passes a base locale, a locale list, a translation config, or a `cwd`. See [Collection-bound operations](#collection-bound-operations). The typed errors extend `LingoTrackerError`; see [Error Model](#error-model).
 
+**Collection Change.** `changeCollection` in `collections-manager/collection-change.ts` owns the shared engine for update, add-locale, and remove-locale. All refusals precede writes. Locale sugar checks read-only before locale-specific checks and the stale snapshot. Update patches check terms, rename, entry, bundle references, terms destination, and stale snapshot before read-only and added-locale validation. Every affected folder is read before writes. The engine seeds added locales, purges removed locales, writes config, then writes optional terms.
+
+The planning step resolves all facts that the write phase needs before any write. The write phase writes config before optional terms. If the terms write fails, config remains written and `changeCollection` throws the original error. Public result shapes remain unchanged. Locale and config failures also throw directly. One reporting step deduplicates reindex mutations for attempted locale saves and changed records, including failed writes. Record equality ignores object key order but preserves array order.
+
+
 Collection rename and delete also update [Bundle Collection References](glossary.md#bundle-collection-references). `renameBundleCollectionReferences(config, oldName, newName)` preserves every entry's prefix, rules, other fields and order; it refuses a new name already referenced by a bundle with `CollectionRenameBundleConflictError`. `removeBundleCollectionReferences(config, name)` checks all bundles before changing any list; if removal would empty an explicit list, it raises `CollectionRequiredByBundleError` with every affected bundle name. Both helpers skip malformed collection lists and tolerate null entries in hand-edited bundles. They replace the bundles record instead of mutating bundle objects shared with the original config. The collection and bundle changes share one config write. `'All'` bundles remain unchanged. Delete only unregisters the collection; it leaves translation folders on disk.
 
 ---
@@ -359,7 +364,9 @@ Rules:
 
 **Translation write status.** `ResourceFolder.setTranslation` computes both checksums and calls `recordTranslation` in `libs/domain/src/lib/staleness.ts`. If the caller omits a status, `recordTranslation` stores `new` for a base copy or `translated` for a different value. It keeps every explicit status. An edit with an unchanged value and no status writes nothing; an explicit status changes only that status. `addResource`, `editResource`, and `importResources` check supplied statuses with `assertTranslationStatus` in `lib/resource/translation-status-input.ts` before they write. `parseJsonImport` checks statuses in rich JSON objects and treats `null` or `""` as absent. `ResourceFolder` checks direct calls too. An invalid status raises `InvalidTranslationStatusError`, which the API maps to HTTP 400.
 
-Resource CRUD is implemented across the resource operations in `libs/core/src/lib/resource/`, each bound to an opened `Collection`. Each function follows the same structural pattern: resolve the dot-delimited [resource key](glossary.md#resource-key) to a filesystem path, load the current JSON files, apply changes, recompute [checksums](glossary.md#checksum) and [translation status](glossary.md#translation-status), then write both files back. Both files are always written together by one call (`ResourceFolder.save()`); the writes are sequential, not atomic.
+Resource CRUD operations in `libs/core/src/lib/resource/` take an opened `Collection`. Add, edit, delete, and translate-existing open a [Resource Entry](glossary.md#resource-entry) with `openResourceEntry(collection, key, { targetFolder? })`. The opener validates the key, resolves the folder, and opens the Resource Folder with the collection's base locale. It exposes `exists()`, `get()`, and the folder for changes. Its `save(onMutation)` reports `upsert` after a write or `remove` after a removal. On a failed save, it reports `reindex` and rethrows the error.
+
+The Resource Folder computes checksums and translation statuses. It writes both files sequentially, not atomically.
 
 **All writes go through `ResourceFolder`.** `openResourceFolder(folderPath, { baseLocale })` in `lib/resource/resource-folder.ts` is the only owner of a [resource folder](glossary.md#resource-folder) (`resource_entries.json` + `tracker_meta.json`). The base locale argument is required; there is no English default. Add, edit, delete, move, import, normalize, translate-locale, translate-existing-resource, and add/remove-locale all load the pair through it, change it with `setBase` / `setTranslation` / `setStatus` / `setDetails` / `setEntry` / `normalizeEntry` / `seedLocale` / `dropLocale` / `remove`, and persist with `save()` (which deletes both files when the folder becomes empty). The folder converts locale values to ICU before storing them and computing checksums. `ResourceFolder` also applies the domain [staleness rule](glossary.md#staleness-rule) (`applyBaseChange`, `recordTranslation` in `libs/domain/src/lib/staleness.ts`), so no caller builds `{ checksum, baseChecksum, status }` by hand. `seedLocale` is the one seeding rule for a locale missing from a stored entry (a `new` copy of the base); add-locale, edit-collection and normalize share it. A locale value with no metadata counts as `new` everywhere: the reader and validate read it so, and `normalizeEntry` records it so. Readers use it too: every whole-collection read goes through the [Collection Reader](#collection-reader), every write over many folders goes through the [Collection Sweep](#collection-sweep), and `resolveResourcePaths()` is the only function that maps a key to its folder.
 
@@ -406,14 +413,14 @@ moveFolder(collection, { sourceFolderPath, destinationFolderPath, override?, nes
 
 Steps:
 
-1. **Resolve paths** — `validateAndResolvePaths()` calls `resolveResourceKey()` and `splitResolvedKey()` from `@simoncodes-ca/domain` to derive `folderPath`, `resourceEntriesPath`, `trackerMetaPath`, and `entryKey`.
-2. **Check existence** — open the resolved Resource Folder and refuse an existing entry by default. `onExisting: 'replace'` allows replacement. This check happens before locale seeding or any write.
+1. **Open the entry** — `openResourceEntry(collection, key, { targetFolder })` validates the key and opens its Resource Folder.
+2. **Check existence** — `entry.exists()` identifies an existing entry, which add refuses by default. `onExisting: 'replace'` allows replacement. This check happens before locale seeding or any write.
 3. **Prepare base value** — `translocoToICU()` supplies an ICU value to locale seeding and terminology checks; the Resource Folder enforces ICU on every write.
 4. **Resolve translations** — [locale seeding](#locale-seeding): supplied translations first, then auto-translation or a copy of the base as `new` for every other target locale. All values are resolved before anything is written, so a provider failure writes nothing.
-5. **Ensure directory** — `ensureDirectoryExists()` creates the folder tree with `mkdirSync({ recursive: true })`.
-6. **Load existing files** — `openResourceFolder()` loads both files (missing files are empty).
+5. **Reopen the entry** — after translation, `openResourceEntry` reads current folder state and add checks existence again.
+6. **Ensure directory** — `ensureDirectoryExists()` creates the folder tree with `mkdirSync({ recursive: true })`.
 7. **Set the entry** — `setEntry` / `setBase` / `setDetails` / `setTranslation` on the `ResourceFolder`. A translation equal to the base value is stored as `new`.
-8. **Write files** — `saveReporting` calls `folder.save()`, then delivers the `upsert`; a save failure delivers `reindex`.
+8. **Save the entry** — `entry.save(onMutation)` saves the folder and reports `upsert`. On a failed save, it reports `reindex`.
 
 ### Resource Batches
 
@@ -429,12 +436,12 @@ Steps:
 
 Steps:
 
-1. **Resolve paths and load** — same as add-resource. `key` is the entry's full key. A `moveTo` is resolved and checked for a collision before anything changes.
+1. **Open the entry** — `openResourceEntry(collection, key)`. `key` is the entry's full key. A `moveTo` is resolved and checked for a collision before anything changes.
 2. **Throws if not found** — exits immediately if either JSON file or the specific entry key is absent.
 3. **Update base value** (if changed) — `translocoToICU()` normalizes the incoming value; `folder.setBase()` recomputes the base checksum and applies the [staleness rule](glossary.md#staleness-rule) to every non-base locale.
 4. **Update comment/tags** — simple field overwrites with change detection to avoid unnecessary writes.
 5. **Update locale values** — for each changed locale in `changes.translations`, `folder.setTranslation()` normalizes to ICU, recomputes the checksum, and updates `status` (defaults to `'translated'` if not provided).
-6. **Persist initial changes** — `folder.save()` before attempting auto-translation, so the base value change is durable even if the translation API call fails.
+6. **Persist initial changes** — `entry.save(onMutation)` before attempting auto-translation, so the base value change is durable even if the translation API call fails.
 7. **Seed on base change** — if the base value changed, [locale seeding](#locale-seeding) runs for the locales that need work and were not supplied; results are written by a second `folder.save()`.
 8. **Move** — with a `moveTo` naming another folder, the entry moves as stored through the [Entry Relocation](#entry-relocation); a collision there throws `ResourceAlreadyExistsError`. The result's `resolvedKey` is the destination key; the sink receives the saved source edit, then the relocation's `remove` and destination `upsert`.
 
@@ -445,35 +452,41 @@ Steps:
 Steps:
 
 1. **Validate each key** — `validateKey()` from `@simoncodes-ca/domain`.
-2. **Resolve paths** — `resolveResourcePaths()`.
+2. **Check presence and open the entry** — check the folder and entries file through `resourceFolderPresence`, then call `openResourceEntry(collection, key)`.
 3. **Remove** — `folder.remove(entryKey)` removes the entry and its metadata.
-4. **Save** — `folder.save()` rewrites both files, or deletes both when the folder has no entries left.
+4. **Save** — `entry.save(onMutation)` saves the folder and reports `remove`. An empty folder loses both files.
 5. **Batch errors** — errors per key are collected and returned; the operation does not stop on ordinary per-key failures. A linked address throws `InvalidCollectionFolderError` before its files are read or changed. Missing folders use `FolderNotFoundError` with a Folder Address; missing files or entries use `ResourceNotFoundError` with the key. Read and parse failures say `folder <address> has unreadable resource files`; save failures say `could not write folder <address>`. Both start with `Failed to delete resource <key>:` and keep the original error in `cause`, so `errors[]` contains no server path.
 
 ### move-resource
 
 **Entry point:** `moveResource(collection, { source, destination, override?, toCollection? }, { config?, cwd?, onMutation? }?)`
 
-Two modes, one move: both get a list of `{ from, to }` keys from the [Move Plan](#move-plan) and hand it to the [Entry Relocation](#entry-relocation) in one call. A collision becomes a warning (`Destination key already exists: <key>. Use override option to force move.`); a failed relocation is an error.
+Two modes, one move: both get relocations and `sameCollection` from the [Move Plan](#move-plan) and hand them to the [Entry Relocation](#entry-relocation) in one call. A collision becomes a warning (`Destination key already exists: <key>. Use override option to force move.`); a failed relocation is an error.
 
 - **Single key move** — one relocation, `source` to `destination`.
 - **Wildcard pattern move** — a pattern ending with `*` is expanded by `sweepKeys()` ([Collection Sweep](#collection-sweep)) to every key under the prefix, each moved under `destination`. A folder the sweep cannot read is one error in the result; the other keys still move.
 
-`moveFolder()` lists the source keys with `sweepKeys()`, maps their destinations, and moves them as one relocation. After every key moves without errors, [Folder Pruning](#folder-pruning) removes empty folders under the source address, including the source itself. Stray files and hidden directories protect their folders. OS junk does not prevent removal.
+`moveFolder()` gets one Move Plan before filesystem reads. After the plan permits the move, `sweepKeys()` lists the source keys. The same plan maps their destinations and supplies `sameCollection` to Entry Relocation. After every key moves without errors, [Folder Pruning](#folder-pruning) removes empty folders under the source address, including the source itself. Stray files and hidden directories protect their folders. OS junk does not prevent removal.
 
 The result retains the warning `Source folder kept: holds content that is not part of the collection: <paths>`. New collection entries produce `Source folder kept: it has resources again: <paths>`. `foldersDeleted` counts the source folder only. Each removed folder, including the source, emits a `remove-folder` mutation. A source tree without entries uses the same pruning rule. `deleteFolder` still deletes the whole tree intentionally.
 
 ### Move Plan
 
-**Entry point:** `planMove(selection, destination)` in `lib/resource/move-plan.ts` (internal)
+**Entry point:** `planMove({ source, destination, selection, destinationPath })` in `lib/resource/move-plan.ts` (internal)
 
-The planner has no filesystem calls. A single key keeps its explicit destination. A wildcard prefix maps every swept key under the destination prefix, including the collection root. An edited entry keeps its last key segment when it moves to a destination folder; an empty or whitespace-only folder names the collection root. A folder move appends the source folder's last segment by default or when moving to the root. With `nestUnderDestination: false`, equal source and destination depths replace the source folder path, and unequal depths append that last segment. The planner also supplies the same-folder and current-parent warnings. `moveFolder` still validates folder addresses and lists keys before relocation; `moveResource` still validates and sweeps patterns; `editResource` still checks the destination collision before saving.
+The planner has no filesystem calls. Its one argument supplies the opened source and destination collections, the selection, and the destination path. A resource selection returns an `entries` plan with both collections, relocations, and `sameCollection`. A folder selection returns a `folder` plan with only `forKeys(keys)`, or a typed refusal.
+
+The refusal reasons are `descendant`, `same-location`, and `already-there`. These folder refusals apply only within the same collection. Each refusal supplies `warning()`, which returns the existing warning or throws `FolderMoveIntoDescendantError`. `moveFolder` calls this method before source inspection and enumeration, preserving refusal behavior for missing sources. The error constructor supplies the descendant message once. The browser-safe domain predicate `isDescendantFolderPath` supplies the descendant rule for both the planner and the Tracker folder-drop rule.
+
+A single key keeps its explicit destination. A wildcard prefix maps every swept key under the destination prefix, including the collection root. An edited entry keeps its last key segment, and an empty or whitespace-only destination folder names the collection root. A folder move appends the last source segment by default or for a root destination. With `nestUnderDestination: false`, equal depths replace the source folder path, and unequal depths append that last segment.
+
+A folder selection does not include keys. Its plan supplies `forKeys(keys)` for keys that the caller enumerates after the move decision. This method returns an `entries` plan bound to the collections and `sameCollection` fact already decided. `moveResource` validates and sweeps patterns, and `moveResources` calls it for each operation. `editResource` checks the destination collision before saving. Entry Relocation takes only the bound plan and options, so separate collection arguments cannot disagree with the plan.
 
 ### Entry Relocation
 
-**Entry point:** `relocateEntries(source, destination, relocations, { override? })` in `lib/resource/relocate-entries.ts` (internal)
+**Entry point:** `relocateEntries(plan, { override?, onMutation? })` in `lib/resource/relocate-entries.ts` (internal)
 
-The [Entry Relocation](glossary.md#entry-relocation) is the one move primitive. It takes a source and a destination `Collection` (the same one for a move inside a collection) and a list of `{ from, to }` full keys, and returns `{ moved, collisions, errors }`. `moved` holds each moved entry as stored at its destination (`ResourceTreeEntry`). It never throws for one relocation.
+The [Entry Relocation](glossary.md#entry-relocation) is the one move primitive. It takes an `entries` plan from Move Plan, with source and destination collections, relocations, and `sameCollection`. It returns `{ moved, collisions, errors }`. `moved` holds each moved entry as stored at its destination (`ResourceTreeEntry`). It never throws for one relocation.
 
 | Rule | What it does |
 |---|---|
@@ -600,12 +613,10 @@ Normalization is a repair and synchronization pass over a [collection's](glossar
 
 Steps:
 
-1. **Sweep folders** — the [Collection Sweep](#collection-sweep) opens every collection folder. Hidden folders are not part of the collection, so normalize does not touch them (it used to walk into them).
+1. **Sweep folders** — the [Collection Sweep](#collection-sweep) opens every collection folder. A missing root yields no folders and normalize reports zero counts and no problems. Hidden folders are not part of the collection, so normalize does not touch them (it used to walk into them).
 2. **Skip what cannot be read** — a folder whose files are not valid JSON, or that cannot be listed, is left as it is and returned in `problems`; the CLI prints one `⚠️  Collection '<name>': Skipped unreadable folder '<path or (root)>': <message>` line for each on stderr. A folder with no entries is left alone.
-3. **Normalize each entry** — two steps, with a clear seam between them:
-   - `normalizeEntryValues(entry)` in `normalize-entry.ts` is pure and counts values that need Transloco-to-ICU conversion (`valuesConverted`); it also prepares normalized tags (`tagsNormalized`). The command passes the raw locale values and prepared tags to the folder.
-   - `ResourceFolder.normalizeEntry(key, values, collection.targetLocales)` converts every locale value to ICU and applies the folder's own rules: it drops a stray base-locale property, re-records every target-locale translation with a current checksum and its stored status (no metadata counts as `new`; a translation whose stored `baseChecksum` differs from the base checksum was made from an older base, so it becomes `stale`, or `new` when its value is a copy of the base or it was `new`, and gets the current `baseChecksum`), puts the base through `setBase` (the [staleness rule](glossary.md#staleness-rule) when the stored checksum disagrees with the value; a missing checksum is just recorded), and seeds each missing target locale with `seedLocale`'s rule (`localesAdded`). It reports whether the entry or its metadata changed. A locale that is not a target locale of the collection (for example one removed from the config) keeps its value and status; ICU conversion updates its checksum if needed.
-4. **Persist changes** — a folder is saved when any entry changed, or when one of its two files is missing (normalize guarantees the pair exists wherever there are entries).
+3. **Normalize each entry** — `ResourceFolder.normalizeEntry(key, collection.targetLocales)` converts each stored value to ICU once, normalizes tags and applies the folder's own rules: it drops a stray base-locale property, re-records every target-locale translation with a current checksum and its stored status (no metadata counts as `new`; a translation whose stored `baseChecksum` differs from the base checksum was made from an older base, so it becomes `stale`, or `new` when its value is a copy of the base or it was `new`, and gets the current `baseChecksum`), applies the same base-update rule as `setBase` (the [staleness rule](glossary.md#staleness-rule) when the stored checksum disagrees with the value; a missing checksum is just recorded), and seeds each missing target locale with `seedLocale`'s rule (`localesAdded`). It returns `valuesConverted`, `tagsNormalized`, `localesAdded` and `changed`; normalize accumulates these counts. A locale that is not a target locale of the collection (for example one removed from the config) keeps its value and status; ICU conversion updates its checksum if needed.
+4. **Persist changes** — a folder is saved when any entry changed, or when `folder.hasMissingFiles()` reports a missing file (normalize guarantees the pair exists wherever there are entries).
 5. **Dry-run mode** — `save({ dryRun: true })` reports the files without writing; counters still reflect what *would* change.
 6. **Prune empty folders** — [Folder Pruning](#folder-pruning) removes only folders with empty collection files and known OS junk. Stray files and hidden directories protect their folders and ancestors. `foldersRemoved` counts actual removals, or planned removals in a dry run.
 
@@ -674,9 +685,11 @@ flowchart TD
 
 The Google Translate v2 provider bounds each HTTP request to 30 seconds. A timeout aborts the request and raises a retryable `TranslationError` with code `TIMEOUT`; `translateLocale` records the affected batch in `failures`, then continues with later batches. The provider rejects an invalid timeout option at construction with `INVALID_REQUEST_TIMEOUT`.
 
+**Translation Batch.** `translateLocale` and `translateExistingResource` share [Translation Batch](glossary.md#translation-batch). The internal `translation-batch.ts` module calls the opened Translator once, groups values by folder, and writes each folder back once. Every key and locale has one outcome: written, skipped, or failed. A provider failure fails all rows; a folder write failure fails only that folder's translated rows, preserving earlier writes and provider skips. `translateLocale` folds these outcomes into counts, failures and skipped keys, reports progress, and delays between batches. Its translated, failed and skipped counts sum to the total eligible resources. `translateExistingResource` rethrows the original failure and retains its result shape and mutation notifications.
+
 **Translation Write-back.** `translateLocale`, `translateExistingResource`, and phase 2 of `editResource` share [Translation Write-back](glossary.md#translation-write-back). The internal `translation-write-back.ts` module snapshots the stored ICU base checksum and target checksum and status before translation. For edit, the snapshot represents the saved phase-1 state. After the await, write-back reopens each Resource Folder from disk. It skips missing entries, changed base checksums, changed target checksums or statuses, and targets that no longer need translation. This preserves sibling entries and concurrent edits, including deletion.
 
-Write-back normalizes values through `setTranslation` and saves once per folder, only if it wrote a value. The default status is `translated`, while edit passes `new` for seeded copies. Each caller supplies its saved mutations, and edit supplies one `upsert` with the fresh entry. `translateExistingResource` sends one `upsert` with the fresh entry and counts only written locales. `translateLocale` supplies a `reindex` after success, and `saveReporting` sends `reindex` before a failed save throws. Thus bulk translation retains one `reindex` per save attempt and its existing batch failure handling.
+Write-back normalizes values through `setTranslation` and saves once per folder, only if it wrote a value. The default status is `translated`, while edit passes `new` for seeded copies. Each caller supplies its saved mutations, and edit supplies one `upsert` with the fresh entry. `translateExistingResource` sends one `upsert` with the fresh entry and counts only written locales. `translateLocale` supplies a `reindex` after success, and `saveReporting` sends `reindex` before a failed save throws. Thus bulk translation retains one `reindex` per save attempt.
 
 Callers append write-back skips to `skippedLocales` or `skippedKeys`. Edit reports `skippedLocales` only when auto-translation ran. If an entry disappears during translation, single-entry callers throw `ResourceNotFoundError` without restoring it. Edit keeps its saved phase-1 changes if the provider fails. A synchronous TOCTOU gap remains between reopening and saving, and the two-file save is not atomic.
 
@@ -724,7 +737,7 @@ An import has two parts. A **format adapter** reads one file and returns `Import
 3. **Normalize syntax** — `normalizeTranslocoSyntaxInResources()` converts Transloco `{{ varName }}` to ICU `{varName}`.
 4. **ICU auto-fix** — `applyICUAutoFixToResources()` repairs placeholders that differ from the stored base value (for example, a translated placeholder name), using `icuAutoFixer` from `@simoncodes-ca/domain`. Fixes and failures are recorded separately in the result.
 5. **Validate** — `validateImportResources()` fails invalid keys and hierarchical conflicts, skips empty values, and warns on duplicate and very long keys, before any write.
-6. **Group by folder** — `groupResourcesByFolder()` batches resources by their [resource folder](glossary.md#resource-folder), so each folder is read and written once.
+6. **Group by folder** — `groupByFolder()` in `resource/folder-batch.ts` batches resources by their [resource folder](glossary.md#resource-folder), so each folder is read and written once.
 7. **Process each group** — `processResourceGroup(session, group)` opens the folder with `openResourceFolder()` and applies each resource according to the [import strategy](glossary.md#import-strategy). A missing resource is skipped unless `createMissing` is set; a target-locale creation needs a `baseValue`. A base-locale import writes base values, and `ResourceFolder.setBase()` applies the [staleness rule](glossary.md#staleness-rule); on those imports every written value is checked against the preferred terminology of the session's [Project Terms](#project-terms) (advisory warnings). A target-locale import warns on a `baseValue` mismatch, then runs `findProtectedTermViolations(storedSource, incomingValue, terms)`: a term that appears in the stored source and is missing from the incoming translation fails that entry with `Protected term(s) altered: …`, and the rest of the group is unaffected. Otherwise `resolveImportStatus()` (domain) decides the status. The folder is saved once, only when it changed and never in a dry run.
 8. **Build the result** — `sessionResult()` derives the counts and status transitions from the session's changes and returns the `ImportResult`.
 

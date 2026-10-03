@@ -2,15 +2,22 @@ import { DEFAULT_CONFIG, type ExportFormat, type ExportRunOptions, type LingoTra
 import { TRANSLATION_STATUSES } from '@simoncodes-ca/domain';
 import type prompts from 'prompts';
 import { mergeRunOptions } from './run-option-defaults';
-import { parseCommaSeparatedList, parseListSelection, selectionNames, selectionPrompt, type Selection } from '../utils';
+import {
+  type ExplicitEmptyList,
+  parseCommaSeparatedList,
+  parseListSelection,
+  selectionNames,
+  selectionPrompt,
+  type Selection,
+} from '../utils';
 import { EXPORT_DEFAULTS } from './run-option-defaults';
 
 export interface ExportCommandOptions {
   format?: ExportFormat;
-  collection?: string;
-  locale?: string;
-  status?: string;
-  tags?: string;
+  collection?: string[];
+  locale?: string[];
+  status?: string[] | ExplicitEmptyList;
+  tags?: string[];
   output?: string;
   structure?: 'flat' | 'hierarchical';
   rich?: boolean;
@@ -134,18 +141,25 @@ export function resolveExportOptions(values: ExportAnswers) {
     (options, rule) => ({ ...options, [rule.name]: values[rule.name] ?? rule.defaultValue }),
     {},
   );
-  const status = values.status ?? stringList(values.statusFilter)?.join(',') ?? EXPORT_DEFAULTS.status;
-  const statuses = parseCommaSeparatedList(status);
   // This flag-shape rule precedes core validation and the base-property advisory.
-  if (!statuses || statuses.length === 0) {
-    throw new Error(`Invalid --status "${status}". Valid statuses: ${TRANSLATION_STATUSES.join(', ')}`);
+  const status = values.status;
+  if (status !== undefined && !Array.isArray(status)) {
+    throw new Error(`Invalid --status "${status.input}". Valid statuses: ${TRANSLATION_STATUSES.join(', ')}`);
+  }
+  const statuses =
+    (Array.isArray(status) ? status : undefined) ??
+    stringList(values.statusFilter) ??
+    parseCommaSeparatedList(EXPORT_DEFAULTS.status) ??
+    [];
+  if (statuses.length === 0) {
+    throw new Error(`Invalid --status "". Valid statuses: ${TRANSLATION_STATUSES.join(', ')}`);
   }
   const options: Omit<ExportRunOptions, 'format'> & { format?: ExportCommandOptions['format'] } = {
     format: values.format,
     outputDirectory: values.output || undefined,
     locales: selectionNames(parseListSelection(values.locale, stringList(values.locales))),
     status: statuses,
-    tags: parseCommaSeparatedList(values.tags || undefined),
+    tags: values.tags?.length ? values.tags : undefined,
     filenamePattern: values.filename || undefined,
     dryRun: values.dryRun,
     verbose: values.verbose,
@@ -175,7 +189,7 @@ export function exportQuestions(
   { config, targetLocales }: ExportOptionsContext,
 ): prompts.PromptObject[] {
   const collectionNames = Object.keys(config.collections || {});
-  const selectedStatuses = EXPORT_DEFAULTS.status.split(',');
+  const selectedStatuses = parseCommaSeparatedList(EXPORT_DEFAULTS.status) ?? [];
 
   const commonQuestions: { flag: keyof ExportCommandOptions; question: prompts.PromptObject }[] = [
     {

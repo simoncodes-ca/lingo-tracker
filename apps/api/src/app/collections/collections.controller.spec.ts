@@ -80,10 +80,7 @@ describe('CollectionsController', () => {
       expect(result).toEqual({
         message: 'Collection "test-collection" deleted successfully',
       });
-      expect(deleteCollection).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'test-collection' }),
-        expect.objectContaining({ onMutation: mockIndex.sink }),
-      );
+      expect(deleteCollection).toHaveBeenCalledWith(expect.objectContaining({ name: 'test-collection' }));
     });
 
     it('passes the route param through verbatim', async () => {
@@ -97,10 +94,7 @@ describe('CollectionsController', () => {
       expect(result).toEqual({
         message: 'Collection "My Collection" deleted successfully',
       });
-      expect(deleteCollection).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'My%Collection' }),
-        expect.objectContaining({ onMutation: mockIndex.sink }),
-      );
+      expect(deleteCollection).toHaveBeenCalledWith(expect.objectContaining({ name: 'My%Collection' }));
     });
 
     it('lets CollectionNotFoundError through, which the filter answers with 404', async () => {
@@ -125,10 +119,7 @@ describe('CollectionsController', () => {
       await expect(collectionsController.deleteCollection('broken')).resolves.toEqual({
         message: 'Collection "broken" deleted successfully',
       });
-      expect(deleteCollection).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'broken', config: {} }),
-        expect.objectContaining({ onMutation: mockIndex.sink }),
-      );
+      expect(deleteCollection).toHaveBeenCalledWith(expect.objectContaining({ name: 'broken', config: {} }));
     });
 
     it('answers a refused deletion with 409 and leaves the index alone', async () => {
@@ -327,7 +318,7 @@ describe('CollectionsController', () => {
         expect.objectContaining({ name: 'old-name' }),
         'new-name',
         dto.collection,
-        { onMutation: mockIndex.sink, protectedTerms: undefined },
+        { protectedTerms: undefined },
       );
     });
 
@@ -350,7 +341,7 @@ describe('CollectionsController', () => {
         expect.objectContaining({ name: 'My%Collection' }),
         'My Collection',
         dto.collection,
-        { onMutation: mockIndex.sink, protectedTerms: undefined },
+        { protectedTerms: undefined },
       );
     });
 
@@ -440,7 +431,7 @@ describe('CollectionsController', () => {
         expect.objectContaining({ name: 'test-collection' }),
         undefined,
         expect.anything(),
-        { onMutation: mockIndex.sink, protectedTerms: ['iPhone'] },
+        { protectedTerms: ['iPhone'] },
       );
     });
 
@@ -465,7 +456,7 @@ describe('CollectionsController', () => {
       expect(toHttpException(error).getStatus()).toBe(404);
     });
 
-    it('passes the sink to the collection update', async () => {
+    it('opens the collection update with the default index sink', async () => {
       (core.updateCollection as jest.Mock).mockResolvedValue({
         message: 'Collection "test-collection" updated successfully',
       });
@@ -473,10 +464,10 @@ describe('CollectionsController', () => {
       const dto: UpdateCollectionDto = { collection: { translationsFolder: './translations/test' } };
       await collectionsController.updateCollectionByName('test-collection', dto);
       expect(core.updateCollection).toHaveBeenCalledWith(
-        expect.any(Object),
+        expect.objectContaining({ onMutation: mockIndex.sink }),
         undefined,
         expect.any(Object),
-        expect.objectContaining({ onMutation: mockIndex.sink }),
+        { protectedTerms: undefined },
       );
     });
   });

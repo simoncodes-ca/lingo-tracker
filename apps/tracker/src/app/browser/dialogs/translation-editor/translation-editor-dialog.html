@@ -258,7 +258,9 @@
                 aria-labelledby="translation-editor-tags-label"
                 [placeholder]="tagPlaceholder"
                 [matAutocomplete]="tagAuto"
-                (keydown)="onTagKeydown($event, tagInput)"
+                [appChipInput]="tagsList()"
+                (chipAdd)="addTagValue($event)"
+                (chipRemove)="removeTag($event)"
                 (input)="onTagInputChange($event)"
               />
             </span>

@@ -6,6 +6,7 @@ import type {
   LingoTrackerConfig,
   OpenedProject,
 } from '@simoncodes-ca/core';
+import { JobNotFoundError } from '../jobs/job-not-found.error';
 import { BundleJobService, JOB_RETENTION_MS, MAX_RETAINED_JOBS } from './bundle-job.service';
 
 const mockGenerateBundle = jest.fn();
@@ -92,7 +93,7 @@ describe('BundleJobService', () => {
 
   it('queues a saved definition without revalidating its shape', () => {
     mockGenerateBundle.mockResolvedValue(makeResult());
-    const jobId = service.startJob({
+    const { jobId } = service.startJob({
       bundleName: 'main',
       project: project({ ...config, bundles: { main: { ...bundleDefinition, bundleName: 'fixed' } } }),
     });
@@ -101,7 +102,7 @@ describe('BundleJobService', () => {
 
   it('completes a saved bundle with an unknown collection and its warning', async () => {
     mockGenerateBundle.mockResolvedValue(makeResult({ warnings: ["Collection 'deleted' not found in config"] }));
-    const jobId = service.startJob({
+    const { jobId } = service.startJob({
       bundleName: 'main',
       project: project({
         ...config,
@@ -113,11 +114,18 @@ describe('BundleJobService', () => {
     expect(service.getJob(jobId)?.result?.warnings).toEqual(["Collection 'deleted' not found in config"]);
   });
 
-  it('startJob returns an ID and getJob exposes the pending job', () => {
+  it('startJob returns the pending snapshot', () => {
     mockGenerateBundle.mockReturnValue(new Promise(() => {}));
 
-    const jobId = service.startJob(makeParams());
-    const job = service.getJob(jobId);
+    const job = service.startJob(makeParams());
+    const jobId = job.jobId;
+    expect(service.getJob(jobId)).toEqual(job);
+    expect(job).toEqual({
+      jobId: expect.any(String),
+      bundleName: 'main',
+      status: 'pending',
+      progress: { current: 0, total: 0 },
+    });
 
     expect(typeof jobId).toBe('string');
     expect(job?.jobId).toBe(jobId);
@@ -126,8 +134,8 @@ describe('BundleJobService', () => {
     expect(job?.progress).toEqual({ current: 0, total: 0 });
   });
 
-  it('getJob returns undefined for an unknown ID', () => {
-    expect(service.getJob('nope')).toBeUndefined();
+  it('getJob throws not-found for an unknown ID', () => {
+    expect(() => service.getJob('nope')).toThrow(JobNotFoundError);
   });
 
   it('passes run options and an onProgress callback to generatePreparedBundle', async () => {
@@ -167,7 +175,7 @@ describe('BundleJobService', () => {
       }),
     );
 
-    const jobId = service.startJob(makeParams());
+    const { jobId } = service.startJob(makeParams());
     await flush();
 
     expect(logger.warn).toHaveBeenCalledWith(warning);
@@ -183,7 +191,10 @@ describe('BundleJobService', () => {
       typeDist: 'types/legacy.ts',
     };
 
-    const jobId = service.startJob({ bundleName: 'main', project: project({ ...config, bundles: { main: legacy } }) });
+    const { jobId } = service.startJob({
+      bundleName: 'main',
+      project: project({ ...config, bundles: { main: legacy } }),
+    });
     await flush();
 
     expect(service.getJob(jobId)?.status).toBe('failed');
@@ -197,7 +208,7 @@ describe('BundleJobService', () => {
       return new Promise(() => {});
     });
 
-    const jobId = service.startJob(makeParams());
+    const { jobId } = service.startJob(makeParams());
     await flush();
 
     expect(service.getJob(jobId)?.status).toBe('running');
@@ -217,7 +228,7 @@ describe('BundleJobService', () => {
       },
     );
 
-    const jobId = service.startJob(makeParams());
+    const { jobId } = service.startJob(makeParams());
     await flush();
 
     const job = service.getJob(jobId);
@@ -237,7 +248,7 @@ describe('BundleJobService', () => {
   it('marks the job failed with the error message and logs it', async () => {
     mockGenerateBundle.mockRejectedValue(new Error('disk full'));
 
-    const jobId = service.startJob(makeParams());
+    const { jobId } = service.startJob(makeParams());
     await flush();
 
     const job = service.getJob(jobId);
@@ -251,7 +262,7 @@ describe('BundleJobService', () => {
   it('uses a fallback message when the rejection is not an Error', async () => {
     mockGenerateBundle.mockRejectedValue('boom');
 
-    const jobId = service.startJob(makeParams());
+    const { jobId } = service.startJob(makeParams());
     await flush();
 
     expect(service.getJob(jobId)?.error).toBe('An unexpected error occurred');
@@ -259,7 +270,7 @@ describe('BundleJobService', () => {
 
   it('keeps the failed job DTO JSON key order', async () => {
     mockGenerateBundle.mockRejectedValue(new Error('disk full'));
-    const jobId = service.startJob(makeParams());
+    const { jobId } = service.startJob(makeParams());
     await flush();
 
     expect(Object.keys(service.getJob(jobId) ?? {})).toEqual([
@@ -284,8 +295,8 @@ describe('BundleJobService', () => {
       )
       .mockResolvedValueOnce(makeResult({ bundleKey: 'second' }));
 
-    const firstId = service.startJob(makeParams('first'));
-    const secondId = service.startJob(makeParams('second'));
+    const { jobId: firstId } = service.startJob(makeParams('first'));
+    const { jobId: secondId } = service.startJob(makeParams('second'));
     await flush();
 
     expect(mockGenerateBundle).toHaveBeenCalledTimes(1);
@@ -303,8 +314,8 @@ describe('BundleJobService', () => {
   it('keeps running the queue after a failed job', async () => {
     mockGenerateBundle.mockRejectedValueOnce(new Error('first failed')).mockResolvedValueOnce(makeResult());
 
-    const firstId = service.startJob(makeParams('first'));
-    const secondId = service.startJob(makeParams('second'));
+    const { jobId: firstId } = service.startJob(makeParams('first'));
+    const { jobId: secondId } = service.startJob(makeParams('second'));
     await flush();
 
     expect(service.getJob(firstId)?.status).toBe('failed');
@@ -323,22 +334,22 @@ describe('BundleJobService', () => {
     it('evicts finished jobs older than the retention window on the next startJob', async () => {
       mockGenerateBundle.mockResolvedValue(makeResult());
 
-      const oldId = service.startJob(makeParams());
+      const { jobId: oldId } = service.startJob(makeParams());
       await jest.advanceTimersByTimeAsync(0);
       expect(service.getJob(oldId)?.status).toBe('completed');
 
       jest.advanceTimersByTime(JOB_RETENTION_MS + 1000);
 
-      const newId = service.startJob(makeParams());
+      const { jobId: newId } = service.startJob(makeParams());
 
-      expect(service.getJob(oldId)).toBeUndefined();
+      expect(() => service.getJob(oldId)).toThrow(JobNotFoundError);
       expect(service.getJob(newId)).toBeDefined();
     });
 
     it('keeps recently finished jobs', async () => {
       mockGenerateBundle.mockResolvedValue(makeResult());
 
-      const recentId = service.startJob(makeParams());
+      const { jobId: recentId } = service.startJob(makeParams());
       await jest.advanceTimersByTimeAsync(0);
 
       jest.advanceTimersByTime(JOB_RETENTION_MS - 1000);
@@ -350,7 +361,7 @@ describe('BundleJobService', () => {
     it('never evicts a job that has not finished', async () => {
       mockGenerateBundle.mockReturnValue(new Promise(() => {}));
 
-      const stuckId = service.startJob(makeParams());
+      const { jobId: stuckId } = service.startJob(makeParams());
       await jest.advanceTimersByTimeAsync(0);
 
       jest.advanceTimersByTime(JOB_RETENTION_MS * 2);
@@ -364,15 +375,15 @@ describe('BundleJobService', () => {
 
       const ids: string[] = [];
       for (let index = 0; index < MAX_RETAINED_JOBS; index++) {
-        ids.push(service.startJob(makeParams()));
+        ids.push(service.startJob(makeParams()).jobId);
         await jest.advanceTimersByTimeAsync(1);
       }
 
       expect(ids.every((id) => service.getJob(id)?.status === 'completed')).toBe(true);
 
-      const extraId = service.startJob(makeParams());
+      const { jobId: extraId } = service.startJob(makeParams());
 
-      expect(service.getJob(ids[0])).toBeUndefined();
+      expect(() => service.getJob(ids[0])).toThrow(JobNotFoundError);
       expect(service.getJob(ids[1])).toBeDefined();
       expect(service.getJob(extraId)).toBeDefined();
     });

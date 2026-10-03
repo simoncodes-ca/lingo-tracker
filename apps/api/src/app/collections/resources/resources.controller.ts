@@ -1,11 +1,21 @@
-import { Controller, Delete, Get, HttpStatus, NotFoundException, Param, Patch, Post, Res } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+  Res,
+} from '@nestjs/common';
 import {
   addResources,
   assertCanTranslateLocale,
   type Collection,
   deleteResource,
   editResource,
-  type MoveResourcesOperation,
   moveResources,
   translateExistingResource,
 } from '@simoncodes-ca/core';
@@ -41,20 +51,20 @@ import {
 import { mapGetTreeResultToDto } from '../../mappers/resource-tree.mapper';
 import { blankSearchResults, mapSearchPageToDto, searchRequestFromQuery } from '../../mappers/search-result.mapper';
 import { TranslationJobService } from '../../translation-job/translation-job.service';
-import { RouteCollection } from '../route-collection';
 import {
-  searchQuery,
-  treeQuery,
-  type SearchQuery,
-  type TreeQuery,
-  translateResourceBody,
   createResourcesBody,
   deleteResourcesBody,
   moveResourcesBody,
-  updateResourceBody,
+  type SearchQuery,
+  searchQuery,
+  type TreeQuery,
   translateLocaleBody,
+  translateResourceBody,
+  treeQuery,
+  updateResourceBody,
 } from '../../validation/dto-schemas';
 import { ValidBody, ValidQuery } from '../../validation/valid-body';
+import { RouteCollection } from '../route-collection';
 
 @Controller('collections/:collectionName/resources')
 export class ResourcesController {
@@ -73,7 +83,7 @@ export class ResourcesController {
     @RouteCollection() collection: Collection,
     @ValidBody(translateResourceBody) dto: TranslateResourceDto,
   ): Promise<TranslateResourceResponseDto> {
-    const result = await translateExistingResource(collection, dto.key, { onMutation: this.#index.sink });
+    const result = await translateExistingResource(collection, dto.key);
 
     return mapTranslateResourceResultToDto(result, dto.key, collection);
   }
@@ -86,18 +96,7 @@ export class ResourcesController {
     // Normalize to array
     const resources = Array.isArray(body) ? body : [body];
 
-    const result = await addResources(
-      collection,
-      resources.map((resource) => ({
-        key: resource.key,
-        baseValue: resource.baseValue,
-        comment: resource.comment,
-        tags: resource.tags,
-        targetFolder: resource.targetFolder,
-        translations: resource.translations,
-      })),
-      { onExisting: 'fail', onMutation: this.#index.sink },
-    );
+    const result = await addResources(collection, resources, { onExisting: 'fail' });
     return mapCreateResourcesResultToDto(result);
   }
 
@@ -106,7 +105,7 @@ export class ResourcesController {
     @RouteCollection() collection: Collection,
     @ValidBody(deleteResourcesBody) dto: DeleteResourceDto,
   ): Promise<DeleteResourceResponseDto> {
-    const result = deleteResource(collection, { keys: dto.keys }, { onMutation: this.#index.sink });
+    const result = deleteResource(collection, dto);
 
     return mapDeleteResourceResultToDto(result);
   }
@@ -119,13 +118,7 @@ export class ResourcesController {
     // Cross-collection moves need the config to resolve destination collections.
     const config = this.#configService.getConfig();
 
-    const moves: MoveResourcesOperation[] = dto.moves.map((op) => ({
-      source: op.source,
-      destination: op.destination,
-      override: op.override,
-      ...(op.toCollection && { toCollection: op.toCollection }),
-    }));
-    const result = await moveResources(collection, moves, { config, onMutation: this.#index.sink });
+    const result = await moveResources(collection, dto.moves, { config });
     return mapMoveResourcesResultToDto(result);
   }
 
@@ -134,18 +127,13 @@ export class ResourcesController {
     @RouteCollection() collection: Collection,
     @ValidBody(updateResourceBody) dto: UpdateResourceDto,
   ): Promise<UpdateResourceResponseDto> {
-    const result = await editResource(
-      collection,
-      dto.key,
-      {
-        baseValue: dto.baseValue,
-        comment: dto.comment,
-        tags: dto.tags,
-        translations: dto.locales,
-        moveTo: dto.moveTo,
-      },
-      { onMutation: this.#index.sink },
-    );
+    const result = await editResource(collection, dto.key, {
+      baseValue: dto.baseValue,
+      comment: dto.comment,
+      tags: dto.tags,
+      translations: dto.locales,
+      moveTo: dto.moveTo,
+    });
     return mapUpdateResourceResultToDto(result, collection);
   }
 
@@ -190,17 +178,14 @@ export class ResourcesController {
   }
 
   @Post('translate-locale')
+  @HttpCode(HttpStatus.ACCEPTED)
   async translateLocale(
     @RouteCollection() collection: Collection,
     @ValidBody(translateLocaleBody) dto: TranslateLocaleRequestDto,
-    @Res() response: Response,
-  ): Promise<void> {
+  ): Promise<TranslateLocaleJobDto> {
     assertCanTranslateLocale(collection, dto.locale);
 
-    const jobId = this.#translationJobService.startJob(collection, dto.locale);
-
-    const job = this.#translationJobService.getJob(jobId);
-    response.status(HttpStatus.ACCEPTED).json(job);
+    return this.#translationJobService.startJob(collection, dto.locale);
   }
 
   @Get('translate-locale/:jobId')
@@ -208,16 +193,6 @@ export class ResourcesController {
     @Param('collectionName') collectionName: string,
     @Param('jobId') jobId: string,
   ): Promise<TranslateLocaleJobDto> {
-    const job = this.#translationJobService.getJob(jobId);
-
-    if (job === undefined) {
-      throw new NotFoundException(`Translation job "${jobId}" not found`);
-    }
-
-    if (job.collectionName !== collectionName) {
-      throw new NotFoundException(`Translation job "${jobId}" not found`);
-    }
-
-    return job;
+    return this.#translationJobService.getJob(jobId, collectionName);
   }
 }

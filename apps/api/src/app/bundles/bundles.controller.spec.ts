@@ -1,17 +1,18 @@
-import { HttpStatus, NotFoundException } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
+import { HTTP_CODE_METADATA } from '@nestjs/common/constants';
 import { Test, type TestingModule } from '@nestjs/testing';
 import type { BundlePlan, LingoTrackerConfig } from '@simoncodes-ca/core';
 import * as core from '@simoncodes-ca/core';
 import type { BundleDefinitionDto } from '@simoncodes-ca/data-transfer';
 import type { BundleDefinition } from '@simoncodes-ca/domain';
-import type { Response } from 'express';
 import { ConfigService } from '../config/config.service';
 import { toHttpException } from '../errors/lingo-tracker-exception.filter';
+import { JobNotFoundError } from '../jobs/job-not-found.error';
+import { bundleDryRunBody, createBundleBody, createCollectionBody, updateBundleBody } from '../validation/dto-schemas';
+import { exactMessage } from '../validation/exact-message.test-support';
+import { SchemaPipe } from '../validation/valid-body';
 import { BundleJobService } from './bundle-job.service';
 import { BundlesController } from './bundles.controller';
-import { bundleDryRunBody, createBundleBody, createCollectionBody, updateBundleBody } from '../validation/dto-schemas';
-import { SchemaPipe } from '../validation/valid-body';
-import { exactMessage } from '../validation/exact-message.test-support';
 
 jest.mock('@simoncodes-ca/core', () => ({
   ...jest.requireActual('@simoncodes-ca/core'),
@@ -75,12 +76,6 @@ const answerOf = (fn: () => unknown): { status: number; body: unknown } => {
 };
 
 const statusOf = (fn: () => unknown): number => answerOf(fn).status;
-
-const makeResponse = (): { response: Response; status: jest.Mock; json: jest.Mock } => {
-  const json = jest.fn();
-  const status = jest.fn(() => ({ json }));
-  return { response: { status } as unknown as Response, status, json };
-};
 
 describe('BundlesController', () => {
   let moduleRef: TestingModule;
@@ -422,78 +417,69 @@ describe('BundlesController', () => {
         projectRoot: '/opened/project',
         sourceConfig: withDeletedCollection,
       });
-      jobService.startJob.mockReturnValue('job-1');
-      jobService.getJob.mockReturnValue({ jobId: 'job-1', status: 'pending' });
-      const { response, status } = makeResponse();
+      const snapshot = { jobId: 'job-1', status: 'pending' };
+      jobService.startJob.mockReturnValue(snapshot);
 
-      controller.generateBundle('tracker', {}, response);
+      expect(controller.generateBundle('tracker', {})).toBe(snapshot);
 
       expect(jobService.startJob).toHaveBeenCalledWith({
         bundleName: 'tracker',
         project: { projectRoot: '/opened/project', sourceConfig: withDeletedCollection },
       });
-      expect(status).toHaveBeenCalledWith(HttpStatus.ACCEPTED);
+      expect(Reflect.getMetadata(HTTP_CODE_METADATA, controller.generateBundle)).toBe(HttpStatus.ACCEPTED);
     });
 
     it('starts a job and answers 202 with its snapshot', () => {
       const snapshot = { jobId: 'job-1', bundleName: 'tracker', status: 'pending', progress: { current: 0, total: 0 } };
-      jobService.startJob.mockReturnValue('job-1');
-      jobService.getJob.mockReturnValue(snapshot);
-      const { response, status, json } = makeResponse();
+      jobService.startJob.mockReturnValue(snapshot);
 
-      controller.generateBundle('tracker', { locales: ['fr-ca'] }, response);
+      const result = controller.generateBundle('tracker', { locales: ['fr-ca'] });
 
       expect(jobService.startJob).toHaveBeenCalledWith({
         bundleName: 'tracker',
         project: { projectRoot: '/opened/project', sourceConfig: config },
         locales: ['fr-ca'],
       });
-      expect(status).toHaveBeenCalledWith(HttpStatus.ACCEPTED);
-      expect(json).toHaveBeenCalledWith(snapshot);
+      expect(Reflect.getMetadata(HTTP_CODE_METADATA, controller.generateBundle)).toBe(HttpStatus.ACCEPTED);
+      expect(result).toBe(snapshot);
+      expect(jobService.getJob).not.toHaveBeenCalled();
     });
 
     it('tolerates an empty body', () => {
-      jobService.startJob.mockReturnValue('job-2');
-      jobService.getJob.mockReturnValue({});
-      const { response, status } = makeResponse();
+      const snapshot = { jobId: 'job-2', status: 'pending' };
+      jobService.startJob.mockReturnValue(snapshot);
 
-      controller.generateBundle('tracker', undefined as never, response);
+      expect(controller.generateBundle('tracker', undefined)).toBe(snapshot);
 
       expect(jobService.startJob).toHaveBeenCalledWith({
         bundleName: 'tracker',
         project: { projectRoot: '/opened/project', sourceConfig: config },
       });
-      expect(status).toHaveBeenCalledWith(HttpStatus.ACCEPTED);
+      expect(Reflect.getMetadata(HTTP_CODE_METADATA, controller.generateBundle)).toBe(HttpStatus.ACCEPTED);
     });
 
     it('returns 404 for an unknown bundle', () => {
-      const { response } = makeResponse();
-
       jobService.startJob.mockImplementation(() => {
         throw new core.BundleNotFoundError('missing');
       });
-      expect(() => controller.generateBundle('missing', {}, response)).toThrow(core.BundleNotFoundError);
-      expect(statusOf(() => controller.generateBundle('missing', {}, response))).toBe(HttpStatus.NOT_FOUND);
+      expect(() => controller.generateBundle('missing', {})).toThrow(core.BundleNotFoundError);
+      expect(statusOf(() => controller.generateBundle('missing', {}))).toBe(HttpStatus.NOT_FOUND);
       expect(jobService.startJob).toHaveBeenCalled();
     });
 
     it('returns 404 for a name that only exists on Object.prototype', () => {
-      const { response } = makeResponse();
-
       jobService.startJob.mockImplementation(() => {
         throw new core.BundleNotFoundError('constructor');
       });
-      expect(statusOf(() => controller.generateBundle('constructor', {}, response))).toBe(HttpStatus.NOT_FOUND);
+      expect(statusOf(() => controller.generateBundle('constructor', {}))).toBe(HttpStatus.NOT_FOUND);
       expect(jobService.startJob).toHaveBeenCalled();
     });
 
     it('returns 400 for a locale outside the project locales', () => {
-      const { response } = makeResponse();
-
       jobService.startJob.mockImplementation(() => {
         throw new core.InvalidBundleLocalesError('Unknown locale "xx": must be defined in the project locales');
       });
-      expect(statusOf(() => controller.generateBundle('tracker', { locales: ['en', 'xx'] }, response))).toBe(
+      expect(statusOf(() => controller.generateBundle('tracker', { locales: ['en', 'xx'] }))).toBe(
         HttpStatus.BAD_REQUEST,
       );
       expect(jobService.startJob).toHaveBeenCalled();
@@ -514,9 +500,15 @@ describe('BundlesController', () => {
     });
 
     it('returns 404 for an unknown job', () => {
-      jobService.getJob.mockReturnValue(undefined);
+      jobService.getJob.mockImplementation(() => {
+        throw new JobNotFoundError('nope', 'Bundle');
+      });
 
-      expect(() => controller.getJob('nope')).toThrow(NotFoundException);
+      expect(() => controller.getJob('nope')).toThrow(JobNotFoundError);
+      expect(answerOf(() => controller.getJob('nope'))).toEqual({
+        status: 404,
+        body: { statusCode: 404, message: 'Bundle job "nope" not found', error: 'Not Found' },
+      });
     });
   });
 });

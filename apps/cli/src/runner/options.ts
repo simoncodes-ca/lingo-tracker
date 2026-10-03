@@ -1,5 +1,5 @@
 import { type Command, Option } from 'commander';
-import { parseCommaSeparatedList } from '../utils';
+import { type ExplicitEmptyList, parseCommaSeparatedList } from '../utils';
 
 /** One Commander option registration. Each command gets its own Option instance. */
 export type OptionDefinition = (command: Command) => void;
@@ -91,7 +91,7 @@ export function resourceFieldOptions(mode: 'add' | 'edit'): readonly OptionDefin
       option({ flags: '--key <key>', description: 'Resource key (dot-delimited, e.g., apps.common.buttons.ok)' }),
       option({ flags: '--value <value>', description: 'Base value (source text)' }),
       option({ flags: '--comment <comment>', description: 'Optional context for translators' }),
-      option({ flags: '--tags <tags>', description: 'Optional tags (comma-separated)' }),
+      commaListOption({ flags: '--tags <tags>', description: 'Optional tags (comma-separated)' }),
       option({ flags: '--target-folder <folder>', description: 'Optional target folder (dot-delimited)' }),
     ];
   }
@@ -99,7 +99,7 @@ export function resourceFieldOptions(mode: 'add' | 'edit'): readonly OptionDefin
     option({ flags: '--key <key>', description: 'Resource key (dot-delimited)' }),
     option({ flags: '--base-value <value>', description: 'New base value (source text)' }),
     option({ flags: '--comment <comment>', description: 'New comment' }),
-    option({ flags: '--tags <tags>', description: 'New tags (comma-separated)' }),
+    commaListOption({ flags: '--tags <tags>', description: 'New tags (comma-separated)' }),
     option({
       flags: '--target-folder <folder>',
       description: 'Move the resource into this folder (dot-delimited; "" for the collection root)',
@@ -107,18 +107,21 @@ export function resourceFieldOptions(mode: 'add' | 'edit'): readonly OptionDefin
   ];
 }
 
-export function parseValidateOptions(options: {
-  allowTranslated: boolean;
-  skipLocales?: string;
-  skipIcu: boolean;
-  skipPlaceholders: boolean;
-  requirePortablePlurals: boolean;
-}) {
-  return {
-    allowTranslated: options.allowTranslated,
-    skipLocales: parseCommaSeparatedList(options.skipLocales) ?? [],
-    skipIcu: options.skipIcu,
-    skipPlaceholders: options.skipPlaceholders,
-    requirePortablePlurals: options.requirePortablePlurals,
-  };
+/** Only raw empty optional flags are omitted; other empty lists retain the supplied-flag gates. */
+export function commaListOption(
+  spec: Omit<OptionSpec<string[]>, 'parse' | 'defaultValue'> & {
+    readonly empty?: 'clear' | 'preserve';
+  },
+): OptionDefinition {
+  const { empty, ...optionSpec } = spec;
+  return option<string[] | ExplicitEmptyList | undefined>({
+    ...optionSpec,
+    parse: (value) => {
+      const items = parseCommaSeparatedList(value);
+      if (items !== undefined) return items;
+      if (empty === 'clear') return [];
+      if (empty === 'preserve') return { kind: 'empty', input: value };
+      return value === '' ? undefined : [];
+    },
+  });
 }

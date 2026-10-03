@@ -12,6 +12,7 @@ import {
   openCollection,
   ReadOnlyCollectionError,
 } from '@simoncodes-ca/core';
+import { CollectionIndex } from '../cache/collection-index.service';
 import { ConfigService } from '../config/config.service';
 
 export interface RouteCollectionOptions {
@@ -40,13 +41,19 @@ export const RouteCollection = (options: RouteCollectionOptions = {}) =>
 export class RouteCollectionPipe implements PipeTransform<RouteCollectionRef, OpenedCollection> {
   readonly #configService: ConfigService;
 
-  constructor(configService: ConfigService) {
+  constructor(
+    configService: ConfigService,
+    private readonly index: CollectionIndex,
+  ) {
     this.#configService = configService;
   }
 
   transform({ name, writable }: RouteCollectionRef): OpenedCollection {
     try {
-      return openCollection(this.#configService.getConfig(), name, { writable });
+      return openCollection(this.#configService.getConfig(), name, {
+        writable,
+        onMutation: writable ? this.index.sink : undefined,
+      });
     } catch (error) {
       // Route pipes also run in modules without the app-level exception filter.
       if (error instanceof CollectionNotFoundError) throw new NotFoundException(`Collection "${name}" not found`);

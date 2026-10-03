@@ -11,8 +11,9 @@ import {
 } from '@simoncodes-ca/core';
 import prompts from 'prompts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type CollectionNeed, CommandCancelledError, type CommandSpec, defineCommand } from './command-runner';
 import { parseListSelection } from '../utils/prompt-utils';
+import { CommandCancelledError } from './command-cancelled-error';
+import { type CollectionNeed, type CommandSpec, defineCommand } from './command-runner';
 import { isInteractiveTerminal } from './terminal';
 
 vi.mock('prompts');

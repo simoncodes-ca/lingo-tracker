@@ -1,6 +1,6 @@
 import { type EditResourceChanges, editResource } from '@simoncodes-ca/core';
 import { defineCommand } from '../runner/command-runner';
-import { ConsoleFormatter, parseCommaSeparatedList, printTerminologyFindings } from '../utils';
+import { ConsoleFormatter, missingTextQuestions, printTerminologyFindings } from '../utils';
 
 export interface EditResourceOptions {
   collection?: string;
@@ -8,7 +8,7 @@ export interface EditResourceOptions {
   targetFolder?: string;
   baseValue?: string;
   comment?: string;
-  tags?: string; // Comma separated
+  tags?: string[];
   locale?: string;
   localeValue?: string;
 }
@@ -16,21 +16,11 @@ export interface EditResourceOptions {
 export const editResourceCommand = defineCommand<EditResourceOptions>()({
   name: 'Edit resource',
   collection: 'writable',
-  prompts: (options) => [
-    ...(options.key
-      ? []
-      : [
-          {
-            type: 'text' as const,
-            name: 'key',
-            message: 'Resource key',
-            validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
-          },
-        ]),
-    ...(options.baseValue
-      ? []
-      : [{ type: 'text' as const, name: 'baseValue', message: 'New base value (leave empty to keep current)' }]),
-  ],
+  prompts: (options) =>
+    missingTextQuestions(options, [
+      { name: 'key', message: 'Resource key', required: true },
+      { name: 'baseValue', message: 'New base value (leave empty to keep current)' },
+    ]),
   required: ['key'],
   run: async ({ collection, answers }) => {
     const translations =
@@ -42,7 +32,7 @@ export const editResourceCommand = defineCommand<EditResourceOptions>()({
     const changes: EditResourceChanges = {
       baseValue: answers.baseValue || undefined,
       comment: answers.comment || undefined,
-      tags: answers.tags ? parseCommaSeparatedList(answers.tags) : undefined,
+      tags: answers.tags?.length ? answers.tags : undefined,
       translations,
       // `--target-folder` names the folder the entry moves to ('' for the collection root).
       moveTo: answers.targetFolder,

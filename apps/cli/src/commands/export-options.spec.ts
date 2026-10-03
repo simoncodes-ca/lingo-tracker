@@ -87,8 +87,8 @@ describe('export Run Options Resolution', () => {
         includeBase: false,
         locales: ['fr'],
         statusFilter: ['verified'],
-        locale: 'de',
-        status: 'new',
+        locale: ['de'],
+        status: ['new'],
         basePropertyName: 'source',
       },
     },
@@ -113,8 +113,8 @@ describe('export Run Options Resolution', () => {
       expected: {},
       answers: {
         locales: ['fr'],
-        locale: '',
-        tags: '',
+        locale: [],
+        tags: [],
         output: '',
         filename: '',
         basePropertyName: '',
@@ -136,9 +136,9 @@ describe('export Run Options Resolution', () => {
         includeTags: true,
       },
       answers: {
-        locale: ' fr, de ',
-        tags: ' ui, ,app ',
-        status: ' verified, translated ',
+        locale: ['fr', 'de'],
+        tags: ['ui', 'app'],
+        status: ['verified', 'translated'],
         output: 'out',
         filename: '{locale}',
         dryRun: true,
@@ -156,10 +156,10 @@ describe('export Run Options Resolution', () => {
         basePropertyName: 'source',
       },
       answers: {
-        status: ' , ',
+        status: [],
         basePropertyName: 'source',
       },
-      error: 'Invalid --status " , ". Valid statuses: new, translated, stale, verified',
+      error: 'Invalid --status "". Valid statuses: new, translated, stale, verified',
     },
     {
       label: 'hidden JSON switches retain defaults for XLIFF',
@@ -285,11 +285,11 @@ describe('export Run Options Resolution', () => {
   const emptySelections = [
     { answers: { collections: [], locales: [], statusFilter: [] }, message: 'Select at least one collection.' },
     {
-      answers: { collection: 'missing', locales: [], statusFilter: [] },
+      answers: { collection: ['missing'], locales: [], statusFilter: [] },
       message: 'Select at least one target locale.',
     },
     {
-      answers: { collection: 'missing', locale: 'fr', statusFilter: [] },
+      answers: { collection: ['missing'], locale: ['fr'], statusFilter: [] },
       message: 'Select at least one translation status.',
     },
   ];
@@ -298,7 +298,7 @@ describe('export Run Options Resolution', () => {
   }
 
   it('resolves collection flags and all answers with Selection', () => {
-    expect(exportSelection({ collection: 'main', collections: ['__ALL__'] })).toEqual({
+    expect(exportSelection({ collection: ['main'], collections: ['__ALL__'] })).toEqual({
       kind: 'some',
       names: ['main'],
     });
@@ -307,19 +307,19 @@ describe('export Run Options Resolution', () => {
 
   for (const status of ['', ' , ']) {
     it(`rejects the empty status shape for ${JSON.stringify(status)}`, () => {
-      expect(() => resolveExportOptions({ status })).toThrow(
+      expect(() => resolveExportOptions({ status: { kind: 'empty', input: status } })).toThrow(
         `Invalid --status "${status}". Valid statuses: new, translated, stale, verified`,
       );
     });
   }
   it('preserves empty-status precedence over an invalid base property', () => {
-    expect(() => resolveExportOptions({ status: '', basePropertyName: 'status' })).toThrow(
+    expect(() => resolveExportOptions({ status: [], basePropertyName: 'status' })).toThrow(
       'Invalid --status "". Valid statuses: new, translated, stale, verified',
     );
   });
 
   it('leaves unknown statuses to core and unrelated errors to the runner', () => {
-    expect(resolveExportOptions({ status: 'new,verifed' }).options.status).toEqual(['new', 'verifed']);
+    expect(resolveExportOptions({ status: ['new', 'verifed'] }).options.status).toEqual(['new', 'verifed']);
     // Resolution has no error-formatting surface; command specs cover unrelated failures.
   });
 

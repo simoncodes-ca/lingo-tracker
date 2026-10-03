@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpStatus, NotFoundException, Param, Post, Put, Res } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
 import { addBundleDefinition, deleteBundleDefinition, planBundle, updateBundleDefinition } from '@simoncodes-ca/core';
 import type {
   BundleDryRunRequestDto,
@@ -8,12 +8,11 @@ import type {
   GenerateBundleRequestDto,
   UpdateBundleDto,
 } from '@simoncodes-ca/data-transfer';
-import type { Response } from 'express';
 import { ConfigService } from '../config/config.service';
 import { mapBundlePlanToDto } from '../mappers/bundle.mapper';
-import { BundleJobService } from './bundle-job.service';
-import { bundleDryRunBody, createBundleBody, updateBundleBody, generateBundleBody } from '../validation/dto-schemas';
+import { bundleDryRunBody, createBundleBody, generateBundleBody, updateBundleBody } from '../validation/dto-schemas';
 import { ValidBody } from '../validation/valid-body';
+import { BundleJobService } from './bundle-job.service';
 
 /**
  * Bundle definitions are checked by the domain Bundle Definition rules: core's add/update
@@ -48,13 +47,7 @@ export class BundlesController {
 
   @Get('jobs/:jobId')
   getJob(@Param('jobId') jobId: string): BundleGenerateJobDto {
-    const job = this.#jobService.getJob(jobId);
-
-    if (job === undefined) {
-      throw new NotFoundException(`Bundle job "${jobId}" not found`);
-    }
-
-    return job;
+    return this.#jobService.getJob(jobId);
   }
 
   @Post()
@@ -81,20 +74,17 @@ export class BundlesController {
 
   /** Starts a generation job for a saved bundle and answers 202 with the job snapshot. */
   @Post(':name/generate')
+  @HttpCode(HttpStatus.ACCEPTED)
   generateBundle(
     @Param('name') name: string,
     @ValidBody(generateBundleBody) body: GenerateBundleRequestDto | undefined,
-    @Res() response: Response,
-  ): void {
+  ): BundleGenerateJobDto {
     const project = this.#configService.openProject();
 
-    const jobId = this.#jobService.startJob({
+    return this.#jobService.startJob({
       bundleName: name,
       project,
       ...(body?.locales && { locales: body.locales }),
     });
-
-    const job = this.#jobService.getJob(jobId);
-    response.status(HttpStatus.ACCEPTED).json(job);
   }
 }

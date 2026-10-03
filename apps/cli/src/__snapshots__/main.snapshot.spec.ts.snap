@@ -100,7 +100,9 @@ Options:
 ",
     "options": {
       "debugKeys": "99",
-      "name": "app",
+      "name": [
+        "app",
+      ],
       "tokenCasing": "upperCase",
       "transformIcuToTransloco": false,
     },
@@ -134,7 +136,9 @@ Options:
 ",
     "options": {
       "collection": "app",
-      "key": "a.b",
+      "key": [
+        "a.b",
+      ],
       "yes": true,
     },
   },
@@ -222,7 +226,9 @@ Options:
   -h, --help                   display help for command
 ",
     "options": {
-      "collection": "app",
+      "collection": [
+        "app",
+      ],
       "dryRun": false,
       "format": "json",
       "includeBase": true,
@@ -410,6 +416,7 @@ Options:
   --all                Normalize all collections
   --dry-run            Preview changes without applying them
   --json               Output results as JSON
+  --yes                Skip confirmation prompt
   -h, --help           display help for command
 ",
     "options": {
@@ -582,7 +589,10 @@ Options:
       "allowTranslated": true,
       "requirePortablePlurals": true,
       "skipIcu": true,
-      "skipLocales": "fr,de",
+      "skipLocales": [
+        "fr",
+        "de",
+      ],
       "skipPlaceholders": false,
     },
   },
