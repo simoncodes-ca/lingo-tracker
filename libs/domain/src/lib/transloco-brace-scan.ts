@@ -29,7 +29,7 @@
  * @module transloco-brace-scan
  */
 
-import { isQuoteToggle } from './icu-auto-fixer';
+import { scanIcuQuotes } from './icu-quotes';
 import { isSubMessageKeyword, SUB_MESSAGE_KEYWORDS, type SubMessageKeyword } from './icu-sub-message';
 
 /**
@@ -229,7 +229,7 @@ function scanIcuBraces(
 ): ScanResult {
   const openBraces: OpenBrace[] = [];
   let text = '';
-  let inEscapedSection = false;
+  const { quoted } = scanIcuQuotes(value);
   let i = 0;
 
   while (i < value.length) {
@@ -245,10 +245,6 @@ function scanIcuBraces(
         continue;
       }
 
-      if (isQuoteToggle(value, i, inEscapedSection)) {
-        inEscapedSection = !inEscapedSection;
-      }
-
       if (collectText) {
         text += char;
       }
@@ -257,7 +253,7 @@ function scanIcuBraces(
     }
 
     // Braces inside a quoted section are literal text and change no scanner state
-    if (inEscapedSection) {
+    if (quoted[i]) {
       if (collectText) {
         text += char;
       }

@@ -8,6 +8,7 @@
     { "path": "./libs/core/tsconfig.json" },
     { "path": "./docs-site/tsconfig.json" },
     { "path": "./apps/api/tsconfig.json" },
-    { "path": "./apps/cli/tsconfig.json" }
+    { "path": "./apps/cli/tsconfig.json" },
+    { "path": "./apps/cli-e2e/tsconfig.json" }
   ]
 }

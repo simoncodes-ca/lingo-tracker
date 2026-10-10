@@ -34,3 +34,4 @@ export * from './lib/create-bundle.dto';
 export * from './lib/update-bundle.dto';
 export * from './lib/bundle-dry-run.dto';
 export * from './lib/bundle-generate-job.dto';
+export * from './lib/api-routes';

@@ -44,6 +44,7 @@ export {
   autoFixICUPlaceholders,
   autoFixTranslocoPlaceholders,
   hasICUPlaceholders,
+  hasQuotedInterpolationDelimiter,
   hasTranslocoPlaceholders,
   type ICUAutoFixResult,
   validateICUSyntax,

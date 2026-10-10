@@ -745,3 +745,16 @@ describe('expandPlaceholderOnlyBranchBodies', () => {
     }
   });
 });
+
+describe('context-aware apostrophes', () => {
+  it('converts interpolation after # or | only when it is outside an ICU quote', () => {
+    for (const marker of ['#', '|']) {
+      const body = `'${marker}' {{ x }}`;
+      expect(convertTranslocoPlaceholders(body)).toBe(`'${marker}' {x}`);
+      expect(convertTranslocoPlaceholders(`{s, select, other {${body}}}`)).toBe(`{s, select, other {'${marker}' {x}}}`);
+      expect(convertTranslocoPlaceholders(`{n, plural, other {${body}}}`)).toBe(`{n, plural, other {'${marker}' {x}}}`);
+    }
+    expect(convertTranslocoPlaceholders("'|'{{ x }}'")).toBe("'|'{{ x }}'");
+    expect(convertTranslocoPlaceholders("'#'{{ x }}'")).toBe("'#'{x}'");
+  });
+});

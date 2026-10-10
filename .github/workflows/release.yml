@@ -75,6 +75,9 @@ jobs:
       - name: Test
         run: pnpm run test
 
+      - name: CLI smoke tests
+        run: pnpm nx run cli-e2e:e2e
+
       - name: Release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}

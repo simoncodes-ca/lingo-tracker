@@ -58,6 +58,7 @@ describe('domain public surface', () => {
       'hasBundleRules',
       'hasICUPlaceholders',
       'hasLocalePlaceholder',
+      'hasQuotedInterpolationDelimiter',
       'hasTranslocoPlaceholders',
       'hasTypeDistConfigured',
       'hasUnbundlableBranchBody',

@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { icuToTransloco, unescapeIcuLiterals } from './icu-to-transloco';
+import MessageFormat from '@messageformat/core';
+import { extractICUPlaceholders, hasICUPlaceholders, scanIcuQuotes, validateICUSyntax } from './icu-auto-fixer';
+import { icuToTransloco } from './icu-to-transloco';
+
+function renderBothPasses(message: string, params: Record<string, string | number>): string {
+  let interpolated = icuToTransloco(message);
+  // As in transloco-runtime-round-trip.spec.ts, rescan after each substitution.
+  // Generated parameter values contain no interpolation delimiters, so this loop converges.
+  let match = /\{\{([^{}]*?)\}\}/.exec(interpolated);
+  while (match !== null) {
+    const name = match[1].trim();
+    interpolated = interpolated.replace(match[0], () => String(params[name] ?? ''));
+    match = /\{\{([^{}]*?)\}\}/.exec(interpolated);
+  }
+  return new MessageFormat('en').compile(interpolated)(params);
+}
 
 describe('icuToTransloco', () => {
   describe('values without placeholders', () => {
@@ -178,14 +193,14 @@ describe('icuToTransloco', () => {
       expect(icuToTransloco("don't have {count} items")).toBe("don't have {{ count }} items");
     });
 
-    it('unescapes a fully-quoted brace literal end to end, so the quotes never reach the bundle', () => {
-      // '{'literal'}' has no real ICU placeholders; should unescape to {literal}
-      expect(icuToTransloco("'{'literal'}'")).toBe('{literal}');
+    it('preserves a fully-quoted brace literal for MessageFormat', () => {
+      // '{'literal'}' has no real ICU placeholders; MessageFormat still needs its quotes.
+      expect(icuToTransloco("'{'literal'}'")).toBe("'{'literal'}'");
     });
 
-    it('unescapes quoted braces in text and converts the real placeholder', () => {
-      // Use '{'name'}' as {realKey} \u2192 Use {name} as {{ realKey }}
-      expect(icuToTransloco("Use '{'name'}' as {realKey}")).toBe('Use {name} as {{ realKey }}');
+    it('preserves quoted braces in text and converts the real placeholder', () => {
+      // Use '{'name'}' as {realKey} → Use '{'name'}' as {{ realKey }}
+      expect(icuToTransloco("Use '{'name'}' as {realKey}")).toBe("Use '{'name'}' as {{ realKey }}");
     });
 
     it('converts a double-apostrophe literal to a single apostrophe and converts the placeholder', () => {
@@ -194,31 +209,116 @@ describe('icuToTransloco', () => {
     });
   });
 
-  describe('unescapeIcuLiterals', () => {
-    it('passes through plain text unchanged', () => {
-      expect(unescapeIcuLiterals('hello world')).toBe('hello world');
-    });
-
-    it('keeps a natural apostrophe as-is', () => {
-      expect(unescapeIcuLiterals("don't")).toBe("don't");
-    });
-
-    it('converts a double-apostrophe to a single apostrophe', () => {
-      expect(unescapeIcuLiterals("it''s")).toBe("it's");
-    });
-
-    it('strips ICU quotes around a brace literal', () => {
-      expect(unescapeIcuLiterals("'{'literal'}'")).toBe('{literal}');
-    });
-
-    it('handles mixed natural apostrophe and escaped brace', () => {
-      expect(unescapeIcuLiterals("l'objet '{'key'}'")).toBe("l'objet {key}");
-    });
-
-    it('treats double-apostrophe inside an open quoted section as a literal apostrophe without closing the section', () => {
-      // '{ opens a section; '' inside emits a literal ' and stays in the section (not closing it); } is literal
-      // Input: '{ '' } — section opens, '' → literal ', } emitted literally, section never closed
-      expect(unescapeIcuLiterals("'{''}")).toBe("{'}");
-    });
+  it('renders quoted literals and apostrophes through both runtime passes', () => {
+    const cases: { icu: string; params: Record<string, string | number>; emitted?: string }[] = [
+      { icu: "'{'literal'}'", params: {}, emitted: "'{'literal'}'" },
+      { icu: "Use '{'name'}' as {realKey}", params: { realKey: 'key' } },
+      { icu: "it''s {name}", params: { name: 'Ada' }, emitted: "it's {{ name }}" },
+      { icu: "l''{item}", params: { item: 'objet' }, emitted: "l'{{ item }}" },
+      {
+        icu: "l''{count, plural, one {# x} other {# xs}}",
+        params: { count: 2 },
+        emitted: "l''{count, plural, one {# x} other {# xs}}",
+      },
+      { icu: "'''{'", params: {}, emitted: "'''{'" },
+      { icu: "a ''''{'b'}'' c", params: {} },
+      { icu: "'''s", params: {} },
+      { icu: "{y}'''", params: { y: 'Y' } },
+      { icu: "''''|'''", params: {} },
+      { icu: "a '''{'b'}' c", params: {} },
+      { icu: "{a} '{'x'}' {b}", params: { a: 'A', b: 'B' } },
+      { icu: "don't {name}", params: { name: 'Ada' } },
+      { icu: "don't have {count} items", params: { count: 3 } },
+      { icu: 'hello world', params: {} },
+      { icu: "don't", params: {} },
+      { icu: "it''s", params: {}, emitted: "it's" },
+      { icu: "l'objet '{'key'}'", params: {} },
+      { icu: "'{''}", params: {} },
+      { icu: "l''{n, number}", params: { n: 3 } },
+      { icu: "l''{gender, select, chosen {x} other {y}}", params: { gender: 'chosen' } },
+      { icu: "l''{rank, selectordinal, one {#st} other {#th}}", params: { rank: 1 } },
+      { icu: "l''{date, date, short}", params: { date: 0 } },
+      { icu: "l''{time, time, short}", params: { time: 0 } },
+    ];
+    for (const { icu, params, emitted } of cases) {
+      if (emitted !== undefined) expect(icuToTransloco(icu)).toBe(emitted);
+      expect(renderBothPasses(icu, params)).toBe(new MessageFormat('en').compile(icu)(params));
+    }
   });
+});
+
+describe('MessageFormat quote contexts', () => {
+  it('agrees with direct rendering for # and | at top level and in branch bodies', () => {
+    const bodies = [
+      "'#'{x}",
+      "'#a''b'",
+      "'#''x'",
+      "a '#}' b",
+      "'{x}",
+      "'#' {x}",
+      "'|' {x}",
+      "'|'{x}'",
+      "'#1 {x}",
+      "'}' {x}",
+      "'{x}'",
+      "''# {x}",
+    ];
+    const params = { n: 1, s: 'chosen', x: 'X' };
+    for (const body of bodies) {
+      const cases = [
+        body,
+        `{n, plural, one {${body}} other {# y}}`,
+        `{n, selectordinal, one {${body}} other {# y}}`,
+        `{s, select, chosen {${body}} other {y}}`,
+        `{n, plural, one {{s, select, chosen {${body}} other {y}}} other {# y}}`,
+        `{s, select, chosen {{n, plural, one {${body}} other {# y}}} other {y}}`,
+      ];
+      for (const icu of cases) {
+        expect(extractICUPlaceholders(icu).success).toBe(true);
+        expect(renderBothPasses(icu, params)).toBe(new MessageFormat('en').compile(icu)(params));
+      }
+    }
+    expect(extractICUPlaceholders("'|'{x}'").placeholders).toEqual([]);
+    expect(icuToTransloco("'|'{x}'")).toBe("'|'{x}'");
+    for (const [icu, quotedHash] of [
+      ["'#' {x}", true],
+      ["'|' {x}", false],
+      ["{n, plural, one {'#' x} other {# y}}", true],
+      ["{n, selectordinal, one {'#' x} other {# y}}", true],
+      ["{s, select, chosen {'#' x} other {y}}", true],
+    ] as const) {
+      expect(scanIcuQuotes(icu).quoted[icu.indexOf(icu.includes('#') ? '#' : '|')]).toBe(quotedHash);
+    }
+  });
+});
+
+it('renders unmatched braces and opaque hash quotes as MessageFormat does', () => {
+  for (const icu of [
+    "'}",
+    "'{x}",
+    "'{}' '#''x'",
+    "{n, plural, other {'|''|'}}",
+    "'{x}'#''#'{pa}'",
+    "a ''''{'b'}'' c",
+    "{count, plural, one { {count, plural, one {  } other {  } } } other { {count, plural, one {  } other { '{x} } } } }''",
+  ]) {
+    const params = { x: 'X', n: 2, count: 0, pa: 'VALUE' };
+    expect(renderBothPasses(icu, params)).toBe(new MessageFormat('en').compile(icu)(params));
+  }
+});
+
+it('extracts live arguments after opaque hash tokens and keeps literal tokens unchanged', () => {
+  for (const [icu, names, emitted] of [
+    ["'#'{x}", ['x'], "'#'{{ x }}"],
+    ["{s, select, a {'#'{x}} other {y}}", ['s'], "{s, select, a {'#'{x}} other {y}}"],
+    ["a '#}' b", [], "a '#}' b"],
+    ["'#a''b'", [], "'#a''b'"],
+    ["'#''x'", [], "'#''x'"],
+    ["'{x}", ['x'], "'{{ x }}"],
+  ] as const) {
+    expect(extractICUPlaceholders(icu).placeholders.map(({ name }) => name)).toEqual(names);
+    expect(hasICUPlaceholders(icu)).toBe(names.length > 0);
+    expect(validateICUSyntax(icu)).toBe(true);
+    expect(icuToTransloco(icu)).toBe(emitted);
+  }
 });

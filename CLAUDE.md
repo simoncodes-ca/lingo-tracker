@@ -32,6 +32,7 @@ pnpm run test:api
 pnpm run test:core
 pnpm run test:domain
 pnpm run test:tracker
+pnpm nx e2e cli-e2e  # smoke tests the built CLI (builds cli first)
 
 # Run a single test file (path relative to the project root)
 pnpm nx test core --testFile=src/lib/resource/checksum.spec.ts   # core, domain, tracker (@nx/vitest)

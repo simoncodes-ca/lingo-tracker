@@ -869,6 +869,21 @@ describe('generateBundle (real fs)', () => {
       expect(reported[0]).not.toContain('malformed');
     });
 
+    it('warns and emits malformed selector/body structure unchanged, including nested values', async () => {
+      for (const malformed of [
+        '{n, plural, one x other {y}}',
+        '{n, select, a {x} {y} other {z}}',
+        '{n, plural, other {x}{y}}',
+        '{n, plural, }',
+      ]) {
+        for (const value of [malformed, `{outer, select, other {${malformed}}}`]) {
+          const result = await bundleValue('choice', value);
+          expect(result.warnings).toContain("Key 'choice': value has malformed ICU syntax and was included as-is");
+          expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ choice: value });
+        }
+      }
+    });
+
     it('warns for a double-brace branch run that is not a parameter name', async () => {
       const result = await bundleValue('choice', UNRESOLVABLE_NAME_VALUE);
       const reported = branchBodyWarnings(result.warnings);
@@ -877,6 +892,8 @@ describe('generateBundle (real fs)', () => {
       expect(reported[0]).toContain("Key 'choice':");
       expect(reported[0]).toContain('a run that is no parameter name');
       expect(reported[0]).toContain(`value: ${UNRESOLVABLE_NAME_VALUE}`);
+      expect(result.warnings).toContain("Key 'choice': value has malformed ICU syntax and was included as-is");
+      expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ choice: UNRESOLVABLE_NAME_VALUE });
     });
 
     it('warns once per key per locale and once across each locale', async () => {

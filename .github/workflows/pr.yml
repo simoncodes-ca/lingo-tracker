@@ -65,3 +65,6 @@ jobs:
 
       - name: Build (affected)
         run: pnpm nx affected -t build --base=${{ steps.nx-base.outputs.NX_BASE }}
+
+      - name: E2E (affected)
+        run: pnpm nx affected -t e2e --base=${{ steps.nx-base.outputs.NX_BASE }}

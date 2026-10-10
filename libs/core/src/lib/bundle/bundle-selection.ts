@@ -9,6 +9,7 @@ import {
   type BundleDefinition,
   type CollectionBundleDefinition,
   type EntrySelectionRule,
+  hasQuotedInterpolationDelimiter,
   hasUnbundlableBranchBody,
   icuToTransloco,
   validateICUSyntax,
@@ -151,6 +152,9 @@ function matchesRule(resource: FlatResource, rule: EntrySelectionRule): boolean 
 function toTransloco(resource: FlatResource, warnings: string[]): string {
   if (resource.value.includes('{') && !validateICUSyntax(resource.value)) {
     warnings.push(`Key '${resource.key}': value has malformed ICU syntax and was included as-is`);
+  }
+  if (hasQuotedInterpolationDelimiter(resource.value)) {
+    warnings.push(`Key '${resource.key}': quoted literal '{{' or '}}' will be consumed by Transloco interpolation`);
   }
   if (hasUnbundlableBranchBody(resource.value)) {
     warnings.push(

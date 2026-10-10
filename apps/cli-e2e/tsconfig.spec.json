@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc/apps/cli-e2e/spec",
+    "typeRoots": ["../../node_modules/@types", "../../node_modules", "../../types"],
+    "types": ["node", "vitest", "vite/client"]
+  },
+  "include": ["vite.config.ts", "src/**/*.ts"]
+}

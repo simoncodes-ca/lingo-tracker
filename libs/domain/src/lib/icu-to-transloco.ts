@@ -3,7 +3,8 @@
  *
  * Converts ICU single-brace simple placeholder syntax to Transloco double-brace
  * interpolation syntax. This is used when exporting bundle files for consumption
- * by Angular applications using the Transloco pipe.
+ * by Angular applications using Transloco with transloco-messageformat. Values
+ * pass through interpolation first, then MessageFormat ICU compilation.
  *
  * Conversion rules:
  * - Simple `{varName}` placeholders → `{{ varName }}`
@@ -13,6 +14,10 @@
  * - The one edit inside a complex construct is a branch body that is nothing but an
  *   argument. It gains one extra brace pair so Transloco's interpolation pass consumes
  *   the argument and leaves the branch wrapper standing.
+ *
+ * - Top-level quoted sections stay verbatim for MessageFormat. Outside them,
+ *   doubled apostrophes collapse unless followed by another apostrophe or a complex
+ *   construct. Natural apostrophes stay unchanged.
  *
  * ICU:       `Hello {name}, you have {count} items`
  * Transloco: `Hello {{ name }}, you have {{ count }} items`
@@ -27,70 +32,34 @@
  * @module icu-to-transloco
  */
 
-import { extractICUPlaceholders, ICU_SYNTAX_CHARS } from './icu-auto-fixer';
+import { extractICUPlaceholders } from './icu-auto-fixer';
+import { scanIcuQuotes } from './icu-quotes';
 import { expandPlaceholderOnlyBranchBodies } from './transloco-brace-scan';
 
 /**
- * Converts a raw ICU text segment (as extracted verbatim from the original
- * message string) into clean output text by stripping ICU quote escaping.
- *
- * Conversion rules (per ICU4J MessageFormat spec):
- * - `''` → `'`  (literal apostrophe, inside or outside a quoted section)
- * - `'{...'` → `{...` (quoted section: drop the surrounding quotes, emit content literally)
- * - A lone `'` not followed by a syntax char → `'`  (natural apostrophe, keep as-is)
- *
- * This is intentionally only applied to text segments, never to placeholder
- * `fullText` values, so ICU syntax within `{…}` blocks is not altered.
- *
- * @param text - A raw text segment from `extractICUPlaceholders`
- * @returns The unescaped string suitable for Transloco output
- *
- * @example
- * ```typescript
- * unescapeIcuLiterals("don't");                  // → "don't"
- * unescapeIcuLiterals("it''s");                  // → "it's"
- * unescapeIcuLiterals("'{'literal'}'");          // → "{literal}"
- * unescapeIcuLiterals("Use '{'name'}' as a key"); // → "Use {name} as a key"
- * ```
+ * Keeps ICU quoted sections for the MessageFormat pass, while making apostrophes
+ * outside them readable unless collapsing would merge adjacent apostrophes or
+ * quote the next ICU construct.
  */
-export function unescapeIcuLiterals(text: string): string {
+function prepareTextSegment(text: string, beforeComplex = false, preserveDoubled = false): string {
   let result = '';
-  let inEscapedSection = false;
+  const { quoted } = scanIcuQuotes(text);
+  const besideIcuSyntax = /[{}#]/.test(text);
 
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
-
     if (char === "'") {
       if (text[i + 1] === "'") {
-        // `''` → literal apostrophe, regardless of current section state
-        result += "'";
+        const beforeApostrophe = text[i + 2] === "'";
+        const beforeComplexConstruct = i + 2 === text.length && beforeComplex;
+        result +=
+          preserveDoubled || quoted[i] || beforeApostrophe || beforeComplexConstruct || besideIcuSyntax ? "''" : "'";
         i++;
         continue;
       }
-
-      if (inEscapedSection) {
-        // Closing quote — exit the section, drop the quote char
-        inEscapedSection = false;
-        continue;
-      }
-
-      // Outside a section: check if this opens one
-      if (i + 1 < text.length && ICU_SYNTAX_CHARS.has(text[i + 1] as string)) {
-        // Opening quote — enter escaped section, drop the quote char
-        inEscapedSection = true;
-        continue;
-      }
-
-      // Lone `'` before a non-syntax char → natural apostrophe, keep it
-      result += "'";
-      continue;
     }
-
-    // Inside a quoted section braces are literal, outside they should not
-    // appear in a text segment (they belong to placeholder fullText).
     result += char;
   }
-
   return result;
 }
 
@@ -104,8 +73,10 @@ export function unescapeIcuLiterals(text: string): string {
  * except that a branch body which is nothing but an argument gains one extra
  * brace pair so it survives Transloco's interpolation pass.
  *
- * If the value contains no ICU placeholders, or if extraction fails (malformed
- * ICU), the original string is returned unchanged.
+ * Top-level ICU quoted sections are preserved verbatim for transloco-messageformat.
+ * Outside them, doubled apostrophes collapse, except before another apostrophe or
+ * a complex construct whose opening brace remains after interpolation. Natural
+ * apostrophes stay unchanged. Malformed ICU is returned unchanged.
  *
  * @param value - The translation string in ICU format
  * @returns The string with simple ICU placeholders converted to Transloco syntax
@@ -151,21 +122,29 @@ export function icuToTransloco(value: string): string {
   }
 
   const { placeholders, textSegments } = extraction;
+  // Collapsing a pair can close an earlier unmatched apostrophe across segment boundaries.
+  const preserveDoubled =
+    /'[{}#]/.test(value.replace(/''/g, '')) ||
+    placeholders.some(
+      (placeholder) =>
+        placeholder.type === 'simple' && !/^\{\s*[^\p{Pat_Syn}\p{Pat_WS}]+\s*\}$/u.test(placeholder.fullText),
+    );
 
   // Values with no real placeholders may still contain ICU quote escaping
-  // (e.g., `"Use '{'name'}' as a key"`). Unescape the single text segment.
+  // (e.g., `"Use '{'name'}' as a key"`). Preserve its quoted sections.
   if (placeholders.length === 0) {
-    return unescapeIcuLiterals(textSegments[0]);
+    return prepareTextSegment(textSegments[0], false, preserveDoubled);
   }
 
   let result = '';
 
   for (let i = 0; i < placeholders.length; i++) {
-    result += unescapeIcuLiterals(textSegments[i]);
-
     const placeholder = placeholders[i];
+    const simpleArgument =
+      placeholder.type === 'simple' && /^\{\s*[^\p{Pat_Syn}\p{Pat_WS}]+\s*\}$/u.test(placeholder.fullText);
+    result += prepareTextSegment(textSegments[i], !simpleArgument, preserveDoubled);
 
-    if (placeholder.type === 'simple') {
+    if (simpleArgument) {
       result += `{{ ${placeholder.name} }}`;
     } else {
       // plural, select, selectordinal, number, date, time — structure passes through, but a
@@ -176,7 +155,7 @@ export function icuToTransloco(value: string): string {
   }
 
   // Append the trailing text segment that follows the last placeholder
-  result += unescapeIcuLiterals(textSegments[textSegments.length - 1]);
+  result += prepareTextSegment(textSegments[textSegments.length - 1], false, preserveDoubled);
 
   return result;
 }

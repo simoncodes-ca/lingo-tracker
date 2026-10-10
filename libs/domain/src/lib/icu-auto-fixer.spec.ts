@@ -1,3 +1,4 @@
+import MessageFormat from '@messageformat/core';
 import { describe, expect, it } from 'vitest';
 import {
   autoFixICUPlaceholders,
@@ -8,6 +9,7 @@ import {
   hasTranslocoPlaceholders,
   validateICUSyntax,
 } from './icu-auto-fixer';
+import { icuToTransloco } from './icu-to-transloco';
 
 describe('extractICUPlaceholders \u2014 ICU quote escaping', () => {
   it('extracts a placeholder from a string containing a natural apostrophe', () => {
@@ -66,11 +68,11 @@ describe('extractICUPlaceholders \u2014 ICU quote escaping', () => {
     expect(result.placeholders[0].name).toBe('name');
   });
 
-  it('returns success: false for a string ending with an open quoted section', () => {
-    // '{ opens a quoted section that is never closed
+  it('reports an unclosed live brace after an unmatched apostrophe', () => {
+    // Without a closing apostrophe, the brace remains live.
     const result = extractICUPlaceholders("foo '{");
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Unclosed quoted section');
+    expect(result.error).toBe("Unquoted '{' does not start an argument at position 5");
   });
 
   it('returns success with zero placeholders for a trailing lone apostrophe', () => {
@@ -80,8 +82,8 @@ describe('extractICUPlaceholders \u2014 ICU quote escaping', () => {
     expect(result.placeholders).toHaveLength(0);
   });
 
-  it("recognises '#' as a syntax char that lets \"'\" start a quoted section", () => {
-    // "'#' is literal" \u2014 '#' triggers the quoted section, so '#' is treated as plain text
+  it('preserves a literal apostrophe before # at top level', () => {
+    // # does not start an ICU quote outside a plural body.
     const result = extractICUPlaceholders("'#' is literal");
     expect(result.success).toBe(true);
     expect(result.placeholders).toHaveLength(0);
@@ -113,9 +115,9 @@ describe('hasICUPlaceholders \u2014 ICU quote escaping', () => {
     expect(hasICUPlaceholders("it''s {name}")).toBe(true);
   });
 
-  it('returns false for a string with an unclosed quoted section', () => {
-    // malformed string \u2014 no valid placeholder can be detected
-    expect(hasICUPlaceholders("foo '{")).toBe(false);
+  it('detects a live brace after an unmatched apostrophe', () => {
+    // The quick predicate detects the brace; extraction reports malformed syntax.
+    expect(hasICUPlaceholders("foo '{")).toBe(true);
   });
 
   it('returns false for a trailing lone apostrophe', () => {
@@ -393,6 +395,45 @@ describe('icu-auto-fixer', () => {
   });
 
   describe('validateICUSyntax', () => {
+    it('rejects unquoted literal braces recursively and reports their position', () => {
+      for (const value of [
+        '{count, plural, one {x} other {{}}}',
+        '{count, plural, one {{pa}} other {{{pa}}}}',
+        '{count, plural, one {{pa}} other {{count, plural, one {{pa}} other {{}}}}}',
+        '{}',
+        '{ }',
+        '{{pa}}',
+        '{count, plural, other {{ }}}',
+        '{count, plural, other {x} } }',
+        '{count, plural, other {{some text}}}',
+      ]) {
+        expect(validateICUSyntax(value)).toBe(false);
+        expect(icuToTransloco(value)).toBe(value);
+        const extracted = extractICUPlaceholders(value);
+        expect(extracted.success).toBe(false);
+        expect(extracted.placeholders).toEqual([]);
+        expect(extracted.error).toMatch(
+          /(?:Unquoted '\{' does not start an argument|Unmatched closing brace) at position \d+/,
+        );
+      }
+    });
+
+    it('accepts structural branch braces, nested arguments and quoted literals', () => {
+      for (const value of [
+        '{count, plural, =1 {{item}} other {# items}}',
+        "l''{count, plural, =1 {{item}} other {#}}",
+        "{count, plural, one {'{'{item}} other {#}}",
+        "'{}'",
+        "{n, plural, one {'{}'} other {x}}",
+        '{n, plural, one {{s, select, chosen {{item}} other {{0}}}} other {{itemName}}}',
+        '{rank, selectordinal, one {{item}} other {{itemName}}}',
+        '{0} {itemName} {日本語} { n, number, integer }',
+      ]) {
+        expect(validateICUSyntax(value)).toBe(true);
+        expect(extractICUPlaceholders(value).success).toBe(true);
+      }
+    });
+
     it('should validate correct ICU syntax', () => {
       expect(validateICUSyntax('Hello {name}')).toBe(true);
       expect(validateICUSyntax('{count, plural, one {# item} other {# items}}')).toBe(true);
@@ -839,4 +880,244 @@ describe('icu-auto-fixer utility functions', () => {
     expect(validateICUSyntax('Hello {name')).toBe(false);
     expect(validateICUSyntax('Hello name}')).toBe(false);
   });
+});
+
+describe('appending placeholders after ICU quotes', () => {
+  it('keeps unmatched apostrophes literal and leaves malformed translations unchanged', () => {
+    for (const translation of ["'{", "'{''", "'{''}"]) {
+      const fixed = autoFixICUPlaceholders('Hello {name}', translation);
+      expect(fixed).toMatchObject({ wasFixed: false, value: translation });
+      expect(fixed.error).toBeDefined();
+      expect(autoFixICUPlaceholders('Hello {name}', fixed.value)).toEqual(fixed);
+    }
+    for (const translation of ["Use '{name}", "Item '{x}", "Item '#'{name}"]) {
+      const fixed = autoFixICUPlaceholders('Hello {name}', translation);
+      expect(fixed.value).toBe(translation.replace('{x}', '{name}'));
+      expect(autoFixICUPlaceholders('Hello {name}', fixed.value)).toMatchObject({
+        wasFixed: false,
+        value: fixed.value,
+      });
+    }
+    for (const translation of ["l''", "don't"]) {
+      const fixed = autoFixICUPlaceholders('Hello {name}', translation);
+      expect(fixed.value).toBe(`${translation} {name}`);
+    }
+    expect(new MessageFormat('en').compile("'{")({})).toBe("'{");
+    expect(autoFixICUPlaceholders('Hello {name}', "'{").value).toBe("'{");
+  });
+
+  it('declines to append a Transloco placeholder after an unclosed live brace', () => {
+    const base = 'Hello {{ name }}';
+    const fixed = autoFixTranslocoPlaceholders(base, "'{");
+    expect(fixed).toMatchObject({ wasFixed: false, value: "'{" });
+    expect(fixed.error).toContain('ICU quoting');
+    expect(extractTranslocoPlaceholders(fixed.value).placeholders).toEqual([]);
+    expect(autoFixTranslocoPlaceholders(base, fixed.value)).toEqual(fixed);
+    const interpolated = fixed.value.replace(/\{\{([^{}]*?)\}\}/, 'Ada');
+    expect(new MessageFormat('en').compile(interpolated)({})).toBe("'{");
+    expect(validateICUSyntax(interpolated)).toBe(false);
+  });
+});
+
+describe('context-aware ICU quotes', () => {
+  it('appends a missing placeholder after a literal apostrophe before # and is idempotent', () => {
+    const fixed = autoFixICUPlaceholders('Hello {name}', "Item '#1");
+    expect(fixed.value).toBe("Item '#1 {name}");
+    expect(autoFixICUPlaceholders('Hello {name}', fixed.value)).toMatchObject({
+      wasFixed: false,
+      value: fixed.value,
+    });
+  });
+});
+
+it('declines repairs whose inserted apostrophes change ICU quoting', () => {
+  const base = "{n, plural, one {# l'x} other {# l'y}}";
+  for (const translation of ["x '{a}", "Voir '#"]) {
+    const result = autoFixICUPlaceholders(base, translation);
+    expect(result).toMatchObject({ wasFixed: false, value: translation });
+    expect(result.error).toContain('ICU quoting');
+    expect(autoFixICUPlaceholders(base, result.value)).toEqual(result);
+  }
+});
+
+it('declines a Transloco rename when the result still has invalid ICU syntax', () => {
+  const translation = "'{ {{ wrong }}";
+  const result = autoFixTranslocoPlaceholders('Hello {{ name }}', translation);
+  expect(result).toMatchObject({ wasFixed: false, value: translation });
+  expect(result.error).toContain('ICU quoting');
+  expect(autoFixTranslocoPlaceholders('Hello {{ name }}', result.value)).toEqual(result);
+});
+
+describe('ICU sub-message structure', () => {
+  it('rejects selector/body mismatches, including nested groups', () => {
+    for (const malformed of [
+      '{n, plural, one x other {y}}',
+      '{n, select, a {x} {y} other {z}}',
+      '{n, plural, other {x}{y}}',
+      '{n, plural, }',
+    ]) {
+      for (const value of [malformed, `{outer, select, other {${malformed}}}`]) {
+        expect(validateICUSyntax(value)).toBe(false);
+        expect(extractICUPlaceholders(value)).toMatchObject({ success: false, placeholders: [], textSegments: [] });
+        expect(icuToTransloco(value)).toBe(value);
+      }
+    }
+  });
+
+  it('requires other and rejects invalid selectors, misplaced offsets and unknown types recursively', () => {
+    for (const malformed of [
+      '{n, plural, one {x}}',
+      '{n, select, a {x}}',
+      '{n, selectordinal, one {x}}',
+      '{n, plural, =x {x} other {y}}',
+      '{n, plural, foo {x} other {y}}',
+      '{n, selectordinal, foo {x} other {y}}',
+      '{n, select, =1 {x} other {y}}',
+      '{n, plural, other {x} offset:1}',
+      '{n, plural, offset:1 offset:2 other {x}}',
+      '{n, select, offset:1 other {x}}',
+      '{n, plural, offset:x other {x}}',
+      '{n, plural}',
+      '{n, unknown}',
+      '{n, unknown, style}',
+    ]) {
+      for (const value of [malformed, `{outer, plural, other {${malformed}}}`]) {
+        expect(validateICUSyntax(value)).toBe(false);
+        expect(extractICUPlaceholders(value).success).toBe(false);
+      }
+    }
+  });
+
+  it('preserves duplicate selectors, all plural categories and runtime numeric selectors and offsets', () => {
+    for (const valid of [
+      '{n, plural, other {first} other {second}}',
+      '{n, select, a {first} a {second} other {fallback}}',
+      '{n, plural, zero {} one {} two {} few {} many {} other {}}',
+      '{n, selectordinal, zero {} one {} two {} few {} many {} other {}}',
+      '{n, plural, offset:1 =0 {} other {{name}}}',
+      '{n, selectordinal, offset:2 one {#} other {#}}',
+      "{n, plural, other {'one x {y}'}}",
+    ]) {
+      expect(validateICUSyntax(valid)).toBe(true);
+      expect(extractICUPlaceholders(valid).success).toBe(true);
+    }
+  });
+});
+
+it('rejects runtime-unsupported numeric forms and rule-based formats without removing standard categories', () => {
+  for (const unsupported of [
+    '{n, spellout}',
+    '{n, ordinal}',
+    ...['-1', '+1', '1.5', '.5', '1e2'].flatMap((number) => [
+      `{n, plural, =${number} {x} other {y}}`,
+      `{n, plural, offset:${number} other {y}}`,
+    ]),
+    '{n, plural, offset :1 other {x}}',
+    '{n, plural, offset: 1 offset:2 other {x}}',
+  ]) {
+    for (const value of [unsupported, `{outer, select, other {${unsupported}}}`]) {
+      expect(validateICUSyntax(value)).toBe(false);
+      expect(extractICUPlaceholders(value).success).toBe(false);
+    }
+  }
+  for (const value of ['{n, plural, offset:1other {x}}', '{n, plural, offset: 1=2 {x} other {y}}']) {
+    expect(validateICUSyntax(value)).toBe(true);
+    expect(() => new MessageFormat('en').compile(value)).not.toThrow();
+  }
+});
+
+it('rejects quoted hash runs containing opening braces outside plural contexts', () => {
+  for (const value of [
+    "'#{pa}'",
+    "'#{'",
+    "{s, select, other {'#{pa}'}}",
+    "{n, number, '#{pa}'}",
+    "{n, date, '#{pa}'}",
+    "{n, time, '#{pa}'}",
+    "{n, plural, other {x}} '#{pa}'",
+  ]) {
+    expect(validateICUSyntax(value)).toBe(false);
+    expect(extractICUPlaceholders(value)).toMatchObject({ success: false, placeholders: [], textSegments: [] });
+  }
+});
+
+it('inherits plural quoting through nested selects and formatter styles and restores the enclosing context', () => {
+  for (const value of [
+    "{n, plural, other {'#{pa}'}}",
+    "{n, selectordinal, other {'#{pa}'}}",
+    "{n, plural, other {{s, select, other {'#{pa}'}}}}",
+    "{s, select, other {{n, plural, other {'#{pa}'}}}}",
+    "{n, plural, other {{n, number, '#{pa}'}}}",
+    "{n, plural, other {{n, date, '#{pa}'}}}",
+    "{n, plural, other {{n, time, '#{pa}'}}}",
+    "'#}'",
+    "'#'",
+    "'{'",
+    "''#{pa}",
+  ]) {
+    expect(validateICUSyntax(value)).toBe(true);
+    expect(() => new MessageFormat('en').compile(value)).not.toThrow();
+    expect(extractICUPlaceholders(value).success).toBe(true);
+  }
+  expect(validateICUSyntax("{s, select, other {{n, plural, other {x}} '#{pa}'}}")).toBe(false);
+});
+
+it('validates and compiles duration and preserves its formatter when repairing a renamed argument', () => {
+  for (const style of ['', ', seconds']) {
+    const base = `Elapsed: {elapsed, duration${style}}`;
+    const translation = `Écoulé : {duree, duration${style}}`;
+    expect(validateICUSyntax(base)).toBe(true);
+    expect(extractICUPlaceholders(base).placeholders[0]).toMatchObject({ name: 'elapsed', type: 'duration' });
+    expect(new MessageFormat('en').compile(base)({ elapsed: 65 })).toBe('Elapsed: 1:05');
+    const repaired = autoFixICUPlaceholders(base, translation);
+    expect(repaired).toMatchObject({ wasFixed: true, value: `Écoulé : {elapsed, duration${style}}` });
+    expect(new MessageFormat('en').compile(repaired.value)({ elapsed: 65 })).toBe('Écoulé : 1:05');
+  }
+});
+
+it('rejects dotted argument names at the top level and in nested messages', () => {
+  for (const invalid of ['{item.name}', '{item.name, number}', '{item.name, plural, other {x}}']) {
+    for (const value of [invalid, `{n, plural, other {${invalid}}}`]) {
+      expect(validateICUSyntax(value)).toBe(false);
+      expect(extractICUPlaceholders(value)).toMatchObject({ success: false, placeholders: [], textSegments: [] });
+      expect(() => new MessageFormat('en').compile(value)).toThrow();
+    }
+  }
+});
+
+it('rejects unpaired style quotes in all built-in formats, including nested arguments', () => {
+  for (const type of ['number', 'date', 'time', 'duration']) {
+    for (const style of ["'", "'a", "a'", "'''", "'a''b", "'a' '"]) {
+      const malformed = `{n, ${type}, ${style}}`;
+      for (const value of [malformed, `Hi ${malformed} there`, `{n, plural, other {${malformed}}}`]) {
+        expect(validateICUSyntax(value)).toBe(false);
+        expect(extractICUPlaceholders(value)).toMatchObject({ success: false, placeholders: [], textSegments: [] });
+        expect(icuToTransloco(value)).toBe(value);
+      }
+    }
+  }
+  expect(autoFixICUPlaceholders('{n, number}', "{numero, number, 'a}")).toMatchObject({ wasFixed: false });
+});
+
+it('checks number pattern quotes after ICU decoding while preserving balanced style literals', () => {
+  for (const style of ["''", "'a''b'"]) {
+    const value = `{n, number, ${style}}`;
+    expect(() => new MessageFormat('en').compile(value)).toThrow();
+    expect(validateICUSyntax(value)).toBe(false);
+  }
+  for (const value of [
+    "{n, number, 'a'0}",
+    "{n, number, ''''}",
+    "{n, number, '#'}",
+    "{n, date, 'a'}",
+    "{n, time, ''}",
+    "{n, duration, ''}",
+    "{n, plural, other {{n, number, 'a'0}}}",
+    "{n, plural, other {{n, number, '#'}}}",
+    "don't {n, number}",
+  ]) {
+    expect(validateICUSyntax(value)).toBe(true);
+    expect(() => new MessageFormat('en').compile(value)).not.toThrow();
+    expect(extractICUPlaceholders(value).success).toBe(true);
+  }
 });
