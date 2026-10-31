@@ -86,13 +86,13 @@ lingo-tracker import --source verified-fr.xliff --locale fr --strategy verificat
 
 ### migration
 
-**Use Case**: Migrating from another translation system (Transloco, i18next, etc.)
+**Use Case**: Migrating from another translation system (Transloco, i18next, etc.). Works with plain interpolation; the [migration guide's Limitations](../guides/migration.md#limitations) list what else to check.
 
 **Behavior**:
 - Creates new resources with base values from XLIFF `<source>` or JSON `baseValue`
 - Sets status to `translated`, or to the `status` found in rich JSON when `--preserve-status` is given
 - Resolves Transloco key references (e.g., `{{t('other.key')}}`, `{{key}}`) by inlining the referenced value. Missing references emit a "Missing reference target" warning only for `t()` calls or direct dotted keys such as `{{other.key}}`. Missing parameters such as `{{name}}` are listed together in one "Unresolved parameters" warning. Circular references emit a "Circular reference detected" warning. Missing and circular references remain as literals
-- Normalizes Transloco plural/select syntax to ICU format
+- Converts `{{ name }}` interpolation to ICU `{name}`. Plural and select blocks are stored as written.
 - Imports values that change through the ICU round trip, with a warning that shows the source and bundled forms. For example, `{first}` bundles as `{{ first }}`
 - Overwrites existing values and metadata
 - Is the only strategy allowed to import into the base locale

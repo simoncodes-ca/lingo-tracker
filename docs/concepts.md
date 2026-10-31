@@ -35,7 +35,7 @@ Bundles can combine collections, so splitting storage does not force you to spli
 
 ## Keys and folders
 
-A resource key is dot-delimited. Each segment can contain letters, digits, hyphens and underscores. There is no length limit on add, no reserved words, and keys are case-sensitive.
+A resource key is dot-delimited. Each segment can contain letters, digits, hyphens and underscores. There is no length limit on add, no reserved words, and keys are case-sensitive. Imports reject keys that break this rule.
 
 The key decides the storage location. All segments except the last name a folder path; the last segment is the entry key inside that folder:
 
@@ -140,7 +140,7 @@ Transloco uses `{{ name }}` for interpolation. LingoTracker converts between the
 | `{{ name }}` to `{name}` | Whenever a value is written: add, edit, import, machine translation, normalize |
 | `{name}` to `{{ name }}` | During `bundle`, when `transformICUToTransloco` is on (the default) |
 
-So you can type `{{ count }}` or `{count}` when authoring; storage is always ICU and bundles are always what Transloco expects. Plural and select structures pass through conversion unchanged. For a runtime that consumes ICU directly, set `transformICUToTransloco: false` globally or per bundle, or pass `--no-transform-icu-to-transloco` to the CLI `bundle` command.
+So you can type `{{ count }}` or `{count}` when authoring; storage is always ICU. Bundles use the syntax of the configured `runtime`: Transloco with `transloco-messageformat` by default, or plain Transloco with `"runtime": "transloco"`, where a single brace is literal text. See [Configuration](./configuration.md). Plural and select structures pass through conversion unchanged. For a runtime that consumes ICU directly, set `transformICUToTransloco: false` globally or per bundle, or pass `--no-transform-icu-to-transloco` to the CLI `bundle` command.
 
 One shape is rejected on write because conversion would corrupt it: a placeholder wrapped in literal braces, such as `{{{name}}}`. The error message tells you how to quote the braces instead. `normalize` additionally reports a plural or select branch whose body collapsed to a bare placeholder.
 

@@ -43,7 +43,7 @@ LingoTracker stores a status next to every translation in your Git repo. A chang
 - A local web UI lets you browse, search and filter by status. You edit with similar-string suggestions and run exports, imports and bundles with a live preview.
 - `install-skill` writes a skill tailored to your collections. Claude Code or a similar assistant can then find hardcoded strings, reuse keys, add resources and update components.
 
-**Adopting it.** Existing Transloco or i18next JSON moves in through the `migration` import strategy. Gettext and CSV need a short conversion step. See the [migration guide](docs/guides/migration.md). After you resolve a merge conflict in the JSON files, run `normalize`. It recomputes checksums and reapplies the status rules. See the [normalize guide](docs/guides/normalize.md).
+**Adopting it.** Existing Transloco or i18next JSON moves in through the `migration` import strategy. The guide lists what each format keeps and loses. Gettext and CSV need a short conversion step. See the [migration guide](docs/guides/migration.md). After you resolve a merge conflict in the JSON files, run `normalize`. It recomputes checksums and reapplies the status rules. See the [normalize guide](docs/guides/normalize.md).
 
 ## Quick start
 

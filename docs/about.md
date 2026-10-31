@@ -46,7 +46,7 @@ LingoTracker stores a small metadata file next to each group of values. That met
 
 **Bundle a library's translations without editing them.** A read-only collection can be browsed, bundled, exported and validated but not changed. `add-collection` defaults folders under `node_modules` to read-only. See [Concepts](./concepts.md).
 
-**Move in from existing files.** Import Transloco or i18next JSON with the `migration` strategy. Gettext and CSV need a short conversion step first. See [Migration](./guides/migration.md).
+**Move in from existing files.** Import Transloco or i18next JSON with the `migration` strategy; the guide lists what each format keeps and loses. Gettext and CSV need a short conversion step first. See [Migration](./guides/migration.md).
 
 **Repair files after a merge conflict.** After a merge conflict or a hand edit, `normalize` recomputes checksums and reapplies the status rules. See [Normalize](./guides/normalize.md).
 

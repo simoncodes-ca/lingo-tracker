@@ -5,17 +5,18 @@ sidebar_position: 2
 
 # Migration Guide
 
-This guide moves existing translation files into LingoTracker with the `migration` import strategy, then switches your application to the generated bundles. It covers Transloco and i18next JSON and XLIFF 1.2 directly, and gettext and CSV through a short conversion step.
+This guide moves existing translation files into LingoTracker with the `migration` import strategy, then switches your application to the generated bundles. It covers Transloco JSON, i18next JSON and XLIFF 1.2 directly, and gettext and CSV through a short conversion step. If your app uses plain Transloco without `transloco-messageformat`, set `"runtime": "transloco"` before the first import; [Step 0](#step-0-set-the-app-runtime) explains how. [Limitations](#limitations) lists what each source format keeps and loses.
 
 ## Table of Contents
 
 1. [Overview](#overview)
 2. [Before You Begin](#before-you-begin)
-3. [Migrating from Transloco](#migrating-from-transloco)
-4. [Migrating from i18next](#migrating-from-i18next)
-5. [Migrating from Other Systems](#migrating-from-other-systems)
-6. [Post-Migration Steps](#post-migration-steps)
-7. [Troubleshooting](#troubleshooting)
+3. [Limitations](#limitations)
+4. [Migrating from Transloco](#migrating-from-transloco)
+5. [Migrating from i18next](#migrating-from-i18next)
+6. [Migrating from Other Systems](#migrating-from-other-systems)
+7. [Post-Migration Steps](#post-migration-steps)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -36,7 +37,7 @@ Migration is the process of importing existing translation resources from anothe
 
 ### What Gets Migrated
 
-- Translation keys and values (all locales)
+- Translation keys and string values, for every locale you import
 - Base locale values (source language)
 - Comments (if present in source format)
 - Tags (if present in source format)
@@ -47,6 +48,9 @@ Migration is the process of importing existing translation resources from anothe
 - Translator assignments
 - Review workflows
 - Custom metadata (not in standard formats)
+- Arrays, numbers, booleans and `null`. They are skipped and listed in the summary.
+- Empty strings. They are skipped.
+- Keys with characters other than letters, digits, `_` and `-` in a segment. They fail. See [Limitations](#limitations).
 
 ---
 
@@ -95,7 +99,7 @@ The import command's `migration` strategy is built for this. With it, import:
 
 - creates resources that do not exist yet (`--create-missing` is on by default)
 - is the only strategy allowed to write the base locale
-- resolves Transloco key references such as `{{t('other.key')}}` by inlining the referenced text
+- resolves Transloco key references by inlining the referenced text. Both `{{t('other.key')}}` and a bare `{{other.key}}` count as a reference when a key with that name exists in the file. A `{{name}}` that matches no key stays an interpolation placeholder and is listed once under "Unresolved parameters".
 - updates comments and tags from the file (`--update-comments` and `--update-tags` are on by default)
 - stores imported values as `translated`, or with the file's own status when you pass `--preserve-status` with rich JSON
 
@@ -107,9 +111,29 @@ lingo-tracker import --source en.json --locale en --strategy migration --dry-run
 
 ---
 
+## Limitations
+
+LingoTracker's migration path was tested against six open-source Transloco and i18next projects. These are the limits that showed up. Check them against your files before you import.
+
+**Runtime.** Set `runtime` before the first import. Your app uses messageformat when `@jsverse/transloco-messageformat` is in `package.json`; `init` detects this. The default, `transloco-messageformat`, treats a single brace as ICU. With `"runtime": "transloco"`, literal `{`, `}` and `'` in your files survive import and bundle unchanged. The setting is global, not per bundle.
+
+**Keys.** Each dot-separated segment may contain only letters, digits, `_` and `-`. A dot always starts a new level. Keys with spaces, `+`, `|`, `:` or other characters fail, are listed in the summary, and make the import exit 1. Natural-language keys (`"Save changes": "Save changes"`) cannot be imported. Rename the keys in your files first.
+
+**Values.** Only strings are imported. Arrays, numbers, booleans and `null` are skipped and listed in one warning. An empty string is skipped. When the base value is empty, the key is never created, so its target values fail too.
+
+**i18next.** Plain `{{name}}` and suffix plurals (`_one`, `_other`) work and come back out as written. Formatters (`{{amount, currency}}`), nesting (`$t(...)`) and `keySeparator: false` do not. Context keys were not tested. The import summary names every value that will not survive the round trip.
+
+**Transloco scopes.** A scope file such as `admin-page/en.json` has its keys at the root. Import it into its own collection, then bundle that collection with `bundleName` `admin-page/{locale}`. Importing it into the main collection merges its keys with the root file, and a bundle cannot strip a prefix afterwards.
+
+**References.** `{{t('key')}}` and a bare `{{key}}` that names an existing key are replaced by that key's text. The reference is gone from the stored value. A later change to the referenced key does not update the copies. This is the text Transloco would have rendered, so the app looks the same.
+
+**Untranslated keys.** `normalize` fills every missing target value with a copy of the source, status `new`. Target bundles therefore contain the source language for those keys, and `validate` fails until they are translated.
+
+---
+
 ## Migrating from Transloco
 
-Transloco is Angular's internationalization library. LingoTracker provides specialized support for Transloco migrations.
+Transloco is Angular's internationalization library. LingoTracker resolves Transloco key references on import and writes bundles in Transloco syntax. Which syntax depends on the `runtime` setting, so do Step 0 first.
 
 > **After completing the steps below**, follow the [Post-Migration Steps](#post-migration-steps) to normalize resources, configure bundles, and test your application.
 
@@ -155,7 +179,7 @@ Import the base locale first to create the resource structure. If you have multi
 lingo-tracker import --source ./src/assets/i18n/en.json --locale en --strategy migration --verbose
 ```
 
-Importing into the base locale is only possible with the `migration` strategy. Each JSON value becomes a resource's source text. Target locales are not filled in at this point; the next steps import them, and `normalize` later seeds any locale that still has no value.
+Importing into the base locale is only possible with the `migration` strategy. Each string value with a valid key becomes a resource's source text. Skipped values and failed keys are listed in the summary, and the command exits 1 when any key failed, even though the valid keys were written. Read the summary before you import the target locales. Target locales are not filled in at this point; the next steps import them, and `normalize` later seeds any locale that still has no value.
 
 ### Step 2: Import Target Locales
 
@@ -190,6 +214,8 @@ If your Transloco files use references like `{{t('other.key')}}`, LingoTracker a
 ```
 
 This happens automatically with the `migration` strategy.
+
+A bare `{{greeting}}` is inlined the same way when `greeting` is a key in the file. This matches what Transloco renders when no parameter named `greeting` is passed. If your app does pass a parameter with the same name as a key, the inlined text replaces it. In a large app this can touch hundreds of values, and the summary's detailed changes list only the first 20. To see them all, run `bundle` after the base import and diff the output against your source file: every inlined value appears as a change.
 
 ### Step 4: Verify Migration
 
@@ -239,7 +265,14 @@ loader: TranslocoHttpLoader  // Loads from src/assets/i18n
 
 ## Migrating from i18next
 
-i18next is a popular internationalization framework for JavaScript. LingoTracker can import i18next JSON files directly.
+i18next is a popular internationalization framework for JavaScript. LingoTracker imports i18next JSON when the files use plain `{{name}}` interpolation and suffix plurals (`key_one`, `key_other`). The plural keys are stored as separate keys, not as ICU plurals, and come back out unchanged.
+
+Two i18next features do not survive the round trip. Import lists each affected key under Warnings as "value will not survive the round trip", and `bundle --verbose` lists them again:
+
+- formatters such as `{{amount, currency}}`. The bundle keeps the formatter but writes the other placeholders in the same value as `{title}`;
+- nesting such as `$t(key, {"count": {{days}} })`. The bundle writes `{days}` inside the options.
+
+Natural-language keys (`keySeparator: false`) cannot be imported either, and these are not flagged as round-trip warnings: a key with a space fails, and a key with a dot nests without a warning. Context keys (`key_male`) were not tested. Rename or rewrite the affected keys first, or keep those namespaces out of LingoTracker for now.
 
 > **After completing the steps below**, follow the [Post-Migration Steps](#post-migration-steps) to normalize resources, configure bundles, and test your application.
 
@@ -384,8 +417,10 @@ After migration, update your i18next configuration to use LingoTracker bundles:
 
 **Generate bundles**:
 ```bash
-lingo-tracker bundle
+lingo-tracker bundle --verbose
 ```
+
+Without `--verbose`, `bundle` prints only the number of warnings. The verbose list names each key whose value may render wrong, such as one that is not valid ICU.
 
 **Update package.json**:
 ```json
@@ -397,7 +432,7 @@ lingo-tracker bundle
 }
 ```
 
-This bundle writes the whole combined tree, with `common`, `dashboard` and `translation` as top-level keys, into one `translation.json` per locale. It does not recreate the separate namespace files. Either update your i18next setup to load one namespace from that file, or define one bundle per namespace with a `matchingPattern` such as `common.*` and a `bundleName` of `{locale}/common`.
+This bundle writes the whole combined tree, with `common`, `dashboard` and `translation` as top-level keys, into one `translation.json` per locale. It does not recreate the separate namespace files. A bundle keeps the full key, so a bundle with `matchingPattern` `common.*` still nests its keys under `common`. To get one file per namespace with the keys at the root, give each namespace its own collection: import `en/common.json` into collection `common` without combining, then define one bundle per collection with `bundleName` `{locale}/common`. Otherwise update your i18next setup to load one namespace from the combined file.
 
 ---
 
@@ -579,6 +614,8 @@ Look for:
 - Warnings (e.g., missing base values)
 - Errors (e.g., malformed keys)
 - ICU auto-fixes applied
+- "value will not survive the round trip" warnings. Each names a key whose bundle output differs from the source.
+- "Unresolved parameters kept as placeholders". Confirm these are real interpolation parameters, not typos of keys.
 
 ### 2. Run Normalization
 
@@ -588,7 +625,7 @@ Ensure all resources have entries for all configured locales, normalized tags an
 lingo-tracker normalize --all
 ```
 
-This adds missing locale entries as `new` copies of the source and brings tags imported from rich JSON into the normalized form. See the [Normalize guide](./normalize.md).
+This adds a `new` copy of the source for every target locale that has no value, and brings tags imported from rich JSON into the normalized form. Those copies ship in the bundle in the source language, so the app shows the source text where it used to fall back to the default language. On screen the result is the same. `validate` fails on these `new` entries until they are translated, which makes its failure list your translation backlog. See the [Normalize guide](./normalize.md).
 
 ### 3. Review Missing Translations
 
@@ -618,7 +655,7 @@ Set up bundle generation for your framework:
 
 Generate bundles:
 ```bash
-lingo-tracker bundle
+lingo-tracker bundle --verbose
 ```
 
 ### 5. Update Build Scripts
@@ -652,7 +689,7 @@ Once migration is verified:
 mv ./src/assets/i18n ./src/assets/i18n.old
 
 # Generate fresh bundles
-lingo-tracker bundle
+lingo-tracker bundle --verbose
 
 # Test application thoroughly
 # If everything works, remove backup
@@ -743,6 +780,12 @@ cat translations/path/to/resource/resource_entries.json
 # Edit the translation to fix placeholders
 ```
 
+### Literal Braces Render Empty
+
+**Cause**: The app uses plain Transloco, and `runtime` was not set to `transloco` before the import. A literal `{first}` was stored as an ICU argument and bundled as `{{ first }}`.
+
+**Solution**: Delete the imported translations folder, set `"runtime": "transloco"` in `.lingo-tracker.json`, and import again from your original files. Re-importing an exported file does not repair it; see [Step 0](#step-0-set-the-app-runtime).
+
 ### Duplicate Keys Warning
 
 **Cause**: Same key appears multiple times in import file.
@@ -753,7 +796,7 @@ cat translations/path/to/resource/resource_entries.json
 
 ### Missing Translations After Migration
 
-**Cause**: Not all locales were imported, or some translations were empty in source.
+**Cause**: Not all locales were imported, or some keys were rejected: the key format was invalid, the value was not a string, or the base value was empty. Check the Failed and Skipped lists in each summary.
 
 **Solution**:
 1. Run normalization: `lingo-tracker normalize --all`
@@ -794,8 +837,9 @@ lingo-tracker import --source fr.json --locale fr --strategy migration
 
 # Post-migration
 lingo-tracker normalize --all
-lingo-tracker bundle
+lingo-tracker bundle --verbose
 lingo-tracker validate --allow-translated
+# exits 1 while any key is untranslated in any locale; the failure list is your translation backlog
 ```
 
 For additional help:

@@ -758,9 +758,7 @@ Create separate bundles for lazy-loaded routes. Transloco loads a scope's file t
       "collections": [
         {
           "name": "Common",
-          "entriesSelectionRules": [
-            { "matchingPattern": "apps.common.*" }
-          ]
+          "entriesSelectionRules": "All"
         }
       ]
     },
@@ -770,9 +768,7 @@ Create separate bundles for lazy-loaded routes. Transloco loads a scope's file t
       "collections": [
         {
           "name": "Admin",
-          "entriesSelectionRules": [
-            { "matchingPattern": "apps.admin.*" }
-          ]
+          "entriesSelectionRules": "All"
         }
       ]
     },
@@ -782,15 +778,15 @@ Create separate bundles for lazy-loaded routes. Transloco loads a scope's file t
       "collections": [
         {
           "name": "Reports",
-          "entriesSelectionRules": [
-            { "matchingPattern": "apps.reports.*" }
-          ]
+          "entriesSelectionRules": "All"
         }
       ]
     }
   }
 }
 ```
+
+Each bundle takes a whole collection, because a bundle keeps the full path of every key. Give each scope its own collection and keep its keys short: the `Admin` collection holds `title`, and the scope addresses it as `admin.title`. A `matchingPattern` such as `apps.admin.*` on a shared collection would keep the keys nested, so the scope would have to address them as `admin.apps.admin.title`.
 
 Register each bundle as a Transloco scope and let the loader request `admin/en.json` or `admin.en.json` depending on your `bundleName`:
 
