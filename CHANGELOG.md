@@ -1,3 +1,338 @@
+# [1.0.0](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.19.1...v1.0.0) (2026-11-02)
+
+
+* build!: drop Node 22 support ([9438256](https://github.com/simoncodes-ca/lingo-tracker/commit/9438256c195438c3f017fd429c240e7dd57fff84))
+* build!: require Node 22.22.3+, 24.15+ or 26+ ([2d98c54](https://github.com/simoncodes-ca/lingo-tracker/commit/2d98c541976d9bc7691df9d01f40f29393fffd80))
+* feat(api)!: answer malformed request bodies with 400 ([ff19265](https://github.com/simoncodes-ca/lingo-tracker/commit/ff19265ca07835a2c5e1935c229e2055191d35eb))
+* feat(api)!: bind the API to 127.0.0.1 and guard Origin and Host ([c54ca34](https://github.com/simoncodes-ca/lingo-tracker/commit/c54ca341c78a4145f4e010ace4a16ca3455bbd1b))
+* feat(core)!: add-resource refuses an existing key unless told to replace ([77a133e](https://github.com/simoncodes-ca/lingo-tracker/commit/77a133efd22697ae78b4df34d45adf4cf8446f30))
+* feat(core)!: one Key Tree nests flat keys; a bundle run generates exactly what it plans ([e324f7f](https://github.com/simoncodes-ca/lingo-tracker/commit/e324f7fc82f764320d881df0c5c9efce97d428ea))
+* feat(core)!: one rename rule for collection and bundle updates ([0213814](https://github.com/simoncodes-ca/lingo-tracker/commit/0213814aefec0f96a3250471c19d50536c5da044))
+* feat(core)!: one Value Check decides whether a translated value keeps its source's contract ([cc3e765](https://github.com/simoncodes-ca/lingo-tracker/commit/cc3e7653001bd81e6a398f28e0629280ff27afa5))
+* fix(cli)!: import and export options get their defaults once, after prompting ([ed577ca](https://github.com/simoncodes-ca/lingo-tracker/commit/ed577ca83c330911c546cce5e1499129243fa88b))
+* fix(cli)!: one Entry Change rule; edit-resource can clear comment and tags ([0cbd534](https://github.com/simoncodes-ca/lingo-tracker/commit/0cbd53431c58c9ad1451c4542307fe584b96aed1))
+* fix(cli)!: run results state their own outcome, and bundle exits 1 when type generation fails ([b34b225](https://github.com/simoncodes-ca/lingo-tracker/commit/b34b2253af7eeeda5fb44e6f308312d57b35608c))
+* fix(core)!: one Folder Pruning rule removes empty folders and keeps stray files ([31410cc](https://github.com/simoncodes-ca/lingo-tracker/commit/31410cc0ba717f1316708860388f0bf2d9eb031a))
+* fix(core)!: one wording for collection folder problems, and symlinked folders are refused ([1fab52c](https://github.com/simoncodes-ca/lingo-tracker/commit/1fab52c7ba4722d64223ef49cfcaa59008b7eecf))
+* fix(core)!: one write rule decides a translation's stored status ([ae2beb3](https://github.com/simoncodes-ca/lingo-tracker/commit/ae2beb3a1d38d5ba818f3a7a54116e2b125e8658))
+* refactor(api)!: export and import job modules own prepare, dry-run and start ([a3c6cff](https://github.com/simoncodes-ca/lingo-tracker/commit/a3c6cff457c953ff23fb7ce29c1a1a893245ef04))
+* refactor(core,api)!: moves use the opened project; each collection gets its own sink ([85ecd9d](https://github.com/simoncodes-ca/lingo-tracker/commit/85ecd9d4ea47639728fe550f0e1b8a9d32cc918d))
+* refactor(core)!: core writes deliver Resource Mutations through one sink as the disk changes ([68e55b8](https://github.com/simoncodes-ca/lingo-tracker/commit/68e55b8a986b86ad37260fed3b82f7310a38579f))
+* refactor(core)!: one Move executor runs key, pattern and folder moves ([8f34900](https://github.com/simoncodes-ca/lingo-tracker/commit/8f349007574ca9e1c6c1098fcc2c9921dd486d05))
+* refactor(core)!: one Move Report for every move; malformed move input is refused up front ([739cf60](https://github.com/simoncodes-ca/lingo-tracker/commit/739cf60c0280788f0d0a4b88dcad2e553c6c06a9))
+* refactor(core)!: one translation run handle replaces the prepare, select and execute exports ([11ed4a6](https://github.com/simoncodes-ca/lingo-tracker/commit/11ed4a6464224181b28703daafa7a8c08d953ac0))
+* refactor(core)!: project terms answer by intent, not raw problems ([16c835f](https://github.com/simoncodes-ca/lingo-tracker/commit/16c835f549e87ff4d7bba3e1f19e7516e46ab511))
+* refactor(core)!: tag edits go through Collection Change; break the resource tree import cycle ([4675b2e](https://github.com/simoncodes-ca/lingo-tracker/commit/4675b2e6961827718d571534f1daac8f903c311b))
+* refactor(core)!: the opened project owns its guarded Config Write ([5e24045](https://github.com/simoncodes-ca/lingo-tracker/commit/5e24045e183c3909296195482f593c9e70e568ee))
+* refactor(core)!: the Resource Folder stores ICU and needs its base locale ([a6194cf](https://github.com/simoncodes-ca/lingo-tracker/commit/a6194cf5627d01c72f72ea372dfd7d4670fa5192))
+* refactor(core)!: typed error codes, an exhaustive HTTP table and a narrow error surface ([018147e](https://github.com/simoncodes-ca/lingo-tracker/commit/018147e47e1666d0d7edeadcd76670e602cfba63))
+* refactor(domain)!: one Collection Settings rule for core and the Tracker ([5c3ed13](https://github.com/simoncodes-ca/lingo-tracker/commit/5c3ed13f70571815f96f3a6568c2786099590541))
+
+
+### Bug Fixes
+
+* align bundle, export, import and allowed-host behaviour with docs ([59c62c1](https://github.com/simoncodes-ca/lingo-tracker/commit/59c62c16fd3d5e4de15698a4d4c83753bc6ff239)), closes [#141](https://github.com/simoncodes-ca/lingo-tracker/issues/141)
+* **api:** allow PATCH in CORS and test the app bootstrap ([2caddcf](https://github.com/simoncodes-ca/lingo-tracker/commit/2caddcf2c449bdddd660e1b64d53afc5b4ae1bf9))
+* **api:** count created entries in import totals ([c4ac1b1](https://github.com/simoncodes-ca/lingo-tracker/commit/c4ac1b1d955302081ca470528543538a938a5852))
+* **api:** keep NestJS 11's JSON 404 outside /api ([ad2cd14](https://github.com/simoncodes-ca/lingo-tracker/commit/ad2cd14cf269f01d0e79d8f34be93d293246dbc2))
+* **api:** one Route Collection seam resolves and guards the route collection ([2a2844e](https://github.com/simoncodes-ca/lingo-tracker/commit/2a2844ef461c35d1529453f18162bca7750a669b))
+* **build:** drop the docs-site project reference from the root tsconfig ([2858333](https://github.com/simoncodes-ca/lingo-tracker/commit/2858333920a925f960e8319caa2a36312f3d0a4b))
+* **build:** stop inferring Nx targets from root package scripts ([19974f6](https://github.com/simoncodes-ca/lingo-tracker/commit/19974f6a5a9d74f50c74e6d5bc30019f425607d2))
+* **build:** typecheck with tsc --build again under Nx 24 ([c5b99ba](https://github.com/simoncodes-ca/lingo-tracker/commit/c5b99ba094590cecb4b2699155bf58207d0b046a))
+* **ci:** scope test-results outputs to api and cli projects ([7269afa](https://github.com/simoncodes-ca/lingo-tracker/commit/7269afadf13aae626575f3c5475b8a71f21ceed2))
+* **cli:** add-collection stores only what the user chose; init builds config in core ([f1819fe](https://github.com/simoncodes-ca/lingo-tracker/commit/f1819fe50926ae1678682b18870be87b9941854a))
+* **cli:** flag values arrive under their record keys, so --no-transform-icu-to-transloco works ([02d82ba](https://github.com/simoncodes-ca/lingo-tracker/commit/02d82ba3b4631adca6cea9a0e15b080bd995d159))
+* **cli:** list every braced finding and report normalize findings once ([71c736f](https://github.com/simoncodes-ca/lingo-tracker/commit/71c736f0c251624d9fecc86bfc0e88b3c454ea25))
+* **cli:** never overwrite import/export summaries from runs in the same second ([92c99c8](https://github.com/simoncodes-ca/lingo-tracker/commit/92c99c81197ac9a238829b92b6ed7a400bcfdc73)), closes [#152](https://github.com/simoncodes-ca/lingo-tracker/issues/152)
+* **cli:** print the cause of a reported error ([cca0fd5](https://github.com/simoncodes-ca/lingo-tracker/commit/cca0fd54930b6e427bf6a3c0511e3ee31a55b0bd))
+* **cli:** the Run Summary Writer owns the summary write and its announcement ([be2106a](https://github.com/simoncodes-ca/lingo-tracker/commit/be2106a1c293c72faad424ffc0dccacc04b90fb6))
+* **cli:** word the bundle hierarchical conflict error ([5aafd01](https://github.com/simoncodes-ca/lingo-tracker/commit/5aafd01e319d2813d02f931d11848ec00edab387))
+* **core,cli,api:** the import run owns its counts and outcome ([2f64ec1](https://github.com/simoncodes-ca/lingo-tracker/commit/2f64ec171b7746be0a0828ecb09eabd96f747685))
+* **core:** a cwd through a file still reports a missing config ([7a3942a](https://github.com/simoncodes-ca/lingo-tracker/commit/7a3942ab337f1bdc76804f7528ce082519e196f3))
+* **core:** a folder move to the root always nests ([a0c4bbc](https://github.com/simoncodes-ca/lingo-tracker/commit/a0c4bbc0c9c3ba4c1da0cdb97dd4943fd02b5e67))
+* **core:** a Translation Batch keeps a failed folder write from miscounting a run ([cc0e6b6](https://github.com/simoncodes-ca/lingo-tracker/commit/cc0e6b6cb27c77b78fd08a3044064251ce4ade04))
+* **core:** compare collection records without node:util so core still builds ([4f61f85](https://github.com/simoncodes-ca/lingo-tracker/commit/4f61f85b3e3548be1bc9a3390d47f4462215e4dd))
+* **core:** folder pruning recognises a missing file from any VM realm ([cfc8613](https://github.com/simoncodes-ca/lingo-tracker/commit/cfc86131472d6bc11ec27dde633f3a493e9bf32a))
+* **core:** keep bundle collection references in step with collections ([d4440a1](https://github.com/simoncodes-ca/lingo-tracker/commit/d4440a12f33ce6e8b2513960f59c3b9cfc973daa))
+* **core:** keep omitted collection fields on PUT; harden Collection Entry ([0380b81](https://github.com/simoncodes-ca/lingo-tracker/commit/0380b81151805e5eaa0c7fb7d537ef436370f8d4))
+* **core:** locale changes read every folder before writing ([d93189e](https://github.com/simoncodes-ca/lingo-tracker/commit/d93189e2b8c54a2a3706f82132f02f0ddc0769df))
+* **core:** make Project Terms updates atomic via one updateProjectTerms ([a440636](https://github.com/simoncodes-ca/lingo-tracker/commit/a4406368f0d51181179f97e4579af3aebd1cb13e))
+* **core:** moveFolder keeps source content outside the collection ([c353bed](https://github.com/simoncodes-ca/lingo-tracker/commit/c353bed8e6fee7dc7dd919e013751d267d9361d5))
+* **core:** normalize marks drifted translations stale ([89aa9fc](https://github.com/simoncodes-ca/lingo-tracker/commit/89aa9fcc7140ac8b17e04395a6dbfe551bd24c93))
+* **core:** omit status transitions for base-locale import changes ([8529743](https://github.com/simoncodes-ca/lingo-tracker/commit/8529743b281783c8e389ac469804eae421324c69)), closes [#154](https://github.com/simoncodes-ca/lingo-tracker/issues/154)
+* **core:** one Translation Write-back keeps writes made during a provider call ([6a67a64](https://github.com/simoncodes-ca/lingo-tracker/commit/6a67a64a1e842dc3916a32e7dc6ad054bb279245))
+* **core:** project term updates target what they say; config and term files roll back together ([e966347](https://github.com/simoncodes-ca/lingo-tracker/commit/e96634743a7aa00bb961cb9eff7d64fce30c846d))
+* **core:** refresh stale metadata on unchanged import ([37b196b](https://github.com/simoncodes-ca/lingo-tracker/commit/37b196b29ea907924e65a66e313de087d02ee697))
+* **core:** reject empty base values on add and edit ([60211f5](https://github.com/simoncodes-ca/lingo-tracker/commit/60211f5d70853a9d8c46cb8486413a7c1e9881b5))
+* **core:** reject placeholders inside literal braces and report collapsed case bodies ([21cd292](https://github.com/simoncodes-ca/lingo-tracker/commit/21cd292a4aaad7670c8ece506ca29e83a4a8aaab))
+* **core:** relocation saves a folder after the folders it sends to ([83496f7](https://github.com/simoncodes-ca/lingo-tracker/commit/83496f7bb78c0ca4fce1d2692950381a84737697))
+* **core:** skip machine translations with braced placeholders, check base-locale statuses ([120b136](https://github.com/simoncodes-ca/lingo-tracker/commit/120b1360259d91a37d01f9113b5c9b71124742d2))
+* **core:** surface protected-terms problems and tighten collection patch rules ([c502576](https://github.com/simoncodes-ca/lingo-tracker/commit/c502576d6cda0ca2929962a430c979c8b7dc53b0))
+* **core:** wildcard move with an empty destination moves to the root ([75215e0](https://github.com/simoncodes-ca/lingo-tracker/commit/75215e0ab51370ac15ac3521e08cf81e207c0dc0))
+* **deps:** relax pinned runtime dependency ranges and update Angular to 21.2.25 ([b461bd2](https://github.com/simoncodes-ca/lingo-tracker/commit/b461bd2ce097230d86e69507309d1657c1190896))
+* **domain:** drop unused flattenKeyTree export ([4ca851d](https://github.com/simoncodes-ca/lingo-tracker/commit/4ca851dd50f2ceaaa2600beb365d96da9cb9dafb)), closes [#155](https://github.com/simoncodes-ca/lingo-tracker/issues/155)
+* **domain:** keep glued and non-ASCII case bodies, read lexical facts from the parser ([94e3825](https://github.com/simoncodes-ca/lingo-tracker/commit/94e3825743b2fe9ca8e3a4196a62694cc26214b4))
+* **domain:** keep ICU quoting in bundles and close open quotes in auto-fix ([bcaa6da](https://github.com/simoncodes-ca/lingo-tracker/commit/bcaa6da05b4ccc0f3126e414b16ad1acd4af31e9))
+* **domain:** match MessageFormat quoting and warn on quoted interpolation ([bdc2a33](https://github.com/simoncodes-ca/lingo-tracker/commit/bdc2a33c82fb78c0675514ed4f01051d295f3fdd))
+* **domain:** reject unquoted literal braces in ICU branch bodies ([bc7d38c](https://github.com/simoncodes-ca/lingo-tracker/commit/bc7d38c6c263538ec2ddf69e95720399905d041b))
+* **domain:** validate ICU sub-message structure and formatter quoting ([5012ff6](https://github.com/simoncodes-ca/lingo-tracker/commit/5012ff6b7e6190403dd9a1c792b4f5f8f92d11d3))
+* fixed messages for config file failures ([213c375](https://github.com/simoncodes-ca/lingo-tracker/commit/213c3753ef595129a61d2635918ce4f87b72572d))
+* **import:** keep JSON keys named "value" and report unsupported values ([ec15b28](https://github.com/simoncodes-ca/lingo-tracker/commit/ec15b283b85244272e70907d7953310d5a068f52)), closes [#149](https://github.com/simoncodes-ca/lingo-tracker/issues/149)
+* **import:** report skipped JSON values in one warning ([9b47ad6](https://github.com/simoncodes-ca/lingo-tracker/commit/9b47ad6bc319ac2a7a2f0d48833de2af12799457)), closes [#149](https://github.com/simoncodes-ca/lingo-tracker/issues/149)
+* keep the message of an invalid-config 500 ([2a42fc3](https://github.com/simoncodes-ca/lingo-tracker/commit/2a42fc32a525bad44bf93273306f776a9298987c))
+* **runtime:** address cross-review findings ([#151](https://github.com/simoncodes-ca/lingo-tracker/issues/151)) ([9e29d34](https://github.com/simoncodes-ca/lingo-tracker/commit/9e29d34abcf7e44a242ea9c02eb491e3a9b2f0e4))
+* stderr diagnostics, status sort, delete confirm, job error, similarity ([6bc971c](https://github.com/simoncodes-ca/lingo-tracker/commit/6bc971c0e015387b8f8a319ae4c497277de522e1))
+* **tracker:** always send clearable collection fields ([f8cee15](https://github.com/simoncodes-ca/lingo-tracker/commit/f8cee1566b9850f155cfdaf1377b5728b69de36a)), closes [#buildResult](https://github.com/simoncodes-ca/lingo-tracker/issues/buildResult)
+* **tracker:** an accepted config write whose reload fails is a load error ([e386e54](https://github.com/simoncodes-ca/lingo-tracker/commit/e386e54e1d2b71d7ea807f867355899ca30bebf3))
+* **tracker:** avoid returning from tree callback ([debdb09](https://github.com/simoncodes-ca/lingo-tracker/commit/debdb09a811448a7ebac8519c1352cf9db5e8694))
+* **tracker:** bundle runs own the generate-all batch ([b61d748](https://github.com/simoncodes-ca/lingo-tracker/commit/b61d74899934049e342bdc035e55e040895cae31))
+* **tracker:** cover API Error paths and keep localized 500 fallback ([0ad0c70](https://github.com/simoncodes-ca/lingo-tracker/commit/0ad0c7054d42a2a2c0fb6fd81b022221b8691ede)), closes [#handleCreateError](https://github.com/simoncodes-ca/lingo-tracker/issues/handleCreateError)
+* **tracker:** drop unused [@let](https://github.com/let) in the import run strip ([c16ecaf](https://github.com/simoncodes-ca/lingo-tracker/commit/c16ecaf83c540dbb84d2b354811d20413a753b1d))
+* **tracker:** editor hand-off resolves with the edit's outcome ([ed70abd](https://github.com/simoncodes-ca/lingo-tracker/commit/ed70abd7fe60fd6bf4608c43693cc8079015697d))
+* **tracker:** encode route and query values exactly once ([1e224bc](https://github.com/simoncodes-ca/lingo-tracker/commit/1e224bc198809beb52d909d65d54f9392b28b30f))
+* **tracker:** export dialog visual pass fixes ([e2cab42](https://github.com/simoncodes-ca/lingo-tracker/commit/e2cab42a6d399388a57ddc92df2a4cda365fbd96))
+* **tracker:** export strip label, focus return and language switch ([21832ea](https://github.com/simoncodes-ca/lingo-tracker/commit/21832ea11cec8557a6ebe9d9e92eacbc6a698479))
+* **tracker:** folder draft keeps the root collapsed and one draft identity ([a808e8d](https://github.com/simoncodes-ca/lingo-tracker/commit/a808e8df55f9c8dbee6b63137c62c0de40cd0777))
+* **tracker:** guard session loads, keep settings current, always send tags ([c4bd117](https://github.com/simoncodes-ca/lingo-tracker/commit/c4bd1176d3212b33c4b77b4f405e1106efef1784))
+* **tracker:** harden export dialog config, error reveal and shared dialog styles ([5432cb7](https://github.com/simoncodes-ca/lingo-tracker/commit/5432cb787bc90ea866a4cb14f213c9de618c2a8e))
+* **tracker:** import UI taste fixes ([97036ed](https://github.com/simoncodes-ca/lingo-tracker/commit/97036ed915c4cd5d69b479935bf967100bc28b35))
+* **tracker:** keep a config write's outcome when the dialog closes ([5b55038](https://github.com/simoncodes-ca/lingo-tracker/commit/5b550384c14e5cc3b71312190239440043a5d7f2))
+* **tracker:** list scope rolls back to a loaded scope and owns its error ([2ef48eb](https://github.com/simoncodes-ca/lingo-tracker/commit/2ef48ebd5a1813a615eab6f320c2af8f766eb22c))
+* **tracker:** list skipped export locales as one inline run ([e99d28d](https://github.com/simoncodes-ca/lingo-tracker/commit/e99d28db2152f1cd6afa0fd5b6645c445a1632f7))
+* **tracker:** mark translations stale when the editor changes a base value ([e40f8ca](https://github.com/simoncodes-ca/lingo-tracker/commit/e40f8cad38939eb4c06f7b3a84a93af7d3abba48))
+* **tracker:** one display status for a locale without metadata ([6c58460](https://github.com/simoncodes-ca/lingo-tracker/commit/6c58460385e8711062a4172d0e9fa0db9e6132fc))
+* **tracker:** one folder drop rule, and root entries can be dropped into folders ([5091139](https://github.com/simoncodes-ca/lingo-tracker/commit/5091139314c765578810d7f4b58c36fd38d779a2))
+* **tracker:** opt-in failed controls, typed clauses and named buttons on run result strip ([c320fe9](https://github.com/simoncodes-ca/lingo-tracker/commit/c320fe9c6d88fb9d09a66063f963cb99a1091d0c))
+* **tracker:** picker folder nodes take the read-only expanded set ([5ab9924](https://github.com/simoncodes-ca/lingo-tracker/commit/5ab992400722156f38e5b4ff09e74abab0870c59))
+* **tracker:** quieter import provenance, relative dates and capped details ([6b586c2](https://github.com/simoncodes-ca/lingo-tracker/commit/6b586c2706b478355d415348634498b3cdd4f199))
+* **tracker:** reopen on locale or folder change and guard entry writes ([a57e865](https://github.com/simoncodes-ca/lingo-tracker/commit/a57e8651c989d02f86e0f008dbad5df4bc329f59))
+* **tracker:** restore export dialog styles and swap the component style budget ([ffc2ae7](https://github.com/simoncodes-ca/lingo-tracker/commit/ffc2ae7c2b5af28ce9b82c6ba501c6e9b4d48ad1))
+* **tracker:** return undefined from braced placeholder params for the transloco pipe ([c2ac382](https://github.com/simoncodes-ca/lingo-tracker/commit/c2ac3825dd896f9e46be9a1799703323bc840627))
+* **tracker:** settings treats an accepted save as saved when the reload fails ([4ba8de3](https://github.com/simoncodes-ca/lingo-tracker/commit/4ba8de35afdb9a80fca52c0f5a28c70a9b64ae20))
+* **tracker:** show preview failures and plan errors in the export footer ([83fd029](https://github.com/simoncodes-ca/lingo-tracker/commit/83fd0296b8faae01ec001c6fb8063323e72f8b84))
+* **tracker:** size the export dialog through its open config ([4d95c63](https://github.com/simoncodes-ca/lingo-tracker/commit/4d95c6344e0f8047e84a7cb80a2d05a8c50105d6))
+* **tracker:** skip body as an export focus-return target ([2b9d3fe](https://github.com/simoncodes-ca/lingo-tracker/commit/2b9d3fe550c074f9f2c6558596acacfa7abcd2e4))
+* **tracker:** skipped-locale toasts no longer blame ICU format ([bb075c2](https://github.com/simoncodes-ca/lingo-tracker/commit/bb075c287169154c7914b0560f40f0db10851237))
+* **tracker:** the store refuses folder-tree interactions while the tree is disabled ([da25851](https://github.com/simoncodes-ca/lingo-tracker/commit/da25851cc7713d3c28218f1908f21bfce989c4d9))
+
+
+### Features
+
+* **api:** add export dry-run, start and job endpoints ([19c11f5](https://github.com/simoncodes-ca/lingo-tracker/commit/19c11f571fc50220fa566319d6b0c239e65b0458))
+* **api:** add imports API with source listing, dry run and jobs ([e5c074b](https://github.com/simoncodes-ca/lingo-tracker/commit/e5c074b565fbefc76b1f746dc29922daf5666af2))
+* **api:** add request shape schemas and ValidBody pipe ([c69526f](https://github.com/simoncodes-ca/lingo-tracker/commit/c69526fb27dc674f9b3647a23c79684651c28f6f))
+* **api:** upload import source files ([9111228](https://github.com/simoncodes-ca/lingo-tracker/commit/9111228eb5f8d0baf1f8954ab7a15edbb0350689))
+* **bundle,validate:** runtime-aware bundle output and validate check ([#151](https://github.com/simoncodes-ca/lingo-tracker/issues/151)) ([6598ba5](https://github.com/simoncodes-ca/lingo-tracker/commit/6598ba51f95a0fbcb91b64c1bc3987fab1171765))
+* **cli:** a preflight hook checks command preconditions before prompts ([692507d](https://github.com/simoncodes-ca/lingo-tracker/commit/692507d026b1fa4378a35b4be64040ef8d48fc88))
+* **cli:** add --yes to normalize to skip the all-collections prompt ([1746a31](https://github.com/simoncodes-ca/lingo-tracker/commit/1746a31e765519fc155aadcaf4f55431d7299ca3))
+* **cli:** list unreadable folders in the normalize --json payload ([5d69624](https://github.com/simoncodes-ca/lingo-tracker/commit/5d696245ba39eff058484c41a22bf474880da404))
+* **cli:** one Run Report prints every command's warnings, errors and exit ([9567b56](https://github.com/simoncodes-ca/lingo-tracker/commit/9567b5625dc46ded8cd256c28dd84f26dfa422e7))
+* **config:** add runtime setting and runtime-aware import conversion ([#151](https://github.com/simoncodes-ca/lingo-tracker/issues/151)) ([d3fc33f](https://github.com/simoncodes-ca/lingo-tracker/commit/d3fc33f8f2433ef18ab6e055888d510937e80f2c))
+* **core:** add import source inspection and locale inference ([e82f8a0](https://github.com/simoncodes-ca/lingo-tracker/commit/e82f8a029b834f74291f04dbef0544f1d7f884ab))
+* **core:** every write prunes the folders it empties, once, at the end ([8aea168](https://github.com/simoncodes-ca/lingo-tracker/commit/8aea1686b3fc5804dd6c768b4688e0b22d50641d))
+* **core:** split export into prepare and write phases ([4585a20](https://github.com/simoncodes-ca/lingo-tracker/commit/4585a20064847e0b6afa52b5fb9f440d9e3a32b8))
+* **icu:** accept dotted simple arguments in strict checks under plain transloco ([#151](https://github.com/simoncodes-ca/lingo-tracker/issues/151)) ([0e69083](https://github.com/simoncodes-ca/lingo-tracker/commit/0e690839c08f193754b8a6076219c518f3e7c294))
+* **import:** group missing interpolation params into one warning ([fb1cc9e](https://github.com/simoncodes-ca/lingo-tracker/commit/fb1cc9eb081ac8f4fd8896ed9d363c5316b444a9)), closes [#150](https://github.com/simoncodes-ca/lingo-tracker/issues/150)
+* **import:** warn when an imported value won't survive the ICU round trip ([451a01f](https://github.com/simoncodes-ca/lingo-tracker/commit/451a01f35cd2d7078e3ef360faf2c983fdfd790a)), closes [#150](https://github.com/simoncodes-ca/lingo-tracker/issues/150)
+* **init,mt:** detect app runtime at init and protect quoted ICU runs ([#151](https://github.com/simoncodes-ca/lingo-tracker/issues/151)) ([f5279ed](https://github.com/simoncodes-ca/lingo-tracker/commit/f5279eda817eca845499ee362f56c18b5dbd72a4))
+* **init:** print the detected runtime in interactive mode too ([#151](https://github.com/simoncodes-ca/lingo-tracker/issues/151)) ([4b44c5f](https://github.com/simoncodes-ca/lingo-tracker/commit/4b44c5f2cd1180f100c4512638f597e004f61450))
+* preferred terminology ([#108](https://github.com/simoncodes-ca/lingo-tracker/issues/108)) ([d0175eb](https://github.com/simoncodes-ca/lingo-tracker/commit/d0175eb7d1154990e18866cd0bc3c80b3c7aadc4))
+* **tracker:** add and translate the translation editor dialog strings ([5cf56a7](https://github.com/simoncodes-ca/lingo-tracker/commit/5cf56a78eb8c97f4e3c68fa32d64394dc6f5456f))
+* **tracker:** add export dialog ([82050fe](https://github.com/simoncodes-ca/lingo-tracker/commit/82050fe37291f52667f621e83baa01e7a76f816f))
+* **tracker:** add export store, job polling, draft, form and preview ([f640b40](https://github.com/simoncodes-ca/lingo-tracker/commit/f640b40beb27977aa5121d5b59212628ba29db3a))
+* **tracker:** add export translation resources ([2e72b8c](https://github.com/simoncodes-ca/lingo-tracker/commit/2e72b8ca4b4a81149a2ed09dee22ea3389a6ef60))
+* **tracker:** add import data layer and generic job run controller ([b0a1c8c](https://github.com/simoncodes-ca/lingo-tracker/commit/b0a1c8c0942b93b8a4be4f111ee8d8568bd29d7d))
+* **tracker:** add import dialog ([9c82110](https://github.com/simoncodes-ca/lingo-tracker/commit/9c8211043f71452ee98863ca4f5ee0c56c51eb06))
+* **tracker:** add import dialog translation resources ([fbcabe9](https://github.com/simoncodes-ca/lingo-tracker/commit/fbcabe925a37576eb533146c4cd08eb40d6851c8))
+* **tracker:** add import entry points and result strip to collections ([f518ff4](https://github.com/simoncodes-ca/lingo-tracker/commit/f518ff4199b9b952e8f678643e5b2d76354529f1))
+* **tracker:** add import upload client ([02770e9](https://github.com/simoncodes-ca/lingo-tracker/commit/02770e9bfa95202954525fada0e3f722b31e7dc4))
+* **tracker:** align compact rows on a fixed key column and surface edit ([0fb5586](https://github.com/simoncodes-ca/lingo-tracker/commit/0fb558630e3ec1c21749db2f27bbe35641150f0f))
+* **tracker:** confirm before saving a value plain Transloco can't render ([#158](https://github.com/simoncodes-ca/lingo-tracker/issues/158)) ([20dc755](https://github.com/simoncodes-ca/lingo-tracker/commit/20dc7557aa6283112a11b1103a190b0082fd1241))
+* **tracker:** redesign the translation editor dialog with a context column ([0be732f](https://github.com/simoncodes-ca/lingo-tracker/commit/0be732f315306be13bc5ba0c80dd877604030208))
+* **tracker:** reject placeholders inside literal braces in the translation editor ([50ee633](https://github.com/simoncodes-ca/lingo-tracker/commit/50ee6333f344574e6d2b95a29f7830c1afbac3f9))
+* **tracker:** runtime advisory in the editor; docs for the runtime setting ([#151](https://github.com/simoncodes-ca/lingo-tracker/issues/151)) ([42e8692](https://github.com/simoncodes-ca/lingo-tracker/commit/42e869244cef80f95e03a2212bd86162fe400892))
+* **tracker:** self-host fonts and icons instead of Google Fonts ([cdd5709](https://github.com/simoncodes-ca/lingo-tracker/commit/cdd5709073215e3632a2df20b27ebb5aedbcb199)), closes [#147](https://github.com/simoncodes-ca/lingo-tracker/issues/147)
+* **tracker:** upload files from the import dialog ([3c962bf](https://github.com/simoncodes-ca/lingo-tracker/commit/3c962bf118f782048d5e2a9bdf49b38634b8eb4d))
+* **tracker:** wire export into the collections manager ([304e20f](https://github.com/simoncodes-ca/lingo-tracker/commit/304e20f6f7027bebce23367460d238d4002a0873))
+
+
+### BREAKING CHANGES
+
+* export include-* options and basePropertyName no longer
+imply rich JSON; pass rich/--rich to get rich objects. Import
+createMissing, updateComments and updateTags are ignored for strategies
+other than migration.
+* engines.node is now ^24.15.0 || >=26.0.0. Node 22 is no
+longer supported.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* engines.node is now ^22.22.3 || ^24.15.0 || >=26.0.0.
+Node 20, Node 22 before 22.22.3 and Node 24 before 24.15 are no longer
+supported.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* POST /api/exports with an unwritable output folder now
+returns 400 with the output problem before registering a job, instead of
+starting a job that fails. The Tracker already blocks this submit.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* The API now binds to 127.0.0.1 by default. Pass --host 0.0.0.0 or
+set LINGO_TRACKER_HOST=0.0.0.0 for network access or containers with published ports.
+Non-loopback bindings expose the full unauthenticated API, including listing any server
+folder, importing from server paths, and uploading import files. Host and Origin
+protection apply in every bind mode. LAN IP access needs no extra setting; named access
+requires LINGO_TRACKER_ALLOWED_HOSTS.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* **domain:** bundles now emit ICU-quoted literals (e.g. '{'x'}')
+instead of unescaped text; correct for transloco-messageformat, but
+consumers using plain Transloco will see the quotes.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+* `edit-resource --comment ""` now clears the stored comment
+instead of being ignored.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* MoveOptions no longer takes `config`/`cwd`; pass an
+opened collection. MoveConfigRequiredError and MOVE_CONFIG_REQUIRED are
+removed. openProjectCollection is a new core export.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* ProjectTerms.problems and readProjectTermsView are replaced by the intent views.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* moveResource, moveResources and moveFolder are replaced by executeMove and
+executeMoves (synchronous).
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* a bundle whose keys conflict (a value with child keys, or two keys with the
+same token path) now fails before writing instead of crashing mid-run or dropping a subtree;
+plans omit empty-locale files; generateBundleTypes throws on token-path collisions.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* editCollectionTags returns Promise<string[]>.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* core's root barrel no longer exports 23 error classes
+that no app uses (e.g. FolderNotFoundError, ConfigChangedError). It now
+exports ERROR_CODES, PROVIDER_ERROR_CODES and the ErrorCode types.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* core no longer exports prepareTranslateLocale,
+selectPreparedTranslateLocale, executeTranslateLocale or translateLocale;
+use prepareTranslationRun(collection).forLocale(locale).execute().
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* a malformed move pattern or key now throws InvalidResourceKeyError instead
+of being returned in result.errors. Batch moves validate every operation before writing, so
+a malformed operation rejects the whole batch with nothing moved. The API answers 400 where
+it used to answer 2xx with errors; the CLI still exits 1 with the same message.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* import fails a target-locale value whose ICU arguments disagree with its
+source (after ICU auto-fix; migration imports are exempt), and validate fails a value that
+drops a protected term. Use `validate --skip-protected-terms` to opt out.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* PUT /api/bundles/:name with a present but blank `name`
+now answers 400 `name must be a non-empty string` instead of updating
+without a rename; omit `name` when not renaming. On PUT
+/api/collections/:name a non-string `name` answers `name must be a
+string`, rename targets are trimmed, and a missing collection with a
+blank name answers 404. A stored bundle key that fails the key pattern
+can now be updated with its own name (200, was 400). Core consumers:
+updateCollection with an empty or whitespace name and
+updateBundleDefinition with newKey '' throw InvalidNameError.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* malformed required bodies and wrong-typed fields now return
+plain 400 responses before reaching core. maxResults that is not a positive integer (non-numeric, 0,
+negative, fractional or empty) now returns 400 instead of defaulting to 100; repeated scalar query parameters are rejected.
+Partial collection.translation settings must include enabled, provider and
+apiKeyEnv. Wrong-typed optional fields, including tags and override, are rejected.
+Non-object bundle definitions and non-string bundle names now return a
+plain shape error instead of the Invalid bundle definition response with
+errors. Empty resource, keys and moves
+arrays are rejected by schemas, and their messages change wording. Folder names
+and paths must be strings, sourceFolderPath must be a non-empty string, and
+folder move flags must be booleans; an empty destination remains valid for root.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* add, edit, delete, move and folder operations on a key
+or folder that passes through a symbolic link below the translations
+folder now fail with InvalidCollectionFolderError (HTTP 400) instead of
+reading or writing through the link. A symlinked translations folder
+itself is still supported.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* a collection whose `locales` is an empty list now
+inherits the global locales, matching the Collection Entry rule that an
+empty list means inherit. It used to resolve to no locales.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* `lingo-tracker normalize` no longer deletes folders that
+hold files other than the collection files and OS junk (for example
+.gitkeep, notes.md or a README); those folders are now kept. Folder move
+now removes an emptied source folder that holds only OS junk.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* core API — updateCollection, addLocaleToCollection,
+removeLocaleFromCollection and editCollectionTags drop the config-file handle;
+addCollection, addBundleDefinition, updateBundleDefinition,
+deleteBundleDefinition, planProjectTermsUpdate and updateProjectTerms take an
+OpenedProject first and drop cwd; deleteCollectionByName(name, options) is now
+deleteCollection(openedCollection, options); createConfigFileOperations,
+ConfigFileOperations and the protected-terms setters leave the public API;
+OpenedProject and openCollection's forDeletion option are added.
+HTTP — POST /collections, DELETE /collections/:name and POST/PUT/DELETE
+/bundles answer 409 when the config changed during the request (they used to
+overwrite the other writer); these routes and protected-terms-only
+PUT /config answer 404 for a missing config and 500 "Invalid configuration
+file format" for a malformed one.
+CLI — add-collection and delete-collection can exit 1 with the conflict
+message; protected-terms and preferred-terminology validate the config
+(missing baseLocale, non-array locales or missing collections exit 1) and
+refuse a missing list destination before printing the preview.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* openResourceFolder requires `baseLocale`; the domain export
+`normalizeTranslocoSyntax` is removed in favour of `translocoToICU`.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* `lingo-tracker bundle` now exits 1 when type generation
+fails. It used to print the error and exit 0. The API bundle job still
+completes with a warning.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* core write results no longer carry `mutations`
+(add/edit/delete/move resource, folder create/delete/move, relocation,
+translate existing/locale, locale add/remove, updateCollection,
+deleteCollectionByName). `translateLocale`'s `onWrite` is renamed
+`onMutation`. deleteResource, moveResource, moveFolder, createFolder,
+deleteFolder, addLocaleToCollection and removeLocaleFromCollection take a
+trailing options argument. HTTP responses are unchanged.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* an unknown status in an API request body is now a 400
+instead of being stored. add-resource keeps an explicit `translated` or
+`verified` on a value identical to the base (it used to store `new`).
+The status of a translation in CreateResourceDto and LocaleUpdateDto is
+now optional.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* `lingo-tracker import --strategy migration` without
+`--update-comments`/`--update-tags` now updates comments and tags, as the
+migration strategy documents.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+* POST /resources is no longer an upsert (409 on an
+existing key); non-interactive `add-resource` no longer overwrites
+without --override; addResource/addResources throw
+ResourceAlreadyExistsError by default; resolveResourcePaths and its two
+types are removed from @simoncodes-ca/core.
+
+Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+
 ## [0.19.1](https://github.com/simoncodes-ca/lingo-tracker/compare/v0.19.0...v0.19.1) (2026-09-17)
 
 
