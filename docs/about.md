@@ -67,7 +67,7 @@ Knowing the limits saves time:
 
 ## Status
 
-LingoTracker is pre-1.0. Every pull request to `develop` runs unit tests and CLI end-to-end tests for the affected projects. The web UI has a Playwright end-to-end suite.
+LingoTracker is at 1.0. Every pull request to `develop` runs unit tests and CLI end-to-end tests for the affected projects. The web UI has a Playwright end-to-end suite.
 
 ## Where to go next
 

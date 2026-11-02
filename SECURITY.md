@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-LingoTracker is pre-1.0. Only the latest 0.x release receives security fixes.
+Only the latest 1.x release receives security fixes.
 
 ## Report a vulnerability
 
