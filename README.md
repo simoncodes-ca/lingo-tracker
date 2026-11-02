@@ -8,12 +8,18 @@ Translation files in a repository hold only values. When the source text changes
 
 LingoTracker stores a status next to every translation in your Git repo. A changed source string marks its existing translations `stale`. Untranslated copies stay `new`. `lingo-tracker validate` fails CI while anything is missing, stale, unreviewed or invalid ICU for its locale. It is built for Angular apps using [Transloco](https://github.com/jsverse/transloco). One npm package gives you a CLI, a local web UI with a REST API, and an installable skill for AI coding assistants. There is no hosted service and no account.
 
-**Status:** pre-1.0. The CLI and API are stable. Every pull request to `develop` runs unit tests and CLI end-to-end tests for the affected projects. The web UI has a Playwright end-to-end suite. See the [roadmap](ROADMAP.md) and the [changelog](CHANGELOG.md).
+**Status:** 1.0. The CLI and API are stable. Every pull request to `develop` runs unit tests and CLI end-to-end tests for the affected projects. The web UI has a Playwright end-to-end suite. See the [roadmap](ROADMAP.md) and the [changelog](CHANGELOG.md).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/simoncodes-ca/lingo-tracker/main/docs/images/translation-browser-dark.png">
   <img src="https://raw.githubusercontent.com/simoncodes-ca/lingo-tracker/main/docs/images/translation-browser-light.png" width="100%" alt="LingoTracker translation browser: fr-ca translations for the checkout keys of a storefront collection, with stale, new, translated and verified statuses.">
 </picture>
+
+## Watch it
+
+[![LingoTracker 1.0 release tour](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.jpg)](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4)
+
+[LingoTracker 1.0](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4) is a 2½-minute tour of the workflow. [LingoTracker in 30 seconds](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-guardrails-cinematic.mp4) covers the guardrails, from ICU checks to the CI gate.
 
 ## Why use it
 
