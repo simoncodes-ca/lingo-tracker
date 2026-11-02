@@ -1,20 +1,22 @@
-import { computed, inject } from '@angular/core';
-import { signalStoreFeature, withState, withComputed, withMethods, patchState, type } from '@ngrx/signals';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, interval, startWith, takeWhile, catchError, of, tap } from 'rxjs';
+import { computed, inject, type Signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
-import { BrowserApiService } from '../../services/browser-api.service';
-import type { CacheStatusType, FolderNodeDto } from '@simoncodes-ca/data-transfer';
-import { toErrorMessage } from '../async-error.utils';
+import { patchState, signalStoreFeature, type, withComputed, withMethods } from '@ngrx/signals';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import type { CacheStatusType } from '@simoncodes-ca/data-transfer';
+import { catchError, of, pipe, switchMap, tap } from 'rxjs';
 import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { apiErrorMessage } from '../../../shared/api-error/api-error';
+import { BrowserApiService } from '../../services/browser-api.service';
+import { IndexReadiness } from '../../services/index-readiness';
+import { type CollectionLifecycleRegistry, withCollectionState } from '../collection-reset';
 
-interface CacheStatusState {
+export interface CacheStatusState {
   cacheStatus: CacheStatusType | null;
   cacheError: string | null;
   collectionStats: { totalKeys: number; localeCount: number } | null;
 }
 
-const initialCacheStatusState: CacheStatusState = {
+export const initialCacheStatusState: CacheStatusState = {
   cacheStatus: null,
   cacheError: null,
   collectionStats: null,
@@ -23,10 +25,11 @@ const initialCacheStatusState: CacheStatusState = {
 export function withCacheStatusFeature<_>() {
   return signalStoreFeature(
     {
-      state: type<{ selectedCollection: string | null; rootFolders: FolderNodeDto[] }>(),
-      methods: type<{ loadRootFolders(): void }>(),
+      state: type<{ selectedCollection: string | null; folderTreeLoaded: boolean }>(),
+      props: type<CollectionLifecycleRegistry & { listLoaded: Signal<boolean> }>(),
+      methods: type<{ loadRootFolders(): void; reloadList(): void }>(),
     },
-    withState(initialCacheStatusState),
+    withCollectionState(initialCacheStatusState),
     withComputed(({ cacheStatus, collectionStats }) => ({
       isCacheReady: computed(() => cacheStatus() === 'ready'),
 
@@ -43,51 +46,63 @@ export function withCacheStatusFeature<_>() {
     })),
     withMethods((store) => {
       const api = inject(BrowserApiService);
+      const indexReadiness = inject(IndexReadiness);
       const transloco = inject(TranslocoService);
 
       return {
+        /**
+         * Polls the index status every 2s until it is ready, then loads what has not loaded yet in
+         * this session: the root tree, and the list (the List Scope, which starts at the root).
+         */
         checkCacheStatus: rxMethod<void>(
           pipe(
+            // Show the indexing state from the first request on, before the server has answered.
+            tap(() => patchState(store, { cacheStatus: 'not-started', cacheError: null, collectionStats: null })),
             switchMap(() => {
               const collection = store.selectedCollection();
               if (!collection) return of(null);
 
-              return interval(2000).pipe(
-                startWith(0),
-                switchMap(() => api.getCacheStatus(collection)),
-                tap((statusDto) => {
-                  patchState(store, {
-                    cacheStatus: statusDto.status,
-                    cacheError: statusDto.error || null,
-                    collectionStats: statusDto.stats
-                      ? {
-                          totalKeys: statusDto.stats.totalKeys,
-                          localeCount: statusDto.stats.localeCount,
-                        }
-                      : null,
-                  });
+              return indexReadiness
+                .whenReady(() => api.getCacheStatus(collection))
+                .pipe(
+                  tap((statusDto) => {
+                    patchState(store, {
+                      cacheStatus: statusDto.status,
+                      cacheError: statusDto.error || null,
+                      collectionStats: statusDto.stats
+                        ? {
+                            totalKeys: statusDto.stats.totalKeys,
+                            localeCount: statusDto.stats.localeCount,
+                          }
+                        : null,
+                    });
 
-                  if (statusDto.status === 'ready' && store.rootFolders().length === 0) {
-                    store.loadRootFolders();
-                  }
-                }),
-                takeWhile((statusDto) => statusDto.status === 'indexing' || statusDto.status === 'not-started', true),
-                catchError((error: unknown) => {
-                  patchState(store, {
-                    cacheStatus: 'error',
-                    cacheError: toErrorMessage(
-                      error,
-                      transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.CHECKCACHESTATUSFAILED),
-                    ),
-                    collectionStats: null,
-                  });
-                  return of(null);
-                }),
-              );
+                    if (statusDto.status === 'ready') {
+                      if (!store.listLoaded()) store.reloadList();
+                      if (!store.folderTreeLoaded()) store.loadRootFolders();
+                    }
+                  }),
+                  catchError((error: unknown) => {
+                    patchState(store, {
+                      cacheStatus: 'error',
+                      cacheError:
+                        apiErrorMessage(
+                          error,
+                          transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.CHECKCACHESTATUSFAILED),
+                        ) || null,
+                      collectionStats: null,
+                    });
+                    return of(null);
+                  }),
+                );
             }),
           ),
         ),
       };
+    }),
+    withMethods((store) => {
+      store._collectionLifecycle.register('ready', () => store.checkCacheStatus());
+      return {};
     }),
   );
 }

@@ -12,14 +12,15 @@ export interface CreateResourceDto {
   comment?: string;
   /** Optional tags (will be stored as array) */
   tags?: string[];
-  /** Optional target folder to override part of the path */
+  /** Optional dot-delimited folder the key is placed under: the stored key is `targetFolder.key` */
   targetFolder?: string;
-  /** Base locale (defaults to "en") */
-  baseLocale?: string;
-  /** Localized translations with locale, value, and status */
+  /**
+   * Translations for some of the collection's locales. Target locales left out are seeded by
+   * the collection's rule: auto-translated when enabled, else a copy of the base value as `new`.
+   */
   translations?: Array<{
     locale: string;
     value: string;
-    status: TranslationStatus;
+    status?: TranslationStatus;
   }>;
 }

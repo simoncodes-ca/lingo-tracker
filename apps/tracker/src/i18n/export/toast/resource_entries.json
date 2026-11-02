@@ -1,0 +1,12 @@
+{
+  "startFailed": {
+    "source": "The export could not be started.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "No se pudo iniciar la exportación.",
+    "fr-ca": "L’exportation n’a pas pu démarrer.",
+    "ru": "Не удалось запустить экспорт.",
+    "ja": "エクスポートを開始できませんでした。",
+    "de": "Der Export konnte nicht gestartet werden."
+  }
+}

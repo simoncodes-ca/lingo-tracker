@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import * as fs from 'fs';
+import { describe, expect, it, vi } from 'vitest';
 import { exportToJson } from './export-to-json';
 import type { ExportOptions, FilteredResource } from './types';
-import * as fs from 'fs';
 
 vi.mock('fs');
 

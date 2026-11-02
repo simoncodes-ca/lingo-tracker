@@ -1,0 +1,112 @@
+{
+  "filesEntriesX": {
+    "source": "{ files, plural, =1 {1 file} other {{files} files} } · { entries, plural, =1 {1 entry} other {{entries} entries} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ files, plural, =1 {1 archivo} other {{files} archivos} } · { entries, plural, =1 {1 entrada} other {{entries} entradas} }",
+    "fr-ca": "{ files, plural, =1 {1 fichier} other {{files} fichiers} } · { entries, plural, =1 {1 entrée} other {{entries} entrées} }",
+    "ru": "{ files, plural, one {{files} файл} few {{files} файла} many {{files} файлов} other {{files} файла} } · { entries, plural, one {{entries} запись} few {{entries} записи} many {{entries} записей} other {{entries} записи} }",
+    "ja": "{ files, plural, other {{files} 個のファイル} } · { entries, plural, other {{entries} 件のエントリ} }",
+    "de": "{ files, plural, =1 {1 Datei} other {{files} Dateien} } · { entries, plural, =1 {1 Eintrag} other {{entries} Einträge} }"
+  },
+  "willFailX": {
+    "source": "{ count, plural, =1 {1 will fail} other {{count} will fail} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 fallará} other {{count} fallarán} }",
+    "fr-ca": "{ count, plural, =1 {1 échouera} other {{count} échoueront} }",
+    "ru": "{ count, plural, one {{count} запись не будет импортирована} few {{count} записи не будут импортированы} many {{count} записей не будут импортированы} other {{count} записи не будут импортированы} }",
+    "ja": "{ count, plural, other {{count} 件が失敗} }",
+    "de": "{ count, plural, =1 {1 schlägt fehl} other {{count} schlagen fehl} }"
+  },
+  "checking": {
+    "source": "Checking…",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Comprobando…",
+    "fr-ca": "Vérification…",
+    "ru": "Проверка…",
+    "ja": "確認中…",
+    "de": "Wird geprüft…"
+  },
+  "nothing": {
+    "source": "Nothing to import in these files",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Nada que importar en estos archivos",
+    "fr-ca": "Rien à importer dans ces fichiers",
+    "ru": "В этих файлах нечего импортировать",
+    "ja": "これらのファイルにインポートするものはありません",
+    "de": "In diesen Dateien gibt es nichts zu importieren"
+  },
+  "noFiles": {
+    "source": "Check at least one file",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Marca al menos un archivo",
+    "fr-ca": "Cochez au moins un fichier",
+    "ru": "Отметьте хотя бы один файл",
+    "ja": "ファイルを1つ以上チェックしてください",
+    "de": "Markiere mindestens eine Datei"
+  },
+  "fixSections": {
+    "source": "Fix the marked sections",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Corrige las secciones marcadas",
+    "fr-ca": "Corrigez les sections signalées",
+    "ru": "Исправьте отмеченные разделы",
+    "ja": "マークされたセクションを修正してください",
+    "de": "Markierte Abschnitte korrigieren"
+  },
+  "readOnly": {
+    "source": "This collection is read-only",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Esta colección es de solo lectura",
+    "fr-ca": "Cette collection est en lecture seule",
+    "ru": "Эта коллекция только для чтения",
+    "ja": "このコレクションは読み取り専用です",
+    "de": "Diese Sammlung ist schreibgeschützt"
+  },
+  "noFileReadable": {
+    "source": "No file could be read",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "No se pudo leer ningún archivo",
+    "fr-ca": "Aucun fichier n’a pu être lu",
+    "ru": "Не удалось прочитать ни один файл",
+    "ja": "読み取れるファイルがありません",
+    "de": "Keine Datei konnte gelesen werden"
+  },
+  "importX": {
+    "source": "{ count, plural, =1 {Import 1 entry} other {Import {count} entries} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {Importar 1 entrada} other {Importar {count} entradas} }",
+    "fr-ca": "{ count, plural, =1 {Importer 1 entrée} other {Importer {count} entrées} }",
+    "ru": "{ count, plural, one {Импортировать {count} запись} few {Импортировать {count} записи} many {Импортировать {count} записей} other {Импортировать {count} записи} }",
+    "ja": "{ count, plural, other {{count} 件のエントリをインポート} }",
+    "de": "{ count, plural, =1 {1 Eintrag importieren} other {{count} Einträge importieren} }"
+  },
+  "import": {
+    "source": "Import",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Importar",
+    "fr-ca": "Importer",
+    "ru": "Импортировать",
+    "ja": "インポート",
+    "de": "Importieren"
+  },
+  "importAnyway": {
+    "source": "Import anyway",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Importar de todos modos",
+    "fr-ca": "Importer quand même",
+    "ru": "Всё равно импортировать",
+    "ja": "このままインポート",
+    "de": "Trotzdem importieren"
+  }
+}

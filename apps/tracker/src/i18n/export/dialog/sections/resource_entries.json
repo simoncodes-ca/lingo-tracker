@@ -1,0 +1,112 @@
+{
+  "format": {
+    "source": "Format",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Formato",
+    "fr-ca": "Format",
+    "ru": "Формат",
+    "ja": "形式",
+    "de": "Format"
+  },
+  "collections": {
+    "source": "Collections",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Colecciones",
+    "fr-ca": "Collections",
+    "ru": "Коллекции",
+    "ja": "コレクション",
+    "de": "Sammlungen"
+  },
+  "locales": {
+    "source": "Locales",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Idiomas",
+    "fr-ca": "Langues",
+    "ru": "Языки",
+    "ja": "ロケール",
+    "de": "Sprachen"
+  },
+  "filters": {
+    "source": "Filters",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Filtros",
+    "fr-ca": "Filtres",
+    "ru": "Фильтры",
+    "ja": "フィルター",
+    "de": "Filter"
+  },
+  "output": {
+    "source": "Output",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Salida",
+    "fr-ca": "Sortie",
+    "ru": "Вывод",
+    "ja": "出力",
+    "de": "Ausgabe"
+  },
+  "json": {
+    "source": "JSON options",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Opciones de JSON",
+    "fr-ca": "Options JSON",
+    "ru": "Параметры JSON",
+    "ja": "JSON オプション",
+    "de": "JSON-Optionen"
+  },
+  "everyCollection": {
+    "source": "Every collection",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Todas las colecciones",
+    "fr-ca": "Toutes les collections",
+    "ru": "Все коллекции",
+    "ja": "すべてのコレクション",
+    "de": "Alle Sammlungen"
+  },
+  "allLocales": {
+    "source": "All target locales",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Todos los idiomas de destino",
+    "fr-ca": "Toutes les langues cibles",
+    "ru": "Все целевые языки",
+    "ja": "すべてのターゲットロケール",
+    "de": "Alle Zielsprachen"
+  },
+  "allStatuses": {
+    "source": "All statuses",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Todos los estados",
+    "fr-ca": "Tous les statuts",
+    "ru": "Все статусы",
+    "ja": "すべてのステータス",
+    "de": "Alle Status"
+  },
+  "tagsX": {
+    "source": "{ count, plural, =1 {1 tag} other {{count} tags} }",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {1 etiqueta} other {{count} etiquetas} }",
+    "fr-ca": "{ count, plural, =1 {1 étiquette} other {{count} étiquettes} }",
+    "ru": "{ count, plural, one {{count} тег} few {{count} тега} many {{count} тегов} other {{count} тега} }",
+    "ja": "{ count, plural, other {{count} 個のタグ} }",
+    "de": "{ count, plural, =1 {1 Tag} other {{count} Tags} }"
+  },
+  "richShort": {
+    "source": "rich",
+    "comment": "Rail sub-line for the JSON options section, after the structure, e.g. \"hierarchical · rich\". Lowercase, short.",
+    "tags": ["export"],
+    "es": "enriquecido",
+    "fr-ca": "enrichi",
+    "ru": "расширенный",
+    "ja": "リッチ",
+    "de": "erweitert"
+  }
+}

@@ -1,0 +1,715 @@
+// The outer box (width, top rule, zero container padding) is owned by
+// `.export-dialog-panel, .import-dialog-panel` in styles.scss, because the CDK appends the
+// overlay pane outside this component. Everything here is the inside.
+@use '../../../styles/master-detail-dialog';
+
+// Under 800px the rail becomes a horizontal strip of sections above the pane.
+@media (max-width: 799px) {
+  .md {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .rail {
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--spacing-1);
+    flex-wrap: wrap;
+    row-gap: var(--spacing-1);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .rail-item {
+    width: auto;
+    flex: none;
+  }
+
+  .rail-stack {
+    flex: none;
+  }
+
+  .rail-sub {
+    max-width: 120px;
+  }
+
+  .rail-count,
+  .rail-dot {
+    margin-left: 0;
+  }
+
+  // The modified date is the first thing to go.
+  .file-meta-date {
+    display: none;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared with the export dialog's recipes
+// ─────────────────────────────────────────────────────────────────────────────
+
+.warn {
+  color: var(--color-warning-text, var(--color-warning));
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary-text);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+  }
+}
+
+.link--quiet {
+  color: var(--color-text-secondary);
+}
+
+.field-label .link {
+  margin-left: auto;
+}
+
+.field-label .link ~ .link {
+  margin-left: var(--spacing-3);
+}
+
+.field-label .link:disabled {
+  color: var(--color-text-tertiary);
+  cursor: default;
+  text-decoration: none;
+}
+
+.field-error .link {
+  margin-left: var(--spacing-1);
+}
+
+.check-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: var(--dialog-well);
+}
+
+.check-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  min-height: 40px;
+  padding: 0 var(--spacing-3);
+
+  & + & {
+    border-top: 1px solid var(--color-border-subtle);
+  }
+}
+
+.check-row--locked {
+  color: var(--color-text-secondary);
+}
+
+.check-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  align-self: stretch;
+  cursor: pointer;
+}
+
+.check-row--locked .check-label {
+  cursor: default;
+}
+
+.check-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.check-row-path {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.check-row-lock {
+  margin-left: auto;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--color-warning-text, var(--color-warning));
+}
+
+.rail-fade,
+.file-row--enter {
+  animation: rail-fade-in var(--transition-normal) both;
+}
+
+@keyframes rail-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+
+  li {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+  }
+}
+
+.footer-meta mat-spinner {
+  flex: none;
+}
+
+.kv dd {
+  text-align: right;
+}
+
+.kv dd.warn {
+  color: var(--color-warning-text);
+}
+
+.tree-count {
+  margin-left: auto;
+  color: var(--color-text-secondary);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Radios: a native input (arrow keys, labels) behind the comp's drawn control
+// ─────────────────────────────────────────────────────────────────────────────
+
+.radio-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.radio {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-text-tertiary);
+  border-radius: 50%;
+  transition: border-color var(--transition-fast);
+}
+
+.radio-input:checked + .radio {
+  border-color: var(--color-primary);
+
+  &::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-primary);
+  }
+}
+
+.radio-input:disabled + .radio {
+  border-style: dashed;
+}
+
+.radio-input:focus-visible + .radio {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Source: folder, files
+// ─────────────────────────────────────────────────────────────────────────────
+
+// A read-only collection keeps the controls in view but out of reach.
+.locked-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  transition: opacity var(--transition-normal);
+
+  &--on {
+    opacity: 0.6;
+  }
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 340px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: var(--dialog-well);
+}
+
+.file-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--spacing-1) var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) var(--spacing-1);
+
+  & + & {
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  &--muted .file-name,
+  &--muted .file-meta {
+    color: var(--color-text-secondary);
+  }
+
+  &--invalid {
+    box-shadow: inset 2px 0 0 var(--color-error);
+  }
+}
+
+.file-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.file-name {
+  overflow: hidden;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+
+  .sep {
+    opacity: 0.6;
+  }
+}
+
+.file-note {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+
+  mat-icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+  }
+}
+
+.file-note--warn {
+  color: var(--color-warning-text);
+
+  mat-icon {
+    color: var(--color-warning);
+  }
+}
+
+.loc-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.loc {
+  appearance: none;
+  min-width: 88px;
+  height: 30px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--border-radius-md);
+  background: var(--dialog-well);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--color-error);
+  }
+}
+
+// No inference yet: dashed and in placeholder ink until a locale is chosen.
+.loc--empty {
+  border-style: dashed;
+  color: var(--color-text-placeholder);
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-normal);
+}
+
+.loc--base {
+  border-style: dashed;
+  color: var(--color-text-secondary);
+}
+
+.loc-chevron {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: var(--color-text-tertiary);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.empty-well {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+
+  p {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.file-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  opacity: 0.6;
+}
+
+.file-skeleton-row {
+  height: 44px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-subtle);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Strategy cards
+// ─────────────────────────────────────────────────────────────────────────────
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.choice {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: var(--color-background-subtle);
+  cursor: pointer;
+  transition: border-color var(--transition-normal), background var(--transition-normal);
+
+  .radio {
+    margin-top: 2px;
+  }
+
+  &--on {
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+    background: color-mix(in srgb, var(--color-primary) 5%, var(--color-background-subtle));
+  }
+}
+
+.choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.choice-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-primary);
+}
+
+.choice-desc {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-snug);
+  color: var(--color-text-secondary);
+}
+
+.choice-tag {
+  flex: none;
+  margin-left: auto;
+  padding-top: 3px;
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Preview
+// ─────────────────────────────────────────────────────────────────────────────
+
+.plan-file {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plan-file-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  mat-icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+  }
+}
+
+.plan-file-problem {
+  padding-left: 20px;
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  overflow-wrap: anywhere;
+}
+
+// The locale a file writes, in the export dialog's chosen-locale tint (`.pill--button[aria-pressed]`).
+.loc-pill {
+  flex: none;
+  padding: 0 6px;
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 35%, transparent);
+  border-radius: var(--border-radius-full);
+  background: color-mix(in srgb, var(--color-secondary) 16%, transparent);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--color-secondary) 45%, var(--color-text-primary));
+  white-space: nowrap;
+}
+
+.transitions,
+.fixes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+}
+
+.transitions li {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.transition-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-tertiary);
+}
+
+.status-word {
+  font-weight: var(--font-weight-semibold);
+}
+
+@each $status in (new, stale, translated, verified) {
+  .status-word[data-status='#{$status}'] {
+    color: var(--color-status-#{$status});
+  }
+}
+
+.fixes li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-family: var(--font-family-mono);
+  overflow-wrap: anywhere;
+}
+
+.fix-key {
+  color: var(--color-text-secondary);
+}
+
+.fix-change,
+.issue-reason {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  color: var(--color-text-primary);
+
+  b {
+    font-weight: var(--font-weight-bold);
+  }
+}
+
+.issue-reason {
+  font-family: var(--font-family-body);
+  color: var(--color-text-secondary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// Full-screen below 640px, like the translation editor (panel box is in styles.scss).
+@media (max-width: 639px) {
+  .dialog-wrapper {
+    height: 100%;
+  }
+
+  // The locale select drops under the file name on its own line.
+  .file-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .loc-wrap {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-panel,
+  .rail-fade,
+  .file-row--enter {
+    animation: none;
+  }
+
+  .drop-zone,
+  .disclosure-chevron,
+  .preview,
+  .rail-item,
+  .switch-row,
+  .choice,
+  .radio,
+  .locked-group {
+    transition: none;
+  }
+}
+
+// Dropping files on the well uploads them.
+.drop-zone {
+  border-radius: var(--border-radius-lg);
+  outline: 2px dashed transparent;
+  outline-offset: 2px;
+  transition: background var(--transition-fast), outline-color var(--transition-fast);
+
+  &--over {
+    outline-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  }
+}
+
+.upload-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+
+  mat-spinner {
+    flex: none;
+  }
+}
+
+.upload-errors {
+  padding: 0;
+}
+
+.upload-clash {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 50%, var(--color-border));
+  border-radius: var(--border-radius-lg);
+  background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+
+  p {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.upload-clash-actions {
+  display: flex;
+  gap: var(--spacing-2);
+}

@@ -1,15 +1,9 @@
-import { resolve } from 'node:path';
-import type prompts from 'prompts';
-import type { LingoTrackerConfig } from '@simoncodes-ca/core';
-import { editResource } from '@simoncodes-ca/core';
-import {
-  loadConfiguration,
-  parseCommaSeparatedList,
-  promptForCollection,
-  resolveWritableCollection,
-  ConsoleFormatter,
-  executePromptsWithFallback,
-} from '../utils';
+import { type EditResourceChanges, editResource } from '@simoncodes-ca/core';
+import { entryChange } from '@simoncodes-ca/domain';
+import { defineCommand } from '../runner/command-runner';
+import { flagName } from '../runner/flag-record';
+import { ConsoleFormatter, reportRun, printTerminologyFindings } from '../utils';
+import { EDIT_RESOURCE_FLAGS } from './edit-resource-flags';
 
 export interface EditResourceOptions {
   collection?: string;
@@ -17,120 +11,46 @@ export interface EditResourceOptions {
   targetFolder?: string;
   baseValue?: string;
   comment?: string;
-  tags?: string; // Comma separated
+  tags?: string[];
   locale?: string;
   localeValue?: string;
 }
 
-export async function editResourceCommand(options: EditResourceOptions): Promise<void> {
-  const loaded = loadConfiguration({ exitOnError: false });
-  if (!loaded) return;
-  const { config, cwd } = loaded;
+export const editResourceCommand = defineCommand<EditResourceOptions>()({
+  flags: EDIT_RESOURCE_FLAGS,
+  name: 'Edit resource',
+  collection: 'writable',
 
-  const collectionName = await promptForCollection(config, options.collection);
-  if (!collectionName) return;
+  required: ['key'],
+  run: async ({ collection, answers }) => {
+    const translations =
+      answers.locale && answers.localeValue ? { [answers.locale]: { value: answers.localeValue } } : undefined;
+    if (!translations && (answers.locale || answers.localeValue)) {
+      ConsoleFormatter.warning(
+        `Both ${flagName(EDIT_RESOURCE_FLAGS.locale)} and ${flagName(EDIT_RESOURCE_FLAGS.localeValue)} must be provided to update a translation.`,
+      );
+    }
 
-  const collection = resolveWritableCollection(collectionName, config, cwd);
-  if (!collection) return;
-
-  const answers = await promptForMissing(options, config, collectionName);
-
-  // Prepare edit options
-  const editOptions: {
-    key: string;
-    cwd: string;
-    baseLocale: string;
-    targetFolder?: string;
-    baseValue?: string;
-    comment?: string;
-    tags?: string[];
-    locales?: Record<string, { value: string }>;
-  } = {
-    key: answers.key,
-    cwd: resolve(cwd),
-    baseLocale: collection.config.baseLocale,
-  };
-
-  if (options.targetFolder) {
-    editOptions.targetFolder = options.targetFolder;
-  }
-
-  if (answers.baseValue) {
-    editOptions.baseValue = answers.baseValue;
-  }
-
-  if (options.comment) {
-    editOptions.comment = options.comment;
-  }
-
-  if (options.tags) {
-    editOptions.tags = parseCommaSeparatedList(options.tags);
-  }
-
-  if (options.locale && options.localeValue) {
-    editOptions.locales = {
-      [options.locale]: { value: options.localeValue },
+    const changes: EditResourceChanges = {
+      baseValue: answers.baseValue || undefined,
+      ...entryChange('edit', answers),
+      translations,
+      // `--target-folder` names the folder the entry moves to ('' for the collection root).
+      moveTo: answers.targetFolder,
     };
-  } else if (options.locale || options.localeValue) {
-    ConsoleFormatter.warning('Both --locale and --localeValue must be provided to update a translation.');
-  }
 
-  const translationConfig = collection.config.translation ?? config.translation;
-  const allLocales = collection.config.locales ?? config.locales ?? [];
-
-  try {
-    const result = await editResource(collection.translationsFolderPath, {
-      ...editOptions,
-      translationConfig,
-      allLocales,
-    });
+    const result = await editResource(collection, answers.key, changes);
 
     if (result.updated) {
       ConsoleFormatter.success(`Resource "${result.resolvedKey}" updated successfully.`);
+      // Present only when this invocation supplied a base value (core's rule): editing a
+      // comment or a translation does not re-raise advice about untouched wording.
+      if (result.terminology) {
+        printTerminologyFindings(result.terminology);
+      }
     } else {
       ConsoleFormatter.info(result.message || 'No changes detected');
     }
-  } catch (e: unknown) {
-    ConsoleFormatter.error(e instanceof Error ? e.message : 'Failed to update resource');
-  }
-}
-
-async function promptForMissing(
-  options: EditResourceOptions,
-  _config: LingoTrackerConfig,
-  _collectionName: string,
-): Promise<{
-  key: string;
-  baseValue?: string;
-}> {
-  const questions: prompts.PromptObject[] = [];
-
-  if (!options.key) {
-    questions.push({
-      type: 'text',
-      name: 'key',
-      message: 'Resource key',
-      validate: (val: string) => (val && val.trim().length > 0 ? true : 'Required'),
-    });
-  }
-
-  if (!options.baseValue) {
-    questions.push({
-      type: 'text',
-      name: 'baseValue',
-      message: 'New base value (leave empty to keep current)',
-    });
-  }
-
-  const result = await executePromptsWithFallback({
-    questions,
-    currentValues: options,
-    requiredFields: ['key'],
-    operationName: 'Edit resource',
-  });
-
-  return {
-    key: result.key as string,
-    baseValue: result.baseValue as string | undefined,
-  };
-}
+    return reportRun({ warnings: result.warnings ?? [], errors: [], outcome: 'succeeded' });
+  },
+});

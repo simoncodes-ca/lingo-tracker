@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
 import * as fs from 'fs';
+import { describe, expect, it, vi } from 'vitest';
 import { exportToXliff } from './export-to-xliff';
 import type { ExportOptions, FilteredResource } from './types';
 

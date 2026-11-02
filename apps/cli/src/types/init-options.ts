@@ -1,4 +1,4 @@
-import type { TokenCasing } from '@simoncodes-ca/core';
+import type { TokenCasing } from '@simoncodes-ca/domain';
 
 /**
  * Configuration options for the init command
@@ -10,6 +10,7 @@ export type InitOptions = {
   importFolder?: string;
   baseLocale?: string;
   locales?: string[];
+  runtime?: string;
   /** When true/false, sets the collection's read-only flag explicitly. When undefined, falls back to node_modules detection (and an interactive prompt in TTY mode). */
   readOnly?: boolean;
   enableAutoTranslation?: boolean;

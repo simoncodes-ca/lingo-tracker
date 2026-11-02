@@ -1,12 +1,20 @@
-import type { ExportOptions, ExportResult, FilteredResource } from './types';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { buildKeyTree, DEFAULT_EXPORT_BASE_PROPERTY_NAME } from '@simoncodes-ca/domain';
 import { writeJsonFile } from '../file-io/json-file-operations';
+import { exportFileName } from './export-file-name';
+import type { ExportOptions, ExportResult, FilteredResource } from './types';
 
 /**
  * Exports resources to JSON format.
  */
-export function exportToJson(resources: FilteredResource[], options: ExportOptions, baseLocale?: string): ExportResult {
+export function exportToJson(
+  resources: FilteredResource[],
+  options: ExportOptions,
+  baseLocale?: string,
+  prepared?: { fileName: string; hierarchy?: ReturnType<typeof buildHierarchicalStructure> },
+): ExportResult {
+  const date = new Date();
   const result: ExportResult = {
     format: 'json',
     filesCreated: [],
@@ -36,17 +44,22 @@ export function exportToJson(resources: FilteredResource[], options: ExportOptio
         options.onProgress(`Processing ${locale} (${localeResources.length} resources)`);
       }
 
-      const filename = getFilename(locale, options, baseLocale);
+      const filename = prepared?.fileName ?? exportFileName('json', locale, baseLocale, options.filenamePattern, date);
       const filePath = path.join(options.outputDirectory, filename);
 
       let content: Record<string, unknown>;
-      const conflicts: string[] = [];
+      let conflicts: string[] = [];
+      let keysCount: number;
 
       if (options.jsonStructure === 'flat') {
         content = buildFlatStructure(localeResources, options);
+        keysCount = Object.keys(content).length;
       } else {
         // Default to hierarchical
-        content = buildHierarchicalStructure(localeResources, options, conflicts);
+        const built = prepared?.hierarchy ?? buildHierarchicalStructure(localeResources, options);
+        content = built.tree;
+        conflicts = built.conflicts;
+        keysCount = built.keysCount;
       }
 
       if (conflicts.length > 0) {
@@ -65,32 +78,13 @@ export function exportToJson(resources: FilteredResource[], options: ExportOptio
       }
 
       result.filesCreated.push(filename);
-      result.resourcesExported += localeResources.length;
+      result.resourcesExported += keysCount;
     } catch (error) {
       result.errors.push(`Failed to export locale ${locale}: ${(error as Error).message}`);
     }
   }
 
   return result;
-}
-
-function getFilename(locale: string, options: ExportOptions, baseLocale?: string): string {
-  if (options.filenamePattern) {
-    let name = options.filenamePattern
-      .replace('{locale}', locale)
-      .replace('{target}', locale) // Alias for locale in JSON context
-      .replace('{date}', new Date().toISOString().split('T')[0]);
-
-    if (baseLocale) {
-      name = name.replace('{source}', baseLocale);
-    }
-
-    if (!name.endsWith('.json')) {
-      name += '.json';
-    }
-    return name;
-  }
-  return `${locale}.json`;
 }
 
 export function buildFlatStructure(resources: FilteredResource[], options: ExportOptions): Record<string, unknown> {
@@ -106,89 +100,33 @@ export function buildFlatStructure(resources: FilteredResource[], options: Expor
 export function buildHierarchicalStructure(
   resources: FilteredResource[],
   options: ExportOptions,
-  conflicts: string[],
-): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-
-  // Sort resources by key length to process shorter keys first (parents before children)
-  // Actually, processing order matters for conflict detection.
-  // If we have 'a' and 'a.b', and we process 'a' first, we set result['a'] = value.
-  // Then 'a.b' comes, we try to access result['a'] and see it's not an object (or it is a value object).
-
-  for (const res of resources) {
-    const parts = res.key.split('.');
-    let current = result;
-
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      const isLast = i === parts.length - 1;
-
-      if (isLast) {
-        // We are at the leaf, assign value
-        if (current[part] !== undefined) {
-          // Conflict: Key already exists.
-          // If it's an object, it means we have a parent collision (e.g. 'a.b' existed, now adding 'a').
-          // But since we are at the leaf of 'a', 'a' is the key.
-          // If current[part] is an object, it means 'a' was already created as a parent for something else.
-          if (typeof current[part] === 'object' && !isRichValue(current[part], options.basePropertyName)) {
-            conflicts.push(`${res.key} conflicts with existing children`);
-          } else {
-            // Overwrite or duplicate key?
-            // Last write wins, but warn?
-            // For now, just overwrite.
-          }
-        }
-        current[part] = formatValue(res, options);
-      } else {
-        // We are traversing
-        if (current[part] === undefined) {
-          current[part] = {};
-        }
-
-        // If current[part] exists but is not an object (it's a leaf value from a previous key),
-        // or it is a rich value object (which is technically an object but conceptually a leaf).
-        if (typeof current[part] !== 'object' || isRichValue(current[part], options.basePropertyName)) {
-          conflicts.push(`${res.key} conflicts with parent ${parts.slice(0, i + 1).join('.')}`);
-          // We can't continue traversing down a leaf.
-          // We have to stop or overwrite.
-          // Requirement says: "Hierarchical format will error if a key is both a parent and leaf value"
-          // "Resource is still exported but marked as problematic" - this implies we might skip it or do something best-effort.
-          // Let's skip this resource to avoid crashing, and log conflict.
-          break;
-        }
-
-        // At this point we've verified current[part] is an object and not a rich value,
-        // so we can safely treat it as a Record<string, unknown> for traversal
-        current = current[part] as Record<string, unknown>;
-      }
-    }
-  }
-
-  return result;
-}
-
-function isRichValue(obj: unknown, basePropertyName = 'baseValue'): boolean {
-  return (
-    obj !== null &&
-    typeof obj === 'object' &&
-    'value' in obj &&
-    Object.keys(obj).every((k) =>
-      ['value', basePropertyName, 'comment', 'status', 'tags', 'doNotTranslate'].includes(k),
-    )
+): { tree: Record<string, unknown>; conflicts: string[]; keysCount: number } {
+  let keysCount = 0;
+  const built = buildKeyTree(
+    resources.map((resource) => [resource.key, resource] as const),
+    {
+      leaf: (resource) => {
+        keysCount++;
+        return formatValue(resource, options);
+      },
+    },
   );
+  const keys = [...new Set(resources.map((resource) => resource.key))].sort();
+  const conflicts = built.conflicts.map(
+    (key) =>
+      `${key} has a value and child keys; skipped ${keys.filter((child) => child.startsWith(`${key}.`)).join(', ')}`,
+  );
+  return { tree: built.tree, conflicts, keysCount };
 }
 
 function formatValue(resource: FilteredResource, options: ExportOptions): unknown {
-  const useRich =
-    options.richJson || options.includeBase || options.includeComment || options.includeStatus || options.includeTags;
-
-  if (useRich) {
+  if (options.richJson) {
     const richObj: Record<string, unknown> = {
       value: resource.value,
     };
 
     if (options.includeBase && resource.baseValue) {
-      richObj[options.basePropertyName ?? 'baseValue'] = resource.baseValue;
+      richObj[options.basePropertyName ?? DEFAULT_EXPORT_BASE_PROPERTY_NAME] = resource.baseValue;
     }
 
     if (options.includeComment && resource.comment) {

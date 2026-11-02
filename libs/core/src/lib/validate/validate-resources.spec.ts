@@ -1,569 +1,457 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { join } from 'node:path';
+import type { TranslationStatus } from '@simoncodes-ca/domain';
+import { describe, expect, it } from 'vitest';
+import {
+  type SeedResource,
+  seedResources,
+  testCollection,
+  useTempDir,
+  writeFolderFiles,
+} from '../../testing/temp-dir.spec-helpers';
+import { readCollectionSet } from '../collection-set/collection-set';
+import type { Collection } from '../config/open-collection';
+import { type ProjectTerms, readProjectTerms } from '../config/project-terms';
 import { validateResources } from './validate-resources';
-import * as exportCommon from '../export/export-common';
-import type { LoadedResource } from '../export/export-common';
 
-// Mock the export-common module
-vi.mock('../export/export-common', async () => {
-  const actual = await vi.importActual('../export/export-common');
-  return {
-    ...actual,
-    loadResourcesFromCollections: vi.fn(),
-  };
-});
+describe('validateResources (real fs)', () => {
+  const root = useTempDir('validate-resources-');
+  const termsByCollection = new Map<Collection, ProjectTerms>();
 
-describe('validateResources', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  /** A collection in its own subfolder of the temp dir; targets `es` and `fr` unless told otherwise. */
+  function collection(name = 'main', overrides: Partial<Collection> = {}): Collection {
+    const opened = testCollection(join(root(), name), { name, locales: ['en', 'es', 'fr'], ...overrides });
+    termsByCollection.set(opened, readProjectTerms(opened));
+    return opened;
+  }
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  /** A resource whose translations all have the given status. */
+  function withStatus(source: string, statuses: Record<string, TranslationStatus>): SeedResource {
+    return {
+      source,
+      translations: Object.fromEntries(
+        Object.entries(statuses).map(([locale, status]) => [locale, { value: `${source} (${locale})`, status }]),
+      ),
+    };
+  }
 
-  describe('success cases', () => {
-    it('should pass validation when all resources are verified', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: { es: 'Vale', fr: 'OK' },
-          status: { es: 'verified', fr: 'verified' },
-          collection: 'main',
-        },
-        {
-          key: 'cancel',
-          fullKey: 'common.cancel',
-          source: 'Cancel',
-          translations: { es: 'Cancelar', fr: 'Annuler' },
-          status: { es: 'verified', fr: 'verified' },
-          collection: 'main',
-        },
-      ];
-
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
-
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es', 'fr'], {
-        allowTranslated: false,
+  describe('status', () => {
+    it('passes when every resource is verified in every target locale', () => {
+      const main = collection();
+      seedResources(main, {
+        'common.ok': withStatus('OK', { es: 'verified', fr: 'verified' }),
+        'common.cancel': withStatus('Cancel', { es: 'verified', fr: 'verified' }),
       });
 
+      const result = validateResources([main], { allowTranslated: false }, termsByCollection);
+
       expect(result.passed).toBe(true);
+      expect(result.successes).toHaveLength(4);
       expect(result.failures).toHaveLength(0);
       expect(result.warnings).toHaveLength(0);
-      expect(result.successes).toHaveLength(4); // 2 resources × 2 locales
       expect(result.totalResourcesValidated).toBe(4);
       expect(result.totalUniqueKeys).toBe(2);
       expect(result.localesValidated).toBe(2);
       expect(result.collectionsValidated).toBe(1);
-      expect(result.statusCounts.verified).toBe(4);
-      expect(result.statusCounts.new).toBe(0);
-      expect(result.statusCounts.stale).toBe(0);
-      expect(result.statusCounts.translated).toBe(0);
+      expect(result.statusCounts).toEqual({ new: 0, translated: 0, stale: 0, verified: 4 });
+      expect(result.unreadableFolders).toEqual([]);
     });
 
-    it('should pass validation with empty collections', () => {
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue([]);
-
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es'], { allowTranslated: false });
+    it('passes for a collection without resources', () => {
+      const result = validateResources([collection()], { allowTranslated: false }, termsByCollection);
 
       expect(result.passed).toBe(true);
-      expect(result.failures).toHaveLength(0);
-      expect(result.warnings).toHaveLength(0);
-      expect(result.successes).toHaveLength(0);
       expect(result.totalResourcesValidated).toBe(0);
       expect(result.totalUniqueKeys).toBe(0);
     });
-  });
 
-  describe('failure cases - new resources', () => {
-    it('should fail validation when resources have new status', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: {},
-          status: { es: 'new' },
-          collection: 'main',
-        },
-      ];
+    it('fails new and stale translations', () => {
+      const main = collection();
+      seedResources(main, { 'common.ok': withStatus('OK', { es: 'new', fr: 'stale' }) });
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
-
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es'], { allowTranslated: false });
+      const result = validateResources([main], { allowTranslated: false }, termsByCollection);
 
       expect(result.passed).toBe(false);
-      expect(result.failures).toHaveLength(1);
-      expect(result.failures[0]).toEqual({
-        key: 'common.ok',
-        locale: 'es',
-        collection: 'main',
-        status: 'new',
-      });
-      expect(result.warnings).toHaveLength(0);
-      expect(result.successes).toHaveLength(0);
-      expect(result.statusCounts.new).toBe(1);
+      expect(result.failures).toEqual([
+        { key: 'common.ok', locale: 'es', collection: 'main', status: 'new' },
+        { key: 'common.ok', locale: 'fr', collection: 'main', status: 'stale' },
+      ]);
+      expect(result.statusCounts).toEqual({ new: 1, translated: 0, stale: 1, verified: 0 });
     });
 
-    it('should treat missing status as new and fail validation', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: {},
-          status: {}, // No status for 'es' locale
-          collection: 'main',
-        },
-      ];
+    it('treats a locale without a status as new, including an entry without metadata', () => {
+      const main = collection();
+      seedResources(main, { 'common.ok': withStatus('OK', { es: 'verified' }) });
+      writeFolderFiles(main.translationsFolder, 'loose', { entries: { orphan: { source: 'Orphan' } } });
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      const result = validateResources([main], { allowTranslated: false }, termsByCollection);
 
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es'], { allowTranslated: false });
-
-      expect(result.passed).toBe(false);
-      expect(result.failures).toHaveLength(1);
-      expect(result.failures[0].status).toBe('new');
-      expect(result.statusCounts.new).toBe(1);
+      expect(result.failures.map((failure) => `${failure.key}/${failure.locale}/${failure.status}`)).toEqual([
+        'common.ok/fr/new',
+        'loose.orphan/es/new',
+        'loose.orphan/fr/new',
+      ]);
     });
-  });
 
-  describe('failure cases - stale resources', () => {
-    it('should fail validation when resources have stale status', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: { es: 'Vale' },
-          status: { es: 'stale' },
-          collection: 'main',
-        },
-      ];
+    it('fails translated resources by default and warns with allowTranslated', () => {
+      const main = collection();
+      seedResources(main, { 'common.ok': withStatus('OK', { es: 'translated', fr: 'verified' }) });
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      const strict = validateResources([main], { allowTranslated: false }, termsByCollection);
+      const relaxed = validateResources([main], { allowTranslated: true }, termsByCollection);
 
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es'], { allowTranslated: false });
+      expect(strict.passed).toBe(false);
+      expect(strict.failures).toEqual([{ key: 'common.ok', locale: 'es', collection: 'main', status: 'translated' }]);
+      expect(relaxed.passed).toBe(true);
+      expect(relaxed.warnings).toEqual([{ key: 'common.ok', locale: 'es', collection: 'main', status: 'translated' }]);
+      expect(relaxed.successes).toHaveLength(1);
+    });
 
-      expect(result.passed).toBe(false);
-      expect(result.failures).toHaveLength(1);
-      expect(result.failures[0]).toEqual({
-        key: 'common.ok',
-        locale: 'es',
-        collection: 'main',
-        status: 'stale',
-      });
-      expect(result.statusCounts.stale).toBe(1);
+    it('collects every failure without stopping early', () => {
+      const main = collection('main', { locales: ['en', 'es', 'fr', 'de'] });
+      seedResources(
+        main,
+        Object.fromEntries(
+          Array.from({ length: 20 }, (_, index) => [`ns.key${index}`, withStatus(`V${index}`, { es: 'new' })]),
+        ),
+      );
+
+      const result = validateResources([main], { allowTranslated: false }, termsByCollection);
+
+      // es is new; fr and de have no status at all
+      expect(result.failures).toHaveLength(60);
+      expect(result.statusCounts.new).toBe(60);
     });
   });
 
-  describe('failure cases - translated resources (default behavior)', () => {
-    it('should fail validation when resources have translated status and allowTranslated is false', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: { es: 'Vale' },
-          status: { es: 'translated' },
-          collection: 'main',
-        },
-      ];
+  describe('per collection', () => {
+    it('validates each collection against its own target locales and counts distinct locales', () => {
+      const common = collection('common');
+      const admin = collection('admin', { locales: ['en', 'de'] });
+      seedResources(common, { ok: withStatus('OK', { es: 'verified', fr: 'verified' }) });
+      seedResources(admin, { users: withStatus('Users', { de: 'new' }) });
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      const result = validateResources([common, admin], { allowTranslated: false }, termsByCollection);
 
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es'], { allowTranslated: false });
-
-      expect(result.passed).toBe(false);
-      expect(result.failures).toHaveLength(1);
-      expect(result.failures[0]).toEqual({
-        key: 'common.ok',
-        locale: 'es',
-        collection: 'main',
-        status: 'translated',
-      });
-      expect(result.warnings).toHaveLength(0);
-      expect(result.statusCounts.translated).toBe(1);
-    });
-  });
-
-  describe('warning cases - translated resources with allowTranslated flag', () => {
-    it('should generate warnings when resources have translated status and allowTranslated is true', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: { es: 'Vale' },
-          status: { es: 'translated' },
-          collection: 'main',
-        },
-      ];
-
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
-
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es'], { allowTranslated: true });
-
-      expect(result.passed).toBe(true); // No failures, only warnings
-      expect(result.failures).toHaveLength(0);
-      expect(result.warnings).toHaveLength(1);
-      expect(result.warnings[0]).toEqual({
-        key: 'common.ok',
-        locale: 'es',
-        collection: 'main',
-        status: 'translated',
-      });
-      expect(result.statusCounts.translated).toBe(1);
-    });
-  });
-
-  describe('mixed statuses', () => {
-    it('should correctly categorize resources with mixed statuses across multiple locales', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: { es: 'Vale', fr: 'OK', de: 'OK' },
-          status: {
-            es: 'verified',
-            fr: 'translated',
-            de: 'new',
-          },
-          collection: 'main',
-        },
-        {
-          key: 'cancel',
-          fullKey: 'common.cancel',
-          source: 'Cancel',
-          translations: { es: 'Cancelar', fr: 'Annuler', de: 'Abbrechen' },
-          status: {
-            es: 'stale',
-            fr: 'verified',
-            de: 'translated',
-          },
-          collection: 'main',
-        },
-      ];
-
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
-
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es', 'fr', 'de'], {
-        allowTranslated: false,
-      });
-
-      expect(result.passed).toBe(false);
-      expect(result.totalResourcesValidated).toBe(6); // 2 resources × 3 locales
-      expect(result.totalUniqueKeys).toBe(2);
+      expect(result.successes.map((detail) => `${detail.collection}/${detail.locale}`)).toEqual([
+        'common/es',
+        'common/fr',
+      ]);
+      expect(result.failures).toEqual([{ key: 'users', locale: 'de', collection: 'admin', status: 'new' }]);
+      expect(result.totalResourcesValidated).toBe(3);
       expect(result.localesValidated).toBe(3);
-
-      // Failures: new (de/ok), stale (es/cancel), translated (fr/ok, de/cancel)
-      expect(result.failures).toHaveLength(4);
-      expect(result.failures.filter((f) => f.status === 'new')).toHaveLength(1);
-      expect(result.failures.filter((f) => f.status === 'stale')).toHaveLength(1);
-      expect(result.failures.filter((f) => f.status === 'translated')).toHaveLength(2);
-
-      // Successes: verified (es/ok, fr/cancel)
-      expect(result.successes).toHaveLength(2);
-
-      // No warnings with allowTranslated=false
-      expect(result.warnings).toHaveLength(0);
-
-      // Status counts
-      expect(result.statusCounts.new).toBe(1);
-      expect(result.statusCounts.stale).toBe(1);
-      expect(result.statusCounts.translated).toBe(2);
-      expect(result.statusCounts.verified).toBe(2);
+      expect(result.collectionsValidated).toBe(2);
     });
 
-    it('should correctly categorize with allowTranslated=true', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: { es: 'Vale', fr: 'OK' },
-          status: {
-            es: 'verified',
-            fr: 'translated',
-          },
-          collection: 'main',
-        },
-        {
-          key: 'cancel',
-          fullKey: 'common.cancel',
-          source: 'Cancel',
-          translations: { es: 'Cancelar', fr: 'Annuler' },
-          status: {
-            es: 'new',
-            fr: 'stale',
-          },
-          collection: 'main',
-        },
-      ];
+    it('validates a key present in two collections in both', () => {
+      const first = collection('first');
+      const second = collection('second');
+      seedResources(first, { 'shared.title': withStatus('Title', { es: 'verified', fr: 'verified' }) });
+      seedResources(second, { 'shared.title': withStatus('Title', { es: 'new', fr: 'verified' }) });
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      const result = validateResources([first, second], { allowTranslated: false }, termsByCollection);
 
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es', 'fr'], {
-        allowTranslated: true,
-      });
-
-      expect(result.passed).toBe(false); // Still fails due to new/stale
-      expect(result.failures).toHaveLength(2); // new and stale only
-      expect(result.warnings).toHaveLength(1); // translated
-      expect(result.successes).toHaveLength(1); // verified
-
-      expect(result.failures.filter((f) => f.status === 'new')).toHaveLength(1);
-      expect(result.failures.filter((f) => f.status === 'stale')).toHaveLength(1);
-      expect(result.warnings.filter((w) => w.status === 'translated')).toHaveLength(1);
+      expect(result.totalUniqueKeys).toBe(2);
+      expect(result.totalResourcesValidated).toBe(4);
+      expect(result.failures).toEqual([{ key: 'shared.title', locale: 'es', collection: 'second', status: 'new' }]);
     });
-  });
 
-  describe('multiple collections', () => {
-    it('should validate resources across multiple collections', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: { es: 'Vale' },
-          status: { es: 'verified' },
-          collection: 'main',
-        },
-        {
-          key: 'submit',
-          fullKey: 'forms.submit',
-          source: 'Submit',
-          translations: { es: 'Enviar' },
-          status: { es: 'new' },
-          collection: 'app',
-        },
-      ];
+    it('treats the base locale of a collection as its source, not as a target', () => {
+      const french = collection('french', { baseLocale: 'fr', locales: ['fr', 'en'] });
+      seedResources(french, { ok: withStatus('Bien', { en: 'verified' }) });
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      const result = validateResources([french], { allowTranslated: false }, termsByCollection);
+
+      expect(result.passed).toBe(true);
+      expect(result.successes).toEqual([{ key: 'ok', locale: 'en', collection: 'french', status: 'verified' }]);
+    });
+
+    it('leaves skipped locales out of every collection', () => {
+      const main = collection();
+      seedResources(main, { ok: withStatus('OK', { es: 'verified', fr: 'new' }) });
 
       const result = validateResources(
-        [
-          { name: 'main', path: '/translations/main' },
-          { name: 'app', path: '/translations/app' },
-        ],
-        ['es'],
+        [main],
         { allowTranslated: false },
+        termsByCollection,
+        readCollectionSet([main], { scope: 'validation', skippedLocales: ['fr'] }),
       );
 
-      expect(result.passed).toBe(false);
-      expect(result.collectionsValidated).toBe(2);
-      expect(result.failures).toHaveLength(1);
-      expect(result.failures[0].collection).toBe('app');
-      expect(result.successes).toHaveLength(1);
-      expect(result.successes[0].collection).toBe('main');
-    });
-  });
-
-  describe('comprehensive validation - no early exit', () => {
-    it('should collect ALL failures across all resources and locales', () => {
-      // Create 100 resources with new status across 2 locales
-      const mockResources: LoadedResource[] = Array.from({ length: 100 }, (_, i) => ({
-        key: `key${i}`,
-        fullKey: `namespace.key${i}`,
-        source: `Source ${i}`,
-        translations: {},
-        status: { es: 'new', fr: 'new' },
-        collection: 'main',
-      }));
-
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
-
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es', 'fr'], {
-        allowTranslated: false,
-      });
-
-      // Should report ALL 200 failures (100 resources × 2 locales)
-      expect(result.passed).toBe(false);
-      expect(result.failures).toHaveLength(200);
-      expect(result.totalResourcesValidated).toBe(200);
-      expect(result.totalUniqueKeys).toBe(100);
-      expect(result.statusCounts.new).toBe(200);
+      expect(result.passed).toBe(true);
+      expect(result.localesValidated).toBe(1);
+      expect(result.totalResourcesValidated).toBe(1);
     });
 
-    it('should collect ALL failures of different types across multiple locales', () => {
-      const mockResources: LoadedResource[] = [
-        // Resource 1: new in es, stale in fr
-        {
-          key: 'key1',
-          fullKey: 'ns.key1',
-          source: 'Source 1',
-          translations: { es: '', fr: 'Val 1' },
-          status: { es: 'new', fr: 'stale' },
-          collection: 'main',
-        },
-        // Resource 2: translated in both (will be failure)
-        {
-          key: 'key2',
-          fullKey: 'ns.key2',
-          source: 'Source 2',
-          translations: { es: 'Val 2', fr: 'Val 2' },
-          status: { es: 'translated', fr: 'translated' },
-          collection: 'main',
-        },
-        // Resource 3: new in es, verified in fr
-        {
-          key: 'key3',
-          fullKey: 'ns.key3',
-          source: 'Source 3',
-          translations: { es: '', fr: 'Val 3' },
-          status: { es: 'new', fr: 'verified' },
-          collection: 'main',
-        },
-      ];
-
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
-
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es', 'fr'], {
-        allowTranslated: false,
-      });
-
-      expect(result.passed).toBe(false);
-      expect(result.totalResourcesValidated).toBe(6); // 3 resources × 2 locales
-
-      // Should collect all failures: 2 new, 1 stale, 2 translated = 5 total
-      expect(result.failures).toHaveLength(5);
-      expect(result.failures.filter((f) => f.status === 'new')).toHaveLength(2);
-      expect(result.failures.filter((f) => f.status === 'stale')).toHaveLength(1);
-      expect(result.failures.filter((f) => f.status === 'translated')).toHaveLength(2);
-
-      // Should have 1 success
-      expect(result.successes).toHaveLength(1);
-      expect(result.successes[0].status).toBe('verified');
-    });
-
-    it('should validate across multiple collections and collect all failures', () => {
-      const mockResources: LoadedResource[] = [
-        // Collection 1 - 2 resources with failures
-        {
-          key: 'key1',
-          fullKey: 'c1.key1',
-          source: 'Source 1',
-          translations: { es: '' },
-          status: { es: 'new' },
-          collection: 'collection1',
-        },
-        {
-          key: 'key2',
-          fullKey: 'c1.key2',
-          source: 'Source 2',
-          translations: { es: 'Val 2' },
-          status: { es: 'stale' },
-          collection: 'collection1',
-        },
-        // Collection 2 - 2 resources with failures
-        {
-          key: 'key1',
-          fullKey: 'c2.key1',
-          source: 'Source 3',
-          translations: { es: 'Val 3' },
-          status: { es: 'translated' },
-          collection: 'collection2',
-        },
-        {
-          key: 'key2',
-          fullKey: 'c2.key2',
-          source: 'Source 4',
-          translations: { es: '' },
-          status: { es: 'new' },
-          collection: 'collection2',
-        },
-      ];
-
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+    it('validates nothing for a collection whose target locales are all skipped', () => {
+      const main = collection('main', { locales: ['en', 'es'] });
+      seedResources(main, { ok: withStatus('OK', { es: 'new' }) });
 
       const result = validateResources(
-        [
-          { name: 'collection1', path: '/c1' },
-          { name: 'collection2', path: '/c2' },
-        ],
-        ['es'],
+        [main],
         { allowTranslated: false },
+        termsByCollection,
+        readCollectionSet([main], { scope: 'validation', skippedLocales: ['es'] }),
       );
 
-      expect(result.passed).toBe(false);
-      expect(result.collectionsValidated).toBe(2);
-      expect(result.failures).toHaveLength(4);
-
-      // Verify all collections are represented
-      const collection1Failures = result.failures.filter((f) => f.collection === 'collection1');
-      const collection2Failures = result.failures.filter((f) => f.collection === 'collection2');
-      expect(collection1Failures).toHaveLength(2);
-      expect(collection2Failures).toHaveLength(2);
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should handle resources with no translations in any locale', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: {},
-          status: {},
-          collection: 'main',
-        },
-      ];
-
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
-
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es', 'fr'], {
-        allowTranslated: false,
-      });
-
-      expect(result.passed).toBe(false);
-      expect(result.failures).toHaveLength(2); // Both locales default to 'new'
-      expect(result.failures.every((f) => f.status === 'new')).toBe(true);
-    });
-
-    it('should handle validation with no target locales', () => {
-      const mockResources: LoadedResource[] = [
-        {
-          key: 'ok',
-          fullKey: 'common.ok',
-          source: 'OK',
-          translations: {},
-          status: {},
-          collection: 'main',
-        },
-      ];
-
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
-
-      const result = validateResources([{ name: 'main', path: '/translations' }], [], { allowTranslated: false });
-
-      expect(result.passed).toBe(true); // No locales to validate
-      expect(result.failures).toHaveLength(0);
+      expect(result.passed).toBe(true);
       expect(result.totalResourcesValidated).toBe(0);
       expect(result.localesValidated).toBe(0);
     });
+  });
 
-    it('should handle large numbers of resources efficiently', () => {
-      // Create 1000 resources
-      const mockResources: LoadedResource[] = Array.from({ length: 1000 }, (_, i) => ({
-        key: `key${i}`,
-        fullKey: `ns.key${i}`,
-        source: `Source ${i}`,
-        translations: { es: `Value ${i}` },
-        status: { es: 'verified' },
-        collection: 'main',
-      }));
+  describe('unreadable folders', () => {
+    it('fails validation and names the folder and file', () => {
+      const main = collection();
+      seedResources(main, { 'good.ok': withStatus('OK', { es: 'verified', fr: 'verified' }) });
+      writeFolderFiles(main.translationsFolder, 'bad', { entries: { x: { source: 'X' } }, meta: '{ broken' });
 
-      vi.mocked(exportCommon.loadResourcesFromCollections).mockReturnValue(mockResources);
+      const result = validateResources([main], { allowTranslated: false }, termsByCollection);
 
-      const result = validateResources([{ name: 'main', path: '/translations' }], ['es'], { allowTranslated: false });
+      expect(result.passed).toBe(false);
+      expect(result.failures).toHaveLength(0);
+      expect(result.successes).toHaveLength(2);
+      expect(result.unreadableFolders).toHaveLength(1);
+      expect(result.unreadableFolders?.[0]).toMatchObject({ collection: 'main', folderPath: 'bad' });
+      expect(result.unreadableFolders?.[0]?.message).toContain('tracker_meta.json');
+    });
+  });
+
+  describe('ICU and placeholders', () => {
+    it("compiles each collection's base values under its own base locale", () => {
+      const main = collection('main', { locales: ['en', 'es'] });
+      const japanese = collection('japanese', { baseLocale: 'ja', locales: ['ja', 'en'] });
+      const plural = '{count, plural, one {# item} other {# items}}';
+      seedResources(main, { count: { source: plural, translations: { es: { value: plural, status: 'verified' } } } });
+      seedResources(japanese, {
+        count: { source: plural, translations: { en: { value: plural, status: 'verified' } } },
+      });
+
+      const result = validateResources(
+        [main, japanese],
+        {
+          allowTranslated: false,
+          icu: { compileValues: true, requirePortablePlurals: true },
+        },
+        termsByCollection,
+      );
+
+      expect(result.icu?.valuesChecked).toBe(4);
+      // The portability rule reads base values only, each under its own collection's base locale.
+      expect(result.icu?.warnings.map((warning) => `${warning.collection}/${warning.locale}`)).toEqual([
+        'main/en',
+        'japanese/ja',
+      ]);
+    });
+
+    it("compares each translation with its collection's base value", () => {
+      const french = collection('french', { baseLocale: 'fr', locales: ['fr', 'en'] });
+      seedResources(french, {
+        greeting: { source: 'Bonjour {name}', translations: { en: { value: 'Hello {nom}', status: 'verified' } } },
+      });
+
+      const result = validateResources([french], { allowTranslated: false, placeholders: true }, termsByCollection);
+
+      expect(result.passed).toBe(false);
+      expect(result.placeholders?.valuesChecked).toBe(1);
+      expect(result.placeholders?.failures).toMatchObject([
+        { key: 'greeting', locale: 'en', collection: 'french', missing: ['name'], unexpected: ['nom'] },
+      ]);
+    });
+
+    it('leaves the ICU and placeholder results undefined when not requested', () => {
+      const result = validateResources([collection()], { allowTranslated: false }, termsByCollection);
+
+      expect(result.icu).toBeUndefined();
+      expect(result.placeholders).toBeUndefined();
+    });
+  });
+
+  describe('dotted simple arguments', () => {
+    for (const runtime of ['transloco', 'transloco-messageformat'] as const) {
+      it(`validates dotted simple arguments according to ${runtime}`, () => {
+        const main = collection('main', { runtime, locales: ['en', 'es'] });
+        seedResources(main, {
+          greeting: {
+            source: 'Hello {user.name}',
+            translations: { es: { value: 'Hola {user.name}', status: 'verified' } },
+          },
+        });
+        const result = validateResources(
+          [main],
+          {
+            allowTranslated: false,
+            icu: { compileValues: true, requirePortablePlurals: false },
+            placeholders: true,
+          },
+          termsByCollection,
+        );
+        expect(result.passed).toBe(runtime === 'transloco');
+        expect(result.icu?.failures).toHaveLength(runtime === 'transloco' ? 0 : 2);
+        expect(result.placeholders?.failures).toEqual([]);
+      });
+    }
+
+    it('reports dotted argument renames and retains the runtime warning for a plural', () => {
+      const main = collection('main', { runtime: 'transloco', locales: ['en', 'es'] });
+      seedResources(main, {
+        count: {
+          source: '{user.name} has {n, plural, other {# items}}',
+          translations: { es: { value: '{user.nam} tiene {n, plural, other {# cosas}}', status: 'verified' } },
+        },
+      });
+      const result = validateResources(
+        [main],
+        {
+          allowTranslated: false,
+          icu: { compileValues: true, requirePortablePlurals: false },
+          placeholders: true,
+        },
+        termsByCollection,
+      );
+      expect(result.icu?.failures).toHaveLength(2);
+      expect(result.icu?.failures.every((failure) => failure.kind === 'runtime-unrenderable')).toBe(true);
+      expect(result.placeholders?.failures).toMatchObject([{ missing: ['user.name'], unexpected: ['user.nam'] }]);
+    });
+  });
+
+  describe('runtime renderability', () => {
+    const plural = '{n, plural, one {# item} other {# items}}';
+
+    it('fails each stored locale under transloco and lists runtime failures with ICU failures', () => {
+      const main = collection('main', { runtime: 'transloco' });
+      seedResources(main, {
+        count: {
+          source: plural,
+          translations: {
+            es: { value: plural, status: 'verified' },
+            fr: { value: plural, status: 'verified' },
+          },
+        },
+      });
+      const result = validateResources(
+        [main],
+        {
+          allowTranslated: false,
+          icu: { compileValues: true, requirePortablePlurals: false },
+        },
+        termsByCollection,
+      );
+      expect(result.passed).toBe(false);
+      expect(result.failures).toEqual([]);
+      expect(result.icu?.failures).toEqual(
+        ['en', 'es', 'fr'].map((locale) => ({
+          kind: 'runtime-unrenderable',
+          key: 'count',
+          locale,
+          collection: 'main',
+          message:
+            'Uses ICU plural, which the transloco runtime cannot render. Set runtime to transloco-messageformat or rewrite the value without ICU constructs.',
+        })),
+      );
+      expect(result.icu?.valuesChecked).toBe(3);
+    });
+
+    it('passes plurals when the runtime check is skipped or the default runtime is used', () => {
+      for (const runtime of ['transloco', 'transloco-messageformat'] as const) {
+        const main = collection(runtime, { runtime });
+        seedResources(main, { count: withStatus(plural, { es: 'verified', fr: 'verified' }) });
+        const result = validateResources(
+          [main],
+          {
+            allowTranslated: false,
+            runtime: runtime !== 'transloco',
+            icu: { compileValues: true, requirePortablePlurals: false },
+          },
+          termsByCollection,
+        );
+        expect(result.passed).toBe(true);
+        expect(result.icu?.failures).toEqual([]);
+      }
+    });
+
+    it('checks the base locale and explicit translations, leaving skipped and missing values out', () => {
+      const main = collection('main', { runtime: 'transloco' });
+      seedResources(main, {
+        count: { source: plural, translations: { es: { value: 'Items', status: 'verified' }, fr: plural } },
+        missing: { source: 'Plain' },
+      });
+      const result = validateResources(
+        [main],
+        { allowTranslated: false },
+        termsByCollection,
+        readCollectionSet([main], { scope: 'validation', skippedLocales: ['fr'] }),
+      );
+      expect(result.icu?.failures).toMatchObject([{ kind: 'runtime-unrenderable', key: 'count', locale: 'en' }]);
+      expect(result.icu?.failures).toHaveLength(1);
+    });
+
+    it('uses explicit base-locale values and accepts renderable ICU-quoted literals', () => {
+      const main = collection('main', { runtime: 'transloco', locales: ['en', 'es'] });
+      writeFolderFiles(main.translationsFolder, '', {
+        entries: {
+          count: { source: plural, en: "Showing '{'first'}' entries", es: 'Hello {name}' },
+        },
+      });
+      const result = validateResources([main], { allowTranslated: false }, termsByCollection);
+      expect(result.icu).toBeUndefined();
+    });
+  });
+
+  describe('preferred terminology', () => {
+    const rules = [{ discouraged: 'Expenditure', preferred: 'Investment' }];
+    const budget: SeedResource = withStatus('Capital expenditure', { es: 'verified', fr: 'verified' });
+
+    it('reports a finding once across every target locale and still passes', () => {
+      const main = collection();
+      seedResources(main, { 'budget.title': budget });
+
+      const result = validateResources([main], { allowTranslated: false, terminology: { rules } }, termsByCollection);
 
       expect(result.passed).toBe(true);
-      expect(result.totalResourcesValidated).toBe(1000);
-      expect(result.successes).toHaveLength(1000);
-      expect(result.statusCounts.verified).toBe(1000);
+      expect(result.terminology?.warnings).toHaveLength(1);
+      expect(result.terminology?.warnings[0]).toMatchObject({ key: 'budget.title', locale: 'en' });
+      expect(result.terminology?.valuesChecked).toBe(1);
+    });
+
+    it('reports each collection under its own base locale', () => {
+      const main = collection();
+      const legacy = collection('legacy', { baseLocale: 'en-GB', locales: ['en-GB', 'es', 'fr'] });
+      seedResources(main, { 'budget.title': budget });
+      seedResources(legacy, { 'legacy.title': budget });
+
+      const result = validateResources(
+        [main, legacy],
+        { allowTranslated: false, terminology: { rules } },
+        termsByCollection,
+      );
+
+      expect(result.terminology?.warnings.map((warning) => `${warning.collection}:${warning.locale}`)).toEqual([
+        'main:en',
+        'legacy:en-GB',
+      ]);
+    });
+
+    it('fails when the rule file could not be loaded', () => {
+      const main = collection();
+      seedResources(main, { 'budget.title': budget });
+
+      const result = validateResources(
+        [main],
+        {
+          allowTranslated: false,
+          terminology: { rules: [], loadError: 'broken' },
+        },
+        termsByCollection,
+      );
+
+      expect(result.passed).toBe(false);
+      expect(result.terminology?.configError).toBe('broken');
+      expect(result.failures).toHaveLength(0);
+    });
+
+    it('leaves the terminology result undefined when not requested', () => {
+      expect(
+        validateResources([collection()], { allowTranslated: false }, termsByCollection).terminology,
+      ).toBeUndefined();
     });
   });
 });

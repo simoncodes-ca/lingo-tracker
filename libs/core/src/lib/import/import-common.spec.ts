@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { detectImportFormat, getStrategyDefaults } from './import-common';
+import { importStrategyPolicy } from '@simoncodes-ca/domain';
+import { describe, expect, it } from 'vitest';
+import { detectImportFormat } from './import-common';
 
 describe('import-common', () => {
   describe('detectImportFormat', () => {
@@ -26,9 +27,9 @@ describe('import-common', () => {
     });
   });
 
-  describe('getStrategyDefaults', () => {
+  describe('strategy defaults', () => {
     it('should return correct defaults for translation-service strategy', () => {
-      const defaults = getStrategyDefaults('translation-service');
+      const defaults = importStrategyPolicy('translation-service').defaults;
       expect(defaults).toEqual({
         createMissing: false,
         updateComments: false,
@@ -37,7 +38,7 @@ describe('import-common', () => {
     });
 
     it('should return correct defaults for verification strategy', () => {
-      const defaults = getStrategyDefaults('verification');
+      const defaults = importStrategyPolicy('verification').defaults;
       expect(defaults).toEqual({
         createMissing: false,
         updateComments: false,
@@ -46,7 +47,7 @@ describe('import-common', () => {
     });
 
     it('should return correct defaults for migration strategy', () => {
-      const defaults = getStrategyDefaults('migration');
+      const defaults = importStrategyPolicy('migration').defaults;
       expect(defaults).toEqual({
         createMissing: true,
         updateComments: true,
@@ -55,7 +56,7 @@ describe('import-common', () => {
     });
 
     it('should return correct defaults for update strategy', () => {
-      const defaults = getStrategyDefaults('update');
+      const defaults = importStrategyPolicy('update').defaults;
       expect(defaults).toEqual({
         createMissing: false,
         updateComments: false,

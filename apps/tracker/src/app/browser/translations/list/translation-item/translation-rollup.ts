@@ -1,36 +1,31 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  signal,
-  computed,
-  inject,
-  viewChild,
-  type ElementRef,
-  type OnDestroy,
-  HostListener,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
 import { Overlay, OverlayModule, type OverlayRef } from '@angular/cdk/overlay';
-import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
-import { ViewContainerRef, type TemplateRef } from '@angular/core';
+import { PortalModule, TemplatePortal } from '@angular/cdk/portal';
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  type ElementRef,
+  HostListener,
+  inject,
+  input,
+  type OnDestroy,
+  signal,
+  type TemplateRef,
+  ViewContainerRef,
+  viewChild,
+} from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
+import { countByStatus } from '@simoncodes-ca/domain';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { injectActiveLang, injectStatusBreakdown } from '../../../../shared/i18n/status-breakdown';
-
-/** Locale state for rollup display */
-export interface LocaleState {
-  code: string;
-  status: TranslationStatus;
-}
-
-/** Per-status display configuration. Color lives in CSS so both themes can move it. */
-interface StatusConfig {
-  labelToken: string;
-  icon: string;
-}
+import {
+  rollupCenter,
+  STATUS_PRESENTATION,
+} from '../../../../shared/translation-status/translation-status-presentation';
+import { ringSegments, sortLocaleRows } from './rollup-geometry';
+import type { RollupLocale } from './row-view';
 
 /** Close delay in ms */
 const CLOSE_DELAY = 120;
@@ -322,11 +317,8 @@ const CLOSE_DELAY = 120;
   },
 })
 export class TranslationRollup implements OnDestroy {
-  /** Locale states to display */
-  locales = input.required<LocaleState[]>();
-
-  /** Base locale code (excluded from display) */
-  baseLocale = input<string>('en');
+  /** Target locales that carry a status (the base locale is never among them). */
+  locales = input.required<readonly RollupLocale[]>();
 
   /** Renders at the smaller size compact's single-line row can afford. */
   compact = input<boolean>(false);
@@ -344,87 +336,31 @@ export class TranslationRollup implements OnDestroy {
 
   /** SVG ring geometry */
   readonly radius = 14;
-  private get circumference(): number {
-    return 2 * Math.PI * this.radius;
-  }
-
-  /** Status configuration */
-  private readonly statusConfig: Record<TranslationStatus, StatusConfig> = {
-    new: {
-      labelToken: TRACKER_TOKENS.BROWSER.STATUS.NEW,
-      icon: 'add_circle',
-    },
-    stale: {
-      labelToken: TRACKER_TOKENS.BROWSER.STATUS.STALE,
-      icon: 'warning',
-    },
-    translated: {
-      labelToken: TRACKER_TOKENS.BROWSER.STATUS.TRANSLATED,
-      icon: 'language',
-    },
-    verified: {
-      labelToken: TRACKER_TOKENS.BROWSER.STATUS.VERIFIED,
-      icon: 'check_circle',
-    },
-  };
 
   ngOnDestroy(): void {
     this.close();
   }
 
-  /** Effective locales (excluding base locale) */
-  private readonly effectiveLocales = computed(() => {
-    const base = this.baseLocale().toLowerCase();
-    return (this.locales() ?? []).filter((l) => (l?.code ?? '').toLowerCase() !== base);
-  });
-
-  /** Get locale codes by status */
-  private codesBy(status: TranslationStatus): string[] {
-    return this.effectiveLocales()
-      .filter((l) => l.status === status)
-      .map((l) => l.code)
-      .sort((a, b) => a.localeCompare(b));
-  }
-
   /** Status counts */
-  readonly counts = computed(() => ({
-    new: this.codesBy('new').length,
-    stale: this.codesBy('stale').length,
-    translated: this.codesBy('translated').length,
-    verified: this.codesBy('verified').length,
-  }));
+  readonly counts = computed(() => countByStatus(this.locales().map((l) => l.status)));
 
-  /** Total non-base locales */
-  readonly total = computed(() => this.effectiveLocales().length);
+  /** Total target locales with a status */
+  readonly total = computed(() => this.locales().length);
 
-  /** Whether all locales are verified */
-  readonly isAllVerified = computed(() => this.total() > 0 && this.counts().verified === this.total());
+  /** What the centre reports: state and glyph, from `rollupCenter`. */
+  private readonly center = computed(() => rollupCenter(this.counts()));
 
   /**
-   * The single state the centre reports. `new` and `stale` are the two states a
-   * translator triages differently, so they stay separate here; `mixed` is the
-   * only case that merges them, and only because both are genuinely present.
+   * The single state the centre reports: the worst status, or `mixed` when new
+   * and stale are both present — the two states a translator triages differently.
    */
-  readonly centerState = computed<'new' | 'stale' | 'mixed' | 'verified' | 'translated'>(() => {
-    const { new: isNew, stale } = this.counts();
-    if (isNew > 0 && stale > 0) return 'mixed';
-    if (stale > 0) return 'stale';
-    if (isNew > 0) return 'new';
-    return this.isAllVerified() ? 'verified' : 'translated';
-  });
+  readonly centerState = computed(() => this.center().state);
 
   /**
    * Center icon. Shape carries the state, so the two issue kinds stay legible to
-   * a reader who cannot separate the arcs by hue. The icons match the tooltip
-   * rows for the same status.
+   * a reader who cannot separate the arcs by hue.
    */
-  readonly centerIcon = computed(() => {
-    const state = this.centerState();
-    if (state === 'mixed') return 'priority_high';
-    if (state === 'verified') return 'check';
-    if (state === 'translated') return 'language';
-    return this.statusConfig[state].icon;
-  });
+  readonly centerIcon = computed(() => this.center().icon);
 
   /** Localized status breakdown, e.g. "2 stale, 1 new". */
   readonly breakdown = injectStatusBreakdown(this.counts);
@@ -446,53 +382,19 @@ export class TranslationRollup implements OnDestroy {
   });
 
   /** Ring segments for SVG */
-  readonly ringSegments = computed(() => {
-    const t = this.total() || 1;
-    const c = this.counts();
-    const circ = this.circumference;
+  readonly ringSegments = computed(() => ringSegments(this.counts(), this.total(), this.radius));
 
-    const order: TranslationStatus[] = ['verified', 'translated', 'stale', 'new'];
-
-    let acc = 0;
-    return order
-      .map((st) => {
-        const count = c[st] || 0;
-        const frac = count / t;
-        const len = frac * circ;
-        const gap = circ - len;
-        const seg = {
-          status: st,
-          dashArray: `${len} ${gap}`,
-          dashOffset: -acc,
-        };
-        acc += len;
-        return seg;
-      })
-      .filter((s) => {
-        if (this.total() === 0) return false;
-        const len = parseFloat(s.dashArray.split(' ')[0]);
-        return len > 0.5;
-      });
-  });
-
-  /** Tooltip rows - one row per locale, sorted by severity then locale code */
-  readonly tooltipLocaleRows = computed(() => {
-    const order: TranslationStatus[] = ['new', 'stale', 'translated', 'verified'];
-    const orderIndex = (s: TranslationStatus) => order.indexOf(s);
-
-    return this.effectiveLocales()
-      .map((l) => ({
+  /** Tooltip rows - one row per locale, most urgent status first, then by locale code */
+  readonly tooltipLocaleRows = computed(() =>
+    sortLocaleRows(
+      this.locales().map((l) => ({
         code: l.code,
         status: l.status,
-        labelToken: this.statusConfig[l.status].labelToken,
-        icon: this.statusConfig[l.status].icon,
-      }))
-      .sort((a, b) => {
-        const orderDiff = orderIndex(a.status) - orderIndex(b.status);
-        if (orderDiff !== 0) return orderDiff;
-        return a.code.localeCompare(b.code);
-      });
-  });
+        labelToken: STATUS_PRESENTATION[l.status].labelToken,
+        icon: STATUS_PRESENTATION[l.status].icon,
+      })),
+    ),
+  );
 
   /** Whether overlay is open */
   readonly isOpen = signal(false);

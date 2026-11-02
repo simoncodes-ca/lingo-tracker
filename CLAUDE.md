@@ -32,9 +32,16 @@ pnpm run test:api
 pnpm run test:core
 pnpm run test:domain
 pnpm run test:tracker
+pnpm nx e2e cli-e2e  # smoke tests the built CLI (builds cli first)
+pnpm nx e2e tracker-e2e  # Playwright suite against the built API + Tracker (builds both first)
 
-# Run a single test file (using Nx)
-pnpm nx test core --testFile=src/lib/resource/checksum.spec.ts
+# Run a single test file: positional path after --, relative to the project root.
+# Nx flags (--skip-nx-cache, --outputStyle) go before --; everything after it reaches the runner.
+pnpm nx test core -- src/lib/resource/checksum.spec.ts   # core, domain, tracker, cli (vitest)
+pnpm nx test api -- src/app/app.service.spec.ts          # api (jest)
+
+# Typecheck (tracker, core, cli and api also typecheck their specs via typecheck-spec)
+pnpm nx typecheck tracker
 ```
 
 ### Development Servers
@@ -51,11 +58,23 @@ Use the `/lingo-tracker` skill for detecting hardcoded strings, creating transla
 
 ### Browser / UI Testing
 
-Use the `/playwright-cli` skill for browser automation, UI testing, screenshots, and interacting with the running Tracker UI. Do NOT use the Playwright MCP plugin or invoke Playwright directly.
+Use the `/playwright-cli` skill for ad-hoc browser automation, screenshots, and interacting with the running Tracker UI. Do NOT use the Playwright MCP plugin for this. Automated UI tests belong in `apps/tracker-e2e`.
+
+### Tracker E2E (`apps/tracker-e2e`)
+
+Playwright, Chromium only. Specs are `src/**/*.e2e.ts`; import `test`/`expect` from `src/fixtures`.
+
+- **System under test**: each worker spawns the built `dist/apps/api/main.js` (which serves `dist/apps/tracker/browser`) on a free port, with a temporary project folder as cwd. Never run e2e against the dev server: its cwd is the workspace root.
+- **Data**: the `project` fixture gives each test its own collection and restores `.lingo-tracker.json` afterwards. Seed through the running API, not by importing core. Assert on disk with the read-only `disk` helpers.
+- **Mocking**: real backend by default. Use `page.route` only for error, latency and network-failure states. The Tracker bundles its fonts and icons; a network guard fails the test on any non-localhost request. Machine translation is not covered.
+- **Locators**: `getByTestId` for app-specific elements, `getByRole` with English names for standard widgets. No CSS or `.mat-*` selectors, no `waitForTimeout`. Add a `data-testid` only when a test needs it.
+- **Page objects** (`src/pages/`): locators and multi-step actions, no assertions; exposed as fixtures.
+- **CI** (`.github/workflows/tracker-e2e.yml`): runs automatically on PRs to `main`, and on PRs to `develop` only when a maintainer adds the `run-e2e` label. `pr.yml` excludes `tracker-e2e`.
 
 ### Other Commands
 
 ```bash
+pnpm run lint          # Biome and cached ESLint checks for all six projects
 pnpm run commit        # Interactive conventional commit
 pnpm run test:release  # Dry-run semantic release
 pnpm nx                # Direct Nx CLI access
@@ -63,7 +82,7 @@ pnpm nx                # Direct Nx CLI access
 
 ## Architecture
 
-### Monorepo Structure (Nx 21.5.3)
+### Monorepo Structure (Nx 24.0.2)
 
 The codebase follows a **layered architecture** with three applications sharing core business logic:
 
@@ -71,22 +90,23 @@ The codebase follows a **layered architecture** with three applications sharing 
 apps/
 ├── cli/        # Command-line interface (Node.js + Commander)
 ├── api/        # REST API backend (NestJS + Express)
-└── tracker/    # Web UI (Angular 20 + Material)
+└── tracker/    # Web UI (Angular 22 + Material)
 
 libs/
 ├── domain/            # Pure business logic (NO Node.js deps — browser-safe)
 │   └── src/lib/       # Flat structure: key validation, status helpers,
 │                      #   format conversion, validation utilities, shared types
 ├── core/              # Node.js business logic (file I/O, checksums, bundles)
-│   ├── config/        # Configuration interfaces and management
-│   ├── resource/      # Resource CRUD, metadata, validation
-│   └── collections-manager/ # Collection operations
+│   └── src/
+│       ├── config/            # Configuration interfaces
+│       ├── collections-manager/ # Collection operations
+│       └── lib/resource/      # Resource CRUD, Folder Address, metadata, reading
 └── data-transfer/     # DTOs shared between API/CLI/UI
 ```
 
 ### Application Responsibilities
 
-- **CLI** (`apps/cli`): Commands for init, add-collection, edit-collection, delete-collection, add-locale, remove-locale, add-resource, edit-resource, delete-resource, move, normalize, translate-locale, bundle, export, import, validate, find-similar, glossary, protected-terms, install-skill. Supports both interactive (TTY) and non-interactive (CI/CD) modes.
+- **CLI** (`apps/cli`): Commands for init, add-collection, edit-collection, delete-collection, add-locale, remove-locale, add-resource, edit-resource, delete-resource, move, normalize, translate-locale, bundle, export, import, validate, find-similar, glossary, protected-terms, preferred-terminology, install-skill. Supports both interactive (TTY) and non-interactive (CI/CD) modes.
 - **API** (`apps/api`): REST endpoints at `/api/*`, serves static Tracker UI, uses mappers to convert between core domain models and DTOs.
 - **Tracker UI** (`apps/tracker`): Angular app with Material UI for browsing/managing translations, uses NgRx Signals for state management.
 
@@ -164,7 +184,9 @@ export class ExampleComponent implements OnInit {
 
 - **Domain Logic** (`@simoncodes-ca/domain`): Pure business logic with **zero Node.js dependencies** — importable by all apps including the browser-based Tracker UI. This is where platform-agnostic logic belongs: key validation/parsing, translation status helpers, ICU↔Transloco format conversion, validation utilities (locale, key length, duplicates, hierarchical conflicts), and shared types (`TranslationStatus`, `LocaleMetadata`).
 - **Core Logic** (`@simoncodes-ca/core`): Node.js-dependent business logic — file I/O, checksums (crypto), directory traversal, bundle generation, import/export. Core depends on domain; **domain must never depend on core**.
+- **Core test helpers** (`@simoncodes-ca/core/testing`): Test-only error fixtures and internal module access for app specs and test helpers (`testing/`, `*.spec-helpers.ts`). ESLint prevents production imports; these names do not extend the public barrel.
 - **DTOs** (`@simoncodes-ca/data-transfer`): API contracts shared between API/CLI/UI
+- **Validation**: Request shape is checked at the edge in `apps/api/src/app/validation/`; rules live in domain/core.
 - **Mappers**: Convert between domain models and DTOs in API layer
 
 #### What goes in domain vs core
@@ -178,41 +200,49 @@ export class ExampleComponent implements OnInit {
 
 ## Key Implementation Patterns
 
-### Adding a Resource (libs/core/src/lib/resource/)
+### Adding a Resource (libs/core/src/lib/resource/resource-entry.ts)
 
-1. Validate key format and resolve to folder path
-2. Load existing `resource_entries.json` and `tracker_meta.json`
-3. Compute checksums (MD5) for source and translations
-4. Determine translation status based on checksums
-5. Write updated files atomically
+1. Validate the key (and optional `targetFolder`) and resolve it to a folder path
+2. Core `preflightAdd` validates a non-empty base value and supplied locales and statuses, then checks whether the resolved key exists; fail by default before locale seeding, or replace only when requested
+3. Core `prepareAdd` produces a Prepared Add: an ICU base value, every target locale (supplied value, else auto-translation, else a `new` copy of the base), skipped locales and terminology with Translator problems, before writing any resource file
+4. `commitPrepared` reopens fresh state, checks existence again and writes through `openResourceFolder` (`libs/core/src/lib/resource/resource-folder.ts`), the one read-modify-write path for `resource_entries.json` + `tracker_meta.json`: it computes MD5 checksums and applies the staleness rule
+5. `save()` writes both files together (not atomically) and reports through the Mutation Sink
 
-### CLI Command Pattern (apps/cli/src/commands/)
+These add phases and their types are private to the Entry Writes module, which owns `addResource`, `addResources` and `editResource` alongside remove. Single-entry translation belongs to Translation Run.
+
+`addResources` preflights every item before preparing any. Each preflight precedes the batch duplicate-key check. After preparation, it rechecks every item without an await before committing in input order; a preparation failure or late conflict writes no batch item.
+
+### CLI Command Pattern (apps/cli/src/runner/command-runner.ts)
 
 ```typescript
-export const commandName = new Command('command-name')
-  .description('Description')
-  .argument('<arg>', 'Arg description')
-  .action(async (arg) => {
-    // Use dynamic import for prompts
-    const prompts = (await import('prompts')).default;
-
-    // Call core library functions
-    const result = await coreFunction(arg);
-  });
+export const addLocaleCommand = defineCommand<AddLocaleOptions>()({
+  name: 'Add locale',              // "❌ Add locale cancelled."
+  collection: 'writable',          // 'writable' | 'read' | 'none'
+  prompts: (options) => (options.locale ? [] : [{ type: 'text', name: 'locale', message: 'Locale' }]),
+  required: ['locale'],            // exit 1 when missing; typed as present in run
+  run: async ({ collection, answers }) => {
+    const result = await addLocaleToCollection(collection, answers.locale);
+    ConsoleFormatter.success(result.message);
+  },
+});
 ```
 
-### API Controller Pattern (apps/api/src/app/controllers/)
+- The runner owns config loading, collection resolution, the interactive rule, cancellation and exit codes (`process.exitCode`, never `process.exit`). `run` returns `{ exitCode: 1 }` for a failure it has already reported, or throws.
+- Diagnostics go to stderr via `ConsoleFormatter.error/warning`; the payload goes to stdout.
+- Command tests use `runCommand(command, flags, { cwd, ask?, interactive?, stdin? })` with a temporary project and real core. Use `testing/command-project.ts` to create and clean up the config, collection and summary files; assert on stored files and captured output rather than mocking core. For commands that accept piped text, supply `stdin: { isTTY, read() }` to control input without reading the test runner's stdin. Production defaults to `process.stdin.isTTY` and a deferred `readFileSync(0, 'utf8')`.
+- Flag records own registration, per-field prompts and selection metadata. Export and import add typed resolution rules in their `*-cmd-flags.ts` files; resolution takes values without a prompt context. The runner appends command `prompts` after flag-level questions. Export and import pass prompt-free flags to the runner and build record questions with command-specific context.
+- Commands are registered (flags, help text, lazy import) in the Command Manifest `apps/cli/src/command-manifest.ts`, which `createCli(manifest = commandManifest)` in `apps/cli/src/program.ts` registers; `main.ts` only supplies argv. `main.spec.ts` and `main.handlers.spec.ts` inject recording loaders derived from the real manifest to cover flag wiring and every entry without command-module mocks, and `program.lazy.spec.ts` checks that help loads without core.
+
+### API Controller Pattern (apps/api/src/app/<feature>/<feature>.controller.ts)
 
 ```typescript
 @Controller('collections')
 export class CollectionsController {
   @Post()
-  async create(@Body() dto: CreateCollectionDto) {
-    // Call core library
-    const result = await addCollection(dto.name, dto.config);
-
-    // Map to DTO if needed
-    return mapper.toDto(result);
+  async createCollection(@ValidBody(createCollectionBody) body: CreateCollectionDto): Promise<{ message: string }> {
+    const mapped = mapDtoToCollection(body.collection); // DTO → core shape (apps/api/src/app/mappers/)
+    const result = addCollection(body.name, mapped); // synchronous core call
+    return { message: result.message };
   }
 }
 ```
@@ -220,11 +250,11 @@ export class CollectionsController {
 ## Important Notes
 
 - **Package Manager**: pnpm 10+ required (enforced by engines)
-- **Node Version**: >=22.16.0
+- **Node Version**: ^24.15.0 || >=26.0.0 (matches `engines`)
 - **Commits**: Use `pnpm run commit` for conventional commits with commitizen
-- **Testing**: Vitest for unit tests, use `--testFile` flag to run single test
+- **Testing**: Vitest for unit tests (the API uses Jest); see [Testing](#testing) for running a single file. API Jest tests need Node 24.9 or later, because NestJS 12 is ESM-only and Jest loads it through require(esm); `nx test api` sets `NODE_OPTIONS=--experimental-vm-modules`, replacing any `NODE_OPTIONS` already set for that target; the published runtime still supports the `engines` range.
 - **API Port**: Default 3030, configurable via `LINGO_TRACKER_PORT` env var
-- **CORS**: Enabled with wildcard origin in development mode
+- **CORS**: Allow only HTTP/HTTPS Origins without userinfo whose parsed host and port match the request Host header, ignoring case. Other localhost ports and loopback hostnames do not bypass this rule. The Angular dev proxy preserves Host localhost:4200, matching its browser Origin. Reject foreign/null/malformed/multiple Origins with 403 before handlers; no-Origin requests pass this check. In every bind mode, Host must name localhost, an IPv4 literal, a bracketed IPv6 literal, or an exact name in LINGO_TRACKER_ALLOWED_HOSTS (comma-separated, trimmed, case-insensitive; port optional). Missing/disallowed Host receives 403. LAN IP access needs no extra setting; named LAN access requires an allowed-host entry.
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->

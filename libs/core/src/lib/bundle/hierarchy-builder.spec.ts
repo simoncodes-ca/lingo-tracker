@@ -1,18 +1,20 @@
-import { describe, it, expect } from 'vitest';
-import { buildHierarchy } from './hierarchy-builder';
+import { buildKeyTree } from '@simoncodes-ca/domain';
+import { describe, expect, it } from 'vitest';
 
-describe('hierarchy-builder', () => {
-  describe('buildHierarchy', () => {
+describe('Key Tree behavioural cases', () => {
+  describe('buildKeyTree', () => {
     it('should handle empty input', () => {
-      const result = buildHierarchy({});
+      const result = buildKeyTree(Object.entries({})).tree;
       expect(result).toEqual({});
     });
 
     it('should handle single-level keys', () => {
-      const result = buildHierarchy({
-        ok: 'OK',
-        cancel: 'Cancel',
-      });
+      const result = buildKeyTree(
+        Object.entries({
+          ok: 'OK',
+          cancel: 'Cancel',
+        }),
+      ).tree;
 
       expect(result).toEqual({
         ok: 'OK',
@@ -21,10 +23,12 @@ describe('hierarchy-builder', () => {
     });
 
     it('should build simple hierarchy', () => {
-      const result = buildHierarchy({
-        'apps.common.ok': 'OK',
-        'apps.common.cancel': 'Cancel',
-      });
+      const result = buildKeyTree(
+        Object.entries({
+          'apps.common.ok': 'OK',
+          'apps.common.cancel': 'Cancel',
+        }),
+      ).tree;
 
       expect(result).toEqual({
         apps: {
@@ -37,12 +41,14 @@ describe('hierarchy-builder', () => {
     });
 
     it('should build complex multi-level hierarchy', () => {
-      const result = buildHierarchy({
-        'apps.common.buttons.ok': 'OK',
-        'apps.common.buttons.cancel': 'Cancel',
-        'apps.common.messages.welcome': 'Welcome',
-        'admin.users.title': 'User Management',
-      });
+      const result = buildKeyTree(
+        Object.entries({
+          'apps.common.buttons.ok': 'OK',
+          'apps.common.buttons.cancel': 'Cancel',
+          'apps.common.messages.welcome': 'Welcome',
+          'admin.users.title': 'User Management',
+        }),
+      ).tree;
 
       expect(result).toEqual({
         apps: {
@@ -65,12 +71,14 @@ describe('hierarchy-builder', () => {
     });
 
     it('should handle mixed depth keys', () => {
-      const result = buildHierarchy({
-        'a.b.c.d': 'deep',
-        'a.b.x': 'medium',
-        'a.y': 'shallow',
-        z: 'root',
-      });
+      const result = buildKeyTree(
+        Object.entries({
+          'a.b.c.d': 'deep',
+          'a.b.x': 'medium',
+          'a.y': 'shallow',
+          z: 'root',
+        }),
+      ).tree;
 
       expect(result).toEqual({
         a: {
@@ -87,21 +95,25 @@ describe('hierarchy-builder', () => {
     });
 
     it('should preserve value order (insertion order)', () => {
-      const result = buildHierarchy({
-        'a.first': '1',
-        'a.second': '2',
-        'a.third': '3',
-      });
+      const result = buildKeyTree(
+        Object.entries({
+          'a.first': '1',
+          'a.second': '2',
+          'a.third': '3',
+        }),
+      ).tree;
 
-      const keys = Object.keys(result.a as Record<string, string>);
+      const keys = Object.keys(result['a'] as Record<string, string>);
       expect(keys).toEqual(['first', 'second', 'third']);
     });
 
     it('should handle keys with numbers and special characters', () => {
-      const result = buildHierarchy({
-        'app1.feature-x.item_1': 'Value 1',
-        'app2.feature_y.item-2': 'Value 2',
-      });
+      const result = buildKeyTree(
+        Object.entries({
+          'app1.feature-x.item_1': 'Value 1',
+          'app2.feature_y.item-2': 'Value 2',
+        }),
+      ).tree;
 
       expect(result).toEqual({
         app1: {
@@ -118,9 +130,11 @@ describe('hierarchy-builder', () => {
     });
 
     it('should handle single dot in key (two segments)', () => {
-      const result = buildHierarchy({
-        'parent.child': 'value',
-      });
+      const result = buildKeyTree(
+        Object.entries({
+          'parent.child': 'value',
+        }),
+      ).tree;
 
       expect(result).toEqual({
         parent: {
@@ -130,11 +144,13 @@ describe('hierarchy-builder', () => {
     });
 
     it('should handle values with special content', () => {
-      const result = buildHierarchy({
-        'key.subkey': 'Value with spaces',
-        'key.another': 'Value\nwith\nnewlines',
-        'key.third': 'Value "with" quotes',
-      });
+      const result = buildKeyTree(
+        Object.entries({
+          'key.subkey': 'Value with spaces',
+          'key.another': 'Value\nwith\nnewlines',
+          'key.third': 'Value "with" quotes',
+        }),
+      ).tree;
 
       expect(result).toEqual({
         key: {
@@ -147,9 +163,11 @@ describe('hierarchy-builder', () => {
 
     it('should create intermediate objects as needed', () => {
       // This tests that intermediate objects are created even if not explicitly present
-      const result = buildHierarchy({
-        'a.b.c': 'deep',
-      });
+      const result = buildKeyTree(
+        Object.entries({
+          'a.b.c': 'deep',
+        }),
+      ).tree;
 
       expect(result).toEqual({
         a: {
@@ -158,6 +176,33 @@ describe('hierarchy-builder', () => {
           },
         },
       });
+    });
+
+    it('treats __proto__ and constructor segments as ordinary keys without touching Object.prototype', () => {
+      const result = buildKeyTree(
+        Object.entries({
+          '__proto__.x': 'polluted?',
+          'constructor.ok': 'OK',
+          'toString.label': 'Label',
+          'buttons.ok': 'Fine',
+        }),
+      ).tree;
+
+      expect(({} as Record<string, unknown>)['x']).toBeUndefined();
+      expect(Object.prototype).not.toHaveProperty('x');
+      expect(JSON.parse(JSON.stringify(result))).toEqual(
+        JSON.parse(
+          '{"__proto__":{"x":"polluted?"},"constructor":{"ok":"OK"},"toString":{"label":"Label"},"buttons":{"ok":"Fine"}}',
+        ),
+      );
+    });
+
+    it('serializes normal keys exactly as a plain object would', () => {
+      const flat = { 'a.b': '1', 'a.c': '2', d: '3' };
+
+      expect(JSON.stringify(buildKeyTree(Object.entries(flat)).tree, null, 2)).toBe(
+        JSON.stringify({ a: { b: '1', c: '2' }, d: '3' }, null, 2),
+      );
     });
   });
 });

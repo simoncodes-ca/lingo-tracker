@@ -1,341 +1,281 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { existsSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { CONFIG_FILENAME, loadConfig } from '@simoncodes-ca/core';
+import { APP_RUNTIMES, DEFAULT_APP_RUNTIME } from '@simoncodes-ca/domain';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { CommandCancelledError } from '../runner/command-runner';
+import { type CommandProject, createCommandProject } from '../testing/command-project';
 import { initCommand } from './init';
 
-const fsMocks = vi.hoisted(() => ({
-  existsSync: vi.fn(),
-  writeFileSync: vi.fn(),
-}));
-
-vi.mock('node:fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:fs')>();
-  return {
-    ...actual,
-    ...fsMocks,
-    default: { ...actual.default, ...fsMocks },
-  };
-});
-vi.mock('prompts');
-
-const mockExistsSync = vi.mocked(existsSync);
-const mockWriteFileSync = vi.mocked(writeFileSync);
+const requiredFlags = { collectionName: 'Main', translationsFolder: 'src/i18n' };
 
 describe('initCommand', () => {
-  let originalStdinIsTTY: boolean | undefined;
-  let originalStdoutIsTTY: boolean | undefined;
-
+  let project: CommandProject;
   beforeEach(() => {
-    vi.clearAllMocks();
-    process.env.INIT_CWD = '/test/project';
-    // Capture original TTY state and explicitly mark streams as non-interactive
-    // so tests never accidentally trigger interactive prompt fallback paths.
-    originalStdinIsTTY = process.stdin.isTTY;
-    originalStdoutIsTTY = process.stdout.isTTY;
-    process.stdin.isTTY = undefined;
-    process.stdout.isTTY = undefined;
+    project = createCommandProject();
+    project.remove(CONFIG_FILENAME);
+  });
+  afterEach(() => project.cleanup());
+
+  it('exits 1 naming the missing flags in non-interactive mode', async () => {
+    const result = await project.run(initCommand, {});
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('--collection-name, --translations-folder');
+    expect(project.exists(CONFIG_FILENAME)).toBe(false);
   });
 
-  afterEach(() => {
-    process.stdin.isTTY = originalStdinIsTTY;
-    process.stdout.isTTY = originalStdoutIsTTY;
-  });
-
-  it('should write config file with provided parameters', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'TestCollection',
-      translationsFolder: 'src/i18n',
-      exportFolder: 'dist/exports',
-      importFolder: 'dist/imports',
-      baseLocale: 'fr',
-      locales: ['fr', 'en', 'es'],
-    };
-
-    await initCommand(options);
-
-    const expectedConfigPath = resolve('/test/project', '.lingo-tracker.json');
-    const expectedConfig = {
-      exportFolder: 'dist/exports',
-      importFolder: 'dist/imports',
-      baseLocale: 'fr',
-      locales: ['fr', 'en', 'es'],
-      collections: {
-        TestCollection: {
-          translationsFolder: 'src/i18n',
+  it('asks nothing and exits 0 in an initialized folder, even without flags', async () => {
+    project.configure(project.config);
+    const before = project.read(CONFIG_FILENAME);
+    const result = await project.run(
+      initCommand,
+      {},
+      {
+        interactive: true,
+        ask: async () => {
+          throw new Error('Unexpected prompt');
         },
       },
-      bundles: {
-        main: {
-          bundleName: '{locale}',
-          dist: './src/assets/i18n',
-          collections: 'All',
+    );
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Lingo Tracker is already initialized in this folder. Nothing to do.');
+    expect(project.read(CONFIG_FILENAME)).toBe(before);
+  });
+
+  it('prompts for missing values when interactive and writes the answers', async () => {
+    const result = await project.run(
+      initCommand,
+      {},
+      {
+        interactive: true,
+        ask: async (questions) => {
+          expect(Array.isArray(questions)).toBe(true);
+          return { collectionName: 'Main', translationsFolder: 'src/i18n', baseLocale: 'fr', setupBundle: false };
         },
       },
-    };
-
-    expect(mockWriteFileSync).toHaveBeenCalledWith(expectedConfigPath, JSON.stringify(expectedConfig, null, 2));
+    );
+    expect(result.exitCode).toBe(0);
+    expect(loadConfig({ cwd: project.cwd }).baseLocale).toBe('fr');
+    expect(result.stdout).toContain(`Created ${CONFIG_FILENAME} in ${project.cwd}`);
   });
 
-  it('should use default values when parameters are not provided', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/translations',
-    };
-
-    await initCommand(options);
-
-    const expectedConfigPath = resolve('/test/project', '.lingo-tracker.json');
-    const expectedConfig = {
-      exportFolder: 'dist/lingo-export',
-      importFolder: 'dist/lingo-import',
-      baseLocale: 'en',
-      locales: [],
-      collections: {
-        Main: {
-          translationsFolder: 'src/translations',
+  it('reports an existing config if another writer creates it after the prompt check', async () => {
+    const result = await project.run(
+      initCommand,
+      {},
+      {
+        interactive: true,
+        ask: async () => {
+          project.configure(project.config);
+          return { collectionName: 'Main', translationsFolder: 'src/i18n' };
         },
       },
-      bundles: {
-        main: {
-          bundleName: '{locale}',
-          dist: './src/assets/i18n',
-          collections: 'All',
-        },
-      },
-    };
-
-    expect(mockWriteFileSync).toHaveBeenCalledWith(expectedConfigPath, JSON.stringify(expectedConfig, null, 2));
+    );
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Lingo Tracker is already initialized');
+    expect(loadConfig({ cwd: project.cwd }).collections).toEqual(project.config.collections);
   });
 
-  it('should not write file if config already exists', async () => {
-    mockExistsSync.mockReturnValue(true);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-    };
-
-    await initCommand(options);
-
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should create config with custom bundle settings when setup bundle is accepted', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-      setupBundle: true,
-      bundleDist: './custom/dist',
-      bundleName: 'custom-{locale}',
-      tokenCasing: 'camelCase' as const,
-      typeDistFile: './src/tokens.ts',
-      tokenConstantName: 'MY_KEYS',
-    };
-
-    await initCommand(options);
-
-    const expectedConfigPath = resolve('/test/project', '.lingo-tracker.json');
-    expect(mockWriteFileSync).toHaveBeenCalledWith(expectedConfigPath, expect.any(String));
-
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
-    expect(writtenConfig.bundles.main).toEqual({
-      bundleName: 'custom-{locale}',
-      dist: './custom/dist',
-      collections: 'All',
-      typeDistFile: './src/tokens.ts',
-      tokenCasing: 'camelCase',
-      tokenConstantName: 'MY_KEYS',
-    });
-  });
-
-  it('should use default bundle and ignore bundle flags when setupBundle is false', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-      setupBundle: false,
-      bundleDist: './custom/dist',
-      bundleName: 'custom-{locale}',
-      tokenCasing: 'camelCase' as const,
-      typeDistFile: './src/tokens.ts',
-      tokenConstantName: 'MY_KEYS',
-    };
-
-    await initCommand(options);
-
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
-
-    expect(writtenConfig.bundles.main).toEqual({
-      bundleName: '{locale}',
-      dist: './src/assets/i18n',
-      collections: 'All',
-    });
-    expect(writtenConfig.bundles.main).not.toHaveProperty('tokenCasing');
-    expect(writtenConfig.bundles.main).not.toHaveProperty('typeDistFile');
-    expect(writtenConfig.bundles.main).not.toHaveProperty('tokenConstantName');
-  });
-
-  it('should infer setupBundle when bundle flags are provided without explicit --setup-bundle', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-      bundleDist: './custom/dist',
-      bundleName: 'custom-{locale}',
-    };
-
-    await initCommand(options);
-
-    const expectedConfigPath = resolve('/test/project', '.lingo-tracker.json');
-    expect(mockWriteFileSync).toHaveBeenCalledWith(expectedConfigPath, expect.any(String));
-
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
-    expect(writtenConfig.bundles.main).toMatchObject({
-      bundleName: 'custom-{locale}',
-      dist: './custom/dist',
-      collections: 'All',
-    });
-    expect(writtenConfig.bundles.main).not.toHaveProperty('tokenCasing');
-    expect(writtenConfig.bundles.main).not.toHaveProperty('typeDistFile');
-    expect(writtenConfig.bundles.main).not.toHaveProperty('tokenConstantName');
-  });
-
-  it('should omit tokenCasing when setupBundle is true but tokenCasing is not provided', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-      setupBundle: true,
-      bundleDist: './src/assets/i18n',
-      bundleName: '{locale}',
-    };
-
-    await initCommand(options);
-
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
-
-    expect(writtenConfig.bundles.main).not.toHaveProperty('tokenCasing');
-  });
-
-  it('should treat whitespace-only tokenConstantName as absent', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-      setupBundle: true,
-      bundleDist: './src/assets/i18n',
-      bundleName: '{locale}',
-      tokenCasing: 'upperCase' as const,
-      tokenConstantName: '   ',
-    };
-
-    await initCommand(options);
-
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
-
-    expect(writtenConfig.bundles.main).not.toHaveProperty('tokenConstantName');
-  });
-
-  it('should omit tokenConstantName when left empty', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-      setupBundle: true,
-      bundleDist: './src/assets/i18n',
-      bundleName: '{locale}',
-      tokenCasing: 'upperCase' as const,
-      typeDistFile: './src/generated/tokens.ts',
-      tokenConstantName: '',
-    };
-
-    await initCommand(options);
-
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
-
-    expect(writtenConfig.bundles.main).toHaveProperty('typeDistFile', './src/generated/tokens.ts');
-    expect(writtenConfig.bundles.main).toHaveProperty('tokenCasing', 'upperCase');
-    expect(writtenConfig.bundles.main).not.toHaveProperty('tokenConstantName');
-  });
-
-  it('should write translation config when auto-translation options are provided', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
+  it('passes supplied flags to core and prints the created path', async () => {
+    const result = await project.run(initCommand, {
+      collectionName: 'Flagged',
+      translationsFolder: 'src/flags',
+      bundleDist: './custom',
       enableAutoTranslation: true,
-      translationProvider: 'google-translate',
-      translationApiKeyEnv: 'MY_API_KEY',
-    };
-
-    await initCommand(options);
-
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
-
-    expect(writtenConfig.translation).toEqual({
-      enabled: true,
-      provider: 'google-translate',
-      apiKeyEnv: 'MY_API_KEY',
     });
+    expect(result.exitCode).toBe(0);
+    expect(loadConfig({ cwd: project.cwd }).collections?.Flagged).toEqual({ translationsFolder: 'src/flags' });
+    expect(result.stdout).toBe(`Created ${CONFIG_FILENAME} in ${project.cwd}\n`);
   });
 
-  it('should omit translation config when auto-translation is disabled', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-      enableAutoTranslation: false,
-    };
-
-    await initCommand(options);
-
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
-
-    expect(writtenConfig).not.toHaveProperty('translation');
+  it('cancels without creating a config', async () => {
+    const result = await project.run(
+      initCommand,
+      {},
+      {
+        interactive: true,
+        ask: async () => {
+          throw new CommandCancelledError();
+        },
+      },
+    );
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain('Initialization cancelled.');
+    expect(project.exists(CONFIG_FILENAME)).toBe(false);
   });
 
-  it('should trim whitespace from locale entries', async () => {
-    mockExistsSync.mockReturnValue(false);
+  it.each([
+    ['dependencies', '@jsverse/transloco'],
+    ['devDependencies', '@jsverse/transloco'],
+    ['dependencies', '@ngneat/transloco'],
+    ['devDependencies', '@ngneat/transloco'],
+  ])('detects plain Transloco from %s.%s', async (section, dependency) => {
+    project.write('package.json', { [section]: { [dependency]: '^8.4.0' } });
 
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-      locales: [' en', 'fr-ca ', ' es '],
-    };
+    const result = await project.run(initCommand, requiredFlags);
 
-    await initCommand(options);
-
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
-
-    expect(writtenConfig.locales).toEqual(['en', 'fr-ca', 'es']);
+    expect(result.exitCode).toBe(0);
+    expect(loadConfig({ cwd: project.cwd }).runtime).toBe('transloco');
+    expect(result.stdout).toContain('Detected runtime: transloco (from package.json)');
+    expect(result.stderr).toBe('');
   });
 
-  it('should filter out blank locale entries after trimming', async () => {
-    mockExistsSync.mockReturnValue(false);
+  it.each([
+    ['dependencies', '@jsverse/transloco-messageformat'],
+    ['devDependencies', '@jsverse/transloco-messageformat'],
+    ['dependencies', '@ngneat/transloco-messageformat'],
+    ['devDependencies', '@ngneat/transloco-messageformat'],
+  ])('prefers messageformat from %s.%s over plain Transloco', async (section, dependency) => {
+    project.write('package.json', {
+      dependencies: { '@jsverse/transloco': '^8.4.0' },
+      [section]: { '@jsverse/transloco': '^8.4.0', [dependency]: '^8.4.0' },
+    });
 
-    const options = {
-      collectionName: 'Main',
-      translationsFolder: 'src/i18n',
-      locales: ['en', '   ', 'fr'],
-    };
+    const result = await project.run(initCommand, requiredFlags);
 
-    await initCommand(options);
+    expect(result.exitCode).toBe(0);
+    expect(project.json(CONFIG_FILENAME)).not.toHaveProperty('runtime');
+    expect(result.stdout).toContain(`Detected runtime: ${DEFAULT_APP_RUNTIME} (from package.json)`);
+  });
 
-    const writtenConfig = JSON.parse(mockWriteFileSync.mock.calls[0][1] as string);
+  it('lets --runtime transloco override detected messageformat', async () => {
+    project.write('package.json', { dependencies: { '@jsverse/transloco-messageformat': '^8.4.0' } });
 
-    expect(writtenConfig.locales).toEqual(['en', 'fr']);
+    const result = await project.run(initCommand, { ...requiredFlags, runtime: 'transloco' });
+
+    expect(result.exitCode).toBe(0);
+    expect(loadConfig({ cwd: project.cwd }).runtime).toBe('transloco');
+    expect(result.stdout).not.toContain('Detected runtime:');
+  });
+
+  it('writes an explicit --runtime transloco-messageformat even when it is the default', async () => {
+    project.write('package.json', { dependencies: { '@jsverse/transloco': '^8.4.0' } });
+
+    const result = await project.run(initCommand, { ...requiredFlags, runtime: 'transloco-messageformat' });
+
+    expect(result.exitCode).toBe(0);
+    expect(loadConfig({ cwd: project.cwd }).runtime).toBe('transloco-messageformat');
+    expect(result.stdout).not.toContain('Detected runtime:');
+  });
+
+  it('rejects an invalid runtime with the allowed values and no config write', async () => {
+    const result = await project.run(initCommand, { ...requiredFlags, runtime: 'bogus' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('--runtime must be one of: transloco-messageformat, transloco');
+    expect(project.exists(CONFIG_FILENAME)).toBe(false);
+  });
+
+  it('leaves the default implicit when package.json is missing', async () => {
+    const result = await project.run(initCommand, requiredFlags);
+
+    expect(result.exitCode).toBe(0);
+    expect(project.json(CONFIG_FILENAME)).not.toHaveProperty('runtime');
+    expect(result.stdout).not.toContain('Detected runtime:');
+  });
+
+  it.each([
+    '{ invalid json',
+    'null',
+    '[]',
+    '{"dependencies":false,"devDependencies":null}',
+    '{"dependencies":{"other":"1"}}',
+  ])('leaves the default implicit for an unusable package.json: %s', async (manifest) => {
+    project.write('package.json', manifest);
+
+    const result = await project.run(initCommand, requiredFlags);
+
+    expect(result.exitCode).toBe(0);
+    expect(project.json(CONFIG_FILENAME)).not.toHaveProperty('runtime');
+    expect(result.stdout).not.toContain('Detected runtime:');
+    expect(result.stderr).toBe('');
+  });
+
+  it.each([undefined, ...APP_RUNTIMES])(
+    'offers the runtime select with initial %s and writes the choice',
+    async (detected) => {
+      if (detected !== undefined) {
+        const dependency = detected === 'transloco' ? '@jsverse/transloco' : '@jsverse/transloco-messageformat';
+        project.write('package.json', { dependencies: { [dependency]: '^8.4.0' } });
+      }
+      const selected = detected ?? DEFAULT_APP_RUNTIME;
+
+      const result = await project.run(
+        initCommand,
+        {},
+        {
+          interactive: true,
+          ask: async (questions) => {
+            const list = Array.isArray(questions) ? questions : [questions];
+            const runtime = list.find((question) => question.name === 'runtime');
+            expect(runtime).toMatchObject({
+              type: 'select',
+              message: 'App runtime',
+              choices: [
+                { title: 'transloco-messageformat (ICU plural/select in bundles)', value: 'transloco-messageformat' },
+                { title: 'transloco (plain; single braces are literal text)', value: 'transloco' },
+              ],
+              initial: APP_RUNTIMES.indexOf(selected),
+            });
+            const names = list.map((question) => question.name);
+            expect(names.indexOf('runtime')).toBe(names.indexOf('locales') + 1);
+            expect(names.indexOf('setupBundle')).toBe(names.indexOf('runtime') + 1);
+            return { ...requiredFlags, runtime: selected, setupBundle: false };
+          },
+        },
+      );
+
+      expect(result.exitCode).toBe(0);
+      if (selected === DEFAULT_APP_RUNTIME) {
+        expect(project.json(CONFIG_FILENAME)).not.toHaveProperty('runtime');
+      } else {
+        expect(loadConfig({ cwd: project.cwd }).runtime).toBe(selected);
+      }
+    },
+  );
+
+  it('skips the runtime select when --runtime was supplied interactively', async () => {
+    const result = await project.run(
+      initCommand,
+      { runtime: DEFAULT_APP_RUNTIME },
+      {
+        interactive: true,
+        ask: async (questions) => {
+          const list = Array.isArray(questions) ? questions : [questions];
+          expect(list.map((question) => question.name)).not.toContain('runtime');
+          return requiredFlags;
+        },
+      },
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(loadConfig({ cwd: project.cwd }).runtime).toBe(DEFAULT_APP_RUNTIME);
+  });
+
+  describe('interactive detection line', () => {
+    const answer = async () => ({ ...requiredFlags, setupBundle: false });
+
+    it('prints it once when detection found a value', async () => {
+      project.write('package.json', { dependencies: { '@jsverse/transloco': '^8.4.0' } });
+
+      const result = await project.run(initCommand, {}, { interactive: true, ask: answer });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout.match(/Detected runtime: transloco \(from package\.json\)/g)).toHaveLength(1);
+    });
+
+    it('does not print it when --runtime was supplied', async () => {
+      project.write('package.json', { dependencies: { '@jsverse/transloco': '^8.4.0' } });
+
+      const result = await project.run(initCommand, { runtime: 'transloco' }, { interactive: true, ask: answer });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).not.toContain('Detected runtime:');
+    });
+
+    it('does not print it without a package.json', async () => {
+      const result = await project.run(initCommand, {}, { interactive: true, ask: answer });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).not.toContain('Detected runtime:');
+    });
   });
 });

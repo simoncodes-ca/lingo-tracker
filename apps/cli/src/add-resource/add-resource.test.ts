@@ -1,365 +1,287 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { checkStoredValue, describeStoredValueFinding } from '@simoncodes-ca/domain';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { CommandCancelledError } from '../runner/command-runner';
+import { type CommandProject, createCommandProject } from '../testing/command-project';
 import { addResourceCommand } from './add-resource';
-import * as fs from 'node:fs';
-import prompts from 'prompts';
-import * as core from '@simoncodes-ca/core';
-import * as utils from '../utils';
 
-// Mock prompts to avoid interactive input
-vi.mock('prompts', () => ({
-  default: vi.fn(),
-}));
-
-const fsMocks = vi.hoisted(() => ({
-  existsSync: vi.fn(),
-  readFileSync: vi.fn(),
-  writeFileSync: vi.fn(),
-}));
-
-vi.mock('node:fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:fs')>();
-  return { ...actual, ...fsMocks, default: { ...actual.default, ...fsMocks } };
-});
-vi.mock('fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fs')>();
-  return { ...actual, ...fsMocks, default: { ...actual.default, ...fsMocks } };
-});
-vi.mock('@simoncodes-ca/core', async () => {
-  const actual = await vi.importActual('@simoncodes-ca/core');
-  return {
-    ...actual,
-    CONFIG_FILENAME: '.lingo-tracker.json',
-    addResource: vi.fn().mockResolvedValue({ resolvedKey: 'test.key', created: true }),
-    resolveResourceKey: vi.fn((key: string, targetFolder?: string) => {
-      return targetFolder ? `${targetFolder}.${key}` : key;
-    }),
-    splitResolvedKey: vi.fn((key: string) => {
-      const parts = key.split('.');
-      const entryKey = parts.pop() || key;
-      return { folderPath: parts, entryKey };
-    }),
-  };
-});
-
-vi.mock('../utils', async () => {
-  const actual = await vi.importActual('../utils');
-  return {
-    ...actual,
-    loadConfiguration: vi.fn(),
-    promptForCollection: vi.fn(),
-    resolveWritableCollection: vi.fn(),
-    parseCommaSeparatedList: vi.fn((input: string | undefined) => {
-      if (!input) return undefined;
-      const result = input
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean);
-      return result.length > 0 ? result : undefined;
-    }),
-  };
-});
-
-describe('addResourceCommand', () => {
+describe('addResourceCommand (real project)', () => {
+  let project: CommandProject;
+  const flags = { key: 'buttons.ok', value: 'OK' };
+  const entries = () => project.json('translations/main/buttons/resource_entries.json');
   beforeEach(() => {
-    process.env.INIT_CWD = '/test';
-    vi.clearAllMocks();
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(fs.readFileSync).mockImplementation(() => {
-      throw new Error('File not found');
-    });
-    vi.mocked(prompts).mockResolvedValue({});
-
-    // Default mock implementations for utils
-    vi.mocked(utils.loadConfiguration).mockReturnValue(null);
-    vi.mocked(utils.promptForCollection).mockResolvedValue(null);
-    vi.mocked(utils.resolveWritableCollection).mockReturnValue(null);
+    project = createCommandProject();
   });
-
   afterEach(() => {
-    delete process.env.INIT_CWD;
+    project.cleanup();
   });
 
-  it('should show error when config file does not exist', async () => {
-    // loadConfiguration returns null when config not found
-    vi.mocked(utils.loadConfiguration).mockReturnValue(null);
-
-    await addResourceCommand({
-      collection: 'test-collection',
-      key: 'buttons.ok',
-      value: 'OK',
-    });
-
-    // Should call loadConfiguration with exitOnError: false
-    expect(utils.loadConfiguration).toHaveBeenCalledWith({
-      exitOnError: false,
-    });
+  it('reports an explicit empty value through the required-options error path with exit 1', async () => {
+    const result = await project.run(addResourceCommand, { ...flags, value: '' });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe('❌ Missing required options in non-interactive mode: --value\n');
+    expect(project.exists('translations/main/buttons')).toBe(false);
   });
 
-  it('should validate key format - config check happens first', async () => {
-    // loadConfiguration returns null when config not found
-    vi.mocked(utils.loadConfiguration).mockReturnValue(null);
-
-    // Invalid key, but config doesn't exist so that error comes first
-    await addResourceCommand({
-      collection: 'test-collection',
-      key: 'invalid key with spaces',
-      value: 'Test',
-    });
-
-    // Config error is checked before key validation
-    expect(utils.loadConfiguration).toHaveBeenCalledWith({
-      exitOnError: false,
-    });
+  it('reports a whitespace-only value through the core error path with exit 1', async () => {
+    const result = await project.run(addResourceCommand, { ...flags, value: '   ' });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe('❌ Base value must not be empty.\n');
+    expect(project.exists('translations/main/buttons')).toBe(false);
   });
 
-  it('should handle command with all parameters', async () => {
-    // loadConfiguration returns null (config doesn't exist)
-    vi.mocked(utils.loadConfiguration).mockReturnValue(null);
-
-    await addResourceCommand({
-      collection: 'test-collection',
-      key: 'buttons.ok',
-      value: 'OK',
-      comment: 'Ok button',
-      tags: 'ui,buttons',
-      targetFolder: 'common',
+  it('prints the braced-placeholder diagnostic and exits 1 before writing', async () => {
+    const value = '{{{a}}}';
+    const found = checkStoredValue(value)[0];
+    expect(found).toBeDefined();
+    if (!found) throw new Error('Missing finding');
+    const result = await project.run(addResourceCommand, { ...flags, value });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe(`❌ Value for locale "en" is not valid:\n  ${describeStoredValueFinding(found)}\n`);
+    expect(project.exists('translations/main/buttons')).toBe(false);
+  });
+  it('trims comma-string tags from an interactive answer', async () => {
+    const result = await project.run(addResourceCommand, flags, {
+      interactive: true,
+      ask: async () => ({ tags: ' a, , b, ' }),
     });
+    expect(result.exitCode).toBe(0);
+    expect(entries()).toMatchObject({ ok: { tags: ['a', 'b'] } });
+  });
 
-    // Should stop early since config doesn't exist
-    expect(utils.loadConfiguration).toHaveBeenCalledWith({
-      exitOnError: false,
-    });
+  it('should show error and exit 1 when config file does not exist', async () => {
+    project.remove('.lingo-tracker.json');
+    const result = await project.run(addResourceCommand, flags);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe(
+      '❌ Configuration file .lingo-tracker.json not found.\nRun "lingo-tracker init" to initialize a project.\n',
+    );
+    expect(project.exists('translations/main/buttons')).toBe(false);
+  });
+
+  it('should print a core error (invalid key) and exit 1', async () => {
+    const result = await project.run(addResourceCommand, { key: 'invalid key with spaces', value: 'Test' });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('Invalid');
+    expect(project.exists('translations/main/resource_entries.json')).toBe(false);
   });
 
   it('should show error when collection does not exist', async () => {
-    const config = {
-      collections: {
-        ExistingCollection: { translationsFolder: 'translations' },
-      },
-    };
-
-    // Mock successful config loading
-    vi.mocked(utils.loadConfiguration).mockReturnValue({
-      config,
-      configPath: '/test/.lingo-tracker.json',
-      cwd: '/test',
-    });
-
-    // Mock promptForCollection to return the collection name
-    vi.mocked(utils.promptForCollection).mockResolvedValue('NonExistentCollection');
-
-    // Mock resolveWritableCollection to return null (collection not found)
-    vi.mocked(utils.resolveWritableCollection).mockReturnValue(null);
-
-    await addResourceCommand({
-      collection: 'NonExistentCollection',
-      key: 'buttons.ok',
-      value: 'OK',
-    });
-
-    // Should call resolveWritableCollection and get null back
-    expect(utils.resolveWritableCollection).toHaveBeenCalledWith('NonExistentCollection', config, '/test');
+    const result = await project.run(addResourceCommand, { ...flags, collection: 'missing' });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe('❌ Collection "missing" not found\n');
+    expect(project.exists('translations/main/buttons')).toBe(false);
   });
 
-  it('should handle translations array format', async () => {
-    const config = {
-      collections: {
-        TestCollection: {
-          translationsFolder: 'translations',
-          baseLocale: 'en',
-          locales: ['en', 'fr-ca', 'es'],
-        },
-      },
-      baseLocale: 'en',
-      locales: ['en', 'fr-ca', 'es'],
-    };
-
-    // Mock successful config loading
-    vi.mocked(utils.loadConfiguration).mockReturnValue({
-      config,
-      configPath: '/test/.lingo-tracker.json',
-      cwd: '/test',
+  it('should refuse a read-only collection with exit 1', async () => {
+    project.configure({
+      ...project.config,
+      collections: { main: { translationsFolder: 'translations/main', readOnly: true } },
     });
+    const result = await project.run(addResourceCommand, flags);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('read-only');
+    expect(project.exists('translations/main/buttons')).toBe(false);
+  });
 
-    // Mock promptForCollection to return the collection name
-    vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
+  it('should exit 1 naming --key and --value when both are missing in non-interactive mode', async () => {
+    const result = await project.run(addResourceCommand, {});
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe('❌ Missing required options in non-interactive mode: --key, --value\n');
+    expect(project.exists('translations/main/buttons')).toBe(false);
+  });
 
-    // Mock resolveWritableCollection to return collection data
-    vi.mocked(utils.resolveWritableCollection).mockReturnValue({
-      name: 'TestCollection',
-      config: config.collections.TestCollection,
-      translationsFolderPath: '/test/translations',
-    });
-
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
-    await addResourceCommand({
-      collection: 'TestCollection',
-      key: 'buttons.ok',
-      value: 'OK',
-      translations: [
-        { locale: 'fr-ca', value: "D'accord", status: 'translated' },
+  it('should pass the opened collection and supplied fields through to core', async () => {
+    const result = await project.run(addResourceCommand, {
+      ...flags,
+      comment: 'Primary confirmation action',
+      tags: ['ui', 'buttons'],
+      targetFolder: 'common',
+      translations: JSON.stringify([
+        { locale: 'fr', value: "D'accord", status: 'translated' },
         { locale: 'es', value: 'Aceptar', status: 'verified' },
-      ],
+      ]),
     });
-
-    // Should call addResource with translations array
-    expect(core.addResource).toHaveBeenCalledWith(
-      '/test/translations',
-      expect.objectContaining({
-        translations: expect.arrayContaining([
-          expect.objectContaining({
-            locale: 'fr-ca',
-            value: "D'accord",
-            status: 'translated',
-          }),
-          expect.objectContaining({
-            locale: 'es',
-            value: 'Aceptar',
-            status: 'verified',
-          }),
-        ]),
-      }),
-      expect.any(Object),
-    );
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('common.buttons.ok');
+    expect(project.json('translations/main/common/buttons/resource_entries.json')).toMatchObject({
+      ok: {
+        source: 'OK',
+        fr: "D'accord",
+        es: 'Aceptar',
+        comment: 'Primary confirmation action',
+        tags: ['ui', 'buttons'],
+      },
+    });
+    expect(project.json('translations/main/common/buttons/tracker_meta.json')).toMatchObject({
+      ok: { fr: { status: 'translated' }, es: { status: 'verified' } },
+    });
   });
 
-  it('should prompt for overwrite confirmation when resource exists in interactive mode', async () => {
-    const config = {
-      collections: {
-        TestCollection: {
-          translationsFolder: 'translations',
-          baseLocale: 'en',
-        },
+  it('should exit 1 with a clear message on malformed --translations JSON', async () => {
+    const result = await project.run(addResourceCommand, { ...flags, translations: '[{"locale":' });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toMatch(/^❌ Invalid --translations JSON: /);
+    expect(project.exists('translations/main/buttons')).toBe(false);
+  });
+
+  it('accepts a supplied translation without a status', async () => {
+    const result = await project.run(addResourceCommand, { ...flags, translations: '[{"locale":"fr","value":"Oui"}]' });
+    expect(result.exitCode).toBe(0);
+    expect(entries()).toMatchObject({ ok: { fr: 'Oui' } });
+    expect(project.json('translations/main/buttons/tracker_meta.json')).toMatchObject({
+      ok: { fr: { status: 'translated' } },
+    });
+  });
+
+  it('rejects an invalid translation status before calling core', async () => {
+    const result = await project.run(addResourceCommand, {
+      ...flags,
+      translations: '[{"locale":"fr","value":"Oui","status":"done"}]',
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe(
+      '❌ Invalid --translations: item 0: status must be one of new, translated, stale, verified\n',
+    );
+    expect(project.exists('translations/main/buttons')).toBe(false);
+  });
+
+  it('rejects a non-string status with exit 1 and a flag diagnostic', async () => {
+    const result = await project.run(addResourceCommand, {
+      ...flags,
+      translations: '[{"locale":"fr","value":"Oui","status":null}]',
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe(
+      '❌ Invalid --translations: item 0: status must be one of new, translated, stale, verified\n',
+    );
+    expect(project.exists('translations/main/buttons')).toBe(false);
+  });
+
+  it('rejects a translation missing its value before calling core', async () => {
+    const result = await project.run(addResourceCommand, {
+      ...flags,
+      translations: '[{"locale":"fr","status":"verified"}]',
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('Invalid --translations: item 0: value must be a string');
+    expect(project.exists('translations/main/buttons')).toBe(false);
+  });
+
+  it('cancels after an interactive conflict is declined', async () => {
+    await project.seed(flags.key);
+    const result = await project.run(addResourceCommand, flags, {
+      interactive: true,
+      ask: async () => ({ confirmed: false }),
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe('❌ Add resource cancelled.\n');
+    expect(entries()).toMatchObject({ ok: { source: 'Original' } });
+  });
+
+  it('retries with replace after an interactive conflict is accepted', async () => {
+    await project.seed(flags.key);
+    const questions: unknown[] = [];
+    const result = await project.run(addResourceCommand, flags, {
+      interactive: true,
+      ask: async (asked) => {
+        questions.push(asked);
+        return { confirmed: true };
       },
-      baseLocale: 'en',
-    };
-
-    // Mock successful config loading
-    vi.mocked(utils.loadConfiguration).mockReturnValue({
-      config,
-      configPath: '/test/.lingo-tracker.json',
-      cwd: '/test',
     });
-
-    // Mock promptForCollection to return the collection name
-    vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
-
-    // Mock resolveWritableCollection to return collection data
-    vi.mocked(utils.resolveWritableCollection).mockReturnValue({
-      name: 'TestCollection',
-      config: config.collections.TestCollection,
-      translationsFolderPath: '/test/translations',
-    });
-
-    vi.mocked(fs.readFileSync).mockImplementation((path: string) => {
-      if (path.includes('resource_entries.json')) {
-        return JSON.stringify({ ok: { source: 'OK' } });
-      }
-      throw new Error('File not found');
-    });
-
-    // Mock resource file exists and contains the entry
-    vi.mocked(fs.existsSync).mockImplementation((path: string) => {
-      return path.includes('resource_entries.json');
-    });
-
-    // Mock TTY to simulate interactive mode
-    const originalIsTTY = process.stdout.isTTY;
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: true,
-      writable: true,
-    });
-
-    // Mock prompt to return false (user cancels)
-    vi.mocked(prompts).mockResolvedValueOnce({ value: false });
-
-    await addResourceCommand({
-      collection: 'TestCollection',
-      key: 'buttons.ok',
-      value: 'OK',
-    });
-
-    expect(prompts).toHaveBeenCalledWith(
+    expect(result.exitCode).toBe(0);
+    expect(questions).toContainEqual(
       expect.objectContaining({
         type: 'confirm',
-        message: expect.stringContaining('already exists'),
+        name: 'confirmed',
+        message: 'Resource "buttons.ok" already exists. Override?',
+        initial: false,
       }),
     );
+    expect(entries()).toMatchObject({ ok: { source: 'OK' } });
+  });
 
-    // Restore
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: originalIsTTY,
-      writable: true,
+  it('reports an existing key and exits 1 without prompting in non-interactive mode', async () => {
+    await project.seed(flags.key);
+    const result = await project.run(addResourceCommand, flags, {
+      ask: async () => {
+        throw new Error('Unexpected prompt');
+      },
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toBe(
+      '❌ Resource already exists: buttons.ok\n  Use --override to replace it, or edit-resource to change it.\n',
+    );
+    expect(entries()).toMatchObject({ ok: { source: 'Original' } });
+  });
+
+  it('passes --override as replace in one call without prompting', async () => {
+    await project.seed(flags.key);
+    const result = await project.run(
+      addResourceCommand,
+      { ...flags, override: true },
+      {
+        ask: async () => {
+          throw new Error('Unexpected prompt');
+        },
+      },
+    );
+    expect(result.exitCode).toBe(0);
+    expect(entries()).toMatchObject({ ok: { source: 'OK' } });
+  });
+
+  describe('preferred terminology', () => {
+    beforeEach(() => {
+      project.write('.lingo-tracker-preferred-terminology.json', [
+        { discouraged: 'Expenditure', preferred: 'Investment', reason: 'Finance style guide' },
+        { discouraged: 'e-mail', preferred: 'email' },
+      ]);
+    });
+    it('prints one warning per finding after a successful add, with the reason on its own line', async () => {
+      const result = await project.run(addResourceCommand, {
+        ...flags,
+        value: 'Expenditure and more expenditure, by e-mail',
+      });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toContain(
+        '⚠️  Preferred terminology: consider "Investment" instead of "Expenditure"\n  Finance style guide\n',
+      );
+      expect(result.stderr).toContain('⚠️  Preferred terminology: consider "email" instead of "e-mail"');
+      expect(result.stderr.match(/Preferred terminology:/g)).toHaveLength(2);
+      expect(entries()).toMatchObject({ ok: { source: 'Expenditure and more expenditure, by e-mail' } });
+    });
+    it('prints nothing when there are no findings', async () => {
+      const result = await project.run(addResourceCommand, { ...flags, value: 'Investment summary' });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBe('');
+    });
+    it('prints each rule-file problem as a warning', async () => {
+      project.write('.lingo-tracker-preferred-terminology.json', '{');
+      const result = await project.run(addResourceCommand, { ...flags, value: 'Expenditure' });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toContain('⚠️  Preferred terminology checks skipped:');
+      expect(result.stderr.match(/⚠️ {2}Preferred terminology/g)).toHaveLength(1);
+    });
+    it('prints only the failure when the add fails', async () => {
+      const result = await project.run(addResourceCommand, { key: 'bad key', value: 'Expenditure' });
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain('❌');
+      expect(result.stderr).not.toContain('Preferred terminology');
     });
   });
 
-  it('should create entries for all locales when no translations provided', async () => {
-    const config = {
-      collections: {
-        TestCollection: {
-          translationsFolder: 'translations',
-          baseLocale: 'en',
-          locales: ['en', 'fr-ca', 'es', 'de'],
+  it('reports a cancelled prompt once and exits 0 without adding the resource', async () => {
+    const result = await project.run(
+      addResourceCommand,
+      {},
+      {
+        interactive: true,
+        ask: async () => {
+          throw new CommandCancelledError();
         },
       },
-      baseLocale: 'en',
-      locales: ['en', 'fr-ca', 'es', 'de'],
-    };
-
-    // Mock successful config loading
-    vi.mocked(utils.loadConfiguration).mockReturnValue({
-      config,
-      configPath: '/test/.lingo-tracker.json',
-      cwd: '/test',
-    });
-
-    // Mock promptForCollection to return the collection name
-    vi.mocked(utils.promptForCollection).mockResolvedValue('TestCollection');
-
-    // Mock resolveWritableCollection to return collection data
-    vi.mocked(utils.resolveWritableCollection).mockReturnValue({
-      name: 'TestCollection',
-      config: config.collections.TestCollection,
-      translationsFolderPath: '/test/translations',
-    });
-
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
-    // Mock non-interactive mode
-    const originalIsTTY = process.stdout.isTTY;
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: false,
-      writable: true,
-    });
-
-    await addResourceCommand({
-      collection: 'TestCollection',
-      key: 'buttons.ok',
-      value: 'OK',
-    });
-
-    // Should call addResource with translations for all non-base locales
-    expect(core.addResource).toHaveBeenCalledWith(
-      '/test/translations',
-      expect.objectContaining({
-        translations: expect.arrayContaining([
-          expect.objectContaining({
-            locale: 'fr-ca',
-            value: 'OK',
-            status: 'new',
-          }),
-          expect.objectContaining({ locale: 'es', value: 'OK', status: 'new' }),
-          expect.objectContaining({ locale: 'de', value: 'OK', status: 'new' }),
-        ]),
-      }),
-      expect.any(Object),
     );
-
-    // Restore
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: originalIsTTY,
-      writable: true,
-    });
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe('❌ Add resource cancelled.\n');
+    expect(project.exists('translations/main/buttons')).toBe(false);
   });
 });

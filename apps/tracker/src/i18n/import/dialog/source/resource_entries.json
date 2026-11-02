@@ -1,0 +1,372 @@
+{
+  "description": {
+    "source": "Which collection to write into, and which files to read.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "En qué colección escribir y qué archivos leer.",
+    "fr-ca": "Dans quelle collection écrire et quels fichiers lire.",
+    "ru": "В какую коллекцию записывать и какие файлы читать.",
+    "ja": "書き込み先のコレクションと、読み込むファイルです。",
+    "de": "In welche Sammlung geschrieben wird und welche Dateien gelesen werden."
+  },
+  "collectionLabel": {
+    "source": "Collection",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Colección",
+    "fr-ca": "Collection",
+    "ru": "Коллекция",
+    "ja": "コレクション",
+    "de": "Sammlung"
+  },
+  "folderLabel": {
+    "source": "Import folder",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Carpeta de importación",
+    "fr-ca": "Dossier d’importation",
+    "ru": "Папка импорта",
+    "ja": "インポートフォルダー",
+    "de": "Importordner"
+  },
+  "folderHint": {
+    "source": "Relative to the project root. Defaults to this collection's import folder.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Relativa a la raíz del proyecto. Por defecto, la carpeta de importación de esta colección.",
+    "fr-ca": "Relatif à la racine du projet. Par défaut, le dossier d’importation de cette collection.",
+    "ru": "Относительно корня проекта. По умолчанию — папка импорта этой коллекции.",
+    "ja": "プロジェクトルートからの相対パスです。既定ではこのコレクションのインポートフォルダーです。",
+    "de": "Relativ zum Projektstamm. Standard ist der Importordner dieser Sammlung."
+  },
+  "folderResolvedX": {
+    "source": "Showing {path}",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Mostrando {path}",
+    "fr-ca": "Affichage de {path}",
+    "ru": "Показан путь {path}",
+    "ja": "表示中: {path}",
+    "de": "Zeigt {path}"
+  },
+  "resetFolder": {
+    "source": "Reset to default",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Restablecer valor predeterminado",
+    "fr-ca": "Rétablir la valeur par défaut",
+    "ru": "Вернуть папку по умолчанию",
+    "ja": "既定に戻す",
+    "de": "Auf Standard zurücksetzen"
+  },
+  "filesLabel": {
+    "source": "Files",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Archivos",
+    "fr-ca": "Fichiers",
+    "ru": "Файлы",
+    "ja": "ファイル",
+    "de": "Dateien"
+  },
+  "selectAll": {
+    "source": "Select all",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Seleccionar todo",
+    "fr-ca": "Tout sélectionner",
+    "ru": "Выбрать все",
+    "ja": "すべて選択",
+    "de": "Alle auswählen"
+  },
+  "clear": {
+    "source": "Clear",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Deseleccionar",
+    "fr-ca": "Désélectionner",
+    "ru": "Снять выбор",
+    "ja": "選択解除",
+    "de": "Auswahl aufheben"
+  },
+  "localeLabelX": {
+    "source": "Locale for {file}",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Idioma de {file}",
+    "fr-ca": "Langue de {file}",
+    "ru": "Язык для {file}",
+    "ja": "{file} のロケール",
+    "de": "Sprache für {file}"
+  },
+  "choose": {
+    "source": "Choose…",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Elegir…",
+    "fr-ca": "Choisir…",
+    "ru": "Выбрать…",
+    "ja": "選択…",
+    "de": "Auswählen…"
+  },
+  "fromTargetLanguage": {
+    "source": "From the file's target-language",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Del target-language del archivo",
+    "fr-ca": "Depuis le target-language du fichier",
+    "ru": "Из target-language файла",
+    "ja": "ファイルの target-language から",
+    "de": "Aus dem target-language der Datei"
+  },
+  "baseLocaleHint": {
+    "source": "Base locale. Only the migration strategy can write it.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Idioma base. Solo la estrategia de migración puede escribirlo.",
+    "fr-ca": "Langue de base. Seule la stratégie de migration peut y écrire.",
+    "ru": "Базовый язык. Записывать его может только стратегия миграции.",
+    "ja": "ベースロケールです。書き込めるのは移行方式のみです。",
+    "de": "Basissprache. Nur die Migrationsstrategie kann sie schreiben."
+  },
+  "duplicateLocaleX": {
+    "source": "Two files write {locale}; they are applied in this order.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Dos archivos escriben {locale}; se aplican en este orden.",
+    "fr-ca": "Deux fichiers écrivent {locale}; ils sont appliqués dans cet ordre.",
+    "ru": "Два файла записывают {locale}; они применяются в таком порядке.",
+    "ja": "2つのファイルが {locale} に書き込みます。この順序で適用されます。",
+    "de": "Zwei Dateien schreiben {locale}; sie werden in dieser Reihenfolge angewendet."
+  },
+  "looking": {
+    "source": "Looking in {path}…",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Buscando en {path}…",
+    "fr-ca": "Recherche dans {path}…",
+    "ru": "Просмотр {path}…",
+    "ja": "{path} を確認中…",
+    "de": "Suche in {path}…"
+  },
+  "noFolderX": {
+    "source": "No folder at {path}.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "No hay ninguna carpeta en {path}.",
+    "fr-ca": "Aucun dossier à l’emplacement {path}.",
+    "ru": "Папки {path} не существует.",
+    "ja": "{path} にフォルダーがありません。",
+    "de": "Kein Ordner unter {path}."
+  },
+  "noFolderHint": {
+    "source": "Export to it first, or point this at the folder your files are in.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Exporta primero a esa carpeta o indica la carpeta donde están tus archivos.",
+    "fr-ca": "Exportez d’abord vers ce dossier, ou indiquez celui qui contient vos fichiers.",
+    "ru": "Сначала выполните экспорт в неё или укажите папку с вашими файлами.",
+    "ja": "先にこのフォルダーにエクスポートするか、ファイルがあるフォルダーを指定してください。",
+    "de": "Exportiere zuerst dorthin oder gib den Ordner mit deinen Dateien an."
+  },
+  "noFilesX": {
+    "source": "No XLIFF or JSON files in {path}.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "No hay archivos XLIFF ni JSON en {path}.",
+    "fr-ca": "Aucun fichier XLIFF ou JSON dans {path}.",
+    "ru": "В {path} нет файлов XLIFF или JSON.",
+    "ja": "{path} に XLIFF または JSON ファイルがありません。",
+    "de": "Keine XLIFF- oder JSON-Dateien in {path}."
+  },
+  "listFailed": {
+    "source": "The folder could not be read.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "No se pudo leer la carpeta.",
+    "fr-ca": "Le dossier n’a pas pu être lu.",
+    "ru": "Не удалось прочитать папку.",
+    "ja": "フォルダーを読み取れませんでした。",
+    "de": "Der Ordner konnte nicht gelesen werden."
+  },
+  "tryAgain": {
+    "source": "Try again",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Intentar de nuevo",
+    "fr-ca": "Réessayer",
+    "ru": "Повторить",
+    "ja": "再試行",
+    "de": "Erneut versuchen"
+  },
+  "readOnly": {
+    "source": "This collection is read-only. Choose another collection to import.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Esta colección es de solo lectura. Elige otra colección para importar.",
+    "fr-ca": "Cette collection est en lecture seule. Choisissez-en une autre pour l’importation.",
+    "ru": "Эта коллекция доступна только для чтения. Выберите другую коллекцию для импорта.",
+    "ja": "このコレクションは読み取り専用です。インポート先には別のコレクションを選んでください。",
+    "de": "Diese Sammlung ist schreibgeschützt. Wähle eine andere Sammlung zum Importieren."
+  },
+  "droppedX": {
+    "source": "{count, plural, =1 {1 selected file is no longer in this folder and was unchecked.} other {{count} selected files are no longer in this folder and were unchecked.}}",
+    "comment": "Hint under the import file list after the folder was relisted and checked files vanished. count = number of files unchecked.",
+    "tags": ["import"],
+    "es": "{count, plural, =1 {1 archivo seleccionado ya no está en esta carpeta y se desmarcó.} other {{count} archivos seleccionados ya no están en esta carpeta y se desmarcaron.}}",
+    "fr-ca": "{count, plural, =1 {1 fichier sélectionné ne se trouve plus dans ce dossier et a été décoché.} other {{count} fichiers sélectionnés ne se trouvent plus dans ce dossier et ont été décochés.}}",
+    "ru": "{count, plural, one {# выбранный файл больше не находится в этой папке, и его отметка снята.} few {# выбранных файла больше не находятся в этой папке, и их отметки сняты.} many {# выбранных файлов больше не находятся в этой папке, и их отметки сняты.} other {# выбранного файла больше не находятся в этой папке, и их отметки сняты.}}",
+    "ja": "{count, plural, other {選択していた{count}個のファイルはこのフォルダーに存在しないため、選択を解除しました。}}",
+    "de": "{count, plural, =1 {1 ausgewählte Datei ist nicht mehr in diesem Ordner und wurde abgewählt.} other {{count} ausgewählte Dateien sind nicht mehr in diesem Ordner und wurden abgewählt.}}"
+  },
+  "uploadFiles": {
+    "source": "Upload files…",
+    "comment": "Link-button in the import dialog that opens the file picker to add files to the import folder",
+    "tags": ["import"],
+    "es": "Subir archivos…",
+    "fr-ca": "Téléverser des fichiers…",
+    "ru": "Загрузить файлы…",
+    "ja": "ファイルをアップロード…",
+    "de": "Dateien hochladen…"
+  },
+  "dropHere": {
+    "source": "Drop XLIFF or JSON files here to add them to this folder.",
+    "comment": "Hint in the empty file well of the import dialog inviting a drag-and-drop upload",
+    "tags": ["import"],
+    "es": "Suelta aquí archivos XLIFF o JSON para añadirlos a esta carpeta.",
+    "fr-ca": "Déposez ici des fichiers XLIFF ou JSON pour les ajouter à ce dossier.",
+    "ru": "Перетащите сюда файлы XLIFF или JSON, чтобы добавить их в эту папку.",
+    "ja": "XLIFF または JSON ファイルをここにドロップすると、このフォルダーに追加されます。",
+    "de": "Ziehen Sie XLIFF- oder JSON-Dateien hierher, um sie diesem Ordner hinzuzufügen."
+  },
+  "uploadingX": {
+    "source": "{count, plural, =1 {Uploading 1 file…} other {Uploading {count} files…}}",
+    "comment": "Status while files upload in the import dialog; count = number of files",
+    "tags": ["import"],
+    "es": "{count, plural, =1 {Subiendo 1 archivo…} other {Subiendo {count} archivos…}}",
+    "fr-ca": "{count, plural, =1 {Téléversement de 1 fichier…} other {Téléversement de {count} fichiers…}}",
+    "ru": "{count, plural, one {Загрузка {count} файла…} few {Загрузка {count} файлов…} many {Загрузка {count} файлов…} other {Загрузка {count} файла…}}",
+    "ja": "{count, plural, other {{count} 個のファイルをアップロードしています…}}",
+    "de": "{count, plural, =1 {1 Datei wird hochgeladen…} other {{count} Dateien werden hochgeladen…}}"
+  },
+  "uploadedX": {
+    "source": "{count, plural, =1 {1 file uploaded and checked.} other {{count} files uploaded and checked.}}",
+    "comment": "Result after an upload in the import dialog; count = number of files",
+    "tags": ["import"],
+    "es": "{count, plural, =1 {1 archivo subido y marcado.} other {{count} archivos subidos y marcados.}}",
+    "fr-ca": "{count, plural, =1 {1 fichier téléversé et coché.} other {{count} fichiers téléversés et cochés.}}",
+    "ru": "{count, plural, one {Загружен и отмечен {count} файл.} few {Загружено и отмечено {count} файла.} many {Загружено и отмечено {count} файлов.} other {Загружено и отмечено {count} файла.}}",
+    "ja": "{count, plural, other {{count} 個のファイルをアップロードして選択しました。}}",
+    "de": "{count, plural, =1 {1 Datei hochgeladen und ausgewählt.} other {{count} Dateien hochgeladen und ausgewählt.}}"
+  },
+  "uploadedPartialX": {
+    "source": "{listed} of {count} uploaded files appear in the list.",
+    "comment": "Result after an upload when some uploaded files are not shown in the list; listed and count are numbers",
+    "tags": ["import"],
+    "es": "{listed} de {count} archivos subidos aparecen en la lista.",
+    "fr-ca": "{listed} des {count} fichiers téléversés figurent dans la liste.",
+    "ru": "В списке отображается файлов: {listed} из {count} загруженных.",
+    "ja": "アップロードした {count} 個のファイルのうち {listed} 個が一覧に表示されています。",
+    "de": "{listed} von {count} hochgeladenen Dateien erscheinen in der Liste."
+  },
+  "uploadFailed": {
+    "source": "The files could not be uploaded.",
+    "comment": "Fallback error when an upload in the import dialog fails without a server message",
+    "tags": ["import"],
+    "es": "No se pudieron subir los archivos.",
+    "fr-ca": "Les fichiers n’ont pas pu être téléversés.",
+    "ru": "Не удалось загрузить файлы.",
+    "ja": "ファイルをアップロードできませんでした。",
+    "de": "Die Dateien konnten nicht hochgeladen werden."
+  },
+  "uploadTooManyX": {
+    "source": "Upload at most {max} files at a time.",
+    "comment": "Upload pre-check error; max = the file count limit",
+    "tags": ["import"],
+    "es": "Sube como máximo {max} archivos a la vez.",
+    "fr-ca": "Téléversez au plus {max} fichiers à la fois.",
+    "ru": "Загружайте не более {max} файлов за раз.",
+    "ja": "一度にアップロードできるのは最大 {max} 個のファイルです。",
+    "de": "Laden Sie höchstens {max} Dateien auf einmal hoch."
+  },
+  "uploadTooLargeX": {
+    "source": "{file} is larger than {max} MB.",
+    "comment": "Upload pre-check error; file = file name, max = size limit in MB",
+    "tags": ["import"],
+    "es": "{file} supera los {max} MB.",
+    "fr-ca": "{file} dépasse {max} Mo.",
+    "ru": "Размер файла {file} превышает {max} МБ.",
+    "ja": "{file} は {max} MB を超えています。",
+    "de": "{file} ist größer als {max} MB."
+  },
+  "uploadWrongTypeX": {
+    "source": "{file} is not an XLIFF or JSON file.",
+    "comment": "Upload pre-check error; file = file name",
+    "tags": ["import"],
+    "es": "{file} no es un archivo XLIFF ni JSON.",
+    "fr-ca": "{file} n’est pas un fichier XLIFF ou JSON.",
+    "ru": "Файл {file} не является файлом XLIFF или JSON.",
+    "ja": "{file} は XLIFF または JSON ファイルではありません。",
+    "de": "{file} ist keine XLIFF- oder JSON-Datei."
+  },
+  "uploadClashX": {
+    "source": "Already in this folder: {names}.",
+    "comment": "Prompt text before Replace / Keep existing; names = comma-separated file names",
+    "tags": ["import"],
+    "es": "Ya existen en esta carpeta: {names}.",
+    "fr-ca": "Déjà dans ce dossier : {names}.",
+    "ru": "Уже есть в этой папке: {names}.",
+    "ja": "このフォルダーに既にあります: {names}。",
+    "de": "Bereits in diesem Ordner: {names}."
+  },
+  "replace": {
+    "source": "Replace",
+    "comment": "Button: overwrite the files that already exist in the import folder",
+    "tags": ["import"],
+    "es": "Reemplazar",
+    "fr-ca": "Remplacer",
+    "ru": "Заменить",
+    "ja": "置き換える",
+    "de": "Ersetzen"
+  },
+  "keepExisting": {
+    "source": "Keep existing",
+    "comment": "Button: keep the files already in the import folder and discard the upload",
+    "tags": ["import"],
+    "es": "Conservar los existentes",
+    "fr-ca": "Conserver les existants",
+    "ru": "Оставить существующие",
+    "ja": "既存のものを残す",
+    "de": "Vorhandene behalten"
+  },
+  "uploadNotAllowedFolder": {
+    "source": "Files can only be uploaded to this collection's import folder or one of its subfolders.",
+    "comment": "Hint shown when the import dialog folder is outside the collection import folder, so Upload is disabled",
+    "tags": ["import"],
+    "es": "Los archivos solo se pueden subir a la carpeta de importación de esta colección o a una de sus subcarpetas.",
+    "fr-ca": "Les fichiers ne peuvent être téléversés que dans le dossier d’importation de cette collection ou l’un de ses sous-dossiers.",
+    "ru": "Файлы можно загружать только в папку импорта этой коллекции или в одну из её вложенных папок.",
+    "ja": "ファイルをアップロードできるのは、このコレクションのインポートフォルダーまたはそのサブフォルダーのみです。",
+    "de": "Dateien können nur in den Importordner dieser Sammlung oder einen seiner Unterordner hochgeladen werden."
+  },
+  "uploadBusy": {
+    "source": "Another upload is already running. Try again in a moment.",
+    "comment": "Error when the server rejects an upload with 429 because another upload is in progress",
+    "tags": ["import"],
+    "es": "Ya hay otra subida en curso. Inténtalo de nuevo en un momento.",
+    "fr-ca": "Un autre téléversement est déjà en cours. Réessayez dans un instant.",
+    "ru": "Другая загрузка уже выполняется. Повторите попытку чуть позже.",
+    "ja": "別のアップロードが実行中です。しばらくしてからもう一度お試しください。",
+    "de": "Ein anderer Upload läuft bereits. Versuchen Sie es gleich noch einmal."
+  },
+  "uploadedUncheckedX": {
+    "source": "{count, plural, =1 {1 file uploaded, not checked.} other {{count} files uploaded, {checked} checked.}} Base-locale files can only be imported with the migration strategy.",
+    "comment": "Result after an upload when some uploaded files were not checked because they target the base locale; count = uploaded files, checked = files checked",
+    "tags": ["import"],
+    "es": "{count, plural, =1 {1 archivo subido, sin marcar.} other {{count} archivos subidos, {checked} marcados.}} Los archivos del idioma base solo se pueden importar con la estrategia de migración.",
+    "fr-ca": "{count, plural, =1 {1 fichier téléversé, non coché.} other {{count} fichiers téléversés, {checked} cochés.}} Les fichiers de la langue de base ne peuvent être importés qu’avec la stratégie de migration.",
+    "ru": "{count, plural, one {Загружен {count} файл, не отмечен.} few {Загружено {count} файла, отмечено: {checked}.} many {Загружено {count} файлов, отмечено: {checked}.} other {Загружено {count} файла, отмечено: {checked}.}} Файлы базового языка можно импортировать только со стратегией миграции.",
+    "ja": "{count, plural, other {{count} 個のファイルをアップロードし、{checked} 個を選択しました。}} 基準ロケールのファイルは、移行方式でのみインポートできます。",
+    "de": "{count, plural, =1 {1 Datei hochgeladen, nicht ausgewählt.} other {{count} Dateien hochgeladen, {checked} ausgewählt.}} Dateien der Basissprache lassen sich nur mit der Migrationsstrategie importieren."
+  }
+}

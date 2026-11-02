@@ -1,37 +1,43 @@
 import { signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideTransloco, type Translation, type TranslocoLoader } from '@jsverse/transloco';
+import { provideTranslocoMessageformat } from '@jsverse/transloco-messageformat';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
+import { type Observable, Subject } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
 import { BrowserStore } from '../../../store/browser.store';
+import type { LocaleFilterLabel } from '../../../store/locale-selection';
 import { LocaleFilter } from './locale-filter';
 
 describe('LocaleFilter', () => {
   let component: LocaleFilter;
   let fixture: ComponentFixture<LocaleFilter>;
   let spectator: Spectator<LocaleFilter>;
-  let mockStore: any;
+  let mockStore: ReturnType<typeof createMockStore>;
+
+  /** The slice of `BrowserStore` the filter reads. */
+  const createMockStore = () => ({
+    availableLocales: signal(['en', 'es', 'fr', 'de']),
+    filterableLocales: signal(['es', 'fr', 'de']), // Excludes base locale 'en'
+    selectedLocales: signal<string[]>([]),
+    compactDisplayLocale: signal('en'),
+    localeFilterLabel: signal<LocaleFilterLabel>({ kind: 'all' }),
+    isShowingAllLocales: signal(true),
+    toggleLocale: vi.fn(),
+    selectAllLocales: vi.fn(),
+    clearAllLocales: vi.fn(),
+    setSelectedLocales: vi.fn(),
+  });
 
   const createComponent = createComponentFactory({
     component: LocaleFilter,
-    imports: [NoopAnimationsModule, getTranslocoTestingModule()],
-    providers: [{ provide: BrowserStore, useFactory: () => mockStore }],
+    imports: [getTranslocoTestingModule()],
+    providers: [provideTranslocoMessageformat(), { provide: BrowserStore, useFactory: () => mockStore }],
   });
 
   beforeEach(() => {
-    mockStore = {
-      availableLocales: signal(['en', 'es', 'fr', 'de']),
-      filterableLocales: signal(['es', 'fr', 'de']), // Excludes base locale 'en'
-      selectedLocales: signal([]),
-      compactDisplayLocale: signal('en'),
-      localeFilterText: signal('All locales'),
-      isShowingAllLocales: signal(true),
-      toggleLocale: vi.fn(),
-      selectAllLocales: vi.fn(),
-      clearAllLocales: vi.fn(),
-      setSelectedLocales: vi.fn(),
-    };
+    mockStore = createMockStore();
 
     spectator = createComponent();
     fixture = spectator.fixture;
@@ -124,11 +130,27 @@ describe('LocaleFilter', () => {
 
     it('should handle single locale selection', () => {
       mockStore.selectedLocales.set(['es']);
-      mockStore.localeFilterText.set('es');
+      mockStore.localeFilterLabel.set({ kind: 'locale', locale: 'es' });
       fixture.detectChanges();
 
       const filterText = fixture.nativeElement.querySelector('.filter-text');
       expect(filterText?.textContent?.trim()).toBe('es');
+    });
+
+    it('should word a partial selection as a localized count', () => {
+      mockStore.localeFilterLabel.set({ kind: 'count', count: 2 });
+      fixture.detectChanges();
+
+      const filterText = fixture.nativeElement.querySelector('.filter-text');
+      expect(filterText?.textContent?.trim()).toBe('2 locales');
+    });
+
+    it('should pass the worded text into the trigger aria-label', () => {
+      mockStore.localeFilterLabel.set({ kind: 'count', count: 3 });
+      fixture.detectChanges();
+
+      const trigger = fixture.nativeElement.querySelector('[data-testid="locale-filter-trigger"]');
+      expect(trigger?.getAttribute('aria-label')).toContain('3 locales');
     });
 
     it('should only show filterable locales in dropdown', () => {
@@ -180,5 +202,50 @@ describe('LocaleFilter', () => {
 
       expect(component.displayedLocales()).toEqual(['en', 'es', 'fr', 'de']);
     });
+  });
+});
+
+describe('LocaleFilter with translations that load after the first render', () => {
+  const mockStore = {
+    availableLocales: signal(['en', 'es', 'fr']),
+    filterableLocales: signal(['es', 'fr']),
+    selectedLocales: signal<string[]>([]),
+    compactDisplayLocale: signal('en'),
+    localeFilterLabel: signal<LocaleFilterLabel>({ kind: 'count', count: 3 }),
+    toggleLocale: vi.fn(),
+    selectAllLocales: vi.fn(),
+    clearAllLocales: vi.fn(),
+    setSelectedLocales: vi.fn(),
+  };
+  const languageFile = new Subject<Translation>();
+  class LateLoader implements TranslocoLoader {
+    getTranslation(): Observable<Translation> {
+      return languageFile;
+    }
+  }
+  const createLateComponent = createComponentFactory({
+    component: LocaleFilter,
+    providers: [
+      provideTransloco({
+        config: { availableLangs: ['en'], defaultLang: 'en' },
+        loader: LateLoader,
+      }),
+      provideTranslocoMessageformat(),
+      { provide: BrowserStore, useFactory: () => mockStore },
+    ],
+  });
+
+  it('should show the translated text, not the key, once the language file arrives', () => {
+    const late = createLateComponent();
+    late.detectChanges();
+
+    languageFile.next({
+      'browser.localeFilter.allLocales': 'All locales',
+      'browser.localeFilter.localesCountX': '{ count, plural, =1 {1 locale} other {{count} locales} }',
+    });
+    languageFile.complete();
+    late.detectChanges();
+
+    expect(late.query('.filter-text')?.textContent?.trim()).toBe('3 locales');
   });
 });

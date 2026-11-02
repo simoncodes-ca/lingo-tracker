@@ -1,116 +1,115 @@
 # LingoTracker
-**"Effortlessly Track, Validate, and Manage Your Translations."**
 
-Welcome to LingoTracker, the ultimate companion to the excellent [Transloco](https://github.com/jsverse/transloco) library! LingoTracker is designed for anyone looking to efficiently manage translation resources.
+[![npm version](https://img.shields.io/npm/v/@simoncodes-ca/lingo-tracker)](https://www.npmjs.com/package/@simoncodes-ca/lingo-tracker) [![CI](https://github.com/simoncodes-ca/lingo-tracker/actions/workflows/pr.yml/badge.svg?branch=develop&event=push)](https://github.com/simoncodes-ca/lingo-tracker/actions/workflows/pr.yml?query=branch%3Adevelop) [![License: MIT](https://img.shields.io/github/license/simoncodes-ca/lingo-tracker)](LICENSE) [![Node ^24.15 || >=26](https://img.shields.io/badge/node-%5E24.15%20%7C%7C%20%3E%3D26-339933)](https://nodejs.org/)
 
-> **Note:** LingoTracker is fully functional with a stable API and is currently being validated in an enterprise application. The 1.0 milestone is focused on completing documentation — see the [roadmap](ROADMAP.md) for details.
+Catch stale and unreviewed translations in CI, not in production.
 
-## Why Is LingoTracker Awesome?
-### AI Ready
-LingoTracker ships with an installable skill for AI-powered coding assistants. Run `lingo-tracker install-skill` to generate a skill file for Claude Code, Cursor, or other agent frameworks. The skill teaches your AI assistant the full i18n workflow: detect untranslated hardcoded strings, find similar existing translations, add translation resources, generate bundles, and update your code to use type-safe key tokens — all without leaving your editor.
+Translation files in a repository hold only values. When the source text changes, nothing marks the translations out of date, so stale translations ship silently.
 
-### Auto-Translation
-Bootstrap translations for new locales in seconds with built-in Google Translate integration. LingoTracker protects ICU placeholders and Transloco variables during translation so `{name}` and `{{ count }}` come back intact. Auto-translation triggers automatically when adding or editing resources, or on demand from the CLI and web UI. [Learn more](docs/auto-translation.md).
+LingoTracker stores a status next to every translation in your Git repo. A changed source string marks its existing translations `stale`. Untranslated copies stay `new`. `lingo-tracker validate` fails CI while anything is missing, stale, unreviewed or invalid ICU for its locale. It is built for Angular apps using [Transloco](https://github.com/jsverse/transloco). One npm package gives you a CLI, a local web UI with a REST API, and an installable skill for AI coding assistants. There is no hosted service and no account.
 
-### Metadata Aware
-Every translation moves through a clear status lifecycle: `new` → `translated` → `verified`, with automatic `stale` detection when the base language value changes. MD5 checksums track both source and translated values, so LingoTracker knows exactly which translations need attention without manual bookkeeping. Use the `normalize` command to recompute checksums, add missing locale stubs, and clean up empty folders across your entire project.
+**Status:** 1.0. The CLI and API are stable. Every pull request to `develop` runs unit tests and CLI end-to-end tests for the affected projects. The web UI has a Playwright end-to-end suite. See the [roadmap](ROADMAP.md) and the [changelog](CHANGELOG.md).
 
-### Git Friendly
-LingoTracker stores all translations and metadata as JSON files, making it a breeze to review changes in pull requests. Collaborate seamlessly with your team and keep your translation resources organized!
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/simoncodes-ca/lingo-tracker/main/docs/images/translation-browser-dark.png">
+  <img src="https://raw.githubusercontent.com/simoncodes-ca/lingo-tracker/main/docs/images/translation-browser-light.png" width="100%" alt="LingoTracker translation browser: fr-ca translations for the checkout keys of a storefront collection, with stale, new, translated and verified statuses.">
+</picture>
 
-### Browse Resources
-LingoTracker includes a full web application for managing translations visually. Navigate a folder tree sidebar, search across keys and values, and filter by locale or status. Switch between compact and expanded density modes, get similar-translation suggestions as you type in the editor, and trigger auto-translation with a single click. View preferences are persisted per collection so you pick up right where you left off.
+## Watch it
 
-```bash
-# Launch the Tracker web UI
-npx lingo-tracker-app
-```
+[![LingoTracker 1.0 release tour](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.jpg)](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4)
 
-### Enterprise Ready & Scalable
-LingoTracker is designed with scalability in mind. By storing metadata in separate files and allowing flexible splitting of resources into nested folders, you can manage even the largest resource sets with ease. Whether you're maintaining a handful of translations or managing thousands of keys across dozens of locales, LingoTracker scales with your application.
+[LingoTracker 1.0](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4) is a 2½-minute tour of the workflow. [LingoTracker in 30 seconds](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-guardrails-cinematic.mp4) covers the guardrails, from ICU checks to the CI gate.
 
-Built for enterprise workflows, LingoTracker supports multiple collections to organize resources by team, feature, or domain. Collections can be marked **read-only** — useful for component-library translations vendored under `node_modules`, which are protected from accidental edits across the CLI, API, and UI (and detected automatically when added). Its CLI-first approach integrates naturally into CI/CD pipelines, enabling automated validation and resource bundling as part of your release process. Combined with Git-friendly storage, teams of any size can collaborate on translations with full traceability and review through their existing pull request workflows.
+## Why use it
 
-### ICU Format Validation
-LingoTracker validates ICU message syntax — balanced braces, placeholder formats, plural/select/number/date expressions, and quote-escape sections — catching errors before they reach production.
+**Gate the release.**
 
-When importing translations from external tools or translators, variable and placeholder names within ICU messages are often accidentally translated along with the surrounding text. LingoTracker detects these cases during import and automatically restores the original names, so your translations remain functional without manual cleanup.
+- Every translation is `new`, `translated`, `stale` or `verified`. Checksums mark existing translations `stale` when the source changes. Untranslated copies stay `new`.
+- `validate` fails CI on missing, stale or unreviewed strings. Use `--allow-translated` for a staging gate.
+- Every value compiles as an ICU message under its own locale. A plural that is valid in English but invalid in Japanese is caught before it renders empty.
+- Pull requests show exactly which strings and statuses changed, because values and metadata are plain JSON per folder.
 
-### Type Safety
-Experience compile-time guarantees with generated translation key tokens. This feature ensures that your application uses the correct and valid translation keys, along with type completion, adding an extra layer of confidence to your translations. [Learn more](docs/features/bundle-type-generation.md).
+**Generate runtime bundles.**
 
-### CLI Support
-LingoTracker provides a comprehensive CLI. Its commands add, edit, delete, and move resources, and validate them. Others find similar translations, extract help-translation glossaries, manage protected terms, and normalize metadata. The rest generate bundles and import or export in JSON and XLIFF. All commands support both interactive (TTY) and non-interactive (CI) modes.
+- `bundle` writes one JSON file per locale from any mix of collections, key patterns and tags.
+- It can emit a TypeScript constant tree, so a mistyped key fails to compile.
+- `bundle --debug-keys` writes an extra bundle whose values are the keys themselves. Load it as its own locale to identify strings in the app.
+- Read-only collections let you bundle translations shipped by a component library without editing them. `add-collection` defaults folders under `node_modules` to read-only.
 
-### Help Translation Glossary
-Translating online help or documentation? The `glossary` command extracts the UI terms mentioned in a block of help text and emits a JSON glossary of their translations across every locale — so help translators reuse the exact terminology already shipped in your app. Feed it a file, a snippet, or piped stdin. [Learn more](docs/features/glossary.md).
+**Translate and review strings.**
 
-```bash
-lingo-tracker glossary --input help-page.md
-```
+- Export `new` and `stale` strings as XLIFF 1.2 or JSON. Import with `translation-service` for vendor deliveries, `verification` for approvals, `migration` for existing files, or `update` for bulk corrections that keep the current status.
+- Import repairs placeholder names that translators changed. It rejects translations that altered a protected term.
+- Protected terms survive translation. Preferred terminology flags discouraged wording in source text.
+- When enabled with a Google Cloud Translation v2 key, auto-translation fills target locales as you add strings. It skips complex ICU and any result with a lost or corrupted placeholder or a missing protected term. Results are marked `translated`, never `verified`.
 
-### Protected Terms
-Brand names and jargon should stay unchanged through translation. Keep your protected terms in a JSON file, and LingoTracker marks them on export. JSON exports get a `doNotTranslate` array, and XLIFF exports get a `Do not translate:` note. On import, LingoTracker rejects any translation that came back with a protected term altered. The terms live in a file of their own, so a terminology list of any size stays out of your configuration diffs. [Learn more](docs/features/protected-terms.md).
+**Work in the UI or from an assistant.**
 
-```bash
-lingo-tracker protected-terms --add iPhone --add "Node.js"
-```
+- A local web UI lets you browse, search and filter by status. You edit with similar-string suggestions and run exports, imports and bundles with a live preview.
+- `install-skill` writes a skill tailored to your collections. Claude Code or a similar assistant can then find hardcoded strings, reuse keys, add resources and update components.
 
-### CI/CD Validation
-The `validate` command acts as a quality gate for your release pipeline — it exits with a non-zero code if any resource is `new`, `stale`, or untranslated. Add it to GitHub Actions, GitLab CI, or any build system to catch translation gaps before they ship. See the [validation docs](docs/features/validate.md) for CI configuration examples.
+**Adopting it.** Existing Transloco or i18next JSON moves in through the `migration` import strategy. The guide lists what each format keeps and loses. Gettext and CSV need a short conversion step. See the [migration guide](docs/guides/migration.md). After you resolve a merge conflict in the JSON files, run `normalize`. It recomputes checksums and reapplies the status rules. See the [normalize guide](docs/guides/normalize.md).
 
-### Flexibility
-Import and export your resource data in JSON and XLIFF 1.2 formats. Use tags to segment resources, filter exports by status or locale, and configure multiple bundles with pattern matching and collection merging strategies. Define **collection-level tags** in your collection configuration to have every resource in a collection automatically inherit those tags — making cross-collection export filtering effortless. LingoTracker gives you complete control over how you manage and bundle resources for your application.
+## Quick start
 
-## Get Started
-
-### Installation
-
-Install as a dev dependency in your project:
+Requires Node.js 24.15 or later within the 24 line, or Node.js 26 or later.
 
 ```bash
-pnpm add -D @simoncodes-ca/lingo-tracker
-npm install --save-dev @simoncodes-ca/lingo-tracker
-yarn add -D @simoncodes-ca/lingo-tracker
-```
+pnpm add -D @simoncodes-ca/lingo-tracker     # or npm install --save-dev / yarn add -D
 
-### Quick Start
+# Create .lingo-tracker.json
+npx lingo-tracker init \
+  --collection-name main --translations-folder src/i18n \
+  --base-locale en --locales en fr-ca es \
+  --setup-bundle true --bundle-dist ./src/assets/i18n \
+  --type-dist-file ./src/generated/translation-tokens.ts
 
-```bash
-# Initialize LingoTracker in your project
-npx lingo-tracker init
-
-# Add a translation resource (interactive prompts guide you)
-npx lingo-tracker add-resource
-
-# Generate locale bundles and TypeScript key tokens
+# Add a string, translate it, and generate the runtime files
+npx lingo-tracker add-resource --key common.buttons.save --value "Save" --comment "Button on edit forms"
+npx lingo-tracker edit-resource --key common.buttons.save --locale fr-ca --locale-value "Enregistrer"
 npx lingo-tracker bundle
 
-# Validate all translations are complete (CI-ready)
-npx lingo-tracker validate
-
-# Launch the Tracker web UI
+# Open the web UI at http://localhost:3030
 npx lingo-tracker-app
+
+# Gate the release
+npx lingo-tracker validate   # exits 1: fr-ca not verified, es still English
 ```
 
-Check the [documentation site](https://simoncodes-ca.github.io/lingo-tracker/), the [getting started guide](docs/getting-started.md) for detailed setup instructions, or the full [CLI reference](docs/cli.md) for all available commands.
+The [Getting Started guide](https://simoncodes-ca.github.io/lingo-tracker/docs/getting-started) explains each step and what the files look like.
 
-For contributors and AI agents, the [architecture documentation](architecture-docs/README.md) covers system design, data models, application layers, and key user flows.
+## What it does not do
 
-## Roadmap
+- It does not host translations or coordinate translators. Hand-off happens through exported files.
+- It has no user accounts or history beyond what Git gives you.
+- Machine translation supports Google Cloud Translation v2 only and skips plural, select and formatted ICU messages.
+- The web UI runs locally without authentication. It is for one developer's machine, not a shared server.
+- Bundles assume `@jsverse/transloco-messageformat` unless `runtime` is `"transloco"` in `.lingo-tracker.json`, for apps on plain Transloco where `{` and `'` are literal text. `init` detects it from `package.json`.
+- Other libraries can consume the nested JSON bundles when their placeholder syntax matches, with ICU-to-Transloco conversion turned off.
 
-### Version 1.0
-- Technical documentation covering architecture, APIs, and extension points
-- Documentation update for accuracy and completeness
-- Detailed documentation site published via GitHub Pages
+## Documentation
 
-See the full [roadmap](ROADMAP.md) for future release plans and ideas.
+The full documentation is at [simoncodes-ca.github.io/lingo-tracker](https://simoncodes-ca.github.io/lingo-tracker/).
+
+| Page | Covers |
+|---|---|
+| [Getting Started](docs/getting-started.md) | Install, init, first resource, first bundle |
+| [Concepts](docs/concepts.md) | Keys, folders, the two files, statuses and checksums |
+| [Configuration](docs/configuration.md) | Every field of `.lingo-tracker.json` |
+| [CLI Reference](docs/cli.md) | Every command, flag and exit code |
+| [API Reference](docs/api.md) | Every endpoint of `lingo-tracker-app`, with Swagger UI at `/api` |
+| [Tracker UI](docs/tracker-ui.md) | The web application |
+| [Guides](docs/guides/) | Bundling, translation workflow, CI/CD, migration, normalize, AI assistant |
+| [Features](docs/features/) | Validate, export, import, type generation, terminology, glossary |
+| [Changelog](CHANGELOG.md) | Release history |
+
+For contributors, [architecture-docs](architecture-docs/README.md) describes the monorepo, data model and application layers.
 
 ## Contributing
-We welcome contributions! Please read our [contributing guidelines](CONTRIBUTING.md) for more information.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, tests and the commit convention. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## License
-LingoTracker is licensed under the [MIT License](LICENSE).
 
----
-Join us today and redefine the way you manage translations with LingoTracker!
+[MIT](LICENSE)

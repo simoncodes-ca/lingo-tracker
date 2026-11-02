@@ -1,11 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
-    "module": "commonjs",
+    "outDir": "../../dist/out-tsc/libs/core/spec",
+    "moduleResolution": "bundler",
+    "typeRoots": ["../../node_modules/@types", "../../node_modules", "../../types"],
     "types": ["vitest/globals", "vitest/importMeta", "vite/client", "node", "vitest"],
-    "composite": true,
-    "declaration": true,
     "skipLibCheck": true
   },
   "include": [
@@ -22,6 +21,7 @@
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx",
     "src/**/*.ts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "../../types/**/*.d.ts"
   ]
 }

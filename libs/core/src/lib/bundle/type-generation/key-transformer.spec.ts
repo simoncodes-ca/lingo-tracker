@@ -1,26 +1,6 @@
-import {
-  bundleKeyToConstantName,
-  constantNameToTypeName,
-  segmentToPropertyName,
-  splitKeyIntoSegments,
-  validateJavaScriptIdentifier,
-} from './key-transformer';
+import { constantNameToTypeName, segmentToPropertyName, splitKeyIntoSegments } from './key-transformer';
 
 describe('Key Transformer', () => {
-  describe('bundleKeyToConstantName', () => {
-    it('should convert simple bundle key to constant name', () => {
-      expect(bundleKeyToConstantName('common')).toBe('COMMON_TOKENS');
-    });
-
-    it('should convert hyphenated bundle key to constant name', () => {
-      expect(bundleKeyToConstantName('core-ui')).toBe('CORE_UI_TOKENS');
-    });
-
-    it('should handle mixed case bundle keys', () => {
-      expect(bundleKeyToConstantName('adminPanel')).toBe('ADMINPANEL_TOKENS');
-    });
-  });
-
   describe('segmentToPropertyName', () => {
     it('should convert lowercase segment to uppercase', () => {
       expect(segmentToPropertyName('buttons')).toBe('BUTTONS');
@@ -169,64 +149,6 @@ describe('Key Transformer', () => {
 
     it('should leave a $ prefix followed by already-uppercase letter unchanged', () => {
       expect(constantNameToTypeName('$MyTokens')).toBe('$MyTokens');
-    });
-  });
-
-  describe('validateJavaScriptIdentifier', () => {
-    it('should return undefined for a valid SCREAMING_SNAKE_CASE identifier', () => {
-      expect(validateJavaScriptIdentifier('MY_TOKENS')).toBeUndefined();
-    });
-
-    it('should return undefined for a valid camelCase identifier', () => {
-      expect(validateJavaScriptIdentifier('myTokens')).toBeUndefined();
-    });
-
-    it('should return undefined for a valid PascalCase identifier', () => {
-      expect(validateJavaScriptIdentifier('MyTokens')).toBeUndefined();
-    });
-
-    it('should return undefined for an identifier starting with underscore', () => {
-      expect(validateJavaScriptIdentifier('_tokens')).toBeUndefined();
-    });
-
-    it('should return undefined for an identifier starting with dollar sign', () => {
-      expect(validateJavaScriptIdentifier('$tokens')).toBeUndefined();
-    });
-
-    it('should return an error for an empty string', () => {
-      expect(validateJavaScriptIdentifier('')).toMatch(/must not be empty/);
-    });
-
-    it('should return an error for an identifier starting with a digit', () => {
-      expect(validateJavaScriptIdentifier('1bad')).toMatch(/must start with a letter/);
-    });
-
-    it('should return an error for an identifier containing a hyphen', () => {
-      expect(validateJavaScriptIdentifier('my-key')).toMatch(/may only contain/);
-    });
-
-    it('should return an error for an identifier containing a space', () => {
-      expect(validateJavaScriptIdentifier('my key')).toMatch(/may only contain/);
-    });
-
-    it('should return an error for a JS reserved word', () => {
-      expect(validateJavaScriptIdentifier('class')).toMatch(/reserved word/);
-    });
-
-    it('should return an error for the reserved word "const"', () => {
-      expect(validateJavaScriptIdentifier('const')).toMatch(/reserved word/);
-    });
-
-    it('should return an error for the TypeScript keyword "async"', () => {
-      expect(validateJavaScriptIdentifier('async')).toMatch(/reserved word/);
-    });
-
-    it('should return an error for the TypeScript keyword "type"', () => {
-      expect(validateJavaScriptIdentifier('type')).toMatch(/reserved word/);
-    });
-
-    it('should return an error for the TypeScript keyword "declare"', () => {
-      expect(validateJavaScriptIdentifier('declare')).toMatch(/reserved word/);
     });
   });
 

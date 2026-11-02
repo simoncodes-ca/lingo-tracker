@@ -1,145 +1,50 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as fs from 'fs';
-import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import { chmodSync, statSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { useTempDir } from '../../testing/temp-dir.spec-helpers';
+import { InvalidExportBasePropertyNameError } from '../errors/lingo-tracker-error';
 import {
-  loadResourcesFromCollections,
+  type ExportResource,
   filterResources,
-  validateOutputDirectory,
   validateBasePropertyName,
-  type LoadedResource,
+  validateOutputDirectory,
 } from './export-common';
 
-// Mock fs module
-vi.mock('fs');
-
 describe('export-common', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  const root = useTempDir('export-common-');
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe('validateOutputDirectory', () => {
+  describe('validateOutputDirectory (real fs)', () => {
     it('should create directory if it does not exist', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
-      vi.spyOn(fs, 'accessSync').mockReturnValue(undefined);
+      const directory = join(root(), 'dist', 'export');
 
-      validateOutputDirectory('/dist/export');
+      validateOutputDirectory(directory);
 
-      expect(fs.mkdirSync).toHaveBeenCalledWith('/dist/export', {
-        recursive: true,
-      });
+      expect(statSync(directory).isDirectory()).toBe(true);
     });
 
     it('should throw error if directory cannot be created', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(fs, 'mkdirSync').mockImplementation(() => {
-        throw new Error('Permission denied');
-      });
+      writeFileSync(join(root(), 'file'), '');
 
-      expect(() => validateOutputDirectory('/dist/export')).toThrow('Could not create output directory');
+      expect(() => validateOutputDirectory(join(root(), 'file', 'export'))).toThrow(
+        'Could not create output directory',
+      );
     });
 
-    it('should throw error if directory is not writable', () => {
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'accessSync').mockImplementation(() => {
-        throw new Error('Not writable');
-      });
+    it.skipIf(process.getuid?.() === 0)('should throw error if directory is not writable', () => {
+      const directory = join(root(), 'read-only');
+      validateOutputDirectory(directory);
+      chmodSync(directory, 0o500);
 
-      expect(() => validateOutputDirectory('/dist/export')).toThrow('not writable');
-    });
-  });
-
-  describe('loadResourcesFromCollections', () => {
-    it('should load resources from multiple collections', () => {
-      const collections = [
-        { name: 'Core', path: '/libs/core' },
-        { name: 'App', path: '/apps/app' },
-      ];
-
-      vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
-        if (typeof p === 'string') {
-          return (
-            p.includes('translations') ||
-            p.endsWith(RESOURCE_ENTRIES_FILENAME) ||
-            p.endsWith(TRACKER_META_FILENAME) ||
-            p === '/libs/core' ||
-            p === '/apps/app'
-          );
-        }
-        return false;
-      });
-
-      vi.spyOn(fs, 'readFileSync').mockImplementation((p) => {
-        if (typeof p === 'string') {
-          if (p.includes('core')) {
-            if (p.endsWith(RESOURCE_ENTRIES_FILENAME)) {
-              return JSON.stringify({
-                'button.ok': { source: 'OK', es: 'Vale' },
-              });
-            }
-            if (p.endsWith(TRACKER_META_FILENAME)) {
-              return JSON.stringify({
-                'button.ok': { es: { status: 'translated' } },
-              });
-            }
-          }
-          if (p.includes('app')) {
-            if (p.endsWith(RESOURCE_ENTRIES_FILENAME)) {
-              return JSON.stringify({
-                title: { source: 'Title', es: 'Título' },
-              });
-            }
-            if (p.endsWith(TRACKER_META_FILENAME)) {
-              return JSON.stringify({
-                title: { es: { status: 'new' } },
-              });
-            }
-          }
-        }
-        return '{}';
-      });
-
-      vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
-
-      const result = loadResourcesFromCollections(collections);
-
-      expect(result).toHaveLength(2);
-      const okBtn = result.find((r) => r.key === 'button.ok');
-      expect(okBtn).toBeDefined();
-      expect(okBtn?.collection).toBe('Core');
-      expect(okBtn?.translations['es']).toBe('Vale');
-
-      const title = result.find((r) => r.key === 'title');
-      expect(title).toBeDefined();
-      expect(title?.collection).toBe('App');
-    });
-
-    it('should handle missing metadata gracefully (skip resource)', () => {
-      const collections = [{ name: 'Core', path: '/libs/core' }];
-
-      vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-      vi.spyOn(fs, 'readFileSync').mockImplementation((p) => {
-        if (typeof p === 'string' && p.endsWith(RESOURCE_ENTRIES_FILENAME)) {
-          return JSON.stringify({ key: { source: 'val' } });
-        }
-        if (typeof p === 'string' && p.endsWith(TRACKER_META_FILENAME)) {
-          return JSON.stringify({}); // No metadata for 'key'
-        }
-        return '{}';
-      });
-      vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
-
-      const result = loadResourcesFromCollections(collections);
-      expect(result).toHaveLength(0);
+      try {
+        expect(() => validateOutputDirectory(directory)).toThrow('not writable');
+      } finally {
+        chmodSync(directory, 0o700);
+      }
     });
   });
 
   describe('filterResources', () => {
-    const mockResources: LoadedResource[] = [
+    const mockResources: ExportResource[] = [
       {
         key: 'key1',
         fullKey: 'key1',
@@ -147,7 +52,9 @@ describe('export-common', () => {
         translations: { es: 'Val 1' },
         status: { es: 'translated' },
         collection: 'Core',
+        targetLocales: ['es'],
         tags: ['ui'],
+        effectiveTags: ['ui'],
       },
       {
         key: 'key2',
@@ -156,7 +63,9 @@ describe('export-common', () => {
         translations: {}, // Missing translation
         status: { es: 'new' },
         collection: 'Core',
+        targetLocales: ['es'],
         tags: ['backend'],
+        effectiveTags: ['backend'],
       },
       {
         key: 'key3',
@@ -165,6 +74,8 @@ describe('export-common', () => {
         translations: { es: 'Val 3' },
         status: { es: 'verified' },
         collection: 'App',
+        targetLocales: ['es'],
+        effectiveTags: [],
       },
     ];
 
@@ -191,44 +102,22 @@ describe('export-common', () => {
       expect(result[0].key).toBe('key2');
     });
 
-    it('computes protectedTermsFound from source for non-base locales', () => {
-      const resources: LoadedResource[] = [
+    it("computes protectedTermsFound from the source and the resource's protected terms for non-base locales", () => {
+      const resources: ExportResource[] = [
         {
           key: 'k1',
           fullKey: 'k1',
-          source: 'Welcome to iPhone',
+          source: 'iPhone by SimonCodes, not Android',
           translations: { es: 'Bienvenido' },
           status: { es: 'new' },
           collection: 'Core',
-          collectionProtectedTerms: ['iPhone'],
+          targetLocales: ['es'],
+          effectiveTags: [],
+          protectedTerms: ['SimonCodes', 'iPhone'],
         },
       ];
 
-      const result = filterResources(resources, 'es', undefined, undefined, {
-        globalProtectedTerms: ['SimonCodes'],
-        baseLocale: 'en',
-      });
-
-      expect(result[0].protectedTermsFound).toEqual(['iPhone']);
-    });
-
-    it('unions global and collection terms', () => {
-      const resources: LoadedResource[] = [
-        {
-          key: 'k1',
-          fullKey: 'k1',
-          source: 'iPhone by SimonCodes',
-          translations: { es: 'Bienvenido' },
-          status: { es: 'new' },
-          collection: 'Core',
-          collectionProtectedTerms: ['iPhone'],
-        },
-      ];
-
-      const result = filterResources(resources, 'es', undefined, undefined, {
-        globalProtectedTerms: ['SimonCodes'],
-        baseLocale: 'en',
-      });
+      const result = filterResources(resources, 'es', undefined, undefined, { baseLocale: 'en' });
 
       expect(result[0].protectedTermsFound).toEqual(['SimonCodes', 'iPhone']);
     });
@@ -242,7 +131,7 @@ describe('export-common', () => {
     });
 
     it('leaves protectedTermsFound undefined when augmentation is disabled', () => {
-      const resources: LoadedResource[] = [
+      const resources: ExportResource[] = [
         {
           key: 'k1',
           fullKey: 'k1',
@@ -250,6 +139,8 @@ describe('export-common', () => {
           translations: { es: 'Bienvenido' },
           status: { es: 'new' },
           collection: 'Core',
+          targetLocales: ['es'],
+          effectiveTags: [],
         },
       ];
 
@@ -263,6 +154,26 @@ describe('export-common', () => {
   });
 
   describe('validateBasePropertyName', () => {
+    it('exposes empty and reserved property names as typed invalid errors with unchanged messages', () => {
+      for (const name of ['', 'value', 'comment', 'status', 'tags']) {
+        const message =
+          name === ''
+            ? 'basePropertyName cannot be empty'
+            : `basePropertyName "${name}" is a reserved key. Reserved: value, comment, status, tags`;
+        expect(() => validateBasePropertyName(name)).toThrow(InvalidExportBasePropertyNameError);
+        try {
+          validateBasePropertyName(name);
+        } catch (error) {
+          expect(error).toMatchObject({
+            code: 'INVALID_EXPORT_BASE_PROPERTY_NAME',
+            kind: 'invalid',
+            exposeMessage: true,
+            message,
+          });
+        }
+      }
+    });
+
     it('should accept valid custom names', () => {
       expect(() => validateBasePropertyName('original')).not.toThrow();
       expect(() => validateBasePropertyName('source')).not.toThrow();

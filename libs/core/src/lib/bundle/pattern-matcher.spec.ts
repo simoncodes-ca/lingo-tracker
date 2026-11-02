@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { matchesPattern } from './pattern-matcher';
 
 describe('pattern-matcher', () => {
@@ -57,6 +57,14 @@ describe('pattern-matcher', () => {
     });
 
     describe('edge cases', () => {
+      it('keeps an empty prefix pattern distinct from the match-all wildcard', () => {
+        expect(matchesPattern('apps', '.*')).toBe(false);
+        expect(matchesPattern('apps.common.ok', '.*')).toBe(false);
+        expect(matchesPattern('', '.*')).toBe(true);
+        expect(matchesPattern('.x', '.*')).toBe(true);
+        expect(matchesPattern('apps.common.ok', '*')).toBe(true);
+      });
+
       it('should handle empty keys', () => {
         expect(matchesPattern('', '*')).toBe(true);
         expect(matchesPattern('', 'apps.*')).toBe(false);

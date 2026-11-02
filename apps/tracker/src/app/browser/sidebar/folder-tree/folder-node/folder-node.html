@@ -26,10 +26,10 @@
       [attr.aria-label]="TOKENS.BROWSER.FOLDERNODE.FOLDERARIALABELX | transloco : { name: folder().name }"
       [attr.aria-expanded]="hasChildren() ? isExpanded() : null"
       [attr.aria-selected]="isSelected()"
-      (keydown.enter)="onFolderClick()"
-      (keydown.space)="onFolderClick()"
-      (keydown.arrowright)="onExpandKeydown($event)"
-      (keydown.arrowleft)="onCollapseKeydown($event)"
+      (keydown.enter)="onTreeKeydown($event, 'Enter')"
+      (keydown.space)="onTreeKeydown($event, ' ')"
+      (keydown.arrowright)="onTreeKeydown($event, 'ArrowRight')"
+      (keydown.arrowleft)="onTreeKeydown($event, 'ArrowLeft')"
       (keydown.delete)="onDeleteKeydown($event)"
       cdkDrag
       [cdkDragData]="dragData()"
@@ -51,7 +51,7 @@
     } @else {
       <span class="expand-spacer" aria-hidden="true"></span>
     }
-    <mat-icon class="folder-icon folder-drag-handle" cdkDragHandle [attr.aria-label]="TOKENS.BROWSER.FOLDERNODE.DRAGTOMOVEFOLDERARIALABEL | transloco">{{ folderIcon() }}</mat-icon>
+    <mat-icon data-testid="folder-drag-handle" class="folder-icon folder-drag-handle" cdkDragHandle [attr.aria-label]="TOKENS.BROWSER.FOLDERNODE.DRAGTOMOVEFOLDERARIALABEL | transloco">{{ folderIcon() }}</mat-icon>
     <span class="folder-name">{{ folder().name }}</span>
     @if (isNewlyCreated()) {
       <span class="new-chip">{{ TOKENS.BROWSER.FOLDERNODE.NEWCHIP | transloco }}</span>
@@ -78,7 +78,9 @@
       @if (shouldShowInlineInput()) {
         <app-inline-folder-input
           [parentPath]="folder().fullPath"
+          [error]="createError()"
           (confirm)="onFolderConfirm($event)"
+          (edited)="store.dismissFolderCreateError()"
           (cancelInput)="onFolderCancel()"
         />
       }
@@ -98,6 +100,7 @@
             (deleteFolder)="deleteFolder.emit($event)"
             (resourceDropped)="resourceDropped.emit($event)"
             (folderDropped)="folderDropped.emit($event)"
+            (createFolder)="createFolder.emit($event)"
             (dragStarted)="dragStarted.emit($event)"
             (dragEnded)="dragEnded.emit()"
           />

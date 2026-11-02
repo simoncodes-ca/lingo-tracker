@@ -61,31 +61,31 @@
   },
   "otherLocales": {
     "en": {
-      "checksum": "aca1284fedfa7431bb8a9dc0b59fe6c6"
+      "checksum": "0d3490fe52087ff57f24fa23f82d930d"
     },
     "es": {
       "checksum": "550c7cdfb92362bb233e70dfa2ad509c",
-      "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
+      "baseChecksum": "0d3490fe52087ff57f24fa23f82d930d",
       "status": "translated"
     },
     "fr-ca": {
       "checksum": "2e2ee859214fac995e01e6dfa885d4dc",
-      "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
+      "baseChecksum": "0d3490fe52087ff57f24fa23f82d930d",
       "status": "translated"
     },
     "ru": {
       "checksum": "acc46f241a646d68c8632fe59c2a2c00",
-      "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
+      "baseChecksum": "0d3490fe52087ff57f24fa23f82d930d",
       "status": "translated"
     },
     "ja": {
       "checksum": "2929efe49206febaad199b1c79eac0a9",
-      "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
+      "baseChecksum": "0d3490fe52087ff57f24fa23f82d930d",
       "status": "translated"
     },
     "de": {
       "checksum": "6313ed09e8f88fde09840484c4ac2b9f",
-      "baseChecksum": "aca1284fedfa7431bb8a9dc0b59fe6c6",
+      "baseChecksum": "0d3490fe52087ff57f24fa23f82d930d",
       "status": "translated"
     }
   }

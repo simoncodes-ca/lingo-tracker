@@ -1,4 +1,11 @@
-import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import type { FolderNodeDto, ResourceTreeDto } from '@simoncodes-ca/data-transfer';
+import {
+  folderPathLeaf,
+  folderPathSegments,
+  isFolderPathUnder,
+  joinFolderPath,
+  rebaseFolderPath,
+} from '@simoncodes-ca/domain';
 
 /**
  * Inserts a new folder into the tree at the specified parent path.
@@ -15,7 +22,7 @@ export function insertFolderIntoTree(
     return updated;
   }
 
-  const parentSegments = parentPath.split('.');
+  const parentSegments = folderPathSegments(parentPath);
 
   const updateChildren = (nodes: FolderNodeDto[], depth: number): FolderNodeDto[] =>
     nodes.map((node) => {
@@ -65,10 +72,27 @@ export function removeFolderFromTree(folders: FolderNodeDto[], pathToRemove: str
 }
 
 /**
+ * Marks the folder at `fullPath` as loaded and gives it `tree`, wherever it sits in the tree.
+ * Returns a new array (immutable update); a path that is not in the tree changes nothing.
+ */
+export function updateFolderInTree(folders: FolderNodeDto[], fullPath: string, tree: ResourceTreeDto): FolderNodeDto[] {
+  return folders.map((folder) => {
+    if (folder.fullPath === fullPath) return { ...folder, loaded: true, tree };
+    if (folder.tree) {
+      return {
+        ...folder,
+        tree: { ...folder.tree, children: updateFolderInTree(folder.tree.children, fullPath, tree) },
+      };
+    }
+    return folder;
+  });
+}
+
+/**
  * Finds a folder node in the tree by its full path.
  * Returns the folder node or undefined if not found.
  */
-export function findFolderInTree(folders: FolderNodeDto[], fullPath: string): FolderNodeDto | undefined {
+export function findFolderInTree(folders: readonly FolderNodeDto[], fullPath: string): FolderNodeDto | undefined {
   for (const folder of folders) {
     if (folder.fullPath === fullPath) return folder;
     if (folder.tree?.children) {
@@ -80,13 +104,35 @@ export function findFolderInTree(folders: FolderNodeDto[], fullPath: string): Fo
 }
 
 /**
+ * Narrows a folder tree to the folders whose path contains `filter` (trimmed,
+ * case-insensitive), keeping an unmatched folder only as the ancestor of a match.
+ *
+ * A matching folder is kept whole: its descendants' paths start with its own, so
+ * they match too. An unmatched ancestor is copied with its children pruned. An
+ * empty filter returns the tree as it is.
+ */
+export function filterFolderTree(folders: FolderNodeDto[], filter: string): FolderNodeDto[] {
+  const needle = filter.trim().toLowerCase();
+  if (!needle) return folders;
+
+  const prune = (nodes: readonly FolderNodeDto[]): FolderNodeDto[] =>
+    nodes.flatMap((folder) => {
+      if (folder.fullPath.toLowerCase().includes(needle)) return [folder];
+      const children = folder.tree ? prune(folder.tree.children) : [];
+      return folder.tree && children.length > 0 ? [{ ...folder, tree: { ...folder.tree, children } }] : [];
+    });
+
+  return prune(folders);
+}
+
+/**
  * Creates a deep copy of a folder with all paths updated to reflect a new parent location.
  * For example, moving folder "common" (fullPath "common") into "apps" updates:
  * - "common" -> "apps.common"
  * - "common.buttons" -> "apps.common.buttons"
  */
 export function rebaseFolderPaths(folder: FolderNodeDto, newParentPath: string): FolderNodeDto {
-  const newFullPath = newParentPath ? `${newParentPath}.${folder.name}` : folder.name;
+  const newFullPath = joinFolderPath(newParentPath, folder.name);
   return {
     ...folder,
     fullPath: newFullPath,
@@ -121,22 +167,25 @@ export function collectExpandablePaths(folders: FolderNodeDto[]): string[] {
   return paths;
 }
 
-/**
- * Returns the strict ancestor paths of a dot-delimited folder path, outermost first.
- * `apps.common.buttons` yields `['apps', 'apps.common']`. The path itself is excluded:
- * revealing a folder does not open it.
- */
-export function collectAncestorPaths(path: string): string[] {
-  if (!path) return [];
+/** Toggles one expansion path without mutating the caller's set. */
+export function toggleExpandedPath(paths: ReadonlySet<string>, path: string): Set<string> {
+  const next = new Set(paths);
+  if (next.has(path)) next.delete(path);
+  else next.add(path);
+  return next;
+}
 
-  const segments = path.split('.');
-  const ancestors: string[] = [];
-
-  for (let i = 1; i < segments.length; i++) {
-    ancestors.push(segments.slice(0, i).join('.'));
-  }
-
-  return ancestors;
+/** Folder paths in rendered order, including children only under open, loaded parents. */
+export function collectVisibleFolderPaths(folders: readonly FolderNodeDto[], expanded: ReadonlySet<string>): string[] {
+  const paths: string[] = [];
+  const walk = (nodes: readonly FolderNodeDto[]): void => {
+    for (const folder of nodes) {
+      paths.push(folder.fullPath);
+      if (expanded.has(folder.fullPath) && folder.loaded && folder.tree) walk(folder.tree.children);
+    }
+  };
+  walk(folders);
+  return paths;
 }
 
 /**
@@ -144,11 +193,10 @@ export function collectAncestorPaths(path: string): string[] {
  * Used after a folder is deleted so the set cannot accumulate paths that no longer exist.
  */
 export function prunePathsUnder(paths: ReadonlySet<string>, removedPath: string): Set<string> {
-  const prefix = `${removedPath}.`;
   const next = new Set<string>();
 
   for (const path of paths) {
-    if (path === removedPath || path.startsWith(prefix)) continue;
+    if (isFolderPathUnder(removedPath, path)) continue;
     next.add(path);
   }
 
@@ -164,19 +212,14 @@ export function rebaseExpandedPaths(
   sourcePath: string,
   destinationParentPath: string,
 ): Set<string> {
-  const segments = sourcePath.split('.');
-  const folderName = segments[segments.length - 1];
-  const newSourcePath = destinationParentPath ? `${destinationParentPath}.${folderName}` : folderName;
+  const newSourcePath = joinFolderPath(destinationParentPath, folderPathLeaf(sourcePath));
 
   if (newSourcePath === sourcePath) return new Set(paths);
 
-  const prefix = `${sourcePath}.`;
   const next = new Set<string>();
 
   for (const path of paths) {
-    if (path === sourcePath) next.add(newSourcePath);
-    else if (path.startsWith(prefix)) next.add(`${newSourcePath}.${path.slice(prefix.length)}`);
-    else next.add(path);
+    next.add(rebaseFolderPath(path, sourcePath, newSourcePath));
   }
 
   return next;

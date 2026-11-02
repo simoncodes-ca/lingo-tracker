@@ -1,7 +1,6 @@
 import { signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
@@ -13,23 +12,25 @@ describe('TranslationSearch', () => {
   let component: TranslationSearch;
   let fixture: ComponentFixture<TranslationSearch>;
   let spectator: Spectator<TranslationSearch>;
-  let mockStore: any;
+  let mockStore: ReturnType<typeof createMockStore>;
+
+  /** The slice of `BrowserStore` the search box reads. */
+  const createMockStore = () => ({
+    searchQuery: signal(''),
+    isSearchMode: signal(false),
+    isSearchLoading: signal(false),
+    showQuery: vi.fn(),
+    clearSearch: vi.fn(),
+  });
 
   const createComponent = createComponentFactory({
     component: TranslationSearch,
-    imports: [NoopAnimationsModule, getTranslocoTestingModule()],
+    imports: [getTranslocoTestingModule()],
     providers: [{ provide: BrowserStore, useFactory: () => mockStore }],
   });
 
   beforeEach(() => {
-    mockStore = {
-      searchQuery: signal(''),
-      isSearchMode: signal(false),
-      isSearchLoading: signal(false),
-      setSearchQuery: vi.fn(),
-      clearSearch: vi.fn(),
-      searchTranslations: vi.fn(),
-    };
+    mockStore = createMockStore();
 
     spectator = createComponent();
     fixture = spectator.fixture;
@@ -47,6 +48,17 @@ describe('TranslationSearch', () => {
 
     it('should initialize searchValue signal with empty value', () => {
       expect(component.searchValue()).toBe('');
+    });
+
+    it("should start from the store's query when remounted mid-search (re-entering the collection)", () => {
+      mockStore.searchQuery.set('save');
+      mockStore.isSearchMode.set(true);
+
+      const remounted = createComponent();
+
+      expect(remounted.component.searchValue()).toBe('save');
+      const searchInput = remounted.debugElement.query(By.directive(SearchInput)).componentInstance as SearchInput;
+      expect(searchInput.value()).toBe('save');
     });
   });
 
@@ -81,21 +93,12 @@ describe('TranslationSearch', () => {
   });
 
   describe('Search Debouncing', () => {
-    it('should update store search query after typing at least 3 characters', async () => {
-      component.onSearchChange('test');
-
-      // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 350));
-
-      expect(mockStore.setSearchQuery).toHaveBeenCalledWith('test');
-    });
-
-    it('should trigger search after debounce with 3+ characters', async () => {
+    it('should show the query in the list after typing at least 3 characters', async () => {
       component.onSearchChange('button');
 
       await new Promise((resolve) => setTimeout(resolve, 350));
 
-      expect(mockStore.searchTranslations).toHaveBeenCalledWith('button');
+      expect(mockStore.showQuery).toHaveBeenCalledWith('button');
     });
 
     it('should not search for query with fewer than 3 characters', async () => {
@@ -103,23 +106,21 @@ describe('TranslationSearch', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 350));
 
-      expect(mockStore.setSearchQuery).not.toHaveBeenCalled();
-      expect(mockStore.searchTranslations).not.toHaveBeenCalled();
+      expect(mockStore.showQuery).not.toHaveBeenCalled();
     });
 
     it('should clear search when query becomes empty', async () => {
       component.onSearchChange('test');
       await new Promise((resolve) => setTimeout(resolve, 350));
 
-      mockStore.setSearchQuery.mockClear();
-      mockStore.searchTranslations.mockClear();
+      mockStore.showQuery.mockClear();
       mockStore.clearSearch.mockClear();
 
       component.onSearchChange('');
       await new Promise((resolve) => setTimeout(resolve, 350));
 
       expect(mockStore.clearSearch).toHaveBeenCalled();
-      expect(mockStore.searchTranslations).not.toHaveBeenCalled();
+      expect(mockStore.showQuery).not.toHaveBeenCalled();
     });
   });
 

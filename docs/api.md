@@ -1,1736 +1,507 @@
 ---
 title: API Reference
-sidebar_position: 4
+sidebar_position: 7
 ---
 
-# LingoTracker API Reference
+# API Reference
 
-## Overview
+`lingo-tracker-app` serves a REST API under `/api` and the [Tracker UI](./tracker-ui.md) at `/`. The UI is a client of this API; anything the UI does, a script can do too.
 
-The LingoTracker API provides REST endpoints for managing translation resources, collections, and configuration.
+- Base URL: `http://localhost:3030/api`
+- Bodies and responses are JSON, except file uploads and the import summary download
+- Interactive Swagger UI at `http://localhost:3030/api`, OpenAPI JSON at `/api-json`
+- Every endpoint below is listed in `libs/data-transfer/src/lib/api-routes.ts`, which a contract test keeps in sync with the server
 
-- **Base URL**: `http://localhost:3030/api`
-- **Default Port**: `3030` (configurable via `LINGO_TRACKER_PORT` environment variable)
-- **Cache revalidation interval**: `2000` ms (configurable via `LINGO_TRACKER_REVALIDATE_INTERVAL_MS` environment variable)
-- **Cached collections**: `4` at most, least-recently-used evicted (configurable via `LINGO_TRACKER_MAX_CACHED_COLLECTIONS` environment variable)
-- **Content-Type**: `application/json`
-- **Response Format**: JSON
-- **CORS**: Enabled with wildcard origin (`*`) in development
-- **Swagger Documentation**: Available at `http://localhost:3030/api` when the server is running
-
-## Authentication
-
-Currently, the API does not require authentication. It is meant to run on your machine when you need it.
-
-## Health Check
-
-### Get Health Status
-
-Returns the health status of the API server.
-
-**Endpoint**: `GET /api/health`
-
-**Response**:
-
-```json
-{
-  "status": "all is good"
-}
-```
-
-**Status Codes**:
-- `200 OK`: Server is healthy
-
-**Example**:
+## Running the server
 
 ```bash
-curl http://localhost:3030/api/health
+npx lingo-tracker-app [--port <n>] [--host <address>]
 ```
 
-## Configuration API
+The server reads `.lingo-tracker.json` from the directory it is started in, on every request. Start it in your project root.
 
-### Get Configuration
+| Setting | Flag | Environment variable | Default |
+|---|---|---|---|
+| Port | `--port` | `LINGO_TRACKER_PORT` | `3030` |
+| Bind address | `--host` | `LINGO_TRACKER_HOST` | `127.0.0.1` |
+| Additional host names | | `LINGO_TRACKER_ALLOWED_HOSTS` | none |
+| Index revalidation interval | | `LINGO_TRACKER_REVALIDATE_INTERVAL_MS` | `2000` |
+| Collections kept indexed | | `LINGO_TRACKER_MAX_CACHED_COLLECTIONS` | `4` |
 
-Retrieves the current LingoTracker configuration including global settings and all collections.
+### Authentication
 
-**Endpoint**: `GET /api/config`
+There is none. The API is designed for one developer's machine. Beyond the loopback default, the only protections are the Host and Origin checks below. Note also that the import source listing accepts any folder path the process can read, and export and bundle output paths may be absolute. If you bind to a non-loopback address, treat everyone who can reach the port as a trusted user.
 
-**Response**:
+### Host and Origin checks
 
-```typescript
-interface LingoTrackerConfigDto {
-  exportFolder: string;
-  importFolder: string;
-  baseLocale: string;
-  locales: string[];
-  collections: Record<string, LingoTrackerCollectionDto>;
-}
+A middleware runs before static files and every route:
 
-interface LingoTrackerCollectionDto {
-  translationsFolder: string;
-  exportFolder?: string;
-  importFolder?: string;
-  baseLocale?: string;
-  locales?: string[];
-}
+1. **Host.** The `Host` header must name `localhost`, an IPv4 literal, a bracketed IPv6 literal, or an exact entry from `LINGO_TRACKER_ALLOWED_HOSTS` (comma-separated, trimmed, case-insensitive). The port is ignored. A missing or other Host gets `403 {"message":"Host not allowed"}`. So LAN access by IP needs no setting, while access by name such as `my-laptop.local` needs the name listed.
+2. **Origin.** When an `Origin` header is present it must be `http://` or `https://`, have no path, userinfo or whitespace, and its host and port must equal the `Host` header, case-insensitive. Anything else, including `null`, another localhost port or a loopback alias, gets `403 {"message":"Origin not allowed"}`. Requests without an Origin header, such as curl, pass. CORS uses the same rule, so there is no cross-origin access.
+
+The Angular dev server proxies `/api` while preserving `Host: localhost:4200`, which matches its browser Origin.
+
+## Conventions
+
+**Status codes.** Unless stated otherwise, `GET`, `PUT`, `PATCH` and `DELETE` return `200`. `POST` returns `201`, except the job starters below, which return `202`.
+
+**Errors** have the shape `{ "statusCode": number, "message"?: string, "error": string, "errors"?: string[] }`. Only unexpected `500` responses omit `message`.
+
+| Code | When |
+|---|---|
+| `400` | Malformed body or query, invalid value, invalid key or locale, locale not present in a collection |
+| `403` | Write to a read-only collection, or a failed Host or Origin check |
+| `404` | Unknown collection, resource, folder, path or job. Also a missing `.lingo-tracker.json`. |
+| `409` | Duplicate name or key, rename or delete blocked by a bundle, config changed on disk between read and write, upload name clash |
+| `413` | Upload file over 20 MB |
+| `422` | Auto-translation requested while `translation.enabled` is false |
+| `429` | A second upload while one is running, or a provider rate limit |
+| `500` | Unreadable config file, missing translation API key, invalid API key or unknown provider, unexpected error. Unexpected errors carry no `message`. |
+| `502` | Translation provider error |
+
+Shape errors read `"<field path> must <requirement>"`, for example `collection.translationsFolder must be a string`.
+
+**Read-only collections.** Every non-GET route under `/collections/:name` opens the collection for writing and returns `403` when it is read-only. The exceptions are `PUT` and `DELETE /collections/:name`, which change only the config.
+
+**Collection names and locales in paths** are URL-encoded: `/api/collections/my%20app`.
+
+**Jobs.** Bundle generation, exports, imports and whole-locale translation run as jobs. The start endpoint validates synchronously, returns `202` with a `jobId`, and the job runs in a serial queue per job type. Poll the status endpoint until `status` is `completed` or `failed`. Jobs live in memory and do not survive a restart. Each time a job of a type starts, finished jobs of that type older than 30 minutes are removed, then the oldest finished ones are removed until the registry holds about 100 jobs including the new one. Running and queued jobs are never removed.
+
+```json
+{ "jobId": "…", "status": "pending" | "running" | "completed" | "failed", "startedAt": "…", "completedAt": "…", "error": "…" }
 ```
 
-**Example Response**:
+**The in-memory index.** Reads of a collection's tree are served from an index the server builds on first access. Writes through the API patch the index. Changes made on disk by anything else are detected by comparing the folder with the index at most once per `LINGO_TRACKER_REVALIDATE_INTERVAL_MS`; a detected change drops the index and the next tree read rebuilds it. There is no manual invalidation endpoint.
+
+## Endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/health` | Liveness |
+| GET | `/config` | Read the project config with resolved terminology |
+| PUT | `/config` | Replace protected terms and preferred terminology |
+| POST | `/collections` | Create a collection |
+| PUT | `/collections/:name` | Update or rename a collection |
+| DELETE | `/collections/:name` | Unregister a collection |
+| POST | `/collections/:name/locales` | Add a locale |
+| DELETE | `/collections/:name/locales/:locale` | Remove a locale |
+| GET | `/collections/:name/resources/tree` | Read the folder tree |
+| GET | `/collections/:name/resources/cache/status` | Index state |
+| GET | `/collections/:name/resources/search` | Text or similarity search |
+| POST | `/collections/:name/resources` | Create resources |
+| PATCH | `/collections/:name/resources` | Edit a resource |
+| DELETE | `/collections/:name/resources` | Delete resources |
+| POST | `/collections/:name/resources/move` | Move or rename resources |
+| POST | `/collections/:name/resources/translate` | Machine-translate one resource |
+| POST | `/collections/:name/resources/translate-locale` | Start a whole-locale translation job |
+| GET | `/collections/:name/resources/translate-locale/:jobId` | Job status |
+| POST | `/collections/:name/folders` | Create a folder |
+| DELETE | `/collections/:name/folders` | Delete a folder and its resources |
+| POST | `/collections/:name/folders/move` | Move a folder |
+| POST | `/bundles` | Create a bundle definition |
+| PUT | `/bundles/:name` | Update or rename a bundle definition |
+| DELETE | `/bundles/:name` | Delete a bundle definition |
+| POST | `/bundles/dry-run` | Preview a definition |
+| POST | `/bundles/:name/generate` | Start a generation job |
+| GET | `/bundles/jobs/:jobId` | Job status |
+| POST | `/exports/dry-run` | Preview an export |
+| POST | `/exports` | Start an export job |
+| GET | `/exports/jobs/:jobId` | Job status |
+| GET | `/imports/sources` | List import files in a folder |
+| POST | `/imports/sources` | Upload import files |
+| POST | `/imports/dry-run` | Preview an import |
+| POST | `/imports` | Start an import job |
+| GET | `/imports/jobs/:jobId` | Job status |
+| GET | `/imports/jobs/:jobId/summary` | Markdown summary |
+
+---
+
+## Health
+
+`GET /api/health` returns `200 { "status": "all is good" }` without reading the config.
+
+## Config
+
+### GET /api/config
+
+Returns the parsed config plus resolved terminology. There is no separate collections list; this is how clients discover collections.
 
 ```json
 {
-  "exportFolder": "./exports",
-  "importFolder": "./imports",
   "baseLocale": "en",
-  "locales": ["en", "es", "fr", "de"],
+  "locales": ["en", "fr-ca"],
+  "exportFolder": "dist/lingo-export",
+  "importFolder": "dist/lingo-import",
+  "tokenCasing": "upperCase",
+  "runtime": "transloco-messageformat",
+  "transformICUToTransloco": true,
+  "translation": { "enabled": false, "provider": "google-translate", "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY" },
   "collections": {
-    "web-app": {
-      "translationsFolder": "./apps/web/src/assets/i18n",
-      "baseLocale": "en",
-      "locales": ["en", "es", "fr"]
-    },
-    "mobile-app": {
-      "translationsFolder": "./apps/mobile/src/i18n",
-      "baseLocale": "en",
-      "locales": ["en", "es"]
+    "main": {
+      "translationsFolder": "src/i18n",
+      "tags": ["web"],
+      "readOnly": false,
+      "protectedTermsFile": "src/i18n/terms.json",
+      "protectedTerms": ["Acme"],
+      "protectedTermsFilePath": "/abs/path/src/i18n/terms.json"
     }
-  }
+  },
+  "bundles": { "main": { "bundleName": "{locale}", "dist": "./src/assets/i18n", "collections": "All" } },
+  "protectedTerms": ["iPhone"],
+  "protectedTermsFilePath": "/abs/path/.lingo-tracker-protected-terms.json",
+  "preferredTerminology": [{ "discouraged": "E-mail", "preferred": "email" }],
+  "preferredTerminologyFilePath": "/abs/path/.lingo-tracker-preferred-terminology.json",
+  "preferredTerminologyError": "…present only when the rule file cannot be loaded…",
+  "preferredTerminologyWarning": "…present when preferredTerminologyFile names a file that does not exist…",
+  "projectName": "my-app"
 }
 ```
 
-**Status Codes**:
-- `200 OK`: Configuration retrieved successfully
-- `500 Internal Server Error`: Configuration file could not be read
+`runtime` is read-only here and appears only when the config file sets it; see [Configuration](./configuration.md#global-fields). Optional fields are omitted when empty. Collection entries also carry `exportFolder`, `importFolder`, `baseLocale`, `locales` and a `translation` block when set, with the meanings in [Configuration](./configuration.md#collection-entry). A missing config file returns `404`; an unparseable one returns `500`.
 
-**Example**:
+### PUT /api/config
 
-```bash
-curl http://localhost:3030/api/config
+Replaces the two terminology lists. Nothing else in the config is writable through this route.
+
+```json
+{ "protectedTerms": ["Acme", "iPhone"], "preferredTerminology": [{ "discouraged": "E-mail", "preferred": "email", "reason": "Style guide" }] }
 ```
 
-## Collections API
+Both fields are optional; an empty body is a no-op. The whole rule list is validated before anything is written. Invalid rules return `400` with `message: "Invalid preferred terminology rules"` and `errors` listing index, field and problem. A config file that changed between read and write returns `409`.
 
-### Create Collection
+## Collections
 
-Creates a new translation collection with specified configuration.
-
-**Endpoint**: `POST /api/collections`
-
-**Request Body**:
-
-```typescript
-interface CreateCollectionDto {
-  name: string;
-  collection: LingoTrackerCollectionDto;
-}
-
-interface LingoTrackerCollectionDto {
-  translationsFolder: string;
-  exportFolder?: string;
-  importFolder?: string;
-  baseLocale?: string;
-  locales?: string[];
-}
-```
-
-**Example Request**:
+### POST /api/collections
 
 ```json
 {
-  "name": "admin-portal",
+  "name": "admin",
   "collection": {
-    "translationsFolder": "./apps/admin/src/i18n",
+    "translationsFolder": "apps/admin/src/i18n",
     "baseLocale": "en",
-    "locales": ["en", "es", "fr", "de"]
+    "locales": ["en", "es"],
+    "readOnly": false,
+    "tags": ["admin"],
+    "exportFolder": "dist/admin-export",
+    "importFolder": "dist/admin-import",
+    "translation": { "enabled": false, "provider": "google-translate", "apiKeyEnv": "KEY", "batchSize": 5, "delayMs": 1000 },
+    "protectedTermsFile": "apps/admin/terms.json",
+    "protectedTerms": ["Acme"]
   }
 }
 ```
 
-**Response**:
+Only `name` and `collection.translationsFolder` are required. A submitted `protectedTermsFilePath` is ignored; it is a read-only output of `GET /config`. `protectedTerms` are written to the named file, not to the config. A folder under `node_modules` becomes read-only unless `readOnly` is given. Returns `201 { "message" }`. A duplicate name returns `409`.
+
+### PUT /api/collections/:name
+
+```json
+{ "name": "admin-v2", "collection": { "translationsFolder": "apps/admin/src/i18n", "locales": ["en", "es", "fr"] } }
+```
+
+- `collection.translationsFolder` is required by the schema even though the update is a patch.
+- A present field replaces the stored value; an absent field keeps it. `tags: []`, `locales: []` and `readOnly: false` clear a setting, and so does `""` for `baseLocale`, `exportFolder`, `importFolder` or `protectedTermsFile`; `locales: []` returns to the global list. `translationsFolder` must stay non-blank.
+- Changing `locales` adds or removes locales from every resource file, which is refused with `403` on a read-only collection. Other fields can be changed on read-only collections, including turning `readOnly` off.
+- `name` renames the collection and rewrites explicit bundle references. A blank name is `400`; an existing name, or a bundle that already references the new name, is `409`.
+
+Returns `200 { "message" }`.
+
+### DELETE /api/collections/:name
+
+Removes the collection from the config and from explicit bundle lists. Translation files stay on disk. Returns `200 { "message" }`. If a bundle would be left with no collections, returns `409` naming it.
+
+## Locales
+
+### POST /api/collections/:name/locales
+
+```json
+{ "locale": "de" }
+```
+
+Adds the locale to the collection's own list and seeds every resource with a `new` copy of the source. Returns `201 { "message", "entriesBackfilled", "filesUpdated" }`. An invalid code, the base locale, or an existing locale returns `400`.
+
+### DELETE /api/collections/:name/locales/:locale
+
+Removes the locale and deletes its values and metadata from every file. Returns `200 { "message", "entriesPurged", "filesUpdated" }`. The base locale or a locale the collection does not have returns `400`.
+
+## Resources
+
+### Resource summary shape
+
+Several routes return resources in this shape:
 
 ```json
 {
-  "message": "Collection 'admin-portal' added successfully"
+  "fullKey": "common.buttons.save",
+  "folderPath": "common.buttons",
+  "entryKey": "save",
+  "base": { "locale": "en", "value": "Save" },
+  "targets": [
+    { "locale": "fr-ca", "value": "Enregistrer", "status": "translated", "needsWork": false, "sameAsBase": false },
+    { "locale": "es", "value": "Save", "status": "new", "needsWork": true, "sameAsBase": true }
+  ],
+  "comment": "Button label",
+  "tags": ["ui"],
+  "inheritedTags": ["web"]
 }
 ```
 
-**Status Codes**:
-- `201 Created`: Collection created successfully
-- `400 Bad Request`: Invalid request body or collection already exists
-- `500 Internal Server Error`: Unexpected error during collection creation
+`targets` lists every target locale of the collection in config order. `needsWork` is true for `new` and `stale`.
 
-**Example**:
+### GET /api/collections/:name/resources/tree
 
-```bash
-curl -X POST http://localhost:3030/api/collections \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "admin-portal",
-    "collection": {
-      "translationsFolder": "./apps/admin/src/i18n",
-      "baseLocale": "en",
-      "locales": ["en", "es", "fr"]
-    }
-  }'
-```
+Query: `path` (dot-delimited folder, default root), `includeNested=true` (flatten every descendant resource into `resources`).
 
-**Error Example** (Collection Already Exists):
+- `200` `{ "path", "resources": [ResourceSummary], "children": [{ "name", "fullPath", "loaded", "tree"? }] }`
+- `202` `{ "status": "indexing" | "not-ready", "message" }` when the index was not ready at the start of the request. The first read after start-up, and the first read after an outside change is detected, builds the index and still answers `202`; the next read returns data.
+- `404` for an unknown collection or path.
 
-```bash
-curl -X POST http://localhost:3030/api/collections \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "web-app",
-    "collection": {
-      "translationsFolder": "./apps/web/src/i18n"
-    }
-  }'
-```
+### GET /api/collections/:name/resources/cache/status
 
-Response:
-```json
-{
-  "statusCode": 400,
-  "message": "Collection 'web-app' already exists"
-}
-```
+`200 { "status": "not-started" | "indexing" | "ready" | "error", "collectionName", "indexedAt"?, "error"?, "stats"?: { "totalKeys", "localeCount" } }`. Starts indexing when the collection has no index yet; an index in the `error` state is rebuilt by the next tree read, not by this route.
 
-### Update Collection
+### GET /api/collections/:name/resources/search
 
-Updates or renames an existing collection.
+Query: `query`, `maxResults` (positive integer, default 100, capped at 500; anything else is `400`), `mode`.
 
-**Endpoint**: `PUT /api/collections/:collectionName`
+- Default mode searches the key, the source value and every translation, case-insensitive. Each result carries `matchType` of `exact-key`, `partial-key`, `exact-value` or `partial-value` and, for value matches, `matchedLocales`.
+- `mode=similar` compares the query with source values only, using the same rule as `find-similar`. Each result carries `matchType: "similar-value"` and `similarity` between 0 and 1.
 
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection to update (URL-encoded if necessary)
+`200 { "query", "results": [...], "totalFound", "limited" }`. A blank query returns an empty result set. The search uses the index when ready and reads disk otherwise.
 
-**Request Body**:
+### POST /api/collections/:name/resources
 
-```typescript
-interface UpdateCollectionDto {
-  /** Optional new name to rename the collection */
-  name?: string;
-  /** Updated collection configuration */
-  collection: LingoTrackerCollectionDto;
-}
-```
-
-**Response**:
+Create one resource or an array of them.
 
 ```json
 {
-  "message": "Collection 'admin-portal' updated successfully"
-}
-```
-
-**Status Codes**:
-- `200 OK`: Collection updated successfully
-- `400 Bad Request`: Invalid request body or collection not found
-- `500 Internal Server Error`: Unexpected error during update
-
-**Example**:
-
-```bash
-curl -X PUT http://localhost:3030/api/collections/admin-portal \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "admin-portal-v2",
-    "collection": {
-      "translationsFolder": "./apps/admin/src/i18n",
-      "baseLocale": "en",
-      "locales": ["en", "es", "fr", "de"]
-    }
-  }'
-```
-
-### Delete Collection
-
-Deletes a collection by name.
-
-**Endpoint**: `DELETE /api/collections/:collectionName`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection to delete (URL-encoded if necessary)
-
-**Response**:
-
-```json
-{
-  "message": "Collection \"admin-portal\" deleted successfully"
-}
-```
-
-**Status Codes**:
-- `200 OK`: Collection deleted successfully
-- `400 Bad Request`: Collection not found or deletion error
-- `500 Internal Server Error`: Unexpected error during deletion
-
-**Example**:
-
-```bash
-curl -X DELETE http://localhost:3030/api/collections/admin-portal
-```
-
-**Example with URL-Encoded Name**:
-
-```bash
-# For a collection named "my collection" (with space)
-curl -X DELETE http://localhost:3030/api/collections/my%20collection
-```
-
-**Error Example** (Collection Not Found):
-
-```bash
-curl -X DELETE http://localhost:3030/api/collections/non-existent
-```
-
-Response:
-```json
-{
-  "statusCode": 400,
-  "message": "Collection 'non-existent' not found"
-}
-```
-
-## Locales API
-
-Manage locales within a specific collection.
-
-### Add Locale
-
-Adds a locale to a collection and backfills all existing resources with the new locale (value set to the base value, `status: "new"`).
-
-**Endpoint**: `POST /api/collections/:collectionName/locales`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
-
-**Request Body**:
-
-```json
-{
-  "locale": "de"
-}
-```
-
-**Response**:
-
-```json
-{
-  "message": "Locale \"de\" added to collection \"main\" successfully",
-  "entriesBackfilled": 42,
-  "filesUpdated": 8
-}
-```
-
-**Status Codes**:
-- `200 OK`: Locale added and resources backfilled
-- `400 Bad Request`: Invalid locale format, locale already exists, cannot modify base locale, or collection not found
-
-**Example**:
-
-```bash
-curl -X POST http://localhost:3030/api/collections/main/locales \
-  -H 'Content-Type: application/json' \
-  -d '{"locale": "de"}'
-```
-
----
-
-### Remove Locale
-
-Removes a locale from a collection and purges all translation data for that locale from resource files.
-
-**Endpoint**: `DELETE /api/collections/:collectionName/locales/:locale`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
-- `locale` (string, required): The locale to remove (URL-encoded if necessary)
-
-**Response**:
-
-```json
-{
-  "message": "Locale \"de\" removed from collection \"main\" successfully",
-  "entriesPurged": 42,
-  "filesUpdated": 8
-}
-```
-
-**Status Codes**:
-- `200 OK`: Locale removed and data purged
-- `400 Bad Request`: Invalid locale format, locale not found in collection, cannot modify base locale, or collection not found
-
-**Example**:
-
-```bash
-curl -X DELETE http://localhost:3030/api/collections/main/locales/de
-```
-
-**Notes**:
-- Translation data for the removed locale is permanently deleted from files (recoverable via git)
-- Removing the last non-base locale is allowed
-- Cannot remove the base locale
-
----
-
-## Resources API
-
-All resource endpoints are scoped to a specific collection.
-
-### Add Resource(s)
-
-Creates one or more translation resource entries within a collection. Supports both single resource and bulk operations.
-
-**Endpoint**: `POST /api/collections/:collectionName/resources`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
-
-**Request Body** (Single Resource):
-
-```typescript
-interface CreateResourceDto {
-  /** Dot-delimited key, e.g., "apps.common.buttons.ok" */
-  key: string;
-  /** Base locale value (the source text) */
-  baseValue: string;
-  /** Optional context for translators */
-  comment?: string;
-  /** Optional tags (stored as array) */
-  tags?: string[];
-  /** Optional target folder to override part of the path */
-  targetFolder?: string;
-  /** Base locale (defaults to collection's baseLocale) */
-  baseLocale?: string;
-  /** Localized translations with locale, value, and status */
-  translations?: Array<{
-    locale: string;
-    value: string;
-    status: 'new' | 'translated' | 'stale' | 'verified';
-  }>;
-}
-```
-
-**Request Body** (Multiple Resources):
-
-```typescript
-type CreateResourcesRequest = CreateResourceDto[];
-```
-
-**Example Request** (Single Resource with Manual Translations):
-
-```json
-{
-  "key": "apps.common.buttons.ok",
+  "key": "common.buttons.ok",
   "baseValue": "OK",
-  "comment": "Standard confirmation button",
-  "tags": ["ui", "button"],
-  "translations": [
-    {
-      "locale": "es",
-      "value": "Aceptar",
-      "status": "translated"
-    },
-    {
-      "locale": "fr",
-      "value": "D'accord",
-      "status": "verified"
-    },
-    {
-      "locale": "de",
-      "value": "OK",
-      "status": "new"
-    }
-  ]
+  "comment": "Dialog confirm button",
+  "tags": ["ui"],
+  "targetFolder": "apps.web",
+  "translations": [{ "locale": "es", "value": "Aceptar", "status": "translated" }]
 }
 ```
 
-**Example Request** (Single Resource with Auto-Generated Translations):
+- `key` and a non-blank `baseValue` are required. `targetFolder` is prepended to the key.
+- Locales not given in `translations` are machine-translated when the collection has auto-translation enabled, otherwise seeded as `new`.
+- This is not an upsert. If any key already exists, or appears twice in the batch, the whole request is refused with `409` and nothing is written.
+- Every item is validated and, when applicable, translated before any file is written. A provider failure writes nothing.
 
-If `translations` is not provided, the system will automatically create entries for all configured locales with the base value and status `"new"`.
+`201 { "entriesCreated", "created", "skippedLocales"?, "terminology"?: { "findings": [{ "key", "discouraged", "preferred", "reason"?, "message" }], "problems": [string] } }`. `skippedLocales` lists locales auto-translation could not handle. `terminology` is advisory: `findings` are preferred-terminology hits in the source text and `problems` are rule-file errors.
+
+### PATCH /api/collections/:name/resources
 
 ```json
 {
-  "key": "apps.common.buttons.cancel",
-  "baseValue": "Cancel",
-  "comment": "Standard cancel button"
+  "key": "common.buttons.save",
+  "baseValue": "Save changes",
+  "comment": "",
+  "tags": ["ui", "forms"],
+  "moveTo": "common.actions",
+  "locales": { "fr-ca": { "value": "Enregistrer les modifications", "status": "verified" } }
 }
 ```
 
-**Example Request** (Bulk Creation):
+- `key` is the existing full key. Every other field is optional. `comment` replaces the comment (an empty string is stored as an empty comment; the field cannot be removed), `tags: []` clears tags, `moveTo` is a destination folder with `""` meaning the root; the entry keeps its last key segment.
+- A changed `baseValue` marks every real translation `stale`; locales holding an untranslated copy are re-seeded or machine-translated. The edit is saved before machine translation runs, so a provider error leaves the edit in place.
+- `locales` entries for the base locale are ignored. A `status` is stored as given; without one the status is inferred.
+
+`200 { "resolvedKey", "updated", "message"?, "resource"?: ResourceSummary, "skippedLocales"?, "terminology"? }`. `updated: false` with `message: "No changes detected"` when nothing differs. Unknown key: `404`. A `moveTo` destination that already exists: `409`.
+
+### DELETE /api/collections/:name/resources
 
 ```json
-[
-  {
-    "key": "apps.common.buttons.save",
-    "baseValue": "Save",
-    "comment": "Save button"
-  },
-  {
-    "key": "apps.common.buttons.delete",
-    "baseValue": "Delete",
-    "comment": "Delete button",
-    "tags": ["dangerous"]
-  },
-  {
-    "key": "apps.common.messages.success",
-    "baseValue": "Operation completed successfully",
-    "translations": [
-      {
-        "locale": "es",
-        "value": "Operación completada con éxito",
-        "status": "verified"
-      }
-    ]
-  }
-]
+{ "keys": ["common.buttons.ok", "common.buttons.cancel"] }
 ```
 
-**Response**:
+Best-effort. `200 { "entriesDeleted", "errors"?: [{ "key", "error" }] }`. Always check `errors`; a `200` does not mean every key was deleted. Emptied folders are removed.
 
-```typescript
-interface CreateResourceResponseDto {
-  /** Number of entries that were created (count of new resources) */
-  entriesCreated: number;
-  /** Whether at least one resource entry was newly created */
-  created: boolean;
-  /**
-   * Locales skipped during auto-translation (ICU message format not supported).
-   * Only present when auto-translation is enabled and some locales were skipped.
-   */
-  skippedLocales?: string[];
-}
-```
-
-**Example Response** (Bulk Creation):
-
-```json
-{
-  "entriesCreated": 3,
-  "created": true
-}
-```
-
-**Status Codes**:
-- `201 Created`: Resources processed successfully (check `entriesCreated` to see how many were new)
-- `400 Bad Request`: Invalid request body, validation error, or empty resource array
-- `404 Not Found`: Collection not found
-- `500 Internal Server Error`: Unexpected error during resource creation
-
-**Translation Status Values**:
-- `new`: Not yet translated (default for auto-generated translations)
-- `translated`: Has translation but not verified
-- `stale`: Base value changed, translation is out of sync
-- `verified`: Reviewed and approved
-
-**Key Format**:
-- Keys must be dot-delimited (e.g., `apps.common.buttons.ok`)
-- Keys are decomposed into folder paths: `apps.common.buttons.ok` → `apps/common/buttons/` folder with `ok` as the entry key
-- The file structure is created automatically based on the key
-
-**Examples**:
-
-**Single Resource with Default Translations**:
-
-```bash
-curl -X POST http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "key": "apps.common.buttons.ok",
-    "baseValue": "OK",
-    "comment": "Confirmation button"
-  }'
-```
-
-**Single Resource with Specific Translations**:
-
-```bash
-curl -X POST http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "key": "apps.common.buttons.cancel",
-    "baseValue": "Cancel",
-    "comment": "Cancel button",
-    "tags": ["ui", "button"],
-    "translations": [
-      {
-        "locale": "es",
-        "value": "Cancelar",
-        "status": "verified"
-      },
-      {
-        "locale": "fr",
-        "value": "Annuler",
-        "status": "translated"
-      }
-    ]
-  }'
-```
-
-**Bulk Resource Creation**:
-
-```bash
-curl -X POST http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '[
-    {
-      "key": "apps.common.buttons.save",
-      "baseValue": "Save"
-    },
-    {
-      "key": "apps.common.buttons.delete",
-      "baseValue": "Delete",
-      "tags": ["dangerous"]
-    },
-    {
-      "key": "apps.common.messages.success",
-      "baseValue": "Success!"
-    }
-  ]'
-```
-
-**Error Examples**:
-
-Collection Not Found:
-```bash
-curl -X POST http://localhost:3030/api/collections/non-existent/resources \
-  -H "Content-Type: application/json" \
-  -d '{"key": "test.key", "baseValue": "Test"}'
-```
-
-Response:
-```json
-{
-  "statusCode": 404,
-  "message": "Collection \"non-existent\" not found"
-}
-```
-
-Invalid Key Format:
-```bash
-curl -X POST http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "key": "invalid key with spaces",
-    "baseValue": "Test"
-  }'
-```
-
-Response:
-```json
-{
-  "statusCode": 400,
-  "message": "Validation error for resource: Invalid key format"
-}
-```
-
-Empty Request:
-```bash
-curl -X POST http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '[]'
-```
-
-Response:
-```json
-{
-  "statusCode": 400,
-  "message": "At least one resource is required"
-}
-```
-
-### Delete Resource(s)
-
-Deletes one or more translation resource entries from a collection. This is a best-effort operation: if some keys fail to delete, the operation continues and returns details about failures.
-
-**Endpoint**: `DELETE /api/collections/:collectionName/resources`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
-
-**Request Body**:
-
-```typescript
-interface DeleteResourceDto {
-  /** Array of full dot-delimited keys to delete */
-  keys: string[];
-}
-```
-
-**Example Request** (Single Key):
-
-```json
-{
-  "keys": ["apps.common.buttons.ok"]
-}
-```
-
-**Example Request** (Multiple Keys):
-
-```json
-{
-  "keys": [
-    "apps.common.buttons.ok",
-    "apps.common.buttons.cancel",
-    "apps.common.buttons.save",
-    "apps.common.messages.success"
-  ]
-}
-```
-
-**Response**:
-
-```typescript
-interface DeleteResourceResponseDto {
-  /** Number of resource entries successfully deleted */
-  entriesDeleted: number;
-  /** Optional array of errors for entries that failed to delete */
-  errors?: Array<{
-    /** The key that failed to delete */
-    key: string;
-    /** Error message describing why the deletion failed */
-    error: string;
-  }>;
-}
-```
-
-**Example Response** (All Successful):
-
-```json
-{
-  "entriesDeleted": 4,
-  "errors": []
-}
-```
-
-**Example Response** (Partial Success):
-
-```json
-{
-  "entriesDeleted": 2,
-  "errors": [
-    {
-      "key": "apps.common.buttons.nonexistent",
-      "error": "Resource key not found"
-    },
-    {
-      "key": "apps.invalid",
-      "error": "Invalid key format"
-    }
-  ]
-}
-```
-
-**Status Codes**:
-- `200 OK`: Deletion attempted (check `entriesDeleted` and `errors` for details)
-- `400 Bad Request`: Invalid request (missing or empty `keys` array)
-- `404 Not Found`: Collection not found
-- `500 Internal Server Error`: Unexpected error during deletion
-
-**Best-Effort Behavior**:
-
-The delete operation uses a best-effort approach:
-- If some keys are valid and others are invalid, valid keys will be deleted
-- If some keys exist and others don't, existing keys will be deleted
-- The response includes `entriesDeleted` (count of successful deletions) and `errors` (array of failures)
-- A `200 OK` response doesn't guarantee all deletions succeeded - always check the response body
-
-**Examples**:
-
-**Delete Single Resource**:
-
-```bash
-curl -X DELETE http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "keys": ["apps.common.buttons.ok"]
-  }'
-```
-
-**Delete Multiple Resources**:
-
-```bash
-curl -X DELETE http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "keys": [
-      "apps.common.buttons.save",
-      "apps.common.buttons.delete",
-      "apps.common.buttons.cancel"
-    ]
-  }'
-```
-
-**Error Examples**:
-
-Collection Not Found:
-```bash
-curl -X DELETE http://localhost:3030/api/collections/non-existent/resources \
-  -H "Content-Type: application/json" \
-  -d '{"keys": ["test.key"]}'
-```
-
-Response:
-```json
-{
-  "statusCode": 404,
-  "message": "Collection \"non-existent\" not found"
-}
-```
-
-Empty Keys Array:
-```bash
-curl -X DELETE http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{"keys": []}'
-```
-
-Response:
-```json
-{
-  "statusCode": 400,
-  "message": "Invalid request: keys array is required and must not be empty"
-}
-```
-
-Missing Keys Field:
-```bash
-curl -X DELETE http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{}'
-```
-
-Response:
-```json
-{
-  "statusCode": 400,
-  "message": "Invalid request: keys array is required and must not be empty"
-}
-```
-
-Partial Failure (Some Keys Don't Exist):
-```bash
-curl -X DELETE http://localhost:3030/api/collections/web-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "keys": [
-      "apps.common.buttons.ok",
-      "apps.common.nonexistent.key",
-      "apps.common.buttons.cancel"
-    ]
-  }'
-```
-
-Response:
-```json
-{
-  "entriesDeleted": 2,
-  "errors": [
-    {
-      "key": "apps.common.nonexistent.key",
-      "error": "Resource key not found in resource_entries.json"
-    }
-  ]
-}
-```
-
-
-### Edit Resource
-
-Modifies an existing translation resource. Supports updating base value, comments, tags, and locale-specific translations.
-
-**Endpoint**: `PATCH /api/collections/:collectionName/resources`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
-
-**Request Body**:
-
-```typescript
-interface UpdateResourceDto {
-  /** The key of the resource to update */
-  key: string;
-  /** Optional new base value */
-  baseValue?: string;
-  /** Optional new comment */
-  comment?: string;
-  /** Optional new tags (replaces existing tags) */
-  tags?: string[];
-  /** Optional target folder override */
-  targetFolder?: string;
-  /** Optional map of locale updates */
-  locales?: Record<string, {
-    value: string;
-    status: 'new' | 'translated' | 'stale' | 'verified';
-  }>;
-}
-```
-
-**Example Request**:
-
-```json
-{
-  "key": "apps.common.buttons.save",
-  "baseValue": "Save Item",
-  "comment": "Main save button",
-  "tags": ["ui", "primary"],
-  "locales": {
-    "fr-ca": { "value": "Enregistrer l'article" }
-  }
-}
-```
-
-**Response**:
-
-```typescript
-interface UpdateResourceResponseDto {
-  /** The resolved key of the updated resource */
-  resolvedKey: string;
-  /** Whether any changes were actually made */
-  updated: boolean;
-  /** Optional message (e.g., "No changes detected") */
-  message?: string;
-  /** The updated resource data (present when updated is true) */
-  resource?: ResourceSummaryDto;
-  /**
-   * Locales skipped during auto-translation (ICU message format not supported).
-   * Only present when auto-translation is enabled and some locales were skipped.
-   */
-  skippedLocales?: string[];
-}
-```
-
-**Example Response**:
-
-```json
-{
-  "resolvedKey": "apps.common.buttons.save",
-  "updated": true
-}
-```
-
-**Status Codes**:
-- `200 OK`: Resource updated successfully (or no changes detected)
-- `400 Bad Request`: Invalid request body or validation error
-- `404 Not Found`: Collection or resource not found
-- `500 Internal Server Error`: Unexpected error
-
-**Notes**:
-- Updating `baseValue` will mark all non-base translations as `stale` (unless they are also updated in the same request).
-- Updating a locale value will set its status to `translated` and update its checksums.
-- If no changes are detected (values match existing), `updated` will be `false`.
-
-### Move Resource(s)
-
-Moves or renames translation resources within a collection. Supports single resource moves and wildcard pattern moves.
-
-**Endpoint**: `POST /api/collections/:collectionName/resources/move`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection (URL-encoded if necessary)
-
-**Request Body**:
-
-```typescript
-interface MoveResourceDto {
-  moves: MoveOperationDto[];
-}
-
-interface MoveOperationDto {
-  /** Source key or pattern (e.g., "common.buttons.ok" or "common.buttons.*") */
-  source: string;
-  /** Destination key (e.g., "common.actions.ok" or "common.actions") */
-  destination: string;
-  /** Whether to overwrite the destination if it exists */
-  override?: boolean;
-  /** Optional destination collection name (defaults to source collection) */
-  toCollection?: string;
-}
-```
-
-**Example Request**:
+### POST /api/collections/:name/resources/move
 
 ```json
 {
   "moves": [
-    {
-      "source": "common.buttons.ok",
-      "destination": "common.actions.ok"
-    },
-    {
-      "source": "common.buttons.cancel",
-      "destination": "common.actions.cancel",
-      "override": true
-    },
-    {
-      "source": "common.buttons.save",
-      "destination": "common.buttons.save",
-      "toCollection": "admin-portal"
-    }
+    { "source": "common.buttons.ok", "destination": "common.actions.ok" },
+    { "source": "common.buttons.*", "destination": "common.actions", "override": true },
+    { "source": "common.title", "destination": "shared.title", "toCollection": "shared" }
   ]
 }
 ```
 
-**Response**:
+A `source` ending in `*` moves everything under the prefix. Within a collection, comments, tags and statuses move unchanged; stored `{{ name }}` placeholders are converted to `{name}` with checksums updated, and nothing is machine-translated. With `toCollection`, both collections must share a base locale (otherwise `400`), locales the destination lacks are dropped and locales the entry lacks are seeded as `new`. A destination that exists is skipped with a warning unless `override` is true. An unknown or read-only `toCollection` is reported in `errors` rather than failing the request. `201 { "movedCount", "warnings": [], "errors": [] }`.
 
-```typescript
-interface MoveResourceResponseDto {
-  /** Total number of resources moved */
-  movedCount: number;
-  /** List of warnings (e.g., destination exists and override was false) */
-  warnings: string[];
-  /** List of errors */
-  errors: string[];
-}
+### POST /api/collections/:name/resources/translate
+
+```json
+{ "key": "common.buttons.ok" }
 ```
 
-**Example Response**:
+Machine-translates every target locale that is `new`, `stale` or has no metadata. `201 { "resource": ResourceSummary, "translatedCount", "skippedLocales": [], "warnings"? }`. Returns `422` when auto-translation is disabled for the collection, `500` when the API key environment variable is unset, `502` for a provider error, `429` for a provider rate limit.
+
+### POST /api/collections/:name/resources/translate-locale
+
+```json
+{ "locale": "fr" }
+```
+
+Starts a job that translates every resource whose target locale is `new`, `stale` or has no metadata. `202 { "jobId", "collectionName", "targetLocale", "status": "pending", "totalResources": 0, "translatedCount": 0, "failedCount": 0, "skippedCount": 0 }`. Synchronous errors: `422` disabled, `400` for the base locale or an unconfigured locale, `403` read-only.
+
+### GET /api/collections/:name/resources/translate-locale/:jobId
+
+`200` with the job, including `failures: [{ "key", "error" }]`, `skippedKeys`, `startedAt`, `completedAt` once finished. `404` when the job is unknown or belongs to another collection.
+
+## Folders
+
+All three routes require a writable collection.
+
+### POST /api/collections/:name/folders
+
+```json
+{ "folderName": "navigation", "parentPath": "apps.common" }
+```
+
+`folderName` is one segment. `201 { "folderPath", "created", "folder": { "name", "fullPath", "loaded": true, "tree": { "path", "resources": [], "children": [] } } }`. `created` is false when the folder already existed.
+
+### DELETE /api/collections/:name/folders
+
+```json
+{ "folderPath": "apps.common.buttons" }
+```
+
+Deletes the folder and every resource in it. `200 { "deleted", "folderPath", "resourcesDeleted" }`. Unknown folder: `404`.
+
+### POST /api/collections/:name/folders/move
+
+```json
+{ "sourceFolderPath": "apps.common.buttons", "destinationFolderPath": "apps.shared", "nestUnderDestination": true, "override": false, "toCollection": "shared" }
+```
+
+With `nestUnderDestination` (default true) the source folder becomes a child of the destination; `""` as destination means the root. Moving a folder into its own descendant is `400`. Unlike resource moves, an unknown or read-only `toCollection` fails the request. `201 { "movedCount", "foldersDeleted", "warnings": [], "errors": [] }`.
+
+## Bundles
+
+Bundle definitions are the objects described in [Configuration](./configuration.md#bundle-definition). The HTTP layer checks only that `bundle` is an object; the core validator returns `400 { "message": "Invalid bundle definition", "errors": [...] }` for anything else.
+
+| Route | Body | Response |
+|---|---|---|
+| `POST /api/bundles` | `{ "name", "bundle" }` | `201 { "message" }`; `409` on a duplicate name |
+| `PUT /api/bundles/:name` | `{ "name"?, "bundle" }` | `200 { "message" }`. Replaces the whole definition; `name` renames. `404` unknown, `409` name taken |
+| `DELETE /api/bundles/:name` | | `200 { "message" }` |
+| `POST /api/bundles/dry-run` | `{ "name", "bundle", "locales"? }` | `201` plan, see below. The definition need not be saved. |
+| `POST /api/bundles/:name/generate` | `{ "locales"? }` optional | `202 { "jobId", "bundleName", "status": "pending", "progress": { "current": 0, "total": 0 } }` |
+| `GET /api/bundles/jobs/:jobId` | | `200` job with `progress: { current, total, currentFile? }` and, when done, `result: { filesGenerated, keysPerLocale, warnings, localesProcessed, typeDistFile?, typesKeysCount? }` |
+
+Dry-run plan:
 
 ```json
 {
-  "movedCount": 2,
-  "warnings": [],
-  "errors": []
+  "name": "web",
+  "locales": ["en", "fr-ca"],
+  "files": [{ "path": "src/assets/i18n/en.json", "kind": "bundle", "locale": "en", "exists": true, "keysCount": 120 }],
+  "keysPerLocale": { "en": 120, "fr-ca": 120 },
+  "conflictsCount": 0,
+  "conflictKeys": [],
+  "hierarchicalConflicts": [],
+  "exampleKey": { "collectionName": "main", "sourceKey": "common.ok", "bundledKey": "common.ok", "tokenPath": "COMMON.OK" },
+  "warnings": []
 }
 ```
 
-**Status Codes**:
-- `201 Created`: Move operation completed (check `movedCount` and `errors` for details)
-- `400 Bad Request`: Invalid request body
-- `404 Not Found`: Collection not found
-- `500 Internal Server Error`: Unexpected error during move
+`conflictKeys` and `hierarchicalConflicts` hold at most 50 items each; `conflictsCount` is the full count.
 
-**Notes**:
-- Wildcard moves (`source: "prefix.*"`) will move all matching resources to the `destination` prefix.
-- The operation is atomic per move entry but not transactional across all moves.
+## Exports
 
-### Get Resource Tree
-
-Returns the resource tree for a collection, optionally scoped to a sub-path. The tree is built from an in-memory cache — the first request triggers background indexing and returns a `202 Accepted` with a status response until the cache is ready.
-
-The cache is revalidated on read. Before the tree is served, the API takes a stat-only fingerprint of the collection's translations folder and compares it with the one recorded at index time; if they differ, the cache is dropped and re-indexed, so the request answers `202 Accepted` and the next one returns fresh data. This is what makes changes written outside the running app — a `lingo-tracker` CLI command, a `git checkout`, a hand edit — visible on a browser refresh instead of only after a restart. The scan is throttled to once every 2000 ms, configurable via the `LINGO_TRACKER_REVALIDATE_INTERVAL_MS` environment variable.
-
-**Endpoint**: `GET /api/collections/:collectionName/resources/tree`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection
-
-**Query Parameters**:
-- `path` (string, optional): Dot-delimited folder path to scope the tree (e.g., `apps.common`)
-- `includeNested` (boolean, optional): When `true` and `path` is set, returns all nested resources flattened into the `resources` array
-
-**Response** (cache ready — `200 OK`):
-
-```typescript
-interface ResourceTreeDto {
-  /** Current folder path (dot-delimited, empty for root) */
-  path: string;
-  /** Resources in this folder */
-  resources: ResourceSummaryDto[];
-  /** Child folders */
-  children: FolderNodeDto[];
-}
-
-interface ResourceSummaryDto {
-  key: string;
-  translations: Record<string, string>;
-  status: Record<string, 'new' | 'translated' | 'stale' | 'verified' | undefined>;
-  comment?: string;
-  tags?: string[];
-}
-
-interface FolderNodeDto {
-  name: string;
-  fullPath: string;
-  loaded: boolean;
-  tree?: ResourceTreeDto;
-}
-```
-
-**Response** (cache not ready — `202 Accepted`):
-
-```typescript
-interface TreeStatusResponseDto {
-  status: 'not-ready' | 'indexing';
-  message: string;
-}
-```
-
-**Status Codes**:
-- `200 OK`: Tree returned successfully
-- `202 Accepted`: Cache is indexing — retry shortly
-- `404 Not Found`: Collection or path not found
-- `500 Internal Server Error`: Unexpected error
-
-**Example**:
-
-```bash
-# Full tree
-curl http://localhost:3030/api/collections/web-app/resources/tree
-
-# Scoped subtree
-curl "http://localhost:3030/api/collections/web-app/resources/tree?path=apps.common"
-
-# Scoped subtree with all nested resources
-curl "http://localhost:3030/api/collections/web-app/resources/tree?path=apps.common&includeNested=true"
-```
-
-### Get Cache Status
-
-Returns the current indexing status of a collection's resource cache.
-
-**Endpoint**: `GET /api/collections/:collectionName/resources/cache/status`
-
-**Response**:
-
-```typescript
-interface CacheStatusDto {
-  status: 'not-started' | 'indexing' | 'ready' | 'error';
-  collectionName?: string;
-  /** ISO date string — present when status is 'ready' */
-  indexedAt?: string;
-  /** Error message — present when status is 'error' */
-  error?: string;
-  /** Collection statistics — present when status is 'ready' */
-  stats?: {
-    totalKeys: number;
-    localeCount: number;
-  };
-}
-```
-
-**Example Response**:
+Read-only collections can be exported. Both POST routes take the same body:
 
 ```json
 {
-  "status": "ready",
-  "collectionName": "web-app",
-  "indexedAt": "2026-04-09T12:00:00.000Z",
-  "stats": {
-    "totalKeys": 342,
-    "localeCount": 4
-  }
+  "format": "xliff",
+  "collections": ["main"],
+  "locales": ["fr-ca"],
+  "statuses": ["new", "stale"],
+  "tags": ["ui"],
+  "outputDirectory": "dist/lingo-export",
+  "filenamePattern": "{source}-{target}-{date}",
+  "protectedTermNotes": true,
+  "json": { "structure": "hierarchical", "rich": false, "includeBase": false, "basePropertyName": "baseValue", "includeStatus": false, "includeComment": false, "includeTags": false }
 }
 ```
 
-**Status Codes**:
-- `200 OK`: Status retrieved
-- `404 Not Found`: Collection not found
-- `500 Internal Server Error`: Unexpected error
+Only `format` is required. Defaults match the CLI: all collections, all target locales, statuses `new,stale`, the config `exportFolder`, and protected-term notes on. Collections must share a base locale. In `json`, `includeBase`, `includeStatus`, `includeComment`, `includeTags` and `basePropertyName` apply only with `rich: true`; without it, values are plain strings. Invalid enum values return `400` with `errors`; an unknown collection returns `404`.
 
-**Example**:
+- `POST /api/exports/dry-run` returns `201 { "format", "outputDirectory", "collections", "locales", "files": [{ "locale", "path", "exists", "entriesCount" }], "skippedLocales": [{ "locale", "reason" }], "entriesTotal", "overwriteCount", "exampleKey"?, "warnings", "errors", "hierarchicalConflicts", "outputProblem"? }`. `warnings`, `errors` and `hierarchicalConflicts` are capped at 50 items. Nothing is written, not even the folder.
+- `POST /api/exports` runs the same preparation and returns `400` with the `outputProblem` message when the output folder is unusable; otherwise `202 { "jobId", "status": "pending", "progress": { "current": 0, "total": <files> }, "request" }`.
+- `GET /api/exports/jobs/:jobId` returns the job with `progress.currentFile` while running and, when done, `result: { "filesWritten", "entriesExported", "localeResults": [{ "locale", "outcome", "entriesExported", "file"?, "error"? }], "warnings", "errors", "outcome": "succeeded" | "failed", "outputDirectory", "format" }`.
 
-```bash
-curl http://localhost:3030/api/collections/web-app/resources/cache/status
-```
+## Imports
 
-### Search Translations
+### GET /api/imports/sources
 
-Searches resources by key or translation value within a collection. Uses the in-memory cache when available, otherwise falls back to disk.
+Query: `collection` (required), `folder` (optional; defaults to the collection's `importFolder`, then the global one, then `dist/lingo-import`; relative to the project root, absolute paths accepted).
 
-**Endpoint**: `GET /api/collections/:collectionName/resources/search`
-
-**Query Parameters**:
-- `query` (string, required): Search string (case-insensitive, matches keys and values)
-- `maxResults` (number, optional): Maximum results to return. Default: `100`, max: `500`
-
-**Response**:
-
-```typescript
-interface SearchResultsDto {
-  query: string;
-  results: SearchResultDto[];
-  totalFound: number;
-  /** True when results were capped by maxResults */
-  limited: boolean;
-}
-
-interface SearchResultDto extends ResourceSummaryDto {
-  matchType: 'exact-key' | 'partial-key' | 'exact-value' | 'partial-value';
-  /** Locales where value match was found */
-  matchedLocales?: string[];
-}
-```
-
-**Example Response**:
+Lists `.xliff`, `.xlf` and `.json` files directly in the folder, with a locale inferred from the XLIFF `target-language` attribute or from the file name.
 
 ```json
 {
-  "query": "cancel",
-  "results": [
-    {
-      "key": "apps.common.buttons.cancel",
-      "translations": { "en": "Cancel", "es": "Cancelar", "fr": "Annuler" },
-      "status": { "en": null, "es": "verified", "fr": "translated" },
-      "matchType": "partial-key"
-    }
-  ],
-  "totalFound": 1,
-  "limited": false
+  "collection": "main",
+  "folder": "dist/lingo-import",
+  "defaultFolder": "dist/lingo-import",
+  "exists": true,
+  "files": [
+    { "path": "dist/lingo-import/fr-ca.xliff", "name": "fr-ca.xliff", "format": "xliff", "sizeBytes": 20480, "modifiedAt": "…", "locale": "fr-ca", "localeSource": "xliff-target-language", "xliffTargetLanguage": "fr-CA" },
+    { "path": "dist/lingo-import/en.json", "name": "en.json", "format": "json", "sizeBytes": 1024, "modifiedAt": "…", "locale": "en", "localeSource": "file-name", "localeProblem": "base-locale" }
+  ]
 }
 ```
 
-**Status Codes**:
-- `200 OK`: Search completed
-- `404 Not Found`: Collection not found
-- `500 Internal Server Error`: Unexpected error
+`localeProblem` is `base-locale` when the inferred locale is the base locale, or `not-configured` when an XLIFF target language matches no configured locale. A missing folder returns `exists: false`; a path that is a file returns `400`.
 
-**Example**:
+### POST /api/imports/sources
 
-```bash
-curl "http://localhost:3030/api/collections/web-app/resources/search?query=cancel&maxResults=50"
-```
+`multipart/form-data` upload with a repeatable `files` field; query `collection` (required), `folder`, `overwrite=true`. Up to 10 files of 20 MB each, extensions `.xliff`, `.xlf` or `.json`. A file must be non-empty, and its name must be at most 255 UTF-8 bytes, contain no path separators, control characters or `<>:"|?*`, not start with a dot, not end with a space or dot, not be a Windows reserved name, and be unique within the batch ignoring case. Uploads are confined to the collection's import folder or a subfolder of it, inside the project root, outside every translations folder and outside `node_modules` or hidden folders. One upload runs at a time per server; a second gets `429`. An existing name returns `409` with the names in `errors` unless `overwrite=true`. Read-only collection: `403`. Returns `201` with the refreshed listing.
 
-### Translate Resource
-
-Triggers auto-translation for a resource using the collection's configured translation provider. Returns an error if auto-translation is not enabled for the collection.
-
-**Endpoint**: `POST /api/collections/:collectionName/resources/translate`
-
-**Request Body**:
-
-```typescript
-interface TranslateResourceDto {
-  /** Full dot-delimited key of the resource to translate */
-  key: string;
-}
-```
-
-**Response**:
-
-```typescript
-interface TranslateResourceResponseDto {
-  /** The resource with translated values applied */
-  resource: ResourceSummaryDto;
-  /** Number of locales successfully translated */
-  translatedCount: number;
-  /** Locales skipped because the base value uses ICU message format */
-  skippedLocales: string[];
-}
-```
-
-**Status Codes**:
-- `201 Created`: Translation completed
-- `404 Not Found`: Collection or resource not found
-- `422 Unprocessable Entity`: Auto-translation not enabled for this collection
-- `502 Bad Gateway`: Translation provider error
-- `500 Internal Server Error`: Unexpected error
-
-**Example**:
-
-```bash
-curl -X POST http://localhost:3030/api/collections/web-app/resources/translate \
-  -H "Content-Type: application/json" \
-  -d '{"key": "apps.common.buttons.cancel"}'
-```
-
-### Start Bulk Locale Translation Job
-
-Starts an async job that translates all `new` and `stale` resources in a collection for a single target locale. Returns immediately with a `jobId` that can be polled for progress. Requires auto-translation to be enabled for the collection.
-
-**Endpoint**: `POST /api/collections/:collectionName/resources/translate-locale`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection
-
-**Request Body**:
+### Import request body
 
 ```json
 {
-  "locale": "fr"
+  "collection": "main",
+  "files": [{ "path": "dist/lingo-import/fr-ca.xliff", "locale": "fr-ca", "format": "xliff" }],
+  "strategy": "translation-service",
+  "createMissing": false,
+  "updateComments": false,
+  "updateTags": false,
+  "preserveStatus": false,
+  "validateBase": true
 }
 ```
 
-**Response** (202 Accepted):
+`collection` and at least one file with a `locale` are required. `locale` must match a configured locale exactly, including case. The base locale is accepted only with `strategy: "migration"`. `createMissing`, `updateComments` and `updateTags` default to `true` for `migration`; other strategies ignore them and always use `false`; `preserveStatus` defaults to `false` and `validateBase` to `true` for every strategy. Both routes open the collection for writing, so a read-only collection returns `403` even for a dry run.
 
-```typescript
-interface TranslateLocaleJobDto {
-  jobId: string;
-  collectionName: string;
-  targetLocale: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  totalResources: number;
-  translatedCount: number;
-  failedCount: number;
-  skippedCount: number;
-  failures?: Array<{ key: string; error: string }>;
-  skippedKeys?: string[];
-  startedAt?: string;
-  completedAt?: string;
-}
-```
+- `POST /api/imports/dry-run` returns `201 { "collection", "strategy", "files": [{ "path", "locale", "format", "entries", "imported", "created", "updated", "skipped", "failed", "changed", "statusTransitions", "warnings", "errors", "sourceProblem"? }], "totals": { "entries", "imported", "created", "updated", "skipped", "failed", "changed" }, "statusTransitions": [{ "from"?, "to", "count" }], "icuAutoFixes": [{ "path"?, "locale", "key", "originalValue", "fixedValue", "description" }], "issues": [{ "path"?, "locale", "key", "type": "failed" | "skipped", "reason" }], "warnings", "errors", "largeFiles", "truncated" }`. `imported` equals `created` plus `updated`. `changed` counts resource files that would be written, not entries. `issues`, `icuAutoFixes`, `warnings` and `errors` are capped at 50 items and `truncated` reports how many were dropped; `files`, `statusTransitions` and `largeFiles` are complete. Each file is previewed against the current state, not against earlier files in the same request.
+- `POST /api/imports` inspects every source first and returns `400` for a bad path or undetectable format; otherwise `202 { "jobId", "status": "pending", "progress": { "current": 0, "total": <files> }, "request" }`.
+- `GET /api/imports/jobs/:jobId` returns the job with `progress.currentFile` and `progress.currentLocale` while running and, when done, `result` with the plan fields except `largeFiles`, plus per-file `outcome` and `filesModified`, an overall `filesModified` list relative to the project root, and an overall `outcome` of `succeeded` or `failed`.
+- `GET /api/imports/jobs/:jobId/summary` returns the Markdown summary as `text/markdown` with a `Content-Disposition: attachment` header. `409` while the job is still running. Summaries are kept in memory with the job and never written to disk by the server.
 
-**Example Response**:
-
-```json
-{
-  "jobId": "uuid-here",
-  "collectionName": "playground",
-  "targetLocale": "fr",
-  "status": "pending",
-  "totalResources": 0,
-  "translatedCount": 0,
-  "failedCount": 0,
-  "skippedCount": 0
-}
-```
-
-**Status Codes**:
-- `202 Accepted`: Job started — poll the GET endpoint for progress
-- `400 Bad Request`: Invalid or missing locale
-- `422 Unprocessable Entity`: Auto-translation not enabled for this collection
-- `404 Not Found`: Collection not found
-- `500 Internal Server Error`: Unexpected error
-
-**Example**:
+## Example: create, verify, export
 
 ```bash
-curl -X POST http://localhost:3030/api/collections/playground/resources/translate-locale \
-  -H 'Content-Type: application/json' \
-  -d '{"locale":"fr"}'
+B=http://localhost:3030/api
+
+# create a resource; the request fails with 409 if the key exists
+curl -s -X POST $B/collections/main/resources -H 'Content-Type: application/json' \
+  -d '{"key":"common.buttons.ok","baseValue":"OK","comment":"Dialog confirm button"}'
+
+# mark the French translation verified
+curl -s -X PATCH $B/collections/main/resources -H 'Content-Type: application/json' \
+  -d '{"key":"common.buttons.ok","locales":{"fr-ca":{"value":"OK","status":"verified"}}}'
+
+# preview an export of everything still needing work
+curl -s -X POST $B/exports/dry-run -H 'Content-Type: application/json' \
+  -d '{"format":"xliff","collections":["main"]}'
+
+# run it and poll
+JOB=$(curl -s -X POST $B/exports -H 'Content-Type: application/json' -d '{"format":"xliff","collections":["main"]}' | jq -r .jobId)
+curl -s $B/exports/jobs/$JOB
 ```
-
-### Get Bulk Locale Translation Job Status
-
-Returns the current status and progress of a bulk locale translation job. Poll this endpoint every 2–5 seconds until `status` is `completed` or `failed`.
-
-**Endpoint**: `GET /api/collections/:collectionName/resources/translate-locale/:jobId`
-
-**Path Parameters**:
-- `collectionName` (string, required): The name of the collection
-- `jobId` (string, required): The job ID returned by the POST endpoint
-
-**Response**:
-
-`TranslateLocaleJobDto` with current status. See the POST endpoint above for the full type definition.
-
-**Status progression**: `pending` → `running` → `completed` / `failed`
-
-**Example Response** (completed):
-
-```json
-{
-  "jobId": "uuid-here",
-  "collectionName": "playground",
-  "targetLocale": "fr",
-  "status": "completed",
-  "totalResources": 48,
-  "translatedCount": 45,
-  "failedCount": 0,
-  "skippedCount": 3,
-  "failures": [],
-  "skippedKeys": ["forms.upload.acceptedFormats"],
-  "startedAt": "2026-04-11T12:00:00.000Z",
-  "completedAt": "2026-04-11T12:00:15.000Z"
-}
-```
-
-**Status Codes**:
-- `200 OK`: Job status returned
-- `404 Not Found`: Collection or job not found
-- `500 Internal Server Error`: Unexpected error
-
-**Example**:
-
-```bash
-curl http://localhost:3030/api/collections/playground/resources/translate-locale/uuid-here
-```
-
-## Folders API
-
-All folder endpoints are scoped to a specific collection.
-
-### Create Folder
-
-Creates a new folder node in the resource hierarchy.
-
-**Endpoint**: `POST /api/collections/:collectionName/folders`
-
-**Request Body**:
-
-```typescript
-interface CreateFolderDto {
-  /** Single-segment folder name (alphanumeric, dashes, underscores) */
-  folderName: string;
-  /** Optional dot-delimited parent path (e.g., "apps.common"). Root if omitted. */
-  parentPath?: string;
-}
-```
-
-**Response**:
-
-```typescript
-interface CreateFolderResponseDto {
-  /** Filesystem path of the created folder */
-  folderPath: string;
-  /** False if the folder already existed */
-  created: boolean;
-  /** The new folder node for inserting into the tree */
-  folder: FolderNodeDto;
-}
-```
-
-**Status Codes**:
-- `201 Created`: Folder created (or already existed)
-- `400 Bad Request`: Invalid folder name
-- `404 Not Found`: Collection not found
-- `500 Internal Server Error`: Unexpected error
-
-**Example**:
-
-```bash
-curl -X POST http://localhost:3030/api/collections/web-app/folders \
-  -H "Content-Type: application/json" \
-  -d '{"folderName": "navigation", "parentPath": "apps.common"}'
-```
-
-### Delete Folder
-
-Deletes a folder and all resources within it.
-
-**Endpoint**: `DELETE /api/collections/:collectionName/folders`
-
-**Request Body**:
-
-```typescript
-interface DeleteFolderDto {
-  /** Dot-delimited folder path to delete (e.g., "apps.common.buttons") */
-  folderPath: string;
-}
-```
-
-**Response**:
-
-```typescript
-interface DeleteFolderResponseDto {
-  deleted: boolean;
-  folderPath: string;
-  /** Number of resource entries deleted with the folder */
-  resourcesDeleted: number;
-  error?: string;
-}
-```
-
-**Status Codes**:
-- `200 OK`: Deletion attempted (check `deleted` and `error` fields)
-- `400 Bad Request`: Invalid folder path
-- `404 Not Found`: Collection not found
-- `500 Internal Server Error`: Unexpected error
-
-**Example**:
-
-```bash
-curl -X DELETE http://localhost:3030/api/collections/web-app/folders \
-  -H "Content-Type: application/json" \
-  -d '{"folderPath": "apps.common.buttons"}'
-```
-
-### Move Folder
-
-Moves a folder (and all its resources) to a new location. Supports cross-collection moves.
-
-**Endpoint**: `POST /api/collections/:collectionName/folders/move`
-
-**Request Body**:
-
-```typescript
-interface MoveFolderDto {
-  /** Dot-delimited source folder path (e.g., "apps.common.buttons") */
-  sourceFolderPath: string;
-  /** Dot-delimited destination folder path (e.g., "apps.shared") */
-  destinationFolderPath: string;
-  /** If true, overwrite existing resources at destination. Default: false */
-  override?: boolean;
-  /** Optional destination collection name for cross-collection moves */
-  toCollection?: string;
-  /**
-   * When true, the source folder is nested under the destination as a child.
-   * Default: true
-   */
-  nestUnderDestination?: boolean;
-}
-```
-
-**Response**:
-
-```typescript
-interface MoveFolderResponseDto {
-  movedCount: number;
-  foldersDeleted: number;
-  warnings: string[];
-  errors: string[];
-}
-```
-
-**Status Codes**:
-- `201 Created`: Move completed (check `movedCount` and `errors` for details)
-- `400 Bad Request`: Invalid paths or validation error
-- `404 Not Found`: Collection not found
-- `500 Internal Server Error`: Unexpected error
-
-**Example**:
-
-```bash
-curl -X POST http://localhost:3030/api/collections/web-app/folders/move \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sourceFolderPath": "apps.common.buttons",
-    "destinationFolderPath": "apps.shared",
-    "nestUnderDestination": true
-  }'
-```
-
-## Error Handling
-
-All error responses follow a consistent format:
-
-```typescript
-interface ErrorResponse {
-  statusCode: number;
-  message: string;
-  error?: string; // Optional error type
-}
-```
-
-### Common HTTP Status Codes
-
-- **200 OK**: Request succeeded
-- **400 Bad Request**: Invalid request body, missing required fields, or validation error
-- **404 Not Found**: Resource or collection not found
-- **500 Internal Server Error**: Unexpected server error
-
-### Error Response Examples
-
-**Validation Error** (400):
-```json
-{
-  "statusCode": 400,
-  "message": "Validation error for resource: Invalid key format"
-}
-```
-
-**Not Found** (404):
-```json
-{
-  "statusCode": 404,
-  "message": "Collection \"unknown-collection\" not found"
-}
-```
-
-**Server Error** (500):
-```json
-{
-  "statusCode": 500,
-  "message": "Error creating resources"
-}
-```
-
-## Complete Workflow Examples
-
-### Example 1: Create a Collection and Add Resources
-
-```bash
-# Step 1: Create a new collection
-curl -X POST http://localhost:3030/api/collections \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "my-app",
-    "collection": {
-      "translationsFolder": "./src/i18n",
-      "baseLocale": "en",
-      "locales": ["en", "es", "fr"]
-    }
-  }'
-
-# Response:
-# {
-#   "message": "Collection 'my-app' added successfully"
-# }
-
-# Step 2: Add resources to the collection
-curl -X POST http://localhost:3030/api/collections/my-app/resources \
-  -H "Content-Type: application/json" \
-  -d '[
-    {
-      "key": "app.welcome.title",
-      "baseValue": "Welcome",
-      "comment": "Main welcome message"
-    },
-    {
-      "key": "app.welcome.subtitle",
-      "baseValue": "Start your journey here",
-      "comment": "Welcome subtitle"
-    }
-  ]'
-
-# Response:
-# {
-#   "entriesCreated": 2,
-#   "created": true
-# }
-
-# Step 3: Verify the configuration
-curl http://localhost:3030/api/config
-
-# The response will include "my-app" in the collections
-```
-
-### Example 2: Add Translations and Update Status
-
-```bash
-# Add a resource with verified translations
-curl -X POST http://localhost:3030/api/collections/my-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "key": "app.buttons.submit",
-    "baseValue": "Submit",
-    "comment": "Form submit button",
-    "tags": ["form", "button"],
-    "translations": [
-      {
-        "locale": "es",
-        "value": "Enviar",
-        "status": "verified"
-      },
-      {
-        "locale": "fr",
-        "value": "Soumettre",
-        "status": "verified"
-      }
-    ]
-  }'
-
-# Response:
-# {
-#   "entriesCreated": 1,
-#   "created": true
-# }
-```
-
-### Example 3: Bulk Operations with Cleanup
-
-```bash
-# Add multiple resources
-curl -X POST http://localhost:3030/api/collections/my-app/resources \
-  -H "Content-Type: application/json" \
-  -d '[
-    {
-      "key": "temp.test1",
-      "baseValue": "Test 1"
-    },
-    {
-      "key": "temp.test2",
-      "baseValue": "Test 2"
-    },
-    {
-      "key": "temp.test3",
-      "baseValue": "Test 3"
-    }
-  ]'
-
-# Response:
-# {
-#   "entriesCreated": 3,
-#   "created": true
-# }
-
-# Clean up - delete the temporary resources
-curl -X DELETE http://localhost:3030/api/collections/my-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "keys": ["temp.test1", "temp.test2", "temp.test3"]
-  }'
-
-# Response:
-# {
-#   "entriesDeleted": 3,
-#   "errors": []
-# }
-```
-
-### Example 4: Error Handling in Bulk Operations
-
-```bash
-# Attempt to delete a mix of existing and non-existing keys
-curl -X DELETE http://localhost:3030/api/collections/my-app/resources \
-  -H "Content-Type: application/json" \
-  -d '{
-    "keys": [
-      "app.welcome.title",
-      "app.nonexistent.key",
-      "app.welcome.subtitle",
-      "another.nonexistent.key"
-    ]
-  }'
-
-# Response (partial success):
-# {
-#   "entriesDeleted": 2,
-#   "errors": [
-#     {
-#       "key": "app.nonexistent.key",
-#       "error": "Resource key not found"
-#     },
-#     {
-#       "key": "another.nonexistent.key",
-#       "error": "Resource key not found"
-#     }
-#   ]
-# }
-```
-
-## Notes and Best Practices
-
-### Resource Keys
-
-- Use dot-delimited format: `namespace.category.subcategory.item`
-- Keys are case-sensitive
-- Avoid special characters except dots and underscores
-- Keys should be descriptive and hierarchical
-
-### Translation Status Lifecycle
-
-The typical status progression is:
-1. `new` - Newly created, needs translation
-2. `translated` - Translation provided, needs review
-3. `verified` - Translation reviewed and approved
-4. `stale` - Source text changed, translation needs updating (automatically set by checksum comparison)
-
-### Bulk Operations
-
-- The resources API supports both single and array payloads for creation
-- Bulk creation processes all resources and returns the total count of created entries
-- Individual resource errors during bulk creation are handled gracefully (partial success)
-- Delete operations always use an array of keys and support partial success
-
-### Best-Effort Deletes
-
-- Delete operations continue even if some keys fail
-- Always check both `entriesDeleted` and `errors` in the response
-- Non-existent keys are reported in errors but don't stop deletion of valid keys
-- This allows for idempotent cleanup scripts
-
-### Checksums and Stale Detection
-
-The system automatically:
-- Computes MD5 checksums for base values and translations
-- Detects when source text changes (marks translations as `stale`)
-- Maintains metadata in `tracker_meta.json` files alongside `resource_entries.json`
-
-### File Structure
-
-Resources are stored as:
-```
-translations-folder/
-  locale/
-    namespace/
-      category/
-        resource_entries.json
-        tracker_meta.json
-```
-
-Where:
-- Key `apps.common.buttons.ok` becomes folder path `apps/common/buttons/`
-- Entry key `ok` is stored in `resource_entries.json`
-- Metadata (checksums, status) stored in `tracker_meta.json`

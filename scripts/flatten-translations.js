@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { glob } from 'node:fs/promises';
+import { glob, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 const OUTPUT_DIR = 'dist/ds-translations';

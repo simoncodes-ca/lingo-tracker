@@ -1,13 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type {
-  ImportFormat,
-  ImportStrategy,
-  ImportOptions,
-  ImportedResource,
-  ImportChangeType,
   ImportChange,
-  StatusTransition,
+  ImportChangeType,
+  ImportedResource,
+  ImportFormat,
   ImportResult,
+  ImportRunOptions,
+  ImportStrategy,
+  ImportSummaryOptions,
+  StatusTransition,
 } from './types';
 
 describe('import types', () => {
@@ -30,22 +31,19 @@ describe('import types', () => {
     });
   });
 
-  describe('ImportOptions', () => {
+  describe('ImportRunOptions', () => {
     it('should create valid import options with required fields', () => {
-      const options: ImportOptions = {
-        source: '/path/to/file.xliff',
+      const options: ImportRunOptions = {
         locale: 'es',
       };
-      expect(options.source).toBe('/path/to/file.xliff');
       expect(options.locale).toBe('es');
     });
 
     it('should create import options with all fields', () => {
-      const options: ImportOptions = {
+      const options: ImportSummaryOptions = {
         format: 'xliff',
         source: '/path/to/file.xliff',
         locale: 'es',
-        collection: 'TestCollection',
         strategy: 'translation-service',
         updateComments: false,
         updateTags: false,
@@ -54,8 +52,7 @@ describe('import types', () => {
         validateBase: true,
         dryRun: false,
         verbose: false,
-        backup: false,
-        onProgress: (msg) => console.log(msg),
+        onProgress: () => undefined,
       };
       expect(options.format).toBe('xliff');
       expect(options.strategy).toBe('translation-service');
@@ -154,9 +151,7 @@ describe('import types', () => {
   describe('ImportResult', () => {
     it('should create complete import result', () => {
       const result: ImportResult = {
-        format: 'xliff',
         strategy: 'translation-service',
-        sourceFile: '/path/to/file.xliff',
         locale: 'es',
         collection: 'TestCollection',
         resourcesImported: 100,
@@ -169,12 +164,15 @@ describe('import types', () => {
           { from: 'new', to: 'translated', count: 50 },
           { from: 'stale', to: 'translated', count: 50 },
         ],
+        filesAffected: [],
         filesModified: [
           '/translations/common/buttons/resource_entries.json',
           '/translations/common/buttons/tracker_meta.json',
         ],
         warnings: ['XLIFF source differs from existing base value'],
         errors: ['Invalid key format: "common..buttons"'],
+        icuAutoFixes: [],
+        icuAutoFixErrors: [],
         dryRun: false,
       };
 

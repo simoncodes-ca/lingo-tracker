@@ -1,0 +1,104 @@
+name: Tracker E2E
+
+on:
+  pull_request:
+    branches: [develop, main]
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: >-
+    tracker-e2e-${{ github.event.pull_request.number || github.ref }}-${{
+      (github.event_name == 'workflow_dispatch' ||
+      (github.base_ref == 'main' && (github.event.action != 'labeled' || github.event.label.name == 'run-e2e')) ||
+      (github.event.action == 'labeled' && github.event.label.name == 'run-e2e')) && 'gated' || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.base_ref == 'main' && (github.event.action != 'labeled' || github.event.label.name == 'run-e2e')) ||
+      (github.event.action == 'labeled' && github.event.label.name == 'run-e2e')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Get pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate tracker i18n types
+        run: pnpm nx build cli && node dist/apps/cli/main.cjs bundle --name tracker
+
+      - name: Get Playwright version
+        id: playwright
+        run: node -p "'version=' + require('@playwright/test/package.json').version" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Tracker E2E
+        run: pnpm nx run tracker-e2e:e2e
+        env:
+          CI: true
+
+      - name: Test summary
+        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
+        with:
+          report_paths: dist/test-results/apps/tracker-e2e/junit.xml
+          check_name: Tracker E2E results
+          annotate_only: true
+          detailed_summary: true
+          include_passed: true
+
+      - name: Upload Playwright results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tracker-e2e-playwright
+          path: dist/.playwright/apps/tracker-e2e/
+          include-hidden-files: true
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: tracker-e2e-results
+          path: dist/test-results/apps/tracker-e2e/junit.xml
+          if-no-files-found: ignore

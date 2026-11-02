@@ -1,4 +1,5 @@
-import type { TranslationStatus } from '@simoncodes-ca/domain';
+import type { PreferredTermRule, TranslationStatus } from '@simoncodes-ca/domain';
+import type { TerminologyFinding } from '../config/project-terms';
 
 /**
  * Options for configuring resource validation behavior.
@@ -14,12 +15,6 @@ export interface ValidationOptions {
   readonly allowTranslated: boolean;
 
   /**
-   * Locales that were excluded from validation by the caller.
-   * Used only for reporting — not for filtering (filtering happens before validateResources is called).
-   */
-  readonly skippedLocales?: readonly string[];
-
-  /**
    * When present, stored values are inspected as ICU messages.
    *
    * Status validation and ICU validation answer different questions: one asks
@@ -30,9 +25,12 @@ export interface ValidationOptions {
    */
   readonly icu?: IcuValidationOptions;
 
+  /** Check ICU constructs against the collection's app runtime. Set false to skip. */
+  readonly runtime?: boolean;
+
   /**
-   * When present, every translation is checked against its base value for the
-   * arguments it interpolates.
+   * When true, every translation is checked against its base value (in the
+   * collection's base locale) for the arguments it interpolates.
    *
    * A third question again: a translation can be approved by a reviewer and
    * compile cleanly while interpolating an argument nobody passes, because a
@@ -41,20 +39,75 @@ export interface ValidationOptions {
    *
    * Omit to skip the check.
    */
-  readonly placeholders?: PlaceholderValidationOptions;
+  readonly placeholders?: boolean;
+
+  /** When true, translations must preserve protected terms from their supplied Project Terms. */
+  readonly protectedTerms?: boolean;
+
+  /**
+   * When present, base-locale values are scanned for discouraged terms from the
+   * preferred-terminology file.
+   *
+   * A fourth question, and the only advisory one: a finding suggests better
+   * wording and never fails validation. A rule file that could not be loaded
+   * does fail it, since every check it should have run was silently skipped.
+   *
+   * The caller loads the rules; validation never reads the file itself.
+   * Omit to skip the check.
+   */
+  readonly terminology?: TerminologyValidationOptions;
 }
 
 /**
- * Options controlling the placeholder-agreement pass.
+ * Options controlling the preferred-terminology pass.
  */
-export interface PlaceholderValidationOptions {
+export interface TerminologyValidationOptions {
   /**
-   * The locale whose value defines the arguments a translation must interpolate.
-   *
-   * The base value is the contract: it is what the calling code passes
-   * arguments for, so it is what every translation has to agree with.
+   * Rules to scan for. Empty when the file is absent, or when it failed to load.
    */
-  readonly baseLocale: string;
+  readonly rules: readonly PreferredTermRule[];
+
+  /**
+   * Why the rule file could not be loaded, when it could not. Reported as a
+   * failure: a broken file means no value was checked.
+   */
+  readonly loadError?: string;
+}
+
+/**
+ * A base-locale value using a discouraged term. One per collection, key, and rule,
+ * however many times the term occurs and however many target locales exist.
+ */
+export interface TerminologyValidationDetail extends TerminologyFinding {
+  /**
+   * The collection this resource belongs to.
+   */
+  readonly collection: string;
+
+  /**
+   * The collection's base locale, whose value was scanned.
+   */
+  readonly locale: string;
+}
+
+/**
+ * Outcome of the preferred-terminology pass.
+ */
+export interface TerminologyValidationResult {
+  /**
+   * Values using a discouraged term. Advisory: warnings never fail validation.
+   */
+  readonly warnings: readonly TerminologyValidationDetail[];
+
+  /**
+   * Why the rule file could not be loaded, when it could not. Fails validation.
+   */
+  readonly configError?: string;
+
+  /**
+   * How many base-locale values were scanned. Zero when there were no rules to scan for.
+   */
+  readonly valuesChecked: number;
 }
 
 /**
@@ -113,17 +166,10 @@ export interface PlaceholderValidationResult {
  */
 export interface IcuValidationOptions {
   /**
-   * The base locale, whose `source` values are compiled alongside the targets.
-   *
-   * The base value is the one copied into every translation slot, so leaving
-   * it unchecked misses the failures that propagate furthest. Omit to check
-   * target locales only.
-   */
-  readonly baseLocale?: string;
-
-  /**
    * When true, every stored value is compiled under the locale it is stored
-   * under, and any value that fails to compile is a validation failure.
+   * under, and any value that fails to compile is a validation failure. Base
+   * values are compiled under their collection's base locale: the base value is
+   * the one copied into every translation slot, so its failures propagate furthest.
    *
    * Set false to run the portability rule alone, without compiling.
    */
@@ -145,6 +191,8 @@ export interface IcuValidationOptions {
  * A single value that failed to compile, or that tripped the portability rule.
  */
 export interface IcuValidationDetail {
+  /** Present for constructs the configured app runtime cannot render. */
+  readonly kind?: 'runtime-unrenderable';
   /**
    * The full dot-delimited key of the resource (e.g., 'common.buttons.ok').
    */
@@ -166,9 +214,15 @@ export interface IcuValidationDetail {
   readonly message: string;
 }
 
-/**
- * Outcome of the per-locale ICU compilation pass.
- */
+/** A value failure with enough context for the existing validation detail renderer. */
+export type ExplainedValidationDetail = Pick<IcuValidationDetail, 'key' | 'locale' | 'collection' | 'message'>;
+
+export interface ProtectedTermValidationResult {
+  readonly failures: readonly ExplainedValidationDetail[];
+  readonly valuesChecked: number;
+}
+
+/** Outcome of the per-locale ICU compilation pass. */
 export interface IcuValidationResult {
   /**
    * Values that failed to compile under their own locale. These are hard
@@ -230,6 +284,18 @@ export interface StatusCounts {
 }
 
 /**
+ * A folder that could not be read, so none of its resources were validated.
+ */
+export interface UnreadableFolderDetail {
+  /** The collection the folder belongs to. */
+  readonly collection: string;
+  /** Dot-delimited folder path in the collection; `''` for the translations folder itself. */
+  readonly folderPath: string;
+  /** Why the folder could not be read; names the file. */
+  readonly message: string;
+}
+
+/**
  * Comprehensive validation result containing counts, categorized failures, and warnings.
  */
 export interface ResourceValidationResult {
@@ -239,12 +305,13 @@ export interface ResourceValidationResult {
   readonly totalResourcesValidated: number;
 
   /**
-   * Total number of unique resource keys checked (before multiplying by locale count).
+   * Number of resources checked (before multiplying by locale count). Keys are unique within a
+   * collection; a key present in two collections counts once for each.
    */
   readonly totalUniqueKeys: number;
 
   /**
-   * Number of locales validated.
+   * Number of distinct locales validated across all collections.
    */
   readonly localesValidated: number;
 
@@ -287,10 +354,26 @@ export interface ResourceValidationResult {
    */
   readonly placeholders?: PlaceholderValidationResult;
 
+  /** Protected-term preservation failures, omitted when no collection has protected terms. */
+  readonly protectedTerms?: ProtectedTermValidationResult;
+
+  /**
+   * Outcome of the preferred-terminology pass, when one was requested.
+   * Undefined when terminology checking was not requested.
+   */
+  readonly terminology?: TerminologyValidationResult;
+
+  /**
+   * Folders that could not be read (malformed JSON, or an entry that is not an object).
+   * Their resources were not validated, so any entry here fails validation.
+   * Absent or empty when every folder was read.
+   */
+  readonly unreadableFolders?: readonly UnreadableFolderDetail[];
+
   /**
    * Whether the validation passed overall (no status failures, no ICU compile
-   * failures, and no placeholder mismatches). Note: warnings do not cause
-   * validation to fail.
+   * failures, no placeholder mismatches or protected-term failures, no unreadable folder, and no unreadable terminology file).
+   * Note: warnings, including terminology findings, do not cause validation to fail.
    */
   readonly passed: boolean;
 }

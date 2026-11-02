@@ -1,5 +1,5 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 /**
  * Simple popover that displays a comment string inside a styled container.

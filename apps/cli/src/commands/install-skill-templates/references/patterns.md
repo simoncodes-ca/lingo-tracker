@@ -29,7 +29,7 @@ import { TOKEN_CONSTANT } from 'path/to/token-file';
 
 @Component({
   standalone: true,
-  imports: [TranslocoPipe, /* ... */],
+  imports: [TranslocoPipe /* ... */],
   // ...
 })
 export class MyComponent {

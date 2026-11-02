@@ -278,5 +278,15 @@
     "ru": "Новый защищенный срок",
     "ja": "新しい保護用語",
     "de": "Neuer geschützter Begriff"
+  },
+  "saveFailed": {
+    "source": "Failed to save settings",
+    "comment": "Fallback error banner on the settings page when a save fails without a server message",
+    "tags": ["settings"],
+    "es": "Failed to save settings",
+    "fr-ca": "Failed to save settings",
+    "ru": "Failed to save settings",
+    "ja": "Failed to save settings",
+    "de": "Failed to save settings"
   }
 }

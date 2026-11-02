@@ -14,6 +14,8 @@ Return to [architecture README](README.md).
   - [tracker_meta.json](#tracker_metajson)
   - [Folder layout example](#folder-layout-example)
 - [Entity Diagram](#entity-diagram)
+- [Entry Change](#entry-change)
+- [Bundle Definition](#bundle-definition)
 - [ICU vs Transloco Format](#icu-vs-transloco-format)
 - [Translation Status Lifecycle](#translation-status-lifecycle)
 - [Checksum-Driven Staleness Detection](#checksum-driven-staleness-detection)
@@ -44,7 +46,7 @@ apps.common.buttons.ok
             └── tracker_meta.json       ← contains checksums and status for "ok"
 ```
 
-A [resolved key](glossary.md#resolved-key) is formed by prepending an optional [target folder](glossary.md#target-folder): `resolvedKey = targetFolder + "." + key`. For example, key `ok` with target folder `apps.common.buttons` resolves to `apps.common.buttons.ok` before the folder path is computed. The resolution logic lives in `resolveResourceKey()` in `@simoncodes-ca/domain`.
+A [resolved key](glossary.md#resolved-key) is formed by prepending an optional [target folder](glossary.md#target-folder): `resolvedKey = targetFolder + "." + key`. For example, key `ok` with target folder `apps.common.buttons` resolves to `apps.common.buttons.ok` before the folder path is computed. The resolution logic lives in `resolveResourceKey()` in `@simoncodes-ca/domain`. Only creation (`addResource`) takes a target folder; an edit names the full existing key and changes folder with `moveTo` (see [core-library.md](core-library.md#collection-bound-operations)).
 
 A single-segment key (e.g. `title`) places the entry at the root of the collection's `translationsFolder` — no subdirectory is created.
 
@@ -248,6 +250,76 @@ erDiagram
 
 `ResourceEntries` and `TrackerMetadata` are always paired: one `resource_entries.json` and one `tracker_meta.json` per folder, never one without the other. The relationship between `ResourceEntry` and `ResourceEntryMetadata` is by shared entry key; the relationship between a locale value in `ResourceEntry` and a `LocaleMetadata` object is by shared locale code.
 
+### Read model: Resource Summary
+
+Readers outside core do not see the stored pair. They see a [Resource Summary](glossary.md#resource-summary) (`libs/domain/src/lib/resource-summary.ts`), built from one entry and its opened `Collection`:
+
+```typescript
+interface ResourceSummary {
+  fullKey: string;      // "apps.common.buttons.ok"
+  folderPath: string;   // "apps.common.buttons" ('' at the root)
+  entryKey: string;     // "ok"
+  base: { locale: string; value: string };      // the collection's base locale and `source`
+  targets: Array<{                               // every collection target locale, in collection order
+    locale: string;
+    value?: string;                              // absent when the entry has no value
+    status?: TranslationStatus;                  // absent when there is no metadata
+    needsWork: boolean;                          // needsTranslation(meta): no metadata, new or stale
+    sameAsBase: boolean;                         // isUntranslatedCopy on trimmed, non-empty values
+  }>;
+  comment?: string;
+  tags: string[];          // the resource's own tags
+  inheritedTags: string[]; // the collection's tags
+}
+```
+
+A target locale without a value still has a row. Values for locales the collection does not have are not shown.
+
+---
+
+## Entry Change
+
+`entryChange(intent, input)` in `libs/domain/src/lib/entry-change.ts` owns the comment and tags presence rule. CLI add-resource, CLI edit-resource and API update use this pure function. It has no platform dependencies. Missing values return `undefined`. Non-empty values pass through without normalization.
+
+On edit, `comment: ''` clears the comment and `tags: []` removes tags. On add, empty values return `undefined` because there is nothing to clear. Core retains all storage and tag normalization rules. API update preserves its existing behavior.
+
+Edit-resource prompts only for missing key and base value. Comment and tags come from flags. The flag-record boundary converts exactly empty `--tags ""` to `undefined`, while comma-only `--tags ,` supplies an empty list.
+
+## Bundle Definition
+
+A [bundle](glossary.md#bundle) is configured by one entry under `bundles` in `.lingo-tracker.json`, keyed by the bundle name. The [Bundle Definition](glossary.md#bundle-definition) type and its rules live in `libs/domain/src/lib/bundle-definition.ts`, so all four consumers use the same ones: core (`LingoTrackerConfig.bundles`, the add/update/delete operations, generation), the API (the dry run and generate; `BundleDefinitionDto` is an alias), the CLI (`init`, `bundle`) and the Tracker bundle form.
+
+```typescript
+interface BundleDefinition {
+  bundleName: string;                       // file name pattern with {locale}, e.g. "main.{locale}"
+  dist: string;                             // output folder, relative to the project root or absolute
+  collections: 'All' | Array<{
+    name: string;                           // an existing collection
+    bundledKeyPrefix?: string;              // prepended to every key from this collection
+    entriesSelectionRules: 'All' | Array<{
+      matchingPattern: string;              // "*", "apps.*" or an exact key
+      matchingTags?: string[];
+      matchingTagOperator?: 'All' | 'Any';  // default 'Any'
+    }>;
+    mergeStrategy?: 'merge' | 'override';   // default 'merge' (first collection wins)
+  }>;
+  typeDistFile?: string;                    // .ts file for generated token constants
+  tokenCasing?: TokenCasing;                // overrides the global setting
+  tokenConstantName?: string;               // a JavaScript identifier
+  transformICUToTransloco?: boolean;        // overrides the global setting (default true)
+}
+```
+
+| Function | Rule |
+|---|---|
+| `validateBundleKey(key)` | The bundle name is required and uses only letters, digits, hyphens and underscores. |
+| `validateBundleDefinition(definition, collectionNames)` | Returns every problem, never throws: `bundleName` is required and has `{locale}`; `dist` is required; `collections` is `'All'` or a non-empty list of existing collections, each at most once per `bundledKeyPrefix`; rules are `'All'` or a non-empty list, each with a `matchingPattern` and a valid tag operator; `mergeStrategy` is `merge` or `override`; `tokenCasing` is `upperCase` or `camelCase`; `typeDistFile` ends in `.ts`; `tokenConstantName` passes `validateJavaScriptIdentifier`. |
+| `normalizeBundleDefinition(definition)` | The stored form: strings trimmed, empty or undefined optionals and empty tags dropped, unknown fields dropped, `'All'` kept, and a legacy `typeDist` moved to `typeDistFile` when that is absent. It never throws: a non-object input becomes an empty definition, and a non-object collection or rule becomes `{ name: '' }` / `{ matchingPattern: '' }`, which validation reports with its index. |
+| `checkBundleDefinition(definition, collectionNames, key?)` | The one check every writer runs (core add/update, the API dry run, the Tracker form): the normalized `definition` and `errors`, key errors first. |
+| `findBundleDefinition(bundles, key)` | The stored definition for a key, own properties only, so `constructor` finds nothing. |
+| `bundleOutputFile(definition, locale)` | `<dist>/<bundleName with {locale} replaced>.json` with `/` separators, no `.` segments or duplicate slashes. Config paths use `/`; backslashes are not normalized. Core resolves the result against the project directory to write the file. |
+| `hasLocalePlaceholder`, `isTypeScriptFile`, `hasTypeDistConfigured` | The small checks the validator and the Tracker form share; `hasTypeDistConfigured` also accepts the deprecated `typeDist`. |
+
 ---
 
 ## ICU vs Transloco Format
@@ -270,6 +342,8 @@ LingoTracker uses two formats at different points in the pipeline:
 
 **Going the other direction**: when importing external translation files (XLIFF or JSON), `transloco-to-icu.ts` converts Transloco `{{ varName }}` back to ICU `{varName}` before the values are stored.
 
+**The `runtime` setting.** Both conversions assume `@jsverse/transloco-messageformat`. The global `runtime` field (`AppRuntime`, `app-runtime.ts`) selects the pair: `toStoredIcu` and `toRuntimeValue` in `runtime-conversion.ts` dispatch on it, and `unrenderableIcuConstructs` reports ICU that plain Transloco cannot render. Under `transloco`, import quotes literal `{`, `}` and `'` into ICU and bundle unquotes them, so storage stays ICU for every runtime. Only the `migration` import strategy applies `toStoredIcu`, because its source is app syntax; other strategies read exported, already-stored ICU. The round trip is identity apart from whitespace inside `{{ }}`. See [ADR-0003](../docs/adr/0003-app-runtime-setting.md).
+
 The `transformICUToTransloco` flag in `BundleDefinition` (default `true`) controls whether conversion happens for a given bundle. Setting it to `false` emits raw ICU format — useful for non-Transloco consumers.
 
 See [bundle-generation.md](bundle-generation.md) *(phase 5, coming soon)* for the full bundle pipeline including how `icuToTransloco()` is called in context.
@@ -291,12 +365,15 @@ flowchart TD
     STALE["stale\nBase value changed\nafter translation was written"]
     VERIFIED["verified\nReviewed and approved\nby a language expert"]
 
-    NEW -- "Translation value written\n(import or edit)" --> TRANSLATED
+    NEW -- "Different value written without status" --> TRANSLATED
+    NEW -- "Explicit translated status" --> TRANSLATED
+    NEW -- "Identical copy verified" --> VERIFIED
     TRANSLATED -- "Reviewed and approved" --> VERIFIED
     VERIFIED -- "Reviewed and approved" --> VERIFIED
     TRANSLATED -- "Base locale value changes" --> STALE
     VERIFIED -- "Base locale value changes" --> STALE
-    STALE -- "Translation updated\nto match new base" --> TRANSLATED
+    STALE -- "Different value written without status" --> TRANSLATED
+    STALE -- "Base copy written without status" --> NEW
 
     style NEW fill:#fff3cd,stroke:#ffc107,color:#000
     style TRANSLATED fill:#d1ecf1,stroke:#17a2b8,color:#000
@@ -315,7 +392,7 @@ Status in CI validation:
 
 Only `verified` entries pass CI validation without flags. This forces an explicit human review step before a translation is considered production-ready.
 
-The status is stored in `tracker_meta.json` — never in `resource_entries.json`. Separating content from metadata means translation values can be diffed cleanly in Git without checksum noise.
+The status is stored in `tracker_meta.json` — never in `resource_entries.json`. Separating content from metadata means translation values can be diffed cleanly in Git without checksum noise. When a writer omits the status, `recordTranslation` in `libs/domain/src/lib/staleness.ts` infers `new` for a base copy or `translated` for another value. It keeps an explicit status, including `translated`, when the values match.
 
 ---
 
@@ -326,16 +403,7 @@ The status is stored in `tracker_meta.json` — never in `resource_entries.json`
 1. **`checksum`** — MD5 of the entry's own locale value at the last write.
 2. **`baseChecksum`** — MD5 of the base locale value at the time this translation was last written.
 
-When the base locale value is updated (via `edit-resource` or import), `core` recomputes the base entry's `checksum`. For every non-base locale, it then compares the stored `baseChecksum` against the new base `checksum`. If they differ, the locale's status is automatically set to `stale` — no separate scan command is needed.
-
-The check happens in `shouldMarkStale()` in `@simoncodes-ca/domain`:
-
-```typescript
-function shouldMarkStale(currentMetadata: LocaleMetadata, newBaseChecksum: string): boolean {
-  return currentMetadata.baseChecksum !== undefined
-    && currentMetadata.baseChecksum !== newBaseChecksum;
-}
-```
+When the base locale value changes, `core` computes its new checksum. `applyBaseChange` in `libs/domain/src/lib/staleness.ts` updates each target locale's `baseChecksum`. It sets the status to `stale`, or to `new` when the translation checksum equals the new base checksum. `ResourceFolder.setBase` applies this rule during edit, import, and normalize.
 
 **Why MD5?** LingoTracker uses MD5 solely as a fast, deterministic, fixed-length content fingerprint — not as a cryptographic security primitive. MD5 produces a 32-character hex digest (`calculateChecksum` uses `node:crypto` via `crypto.createHash('md5').update(value).digest('hex')`). Collision resistance is not required here: the values being hashed are human-readable translation strings, and a collision would at worst suppress a stale detection for one entry. MD5 is faster than SHA-256 for this high-frequency, low-risk use case, and its 32-character output is compact enough to keep `tracker_meta.json` files readable in Git diffs.
 
@@ -372,6 +440,8 @@ The list for a resource combines the global file with its collection's file, ded
 
 This deliberately avoids `normalizeTags()`, which lowercases and hyphenates. `normalizeTags()` would turn `iPhone` into `iphone` and `Node.js` into `node-js`. That would destroy the exact thing this feature protects.
 
+For list edits, domain `listEditProblem()` checks the shared add/remove/set conflict rule, and `mergeListEdit()` applies the merge. Core gives it `normalizeProtectedTerms()` here and `normalizeTags()` for collection tags, so the two lists keep their own value rules.
+
 ### Matching
 
 `buildProtectedTermRegex(term, { caseInsensitive })` escapes the term for use in a regular expression. `Node.js` and `C++` therefore match literally. It then wraps the term in Unicode lookarounds, `(?<![\p{L}\p{N}])…(?![\p{L}\p{N}])`.
@@ -383,8 +453,12 @@ Two functions use the regular expression, with opposite case sensitivity:
 | Function | Case handling | Used by |
 |---|---|---|
 | `findProtectedTerms(value, terms)` | Case-**insensitive** — returns the stored canonical term, not the matched substring | Export annotation |
-| `findProtectedTermViolations(source, translation, terms)` | Source matched case-insensitively; translation matched case-**sensitively** | Import verification |
+| `findProtectedTermViolations(source, translation, terms)` | Source matched case-insensitively; translation matched case-**sensitively** | Import verification; the [Translator](glossary.md#translator)'s protected-term guard |
 
 That difference is the mechanism. LingoTracker flags a source string however it was typed. It then requires the translation to hold the term exactly as stored. This is what catches `iPhone` returning from a translation service as `iphone` or as `Iphone`.
 
 All of this lives in `libs/domain/src/lib/protected-terms.ts`, and all of it is pure. Resolving and reading the files is core's job. See [core-library.md — Protected Terms Resolution](core-library.md#protected-terms-resolution).
+
+## Key Tree
+
+The domain [Key Tree](glossary.md#key-tree) converts flat dot-delimited entries to nested JSON and back. It has no Node dependencies, so browser callers can use the same rules. Branches have null prototypes; rich leaf objects remain opaque. Conflict detection is independent of key order. An optional path transformation reports distinct source keys that map to the same output path. Flattening preserves empty segments. Parent leaves win, and callers choose whether to reject or report the conflicts.

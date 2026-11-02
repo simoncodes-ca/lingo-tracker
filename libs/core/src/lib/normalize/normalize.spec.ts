@@ -1,760 +1,342 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import fs from 'fs';
-import path from 'path';
-import { normalize, type NormalizeParams } from './normalize';
-import type { ResourceEntries } from '../../resource/resource-entry';
-import type { TrackerMetadata } from '../../resource/tracker-metadata';
-import { calculateChecksum } from '../../resource/checksum';
-import * as cleanupModule from './cleanup-empty-folders';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { seedResources, testCollection, useTempDir, writeFolderFiles } from '../../testing/temp-dir.spec-helpers';
+import { ReadOnlyCollectionError } from '../errors/lingo-tracker-error';
+import { calculateChecksum } from '../resource/checksum';
+import { readCollection } from '../resource/read-collection';
+import { normalize } from './normalize';
 
-// Mock the fs module
-vi.mock('fs');
+const md5 = calculateChecksum;
 
-describe('Normalize', () => {
-  const baseLocale = 'en';
-  const locales = ['en', 'fr-ca', 'es'];
+describe('normalize', () => {
+  const dir = useTempDir('normalize-');
+  const collection = () => testCollection(dir(), { locales: ['en', 'fr', 'es'] });
+  const readJson = (folder: string, file: string) => JSON.parse(readFileSync(join(folder, file), 'utf8'));
+  const meta = (folder: string) => readJson(folder, 'tracker_meta.json');
+  const entries = (folder: string) => readJson(folder, 'resource_entries.json');
 
-  // Helper to create a mock file system structure
-  interface MockFileSystem {
-    [path: string]: {
-      type: 'file' | 'directory';
-      content?: string;
-      children?: string[];
-    };
-  }
+  it.skipIf(process.getuid?.() === 0)('reports a pruning removal failure and retains the empty folder', async () => {
+    const root = dir();
+    const empty = join(root, 'empty');
+    mkdirSync(empty);
+    chmodSync(root, 0o555);
+    try {
+      const result = await normalize(collection());
+      const problem = result.problems[0];
+      expect(problem).toBeDefined();
+      expect(problem).toMatchObject({ kind: 'not-removed', folderPath: 'empty', absolutePath: empty });
+      expect(problem?.message).toContain('EACCES');
+      expect(result.foldersRemoved).toBe(0);
+      expect(existsSync(empty)).toBe(true);
+    } finally {
+      chmodSync(root, 0o755);
+    }
+  });
 
-  function setupMockFileSystem(mockFs: MockFileSystem) {
-    vi.mocked(fs.existsSync).mockImplementation((filepath) => {
-      return mockFs[filepath as string] !== undefined;
+  it.each([
+    ['{p, plural, offset:2other{x}}', 'collapsed-case-body'],
+    ['{{{a}}}', 'braced-placeholder'],
+  ])('reports %s without changing bytes or checksums', async (value, kind) => {
+    const checksum = md5(value);
+    const folder = writeFolderFiles(dir(), 'common', {
+      entries: { ok: { source: value, fr: value, es: value } },
+      meta: {
+        ok: {
+          en: { checksum },
+          fr: { checksum, baseChecksum: checksum, status: 'new' },
+          es: { checksum, baseChecksum: checksum, status: 'new' },
+        },
+      },
     });
-
-    vi.mocked(fs.statSync).mockImplementation((filepath) => {
-      const entry = mockFs[filepath as string];
-      if (!entry) {
-        throw new Error(`ENOENT: no such file or directory, stat '${filepath}'`);
-      }
-      return {
-        isDirectory: () => entry.type === 'directory',
-        isFile: () => entry.type === 'file',
-      } as fs.Stats;
-    });
-
-    vi.mocked(fs.readdirSync).mockImplementation((filepath, options) => {
-      const entry = mockFs[filepath as string];
-      if (!entry || entry.type !== 'directory') {
-        throw new Error(`ENOTDIR: not a directory, scandir '${filepath}'`);
-      }
-      const childNames = entry.children || [];
-      // When withFileTypes is requested, return Dirent-like objects
-      if (options && typeof options === 'object' && (options as { withFileTypes?: boolean }).withFileTypes) {
-        return childNames.map((childName) => {
-          const childPath = path.join(filepath as string, childName);
-          const childEntry = mockFs[childPath];
-          const isDir = childEntry?.type === 'directory';
-          return {
-            name: childName,
-            isDirectory: () => isDir,
-            isFile: () => !isDir,
-            isSymbolicLink: () => false,
-            isBlockDevice: () => false,
-            isCharacterDevice: () => false,
-            isFIFO: () => false,
-            isSocket: () => false,
-          } as unknown as fs.Dirent;
-        });
-      }
-      return childNames as unknown as fs.Dirent[];
-    });
-
-    vi.mocked(fs.readFileSync).mockImplementation((filepath) => {
-      const entry = mockFs[filepath as string];
-      if (!entry || entry.type !== 'file') {
-        throw new Error(`ENOENT: no such file or directory, open '${filepath}'`);
-      }
-      return entry.content || '';
-    });
-
-    vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks();
+    const paths = ['resource_entries.json', 'tracker_meta.json'].map((file) => join(folder, file));
+    const before = paths.map((path) => readFileSync(path));
+    const dry = await normalize(collection(), { dryRun: true });
+    const result = await normalize(collection());
+    expect(result.findings).toEqual(dry.findings);
+    expect(result.findings.map(({ key, locale, kind }) => ({ key, locale, kind }))).toEqual(
+      ['en', 'fr', 'es'].map((locale) => ({ key: 'common.ok', locale, kind })),
+    );
+    expect(result).toMatchObject({ valuesConverted: 0, filesCreated: 0, filesUpdated: 0, localesAdded: 0 });
+    expect(paths.map((path) => readFileSync(path))).toEqual(before);
+    if (kind === 'collapsed-case-body')
+      expect(result.findings[0]?.detail).toBe(
+        "case 'other' body {x} may have been the placeholder {{x}}; earlier versions dropped one brace pair here. If it was a placeholder, edit the value to restore it.",
+      );
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe('normalize', () => {
-    it('should process all entries in translations folder', async () => {
-      const testDir = '/test-root';
-      const entriesPath = path.join(testDir, 'resource_entries.json');
-      const metaPath = path.join(testDir, 'tracker_meta.json');
+  it('refuses a read-only collection', async () => {
+    await expect(normalize(testCollection(dir(), { readOnly: true }))).rejects.toThrow(ReadOnlyCollectionError);
+  });
 
-      const entries: ResourceEntries = {
-        cancel: {
-          source: 'Cancel',
-          'fr-ca': 'Annuler',
-        },
-        ok: {
-          source: 'OK',
-        },
-      };
+  it('counts a locale value without metadata as new, like the reader and validate do', async () => {
+    const folder = writeFolderFiles(dir(), 'common', { entries: { ok: { source: 'OK', fr: 'Oui', es: 'Vale' } } });
 
-      const metadata: TrackerMetadata = {
-        cancel: {
-          en: { checksum: calculateChecksum('Cancel') },
-          'fr-ca': {
-            checksum: calculateChecksum('Annuler'),
-            baseChecksum: calculateChecksum('Cancel'),
-            status: 'translated',
-          },
-        },
-        ok: {
-          en: { checksum: calculateChecksum('OK') },
-        },
-      };
+    const result = await normalize(collection());
 
-      const mockFs: MockFileSystem = {
-        [testDir]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-        [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      expect(result.entriesProcessed).toBe(2);
+    expect(result).toMatchObject({ entriesProcessed: 1, localesAdded: 0, filesCreated: 1, filesUpdated: 1 });
+    expect(meta(folder).ok).toEqual({
+      en: { checksum: md5('OK') },
+      fr: { checksum: md5('Oui'), baseChecksum: md5('OK'), status: 'new' },
+      es: { checksum: md5('Vale'), baseChecksum: md5('OK'), status: 'new' },
     });
+    const read = readCollection(collection());
+    expect(read.resources[0]?.entry.metadata['fr']?.status).toBe('new');
+  });
 
-    it('should create missing tracker_meta.json files', async () => {
-      const testDir = '/test-root';
-      const entriesPath = path.join(testDir, 'resource_entries.json');
+  it('seeds missing target locales as new copies of the base', async () => {
+    const col = collection();
+    seedResources(col, { 'common.ok': { source: 'OK', translations: { fr: 'Oui' } } });
 
-      const entries: ResourceEntries = {
-        cancel: {
-          source: 'Cancel',
-        },
-      };
+    const result = await normalize(col);
 
-      const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['resource_entries.json'] },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-      };
+    expect(result).toMatchObject({ entriesProcessed: 1, localesAdded: 1, filesCreated: 0, filesUpdated: 2 });
+    const folder = join(dir(), 'common');
+    expect(entries(folder).ok).toEqual({ source: 'OK', fr: 'Oui', es: 'OK' });
+    expect(meta(folder).ok.es).toEqual({ checksum: md5('OK'), baseChecksum: md5('OK'), status: 'new' });
+    expect(meta(folder).ok.fr.status).toBe('translated');
+  });
 
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      expect(result.filesCreated).toBeGreaterThan(0);
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        path.join(testDir, 'tracker_meta.json'),
-        expect.any(String),
-        'utf8',
-      );
-    });
-
-    it('should add missing locale entries across all resources', async () => {
-      const testDir = '/test-root';
-      const entriesPath = path.join(testDir, 'resource_entries.json');
-      const metaPath = path.join(testDir, 'tracker_meta.json');
-
-      const entries: ResourceEntries = {
-        cancel: {
-          source: 'Cancel',
-          'fr-ca': 'Annuler',
-          // es missing
-        },
-        ok: {
-          source: 'OK',
-          // fr-ca and es missing
-        },
-      };
-
-      const metadata: TrackerMetadata = {
-        cancel: {
-          en: { checksum: calculateChecksum('Cancel') },
-          'fr-ca': {
-            checksum: calculateChecksum('Annuler'),
-            baseChecksum: calculateChecksum('Cancel'),
-            status: 'translated',
-          },
-        },
-        ok: {
-          en: { checksum: calculateChecksum('OK') },
-        },
-      };
-
-      const mockFs: MockFileSystem = {
-        [testDir]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-        [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      // Should add: es to cancel, fr-ca and es to ok = 3 locales
-      expect(result.localesAdded).toBe(3);
-
-      // Verify writeFileSync was called with updated entries
-      expect(fs.writeFileSync).toHaveBeenCalled();
-    });
-
-    it('should update checksums for all entries', async () => {
-      const testDir = '/test-root';
-      const entriesPath = path.join(testDir, 'resource_entries.json');
-      const metaPath = path.join(testDir, 'tracker_meta.json');
-
-      const entries: ResourceEntries = {
-        cancel: {
-          source: 'Cancel',
-          'fr-ca': 'Annuler',
-        },
-      };
-
-      const metadata: TrackerMetadata = {
-        cancel: {
-          en: { checksum: 'outdated-checksum' },
-          'fr-ca': {
-            checksum: 'outdated-checksum',
-            baseChecksum: 'outdated-checksum',
-            status: 'translated',
-          },
-        },
-      };
-
-      const mockFs: MockFileSystem = {
-        [testDir]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-        [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      await normalize(params);
-
-      // Verify files were written with updated content
-      expect(fs.writeFileSync).toHaveBeenCalled();
-    });
-
-    it('should detect and mark stale translations', async () => {
-      const testDir = '/test-root';
-      const entriesPath = path.join(testDir, 'resource_entries.json');
-      const metaPath = path.join(testDir, 'tracker_meta.json');
-
-      const oldBaseValue = 'Save';
-      const newBaseValue = 'Save Changes';
-
-      const entries: ResourceEntries = {
+  it('recomputes stale checksums and applies the Staleness rule when the base value was hand-edited', async () => {
+    const folder = writeFolderFiles(dir(), 'common', {
+      entries: { save: { source: 'Save changes', fr: 'Enregistrer', es: 'Save changes' } },
+      meta: {
         save: {
-          source: newBaseValue,
-          'fr-ca': 'Enregistrer', // Translation of old value
+          en: { checksum: md5('Save') },
+          fr: { checksum: 'outdated', baseChecksum: md5('Save'), status: 'verified' },
+          es: { checksum: md5('Save'), baseChecksum: md5('Save'), status: 'new' },
         },
-      };
+      },
+    });
 
-      const metadata: TrackerMetadata = {
-        save: {
-          en: { checksum: calculateChecksum(oldBaseValue) },
-          'fr-ca': {
-            checksum: calculateChecksum('Enregistrer'),
-            baseChecksum: calculateChecksum(oldBaseValue),
-            status: 'translated',
-          },
+    await normalize(collection());
+
+    expect(meta(folder).save).toEqual({
+      en: { checksum: md5('Save changes') },
+      fr: { checksum: md5('Enregistrer'), baseChecksum: md5('Save changes'), status: 'stale' },
+      es: { checksum: md5('Save changes'), baseChecksum: md5('Save changes'), status: 'new' },
+    });
+  });
+
+  it('keeps statuses when only a translation checksum was out of date', async () => {
+    const folder = writeFolderFiles(dir(), 'common', {
+      entries: { ok: { source: 'OK', fr: 'Oui', es: 'Vale' } },
+      meta: {
+        ok: {
+          en: { checksum: md5('OK') },
+          fr: { checksum: 'outdated', baseChecksum: md5('OK'), status: 'verified' },
+          es: { checksum: 'outdated', baseChecksum: md5('OK'), status: 'translated' },
         },
-      };
+      },
+    });
 
-      const mockFs: MockFileSystem = {
-        [testDir]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
+    const result = await normalize(collection());
+
+    expect(result.filesUpdated).toBe(2);
+    expect(meta(folder).ok.fr).toEqual({ checksum: md5('Oui'), baseChecksum: md5('OK'), status: 'verified' });
+    expect(meta(folder).ok.es).toEqual({ checksum: md5('Vale'), baseChecksum: md5('OK'), status: 'translated' });
+  });
+
+  it('marks translations made from an older base stale (a merge where the base changed on another branch)', async () => {
+    const folder = writeFolderFiles(dir(), 'common', {
+      entries: {
+        verified: { source: 'OK', fr: 'Oui', es: 'Vale' },
+        untouched: { source: 'Yes', fr: 'Oui', es: 'Sí' },
+      },
+      meta: {
+        verified: {
+          en: { checksum: md5('OK') },
+          fr: { checksum: md5('Oui'), baseChecksum: md5('Okay'), status: 'verified' },
+          es: { checksum: md5('Vale'), baseChecksum: md5('Okay'), status: 'translated' },
         },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-        [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
-      };
+        untouched: {
+          en: { checksum: md5('Yes') },
+          fr: { checksum: md5('Oui'), baseChecksum: md5('Yes'), status: 'verified' },
+          es: { checksum: md5('Sí'), baseChecksum: md5('Okay'), status: 'new' },
+        },
+      },
+    });
 
-      setupMockFileSystem(mockFs);
+    const first = await normalize(collection());
 
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
+    expect(first.filesUpdated).toBe(2);
+    expect(meta(folder).verified).toEqual({
+      en: { checksum: md5('OK') },
+      fr: { checksum: md5('Oui'), baseChecksum: md5('OK'), status: 'stale' },
+      es: { checksum: md5('Vale'), baseChecksum: md5('OK'), status: 'stale' },
+    });
+    expect(meta(folder).untouched).toEqual({
+      en: { checksum: md5('Yes') },
+      fr: { checksum: md5('Oui'), baseChecksum: md5('Yes'), status: 'verified' },
+      es: { checksum: md5('Sí'), baseChecksum: md5('Yes'), status: 'new' },
+    });
+
+    const second = await normalize(collection());
+    expect(second.filesUpdated).toBe(0);
+    expect(meta(folder).verified.fr.status).toBe('stale');
+  });
+
+  it('leaves a locale that is not in the collection untouched', async () => {
+    const deMeta = { checksum: 'outdated', baseChecksum: 'older-base', status: 'verified' };
+    const folder = writeFolderFiles(dir(), 'common', {
+      entries: { ok: { source: 'OK', fr: 'Oui', es: 'Vale', de: 'Ja' } },
+      meta: {
+        ok: {
+          en: { checksum: md5('OK') },
+          fr: { checksum: md5('Oui'), baseChecksum: md5('OK'), status: 'translated' },
+          es: { checksum: md5('Vale'), baseChecksum: md5('OK'), status: 'translated' },
+          de: deMeta,
+        },
+      },
+    });
+
+    const result = await normalize(collection());
+
+    expect(result.filesUpdated).toBe(0);
+    expect(entries(folder).ok.de).toBe('Ja');
+    expect(meta(folder).ok.de).toEqual(deMeta);
+  });
+
+  it('converts Transloco syntax to ICU, normalizes tags and drops a stray base-locale property', async () => {
+    const folder = writeFolderFiles(dir(), 'common', {
+      entries: {
+        hello: {
+          source: 'Hello {{ name }}',
+          en: 'Hello',
+          fr: 'Bonjour {{ name }}',
+          es: 'Hola {name}',
+          tags: ['UI', 'Buttons '],
+        },
+      },
+    });
+
+    const result = await normalize(collection());
+
+    expect(result).toMatchObject({ valuesConverted: 2, tagsNormalized: 1, localesAdded: 0 });
+    expect(entries(folder).hello).toEqual({
+      source: 'Hello {name}',
+      fr: 'Bonjour {name}',
+      es: 'Hola {name}',
+      tags: ['ui', 'buttons'],
+    });
+    expect(meta(folder).hello.fr.checksum).toBe(md5('Bonjour {name}'));
+    expect(meta(folder).hello.en).toEqual({ checksum: md5('Hello {name}') });
+  });
+
+  it('is a no-op on a consistent collection and is idempotent', async () => {
+    const col = collection();
+    seedResources(col, {
+      'common.ok': { source: 'OK', translations: { fr: 'Oui', es: 'Vale' }, comment: 'Button', tags: ['ui'] },
+    });
+    const folder = join(dir(), 'common');
+    const before = { entries: entries(folder), meta: meta(folder) };
+
+    const result = await normalize(col);
+
+    expect(result).toEqual({
+      entriesProcessed: 1,
+      localesAdded: 0,
+      valuesConverted: 0,
+      tagsNormalized: 0,
+      filesCreated: 0,
+      filesUpdated: 0,
+      foldersRemoved: 0,
+      dryRun: false,
+      problems: [],
+      findings: [],
+    });
+    expect({ entries: entries(folder), meta: meta(folder) }).toEqual(before);
+  });
+
+  it('walks nested folders, creates missing files and removes empty folders', async () => {
+    writeFolderFiles(dir(), 'apps.common', { entries: { ok: { source: 'OK' } } });
+    writeFolderFiles(dir(), 'apps.common.buttons', { entries: { cancel: { source: 'Cancel' } }, meta: {} });
+    writeFolderFiles(dir(), 'apps.empty', { entries: {} });
+    mkdirSync(join(dir(), 'orphan', 'deep'), { recursive: true });
+
+    const result = await normalize(collection());
+
+    expect(result).toMatchObject({ entriesProcessed: 2, localesAdded: 4, filesCreated: 1, filesUpdated: 3 });
+    expect(result.foldersRemoved).toBe(3);
+    expect(existsSync(join(dir(), 'apps', 'common', 'buttons', 'tracker_meta.json'))).toBe(true);
+    expect(existsSync(join(dir(), 'orphan'))).toBe(false);
+    // A folder with an empty entries file gets no metadata file from normalize; cleanup removes it.
+    expect(existsSync(join(dir(), 'apps', 'empty'))).toBe(false);
+  });
+
+  it('dry run reports the changes without writing', async () => {
+    const folder = writeFolderFiles(dir(), 'common', { entries: { ok: { source: 'OK' } } });
+    mkdirSync(join(dir(), 'orphan'));
+
+    const result = await normalize(collection(), { dryRun: true });
+
+    expect(result).toMatchObject({
+      entriesProcessed: 1,
+      localesAdded: 2,
+      filesCreated: 1,
+      filesUpdated: 1,
+      dryRun: true,
+    });
+    expect(existsSync(join(folder, 'tracker_meta.json'))).toBe(false);
+    expect(entries(folder).ok).toEqual({ source: 'OK' });
+    expect(existsSync(join(dir(), 'orphan'))).toBe(true);
+  });
+
+  it('returns zero counts for a missing translations folder', async () => {
+    for (const dryRun of [false, true]) {
+      const result = await normalize(testCollection(join(dir(), 'missing')), { dryRun });
+      expect(result).toEqual({
+        entriesProcessed: 0,
+        localesAdded: 0,
+        valuesConverted: 0,
+        tagsNormalized: 0,
+        filesCreated: 0,
+        filesUpdated: 0,
         foldersRemoved: 0,
-        removedPaths: [],
+        dryRun,
+        problems: [],
+        findings: [],
       });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      await normalize(params);
-
-      // Verify metadata was written with stale status
-      const metaWriteCalls = vi.mocked(fs.writeFileSync).mock.calls.filter((call) => call[0] === metaPath);
-      expect(metaWriteCalls.length).toBeGreaterThan(0);
-    });
-
-    it('should remove empty folders after normalization', async () => {
-      const testDir = '/test-root';
-      const withEntriesFolder = path.join(testDir, 'with-entries');
-      const entriesPath = path.join(withEntriesFolder, 'resource_entries.json');
-      const metaPath = path.join(withEntriesFolder, 'tracker_meta.json');
-
-      const entries: ResourceEntries = {
-        cancel: {
-          source: 'Cancel',
-        },
-      };
-
-      const metadata: TrackerMetadata = {
-        cancel: {
-          en: { checksum: calculateChecksum('Cancel') },
-        },
-      };
-
-      const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['with-entries'] },
-        [withEntriesFolder]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-        [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 1,
-        removedPaths: ['/test-root/empty'],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      expect(result.foldersRemoved).toBe(1);
-      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(testDir, false);
-    });
-
-    it('should return correct summary counts', async () => {
-      const testDir = '/test-root';
-      const entriesPath = path.join(testDir, 'resource_entries.json');
-      const metaPath = path.join(testDir, 'tracker_meta.json');
-
-      const entries: ResourceEntries = {
-        cancel: {
-          source: 'Cancel',
-          'fr-ca': 'Annuler',
-        },
-      };
-
-      const metadata: TrackerMetadata = {
-        cancel: {
-          en: { checksum: calculateChecksum('Cancel') },
-          'fr-ca': {
-            checksum: calculateChecksum('Annuler'),
-            baseChecksum: calculateChecksum('Cancel'),
-            status: 'translated',
-          },
-        },
-      };
-
-      const mockFs: MockFileSystem = {
-        [testDir]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-        [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      expect(result.entriesProcessed).toBe(1);
-      expect(result.localesAdded).toBe(1); // es added
-      expect(result.filesUpdated).toBeGreaterThan(0);
-      expect(result.dryRun).toBe(false);
-    });
-
-    it('should support dry-run mode (report changes but do not modify files)', async () => {
-      const testDir = '/test-root';
-      const entriesPath = path.join(testDir, 'resource_entries.json');
-      const metaPath = path.join(testDir, 'tracker_meta.json');
-
-      const entries: ResourceEntries = {
-        cancel: {
-          source: 'Cancel',
-          'fr-ca': 'Annuler',
-        },
-      };
-
-      const metadata: TrackerMetadata = {
-        cancel: {
-          en: { checksum: calculateChecksum('Cancel') },
-          'fr-ca': {
-            checksum: calculateChecksum('Annuler'),
-            baseChecksum: calculateChecksum('Cancel'),
-            status: 'translated',
-          },
-        },
-      };
-
-      const mockFs: MockFileSystem = {
-        [testDir]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-        [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-        dryRun: true,
-      };
-
-      const result = await normalize(params);
-
-      expect(result.dryRun).toBe(true);
-      expect(result.entriesProcessed).toBe(1);
-      expect(result.localesAdded).toBe(1); // es would be added
-
-      // Files should not be modified in dry-run
-      expect(fs.writeFileSync).not.toHaveBeenCalled();
-      expect(cleanupModule.cleanupEmptyFolders).toHaveBeenCalledWith(testDir, true);
-    });
-
-    it('should handle deeply nested folder structures', async () => {
-      const testDir = '/test-root';
-      const level1 = path.join(testDir, 'apps');
-      const level2 = path.join(level1, 'common');
-      const level3 = path.join(level2, 'buttons');
-      const entriesPath = path.join(level3, 'resource_entries.json');
-      const metaPath = path.join(level3, 'tracker_meta.json');
-
-      const entries: ResourceEntries = {
-        cancel: {
-          source: 'Cancel',
-        },
-      };
-
-      const metadata: TrackerMetadata = {
-        cancel: {
-          en: { checksum: calculateChecksum('Cancel') },
-        },
-      };
-
-      const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['apps'] },
-        [level1]: { type: 'directory', children: ['common'] },
-        [level2]: { type: 'directory', children: ['buttons'] },
-        [level3]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-        [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      expect(result.entriesProcessed).toBe(1);
-      expect(result.localesAdded).toBe(2); // fr-ca and es
-    });
-
-    it('should handle collection with no inconsistencies (no-op)', async () => {
-      const testDir = '/test-root';
-      const entriesPath = path.join(testDir, 'resource_entries.json');
-      const metaPath = path.join(testDir, 'tracker_meta.json');
-
-      const entries: ResourceEntries = {
-        cancel: {
-          source: 'Cancel',
-          'fr-ca': 'Annuler',
-          es: 'Cancelar',
-        },
-      };
-
-      const baseChecksum = calculateChecksum('Cancel');
-      const metadata: TrackerMetadata = {
-        cancel: {
-          en: { checksum: baseChecksum },
-          'fr-ca': {
-            checksum: calculateChecksum('Annuler'),
-            baseChecksum,
-            status: 'translated',
-          },
-          es: {
-            checksum: calculateChecksum('Cancelar'),
-            baseChecksum,
-            status: 'translated',
-          },
-        },
-      };
-
-      const mockFs: MockFileSystem = {
-        [testDir]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [entriesPath]: { type: 'file', content: JSON.stringify(entries) },
-        [metaPath]: { type: 'file', content: JSON.stringify(metadata) },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      expect(result.entriesProcessed).toBe(1);
-      expect(result.localesAdded).toBe(0);
-    });
-
-    it('should handle non-existent translations folder gracefully', async () => {
-      const nonExistent = '/does-not-exist';
-
-      vi.mocked(fs.existsSync).mockReturnValue(false);
-
-      const params: NormalizeParams = {
-        translationsFolder: nonExistent,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      expect(result.entriesProcessed).toBe(0);
-      expect(result.localesAdded).toBe(0);
-      expect(result.filesCreated).toBe(0);
-      expect(result.filesUpdated).toBe(0);
-      expect(result.foldersRemoved).toBe(0);
-    });
-
-    it('should process multiple folders at different levels', async () => {
-      const testDir = '/test-root';
-      const appsButtons = path.join(testDir, 'apps', 'buttons');
-      const sharedValidation = path.join(testDir, 'shared', 'validation');
-
-      const entries1: ResourceEntries = {
-        cancel: { source: 'Cancel' },
-      };
-
-      const entries2: ResourceEntries = {
-        required: { source: 'Required' },
-      };
-
-      const metadata1: TrackerMetadata = {
-        cancel: { en: { checksum: calculateChecksum('Cancel') } },
-      };
-
-      const metadata2: TrackerMetadata = {
-        required: { en: { checksum: calculateChecksum('Required') } },
-      };
-
-      const mockFs: MockFileSystem = {
-        [testDir]: { type: 'directory', children: ['apps', 'shared'] },
-        [path.join(testDir, 'apps')]: {
-          type: 'directory',
-          children: ['buttons'],
-        },
-        [path.join(testDir, 'shared')]: {
-          type: 'directory',
-          children: ['validation'],
-        },
-        [appsButtons]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [sharedValidation]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [path.join(appsButtons, 'resource_entries.json')]: {
-          type: 'file',
-          content: JSON.stringify(entries1),
-        },
-        [path.join(appsButtons, 'tracker_meta.json')]: {
-          type: 'file',
-          content: JSON.stringify(metadata1),
-        },
-        [path.join(sharedValidation, 'resource_entries.json')]: {
-          type: 'file',
-          content: JSON.stringify(entries2),
-        },
-        [path.join(sharedValidation, 'tracker_meta.json')]: {
-          type: 'file',
-          content: JSON.stringify(metadata2),
-        },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      expect(result.entriesProcessed).toBe(2);
-      expect(result.localesAdded).toBe(4); // 2 entries × 2 missing locales
-    });
-
-    it('should skip folders with corrupted JSON files without modifying them', async () => {
-      const testDir = '/test-root';
-      const entriesPath = path.join(testDir, 'resource_entries.json');
-      const metaPath = path.join(testDir, 'tracker_meta.json');
-
-      const mockFs: MockFileSystem = {
-        [testDir]: {
-          type: 'directory',
-          children: ['resource_entries.json', 'tracker_meta.json'],
-        },
-        [entriesPath]: { type: 'file', content: 'invalid json{' },
-        [metaPath]: { type: 'file', content: 'invalid json{' },
-      };
-
-      setupMockFileSystem(mockFs);
-
-      // Spy on console.error to verify error message is logged
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-
-      vi.spyOn(cleanupModule, 'cleanupEmptyFolders').mockReturnValue({
-        foldersRemoved: 0,
-        removedPaths: [],
-      });
-
-      const params: NormalizeParams = {
-        translationsFolder: testDir,
-        baseLocale,
-        locales,
-      };
-
-      const result = await normalize(params);
-
-      // Should skip the folder and not process any entries
-      expect(result.entriesProcessed).toBe(0);
-
-      // Should log an error message
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️  Skipping folder due to invalid JSON'),
-        testDir,
-      );
-
-      // Should NOT write any files (folder is skipped)
-      expect(fs.writeFileSync).not.toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
-    });
+    }
+  });
+
+  it('skips a folder with invalid JSON, returns it as a problem and leaves it untouched', async () => {
+    const folder = writeFolderFiles(dir(), 'broken', { entries: 'invalid json{', meta: 'invalid json{' });
+    writeFolderFiles(dir(), 'fine', { entries: { ok: { source: 'OK' } } });
+
+    const result = await normalize(collection());
+
+    expect(result.entriesProcessed).toBe(1);
+    expect(result.problems).toHaveLength(1);
+    expect(result.problems[0]).toMatchObject({ folderPath: 'broken', absolutePath: folder });
+    expect(result.problems[0]?.message).toContain('resource_entries.json');
+    expect(readFileSync(join(folder, 'resource_entries.json'), 'utf8')).toBe('invalid json{');
+  });
+
+  it('leaves hidden folders alone: their entries are not normalized and their empty subfolders are kept', async () => {
+    const hiddenFolder = writeFolderFiles(join(dir(), '.backup'), '', { entries: { ok: { source: 'Hi {{ name }}' } } });
+    mkdirSync(join(hiddenFolder, 'empty'));
+
+    const result = await normalize(collection());
+
+    expect(result.entriesProcessed).toBe(0);
+    expect(result.foldersRemoved).toBe(0);
+    expect(entries(hiddenFolder).ok).toEqual({ source: 'Hi {{ name }}' });
+    expect(existsSync(join(hiddenFolder, 'tracker_meta.json'))).toBe(false);
+    expect(existsSync(join(hiddenFolder, 'empty'))).toBe(true);
+  });
+
+  it('keeps stray files and their ancestors without reporting errors', async () => {
+    const folder = writeFolderFiles(dir(), 'apps.common', { entries: {}, meta: {} });
+    writeFileSync(join(folder, 'notes.md'), 'my notes');
+    const result = await normalize(collection());
+    expect(result.foldersRemoved).toBe(0);
+    expect(result.problems).toEqual([]);
+    expect(readFileSync(join(folder, 'notes.md'), 'utf8')).toBe('my notes');
+    expect(existsSync(join(dir(), 'apps'))).toBe(true);
   });
 });

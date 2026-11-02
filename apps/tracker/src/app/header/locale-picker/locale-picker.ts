@@ -1,10 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { LocaleService, type LocaleCode } from '../../shared/services/locale.service';
 import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
+import { type LocaleCode, LocaleService } from '../../shared/services/locale.service';
 
 @Component({
   selector: 'locale-picker',

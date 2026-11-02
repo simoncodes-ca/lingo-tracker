@@ -1,0 +1,62 @@
+{
+  "description": {
+    "source": "Which entries qualify. An entry is exported when its status in that locale is one of these.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Qué entradas cumplen los requisitos. Una entrada se exporta cuando su estado en ese idioma es uno de estos.",
+    "fr-ca": "Quelles entrées sont retenues. Une entrée est exportée lorsque son statut dans cette langue est l’un de ceux-ci.",
+    "ru": "Какие записи подходят. Запись экспортируется, если её статус в этом языке один из перечисленных.",
+    "ja": "対象となるエントリです。そのロケールでのステータスがここで選んだものに該当するエントリがエクスポートされます。",
+    "de": "Welche Einträge infrage kommen. Ein Eintrag wird exportiert, wenn sein Status in dieser Sprache einer der folgenden ist."
+  },
+  "statusLabel": {
+    "source": "Status",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Estado",
+    "fr-ca": "Statut",
+    "ru": "Статус",
+    "ja": "ステータス",
+    "de": "Status"
+  },
+  "selectAll": {
+    "source": "Select all",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Seleccionar todo",
+    "fr-ca": "Tout sélectionner",
+    "ru": "Выбрать все",
+    "ja": "すべて選択",
+    "de": "Alle auswählen"
+  },
+  "statusHint": {
+    "source": "Default for a translator handoff: new and stale.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Valor predeterminado para entregar a un traductor: nuevo y desactualizado.",
+    "fr-ca": "Valeur par défaut pour une remise à un traducteur : nouveau et obsolète.",
+    "ru": "По умолчанию для передачи переводчику: новые и устаревшие.",
+    "ja": "翻訳者への引き渡しの既定値は「新規」と「古くなった」です。",
+    "de": "Standard für die Übergabe an Übersetzer: neu und veraltet."
+  },
+  "tagsLabel": {
+    "source": "Tags",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Etiquetas",
+    "fr-ca": "Étiquettes",
+    "ru": "Теги",
+    "ja": "タグ",
+    "de": "Tags"
+  },
+  "tagsHint": {
+    "source": "Only entries carrying any of these tags. Collection-level tags count.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Solo las entradas que tengan alguna de estas etiquetas. Cuentan las etiquetas de la colección.",
+    "fr-ca": "Seulement les entrées portant l’une de ces étiquettes. Les étiquettes de la collection comptent.",
+    "ru": "Только записи с любым из этих тегов. Теги уровня коллекции учитываются.",
+    "ja": "これらのタグのいずれかを持つエントリのみです。コレクションレベルのタグも対象です。",
+    "de": "Nur Einträge mit einem dieser Tags. Tags auf Sammlungsebene zählen mit."
+  }
+}

@@ -1,22 +1,27 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.13/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!!**/dist"]
+    "includes": ["**", "!!**/dist", "!!**/sample-translations"]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "lineWidth": 120
   },
+  "html": {
+    "parser": {
+      "interpolation": true
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useNodejsImportProtocol": "off"
       }
@@ -31,6 +36,11 @@
       "unsafeParameterDecoratorsEnabled": true
     }
   },
+  "css": {
+    "formatter": {
+      "quoteStyle": "single"
+    }
+  },
   "assist": {
     "enabled": true,
     "actions": {
@@ -42,8 +52,28 @@
   "overrides": [
     {
       "includes": ["**/*.html"],
+      "formatter": {
+        "enabled": false
+      },
       "linter": {
         "enabled": false
+      }
+    },
+    {
+      "includes": ["**/*.scss"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnknownUnit": "off",
+            "noUnknownPseudoElement": "off"
+          },
+          "style": {
+            "noDescendingSpecificity": "off"
+          },
+          "complexity": {
+            "noImportantStyles": "off"
+          }
+        }
       }
     },
     {
@@ -71,6 +101,16 @@
     },
     {
       "includes": ["libs/core/**/*.ts"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "useLiteralKeys": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/tracker/**/*.ts"],
       "linter": {
         "rules": {
           "complexity": {

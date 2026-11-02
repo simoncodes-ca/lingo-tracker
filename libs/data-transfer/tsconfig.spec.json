@@ -1,7 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
+    "outDir": "../../dist/out-tsc/libs/data-transfer/spec",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "typeRoots": ["../../node_modules/@types", "../../node_modules"],
     "types": ["vitest/globals", "vitest/importMeta", "vite/client", "node", "vitest"]
   },
   "include": [

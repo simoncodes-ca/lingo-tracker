@@ -1,0 +1,80 @@
+// Bundle-dialog extras on top of `master-detail-dialog`: the collection tree in the rail, the
+// two-up rows, optional-field labels and the locked name well. Kept apart so the export dialog
+// does not ship rules it never renders (the per-component style budget is 20kB).
+.rail-item {
+  &--child {
+    padding-left: var(--spacing-6);
+    font-weight: var(--font-weight-medium);
+
+    > mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    &.rail-item--on {
+      font-weight: var(--font-weight-bold);
+    }
+  }
+
+  &--add {
+    padding-left: var(--spacing-6);
+    color: var(--color-text-secondary);
+
+    > mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: var(--color-text-secondary);
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
+  }
+}
+
+.pane-head-action {
+  flex: none;
+  height: 32px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3);
+}
+
+.row-3-2 {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: var(--spacing-3);
+}
+
+.field-label-opt {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.text-input {
+  &--compact {
+    height: 36px;
+  }
+
+  &--locked {
+    border-style: dashed;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+  }
+}

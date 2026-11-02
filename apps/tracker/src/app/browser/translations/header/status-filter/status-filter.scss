@@ -1,3 +1,5 @@
+@use '../../../../../styles/status-toggle';
+
 // The status rail. Four statuses plus a "Needs work" shortcut, always visible.
 //
 // Colour comes entirely from the status chip tokens in tokens.scss — the same
@@ -14,49 +16,21 @@
 }
 
 .status-toggle {
-  align-items: center;
+  @include status-toggle.toggle;
+
   appearance: none;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--border-radius-full);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  display: flex;
   flex-shrink: 0;
   font-family: inherit;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  gap: var(--spacing-1);
-  // Sits inside the 40px control row without matching it — a toggle in a set of
-  // five is not the same weight of object as the search field beside it.
-  height: var(--spacing-8);
-  line-height: 1;
   min-width: 0;
-  padding: 0 var(--spacing-2) 0 var(--spacing-1);
-  transition:
-    background-color var(--transition-fast),
-    border-color var(--transition-fast),
-    color var(--transition-fast);
-
-  &:hover {
-    background-color: var(--color-background-muted);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring-color);
-    outline-offset: 2px;
-  }
 }
 
 // The dot is the only mark carrying status colour while a toggle is off, so it
 // stays at full strength until something is actually filtered.
 .status-dot {
-  border-radius: 50%;
-  flex-shrink: 0;
-  height: 7px;
-  margin-left: var(--spacing-1);
+  @include status-toggle.dot;
+
   transition: opacity var(--transition-fast);
-  width: 7px;
 }
 
 .status-name {
@@ -89,34 +63,30 @@
   background-color: var(--color-status-verified);
 }
 
-@mixin pressed($surface, $border, $ink) {
-  background-color: var($surface);
-  border-color: var($border);
-  color: var($ink);
-
-  .status-dot {
-    // Once the chip is filled, a separate coloured dot is a second mark saying
-    // the same thing; it drops to the label's ink and reads as a bullet.
-    background-color: currentcolor;
-  }
+@mixin pressed($status) {
+  @include status-toggle.pressed(
+    var(--color-status-#{$status}-surface),
+    var(--color-status-#{$status}-border),
+    var(--color-status-#{$status}-ink)
+  );
 }
 
 .status-toggle[aria-pressed='true'] {
   &[data-status='needsWork'],
   &[data-status='stale'] {
-    @include pressed(--color-status-stale-surface, --color-status-stale-border, --color-status-stale-ink);
+    @include pressed(stale);
   }
 
   &[data-status='new'] {
-    @include pressed(--color-status-new-surface, --color-status-new-border, --color-status-new-ink);
+    @include pressed(new);
   }
 
   &[data-status='translated'] {
-    @include pressed(--color-status-translated-surface, --color-status-translated-border, --color-status-translated-ink);
+    @include pressed(translated);
   }
 
   &[data-status='verified'] {
-    @include pressed(--color-status-verified-surface, --color-status-verified-border, --color-status-verified-ink);
+    @include pressed(verified);
   }
 }
 

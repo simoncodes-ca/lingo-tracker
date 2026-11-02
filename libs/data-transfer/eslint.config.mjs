@@ -11,6 +11,8 @@ export default [
           ignoredFiles: [
             '{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}',
             '{projectRoot}/vite.config.{js,ts,mjs,mts}',
+            // Test runner imports are not runtime dependencies of the DTO library.
+            '{projectRoot}/src/**/*.{spec,test}.ts',
           ],
         },
       ],

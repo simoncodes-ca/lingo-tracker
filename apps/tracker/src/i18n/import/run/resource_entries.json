@@ -1,0 +1,262 @@
+{
+  "importing": {
+    "source": "Importing…",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Importando…",
+    "fr-ca": "Importation en cours…",
+    "ru": "Импорт…",
+    "ja": "インポート中…",
+    "de": "Wird importiert…"
+  },
+  "reading": {
+    "source": "Reading",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Leyendo",
+    "fr-ca": "Lecture de",
+    "ru": "Чтение",
+    "ja": "読み込み中:",
+    "de": "Lese"
+  },
+  "filesProgressX": {
+    "source": "{current} of {total} files",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{current} de {total} archivos",
+    "fr-ca": "{current} de {total} fichiers",
+    "ru": "{current} из {total} файлов",
+    "ja": "{total} 個中 {current} 個のファイル",
+    "de": "{current} von {total} Dateien"
+  },
+  "imported": {
+    "source": "Imported",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Importado",
+    "fr-ca": "Importé",
+    "ru": "Импортировано",
+    "ja": "インポート完了",
+    "de": "Importiert"
+  },
+  "failed": {
+    "source": "Import failed",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Error al importar",
+    "fr-ca": "Échec de l’importation",
+    "ru": "Не удалось выполнить импорт",
+    "ja": "インポートに失敗しました",
+    "de": "Import fehlgeschlagen"
+  },
+  "entriesX": {
+    "source": "{ count, plural, =1 {1 entry} other {{count} entries} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 entrada} other {{count} entradas} }",
+    "fr-ca": "{ count, plural, =1 {1 entrée} other {{count} entrées} }",
+    "ru": "{ count, plural, one {{count} запись} few {{count} записи} many {{count} записей} other {{count} записи} }",
+    "ja": "{ count, plural, other {{count} 件のエントリ} }",
+    "de": "{ count, plural, =1 {1 Eintrag} other {{count} Einträge} }"
+  },
+  "filesX": {
+    "source": "{ count, plural, =1 {1 file} other {{count} files} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 archivo} other {{count} archivos} }",
+    "fr-ca": "{ count, plural, =1 {1 fichier} other {{count} fichiers} }",
+    "ru": "{ count, plural, one {{count} файл} few {{count} файла} many {{count} файлов} other {{count} файла} }",
+    "ja": "{ count, plural, other {{count} 個のファイル} }",
+    "de": "{ count, plural, =1 {1 Datei} other {{count} Dateien} }"
+  },
+  "failedX": {
+    "source": "{ count, plural, =1 {1 failed} other {{count} failed} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 fallida} other {{count} fallidas} }",
+    "fr-ca": "{ count, plural, =1 {1 échouée} other {{count} échouées} }",
+    "ru": "{ count, plural, one {{count} с ошибкой} few {{count} с ошибкой} many {{count} с ошибкой} other {{count} с ошибкой} }",
+    "ja": "{ count, plural, other {{count} 件が失敗} }",
+    "de": "{ count, plural, =1 {1 fehlgeschlagen} other {{count} fehlgeschlagen} }"
+  },
+  "skippedX": {
+    "source": "{ count, plural, =1 {1 skipped} other {{count} skipped} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 omitida} other {{count} omitidas} }",
+    "fr-ca": "{ count, plural, =1 {1 ignorée} other {{count} ignorées} }",
+    "ru": "{ count, plural, one {{count} пропущено} few {{count} пропущено} many {{count} пропущено} other {{count} пропущено} }",
+    "ja": "{ count, plural, other {{count} 件をスキップ} }",
+    "de": "{ count, plural, =1 {1 übersprungen} other {{count} übersprungen} }"
+  },
+  "warningsX": {
+    "source": "{ count, plural, =1 {1 warning} other {{count} warnings} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 advertencia} other {{count} advertencias} }",
+    "fr-ca": "{ count, plural, =1 {1 avertissement} other {{count} avertissements} }",
+    "ru": "{ count, plural, one {{count} предупреждение} few {{count} предупреждения} many {{count} предупреждений} other {{count} предупреждения} }",
+    "ja": "{ count, plural, other {{count} 件の警告} }",
+    "de": "{ count, plural, =1 {1 Warnung} other {{count} Warnungen} }"
+  },
+  "details": {
+    "source": "Details",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Detalles",
+    "fr-ca": "Détails",
+    "ru": "Подробности",
+    "ja": "詳細",
+    "de": "Details"
+  },
+  "detailsAriaLabel": {
+    "source": "Import details",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Detalles de la importación",
+    "fr-ca": "Détails de l’importation",
+    "ru": "Подробности импорта",
+    "ja": "インポートの詳細",
+    "de": "Importdetails"
+  },
+  "dismissAriaLabel": {
+    "source": "Dismiss import result",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Descartar el resultado de la importación",
+    "fr-ca": "Fermer le résultat de l’importation",
+    "ru": "Закрыть результат импорта",
+    "ja": "インポート結果を閉じる",
+    "de": "Importergebnis schließen"
+  },
+  "filesHeading": {
+    "source": "Files",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Archivos",
+    "fr-ca": "Fichiers",
+    "ru": "Файлы",
+    "ja": "ファイル",
+    "de": "Dateien"
+  },
+  "statusHeading": {
+    "source": "Status changes",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Cambios de estado",
+    "fr-ca": "Changements de statut",
+    "ru": "Изменения статуса",
+    "ja": "ステータスの変更",
+    "de": "Statusänderungen"
+  },
+  "autoFixesHeading": {
+    "source": "Auto-fixes",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Correcciones automáticas",
+    "fr-ca": "Corrections automatiques",
+    "ru": "Автоисправления",
+    "ja": "自動修正",
+    "de": "Automatische Korrekturen"
+  },
+  "issuesHeading": {
+    "source": "Issues",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Problemas",
+    "fr-ca": "Problèmes",
+    "ru": "Проблемы",
+    "ja": "問題",
+    "de": "Probleme"
+  },
+  "warningsHeading": {
+    "source": "Warnings",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Advertencias",
+    "fr-ca": "Avertissements",
+    "ru": "Предупреждения",
+    "ja": "警告",
+    "de": "Warnungen"
+  },
+  "errorsHeading": {
+    "source": "Errors",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Errores",
+    "fr-ca": "Erreurs",
+    "ru": "Ошибки",
+    "ja": "エラー",
+    "de": "Fehler"
+  },
+  "filesChanged": {
+    "source": "Files changed",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Archivos modificados",
+    "fr-ca": "Fichiers modifiés",
+    "ru": "Изменённые файлы",
+    "ja": "変更されたファイル",
+    "de": "Geänderte Dateien"
+  },
+  "moreInSummaryX": {
+    "source": "and {count} more in the summary",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "y {count} más en el resumen",
+    "fr-ca": "et {count} de plus dans le résumé",
+    "ru": "и ещё {count} в сводке",
+    "ja": "他 {count} 件は概要に記載",
+    "de": "und {count} weitere in der Zusammenfassung"
+  },
+  "downloadSummary": {
+    "source": "Download summary (.md)",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Descargar resumen (.md)",
+    "fr-ca": "Télécharger le résumé (.md)",
+    "ru": "Скачать сводку (.md)",
+    "ja": "概要をダウンロード (.md)",
+    "de": "Zusammenfassung herunterladen (.md)"
+  },
+  "importedX": {
+    "source": "{ count, plural, =1 {1 imported} other {{count} imported} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 importada} other {{count} importadas} }",
+    "fr-ca": "{ count, plural, =1 {1 importée} other {{count} importées} }",
+    "ru": "{ count, plural, one {{count} импортирована} few {{count} импортированы} many {{count} импортировано} other {{count} импортировано} }",
+    "ja": "{ count, plural, other {{count} 件をインポート} }",
+    "de": "{ count, plural, =1 {1 importiert} other {{count} importiert} }"
+  },
+  "createdX": {
+    "source": "{ count, plural, =1 {1 created} other {{count} created} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 creada} other {{count} creadas} }",
+    "fr-ca": "{ count, plural, =1 {1 créée} other {{count} créées} }",
+    "ru": "{ count, plural, one {{count} создана} few {{count} созданы} many {{count} создано} other {{count} создано} }",
+    "ja": "{ count, plural, other {{count} 件を作成} }",
+    "de": "{ count, plural, =1 {1 erstellt} other {{count} erstellt} }"
+  },
+  "updatedX": {
+    "source": "{ count, plural, =1 {1 updated} other {{count} updated} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 actualizada} other {{count} actualizadas} }",
+    "fr-ca": "{ count, plural, =1 {1 mise à jour} other {{count} mises à jour} }",
+    "ru": "{ count, plural, one {{count} обновлена} few {{count} обновлены} many {{count} обновлено} other {{count} обновлено} }",
+    "ja": "{ count, plural, other {{count} 件を更新} }",
+    "de": "{ count, plural, =1 {1 aktualisiert} other {{count} aktualisiert} }"
+  },
+  "filesFailedX": {
+    "source": "{ count, plural, =1 {1 file failed} other {{count} files failed} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 archivo con error} other {{count} archivos con error} }",
+    "fr-ca": "{ count, plural, =1 {1 fichier en échec} other {{count} fichiers en échec} }",
+    "ru": "{ count, plural, one {{count} файл с ошибкой} few {{count} файла с ошибкой} many {{count} файлов с ошибкой} other {{count} файла с ошибкой} }",
+    "ja": "{ count, plural, other {{count} 件のファイルが失敗} }",
+    "de": "{ count, plural, =1 {1 Datei fehlgeschlagen} other {{count} Dateien fehlgeschlagen} }"
+  }
+}

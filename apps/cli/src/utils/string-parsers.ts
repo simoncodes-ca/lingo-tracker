@@ -1,3 +1,9 @@
+/** An explicitly empty list whose original input is needed for a deferred diagnostic. */
+export interface ExplicitEmptyList {
+  readonly kind: 'empty';
+  readonly input: string;
+}
+
 /**
  * Parses a comma-separated string into an array of trimmed, non-empty strings.
  * Returns undefined if input is undefined or empty.
@@ -17,16 +23,4 @@ export function parseCommaSeparatedList(input: string | undefined): string[] | u
     .filter(Boolean);
 
   return result.length > 0 ? result : undefined;
-}
-
-/**
- * Same as parseCommaSeparatedList but throws if result is empty.
- * Use when at least one value is required.
- */
-export function parseCommaSeparatedListRequired(input: string | undefined, fieldName = 'value'): string[] {
-  const result = parseCommaSeparatedList(input);
-  if (!result || result.length === 0) {
-    throw new Error(`At least one ${fieldName} is required`);
-  }
-  return result;
 }

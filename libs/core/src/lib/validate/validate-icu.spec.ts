@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { checkStoredValue, describeStoredValueFinding } from '@simoncodes-ca/domain';
+import { describe, expect, it } from 'vitest';
+import type { CollectionSetResource } from '../collection-set/collection-set';
 import { validateIcuValues } from './validate-icu';
-import type { LoadedResource } from '../export/export-common';
 
-function resource(overrides: Partial<LoadedResource> = {}): LoadedResource {
+function resource(overrides: Partial<CollectionSetResource> = {}): CollectionSetResource {
   return {
     key: 'count',
     fullKey: 'common.count',
@@ -10,11 +11,59 @@ function resource(overrides: Partial<LoadedResource> = {}): LoadedResource {
     translations: {},
     status: {},
     collection: 'main',
+    effectiveTags: [],
+    targetLocales: [],
     ...overrides,
   };
 }
 
 describe('validateIcuValues', () => {
+  it('reports braced source and target values instead of compiling them', () => {
+    const value = '{{{a}}}';
+    const first = checkStoredValue(value)[0];
+    expect(first).toBeDefined();
+    if (!first) throw new Error('Missing finding');
+    const result = validateIcuValues([resource({ source: value, translations: { fr: value } })], ['fr'], {
+      baseLocale: 'en',
+      compileValues: true,
+      requirePortablePlurals: false,
+    });
+    expect(result.valuesChecked).toBe(2);
+    expect(result.failures).toEqual(
+      ['en', 'fr'].map((locale) => ({
+        key: 'common.count',
+        locale,
+        collection: 'main',
+        message: describeStoredValueFinding(first),
+      })),
+    );
+  });
+
+  it.each([false, true])(
+    'reports braced values independently of compilation and locale support (compileValues=%s)',
+    (compileValues) => {
+      const value = '{{{a}}}';
+      const found = checkStoredValue(value)[0];
+      expect(found).toBeDefined();
+      if (!found) throw new Error('Missing finding');
+      const result = validateIcuValues([resource({ source: value, translations: { fr_CA: value } })], ['fr_CA'], {
+        baseLocale: 'en',
+        compileValues,
+        requirePortablePlurals: false,
+      });
+      expect(result.failures).toEqual(
+        ['en', 'fr_CA'].map((locale) => ({
+          key: 'common.count',
+          collection: 'main',
+          locale,
+          message: describeStoredValueFinding(found),
+        })),
+      );
+      expect(result.unsupportedLocales).toEqual(compileValues ? ['fr_CA'] : []);
+      expect(result.valuesChecked).toBe(compileValues ? 1 : 0);
+    },
+  );
+
   describe('compiling each value under its own locale', () => {
     it('reports nothing when every value compiles', () => {
       const result = validateIcuValues(

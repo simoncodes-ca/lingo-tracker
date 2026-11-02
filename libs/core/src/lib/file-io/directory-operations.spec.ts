@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, accessSync, constants } from 'node:fs';
+import { accessSync, constants, mkdirSync } from 'node:fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ensureDirectoryExists } from './directory-operations';
 
 // Mock the node:fs module

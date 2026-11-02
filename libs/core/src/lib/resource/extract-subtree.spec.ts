@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { extractSubtree, extractResourcesRecursively } from './extract-subtree';
-import type { ResourceTreeNode, ResourceTreeEntry } from './load-resource-tree';
+import { describe, expect, it } from 'vitest';
+import { extractResourcesRecursively, extractSubtree } from './extract-subtree';
+import type { ResourceTreeNode } from './resource-tree-types';
 
 describe('extractSubtree', () => {
   describe('root extraction', () => {
@@ -13,10 +13,8 @@ describe('extractSubtree', () => {
             source: 'Root value',
             translations: { es: 'Valor raíz' },
             metadata: {
-              baseChecksum: 'abc123',
-              translations: {
-                es: { checksum: 'def456', status: 'translated' },
-              },
+              en: { checksum: 'abc123' },
+              es: { checksum: 'def456', baseChecksum: 'abc123', status: 'translated' },
             },
           },
         ],
@@ -63,8 +61,8 @@ describe('extractSubtree', () => {
             source: 'Apps Title',
             translations: { es: 'Título Apps' },
             metadata: {
-              baseChecksum: 'hash1',
-              translations: { es: { checksum: 'hash2', status: 'verified' } },
+              en: { checksum: 'hash1' },
+              es: { checksum: 'hash2', baseChecksum: 'hash1', status: 'verified' },
             },
           },
         ],
@@ -136,11 +134,9 @@ describe('extractSubtree', () => {
             source: 'OK',
             translations: { es: 'Aceptar', fr: "D'accord" },
             metadata: {
-              baseChecksum: 'ok-hash',
-              translations: {
-                es: { checksum: 'ok-es', status: 'verified' },
-                fr: { checksum: 'ok-fr', status: 'translated' },
-              },
+              en: { checksum: 'ok-hash' },
+              es: { checksum: 'ok-es', baseChecksum: 'ok-hash', status: 'verified' },
+              fr: { checksum: 'ok-fr', baseChecksum: 'ok-hash', status: 'translated' },
             },
           },
           {
@@ -148,10 +144,8 @@ describe('extractSubtree', () => {
             source: 'Cancel',
             translations: { es: 'Cancelar' },
             metadata: {
-              baseChecksum: 'cancel-hash',
-              translations: {
-                es: { checksum: 'cancel-es', status: 'verified' },
-              },
+              en: { checksum: 'cancel-hash' },
+              es: { checksum: 'cancel-es', baseChecksum: 'cancel-hash', status: 'verified' },
             },
           },
         ],
@@ -215,10 +209,8 @@ describe('extractSubtree', () => {
             source: 'Deep value',
             translations: { es: 'Valor profundo' },
             metadata: {
-              baseChecksum: 'deep-hash',
-              translations: {
-                es: { checksum: 'deep-es', status: 'translated' },
-              },
+              en: { checksum: 'deep-hash' },
+              es: { checksum: 'deep-es', baseChecksum: 'deep-hash', status: 'translated' },
             },
           },
         ],
@@ -578,10 +570,8 @@ describe('extractSubtree', () => {
             source: 'Common Label',
             translations: { es: 'Etiqueta común' },
             metadata: {
-              baseChecksum: 'label-hash',
-              translations: {
-                es: { checksum: 'label-es', status: 'verified' },
-              },
+              en: { checksum: 'label-hash' },
+              es: { checksum: 'label-es', baseChecksum: 'label-hash', status: 'verified' },
             },
           },
         ],
@@ -648,8 +638,8 @@ describe('extractResourcesRecursively', () => {
           key: 'k1',
           source: 'v1',
           translations: {},
-          metadata: { baseChecksum: 'c1', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c1' } },
+        },
       ],
       children: [],
     };
@@ -667,8 +657,8 @@ describe('extractResourcesRecursively', () => {
           key: 'k2',
           source: 'v2',
           translations: {},
-          metadata: { baseChecksum: 'c2', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c2' } },
+        },
       ],
       children: [],
     };
@@ -680,8 +670,8 @@ describe('extractResourcesRecursively', () => {
           key: 'k1',
           source: 'v1',
           translations: {},
-          metadata: { baseChecksum: 'c1', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c1' } },
+        },
       ],
       children: [
         {
@@ -707,8 +697,8 @@ describe('extractResourcesRecursively', () => {
           key: 'acceptedFormatsX',
           source: 'v1',
           translations: {},
-          metadata: { baseChecksum: 'c1', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c1' } },
+        },
       ],
       children: [],
     };
@@ -720,8 +710,8 @@ describe('extractResourcesRecursively', () => {
           key: 'rootKey',
           source: 'v0',
           translations: {},
-          metadata: { baseChecksum: 'c0', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c0' } },
+        },
       ],
       children: [
         {
@@ -747,8 +737,8 @@ describe('extractResourcesRecursively', () => {
           key: 'k2',
           source: 'v2',
           translations: {},
-          metadata: { baseChecksum: 'c2', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c2' } },
+        },
       ],
       children: [],
     };
@@ -760,8 +750,8 @@ describe('extractResourcesRecursively', () => {
           key: 'k3',
           source: 'v3',
           translations: {},
-          metadata: { baseChecksum: 'c3', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c3' } },
+        },
       ],
       children: [],
     };
@@ -789,8 +779,8 @@ describe('extractResourcesRecursively', () => {
           key: 'k3',
           source: 'v3',
           translations: {},
-          metadata: { baseChecksum: 'c3', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c3' } },
+        },
       ],
       children: [],
     };
@@ -802,8 +792,8 @@ describe('extractResourcesRecursively', () => {
           key: 'k2',
           source: 'v2',
           translations: {},
-          metadata: { baseChecksum: 'c2', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c2' } },
+        },
       ],
       children: [{ name: 'c', fullPathSegments: ['a', 'b', 'c'], loaded: true, tree: grandchild }],
     };
@@ -828,8 +818,8 @@ describe('extractResourcesRecursively', () => {
           key: 'bad',
           source: 'v',
           translations: {},
-          metadata: { baseChecksum: 'c', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c' } },
+        },
       ],
       children: [],
     };
@@ -841,8 +831,8 @@ describe('extractResourcesRecursively', () => {
           key: 'k1',
           source: 'v1',
           translations: {},
-          metadata: { baseChecksum: 'c1', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c1' } },
+        },
       ],
       children: [{ name: 'x', fullPathSegments: ['x'], loaded: true, tree: invalidChild }],
     };
@@ -860,8 +850,8 @@ describe('extractResourcesRecursively', () => {
           key: 'k1',
           source: 'v1',
           translations: {},
-          metadata: { baseChecksum: 'c1', translations: {} },
-        } as ResourceTreeEntry,
+          metadata: { en: { checksum: 'c1' } },
+        },
       ],
       children: [
         {

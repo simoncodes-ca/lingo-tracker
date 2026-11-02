@@ -1,15 +1,8 @@
 {
+  "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
     "baseUrl": ".",
-    "target": "ES2017",
-    "lib": ["ES2017", "DOM"],
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "jsx": "react",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "noEmit": true
-  }
+    "types": ["@docusaurus/module-type-aliases"]
+  },
+  "exclude": [".docusaurus", "build", "node_modules"]
 }

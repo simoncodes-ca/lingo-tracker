@@ -28,5 +28,65 @@
       "baseChecksum": "8a99d337e7d73673d6afcfa72e7b82fd",
       "status": "translated"
     }
+  },
+  "allLocales": {
+    "en": {
+      "checksum": "261b31194c8a406160ce07cbdeeba911"
+    },
+    "es": {
+      "checksum": "fdcb873fcaf2a6d106350390b9901c18",
+      "baseChecksum": "261b31194c8a406160ce07cbdeeba911",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "c78a929aeebe355ab92ff61786360fb9",
+      "baseChecksum": "261b31194c8a406160ce07cbdeeba911",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "e2a2f18a9df7a9acea26b0a2b41f12e0",
+      "baseChecksum": "261b31194c8a406160ce07cbdeeba911",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "21a243b7cf14740a580b4fcc20409d8e",
+      "baseChecksum": "261b31194c8a406160ce07cbdeeba911",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "96efe02a5ad784b87ea760c80c6eb3e4",
+      "baseChecksum": "261b31194c8a406160ce07cbdeeba911",
+      "status": "translated"
+    }
+  },
+  "localesCountX": {
+    "en": {
+      "checksum": "ab692b642031b8646162616db0a399cf"
+    },
+    "es": {
+      "checksum": "3cdb31b15b5ddc3c03ff82b1bb2a012a",
+      "baseChecksum": "ab692b642031b8646162616db0a399cf",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "f7e7a574c2f132d213cc8f93a70dd30b",
+      "baseChecksum": "ab692b642031b8646162616db0a399cf",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "8b00de39b7f753ba7f3649064735ed36",
+      "baseChecksum": "ab692b642031b8646162616db0a399cf",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "9c85d78f98ac6a06a3a23502b7b36c5a",
+      "baseChecksum": "ab692b642031b8646162616db0a399cf",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "5520b4d75c604e1ca0d2d8584403a179",
+      "baseChecksum": "ab692b642031b8646162616db0a399cf",
+      "status": "translated"
+    }
   }
 }

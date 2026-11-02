@@ -1,0 +1,72 @@
+{
+  "description": {
+    "source": "Where the files go and how they are named.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Dónde se guardan los archivos y cómo se llaman.",
+    "fr-ca": "Où vont les fichiers et comment ils sont nommés.",
+    "ru": "Куда попадают файлы и как они называются.",
+    "ja": "ファイルの保存先と名前の付け方です。",
+    "de": "Wohin die Dateien geschrieben werden und wie sie heißen."
+  },
+  "folderLabel": {
+    "source": "Output folder",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Carpeta de salida",
+    "fr-ca": "Dossier de sortie",
+    "ru": "Папка вывода",
+    "ja": "出力フォルダー",
+    "de": "Ausgabeordner"
+  },
+  "folderResolvedX": {
+    "source": "Writes to {path}",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Se escribe en {path}",
+    "fr-ca": "Écrit dans {path}",
+    "ru": "Запись в {path}",
+    "ja": "書き込み先: {path}",
+    "de": "Schreibt nach {path}"
+  },
+  "patternLabel": {
+    "source": "File name pattern",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Patrón del nombre de archivo",
+    "fr-ca": "Modèle de nom de fichier",
+    "ru": "Шаблон имени файла",
+    "ja": "ファイル名パターン",
+    "de": "Dateinamenmuster"
+  },
+  "patternHint": {
+    "source": "Placeholders: '{locale}', '{source}', '{date}'.",
+    "comment": "Literal file-name pattern tokens shown to the user; not interpolation params. Keep the quoted braces.",
+    "tags": ["export"],
+    "es": "Marcadores: '{locale}', '{source}', '{date}'.",
+    "fr-ca": "Variables : '{locale}', '{source}', '{date}'.",
+    "ru": "Подстановки: '{locale}', '{source}', '{date}'.",
+    "ja": "プレースホルダー: '{locale}', '{source}', '{date}'。",
+    "de": "Platzhalter: '{locale}', '{source}', '{date}'."
+  },
+  "protectLabel": {
+    "source": "Note protected terms",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Anotar términos protegidos",
+    "fr-ca": "Annoter les termes protégés",
+    "ru": "Помечать защищённые термины",
+    "ja": "保護された用語をメモする",
+    "de": "Geschützte Begriffe vermerken"
+  },
+  "protectHint": {
+    "source": "Adds \"Do not translate: …\" for entries whose source contains a protected term.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Añade «No traducir: …» a las entradas cuyo origen contiene un término protegido.",
+    "fr-ca": "Ajoute « Ne pas traduire : … » aux entrées dont la source contient un terme protégé.",
+    "ru": "Добавляет «Не переводить: …» для записей, оригинал которых содержит защищённый термин.",
+    "ja": "原文に保護された用語を含むエントリに「翻訳しない: …」を追加します。",
+    "de": "Fügt „Nicht übersetzen: …“ für Einträge hinzu, deren Quelle einen geschützten Begriff enthält."
+  }
+}

@@ -6,15 +6,15 @@
 // Define typography config
 $lingo-tracker-typography: mat.m2-define-typography-config(
   $font-family: '"Nunito", sans-serif',
-  $headline-1: mat.m2-define-typography-level(2.25rem, 1.25, 700),  // 4xl
+  $headline-1: mat.m2-define-typography-level(2.25rem, 1.25, 700), // 4xl
   $headline-2: mat.m2-define-typography-level(1.875rem, 1.25, 700), // 3xl
-  $headline-3: mat.m2-define-typography-level(1.5rem, 1.25, 600),   // 2xl
-  $headline-4: mat.m2-define-typography-level(1.25rem, 1.5, 600),   // xl
-  $headline-5: mat.m2-define-typography-level(1.125rem, 1.5, 600),  // lg
-  $headline-6: mat.m2-define-typography-level(1rem, 1.5, 600),      // base
+  $headline-3: mat.m2-define-typography-level(1.5rem, 1.25, 600), // 2xl
+  $headline-4: mat.m2-define-typography-level(1.25rem, 1.5, 600), // xl
+  $headline-5: mat.m2-define-typography-level(1.125rem, 1.5, 600), // lg
+  $headline-6: mat.m2-define-typography-level(1rem, 1.5, 600), // base
   $body-1: mat.m2-define-typography-level(1rem, 1.5, 400),
   $body-2: mat.m2-define-typography-level(0.875rem, 1.5, 400),
-  $button: mat.m2-define-typography-level(0.875rem, 1, 500),
+  $button: mat.m2-define-typography-level(0.875rem, 1, 500)
 );
 
 // Warm watercolor palettes
@@ -26,26 +26,30 @@ $wc-sky-palette: mat.m2-define-palette(mat.$m2-light-blue-palette, 400, 200, 600
 $wc-warn-palette: mat.m2-define-palette(mat.$m2-red-palette, 300, 100, 500);
 
 // Create light theme
-$lingo-tracker-light-theme: mat.m2-define-light-theme((
-  color: (
-    primary: $wc-coral-palette,
-    accent: $wc-sky-palette,
-    warn: $wc-warn-palette,
-  ),
-  typography: $lingo-tracker-typography,
-  density: -1,
-));
+$lingo-tracker-light-theme: mat.m2-define-light-theme(
+  (
+    color: (
+      primary: $wc-coral-palette,
+      accent: $wc-sky-palette,
+      warn: $wc-warn-palette,
+    ),
+    typography: $lingo-tracker-typography,
+    density: -1,
+  )
+);
 
 // Create dark theme
-$lingo-tracker-dark-theme: mat.m2-define-dark-theme((
-  color: (
-    primary: $wc-coral-palette,
-    accent: $wc-sky-palette,
-    warn: $wc-warn-palette,
-  ),
-  typography: $lingo-tracker-typography,
-  density: -1,
-));
+$lingo-tracker-dark-theme: mat.m2-define-dark-theme(
+  (
+    color: (
+      primary: $wc-coral-palette,
+      accent: $wc-sky-palette,
+      warn: $wc-warn-palette,
+    ),
+    typography: $lingo-tracker-typography,
+    density: -1,
+  )
+);
 
 // Apply light theme by default
 :root {

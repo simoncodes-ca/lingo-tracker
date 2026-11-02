@@ -6,13 +6,13 @@
     </div>
   }
 
-  @if (store.error() && !store.isLoading()) {
+  @if (store.listErrorMessage() && !store.isLoading()) {
     <div class="error-container">
-      <p>{{ store.error() }}</p>
+      <p>{{ store.listErrorMessage() }}</p>
       <button
         mat-raised-button
         color="primary"
-        (click)="store.selectFolder(store.currentFolderPath())"
+        (click)="store.retryLoad()"
       >
           {{ TOKENS.COMMON.ACTIONS.RETRY | transloco }}
       </button>
@@ -27,7 +27,7 @@
     </div>
   }
 
-  @if (!store.isLoading() && !store.error()) {
+  @if (!store.isLoading() && !store.listErrorMessage()) {
     @if (store.sortedTranslations().length === 0) {
       <div class="empty-state">
         <mat-card class="empty-state__card">

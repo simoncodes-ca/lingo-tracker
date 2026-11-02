@@ -1,0 +1,62 @@
+{
+  "source": {
+    "source": "Source",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Origen",
+    "fr-ca": "Source",
+    "ru": "Источник",
+    "ja": "ソース",
+    "de": "Quelle"
+  },
+  "strategy": {
+    "source": "Strategy",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Estrategia",
+    "fr-ca": "Stratégie",
+    "ru": "Стратегия",
+    "ja": "方式",
+    "de": "Strategie"
+  },
+  "options": {
+    "source": "Options",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Opciones",
+    "fr-ca": "Options",
+    "ru": "Параметры",
+    "ja": "オプション",
+    "de": "Optionen"
+  },
+  "filesX": {
+    "source": "{ count, plural, =0 {No files} =1 {1 file} other {{count} files} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =0 {Sin archivos} =1 {1 archivo} other {{count} archivos} }",
+    "fr-ca": "{ count, plural, =0 {Aucun fichier} =1 {1 fichier} other {{count} fichiers} }",
+    "ru": "{ count, plural, =0 {Нет файлов} one {{count} файл} few {{count} файла} many {{count} файлов} other {{count} файла} }",
+    "ja": "{ count, plural, =0 {ファイルなし} other {{count} 個のファイル} }",
+    "de": "{ count, plural, =0 {Keine Dateien} =1 {1 Datei} other {{count} Dateien} }"
+  },
+  "defaults": {
+    "source": "Defaults",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Valores predeterminados",
+    "fr-ca": "Valeurs par défaut",
+    "ru": "По умолчанию",
+    "ja": "既定値",
+    "de": "Standardwerte"
+  },
+  "changedX": {
+    "source": "{ count, plural, =1 {1 changed} other {{count} changed} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 modificado} other {{count} modificados} }",
+    "fr-ca": "{ count, plural, =1 {1 modifié} other {{count} modifiés} }",
+    "ru": "{ count, plural, one {Изменено: {count}} few {Изменено: {count}} many {Изменено: {count}} other {Изменено: {count}} }",
+    "ja": "{ count, plural, other {{count} 件変更} }",
+    "de": "{ count, plural, =1 {1 geändert} other {{count} geändert} }"
+  }
+}

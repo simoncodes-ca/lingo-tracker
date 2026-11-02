@@ -1,0 +1,22 @@
+{
+  "button": {
+    "source": "Export…",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Exportar…",
+    "fr-ca": "Exporter…",
+    "ru": "Экспорт…",
+    "ja": "エクスポート…",
+    "de": "Exportieren…"
+  },
+  "buttonBusy": {
+    "source": "Exporting…",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Exportando…",
+    "fr-ca": "Exportation en cours…",
+    "ru": "Экспорт…",
+    "ja": "エクスポート中…",
+    "de": "Wird exportiert…"
+  }
+}

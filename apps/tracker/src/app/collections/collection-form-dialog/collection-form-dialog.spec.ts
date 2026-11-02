@@ -1,276 +1,273 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
-import { of } from 'rxjs';
+import type { LingoTrackerConfigDto } from '@simoncodes-ca/data-transfer';
+import { of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTranslocoTestingModule } from '../../../testing/transloco-testing.module';
+import { toApiError } from '../../shared/api-error/api-error';
+import { CollectionsStore } from '../store/collections.store';
 import { CollectionFormDialog } from './collection-form-dialog';
 import type { CollectionFormDialogData } from './collection-form-dialog-data';
 
+const savedConfig: LingoTrackerConfigDto = {
+  exportFolder: 'dist/export',
+  importFolder: 'dist/import',
+  baseLocale: 'en',
+  locales: ['en'],
+  collections: { 'my-collection': { translationsFolder: './i18n' } },
+};
+
 const createComponent = createComponentFactory({
   component: CollectionFormDialog,
-  imports: [NoopAnimationsModule, getTranslocoTestingModule()],
+  imports: [getTranslocoTestingModule()],
   detectChanges: false,
 });
 
+/** The one `MatDialog` method the form uses: `open`, for the base-locale-change confirmation. */
+type DialogMock = { open: ReturnType<typeof vi.fn> };
+
+/** The two Config Writes the dialog makes; both accept by default. */
+type StoreMock = { createCollection: ReturnType<typeof vi.fn>; updateCollection: ReturnType<typeof vi.fn> };
+
+/** `close`, and `disableClose`, which the dialog sets while a write is in flight. */
+type DialogRefMock = { close: ReturnType<typeof vi.fn>; disableClose: boolean | undefined };
+
+const apiError = (status: number, body: object) =>
+  toApiError(new HttpErrorResponse({ status, error: { statusCode: status, ...body } }));
+
+const rejection = (status: number, body: object) =>
+  throwError(() => toApiError(new HttpErrorResponse({ status, error: { statusCode: status, ...body } })));
+
 const buildHarness = (
   data: CollectionFormDialogData,
-  mockDialog: Partial<MatDialog> = { open: vi.fn() },
+  mockDialog: DialogMock = { open: vi.fn() },
 ): {
   fixture: ComponentFixture<CollectionFormDialog>;
   spectator: Spectator<CollectionFormDialog>;
-  mockDialogRef: { close: ReturnType<typeof vi.fn> };
-  mockDialog: Partial<MatDialog>;
+  mockDialogRef: DialogRefMock;
+  mockDialog: DialogMock;
+  store: StoreMock;
 } => {
-  const mockDialogRef = { close: vi.fn() };
+  const mockDialogRef: DialogRefMock = { close: vi.fn(), disableClose: false };
+  const store: StoreMock = {
+    createCollection: vi.fn(() => of(savedConfig)),
+    updateCollection: vi.fn(() => of(savedConfig)),
+  };
   const spectator = createComponent({
     providers: [
       { provide: MAT_DIALOG_DATA, useValue: data },
       { provide: MatDialogRef, useValue: mockDialogRef },
       { provide: MatDialog, useValue: mockDialog },
+      { provide: CollectionsStore, useValue: store },
     ],
   });
   spectator.detectChanges();
-  return { fixture: spectator.fixture, spectator, mockDialogRef, mockDialog };
+  return { fixture: spectator.fixture, spectator, mockDialogRef, mockDialog, store };
 };
 
 describe('CollectionFormDialog — create mode', () => {
   let fixture: ComponentFixture<CollectionFormDialog>;
   let component: CollectionFormDialog;
-  let mockDialogRef: { close: ReturnType<typeof vi.fn> };
+  let mockDialogRef: DialogRefMock;
+  let store: StoreMock;
 
   beforeEach(async () => {
-    ({ fixture, mockDialogRef } = buildHarness({ mode: 'create' }));
+    ({ fixture, mockDialogRef, store } = buildHarness({ mode: 'create' }));
     component = fixture.componentInstance;
+  });
+
+  const el = (): HTMLElement => fixture.nativeElement as HTMLElement;
+
+  const fillValidForm = (): void => {
+    component.model.form.controls.name.setValue('my-collection');
+    component.model.form.controls.translationsFolder.setValue('./i18n');
+    component.model.addLocaleInput.setValue('en');
+    component.model.addLocale();
+  };
+
+  const submitError = (): string | null =>
+    el().querySelector('[data-testid="submit-error"] span')?.textContent?.trim() ?? null;
+
+  /** Cancel in the footer and the close icon in the header. */
+  const closeButtons = (): HTMLButtonElement[] =>
+    Array.from(el().querySelectorAll<HTMLButtonElement>('[data-testid="cancel"]'));
+
+  const press = (input: HTMLInputElement, key: string): void => {
+    input.dispatchEvent(new KeyboardEvent('keydown', { key, cancelable: true }));
+    fixture.detectChanges();
+  };
+
+  const chipTexts = (labelledBy: string): string[] =>
+    Array.from(el().querySelectorAll(`[aria-labelledby="${labelledBy}"] .text-chip .locale-chip-body`)).map((chip) =>
+      (chip.textContent ?? '').trim(),
+    );
+
+  describe('writing through the store', () => {
+    it('should create the collection through the store and close only once the server has accepted it', async () => {
+      fillValidForm();
+
+      await component.onSubmit();
+
+      expect(store.createCollection).toHaveBeenCalledWith({
+        name: 'my-collection',
+        collection: expect.objectContaining({ translationsFolder: './i18n', locales: ['en'], baseLocale: 'en' }),
+      });
+      expect(mockDialogRef.close).toHaveBeenCalledWith(expect.objectContaining({ name: 'my-collection' }));
+    });
+
+    it('should render a taken-name refusal on the name field and keep the dialog open', async () => {
+      store.createCollection.mockReturnValue(
+        rejection(409, { message: 'Collection "my-collection" already exists', error: 'Conflict' }),
+      );
+      fillValidForm();
+
+      await component.onSubmit();
+      fixture.detectChanges();
+
+      expect(mockDialogRef.close).not.toHaveBeenCalled();
+      expect(component.saving()).toBe(false);
+      expect(component.model.showNameConflict).toBe(true);
+      expect(fixture.nativeElement.textContent).toContain('A collection named my-collection already exists.');
+      expect(submitError()).toBeNull();
+
+      component.model.form.controls.name.setValue('other');
+      expect(component.model.showNameConflict).toBe(false);
+      expect(component.model.form.controls.name.valid).toBe(true);
+    });
+
+    it('should not let the dialog close while the write is in flight, and allow it again after a refusal', async () => {
+      const write = new Subject<LingoTrackerConfigDto | null>();
+      store.createCollection.mockReturnValue(write);
+      fillValidForm();
+
+      await component.onSubmit();
+      fixture.detectChanges();
+
+      expect(mockDialogRef.disableClose).toBe(true);
+      expect(closeButtons().every((button) => button.disabled)).toBe(true);
+
+      write.error(apiError(400, { message: 'nope', error: 'Bad Request' }));
+      fixture.detectChanges();
+
+      expect(mockDialogRef.disableClose).toBe(false);
+      expect(closeButtons().some((button) => button.disabled)).toBe(false);
+    });
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+    expect(component.model.isEditMode).toBe(false);
   });
 
-  it('should not be in edit mode', () => {
-    expect(component.isEditMode).toBe(false);
-  });
+  it('should toggle read-only from the switch and keep the user choice when the folder changes', () => {
+    component.model.form.controls.translationsFolder.setValue('./node_modules/pkg/i18n');
+    fixture.detectChanges();
+    const toggle = el().querySelector<HTMLButtonElement>('mat-slide-toggle button');
+    expect(toggle).not.toBeNull();
+    expect(toggle?.getAttribute('aria-checked')).toBe('true');
 
-  it('should add a valid locale and auto-set it as base', () => {
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
+    toggle?.click();
+    fixture.detectChanges();
+    expect(component.model.readOnly()).toBe(false);
 
-    expect(component.form.controls.locales.length).toBe(1);
-    expect(component.form.controls.locales.at(0).value).toBe('en');
-    expect(component.form.controls.baseLocale.value).toBe('en');
-    expect(component.addLocaleInput.value).toBe('');
-    expect(component.addLocaleInput.errors).toBeNull();
-  });
-
-  it('should add a second locale without changing base', () => {
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
-    component.addLocaleInput.setValue('fr-ca');
-    component.addLocale();
-
-    expect(component.form.controls.locales.length).toBe(2);
-    expect(component.form.controls.baseLocale.value).toBe('en');
-  });
-
-  it('should reject an invalid locale format', () => {
-    component.addLocaleInput.setValue('xx-invalid-code');
-    component.addLocale();
-
-    expect(component.form.controls.locales.length).toBe(0);
-    expect(component.addLocaleInput.hasError('invalidLocale')).toBe(true);
-    expect(component.addLocaleInput.value).toBe('xx-invalid-code');
-  });
-
-  it('should reject a duplicate locale', () => {
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
-
-    expect(component.form.controls.locales.length).toBe(1);
-    expect(component.addLocaleInput.hasError('duplicateLocale')).toBe(true);
-  });
-
-  it('should normalize locale to lowercase on add', () => {
-    component.addLocaleInput.setValue('EN');
-    component.addLocale();
-
-    expect(component.form.controls.locales.at(0).value).toBe('en');
-  });
-
-  it('should remove a locale row', () => {
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
-    component.addLocaleInput.setValue('es');
-    component.addLocale();
-
-    component.removeLocale(1);
-
-    expect(component.form.controls.locales.length).toBe(1);
-    expect(component.form.controls.locales.at(0).value).toBe('en');
-  });
-
-  it('should auto-promote first remaining locale to base when base is removed', () => {
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
-    component.addLocaleInput.setValue('es');
-    component.addLocale();
-    component.removeLocale(0);
-
-    expect(component.form.controls.baseLocale.value).toBe('es');
-  });
-
-  it('should clear base locale when last locale is removed', () => {
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
-    component.removeLocale(0);
-
-    expect(component.form.controls.locales.length).toBe(0);
-    expect(component.form.controls.baseLocale.value).toBe('');
-  });
-
-  it('should let a clicked locale chip become the base', () => {
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
-    component.addLocaleInput.setValue('fr-ca');
-    component.addLocale();
-
-    component.setBaseLocale('fr-ca');
-
-    expect(component.form.controls.baseLocale.value).toBe('fr-ca');
-    expect(component.isBaseLocale('fr-ca')).toBe(true);
-    expect(component.isBaseLocale('en')).toBe(false);
-  });
-
-  it('should ignore a base locale that is not in the list', () => {
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
-
-    component.setBaseLocale('de');
-
-    expect(component.form.controls.baseLocale.value).toBe('en');
+    component.model.form.controls.translationsFolder.setValue('./node_modules/other/i18n');
+    fixture.detectChanges();
+    expect(component.model.readOnly()).toBe(false);
+    expect(toggle?.getAttribute('aria-checked')).toBe('false');
   });
 
   it('should add a pending locale when the input loses focus', () => {
-    component.addLocaleInput.setValue('es');
-    component.addLocaleIfPending();
+    const input = el().querySelector<HTMLInputElement>('input[aria-describedby="locales-hint"]');
+    expect(input).not.toBeNull();
+    if (!input) return;
+    input.value = 'es';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
 
-    expect(component.form.controls.locales.at(0).value).toBe('es');
+    expect(component.model.locales()).toEqual(['es']);
   });
 
-  it('should keep the tags and protected terms disclosure closed when there is nothing in it', () => {
-    expect(component.advancedOpen()).toBe(false);
-    component.toggleAdvanced();
-    expect(component.advancedOpen()).toBe(true);
+  it('should commit tags on Enter or comma, remove the last on Backspace, and commit a pending tag on blur', () => {
+    component.model.toggleAdvanced();
+    fixture.detectChanges();
+    const input = el().querySelector<HTMLInputElement>('input[aria-describedby="tags-hint"]');
+    expect(input).not.toBeNull();
+    if (!input) return;
+
+    input.value = ' Design System ';
+    press(input, 'Enter');
+    expect(input.value).toBe('');
+    input.value = 'ui';
+    press(input, ',');
+    expect(chipTexts('tags-label')).toEqual(['design-system', 'ui']);
+
+    press(input, 'Backspace');
+    expect(chipTexts('tags-label')).toEqual(['design-system']);
+
+    input.value = 'late';
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    expect(chipTexts('tags-label')).toEqual(['design-system', 'late']);
   });
 
   it('should mark required fields touched instead of closing when submitted empty', async () => {
     await component.onSubmit();
+    fixture.detectChanges();
 
-    expect(component.form.controls.name.touched).toBe(true);
-    expect(component.showNameError).toBe(true);
-    expect(component.showFolderError).toBe(true);
-  });
-
-  it('should not close dialog when form is invalid', async () => {
-    await component.onSubmit();
+    expect(component.model.form.controls.name.touched).toBe(true);
+    expect(el().querySelector('#collection-name-error')).not.toBeNull();
+    expect(el().querySelector('#collection-folder-error')).not.toBeNull();
     expect(mockDialogRef.close).not.toHaveBeenCalled();
   });
 
   it('should close dialog with result when form is valid and submitted', async () => {
-    component.form.controls.name.setValue('my-collection');
-    component.form.controls.translationsFolder.setValue('./i18n');
-    component.addLocaleInput.setValue('en');
-    component.addLocale();
+    fillValidForm();
 
     await component.onSubmit();
 
     expect(mockDialogRef.close).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'my-collection',
-        config: expect.objectContaining({
-          translationsFolder: './i18n',
-          locales: ['en'],
-          baseLocale: 'en',
-        }),
+        config: expect.objectContaining({ translationsFolder: './i18n', locales: ['en'], baseLocale: 'en' }),
       }),
     );
   });
 
-  it('should omit baseLocale and locales from result when no locales added', async () => {
-    component.form.controls.name.setValue('my-collection');
-    component.form.controls.translationsFolder.setValue('./i18n');
+  it('should send the exact create payload when nothing is set beyond the required fields', async () => {
+    component.model.form.controls.name.setValue('my-collection');
+    component.model.form.controls.translationsFolder.setValue('./i18n');
 
     await component.onSubmit();
 
-    const closeArg = mockDialogRef.close.mock.calls[0][0];
-    expect(closeArg.config).not.toHaveProperty('locales');
-    expect(closeArg.config).not.toHaveProperty('baseLocale');
+    expect(mockDialogRef.close).toHaveBeenCalledWith({
+      name: 'my-collection',
+      config: {
+        translationsFolder: './i18n',
+        locales: [],
+        readOnly: false,
+        tags: [],
+        protectedTermsFile: '',
+      },
+    });
   });
 
-  it('should add a protected term preserving casing and trimming, deduped case-sensitively', () => {
-    component.addProtectedTerm({ value: ' iPhone ', chipInput: { clear: () => undefined } } as never);
-    component.addProtectedTerm({ value: 'Node.js', chipInput: { clear: () => undefined } } as never);
-    component.addProtectedTerm({ value: 'iPhone', chipInput: { clear: () => undefined } } as never);
+  it('should keep the protected terms editor hidden without a terms file', () => {
+    component.model.toggleAdvanced();
+    fixture.detectChanges();
 
-    expect(component.protectedTermsList()).toEqual(['iPhone', 'Node.js']);
-  });
-
-  it('should commit a typed tag on Enter or comma and clear the input', () => {
-    const input = { value: ' Design System ' } as HTMLInputElement;
-    const enter = { key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent;
-
-    component.onChipInputKeydown(enter, input, 'tag');
-
-    expect(enter.preventDefault).toHaveBeenCalled();
-    expect(component.tagsList()).toEqual(['design-system']);
-    expect(input.value).toBe('');
-
-    const other = { key: 'a', preventDefault: vi.fn() } as unknown as KeyboardEvent;
-    component.onChipInputKeydown(other, { value: 'x' } as HTMLInputElement, 'tag');
-    expect(component.tagsList()).toEqual(['design-system']);
-  });
-
-  it('should commit a pending protected term when its input blurs', () => {
-    const input = { value: 'iPhone' } as HTMLInputElement;
-    component.commitChipInput(input, 'term');
-
-    expect(component.protectedTermsList()).toEqual(['iPhone']);
-    expect(input.value).toBe('');
-  });
-
-  it('should remove a protected term', () => {
-    component.addProtectedTerm({ value: 'iPhone', chipInput: { clear: () => undefined } } as never);
-    component.addProtectedTerm({ value: 'C++', chipInput: { clear: () => undefined } } as never);
-    component.removeProtectedTerm('iPhone');
-
-    expect(component.protectedTermsList()).toEqual(['C++']);
-  });
-
-  it('should not allow editing protected terms without a terms file', () => {
-    expect(component.canEditProtectedTerms()).toBe(false);
-  });
-
-  it('should omit protected terms from the submitted config when no terms file is configured', async () => {
-    component.form.controls.name.setValue('my-collection');
-    component.form.controls.translationsFolder.setValue('./i18n');
-    component.addProtectedTerm({ value: 'iPhone', chipInput: { clear: () => undefined } } as never);
-
-    await component.onSubmit();
-
-    const closeArg = mockDialogRef.close.mock.calls[0][0];
-    expect(closeArg.config).not.toHaveProperty('protectedTerms');
-    expect(closeArg.config).not.toHaveProperty('protectedTermsFile');
+    expect(el().querySelector('input[aria-describedby="protected-terms-hint"]')).toBeNull();
   });
 });
 
 describe('CollectionFormDialog — edit mode', () => {
   let fixture: ComponentFixture<CollectionFormDialog>;
   let component: CollectionFormDialog;
-  let mockDialogRef: { close: ReturnType<typeof vi.fn> };
-  let mockDialog: { open: ReturnType<typeof vi.fn> };
+  let mockDialogRef: DialogRefMock;
+  let mockDialog: DialogMock;
+  let store: StoreMock;
 
   const editData: CollectionFormDialogData = {
     mode: 'edit',
@@ -288,36 +285,23 @@ describe('CollectionFormDialog — edit mode', () => {
   beforeEach(async () => {
     mockDialog = { open: vi.fn() };
 
-    ({ fixture, mockDialogRef, mockDialog } = buildHarness(editData, mockDialog));
+    ({ fixture, mockDialogRef, mockDialog, store } = buildHarness(editData, mockDialog));
     component = fixture.componentInstance;
   });
 
-  it('should be in edit mode', () => {
-    expect(component.isEditMode).toBe(true);
-  });
+  it('should update the collection under its existing name through the store and close once accepted', async () => {
+    await component.onSubmit();
 
-  it('should pre-populate locale rows from config', () => {
-    expect(component.form.controls.locales.length).toBe(3);
-    expect(component.form.controls.locales.at(0).value).toBe('en');
-    expect(component.form.controls.locales.at(1).value).toBe('es');
-    expect(component.form.controls.locales.at(2).value).toBe('fr-ca');
-  });
-
-  it('should pre-populate baseLocale from config', () => {
-    expect(component.form.controls.baseLocale.value).toBe('en');
-  });
-
-  it('should pre-populate protected terms from config', () => {
-    expect(component.protectedTermsList()).toEqual(['iPhone', 'Node.js']);
-  });
-
-  it('should allow editing protected terms once a terms file is configured', () => {
-    expect(component.canEditProtectedTerms()).toBe(true);
-    expect(component.protectedTermsFilePath()).toBe('/project/i18n/terms.json');
+    expect(store.updateCollection).toHaveBeenCalledWith('my-app', {
+      name: undefined,
+      collection: expect.objectContaining({ translationsFolder: './i18n', locales: ['en', 'es', 'fr-ca'] }),
+    });
+    expect(store.createCollection).not.toHaveBeenCalled();
+    expect(mockDialogRef.close).toHaveBeenCalledWith(expect.objectContaining({ name: 'my-app' }));
   });
 
   it('should return protected terms and preserve the file pointer in the result config', async () => {
-    component.addProtectedTerm({ value: 'C++', chipInput: { clear: () => undefined } } as never);
+    component.model.addProtectedTerm('C++');
     await component.onSubmit();
 
     expect(mockDialogRef.close).toHaveBeenCalledWith(
@@ -330,20 +314,52 @@ describe('CollectionFormDialog — edit mode', () => {
     );
   });
 
+  it('should show stored protected terms, add one on Enter, and drop the last on Backspace', () => {
+    const chips = (): string[] =>
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll(
+          '[aria-labelledby="protected-terms-label"] .text-chip .locale-chip-body',
+        ),
+      ).map((chip) => (chip.textContent ?? '').trim());
+    const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      'input[aria-describedby="protected-terms-hint"]',
+    );
+    expect(chips()).toEqual(['iPhone', 'Node.js']);
+    expect(input).not.toBeNull();
+    if (!input) return;
+
+    input.value = ' C++ ';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', cancelable: true }));
+    fixture.detectChanges();
+    expect(chips()).toEqual(['iPhone', 'Node.js', 'C++']);
+
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', cancelable: true }));
+    fixture.detectChanges();
+    expect(chips()).toEqual(['iPhone', 'Node.js']);
+  });
+
   it('should open confirmation dialog when a pre-existing locale is removed on submit', async () => {
     mockDialog.open.mockReturnValue({ afterClosed: () => of(false) });
 
-    component.removeLocale(2);
+    component.model.removeLocale(2);
     await component.onSubmit();
 
     expect(mockDialog.open).toHaveBeenCalled();
+    expect(mockDialog.open.mock.calls.at(-1)?.[1]).toEqual({
+      data: {
+        title: 'Remove locales',
+        message: 'Removing locales: fr-ca. Their translation entries will be deleted. This cannot be undone.',
+        confirmButtonText: 'Save',
+        actionType: 'destructive',
+      },
+    });
     expect(mockDialogRef.close).not.toHaveBeenCalled();
   });
 
   it('should close dialog with result after removal confirmation confirmed', async () => {
     mockDialog.open.mockReturnValue({ afterClosed: () => of(true) });
 
-    component.removeLocale(2);
+    component.model.removeLocale(2);
     await component.onSubmit();
 
     expect(mockDialogRef.close).toHaveBeenCalledWith(
@@ -354,12 +370,11 @@ describe('CollectionFormDialog — edit mode', () => {
   });
 
   it('should not open confirmation dialog when only adding a new locale on submit', async () => {
-    component.addLocaleInput.setValue('de');
-    component.addLocale();
+    component.model.addLocaleInput.setValue('de');
+    component.model.addLocale();
     await component.onSubmit();
 
     expect(mockDialog.open).not.toHaveBeenCalled();
-    expect(mockDialogRef.close).toHaveBeenCalled();
     expect(mockDialogRef.close).toHaveBeenCalledWith(
       expect.objectContaining({
         config: expect.objectContaining({ locales: ['en', 'es', 'fr-ca', 'de'] }),
@@ -367,59 +382,32 @@ describe('CollectionFormDialog — edit mode', () => {
     );
   });
 
-  it('should keep base locale unchanged in edit mode', () => {
-    expect(component.form.controls.baseLocale.value).toBe('en');
-    component.removeLocale(1);
-    expect(component.form.controls.baseLocale.value).toBe('en');
-  });
-
-  it('should not remove the base locale row in edit mode', () => {
-    component.removeLocale(0);
-    expect(component.form.controls.locales.length).toBe(3);
-    expect(component.form.controls.locales.at(0).value).toBe('en');
-  });
-
-  it('should not offer a remove control for the base locale in edit mode', () => {
-    expect(component.canRemoveLocale(0)).toBe(false);
-    expect(component.canRemoveLocale(1)).toBe(true);
-  });
-
-  it('should not let the base locale change in edit mode', () => {
-    component.setBaseLocale('es');
-    expect(component.form.controls.baseLocale.value).toBe('en');
-  });
-
-  it('should open the disclosure when protected terms already exist', () => {
-    expect(component.advancedOpen()).toBe(true);
+  it('should render the locale chips with the base locked and no remove control on it', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const chips = Array.from(el.querySelectorAll('.chip-list[aria-label] .locale-chip'));
+    expect(chips).toHaveLength(3);
+    expect(chips[0].classList).toContain('locale-chip--base');
+    expect(chips[0].querySelector('.locale-chip-remove')).toBeNull();
+    expect(chips[1].querySelector('.locale-chip-remove')).not.toBeNull();
   });
 });
 
-describe('CollectionFormDialog — edit mode with inherited base locale', () => {
-  let component: CollectionFormDialog;
-  let mockDialogRef: { close: ReturnType<typeof vi.fn> };
-
-  beforeEach(async () => {
-    const built = buildHarness({
+describe('CollectionFormDialog — edit mode with stored protected terms', () => {
+  it('should render stored protected terms verbatim, one chip each, including untrimmed values', () => {
+    const { fixture } = buildHarness({
       mode: 'edit',
-      name: 'inherits-base',
-      config: { translationsFolder: './i18n', locales: ['en', 'de'] },
-      effectiveBaseLocale: 'en',
+      name: 'my-app',
+      config: {
+        translationsFolder: './i18n',
+        baseLocale: 'en',
+        locales: ['en'],
+        protectedTerms: ['a', ' a', 'b'],
+        protectedTermsFile: 'i18n/terms.json',
+      },
     });
-    component = built.fixture.componentInstance;
-    mockDialogRef = built.mockDialogRef;
-  });
 
-  it('should mark and lock the inherited base locale', () => {
-    expect(component.displayedBaseLocale).toBe('en');
-    expect(component.isBaseLocale('en')).toBe(true);
-    expect(component.canRemoveLocale(0)).toBe(false);
-    expect(component.canRemoveLocale(1)).toBe(true);
-  });
-
-  it('should not write the inherited base locale into the collection on save', async () => {
-    await component.onSubmit();
-
-    const closeArg = mockDialogRef.close.mock.calls[0][0];
-    expect(closeArg.config).not.toHaveProperty('baseLocale');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('[aria-labelledby="protected-terms-label"] .text-chip'),
+    ).toHaveLength(3);
   });
 });

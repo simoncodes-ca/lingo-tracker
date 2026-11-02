@@ -1,0 +1,22 @@
+{
+  "title": {
+    "source": "Export translations",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Exportar traducciones",
+    "fr-ca": "Exporter les traductions",
+    "ru": "Экспорт переводов",
+    "ja": "翻訳をエクスポート",
+    "de": "Übersetzungen exportieren"
+  },
+  "subtitle": {
+    "source": "Write the entries that match these filters to files a translator or a script can use. Nothing in the collections changes.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Escribe las entradas que coinciden con estos filtros en archivos que un traductor o un script puedan usar. No se modifica nada en las colecciones.",
+    "fr-ca": "Écrit les entrées qui correspondent à ces filtres dans des fichiers utilisables par un traducteur ou un script. Rien ne change dans les collections.",
+    "ru": "Записывает записи, соответствующие этим фильтрам, в файлы, которые может использовать переводчик или скрипт. Коллекции не изменяются.",
+    "ja": "これらのフィルターに一致するエントリを、翻訳者やスクリプトが使えるファイルに書き出します。コレクションは変更されません。",
+    "de": "Schreibt die Einträge, die diesen Filtern entsprechen, in Dateien, die ein Übersetzer oder ein Skript verwenden kann. An den Sammlungen ändert sich nichts."
+  }
+}

@@ -1,11 +1,13 @@
-import { Component, ChangeDetectionStrategy, input, output, effect, viewChild, type ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, type ElementRef, effect, input, output, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
+import { segmentValidator } from '../../../../shared/validators/segment.validator';
 
 /**
  * Inline input component for creating new folders in the folder tree.
@@ -33,6 +35,12 @@ export class InlineFolderInput {
   /** Emitted when user confirms the folder name (Enter key) */
   readonly confirm = output<string>();
 
+  /** A refusal of the last confirmed name, shown under the input until the name is edited. */
+  readonly error = input<string | null>(null);
+
+  /** Emitted when the user edits the name, which retires a refusal of the previous one. */
+  readonly edited = output<void>();
+
   /** Emitted when user cancels (Escape key or blur) */
   readonly cancelInput = output<void>();
 
@@ -42,13 +50,19 @@ export class InlineFolderInput {
   /** Form control for folder name with validation */
   readonly folderNameControl = new FormControl('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.pattern(/^[A-Za-z0-9_-]+$/)],
+    validators: [Validators.required, segmentValidator],
   });
 
   /** Track if confirm was already emitted to prevent blur from canceling */
   #confirmed = false;
 
   constructor() {
+    this.folderNameControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      // A refused name leaves the input open: editing it re-arms blur-to-cancel.
+      this.#confirmed = false;
+      this.edited.emit();
+    });
+
     // Auto-focus the input when component appears
     effect(() => {
       const element = this.inputElement();

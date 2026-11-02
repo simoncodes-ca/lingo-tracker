@@ -1,18 +1,8 @@
-import path from 'path';
-import { loadConfiguration } from '../utils';
-import { searchTranslations } from '@simoncodes-ca/core';
-import { normalizedLevenshtein } from '@simoncodes-ca/domain';
-
-/**
- * How many candidates to score. searchTranslations stops walking once it has
- * this many hits, so the budget must be large enough that ranking, not
- * discovery order, decides what survives — while still bounding the walk on a
- * very short query that matches most of the store.
- */
-const CANDIDATE_LIMIT = 500;
-
-/** Minimum similarity for a candidate to be reported as a match. */
-const THRESHOLD = 0.8;
+import { type Collection, normalizeSearchRequest, readCollection, searchResources } from '@simoncodes-ca/core';
+import { CommandOutput } from '../runner/command-output';
+import { defineCommand } from '../runner/command-runner';
+import { ConsoleFormatter } from '../utils';
+import { DEFAULT_MAX_RESULTS, FIND_SIMILAR_BLANK_VALUE_ERROR, FIND_SIMILAR_FLAGS } from './find-similar-flags';
 
 export interface FindSimilarOptions {
   collection?: string;
@@ -20,75 +10,38 @@ export interface FindSimilarOptions {
   maxResults?: number;
 }
 
-export async function findSimilarCommand(options: FindSimilarOptions): Promise<void> {
-  const loaded = loadConfiguration();
-  if (!loaded) return;
-  const { config, cwd } = loaded;
+export const findSimilarCommand = defineCommand<FindSimilarOptions>()({
+  flags: FIND_SIMILAR_FLAGS,
+  name: 'Find similar',
+  collection: 'read',
 
-  if (!options.value || options.value.trim().length === 0) {
-    console.error('Error: --value is required');
-    process.exit(1);
-  }
-
-  if (!options.collection) {
-    console.error('Error: --collection is required');
-    process.exit(1);
-  }
-
-  const collectionConfig = config.collections?.[options.collection];
-  if (!collectionConfig) {
-    console.error(`Error: Collection "${options.collection}" not found`);
-    process.exit(1);
-  }
-
-  const translationsFolder = path.resolve(cwd, collectionConfig.translationsFolder);
-  const baseLocale = collectionConfig.baseLocale || config.baseLocale || 'en';
-  const query = options.value.trim();
-  const displayLimit = options.maxResults ?? 5;
-
-  // Use a broad search to get candidates (pass the whole query for substring pre-filter)
-  const candidates = searchTranslations({
-    translationsFolder,
-    query,
-    maxResults: CANDIDATE_LIMIT,
-    baseLocale,
-  });
-
-  // Score every candidate on its base value, whatever its matchType: a key match
-  // pre-empts a value match upstream (see MatchType), so filtering on matchType
-  // discarded the well-named canonical keys this command exists to surface. The
-  // threshold is what separates a real match from a coincidental one.
-  const scored = candidates
-    .map((r) => {
-      const storedValue = r.translations[baseLocale] ?? '';
-      const score = normalizedLevenshtein(query.toLowerCase(), storedValue.toLowerCase());
-      const keyMatch = r.matchType === 'exact-key' || r.matchType === 'partial-key';
-      return { key: r.key, value: storedValue, score, keyMatch };
-    })
-    .filter((r) => r.score >= THRESHOLD)
-    .sort((a, b) => {
-      // Score decides first: a key hit never outranks a closer value.
-      if (b.score !== a.score) return b.score - a.score;
-      // On a tie, prefer the entry whose key is also named after the query — it
-      // is the canonical, reusable key a caller is looking for.
-      return Number(b.keyMatch) - Number(a.keyMatch);
-    })
-    .slice(0, displayLimit);
-
-  if (candidates.length >= CANDIDATE_LIMIT) {
-    console.warn(
-      `Note: only the first ${CANDIDATE_LIMIT} candidates were compared. Narrow the query for a complete result.`,
+  required: ['value', 'maxResults'],
+  run: ({ collection, answers }) => {
+    const request = normalizeSearchRequest(
+      { query: answers.value, mode: 'similar-value', limit: answers.maxResults },
+      DEFAULT_MAX_RESULTS,
     );
+    if (request.kind === 'blank') throw new Error(FIND_SIMILAR_BLANK_VALUE_ERROR);
+    reportSimilar(collection, request.query, request.limit);
+  },
+});
+
+/** Prints the collection's base values that Resource Search's similar-value rule matches, best first. */
+function reportSimilar(collection: Collection, query: string, limit: number): void {
+  const { resources, warnings } = readCollection(collection);
+  for (const warning of warnings) {
+    ConsoleFormatter.warning(warning);
   }
 
-  if (scored.length === 0) {
-    console.log(`No similar values found for "${query}".`);
+  const matches = searchResources(resources, collection, query, { mode: 'similar-value', limit });
+  if (matches.length === 0) {
+    CommandOutput.log(`No similar values found for "${query}".`);
     return;
   }
 
-  console.log(`Similar values found for "${query}":`);
-  for (const match of scored) {
-    const pct = Math.round(match.score * 100);
-    console.log(`  ${match.key} → "${match.value}" (similarity: ${pct}%)`);
+  CommandOutput.log(`Similar values found for "${query}":`);
+  for (const match of matches) {
+    const pct = Math.round((match.similarity ?? 0) * 100);
+    CommandOutput.log(`  ${match.key} → "${match.source}" (similarity: ${pct}%)`);
   }
 }

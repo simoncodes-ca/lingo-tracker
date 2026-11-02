@@ -1,11 +1,48 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { generateValidationSummary } from './generate-validation-summary';
-import type { ResourceValidationResult, ValidationOptions, ResourceValidationDetail } from './types';
+import type {
+  ResourceValidationDetail,
+  ResourceValidationResult,
+  TerminologyValidationDetail,
+  ValidationOptions,
+} from './types';
 
 describe('generateValidationSummary', () => {
   const defaultOptions: ValidationOptions = {
     allowTranslated: false,
   };
+
+  describe('unreadable folders', () => {
+    it('lists each unreadable folder with its message and counts them in the summary', () => {
+      const result: ResourceValidationResult = {
+        totalResourcesValidated: 0,
+        totalUniqueKeys: 0,
+        localesValidated: 1,
+        collectionsValidated: 1,
+        statusCounts: { new: 0, translated: 0, stale: 0, verified: 0 },
+        failures: [],
+        warnings: [],
+        successes: [],
+        unreadableFolders: [
+          {
+            collection: 'main',
+            folderPath: 'apps.bad',
+            message: 'Failed to parse JSON file /t/apps/bad/tracker_meta.json',
+          },
+          { collection: 'main', folderPath: '', message: 'Failed to parse JSON file /t/resource_entries.json' },
+        ],
+        passed: false,
+      };
+
+      const summary = generateValidationSummary(result, defaultOptions);
+
+      expect(summary).toContain('❌ Unreadable Folders (2):');
+      expect(summary).toContain('  [main] apps.bad\n    Failed to parse JSON file /t/apps/bad/tracker_meta.json');
+      expect(summary).toContain('  [main] (root)');
+      expect(summary).toContain('Unreadable Folders: 2');
+      expect(summary).toContain('❌ Validation failed.');
+    });
+  });
 
   describe('successful validation', () => {
     it('should generate summary for all verified resources', () => {
@@ -835,15 +872,15 @@ describe('generateValidationSummary', () => {
     };
 
     it('should include skipped locales line when skippedLocales is non-empty', () => {
-      const options: ValidationOptions = { allowTranslated: false, skippedLocales: ['fr', 'de'] };
-      const summary = generateValidationSummary(baseResult, options);
+      const options: ValidationOptions = { allowTranslated: false };
+      const summary = generateValidationSummary(baseResult, options, ['fr', 'de']);
 
       expect(summary).toContain('Skipped Locales: fr, de (2)');
     });
 
     it('should not include skipped locales line when skippedLocales is empty', () => {
-      const options: ValidationOptions = { allowTranslated: false, skippedLocales: [] };
-      const summary = generateValidationSummary(baseResult, options);
+      const options: ValidationOptions = { allowTranslated: false };
+      const summary = generateValidationSummary(baseResult, options, []);
 
       expect(summary).not.toContain('Skipped Locales');
     });
@@ -856,8 +893,8 @@ describe('generateValidationSummary', () => {
     });
 
     it('should place skipped locales between Locales Validated and Collections Validated', () => {
-      const options: ValidationOptions = { allowTranslated: false, skippedLocales: ['fr'] };
-      const summary = generateValidationSummary(baseResult, options);
+      const options: ValidationOptions = { allowTranslated: false };
+      const summary = generateValidationSummary(baseResult, options, ['fr']);
 
       const localesIdx = summary.indexOf('Locales Validated:');
       const skippedIdx = summary.indexOf('Skipped Locales:');
@@ -865,6 +902,96 @@ describe('generateValidationSummary', () => {
 
       expect(localesIdx).toBeLessThan(skippedIdx);
       expect(skippedIdx).toBeLessThan(collectionsIdx);
+    });
+  });
+
+  describe('preferred terminology', () => {
+    const baseResult: ResourceValidationResult = {
+      totalResourcesValidated: 2,
+      totalUniqueKeys: 1,
+      localesValidated: 2,
+      collectionsValidated: 1,
+      statusCounts: { new: 0, translated: 0, stale: 0, verified: 2 },
+      failures: [],
+      warnings: [],
+      successes: createResourceDetails('verified', 2, 'es', 'main'),
+      passed: true,
+    };
+    const rules = [{ discouraged: 'Expenditure', preferred: 'Investment' }];
+    const options: ValidationOptions = {
+      allowTranslated: false,
+      terminology: { rules },
+    };
+
+    const finding = (key: string, reason?: string): TerminologyValidationDetail => ({
+      key,
+      collection: 'main',
+      locale: 'en',
+      discouraged: 'Expenditure',
+      preferred: 'Investment',
+      ...(reason ? { reason } : {}),
+      message: 'consider "Investment" instead of "Expenditure"',
+    });
+
+    it('lists each finding with its reason on its own line', () => {
+      const summary = generateValidationSummary(
+        {
+          ...baseResult,
+          terminology: {
+            warnings: [finding('budget.title', 'Finance style guide'), finding('budget.subtitle')],
+            valuesChecked: 1,
+          },
+        },
+        options,
+      );
+
+      expect(summary).toContain('⚠️  Preferred terminology warnings (2):');
+      expect(summary).toContain(
+        '  [main] budget.title: consider "Investment" instead of "Expenditure"\n    Finance style guide',
+      );
+      expect(summary).toContain('  [main] budget.subtitle: consider "Investment" instead of "Expenditure"');
+      expect(summary).toContain('Terminology Values Scanned: 1');
+      expect(summary).toContain('Total Preferred Terminology Warnings: 2');
+      expect(summary).toContain('✅ Validation passed with warnings.');
+    });
+
+    it('truncates a long list of findings', () => {
+      const warnings = Array.from({ length: 105 }, (_, i) => finding(`key.${i}`));
+      const summary = generateValidationSummary(
+        { ...baseResult, terminology: { warnings, valuesChecked: 105 } },
+        options,
+      );
+
+      expect(summary).toContain('[main] key.99:');
+      expect(summary).not.toContain('[main] key.100:');
+      expect(summary).toContain('  ... and 5 more');
+    });
+
+    it('shows a load error as a failure', () => {
+      const summary = generateValidationSummary(
+        {
+          ...baseResult,
+          passed: false,
+          terminology: { warnings: [], configError: 'Preferred terminology file is not valid JSON', valuesChecked: 0 },
+        },
+        { allowTranslated: false, terminology: { rules: [], loadError: 'x' } },
+      );
+
+      expect(summary).toContain('❌ Preferred terminology file error:');
+      expect(summary).toContain('  Preferred terminology file is not valid JSON');
+      expect(summary).toContain('Preferred Terminology File: failed to load');
+      expect(summary).not.toContain('Terminology Values Scanned');
+      expect(summary).toContain('❌ Validation failed.');
+    });
+
+    it('adds nothing when there are no rules and no load error', () => {
+      const summary = generateValidationSummary(
+        { ...baseResult, terminology: { warnings: [], valuesChecked: 0 } },
+        { allowTranslated: false, terminology: { rules: [] } },
+      );
+
+      expect(summary).not.toMatch(/terminology/i);
+      expect(summary).toContain('✅ Validation passed successfully!');
     });
   });
 });

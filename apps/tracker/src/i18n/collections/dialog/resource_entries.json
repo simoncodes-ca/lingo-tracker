@@ -457,5 +457,15 @@
     "ru": "Relative to the project root, next to {file}.",
     "ja": "Relative to the project root, next to {file}.",
     "de": "Relative to the project root, next to {file}."
+  },
+  "nameExistsX": {
+    "source": "A collection named {name} already exists.",
+    "comment": "Shown under the name field when the server refuses a new collection because the name is taken",
+    "tags": ["collections"],
+    "es": "A collection named {name} already exists.",
+    "fr-ca": "A collection named {name} already exists.",
+    "ru": "A collection named {name} already exists.",
+    "ja": "A collection named {name} already exists.",
+    "de": "A collection named {name} already exists."
   }
 }

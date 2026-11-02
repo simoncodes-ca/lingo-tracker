@@ -15,4 +15,6 @@ export interface TranslateLocaleJobDto {
   readonly skippedKeys?: readonly string[];
   readonly startedAt?: string;
   readonly completedAt?: string;
+  /** Why the job failed: set only when `status` is `failed`. */
+  readonly error?: string;
 }

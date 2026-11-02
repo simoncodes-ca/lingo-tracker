@@ -1,3 +1,5 @@
+import type { PreferredTermRuleDto } from './preferred-term-rule.dto';
+
 /**
  * Writable top-level configuration fields for `PUT /api/config`.
  *
@@ -8,4 +10,9 @@
 export interface UpdateConfigDto {
   /** Global protected terms. Written to the global protected-terms file, not into the config. */
   protectedTerms?: string[];
+  /**
+   * The full preferred-terminology rule list, replacing the file's contents. Validated
+   * server-side; the file is written sorted by discouraged term.
+   */
+  preferredTerminology?: PreferredTermRuleDto[];
 }

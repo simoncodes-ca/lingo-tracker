@@ -1,10 +1,11 @@
+import { buildGlossary, type Collection } from '@simoncodes-ca/core';
 import * as fs from 'fs';
 import * as path from 'path';
-import { loadResourcesFromCollections } from '@simoncodes-ca/core';
-import type { LingoTrackerCollection, LingoTrackerConfig } from '@simoncodes-ca/core';
-import { ConsoleFormatter, loadConfiguration, parseCommaSeparatedList, resolveCollection } from '../utils';
-import { resolveExtractor, type CandidateExtractor, type ExtractorMode } from './glossary-extractor';
-import { matchGlossary, type FlatEntry } from './glossary-matcher';
+import { CommandOutput } from '../runner/command-output';
+import { type CommandResult, type CommandStdin, defineCommand } from '../runner/command-runner';
+import { flagName } from '../runner/flag-record';
+import { ConsoleFormatter, parseNameSelection } from '../utils';
+import { GLOSSARY_FLAGS } from './glossary-flags';
 
 export interface GlossaryCommandOptions {
   /** Inline text snippet to extract from. */
@@ -17,19 +18,19 @@ export interface GlossaryCommandOptions {
   stdout?: boolean;
   /** Limit matching to a single collection (default: all collections). */
   collection?: string;
-  /** Comma-separated locales to include (default: all configured locales). */
-  locales?: string;
+  /** Comma-separated locales to include (default: opened collections' target locales). */
+  locales?: string[];
   /** Include new/stale entries (default: only translated + verified). */
   includeAll?: boolean;
   /** Extraction strategy (default: ngram). */
-  extractor?: ExtractorMode;
+  extractor?: 'ngram' | 'ai';
 }
 
 /**
  * Reads the input block from --text, --input <file>, or piped stdin (in that order
  * of precedence). Returns null and reports an error when no input is available.
  */
-function resolveInputText(options: GlossaryCommandOptions, cwd: string): string | null {
+function resolveInputText(options: GlossaryCommandOptions, cwd: string, stdin: CommandStdin): string | null {
   if (options.text && options.text.trim().length > 0) {
     return options.text;
   }
@@ -44,54 +45,19 @@ function resolveInputText(options: GlossaryCommandOptions, cwd: string): string 
   }
 
   // Fall back to piped stdin when not attached to a terminal.
-  if (!process.stdin.isTTY) {
+  if (!stdin.isTTY) {
     try {
-      const piped = fs.readFileSync(0, 'utf8');
+      const piped = stdin.read();
       if (piped.trim().length > 0) return piped;
     } catch {
       // No readable stdin — fall through to the error below.
     }
   }
 
-  ConsoleFormatter.error('No input provided. Use --text "...", --input <file>, or pipe text via stdin.');
+  ConsoleFormatter.error(
+    `No input provided. Use ${flagName(GLOSSARY_FLAGS.text)} "...", ${flagName(GLOSSARY_FLAGS.input)} <file>, or pipe text via stdin.`,
+  );
   return null;
-}
-
-/**
- * Loads entries from the requested collection(s) via the shared core loader,
- * mapping each `LoadedResource` to the matcher's `FlatEntry`. Each collection's
- * effective base locale is stripped from `translations` (it lives in `source`).
- * Returns null if a named collection cannot be resolved.
- */
-function loadEntries(options: GlossaryCommandOptions, config: LingoTrackerConfig, cwd: string): FlatEntry[] | null {
-  const globalBase = config.baseLocale;
-
-  let targets: { name: string; collection: LingoTrackerCollection }[];
-  if (options.collection) {
-    const resolved = resolveCollection(options.collection, config, cwd);
-    if (!resolved) return null;
-    targets = [{ name: resolved.name, collection: resolved.config }];
-  } else {
-    targets = Object.entries(config.collections ?? {}).map(([name, collection]) => ({ name, collection }));
-  }
-
-  const entries: FlatEntry[] = [];
-  for (const { name, collection } of targets) {
-    const base = collection.baseLocale ?? globalBase;
-    const loaded = loadResourcesFromCollections([{ name, path: path.resolve(cwd, collection.translationsFolder) }]);
-    for (const resource of loaded) {
-      const translations = { ...resource.translations };
-      if (base) delete translations[base];
-      entries.push({
-        key: resource.fullKey,
-        collection: resource.collection,
-        source: resource.source,
-        translations,
-        status: resource.status,
-      });
-    }
-  }
-  return entries;
 }
 
 function buildOutputPath(options: GlossaryCommandOptions, cwd: string): string {
@@ -101,67 +67,55 @@ function buildOutputPath(options: GlossaryCommandOptions, cwd: string): string {
   return path.resolve(cwd, `lingo-tracker-glossary-${timestamp}.json`);
 }
 
-export async function glossaryCommand(options: GlossaryCommandOptions): Promise<void> {
-  const loaded = loadConfiguration();
-  if (!loaded) return;
-  const { config, cwd } = loaded;
+export const glossaryCommand = defineCommand<GlossaryCommandOptions>()({
+  flags: GLOSSARY_FLAGS,
+  name: 'Glossary',
+  collection: 'many',
+  many: { select: (answers) => parseNameSelection(answers.collection) ?? { kind: 'all' } },
+  run: ({ cwd, collections, answers, stdin }) => runGlossary(answers, cwd, collections, stdin),
+});
 
-  const block = resolveInputText(options, cwd);
+function runGlossary(
+  options: GlossaryCommandOptions,
+  cwd: string,
+  collections: Collection[],
+  stdin: CommandStdin,
+): CommandResult {
+  const block = resolveInputText(options, cwd, stdin);
   if (block === null) {
-    process.exit(1);
+    return { exitCode: 1 };
   }
 
-  const baseLocale = config.baseLocale || 'en';
-  const requested = parseCommaSeparatedList(options.locales) ?? config.locales ?? [];
-  const targetLocales = requested.filter((locale) => locale !== baseLocale);
-
-  if (targetLocales.length === 0) {
-    ConsoleFormatter.warning('No target locales to include (only the base locale is configured or requested).');
-  }
-
-  const entries = loadEntries(options, config, cwd);
-  if (entries === null) {
-    process.exit(1);
-  }
-
-  let extractor: CandidateExtractor;
-  try {
-    extractor = resolveExtractor(options.extractor ?? 'ngram');
-  } catch (error) {
-    ConsoleFormatter.error((error as Error).message);
-    process.exit(1);
-  }
-
-  const candidates = extractor(block);
-  const terms = matchGlossary(entries, candidates, {
-    locales: targetLocales,
+  const { warnings, ...glossary } = buildGlossary(collections, block, {
+    extractor: options.extractor,
+    locales: options.locales?.length ? options.locales : undefined,
     includeAll: options.includeAll,
   });
 
-  const glossary = {
-    baseLocale,
-    locales: targetLocales,
-    source: { chars: block.length, candidates: candidates.length },
-    matchCount: terms.length,
-    terms,
-  };
+  for (const warning of warnings) {
+    ConsoleFormatter.warning(warning);
+  }
+
+  if (glossary.locales.length === 0) {
+    ConsoleFormatter.warning('No target locales to include (only the base locale is configured or requested).');
+  }
 
   const json = JSON.stringify(glossary, null, 2);
 
   if (options.stdout) {
     // Keep stdout clean for piping; status goes to stderr.
-    process.stdout.write(`${json}\n`);
-    console.error(`✅ ${terms.length} term(s) matched from ${candidates.length} candidate(s).`);
+    CommandOutput.write(`${json}\n`);
+    CommandOutput.error(`✅ ${glossary.matchCount} term(s) matched from ${glossary.source.candidates} candidate(s).`);
     return;
   }
 
   const outputPath = buildOutputPath(options, cwd);
   fs.writeFileSync(outputPath, json);
 
-  if (terms.length === 0) {
+  if (glossary.matchCount === 0) {
     ConsoleFormatter.info(`No matching translations found. Wrote empty glossary to: ${outputPath}`);
   } else {
-    ConsoleFormatter.success(`${terms.length} term(s) matched from ${candidates.length} candidate(s).`);
+    ConsoleFormatter.success(`${glossary.matchCount} term(s) matched from ${glossary.source.candidates} candidate(s).`);
     ConsoleFormatter.keyValue('Glossary written to', outputPath);
   }
 }

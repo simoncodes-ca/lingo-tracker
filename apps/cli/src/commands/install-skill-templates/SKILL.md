@@ -1,4 +1,5 @@
 ---
+
 name: lingo-tracker
 description: Translation management for lingo-tracker. Handles i18n, internationalization, transloco, hardcoded strings detection, translation resource creation, token generation, and code updates.
 ---
@@ -40,7 +41,7 @@ Before calling `add-resource` for any detected string, run:
 npx lingo-tracker find-similar --collection {{PRIMARY_COLLECTION}} --value "<the string value>"
 ```
 
-**If the command returns any results, evaluate each match** (the tool already filters to ≥ 80% similarity):
+**If the command returns any results, evaluate each match** (the tool shows values that are ≥ 80% similar, or that contain the string or are contained in it as whole words with ≥ 40% similarity; such a containment match shows its real similarity, between 40% and 80%):
 
 - **Reuse the existing key if**:
   - The stored value is identical or nearly identical (≥ 95% similarity)
@@ -54,6 +55,8 @@ npx lingo-tracker find-similar --collection {{PRIMARY_COLLECTION}} --value "<the
 
 When reusing, use the existing key directly in the code — do not call `add-resource`.
 
+If the key already exists the command exits 1; reuse the key, use `edit-resource`, or pass `--override` to replace it.
+
 ## Default Collection & Bundle
 
 {{COLLECTIONS_SECTION}}
@@ -62,11 +65,13 @@ When reusing, use the existing key directly in the code — do not call `add-res
 ## Detecting Hardcoded Strings
 
 ### Flag these as translatable:
+
 - HTML text content, `placeholder`, `aria-label`, `title` attributes
 - Angular Material: `matTooltip`, `<mat-label>`, button text
 - TypeScript: snackbar messages, dialog titles/messages, toast notifications, error messages shown to users
 
 ### Skip these (not translatable):
+
 - CSS class names, route paths, enum values, icon names (e.g., `'add'`, `'delete'`)
 - Technical identifiers, object keys, log messages, selector strings
 - URLs, file paths, regex patterns

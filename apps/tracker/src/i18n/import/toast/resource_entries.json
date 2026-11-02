@@ -1,0 +1,12 @@
+{
+  "startFailed": {
+    "source": "The import could not be started.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "No se pudo iniciar la importación.",
+    "fr-ca": "L’importation n’a pas pu démarrer.",
+    "ru": "Не удалось запустить импорт.",
+    "ja": "インポートを開始できませんでした。",
+    "de": "Der Import konnte nicht gestartet werden."
+  }
+}

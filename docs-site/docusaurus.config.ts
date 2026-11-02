@@ -1,9 +1,9 @@
-import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import type { Config } from '@docusaurus/types';
 
 const config: Config = {
-  title: 'Lingo Tracker',
-  tagline: 'Effortlessly Track, Validate, and Manage Your Translations',
+  title: 'LingoTracker',
+  tagline: 'Translation management that lives in your repository',
   favicon: 'img/favicon.png',
 
   url: 'https://simoncodes-ca.github.io',
@@ -33,7 +33,8 @@ const config: Config = {
           path: '../docs',
           routeBasePath: 'docs',
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/simoncodes-ca/lingo-tracker/edit/develop/',
+          exclude: ['**/adr/**'],
+          editUrl: ({ docPath }) => `https://github.com/simoncodes-ca/lingo-tracker/edit/develop/docs/${docPath}`,
         },
         blog: false,
         theme: {
@@ -49,9 +50,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'Lingo Tracker',
+      title: 'LingoTracker',
       logo: {
-        alt: 'Lingo Tracker Logo',
+        alt: 'LingoTracker Logo',
         src: 'img/logo.png',
         srcDark: 'img/logo-dark.png',
       },
@@ -76,6 +77,7 @@ const config: Config = {
           title: 'Docs',
           items: [
             { label: 'Getting Started', to: '/docs/getting-started' },
+            { label: 'Concepts', to: '/docs/concepts' },
             { label: 'CLI Reference', to: '/docs/cli' },
             { label: 'API Reference', to: '/docs/api' },
           ],

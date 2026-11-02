@@ -1,7 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
+    "outDir": "../../dist/out-tsc/apps/cli/spec",
+    "moduleResolution": "bundler",
+    "typeRoots": ["../../node_modules/@types", "../../node_modules", "../../types"],
     "types": ["vitest/globals", "vitest/importMeta", "vite/client", "node", "vitest"]
   },
   "include": [
@@ -18,5 +20,6 @@
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx",
     "src/**/*.d.ts"
-  ]
+  ],
+  "files": ["src/test-setup.ts"]
 }

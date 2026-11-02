@@ -1,0 +1,22 @@
+{
+  "title": {
+    "source": "Import translations",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Importar traducciones",
+    "fr-ca": "Importer les traductions",
+    "ru": "Импорт переводов",
+    "ja": "翻訳をインポート",
+    "de": "Übersetzungen importieren"
+  },
+  "subtitle": {
+    "source": "Read files a translator or a script produced and write them into one collection, one locale per file.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Lee los archivos que produjo un traductor o un script y los escribe en una colección, un idioma por archivo.",
+    "fr-ca": "Lit les fichiers produits par un traducteur ou un script et les écrit dans une collection, une langue par fichier.",
+    "ru": "Читает файлы, созданные переводчиком или скриптом, и записывает их в одну коллекцию: один язык на файл.",
+    "ja": "翻訳者やスクリプトが作成したファイルを読み込み、1つのコレクションに書き込みます。1ファイルにつき1ロケールです。",
+    "de": "Liest Dateien, die ein Übersetzer oder ein Skript erstellt hat, und schreibt sie in eine Sammlung, eine Sprache pro Datei."
+  }
+}

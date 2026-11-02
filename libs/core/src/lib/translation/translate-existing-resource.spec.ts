@@ -1,333 +1,436 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { translateExistingResource } from './translate-existing-resource';
-import * as fs from 'node:fs';
-import { type SafeAny, RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TranslationConfig } from '../../config/translation-config';
+import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import { seedResources, testCollection, useTempDir } from '../../testing/temp-dir.spec-helpers';
+import type { Collection } from '../config/open-collection';
+import { AutoTranslationDisabledError, ResourceNotFoundError, TranslationError } from '../errors/lingo-tracker-error';
+import { writeJsonFile } from '../file-io/json-file-operations';
+import { InMemoryTranslationProvider } from '../machine-translation/in-memory-translation-provider';
+// Standalone fixtures and readback retain unreported saves.
+import { openUnreportedResourceFolder } from '../resource/resource-folder';
+import type { ResourceMutation } from '../resource/resource-mutation';
+import { translateExistingResource } from './translate-existing-resource';
 
-vi.mock('node:fs');
-vi.mock('./auto-translate-resources');
+vi.mock('../file-io/json-file-operations', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../file-io/json-file-operations')>();
+  return { ...actual, writeJsonFile: vi.fn(actual.writeJsonFile) };
+});
 
-import { autoTranslateResource } from './auto-translate-resources';
+async function failWrite(filePath: string) {
+  const actual = await vi.importActual<typeof import('../file-io/json-file-operations')>(
+    '../file-io/json-file-operations',
+  );
+  const error = new Error('write failed');
+  const writer = vi.mocked(writeJsonFile);
+  writer.mockImplementation((options) => {
+    if (options.filePath === filePath) throw error;
+    return actual.writeJsonFile(options);
+  });
+  return { error, restore: () => writer.mockImplementation(actual.writeJsonFile) };
+}
+
+const collected: ResourceMutation[] = [];
+const onMutation = (mutation: ResourceMutation): void => {
+  collected.push(mutation);
+};
+beforeEach(() => {
+  collected.length = 0;
+});
+
+const AUTO: TranslationConfig = {
+  enabled: true,
+  provider: 'google-translate',
+  apiKeyEnv: 'TRANSLATE_EXISTING_SPEC_KEY',
+};
 
 describe('translateExistingResource', () => {
-  const translationsFolder = 'translations';
-  const cwd = '/test';
+  const dir = useTempDir('translate-existing-');
 
-  const enabledTranslationConfig: TranslationConfig = {
-    enabled: true,
-    provider: 'google-translate',
-    apiKeyEnv: 'GOOGLE_TRANSLATE_API_KEY',
-  };
+  function collection(overrides: Partial<Collection> = {}): Collection {
+    return testCollection(dir(), { locales: ['en', 'fr', 'es', 'de'], translationConfig: AUTO, ...overrides });
+  }
 
-  const baseResourceEntries = {
-    save: { source: 'Save', 'fr-ca': 'Sauvegarder' },
-  };
+  function read(file: string, ...segments: string[]) {
+    return JSON.parse(readFileSync(join(dir(), ...segments, file), 'utf8'));
+  }
 
-  const _baseTrackerMeta = {
-    save: {
-      en: { checksum: 'base_hash' },
-      'fr-ca': { checksum: 'fr_hash', baseChecksum: 'base_hash', status: 'translated' },
-      es: { checksum: 'es_empty_hash', baseChecksum: 'base_hash', status: 'new' },
-    },
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(fs.writeFileSync).mockImplementation(() => undefined);
-
-    vi.mocked(autoTranslateResource).mockResolvedValue({
-      translations: [],
-      skippedLocales: [],
-    });
-  });
-
-  function mockFileSystem(resourceEntries: SafeAny, trackerMeta: SafeAny) {
-    vi.mocked(fs.readFileSync).mockImplementation((filePath: SafeAny) => {
-      if ((filePath as string).includes(RESOURCE_ENTRIES_FILENAME)) {
-        return JSON.stringify(resourceEntries);
-      }
-      if ((filePath as string).includes(TRACKER_META_FILENAME)) {
-        return JSON.stringify(trackerMeta);
-      }
-      return '{}';
+  /** `common.save`: fr translated, es new (copy), de missing. */
+  function seedSave(target: Collection, source = 'Save'): void {
+    seedResources(target, {
+      'common.save': {
+        source,
+        translations: { fr: 'Sauvegarder', es: { value: source, status: 'new' } },
+      },
     });
   }
 
-  it('should throw when the resource files do not exist', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
-    await expect(
-      translateExistingResource({
-        key: 'buttons.save',
-        translationsFolder,
-        translationConfig: enabledTranslationConfig,
-        allLocales: ['en', 'fr-ca', 'es'],
-        baseLocale: 'en',
-        cwd,
-      }),
-    ).rejects.toThrow(/Resource not found/);
-  });
-
-  it('should throw when the entry key is not present in the files', async () => {
-    mockFileSystem({}, {});
-
-    await expect(
-      translateExistingResource({
-        key: 'buttons.save',
-        translationsFolder,
-        translationConfig: enabledTranslationConfig,
-        allLocales: ['en', 'fr-ca'],
-        baseLocale: 'en',
-        cwd,
-      }),
-    ).rejects.toThrow(/Resource not found/);
-  });
-
-  it('should return translatedCount 0 when no locales have new or stale status', async () => {
-    const allTranslatedMeta = {
-      save: {
-        en: { checksum: 'base_hash' },
-        'fr-ca': { checksum: 'fr_hash', baseChecksum: 'base_hash', status: 'translated' },
-        es: { checksum: 'es_hash', baseChecksum: 'base_hash', status: 'verified' },
-      },
-    };
-    mockFileSystem(baseResourceEntries, allTranslatedMeta);
-
-    const result = await translateExistingResource({
-      key: 'buttons.save',
-      translationsFolder,
-      translationConfig: enabledTranslationConfig,
-      allLocales: ['en', 'fr-ca', 'es'],
-      baseLocale: 'en',
-      cwd,
+  it('reports a named protected-terms file that does not exist in warnings', async () => {
+    const missing = join(dir(), 'typo.json');
+    const named = collection({
+      termFiles: { ...collection().termFiles, protectedTerms: { path: missing, explicit: true } },
     });
+    seedSave(named);
 
-    expect(result.translatedCount).toBe(0);
-    expect(result.skippedLocales).toEqual([]);
-    expect(autoTranslateResource).not.toHaveBeenCalled();
-    expect(fs.writeFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should return the current entry when no locales need translation', async () => {
-    const resourceEntries = { save: { source: 'Save', 'fr-ca': 'Sauvegarder' } };
-    const allVerifiedMeta = {
-      save: {
-        en: { checksum: 'base_hash' },
-        'fr-ca': { checksum: 'fr_hash', baseChecksum: 'base_hash', status: 'verified' },
-      },
-    };
-    mockFileSystem(resourceEntries, allVerifiedMeta);
-
-    const result = await translateExistingResource({
-      key: 'buttons.save',
-      translationsFolder,
-      translationConfig: enabledTranslationConfig,
-      allLocales: ['en', 'fr-ca'],
-      baseLocale: 'en',
-      cwd,
-    });
-
-    expect(result.entry.key).toBe('save');
-    expect(result.entry.source).toBe('Save');
-    expect(result.entry.translations['fr-ca']).toBe('Sauvegarder');
-  });
-
-  it('should translate locales with new status', async () => {
-    const newLocaleMeta = {
-      save: {
-        en: { checksum: 'base_hash' },
-        'fr-ca': { checksum: 'fr_hash', baseChecksum: 'base_hash', status: 'new' },
-        es: { checksum: 'es_hash', baseChecksum: 'base_hash', status: 'new' },
-      },
-    };
-    const resourceEntries = { save: { source: 'Save', 'fr-ca': 'Save', es: 'Save' } };
-    mockFileSystem(resourceEntries, newLocaleMeta);
-
-    vi.mocked(autoTranslateResource).mockResolvedValue({
-      translations: [
-        { locale: 'fr-ca', value: 'Sauvegarder', status: 'translated' },
-        { locale: 'es', value: 'Guardar', status: 'translated' },
-      ],
-      skippedLocales: [],
-    });
-
-    const result = await translateExistingResource({
-      key: 'buttons.save',
-      translationsFolder,
-      translationConfig: enabledTranslationConfig,
-      allLocales: ['en', 'fr-ca', 'es'],
-      baseLocale: 'en',
-      cwd,
-    });
+    const result = await translateExistingResource(
+      { ...named, onMutation: onMutation ?? named.onMutation },
+      'common.save',
+      { provider: new InMemoryTranslationProvider() },
+    );
 
     expect(result.translatedCount).toBe(2);
+    expect(result.warnings).toEqual([`Protected terms file not found: ${missing}. Treating as an empty list.`]);
+  });
+
+  it('throws AutoTranslationDisabledError when auto-translation is disabled', async () => {
+    const disabled = collection({ translationConfig: { ...AUTO, enabled: false } });
+    seedSave(disabled);
+
+    await expect(
+      translateExistingResource({ ...disabled, onMutation: onMutation ?? disabled.onMutation }, 'common.save', {}),
+    ).rejects.toThrow(AutoTranslationDisabledError);
+  });
+
+  it('throws MISSING_API_KEY when no provider is injected and the env var is unset', async () => {
+    const target = collection();
+    seedSave(target);
+
+    await expect(
+      translateExistingResource({ ...target, onMutation: onMutation ?? target.onMutation }, 'common.save', {}),
+    ).rejects.toThrow(TranslationError);
+  });
+
+  it('returns without an API key when no locale needs work', async () => {
+    const target = collection({ locales: ['en', 'fr'] });
+    seedResources(target, { 'common.save': { source: 'Save', translations: { fr: 'Sauvegarder' } } });
+
+    const result = await translateExistingResource(
+      { ...target, onMutation: onMutation ?? target.onMutation },
+      'common.save',
+      {},
+    );
+
+    expect(result).toMatchObject({ translatedCount: 0, skippedLocales: [] });
+    expect(collected).toEqual([]);
+  });
+
+  it('throws ResourceNotFoundError when the folder or the entry does not exist', async () => {
+    const target = collection();
+    seedSave(target);
+    const provider = new InMemoryTranslationProvider();
+
+    await expect(
+      translateExistingResource({ ...target, onMutation: onMutation ?? target.onMutation }, 'nowhere.save', {
+        provider,
+      }),
+    ).rejects.toThrow(ResourceNotFoundError);
+    await expect(
+      translateExistingResource({ ...target, onMutation: onMutation ?? target.onMutation }, 'common.missing', {
+        provider,
+      }),
+    ).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  it('translates only the locales that need work (new, stale, or no metadata), with status translated', async () => {
+    const target = collection();
+    seedResources(target, {
+      'common.save': {
+        source: 'Save',
+        translations: {
+          fr: { value: 'Sauvegarder', status: 'verified' },
+          es: { value: 'Save', status: 'new' },
+        },
+      },
+    });
+    const provider = new InMemoryTranslationProvider();
+
+    const result = await translateExistingResource(
+      { ...target, onMutation: onMutation ?? target.onMutation },
+      'common.save',
+      { provider },
+    );
+
+    expect(provider.calls.map((call) => call.map(({ targetLocale }) => targetLocale))).toEqual([['es'], ['de']]);
+    expect(result.translatedCount).toBe(2);
     expect(result.skippedLocales).toEqual([]);
-    expect(result.entry.translations['fr-ca']).toBe('Sauvegarder');
-    expect(result.entry.translations.es).toBe('Guardar');
+    expect(read(RESOURCE_ENTRIES_FILENAME, 'common').save).toEqual({
+      source: 'Save',
+      fr: 'Sauvegarder',
+      es: '[es] Save',
+      de: '[de] Save',
+    });
+    const meta = read(TRACKER_META_FILENAME, 'common').save;
+    expect(meta.fr.status).toBe('verified');
+    expect(meta.es.status).toBe('translated');
+    expect(meta.de.status).toBe('translated');
+    expect(result.entry.translations).toMatchObject({ es: '[es] Save', de: '[de] Save' });
+    expect(collected).toEqual([{ kind: 'upsert', translationsFolder: dir(), key: 'common.save', entry: result.entry }]);
   });
 
-  it('should translate locales with stale status', async () => {
-    const staleMeta = {
-      save: {
-        en: { checksum: 'new_base_hash' },
-        'fr-ca': { checksum: 'fr_hash', baseChecksum: 'old_base_hash', status: 'stale' },
-      },
-    };
-    const resourceEntries = { save: { source: 'Save It', 'fr-ca': 'Sauvegarder' } };
-    mockFileSystem(resourceEntries, staleMeta);
-
-    vi.mocked(autoTranslateResource).mockResolvedValue({
-      translations: [{ locale: 'fr-ca', value: 'Enregistrer', status: 'translated' }],
-      skippedLocales: [],
-    });
-
-    const result = await translateExistingResource({
-      key: 'buttons.save',
-      translationsFolder,
-      translationConfig: enabledTranslationConfig,
-      allLocales: ['en', 'fr-ca'],
+  it('translates a stale locale', async () => {
+    const target = collection({ locales: ['en', 'fr'] });
+    seedResources(target, { 'common.save': { source: 'Save', translations: { fr: 'Sauvegarder' } } });
+    const folder = openUnreportedResourceFolder(join(dir(), 'common'), {
+      runtime: 'transloco-messageformat',
       baseLocale: 'en',
-      cwd,
     });
+    folder.setBase('save', 'Save all');
+    folder.save();
+    expect(read(TRACKER_META_FILENAME, 'common').save.fr.status).toBe('stale');
+    const provider = new InMemoryTranslationProvider(() => 'Tout sauvegarder');
+
+    const result = await translateExistingResource(
+      { ...target, onMutation: onMutation ?? target.onMutation },
+      'common.save',
+      { provider },
+    );
 
     expect(result.translatedCount).toBe(1);
-    expect(result.entry.translations['fr-ca']).toBe('Enregistrer');
-    expect(autoTranslateResource).toHaveBeenCalledWith(
-      expect.objectContaining({
-        targetLocales: ['fr-ca'],
-      }),
-    );
+    expect(read(RESOURCE_ENTRIES_FILENAME, 'common').save.fr).toBe('Tout sauvegarder');
+    expect(read(TRACKER_META_FILENAME, 'common').save.fr.status).toBe('translated');
   });
 
-  it('should skip verified and translated locales and only translate new/stale ones', async () => {
-    const mixedMeta = {
-      save: {
-        en: { checksum: 'base_hash' },
-        'fr-ca': { checksum: 'fr_hash', baseChecksum: 'base_hash', status: 'verified' },
-        es: { checksum: 'es_hash', baseChecksum: 'base_hash', status: 'translated' },
-        de: { checksum: 'de_hash', baseChecksum: 'base_hash', status: 'new' },
-      },
-    };
-    const resourceEntries = { save: { source: 'Save', 'fr-ca': 'Sauvegarder', es: 'Guardar', de: 'Save' } };
-    mockFileSystem(resourceEntries, mixedMeta);
-
-    vi.mocked(autoTranslateResource).mockResolvedValue({
-      translations: [{ locale: 'de', value: 'Speichern', status: 'translated' }],
-      skippedLocales: [],
+  it('stores translated when the translator returns the base value and skips it on the next run', async () => {
+    const target = collection({ locales: ['en', 'fr'] });
+    seedResources(target, {
+      'common.save': { source: 'Save', translations: { fr: { value: 'Save', status: 'new' } } },
     });
 
-    const result = await translateExistingResource({
-      key: 'buttons.save',
-      translationsFolder,
-      translationConfig: enabledTranslationConfig,
-      allLocales: ['en', 'fr-ca', 'es', 'de'],
-      baseLocale: 'en',
-      cwd,
-    });
-
-    expect(autoTranslateResource).toHaveBeenCalledWith(
-      expect.objectContaining({
-        targetLocales: ['de'],
-      }),
+    const result = await translateExistingResource(
+      { ...target, onMutation: onMutation ?? target.onMutation },
+      'common.save',
+      { provider: new InMemoryTranslationProvider(() => 'Save') },
     );
+
     expect(result.translatedCount).toBe(1);
-    expect(result.entry.translations.de).toBe('Speichern');
+    expect(read(TRACKER_META_FILENAME, 'common').save.fr.status).toBe('translated');
+    expect(
+      (await translateExistingResource({ ...target, onMutation: onMutation ?? target.onMutation }, 'common.save', {}))
+        .translatedCount,
+    ).toBe(0);
   });
 
-  it('should return skipped locales for ICU content', async () => {
-    const newLocaleMeta = {
-      plural: {
-        en: { checksum: 'base_hash' },
-        'fr-ca': { checksum: 'fr_hash', baseChecksum: 'base_hash', status: 'new' },
-        es: { checksum: 'es_hash', baseChecksum: 'base_hash', status: 'new' },
-      },
-    };
-    const icuValue = 'You have {count, plural, one {# item} other {# items}}';
-    const resourceEntries = { plural: { source: icuValue, 'fr-ca': icuValue, es: icuValue } };
-    mockFileSystem(resourceEntries, newLocaleMeta);
+  it('returns the current entry and writes nothing when no locale needs work', async () => {
+    const target = collection({ locales: ['en', 'fr'] });
+    seedResources(target, { 'common.save': { source: 'Save', translations: { fr: 'Sauvegarder' } } });
+    const before = readFileSync(join(dir(), 'common', TRACKER_META_FILENAME), 'utf8');
+    const provider = new InMemoryTranslationProvider();
 
-    vi.mocked(autoTranslateResource).mockResolvedValue({
-      translations: [],
-      skippedLocales: ['fr-ca', 'es'],
-    });
+    const result = await translateExistingResource(
+      { ...target, onMutation: onMutation ?? target.onMutation },
+      'common.save',
+      { provider },
+    );
 
-    const result = await translateExistingResource({
-      key: 'messages.plural',
-      translationsFolder,
-      translationConfig: enabledTranslationConfig,
-      allLocales: ['en', 'fr-ca', 'es'],
-      baseLocale: 'en',
-      cwd,
-    });
+    expect(result).toMatchObject({ translatedCount: 0, skippedLocales: [] });
+    expect(collected).toEqual([]);
+    expect(result.entry.source).toBe('Save');
+    expect(provider.calls).toEqual([]);
+    expect(readFileSync(join(dir(), 'common', TRACKER_META_FILENAME), 'utf8')).toBe(before);
+  });
+
+  it('reports complex ICU locales as skipped and leaves them untouched', async () => {
+    const target = collection();
+    const plural = '{count, plural, one {# file} other {# files}}';
+    seedSave(target, plural);
+    const provider = new InMemoryTranslationProvider();
+
+    const result = await translateExistingResource(
+      { ...target, onMutation: onMutation ?? target.onMutation },
+      'common.save',
+      { provider },
+    );
 
     expect(result.translatedCount).toBe(0);
-    expect(result.skippedLocales).toEqual(['fr-ca', 'es']);
-    expect(fs.writeFileSync).not.toHaveBeenCalled();
+    expect(result.skippedLocales).toEqual(['es', 'de']);
+    expect(collected).toEqual([]);
+    expect(read(RESOURCE_ENTRIES_FILENAME, 'common').save.es).toBe(plural);
   });
 
-  it('should write updated files when translations are applied', async () => {
-    const newLocaleMeta = {
-      save: {
-        en: { checksum: 'base_hash' },
-        'fr-ca': { checksum: 'save_hash', baseChecksum: 'base_hash', status: 'new' },
-      },
-    };
-    mockFileSystem({ save: { source: 'Save', 'fr-ca': 'Save' } }, newLocaleMeta);
+  it('skips a locale whose translation dropped a protected term', async () => {
+    const target = collection({ locales: ['en', 'fr', 'es'] });
+    seedResources(target, { 'common.buy': { source: 'Buy an iPhone' } });
+    const provider = new InMemoryTranslationProvider(({ targetLocale }) =>
+      targetLocale === 'fr' ? 'Acheter un téléphone' : 'Comprar un iPhone',
+    );
 
-    vi.mocked(autoTranslateResource).mockResolvedValue({
-      translations: [{ locale: 'fr-ca', value: 'Sauvegarder', status: 'translated' }],
-      skippedLocales: [],
-    });
+    const result = await translateExistingResource(
+      { ...target, onMutation: onMutation ?? target.onMutation },
+      'common.buy',
+      { provider, protectedTerms: ['iPhone'] },
+    );
 
-    await translateExistingResource({
-      key: 'buttons.save',
-      translationsFolder,
-      translationConfig: enabledTranslationConfig,
-      allLocales: ['en', 'fr-ca'],
-      baseLocale: 'en',
-      cwd,
-    });
-
-    const writeCalls = vi.mocked(fs.writeFileSync).mock.calls;
-    expect(writeCalls).toHaveLength(2);
-
-    const updatedResources = JSON.parse(writeCalls[0][1] as string);
-    expect(updatedResources.save['fr-ca']).toBe('Sauvegarder');
-
-    const updatedMeta = JSON.parse(writeCalls[1][1] as string);
-    expect(updatedMeta.save['fr-ca'].status).toBe('translated');
-    expect(updatedMeta.save['fr-ca'].baseChecksum).toBe('base_hash');
+    expect(result.skippedLocales).toEqual(['fr']);
+    expect(read(RESOURCE_ENTRIES_FILENAME, 'common').buy).toEqual({ source: 'Buy an iPhone', es: 'Comprar un iPhone' });
   });
 
-  it('should pass the base value and base locale to autoTranslateResource', async () => {
-    const newLocaleMeta = {
-      greeting: {
-        en: { checksum: 'base_hash' },
-        de: { checksum: 'de_hash', baseChecksum: 'base_hash', status: 'new' },
-      },
-    };
-    mockFileSystem({ greeting: { source: 'Hello World', de: 'Hello World' } }, newLocaleMeta);
+  it('stores values normalised to ICU, even when the stored base value is Transloco syntax', async () => {
+    const target = collection({ locales: ['en', 'fr'] });
+    seedResources(target, { 'common.greet': { source: 'Hello {{ name }}' } });
+    const provider = new InMemoryTranslationProvider(({ text }) => text.replace('Hello', 'Bonjour'));
 
-    vi.mocked(autoTranslateResource).mockResolvedValue({
-      translations: [{ locale: 'de', value: 'Hallo Welt', status: 'translated' }],
-      skippedLocales: [],
+    await translateExistingResource({ ...target, onMutation: onMutation ?? target.onMutation }, 'common.greet', {
+      provider,
     });
 
-    await translateExistingResource({
-      key: 'messages.greeting',
-      translationsFolder,
-      translationConfig: enabledTranslationConfig,
-      allLocales: ['en', 'de'],
-      baseLocale: 'en',
-      cwd,
+    expect(read(RESOURCE_ENTRIES_FILENAME, 'common').greet.fr).toBe('Bonjour {name}');
+  });
+  describe('writes made during the provider call', () => {
+    function prepare(): Collection {
+      const target = collection({ locales: ['en', 'fr', 'es'] });
+      seedResources(target, {
+        'common.save': { source: 'Save', translations: { fr: { value: 'Save', status: 'new' } } },
+      });
+      return target;
+    }
+
+    it('preserves a sibling added meanwhile and reports one upsert with the fresh entry', async () => {
+      const target = prepare();
+      const provider = new InMemoryTranslationProvider(({ targetLocale }) => {
+        const folder = openUnreportedResourceFolder(join(dir(), 'common'), target);
+        folder.setBase('cancel', 'Cancel');
+        folder.setDetails('save', { comment: 'Added meanwhile' });
+        folder.save();
+        return `[${targetLocale}] Save`;
+      });
+      const result = await translateExistingResource(
+        { ...target, onMutation: onMutation ?? target.onMutation },
+        'common.save',
+        { provider },
+      );
+
+      expect(result.translatedCount).toBe(2);
+      expect(read(RESOURCE_ENTRIES_FILENAME, 'common').cancel).toEqual({ source: 'Cancel' });
+      expect(result.entry.comment).toBe('Added meanwhile');
+      expect(collected).toEqual([
+        { kind: 'upsert', translationsFolder: dir(), key: 'common.save', entry: result.entry },
+      ]);
     });
 
-    expect(autoTranslateResource).toHaveBeenCalledWith({
-      baseValue: 'Hello World',
-      baseLocale: 'en',
-      targetLocales: ['de'],
-      translationConfig: enabledTranslationConfig,
+    it('keeps a manual fr translation and reports it in skippedLocales', async () => {
+      const target = prepare();
+      const provider = new InMemoryTranslationProvider(({ targetLocale }) => {
+        const folder = openUnreportedResourceFolder(join(dir(), 'common'), target);
+        folder.setTranslation('save', 'fr', 'Humain', 'translated');
+        folder.save();
+        return targetLocale === 'es' ? 'Guardar' : 'Machine';
+      });
+      const result = await translateExistingResource(
+        { ...target, onMutation: onMutation ?? target.onMutation },
+        'common.save',
+        { provider },
+      );
+
+      expect(result.translatedCount).toBe(1);
+      expect(result.skippedLocales).toEqual(['fr']);
+      expect(result.entry.translations).toEqual({ fr: 'Humain', es: 'Guardar' });
+      expect(read(RESOURCE_ENTRIES_FILENAME, 'common').save.fr).toBe('Humain');
+      expect(read(TRACKER_META_FILENAME, 'common').save.fr.status).toBe('translated');
+      expect(collected).toEqual([
+        { kind: 'upsert', translationsFolder: dir(), key: 'common.save', entry: result.entry },
+      ]);
     });
+
+    it('skips all pending translations after a base change and returns the entry on disk', async () => {
+      const target = prepare();
+      const provider = new InMemoryTranslationProvider(() => {
+        const folder = openUnreportedResourceFolder(join(dir(), 'common'), target);
+        folder.setBase('save', 'Save all');
+        folder.save();
+        return 'Machine';
+      });
+      const result = await translateExistingResource(
+        { ...target, onMutation: onMutation ?? target.onMutation },
+        'common.save',
+        { provider },
+      );
+
+      expect(result.translatedCount).toBe(0);
+      expect(result.skippedLocales).toEqual(['fr', 'es']);
+      expect(result.entry).toEqual(openUnreportedResourceFolder(join(dir(), 'common'), target).treeEntry('save'));
+      expect(result.entry.source).toBe('Save all');
+      expect(collected).toEqual([]);
+    });
+
+    it('throws ResourceNotFoundError after deletion without resurrecting the entry', async () => {
+      const target = prepare();
+      const provider = new InMemoryTranslationProvider(() => {
+        const folder = openUnreportedResourceFolder(join(dir(), 'common'), target);
+        folder.remove('save');
+        folder.save();
+        return 'Machine';
+      });
+      await expect(
+        translateExistingResource({ ...target, onMutation: onMutation ?? target.onMutation }, 'common.save', {
+          provider,
+        }),
+      ).rejects.toThrow(ResourceNotFoundError);
+      expect(openUnreportedResourceFolder(join(dir(), 'common'), target).has('save')).toBe(false);
+      expect(collected).toEqual([]);
+    });
+
+    it('reports translator skips before locales changed on disk', async () => {
+      const target = prepare();
+      const provider = new InMemoryTranslationProvider(({ targetLocale }) => {
+        const folder = openUnreportedResourceFolder(join(dir(), 'common'), target);
+        folder.setTranslation('save', 'fr', 'Humain', 'new');
+        folder.save();
+        return targetLocale === 'es' ? 'Machine' : 'Save';
+      });
+      const result = await translateExistingResource(
+        { ...target, onMutation: onMutation ?? target.onMutation },
+        'common.save',
+        { provider, protectedTerms: ['Save'] },
+      );
+      expect(result.translatedCount).toBe(0);
+      expect(result.skippedLocales).toEqual(['es', 'fr']);
+      expect(result.entry.translations['fr']).toBe('Humain');
+      expect(collected).toEqual([]);
+    });
+  });
+  it('rethrows the original provider failure from a one-row Translation Run', async () => {
+    const target = collection();
+    seedSave(target);
+    const error = new TranslationError('original provider failure', 'TIMEOUT', true);
+    const provider = new InMemoryTranslationProvider(({ targetLocale }) => {
+      throw targetLocale === 'es' ? error : new Error('later provider failure');
+    });
+    await expect(
+      translateExistingResource({ ...target, onMutation: onMutation ?? target.onMutation }, 'common.save', {
+        provider,
+      }),
+    ).rejects.toBe(error);
+    expect(provider.calls).toEqual([
+      [{ text: 'Save', sourceLocale: 'en', targetLocale: 'es' }],
+      [{ text: 'Save', sourceLocale: 'en', targetLocale: 'de' }],
+    ]);
+    expect(collected).toEqual([]);
+    expect(read(RESOURCE_ENTRIES_FILENAME, 'common').save).toEqual({ source: 'Save', fr: 'Sauvegarder', es: 'Save' });
+  });
+
+  it('rethrows the original write failure from a one-row Translation Run', async () => {
+    const target = collection();
+    seedSave(target);
+    const metadataPath = join(dir(), 'common', TRACKER_META_FILENAME);
+    const provider = new InMemoryTranslationProvider(({ targetLocale, text }) => {
+      return `[${targetLocale}] ${text}`;
+    });
+    const { error, restore } = await failWrite(metadataPath);
+    try {
+      await expect(
+        translateExistingResource({ ...target, onMutation: onMutation ?? target.onMutation }, 'common.save', {
+          provider,
+        }),
+      ).rejects.toBe(error);
+    } finally {
+      restore();
+    }
+    expect(provider.calls).toEqual([
+      [{ text: 'Save', sourceLocale: 'en', targetLocale: 'es' }],
+      [{ text: 'Save', sourceLocale: 'en', targetLocale: 'de' }],
+    ]);
+    expect(collected).toEqual([{ kind: 'reindex', translationsFolder: dir() }]);
+    expect(read(RESOURCE_ENTRIES_FILENAME, 'common').save.es).toBe('[es] Save');
   });
 });

@@ -1,67 +1,53 @@
-import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import { STATUS_PRECEDENCE, type StatusCounts } from '@simoncodes-ca/domain';
 
 export type SortField = 'key' | 'status';
 export type SortDirection = 'asc' | 'desc';
 
-export const STATUS_PRIORITY: Record<TranslationStatus | 'undefined', number> = {
-  new: 0,
-  stale: 1,
-  translated: 2,
-  verified: 3,
-  undefined: 3,
-};
-
-export function getWorstStatus(statuses: Record<string, TranslationStatus | undefined>, locales: string[]): number {
-  if (locales.length === 0) {
-    return STATUS_PRIORITY.verified;
-  }
-
-  const priorities = locales
-    .map((locale) => {
-      const status = statuses[locale];
-      return STATUS_PRIORITY[status ?? 'undefined'];
-    })
-    .filter((priority) => priority !== undefined);
-
-  if (priorities.length === 0) {
-    return STATUS_PRIORITY.verified;
-  }
-
-  return Math.min(...priorities);
+export interface TranslationStatusRecord<T extends ResourceSummaryDto> {
+  readonly item: T;
+  readonly counts: StatusCounts;
 }
 
-export function sortTranslations<
-  T extends {
-    key: string;
-    status?: Record<string, TranslationStatus | undefined>;
-  },
->(items: T[], field: SortField, direction: SortDirection, selectedLocales: string[]): T[] {
-  const sortedItems = [...items];
+const VERIFIED_RANK = STATUS_PRECEDENCE.indexOf('verified');
 
-  sortedItems.sort((itemA, itemB) => {
-    if (field === 'key') {
-      return itemA.key.localeCompare(itemB.key, undefined, {
-        sensitivity: 'base',
-      });
+/**
+ * Sort rank of an item: the position, in STATUS_PRECEDENCE (most urgent first), of the
+ * earliest status its locales carry (a locale with no metadata is `new`).
+ * Locales with no status rank as verified.
+ */
+function statusRank(counts: StatusCounts): number {
+  const rank = STATUS_PRECEDENCE.findIndex((status) => counts[status] > 0);
+  return rank === -1 ? VERIFIED_RANK : rank;
+}
+
+/**
+ * Sorts status-scope records by full key, or by their counted statuses (then full
+ * key). Computes each status rank once without reading the resource's targets.
+ */
+export function sortTranslationRecords<T extends ResourceSummaryDto>(
+  records: readonly TranslationStatusRecord<T>[],
+  field: SortField,
+  direction: SortDirection,
+): TranslationStatusRecord<T>[] {
+  const sortedRecords = records.map((record) => ({
+    record,
+    rank: field === 'status' ? statusRank(record.counts) : 0,
+  }));
+
+  sortedRecords.sort((recordA, recordB) => {
+    if (recordA.rank !== recordB.rank) {
+      return recordA.rank - recordB.rank;
     }
 
-    // Sort by status
-    const statusA = getWorstStatus(itemA.status ?? {}, selectedLocales);
-    const statusB = getWorstStatus(itemB.status ?? {}, selectedLocales);
-
-    if (statusA !== statusB) {
-      return statusA - statusB;
-    }
-
-    // Secondary sort by key for ties
-    return itemA.key.localeCompare(itemB.key, undefined, {
+    return recordA.record.item.fullKey.localeCompare(recordB.record.item.fullKey, undefined, {
       sensitivity: 'base',
     });
   });
 
   if (direction === 'desc') {
-    sortedItems.reverse();
+    sortedRecords.reverse();
   }
 
-  return sortedItems;
+  return sortedRecords.map(({ record }) => record);
 }

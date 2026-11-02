@@ -1,3 +1,5 @@
+import { folderPathSegments } from '@simoncodes-ca/domain';
+
 const MAXIMUM_LENGTH = 50;
 
 /**
@@ -11,7 +13,7 @@ export function truncateKey(key: string): string {
     return key;
   }
 
-  const segments = key.split('.');
+  const segments = folderPathSegments(key);
 
   if (segments.length === 1) {
     return key;

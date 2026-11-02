@@ -1,18 +1,21 @@
-import { Component, ChangeDetectionStrategy, input, output, computed, effect, inject, signal } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 import { CdkDrag, CdkDragPlaceholder } from '@angular/cdk/drag-drop';
-import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
-import { BrowserStore } from '../../../store/browser.store';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
-import { TranslationItemHeader } from './item-header';
-import { TranslationItemLocales, statusIconFor, statusLabelTokenFor, type BaseTranslation } from './item-locales';
+import { injectStatusBreakdown } from '../../../../shared/i18n/status-breakdown';
 import { HighlightPipe } from '../../../../shared/pipes/highlight.pipe';
+import {
+  statusIconFor,
+  statusLabelTokenFor,
+} from '../../../../shared/translation-status/translation-status-presentation';
+import { BrowserStore } from '../../../store/browser.store';
 import type { DragData } from '../../../types/drag-data';
 import { TranslationListStore } from '../store/translation-list.store';
-import { injectStatusBreakdown } from '../../../../shared/i18n/status-breakdown';
-
-const EXPAND_THRESHOLD = 200;
+import { TranslationItemHeader } from './item-header';
+import { TranslationItemLocales } from './item-locales';
+import { rowView } from './row-view';
 
 /**
  * Number of locale rows rendered while a full-density item is collapsed.
@@ -20,28 +23,6 @@ const EXPAND_THRESHOLD = 200;
  */
 const MAX_VISIBLE_LOCALE_ROWS = 4;
 const LONG_PRESS_THRESHOLD = 500;
-
-/**
- * Whether a locale's stored value is the base value verbatim.
- *
- * Checksums cannot catch this: copying the source into a locale produces a
- * perfectly valid `translated` status, so the row would report finished work on a
- * string nobody has touched. Compared trimmed, because trailing whitespace is not
- * a translation. An empty value is the `new`/missing case and belongs to the
- * status chip, not here.
- */
-function isIdenticalToBase(value: string, baseValue: string): boolean {
-  const trimmed = value.trim();
-  return trimmed.length > 0 && trimmed === baseValue.trim();
-}
-
-const STATUS_SORT_PRIORITY: Record<string, number> = {
-  stale: 0,
-  new: 1,
-  translated: 2,
-  verified: 3,
-  missing: 4,
-};
 
 /**
  * Displays a single translation entry with key, base value, locale translations,
@@ -86,17 +67,11 @@ export class TranslationItem {
   readonly #listStore = inject(TranslationListStore);
   readonly TOKENS = TRACKER_TOKENS;
 
-  /** Active collection name — always set when this component is rendered. */
-  readonly #collectionName = computed(() => this.#store.selectedCollection() ?? '');
-
   /** Whether this item was recently updated (flash highlight). */
-  readonly isRecentlyUpdated = computed(() => this.#listStore.isRecentlyUpdated(this.translation().key));
+  readonly isRecentlyUpdated = computed(() => this.#listStore.isRecentlyUpdated(this.translation().fullKey));
 
   /** Current search query from the store */
   readonly searchQuery = this.#store.searchQuery;
-
-  /** Whether the active collection is read-only (mutating actions are refused). */
-  readonly isReadOnly = this.#store.isReadOnly;
 
   // Timestamp when touch started (ms since epoch)
   #touchStartTs = 0;
@@ -105,103 +80,32 @@ export class TranslationItem {
   readonly isTouchPressed = signal(false);
 
   /**
-   * Full translation key (combines folder path with entry key if needed).
-   * For search results, the key already contains the full path.
-   * For folder browsing, we prepend the current folder path.
+   * What this row shows under the list's current locale selection — see `row-view.ts`.
+   * The computeds below only hand its parts to the template.
    */
-  readonly fullKey = computed(() => {
-    const path = this.#store.isSearchMode() ? '' : this.#store.currentFolderPath();
-    const key = this.translation().key;
-    return path ? `${path}.${key}` : key;
-  });
+  readonly view = computed(() =>
+    rowView(this.translation(), {
+      visibleLocales: this.#store.filteredLocales(),
+      compactLocale: this.#store.compactDisplayLocale(),
+    }),
+  );
 
-  /** Base locale value (English/source) */
-  readonly baseValue = computed(() => {
-    const base = this.#store.baseLocale();
-    return this.translation().translations[base] || '';
-  });
+  /** The source row for full density; absent when there is no base value to compare against. */
+  readonly baseRow = computed(() => this.view().baseRow);
 
-  /**
-   * The source row for full density, or undefined when the collection has no base
-   * locale and there is therefore nothing to compare the translations against.
-   */
-  readonly baseRow = computed<BaseTranslation | undefined>(() => {
-    const value = this.baseValue();
-    if (!value.trim()) return undefined;
-
-    return { locale: this.#store.baseLocale(), value };
-  });
-
-  /** Locale translations excluding base locale, sorted by status priority then locale code */
-  readonly localeTranslations = computed(() => {
-    const trans = this.translation();
-    const base = this.#store.baseLocale();
-    const activeLocales = this.#store.filteredLocales();
-
-    const baseValue = trans.translations[base] || '';
-
-    return activeLocales
-      .filter((locale) => locale !== base)
-      .map((locale) => {
-        const value = trans.translations[locale] || '';
-
-        return {
-          locale,
-          value,
-          status: trans.status ? trans.status[locale] : undefined,
-          isSameAsBase: isIdenticalToBase(value, baseValue),
-        };
-      })
-      .sort((a, b) => {
-        const priorityA = a.status ? (STATUS_SORT_PRIORITY[a.status] ?? 4) : 4;
-        const priorityB = b.status ? (STATUS_SORT_PRIORITY[b.status] ?? 4) : 4;
-        if (priorityA !== priorityB) return priorityA - priorityB;
-        return a.locale.localeCompare(b.locale);
-      });
-  });
+  /** Visible target locales, worst status first, then by locale code. */
+  readonly localeTranslations = computed(() => this.view().localeRows);
 
   /** Current density mode (reads from BrowserStore) */
   readonly currentDensityMode = computed(() => this.#store.densityMode());
 
   /**
-   * What the compact row shows: one locale's value, and only what is worth
-   * saying about it.
-   *
-   * The locale is the store's single compact selection — the base locale until
-   * the user picks another, at which point that locale's value takes the base
-   * value's place rather than sitting beside it. Compact used to show source and
-   * translation as a pair, which made the translation an awkward annotation
-   * hanging off the right-hand end of the row.
-   *
-   * `needsAttention` gates the status chip. `translated` and `verified` are the
-   * quiet states — the rollup already reports them — so a chip on every row saying
-   * so was noise. Only `new` and `stale` name work to be done, and only they are
-   * shown. A row carries at most one marker: the chip when the status asks for
-   * work, otherwise the same-as-source flag when a "finished" translation is
-   * really the source text.
+   * What the compact row shows: one locale's value, and at most one marker — the
+   * status chip when the locale needs work, otherwise the same-as-source flag.
+   * The locale is the store's single compact selection, the base locale until the
+   * user picks another, and its value takes the base value's place.
    */
-  readonly compactDisplay = computed(() => {
-    const locale = this.#store.compactDisplayLocale();
-    const base = this.#store.baseLocale();
-    const translation = this.translation();
-    const value = translation.translations[locale] || '';
-    const isBase = locale === base;
-    const status = isBase ? undefined : translation.status?.[locale];
-    const needsAttention = status === 'new' || status === 'stale';
-
-    return {
-      locale,
-      value,
-      isBase,
-      status,
-      needsAttention,
-      // Source text is trivially the same as itself, so the marker only means
-      // something for a translation — and only for one the status chip already
-      // calls finished. A `new` row that still holds the English copy is flagged
-      // once, by the chip; a second marker saying the same thing is noise.
-      isSameAsBase: !isBase && !needsAttention && isIdenticalToBase(value, translation.translations[base] || ''),
-    };
-  });
+  readonly compactDisplay = computed(() => this.view().compact);
 
   /** Material icon for the compact row's status. */
   readonly compactStatusIcon = computed(() => statusIconFor(this.compactDisplay().status));
@@ -237,11 +141,7 @@ export class TranslationItem {
   );
 
   /** True when the base value or any active locale value is clipped by its line clamp. */
-  readonly hasClippedValues = computed(() => {
-    if ((this.baseValue() || '').length > EXPAND_THRESHOLD) return true;
-
-    return this.localeTranslations().some((v) => (v.value || '').length > EXPAND_THRESHOLD);
-  });
+  readonly hasClippedValues = computed(() => this.view().hasLongValue);
 
   /**
    * Whether the expand control is offered. It answers "is anything hidden?" —
@@ -269,7 +169,7 @@ export class TranslationItem {
   toggleExpansion(): void {
     this.isExpanded.update((v) => !v);
     this.expansionChanged.emit({
-      key: this.translation().key,
+      key: this.translation().fullKey,
       expanded: this.isExpanded(),
     });
   }
@@ -301,7 +201,7 @@ export class TranslationItem {
       return;
     }
 
-    this.#listStore.editTranslation(this.translation(), this.#collectionName());
+    this.#listStore.editTranslation(this.translation());
   }
 
   // Touch handlers ---------------------------------------------------------
@@ -317,7 +217,7 @@ export class TranslationItem {
 
     // Long press -> open edit
     if (duration > LONG_PRESS_THRESHOLD) {
-      this.#listStore.editTranslation(this.translation(), this.#collectionName());
+      this.#listStore.editTranslation(this.translation());
     }
   }
 
@@ -332,16 +232,14 @@ export class TranslationItem {
 
     switch (key) {
       case 'e':
-        action = () => this.#listStore.editTranslation(this.translation(), this.#collectionName());
+        action = () => this.#listStore.editTranslation(this.translation());
         break;
 
       case 'delete':
       case 'del':
-        // The menu item is disabled in a read-only collection, so the keyboard
-        // must refuse the same way. Without this the shortcut opens a delete
-        // confirmation the API will reject after the user commits to it.
-        if (this.isReadOnly()) return;
-        action = () => this.#listStore.deleteTranslation(this.translation(), this.#collectionName());
+        action = () => {
+          void this.#listStore.deleteTranslation(this.translation());
+        };
         break;
     }
 
@@ -352,31 +250,8 @@ export class TranslationItem {
     }
   }
 
-  /**
-   * Computes counts of each status and total known statuses.
-   * Used by rollupStatus and statusBreakdown to avoid duplicated logic.
-   */
-  readonly #statusCounts = computed(() => {
-    const statusMap = this.translation().status || {};
-
-    const counts: Record<'stale' | 'new' | 'translated' | 'verified', number> = {
-      stale: 0,
-      new: 0,
-      translated: 0,
-      verified: 0,
-    };
-
-    const total = Object.values(statusMap).reduce((acc, s) => {
-      if (!s) return acc;
-      if (s in counts) {
-        counts[s as keyof typeof counts] += 1;
-        return acc + 1;
-      }
-      return acc;
-    }, 0);
-
-    return { counts, total } as const;
-  });
+  /** Status counts across every target locale of the entry, whatever the locale filter shows. */
+  readonly #statusCounts = computed(() => this.view().statusCounts);
 
   constructor() {
     effect(() => {
@@ -386,16 +261,13 @@ export class TranslationItem {
   }
 
   /** Returns a stable id for the rollup status element. */
-  readonly statusId = computed(() => `rollup-${this.translation().key}`);
+  readonly statusId = computed(() => `rollup-${this.translation().fullKey}`);
 
-  /**
-   * Drag data for this translation item.
-   * Contains resource key, folder path, and type identifier.
-   */
+  /** Drag data for this translation item: the resource's full key and the folder it lives in. */
   readonly dragData = computed<DragData>(() => ({
     type: 'resource',
-    key: this.fullKey(),
-    folderPath: this.#store.isSearchMode() ? '' : this.#store.currentFolderPath(),
+    key: this.translation().fullKey,
+    folderPath: this.translation().folderPath,
   }));
 
   /**
@@ -410,26 +282,7 @@ export class TranslationItem {
    * Localized breakdown of statuses across all locales, announced to screen
    * readers. Example: "2 stale, 3 verified, 1 new".
    */
-  readonly statusBreakdown = injectStatusBreakdown(computed(() => this.#statusCounts().counts));
-
-  /**
-   * Roll-up status across ALL locales. Priority (worst first): stale > new > translated > verified
-   * Returns tuple: [status, count]
-   */
-  readonly rollupStatus = computed(() => {
-    const { counts, total } = this.#statusCounts();
-
-    if (total === 0) return ['new', 0] as const;
-
-    const priority: Array<keyof typeof counts> = ['stale', 'new', 'translated', 'verified'];
-
-    for (const p of priority) {
-      const c = counts[p];
-      if (c > 0) return [p, c] as const;
-    }
-
-    return ['new', 0] as const;
-  });
+  readonly statusBreakdown = injectStatusBreakdown(this.#statusCounts);
 
   /**
    * Handles drag started event.

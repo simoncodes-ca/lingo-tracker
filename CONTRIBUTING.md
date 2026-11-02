@@ -1,10 +1,10 @@
 # Contributing to LingoTracker
 
-Thank you for your interest in contributing to LingoTracker! This guide will help you get started.
+Thank you for your interest in contributing to LingoTracker. This guide will help you get started.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) >= 20
+- [Node.js](https://nodejs.org/) ^24.15.0 || >=26.0.0 (see `engines` in `package.json`)
 - [pnpm](https://pnpm.io/) >= 10
 
 ## Setup
@@ -64,10 +64,18 @@ pnpm run test:core       # Core library tests only
 pnpm run test:tracker    # Tracker UI tests only
 ```
 
+### Test suites
+
+| Suite | Command | When CI runs it |
+|---|---|---|
+| Unit tests (Vitest; the API uses Jest) | `pnpm run test` | `pr.yml`: pull requests to `develop` and pushes to `develop` (affected projects) |
+| CLI end-to-end smoke tests | `pnpm nx e2e cli-e2e` | `pr.yml`: same triggers (affected projects) |
+| Tracker end-to-end tests (Playwright) | `pnpm nx e2e tracker-e2e` | `tracker-e2e.yml`: pull requests to `main` automatically; pull requests to `develop` only with the `run-e2e` label |
+
 ### Linting and Formatting
 
 ```bash
-pnpm run lint            # Lint with Biome
+pnpm run lint            # Lint with Biome and ESLint
 pnpm run format:check    # Check formatting
 pnpm run format          # Auto-format
 ```
@@ -119,7 +127,11 @@ The docs site lives in `docs-site/` and is built with [Docusaurus](https://docus
 pnpm run docs:dev
 ```
 
-Documentation source files are located under `docs-site/src/pages/`. Add or edit pages there and open a pull request as you would for any other change.
+Markdown sources live in `docs/`. The Docusaurus site in `docs-site/` builds them. Add or edit pages in `docs/` and open a pull request as you would for any other change.
+
+## Security
+
+Do not open a public issue for a vulnerability. See [SECURITY.md](SECURITY.md).
 
 ## Questions?
 

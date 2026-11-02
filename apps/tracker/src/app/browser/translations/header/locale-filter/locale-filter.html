@@ -1,13 +1,20 @@
+@let label = store.localeFilterLabel();
+@let filterText =
+  label.kind === 'all'
+    ? (TOKENS.BROWSER.LOCALEFILTER.ALLLOCALES | transloco)
+    : label.kind === 'count'
+      ? (TOKENS.BROWSER.LOCALEFILTER.LOCALESCOUNTX | transloco : { count: label.count })
+      : label.locale;
 <button
   type="button"
   [matMenuTriggerFor]="localeMenu"
   data-testid="locale-filter-trigger"
   class="locale-filter-trigger"
-  [attr.aria-label]="TOKENS.BROWSER.LOCALEFILTER.ARIALABELX | transloco : { text: store.localeFilterText() }"
+  [attr.aria-label]="TOKENS.BROWSER.LOCALEFILTER.ARIALABELX | transloco : { text: filterText }"
   aria-haspopup="true"
 >
   <mat-icon class="filter-icon">translate</mat-icon>
-  <span class="filter-text">{{ store.localeFilterText() }}</span>
+  <span class="filter-text">{{ filterText }}</span>
   <mat-icon class="arrow-icon">arrow_drop_down</mat-icon>
 </button>
 

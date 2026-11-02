@@ -1,0 +1,82 @@
+{
+  "empty": {
+    "source": "Required",
+    "comment": "Inline error under an empty discouraged or preferred term input",
+    "tags": ["settings"],
+    "es": "Required",
+    "fr-ca": "Required",
+    "ru": "Required",
+    "ja": "Required",
+    "de": "Required"
+  },
+  "selfMapping": {
+    "source": "Must differ from the discouraged term",
+    "comment": "Inline error when the preferred term equals its own discouraged term (case-insensitive)",
+    "tags": ["settings"],
+    "es": "Must differ from the discouraged term",
+    "fr-ca": "Must differ from the discouraged term",
+    "ru": "Must differ from the discouraged term",
+    "ja": "Must differ from the discouraged term",
+    "de": "Must differ from the discouraged term"
+  },
+  "duplicateX": {
+    "source": "“{term}” is already listed",
+    "comment": "Inline error when the discouraged term {{ term }} appears in an earlier rule",
+    "tags": ["settings"],
+    "es": "“{term}” is already listed",
+    "fr-ca": "“{term}” is already listed",
+    "ru": "“{term}” is already listed",
+    "ja": "“{term}” is already listed",
+    "de": "“{term}” is already listed"
+  },
+  "chainX": {
+    "source": "“{term}” is itself discouraged; use “{preferred}” instead",
+    "comment": "Inline error when the preferred term {{ term }} is another rule's discouraged term, whose preferred term is {{ preferred }}",
+    "tags": ["settings"],
+    "es": "“{term}” is itself discouraged; use “{preferred}” instead",
+    "fr-ca": "“{term}” is itself discouraged; use “{preferred}” instead",
+    "ru": "“{term}” is itself discouraged; use “{preferred}” instead",
+    "ja": "“{term}” is itself discouraged; use “{preferred}” instead",
+    "de": "“{term}” is itself discouraged; use “{preferred}” instead"
+  },
+  "containsDiscouragedX": {
+    "source": "Contains the discouraged term “{term}”",
+    "comment": "Inline error when the preferred term contains the discouraged term {{ term }} as a whole word",
+    "tags": ["settings"],
+    "es": "Contains the discouraged term “{term}”",
+    "fr-ca": "Contains the discouraged term “{term}”",
+    "ru": "Contains the discouraged term “{term}”",
+    "ja": "Contains the discouraged term “{term}”",
+    "de": "Contains the discouraged term “{term}”"
+  },
+  "cycleX": {
+    "source": "Leads back to “{term}” in a cycle",
+    "comment": "Inline error when following preferred terms from this rule returns to its discouraged term {{ term }}",
+    "tags": ["settings"],
+    "es": "Leads back to “{term}” in a cycle",
+    "fr-ca": "Leads back to “{term}” in a cycle",
+    "ru": "Leads back to “{term}” in a cycle",
+    "ja": "Leads back to “{term}” in a cycle",
+    "de": "Leads back to “{term}” in a cycle"
+  },
+  "invalidType": {
+    "source": "Must be text",
+    "comment": "Inline error when a rule field is not a string (only reachable through server validation)",
+    "tags": ["settings"],
+    "es": "Must be text",
+    "fr-ca": "Must be text",
+    "ru": "Must be text",
+    "ja": "Must be text",
+    "de": "Must be text"
+  },
+  "invalidCharacter": {
+    "source": "Cannot contain '{' '}' < or >",
+    "comment": "Inline error when a term contains ICU or HTML syntax characters",
+    "tags": ["settings"],
+    "es": "Cannot contain '{' '}' < or >",
+    "fr-ca": "Cannot contain '{' '}' < or >",
+    "ru": "Cannot contain '{' '}' < or >",
+    "ja": "Cannot contain '{' '}' < or >",
+    "de": "Cannot contain '{' '}' < or >"
+  }
+}

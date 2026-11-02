@@ -1,5 +1,5 @@
 /* Google Fonts — Watercolor design system */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
 
 /* ─── Light theme ─────────────────────────────────────────────────────────── */
 :root {
@@ -13,8 +13,8 @@
   --ifm-color-primary-lightest: #e8a9a3;
 
   /* Fonts */
-  --ifm-font-family-base: 'Nunito', sans-serif;
-  --ifm-font-family-monospace: 'IBM Plex Mono', monospace;
+  --ifm-font-family-base: "Nunito", sans-serif;
+  --ifm-font-family-monospace: "IBM Plex Mono", monospace;
   --ifm-code-font-size: 90%;
 
   /* Background & text */
@@ -68,7 +68,7 @@
 }
 
 /* ─── Dark theme ──────────────────────────────────────────────────────────── */
-[data-theme='dark'] {
+[data-theme="dark"] {
   /* Primary — brightened Coral */
   --ifm-color-primary: #e8847c;
   --ifm-color-primary-dark: #e06e65;
@@ -126,7 +126,7 @@
 
 /* ─── Body texture ────────────────────────────────────────────────────────── */
 body::after {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -165,4 +165,28 @@ article h2,
 article h3,
 article h4 {
   font-weight: 700;
+}
+
+/* ─── Code blocks ──────────────────────────────────────────────────────────── */
+/* Warm the Prism background in both themes. !important beats the inline styles the theme sets. */
+.theme-code-block {
+  --prism-background-color: #2e2923 !important;
+}
+
+.theme-code-block .prism-code {
+  background-color: var(--prism-background-color) !important;
+}
+
+/* ─── Themed images ───────────────────────────────────────────────────────── */
+/* GitHub-style fragments, so one Markdown file shows one image per theme on GitHub and here. */
+[data-theme='light'] img[src$='#gh-dark-mode-only'],
+[data-theme='dark'] img[src$='#gh-light-mode-only'] {
+  display: none;
+}
+
+/* Frame the Tracker UI screenshot like the landing page does. */
+article img[src*='translation-browser'] {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.75rem;
+  box-shadow: var(--ifm-global-shadow-md);
 }

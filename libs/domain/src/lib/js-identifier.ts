@@ -1,16 +1,16 @@
 /**
  * Browser-safe JavaScript identifier rules.
  *
- * Both the CLI/API (via core's `validateJavaScriptIdentifier`) and the Tracker
- * UI's bundle form validate the token constant name. Keeping the rules here
- * means the client-side check can never drift from the server-side one.
+ * Core (type generation, bundle definition validation) and the Tracker UI's
+ * bundle form validate the token constant name with these rules, so the
+ * client-side check can never drift from the server-side one.
  */
 
 /** Matches an ASCII-only JavaScript identifier. Unicode letters are not permitted. */
 export const JS_IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 /** ES2022 + TypeScript contextual keywords that cannot be used as bare identifiers in a const declaration. */
-export const JS_RESERVED_WORDS: ReadonlySet<string> = new Set([
+const JS_RESERVED_WORDS: ReadonlySet<string> = new Set([
   // ES2022 reserved words
   'break',
   'case',
@@ -102,4 +102,38 @@ export function isJavaScriptReservedWord(name: string): boolean {
  */
 export function isValidJavaScriptIdentifier(name: string): boolean {
   return name.length > 0 && JS_IDENTIFIER_PATTERN.test(name) && !isJavaScriptReservedWord(name);
+}
+
+/**
+ * Validates that a string is a legal JavaScript identifier.
+ * Returns `undefined` when valid, or an error message string when invalid.
+ *
+ * Only ASCII identifiers are accepted: letters A-Z and a-z, digits 0-9,
+ * underscore `_`, and dollar sign `$`. Unicode letters are not permitted.
+ *
+ * Accepts any casing: camelCase, PascalCase, SCREAMING_SNAKE_CASE, snake_case.
+ *
+ * Examples of valid identifiers: `MY_KEYS`, `myKeys`, `MyKeys`, `_internal`
+ * Examples of invalid identifiers: `1bad`, `my-key`, `my key`, `class`
+ */
+export function validateJavaScriptIdentifier(name: string): string | undefined {
+  if (name.length === 0) {
+    return 'Identifier must not be empty.';
+  }
+
+  // Must start with a letter, underscore, or dollar sign
+  if (!/^[A-Za-z_$]/.test(name)) {
+    return `"${name}" is not a valid JavaScript identifier: must start with a letter, underscore, or dollar sign.`;
+  }
+
+  // Remaining characters: letters, digits, underscore, dollar sign
+  if (!JS_IDENTIFIER_PATTERN.test(name)) {
+    return `"${name}" is not a valid JavaScript identifier: may only contain letters, digits, underscores, and dollar signs.`;
+  }
+
+  if (isJavaScriptReservedWord(name)) {
+    return `"${name}" is a JavaScript reserved word and cannot be used as an identifier.`;
+  }
+
+  return undefined;
 }

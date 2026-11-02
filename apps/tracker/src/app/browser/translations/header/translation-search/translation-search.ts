@@ -1,10 +1,11 @@
-import { Component, ChangeDetectionStrategy, inject, type OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, type OnDestroy, signal } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { BrowserStore } from '../../../store/browser.store';
-import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
 import { SearchInput } from '../../../../shared/components/search-input';
+import { hasSearchLength } from '../../../../shared/search/search-minimum';
+import { BrowserStore } from '../../../store/browser.store';
 
 /**
  * TranslationSearch component provides a search input with debouncing
@@ -32,7 +33,11 @@ export class TranslationSearch implements OnDestroy {
   readonly store = inject(BrowserStore);
   readonly TOKENS = TRACKER_TOKENS;
 
-  searchValue = signal('');
+  /**
+   * Starts from the store's query, so re-entering the collection mid-search shows the query
+   * behind the results still on screen instead of an empty box.
+   */
+  searchValue = signal(this.store.searchQuery());
 
   #searchSubject = new Subject<string>();
   #subscription = new Subscription();
@@ -47,9 +52,8 @@ export class TranslationSearch implements OnDestroy {
         )
         .subscribe((query) => {
           // Only trigger search if query has at least 3 characters
-          if (query.trim().length >= 3) {
-            this.store.setSearchQuery(query);
-            this.store.searchTranslations(query);
+          if (hasSearchLength(query.trim())) {
+            this.store.showQuery(query);
           } else if (query.trim().length === 0) {
             // Clear search when input is empty
             this.store.clearSearch();

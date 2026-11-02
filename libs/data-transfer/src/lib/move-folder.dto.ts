@@ -1,3 +1,5 @@
+import type { MoveResourceResponseDto } from './move-resource-response.dto';
+
 /**
  * DTO for moving a folder within the resource hierarchy.
  */
@@ -29,6 +31,7 @@ export interface MoveFolderDto {
   /**
    * When true, the source folder is nested under the destination as a child folder.
    * When false, uses depth-based rename/nest heuristic (legacy behavior).
+   * The root destination ("") has no name, so it always nests, whatever this says.
    * Default: true
    */
   nestUnderDestination?: boolean;
@@ -37,16 +40,7 @@ export interface MoveFolderDto {
 /**
  * Response DTO for folder move operation.
  */
-export interface MoveFolderResponseDto {
-  /** Number of resources successfully moved */
-  movedCount: number;
-
+export interface MoveFolderResponseDto extends Required<MoveResourceResponseDto> {
   /** Number of folders deleted after move (usually 1 for source folder) */
   foldersDeleted: number;
-
-  /** Warning messages encountered during the move */
-  warnings: string[];
-
-  /** Error messages if the move failed or partially failed */
-  errors: string[];
 }

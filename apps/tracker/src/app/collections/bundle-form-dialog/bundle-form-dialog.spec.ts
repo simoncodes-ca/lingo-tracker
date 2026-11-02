@@ -1,14 +1,21 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { signal } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createComponentFactory } from '@ngneat/spectator/vitest';
-import type { BundleDefinitionDto, BundleDryRunResultDto, LingoTrackerConfigDto } from '@simoncodes-ca/data-transfer';
-import { of, throwError } from 'rxjs';
+import type {
+  BundleDefinitionDto,
+  BundleDryRunRequestDto,
+  BundleDryRunResultDto,
+  LingoTrackerConfigDto,
+} from '@simoncodes-ca/data-transfer';
+import { of, Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fakeEnv } from '../../../testing/form-submit-env';
 import { getTranslocoTestingModule } from '../../../testing/transloco-testing.module';
-import { CollectionsApiService } from '../services/collections-api.service';
+import { toApiError } from '../../shared/api-error/api-error';
 import { CollectionsStore } from '../store/collections.store';
+import { BundleForm } from './bundle-form';
 import { BundleFormDialog } from './bundle-form-dialog';
 import type { BundleFormDialogData } from './bundle-form-dialog-data';
 
@@ -51,44 +58,89 @@ const dryRunResult: BundleDryRunResultDto = {
 interface Harness {
   fixture: ComponentFixture<BundleFormDialog>;
   component: BundleFormDialog;
-  dialogRef: { close: ReturnType<typeof vi.fn> };
-  api: { dryRunBundle: ReturnType<typeof vi.fn> };
+  /** `close`, and `disableClose`, which the dialog sets while a write is in flight. */
+  dialogRef: { close: ReturnType<typeof vi.fn>; disableClose: boolean | undefined };
+  /** The two Config Writes the dialog makes; both accept by default. */
+  store: {
+    createBundle: ReturnType<typeof vi.fn>;
+    updateBundle: ReturnType<typeof vi.fn>;
+    dryRunBundle: ReturnType<typeof vi.fn>;
+  };
 }
+
+const apiError = (status: number, body: object) =>
+  toApiError(new HttpErrorResponse({ status, error: { statusCode: status, ...body } }));
+
+const rejection = (status: number, body: object) => throwError(() => apiError(status, body));
 
 const createComponent = createComponentFactory({
   component: BundleFormDialog,
-  imports: [NoopAnimationsModule, getTranslocoTestingModule()],
+  imports: [getTranslocoTestingModule()],
   detectChanges: false,
 });
 
 const buildHarness = (data: BundleFormDialogData): Harness => {
-  const dialogRef = { close: vi.fn() };
-  const api = { dryRunBundle: vi.fn().mockReturnValue(of(dryRunResult)) };
+  const dialogRef: Harness['dialogRef'] = { close: vi.fn(), disableClose: false };
   const store = {
     config: signal<LingoTrackerConfigDto | null>(config),
     collectionEntries: signal(
       Object.entries(config.collections).map(([name, collection]) => ({ name, config: collection })),
     ),
     bundleEntries: signal([{ name: 'tracker', definition: trackerBundle }]),
+    createBundle: vi.fn(() => of(config)),
+    updateBundle: vi.fn(() => of(config)),
+    dryRunBundle: vi.fn(() => of(dryRunResult)),
   };
 
   const spectator = createComponent({
     providers: [
       { provide: MAT_DIALOG_DATA, useValue: data },
       { provide: MatDialogRef, useValue: dialogRef },
-      { provide: CollectionsApiService, useValue: api },
       { provide: CollectionsStore, useValue: store },
     ],
   });
   spectator.detectChanges();
   const fixture = spectator.fixture;
-  return { fixture, component: fixture.componentInstance, dialogRef, api };
+  return { fixture, component: fixture.componentInstance, dialogRef, store };
 };
 
-const fillOutput = (component: BundleFormDialog): void => {
-  component.form.controls.name.setValue('admin');
-  component.form.controls.dist.setValue('./dist/i18n');
-  component.form.controls.bundleName.setValue('admin.{locale}');
+// Preview and seeding cases need only the model and its injected dry-run call.
+const modelHarnesses: BundleForm[] = [];
+afterEach(() => {
+  for (const model of modelHarnesses) model.destroy();
+  modelHarnesses.length = 0;
+});
+const buildModelHarness = (data: BundleFormDialogData) => {
+  const store = { dryRunBundle: vi.fn((_request: BundleDryRunRequestDto) => of(dryRunResult)) };
+  const model = new BundleForm({
+    data,
+    collectionNames: () => Object.keys(config.collections),
+    bundleNames: () => ['tracker'],
+    locales: () => config.locales,
+    baseLocale: () => config.baseLocale,
+    tokenCasing: () => 'upperCase',
+    icuTransform: () => true,
+    dryRun: (request) => store.dryRunBundle(request),
+    env: fakeEnv(),
+  });
+  modelHarnesses.push(model);
+  return { component: { model }, store };
+};
+
+const submitErrorsText = (harness: Harness): string | null =>
+  (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="submit-errors"]')?.textContent?.trim() ??
+  null;
+
+/** Cancel in the footer and the close icon in the header. */
+const closeButtons = (harness: Harness): HTMLButtonElement[] =>
+  Array.from(
+    (harness.fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('[data-testid="cancel"]'),
+  );
+
+const fillOutput = (component: { model: BundleForm }): void => {
+  component.model.form.controls.name.setValue('admin');
+  component.model.form.controls.dist.setValue('./dist/i18n');
+  component.model.form.controls.bundleName.setValue('admin.{locale}');
 };
 
 describe('BundleFormDialog — create mode', () => {
@@ -102,167 +154,78 @@ describe('BundleFormDialog — create mode', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
-    expect(component.isEditMode).toBe(false);
-  });
-
-  it('should start with the first collection pane open, seeded with the first collection', () => {
-    expect(component.form.controls.collections.length).toBe(1);
-    expect(component.form.controls.collections.at(0).controls.name.value).toBe('trackerResources');
-    expect(component.activeSection()).toBe('coll:0');
-    expect(component.activeKind()).toBe('collection');
-  });
-
-  it('should keep the name editable', () => {
-    expect(component.form.controls.name.disabled).toBe(false);
-  });
-
-  it('should reject a name that collides with an existing bundle', () => {
-    component.form.controls.name.setValue('tracker');
-    expect(component.form.controls.name.hasError('nameExists')).toBe(true);
-
-    component.form.controls.name.setValue('admin');
-    expect(component.form.controls.name.errors).toBeNull();
-  });
-
-  it('should reject names outside the letters, numbers, hyphens and underscores charset', () => {
-    component.form.controls.name.setValue('my bundle!');
-    expect(component.form.controls.name.hasError('pattern')).toBe(true);
-  });
-
-  it('should require {locale} in the file name pattern', () => {
-    component.form.controls.bundleName.setValue('admin');
-    expect(component.form.controls.bundleName.hasError('missingLocale')).toBe(true);
-
-    component.form.controls.bundleName.setValue('admin.{locale}');
-    expect(component.form.controls.bundleName.errors).toBeNull();
-  });
-
-  it('should require a .ts type file only while types are on', () => {
-    const typeFile = component.form.controls.typeDistFile;
-    expect(typeFile.errors).toBeNull();
-
-    component.form.controls.typesEnabled.setValue(true);
-    expect(typeFile.hasError('required')).toBe(true);
-
-    typeFile.setValue('./dist/types/admin.js');
-    expect(typeFile.hasError('notTypeScript')).toBe(true);
-
-    typeFile.setValue('./dist/types/admin.ts');
-    expect(typeFile.errors).toBeNull();
-
-    typeFile.setValue('./dist/types/admin.js');
-    component.form.controls.typesEnabled.setValue(false);
-    expect(typeFile.errors).toBeNull();
-  });
-
-  it('should require a valid JavaScript identifier for the constant name', () => {
-    const constant = component.form.controls.tokenConstantName;
-    constant.setValue('1BAD');
-    expect(constant.hasError('invalidIdentifier')).toBe(true);
-
-    constant.setValue('ADMIN_TOKENS');
-    expect(constant.errors).toBeNull();
-
-    constant.setValue('');
-    expect(constant.errors).toBeNull();
-  });
-
-  it('should reject reserved words the server would reject, so the dialog never closes on a 400', () => {
-    const constant = component.form.controls.tokenConstantName;
-
-    for (const reserved of ['type', 'class', 'interface', 'await', 'undefined']) {
-      constant.setValue(reserved);
-      expect(constant.hasError('invalidIdentifier')).toBe(true);
-    }
-
-    constant.setValue('typeTokens');
-    expect(constant.errors).toBeNull();
-  });
-
-  it('should require at least one collection unless every collection is included', () => {
-    component.removeCollection(0);
-    expect(component.form.controls.collections.hasError('collectionsEmpty')).toBe(true);
-    expect(component.activeSection()).toBe('collections');
-
-    component.form.controls.allCollections.setValue(true);
-    expect(component.form.controls.collections.errors).toBeNull();
-  });
-
-  it('should require at least one rule unless the collection takes all entries', () => {
-    const group = component.form.controls.collections.at(0);
-    expect(group.controls.rules.errors).toBeNull();
-
-    group.controls.allEntries.setValue(false);
-    expect(group.controls.rules.hasError('rulesEmpty')).toBe(true);
-
-    component.addRule(group);
-    expect(group.controls.rules.errors).toBeNull();
-    expect(group.controls.rules.at(0).controls.matchingPattern.hasError('required')).toBe(true);
-
-    component.removeRule(group, 0);
-    expect(group.controls.rules.hasError('rulesEmpty')).toBe(true);
-  });
-
-  it('should add a collection from the remaining ones and open its pane', () => {
-    expect(component.availableCollections()).toEqual(['mockDesignSystem', 'TestDataPlayground']);
-
-    component.addCollection('mockDesignSystem');
-
-    expect(component.form.controls.collections.length).toBe(2);
-    expect(component.activeSection()).toBe('coll:1');
-    expect(component.availableCollections()).toEqual(['TestDataPlayground']);
-  });
-
-  it('should flag an invalid section in the rail once it has been touched', () => {
-    expect(component.sectionErrors().has('output')).toBe(false);
-
-    component.form.controls.bundleName.setValue('admin');
-    component.form.controls.bundleName.markAsTouched();
-
-    expect(component.sectionErrors().has('output')).toBe(true);
+    expect(component.model.isEditMode).toBe(false);
   });
 
   it('should add, normalize and remove rule tags and toggle the operator', () => {
-    const group = component.form.controls.collections.at(0);
+    const group = component.model.form.controls.collections.at(0);
     group.controls.allEntries.setValue(false);
-    component.addRule(group);
+    component.model.addRule(group);
     const rule = group.controls.rules.at(0);
-    const input = { value: ' Admin UI ' } as HTMLInputElement;
 
-    component.commitTagInput(rule, input);
-    expect(rule.controls.matchingTags.value).toEqual(['admin-ui']);
-    expect(input.value).toBe('');
-
-    component.commitTagInput(rule, { value: 'admin-ui' } as HTMLInputElement);
+    component.model.addRuleTag(rule, ' Admin UI ');
     expect(rule.controls.matchingTags.value).toEqual(['admin-ui']);
 
-    component.toggleTagOperator(rule);
+    component.model.addRuleTag(rule, 'admin-ui');
+    expect(rule.controls.matchingTags.value).toEqual(['admin-ui']);
+
+    component.model.toggleTagOperator(rule);
     expect(rule.controls.matchingTagOperator.value).toBe('All');
 
-    component.removeRuleTag(rule, 'admin-ui');
+    component.model.removeRuleTag(rule, 'admin-ui');
     expect(rule.controls.matchingTags.value).toEqual([]);
+  });
+
+  it("should edit a rule's tags from the keyboard: commit on Enter, remove the last on Backspace, commit on blur", () => {
+    const group = component.model.form.controls.collections.at(0);
+    group.controls.allEntries.setValue(false);
+    component.model.addRule(group);
+    const rule = group.controls.rules.at(0);
+    component.model.activateCollection(0);
+    harness.fixture.detectChanges();
+    const input = (harness.fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input.tags-input');
+    expect(input).not.toBeNull();
+    if (!input) return;
+    const press = (key: string): void => {
+      input.dispatchEvent(new KeyboardEvent('keydown', { key, cancelable: true }));
+      harness.fixture.detectChanges();
+    };
+
+    input.value = ' Admin UI ';
+    press('Enter');
+    expect(input.value).toBe('');
+    input.value = 'beta';
+    press(',');
+    expect(rule.controls.matchingTags.value).toEqual(['admin-ui', 'beta']);
+
+    press('Backspace');
+    expect(rule.controls.matchingTags.value).toEqual(['admin-ui']);
+
+    input.value = 'late';
+    input.dispatchEvent(new Event('blur'));
+    expect(rule.controls.matchingTags.value).toEqual(['admin-ui', 'late']);
   });
 
   it('should not close when submitted invalid, and land on the first section with errors', () => {
     component.onSubmit();
 
     expect(harness.dialogRef.close).not.toHaveBeenCalled();
-    expect(component.submitAttempted()).toBe(true);
-    expect(component.activeSection()).toBe('output');
+    expect(component.model.submitAttempted()).toBe(true);
+    expect(component.model.activeSection()).toBe('output');
   });
 
   it('should close with a definition that omits empty optional fields and maps inherit to undefined', () => {
     fillOutput(component);
-    const group = component.form.controls.collections.at(0);
+    const group = component.model.form.controls.collections.at(0);
     group.controls.allEntries.setValue(false);
-    component.addRule(group);
+    component.model.addRule(group);
     group.controls.rules.at(0).controls.matchingPattern.setValue('apps.admin.*');
-    component.addCollection('mockDesignSystem');
-    const second = component.form.controls.collections.at(1);
+    component.model.addCollection('mockDesignSystem');
+    const second = component.model.form.controls.collections.at(1);
     second.controls.bundledKeyPrefix.setValue('ds');
     second.controls.mergeStrategy.setValue('override');
-    component.form.controls.typesEnabled.setValue(true);
-    component.form.controls.typeDistFile.setValue('./dist/i18n-types/admin.ts');
+    component.model.form.controls.typesEnabled.setValue(true);
+    component.model.form.controls.typeDistFile.setValue('./dist/i18n-types/admin.ts');
 
     component.onSubmit();
 
@@ -286,12 +249,12 @@ describe('BundleFormDialog — create mode', () => {
 
   it('should send "All" for collections and explicit casing and ICU choices when set', () => {
     fillOutput(component);
-    component.form.controls.allCollections.setValue(true);
-    component.form.controls.typesEnabled.setValue(true);
-    component.form.controls.typeDistFile.setValue('./dist/i18n-types/admin.ts');
-    component.form.controls.tokenCasing.setValue('camelCase');
-    component.form.controls.tokenConstantName.setValue('ADMIN_KEYS');
-    component.setIcu(false);
+    component.model.form.controls.allCollections.setValue(true);
+    component.model.form.controls.typesEnabled.setValue(true);
+    component.model.form.controls.typeDistFile.setValue('./dist/i18n-types/admin.ts');
+    component.model.form.controls.tokenCasing.setValue('camelCase');
+    component.model.form.controls.tokenConstantName.setValue('ADMIN_KEYS');
+    component.model.setIcu(false);
 
     component.onSubmit();
 
@@ -313,17 +276,101 @@ describe('BundleFormDialog — create mode', () => {
     component.onCancel();
     expect(harness.dialogRef.close).toHaveBeenCalledWith(undefined);
   });
+
+  describe('writing through the store', () => {
+    it('should create the bundle through the store and close only once the server has accepted it', () => {
+      fillOutput(component);
+
+      component.onSubmit();
+
+      expect(harness.store.createBundle).toHaveBeenCalledWith({
+        name: 'admin',
+        bundle: expect.objectContaining({ bundleName: 'admin.{locale}', dist: './dist/i18n' }),
+      });
+      expect(harness.dialogRef.close).toHaveBeenCalledWith(expect.objectContaining({ name: 'admin' }));
+    });
+
+    it('should show a taken-name refusal in the Output section and keep the dialog open', () => {
+      harness.store.createBundle.mockReturnValue(
+        rejection(409, { message: 'Bundle "admin" already exists', error: 'Conflict' }),
+      );
+      fillOutput(component);
+      component.model.activate('types');
+
+      component.onSubmit();
+      harness.fixture.detectChanges();
+
+      expect(harness.dialogRef.close).not.toHaveBeenCalled();
+      expect(component.saving()).toBe(false);
+      expect(component.model.form.controls.name.hasError('nameExists')).toBe(true);
+      expect(component.model.activeSection()).toBe('output');
+      expect(harness.fixture.nativeElement.textContent).toContain('A bundle named admin already exists.');
+      expect(submitErrorsText(harness)).toBeNull();
+
+      component.model.form.controls.name.setValue('other');
+      expect(component.model.form.controls.name.hasError('nameExists')).toBe(false);
+      expect(component.model.form.controls.name.valid).toBe(true);
+    });
+
+    it('should not let the dialog close while the write is in flight, and allow it again after a refusal', () => {
+      const write = new Subject<LingoTrackerConfigDto | null>();
+      harness.store.createBundle.mockReturnValue(write);
+      fillOutput(component);
+
+      component.onSubmit();
+      harness.fixture.detectChanges();
+
+      expect(harness.dialogRef.disableClose).toBe(true);
+      expect(closeButtons(harness).every((button) => button.disabled)).toBe(true);
+
+      write.error(apiError(403, { message: 'Config is read-only', error: 'Forbidden' }));
+      harness.fixture.detectChanges();
+
+      expect(harness.dialogRef.disableClose).toBe(false);
+      expect(closeButtons(harness).some((button) => button.disabled)).toBe(false);
+    });
+  });
+
+  it('should not close when the domain rules reject what the field validators allowed', () => {
+    fillOutput(component);
+    component.model.form.controls.collections.at(0).controls.name.setValue('ghost');
+
+    component.onSubmit();
+    harness.fixture.detectChanges();
+
+    expect(harness.dialogRef.close).not.toHaveBeenCalled();
+    expect(component.model.submitErrors()).toEqual(["Collection 'ghost' does not exist in the configuration."]);
+    const errors = (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="submit-errors"]');
+    expect(errors?.getAttribute('role')).toBe('alert');
+    expect(errors?.textContent).toContain("Collection 'ghost' does not exist in the configuration.");
+
+    component.model.form.controls.collections.at(0).controls.name.setValue('trackerResources');
+    expect(component.model.submitErrors()).toEqual([]);
+    component.onSubmit();
+    expect(harness.dialogRef.close).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('BundleFormDialog — all collections', () => {
+  it('should seed the first collection when a create definition has an empty collection list', () => {
+    const { component } = buildModelHarness({
+      mode: 'create',
+      bundle: { bundleName: '{locale}', dist: './dist', collections: [] },
+    });
+
+    expect(component.model.form.controls.collections.length).toBe(1);
+    expect(component.model.form.controls.collections.at(0).controls.name.value).toBe('trackerResources');
+    expect(component.model.activeSection()).toBe('coll:0');
+  });
+
   it('should open the Collections pane when the bundle includes every collection', () => {
-    const { component } = buildHarness({
+    const { component } = buildModelHarness({
       mode: 'create',
       bundle: { bundleName: '{locale}', dist: './dist', collections: 'All' },
     });
 
-    expect(component.activeSection()).toBe('collections');
-    expect(component.form.controls.collections.length).toBe(0);
+    expect(component.model.activeSection()).toBe('collections');
+    expect(component.model.form.controls.collections.length).toBe(0);
   });
 });
 
@@ -337,49 +384,51 @@ describe('BundleFormDialog — dry run', () => {
   });
 
   it('should debounce edits and call the API once with the current definition', async () => {
-    const { component, api } = buildHarness({ mode: 'create' });
+    const { component, store } = buildModelHarness({ mode: 'create' });
     fillOutput(component);
-    component.form.controls.dist.setValue('./dist/i18n');
-    expect(api.dryRunBundle).not.toHaveBeenCalled();
-    expect(component.previewStale()).toBe(true);
+    component.model.form.controls.dist.setValue('./dist/i18n');
+    expect(store.dryRunBundle).not.toHaveBeenCalled();
+    expect(component.model.preview.previewStale()).toBe(true);
 
     vi.advanceTimersByTime(299);
-    expect(api.dryRunBundle).not.toHaveBeenCalled();
+    expect(store.dryRunBundle).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(1);
-    expect(api.dryRunBundle).toHaveBeenCalledTimes(1);
-    expect(api.dryRunBundle).toHaveBeenCalledWith({
+    expect(store.dryRunBundle).toHaveBeenCalledTimes(1);
+    expect(store.dryRunBundle).toHaveBeenCalledWith({
       name: 'admin',
       bundle: expect.objectContaining({ bundleName: 'admin.{locale}', dist: './dist/i18n' }),
     });
-    expect(component.dryRun()).toEqual(dryRunResult);
-    expect(component.previewStatus()).toBe('ready');
-    expect(component.previewStale()).toBe(false);
-    expect(component.previewFileCount()).toBe(3);
-    expect(component.keysPerLocale()).toBe(12);
+    expect(component.model.preview.dryRun()).toEqual(dryRunResult);
+    expect(component.model.preview.previewStatus()).toBe('ready');
+    expect(component.model.preview.previewStale()).toBe(false);
+    expect(component.model.preview.previewFileCount()).toBe(3);
+    expect(component.model.preview.keysPerLocale()).toBe(12);
   });
 
   it('should not call the API until name, folder and pattern are all present', async () => {
-    const { component, api } = buildHarness({ mode: 'create' });
-    component.form.controls.name.setValue('admin');
+    const { component, store } = buildModelHarness({ mode: 'create' });
+    component.model.form.controls.name.setValue('admin');
     vi.advanceTimersByTime(300);
 
-    expect(api.dryRunBundle).not.toHaveBeenCalled();
-    expect(component.previewStatus()).toBe('waiting');
+    expect(store.dryRunBundle).not.toHaveBeenCalled();
+    expect(component.model.preview.previewStatus()).toBe('waiting');
   });
 
   it('should fall back to the client-side tree when the dry run fails', async () => {
-    const { component, api } = buildHarness({ mode: 'create' });
-    api.dryRunBundle.mockReturnValue(throwError(() => new Error('boom')));
+    const { component, store } = buildModelHarness({ mode: 'create' });
+    store.dryRunBundle.mockReturnValue(
+      throwError(() => toApiError(new HttpErrorResponse({ status: 500, error: { message: 'boom' } }))),
+    );
     fillOutput(component);
-    component.form.controls.typesEnabled.setValue(true);
-    component.form.controls.typeDistFile.setValue('./dist/i18n-types/admin.ts');
+    component.model.form.controls.typesEnabled.setValue(true);
+    component.model.form.controls.typeDistFile.setValue('./dist/i18n-types/admin.ts');
     vi.advanceTimersByTime(300);
 
-    expect(component.previewStatus()).toBe('error');
-    expect(component.dryRun()).toBeUndefined();
+    expect(component.model.preview.previewStatus()).toBe('error');
+    expect(component.model.preview.dryRun()).toBeUndefined();
     expect(
-      component.previewTree().map((folder) => ({
+      component.model.preview.previewTree().map((folder) => ({
         path: folder.path,
         files: folder.files.map((file) => ({ name: file.name, kind: file.kind, exists: file.exists })),
       })),
@@ -397,12 +446,14 @@ describe('BundleFormDialog — dry run', () => {
   });
 
   it('should split tree paths and names after separators so they wrap between segments', async () => {
-    const { component, api } = buildHarness({ mode: 'create' });
-    api.dryRunBundle.mockReturnValue(throwError(() => new Error('boom')));
+    const { component, store } = buildModelHarness({ mode: 'create' });
+    store.dryRunBundle.mockReturnValue(
+      throwError(() => toApiError(new HttpErrorResponse({ status: 500, error: { message: 'boom' } }))),
+    );
     fillOutput(component);
     vi.advanceTimersByTime(300);
 
-    const folder = component.previewTree()[0];
+    const folder = component.model.preview.previewTree()[0];
     expect(folder).toBeDefined();
     expect(folder?.pathParts).toEqual(['dist/', 'i18n']);
     expect(folder?.files[0]?.nameParts).toEqual(['admin.', 'en.', 'json']);
@@ -410,11 +461,11 @@ describe('BundleFormDialog — dry run', () => {
   });
 
   it('should split the example token path after separators', async () => {
-    const { component } = buildHarness({ mode: 'create' });
+    const { component } = buildModelHarness({ mode: 'create' });
     fillOutput(component);
     vi.advanceTimersByTime(300);
 
-    component.dryRun.set({
+    component.model.preview.dryRun.set({
       ...dryRunResult,
       exampleKey: {
         collectionName: 'trackerResources',
@@ -424,8 +475,8 @@ describe('BundleFormDialog — dry run', () => {
       },
     });
 
-    expect(component.tokenPathParts()).toEqual(['TRACKER_', 'TOKENS.', 'APP.', 'SKIPTOMAINCONTENT']);
-    expect(component.tokenPathParts().join('')).toBe('TRACKER_TOKENS.APP.SKIPTOMAINCONTENT');
+    expect(component.model.preview.tokenPathParts()).toEqual(['TRACKER_', 'TOKENS.', 'APP.', 'SKIPTOMAINCONTENT']);
+    expect(component.model.preview.tokenPathParts().join('')).toBe('TRACKER_TOKENS.APP.SKIPTOMAINCONTENT');
   });
 
   it('should surface hierarchical key collisions as an error in the preview', async () => {
@@ -436,17 +487,37 @@ describe('BundleFormDialog — dry run', () => {
 
     expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="hierarchical-conflicts"]')).toBeNull();
 
-    component.dryRun.set({ ...dryRunResult, hierarchicalConflicts: ['buttons.ok', 'menu.file'] });
+    component.model.preview.dryRun.set({ ...dryRunResult, hierarchicalConflicts: ['buttons.ok', 'menu.file'] });
     fixture.detectChanges();
 
-    expect(component.hierarchicalConflicts()).toEqual(['buttons.ok', 'menu.file']);
-    expect(component.hierarchicalConflictList()).toBe('buttons.ok, menu.file');
+    expect(component.model.preview.hierarchicalConflicts()).toEqual(['buttons.ok', 'menu.file']);
+    expect(component.model.preview.hierarchicalConflictList()).toBe('buttons.ok, menu.file');
 
     // The message itself is translated (asserted via the token), so the test checks
     // that the error line appears at all and that it is announced.
     const error = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="hierarchical-conflicts"]');
     expect(error).toBeTruthy();
     expect(error?.getAttribute('role')).toBe('alert');
+  });
+});
+
+describe('BundleFormDialog — legacy typeDist', () => {
+  it('should show a legacy typeDist as the types file and save it as typeDistFile', () => {
+    const legacy = {
+      ...trackerBundle,
+      typeDistFile: undefined,
+      typeDist: './src/legacy-tokens.ts',
+    } as BundleDefinitionDto;
+    const { component, dialogRef } = buildHarness({ mode: 'edit', name: 'tracker', bundle: legacy });
+
+    expect(component.model.form.controls.typesEnabled.value).toBe(true);
+    expect(component.model.form.controls.typeDistFile.value).toBe('./src/legacy-tokens.ts');
+
+    component.onSubmit();
+
+    const bundle = dialogRef.close.mock.calls[0][0].bundle as BundleDefinitionDto;
+    expect(bundle.typeDistFile).toBe('./src/legacy-tokens.ts');
+    expect(bundle).not.toHaveProperty('typeDist');
   });
 });
 
@@ -460,28 +531,15 @@ describe('BundleFormDialog — edit mode', () => {
   });
 
   it('should open on the Output section', () => {
-    expect(component.isEditMode).toBe(true);
-    expect(component.activeSection()).toBe('output');
+    expect(component.model.isEditMode).toBe(true);
+    expect(component.model.activeSection()).toBe('output');
   });
 
   it('should lock the name and skip the collision check against itself', () => {
-    expect(component.form.controls.name.disabled).toBe(true);
-    expect(component.form.controls.name.value).toBe('tracker');
-    expect(component.form.controls.name.errors).toBeNull();
+    expect(component.model.form.controls.name.disabled).toBe(true);
+    expect(component.model.form.controls.name.value).toBe('tracker');
+    expect(component.model.form.controls.name.errors).toBeNull();
     expect(harness.fixture.nativeElement.querySelector('[data-testid="name-locked"]')).toBeTruthy();
-  });
-
-  it('should pre-populate the definition', () => {
-    const raw = component.form.getRawValue();
-    expect(raw.dist).toBe('./apps/tracker/src/assets/i18n');
-    expect(raw.bundleName).toBe('{locale}');
-    expect(raw.allCollections).toBe(false);
-    expect(raw.collections).toHaveLength(1);
-    expect(raw.collections[0]?.allEntries).toBe(true);
-    expect(raw.typesEnabled).toBe(true);
-    expect(raw.typeDistFile).toBe('./apps/tracker/src/i18n-types/tracker-resources.ts');
-    expect(raw.tokenCasing).toBe('inherit');
-    expect(raw.transformICUToTransloco).toBe('on');
   });
 
   it('should keep the name in the result even though the control is disabled', () => {
@@ -495,11 +553,186 @@ describe('BundleFormDialog — edit mode', () => {
     );
   });
 
-  it('should collapse an ICU choice equal to the project default (on) back to inherit', () => {
-    component.setIcu(true);
-    expect(component.form.controls.transformICUToTransloco.value).toBe('inherit');
+  it('should update the bundle under its existing name through the store', () => {
+    component.onSubmit();
 
-    component.setIcu(false);
-    expect(component.form.controls.transformICUToTransloco.value).toBe('off');
+    expect(harness.store.updateBundle).toHaveBeenCalledWith('tracker', {
+      name: undefined,
+      bundle: expect.objectContaining({ dist: './apps/tracker/src/assets/i18n' }),
+    });
+    expect(harness.store.createBundle).not.toHaveBeenCalled();
+  });
+});
+
+// These existing cases now exercise the form model directly, without constructing a dialog.
+describe('BundleForm — migrated dialog form cases', () => {
+  let model: BundleForm;
+  const createModel = (data: BundleFormDialogData) =>
+    new BundleForm({
+      data,
+      collectionNames: () => Object.keys(config.collections),
+      bundleNames: () => ['tracker'],
+      locales: () => config.locales,
+      baseLocale: () => config.baseLocale,
+      tokenCasing: () => 'upperCase',
+      icuTransform: () => true,
+      dryRun: () => of(dryRunResult),
+      env: fakeEnv(),
+    });
+  beforeEach(() => {
+    model = createModel({ mode: 'create' });
+  });
+  afterEach(() => model.destroy());
+  it('should start with the first collection pane open, seeded with the first collection', () => {
+    expect(model.form.controls.collections.length).toBe(1);
+    expect(model.form.controls.collections.at(0).controls.name.value).toBe('trackerResources');
+    expect(model.activeSection()).toBe('coll:0');
+    expect(model.activeKind()).toBe('collection');
+  });
+
+  it('should keep the name editable', () => {
+    expect(model.form.controls.name.disabled).toBe(false);
+  });
+
+  it('should reject a name that collides with an existing bundle', () => {
+    model.form.controls.name.setValue('tracker');
+    expect(model.form.controls.name.hasError('nameExists')).toBe(true);
+
+    model.form.controls.name.setValue('admin');
+    expect(model.form.controls.name.errors).toBeNull();
+  });
+
+  it('should reject names outside the letters, numbers, hyphens and underscores charset', () => {
+    model.form.controls.name.setValue('my bundle!');
+    expect(model.form.controls.name.hasError('pattern')).toBe(true);
+  });
+
+  it('should require {locale} in the file name pattern', () => {
+    model.form.controls.bundleName.setValue('admin');
+    expect(model.form.controls.bundleName.hasError('missingLocale')).toBe(true);
+
+    model.form.controls.bundleName.setValue('admin.{locale}');
+    expect(model.form.controls.bundleName.errors).toBeNull();
+  });
+
+  it('should require a .ts type file only while types are on', () => {
+    const typeFile = model.form.controls.typeDistFile;
+    expect(typeFile.errors).toBeNull();
+
+    model.form.controls.typesEnabled.setValue(true);
+    expect(typeFile.hasError('required')).toBe(true);
+
+    typeFile.setValue('./dist/types/admin.js');
+    expect(typeFile.hasError('notTypeScript')).toBe(true);
+
+    typeFile.setValue('./dist/types/admin.ts');
+    expect(typeFile.errors).toBeNull();
+
+    typeFile.setValue('./dist/types/admin.js');
+    model.form.controls.typesEnabled.setValue(false);
+    expect(typeFile.errors).toBeNull();
+  });
+
+  it('should require a valid JavaScript identifier for the constant name', () => {
+    const constant = model.form.controls.tokenConstantName;
+    constant.setValue('1BAD');
+    expect(constant.hasError('invalidIdentifier')).toBe(true);
+
+    constant.setValue('ADMIN_TOKENS');
+    expect(constant.errors).toBeNull();
+
+    constant.setValue('');
+    expect(constant.errors).toBeNull();
+  });
+
+  it('should reject reserved words the server would reject, so the dialog never closes on a 400', () => {
+    const constant = model.form.controls.tokenConstantName;
+
+    for (const reserved of ['type', 'class', 'interface', 'await', 'undefined']) {
+      constant.setValue(reserved);
+      expect(constant.hasError('invalidIdentifier')).toBe(true);
+    }
+
+    constant.setValue('typeTokens');
+    expect(constant.errors).toBeNull();
+  });
+
+  it('should require at least one collection unless every collection is included', () => {
+    model.removeCollection(0);
+    expect(model.form.controls.collections.hasError('collectionsEmpty')).toBe(true);
+    expect(model.activeSection()).toBe('collections');
+
+    model.form.controls.allCollections.setValue(true);
+    expect(model.form.controls.collections.errors).toBeNull();
+  });
+
+  it('should require at least one rule unless the collection takes all entries', () => {
+    const group = model.form.controls.collections.at(0);
+    expect(group.controls.rules.errors).toBeNull();
+
+    group.controls.allEntries.setValue(false);
+    expect(group.controls.rules.hasError('rulesEmpty')).toBe(true);
+
+    model.addRule(group);
+    expect(group.controls.rules.errors).toBeNull();
+    expect(group.controls.rules.at(0).controls.matchingPattern.hasError('required')).toBe(true);
+
+    model.removeRule(group, 0);
+    expect(group.controls.rules.hasError('rulesEmpty')).toBe(true);
+  });
+
+  it('should add a collection from the remaining ones and open its pane', () => {
+    expect(model.availableCollections()).toEqual(['mockDesignSystem', 'TestDataPlayground']);
+
+    model.addCollection('mockDesignSystem');
+
+    expect(model.form.controls.collections.length).toBe(2);
+    expect(model.activeSection()).toBe('coll:1');
+    expect(model.availableCollections()).toEqual(['TestDataPlayground']);
+  });
+
+  it('should flag an invalid section in the rail once it has been touched', () => {
+    expect(model.sectionErrors().has('output')).toBe(false);
+
+    model.form.controls.bundleName.setValue('admin');
+    model.form.controls.bundleName.markAsTouched();
+
+    expect(model.sectionErrors().has('output')).toBe(true);
+  });
+
+  it('should preview the output paths with the domain output-file rule', () => {
+    model.form.controls.dist.setValue(' ./dist//i18n/ ');
+    model.form.controls.bundleName.setValue('{locale}/admin');
+
+    expect(model.preview.outputSummary()).toBe('dist/i18n/{locale}/admin.json');
+    expect(model.preview.patternFiles()).toEqual(['en/admin.json', 'fr-ca/admin.json', 'es/admin.json']);
+    expect(
+      model.preview.localTree().flatMap((folder) => folder.files.map((file) => `${folder.path}/${file.name}`)),
+    ).toEqual(['dist/i18n/en/admin.json', 'dist/i18n/fr-ca/admin.json', 'dist/i18n/es/admin.json']);
+  });
+
+  it('should pre-populate the definition', () => {
+    model.destroy();
+    model = createModel({ mode: 'edit', name: 'tracker', bundle: trackerBundle });
+    const raw = model.form.getRawValue();
+    expect(raw.dist).toBe('./apps/tracker/src/assets/i18n');
+    expect(raw.bundleName).toBe('{locale}');
+    expect(raw.allCollections).toBe(false);
+    expect(raw.collections).toHaveLength(1);
+    expect(raw.collections[0]?.allEntries).toBe(true);
+    expect(raw.typesEnabled).toBe(true);
+    expect(raw.typeDistFile).toBe('./apps/tracker/src/i18n-types/tracker-resources.ts');
+    expect(raw.tokenCasing).toBe('inherit');
+    expect(raw.transformICUToTransloco).toBe('on');
+  });
+
+  it('should collapse an ICU choice equal to the project default (on) back to inherit', () => {
+    model.destroy();
+    model = createModel({ mode: 'edit', name: 'tracker', bundle: trackerBundle });
+    model.setIcu(true);
+    expect(model.form.controls.transformICUToTransloco.value).toBe('inherit');
+
+    model.setIcu(false);
+    expect(model.form.controls.transformICUToTransloco.value).toBe('off');
   });
 });

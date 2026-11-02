@@ -1,11 +1,12 @@
-import type { ImportedResource, ImportChange } from './types';
 import {
-  validateImportKey,
-  isKeyTooLong,
-  isEmptyValue,
-  detectHierarchicalConflicts,
   detectDuplicateKeys,
+  detectHierarchicalConflicts,
+  isEmptyValue,
+  isKeyTooLong,
+  validateImportKey,
 } from '@simoncodes-ca/domain';
+import type { ImportIssue } from './import-session';
+import type { ImportedResource } from './types';
 
 /**
  * Configuration for import validation process.
@@ -25,10 +26,8 @@ export interface ValidationResult {
   validResources: ImportedResource[];
   /** Non-fatal warnings that don't prevent import */
   warnings: string[];
-  /** Fatal errors for specific resources */
-  errors: string[];
-  /** Change records for failed validations */
-  failedChanges: ImportChange[];
+  /** Ordered issues, the single input to session rejection recording. */
+  issues: ImportIssue[];
 }
 
 /**
@@ -56,12 +55,12 @@ export interface ValidationResult {
  * 5. **Empty Value Detection**: Identifies and optionally skips resources with empty or
  *    whitespace-only values (configurable via skipEmptyValues).
  *
- * Resources that fail validation are recorded in failedChanges with specific reasons,
+ * Resources that fail validation are recorded in issues with specific reasons and diagnostics,
  * making it easy to identify and fix issues in the source data.
  *
  * @param resources - Array of imported resources to validate
  * @param config - Validation configuration controlling warning and skip behavior
- * @returns ValidationResult containing valid resources, warnings, errors, and failed changes
+ * @returns ValidationResult containing valid resources, warnings, and issues
  *
  * @example
  * ```typescript
@@ -80,14 +79,12 @@ export interface ValidationResult {
  *
  * console.log(`Valid: ${result.validResources.length}`);
  * console.log(`Warnings: ${result.warnings.length}`);
- * console.log(`Errors: ${result.errors.length}`);
- * console.log(`Failed: ${result.failedChanges.length}`);
+ * console.log(`Issues: ${result.issues.length}`);
  * ```
  */
 export function validateImportResources(resources: ImportedResource[], config: ValidationConfig): ValidationResult {
   const warnings: string[] = [];
-  const errors: string[] = [];
-  const failedChanges: ImportChange[] = [];
+  const issues: ImportIssue[] = [];
   const validResources: ImportedResource[] = [];
 
   // Detect duplicates
@@ -101,21 +98,22 @@ export function validateImportResources(resources: ImportedResource[], config: V
 
   // Detect hierarchical conflicts
   const conflicts = detectHierarchicalConflicts(keys);
-  if (conflicts.length > 0) {
-    for (const key of conflicts) {
-      errors.push(`Hierarchical conflict: "${key}" (has value and child keys)`);
-    }
-  }
+  const reportedConflicts = new Set<string>();
 
   // Validate each resource
   for (const resource of resources) {
     // Skip if part of hierarchical conflict
     if (conflicts.includes(resource.key)) {
-      failedChanges.push({
+      issues.push({
         key: resource.key,
         type: 'failed',
         reason: 'Hierarchical conflict (has value and child keys)',
+        error: reportedConflicts.has(resource.key)
+          ? undefined
+          : `Hierarchical conflict: "${resource.key}" (has value and child keys)`,
+        diagnosticOrder: conflicts.indexOf(resource.key),
       });
+      reportedConflicts.add(resource.key);
       continue;
     }
 
@@ -123,11 +121,12 @@ export function validateImportResources(resources: ImportedResource[], config: V
     try {
       validateImportKey(resource.key);
     } catch (error) {
-      errors.push(`Invalid key format: "${resource.key}" (${error})`);
-      failedChanges.push({
+      issues.push({
         key: resource.key,
         type: 'failed',
         reason: `Invalid key format: ${error}`,
+        error: `Invalid key format: "${resource.key}" (${error})`,
+        diagnosticOrder: conflicts.length,
       });
       continue;
     }
@@ -140,7 +139,7 @@ export function validateImportResources(resources: ImportedResource[], config: V
     // Skip empty values if configured
     if (config.skipEmptyValues && isEmptyValue(resource.value)) {
       warnings.push(`Empty value skipped: "${resource.key}"`);
-      failedChanges.push({
+      issues.push({
         key: resource.key,
         type: 'skipped',
         reason: 'Empty value',
@@ -154,8 +153,7 @@ export function validateImportResources(resources: ImportedResource[], config: V
 
   return {
     validResources,
+    issues,
     warnings,
-    errors,
-    failedChanges,
   };
 }

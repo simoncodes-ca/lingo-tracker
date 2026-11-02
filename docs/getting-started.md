@@ -3,42 +3,52 @@ title: Getting Started
 sidebar_position: 2
 ---
 
-## Getting Started
+# Getting Started
 
-Lingo Tracker helps you track, validate, and manage translations across projects. This guide shows how to install the CLI, initialize a project, and add collections.
+This guide installs LingoTracker, creates a project, adds a first string, generates a bundle and opens the web UI. It takes about ten minutes.
 
-### Install
+## Requirements
 
-Node.js >= 22.16 is required. Install the CLI as a dev dependency in your project.
+- Node.js 24.15 or later in the 24 line, or Node.js 26 or later
+- A package manager: pnpm, npm or yarn
 
-#### pnpm
+## Install
+
+Install the package as a development dependency of the project that owns the translations.
 
 ```bash
 pnpm add -D @simoncodes-ca/lingo-tracker
-```
-
-#### npm
-
-```bash
+# or
 npm install --save-dev @simoncodes-ca/lingo-tracker
-```
-
-#### yarn
-
-```bash
+# or
 yarn add -D @simoncodes-ca/lingo-tracker
 ```
 
-Once installed, use the `npx lingo-tracker` command to interact with the CLI.
+The package installs two commands:
 
-### Quick Start: Initialize Your Project
+| Command | Purpose |
+|---|---|
+| `lingo-tracker` | The CLI |
+| `lingo-tracker-app` | The web UI and its REST API |
 
-Run this in your project root to create a `.lingo-tracker.json` with a sensible default setup:
+Run them with `npx`, or add scripts to `package.json`. The examples below use `npx`.
+
+## 1. Initialize the project
+
+Run `init` in the folder that will hold `.lingo-tracker.json`. The CLI reads the config file from the directory you run it in (or from `INIT_CWD` under a package-manager script), never from a parent folder.
+
+Interactive:
+
+```bash
+npx lingo-tracker init
+```
+
+Non-interactive, which is the form to copy into scripts:
 
 ```bash
 npx lingo-tracker init \
-  --collection-name Main \
-  --translations-folder src/assets/i18n \
+  --collection-name main \
+  --translations-folder src/i18n \
   --base-locale en \
   --locales en fr-ca es \
   --setup-bundle true \
@@ -47,368 +57,151 @@ npx lingo-tracker init \
   --type-dist-file ./src/generated/translation-tokens.ts
 ```
 
-What each flag does:
+| Flag | Meaning |
+|---|---|
+| `--collection-name` | Name of the first collection. A collection is one translations folder. |
+| `--translations-folder` | Where LingoTracker stores its own files. Keep this separate from the bundle output folder. |
+| `--base-locale` | The locale you author in. |
+| `--locales` | Every locale the project supports, including the base locale. Bundles are produced for this list. |
+| `--setup-bundle true` | Customize the default bundle instead of accepting the defaults. |
+| `--bundle-dist` | Folder the runtime JSON files go to, the one your app loads from. |
+| `--bundle-name` | File name pattern. `{locale}` becomes `en`, `fr-ca`, and so on. |
+| `--type-dist-file` | Enables TypeScript key generation and names the output file. |
 
-| Flag | Value | Why |
-|------|-------|-----|
-| `--collection-name` | `Main` | Name for the initial translation collection |
-| `--translations-folder` | `src/assets/i18n` | Where LingoTracker stores its internal JSON source files |
-| `--base-locale` | `en` | Authoring language — the locale you write source strings in |
-| `--locales` | `en fr-ca es` | All locales your app supports (adjust to your needs) |
-| `--bundle-dist` | `./src/assets/i18n` | Output directory for the runtime bundle files Transloco loads |
-| `--bundle-name` | `{locale}` | Output filename pattern — produces `en.json`, `fr-ca.json`, etc. |
-| `--type-dist-file` | `./src/generated/translation-tokens.ts` | Enables TypeScript token generation for type-safe translation keys |
-
-After running this command, `lingo-tracker bundle` will produce `en.json`, `fr-ca.json`, and `es.json` in `src/assets/i18n`, and a typed `translation-tokens.ts` constant file in `src/generated/`.
-
-See [Initialize a project](#initialize-a-project) below for the full option reference, and the [Bundle Generation Guide](./guides/bundling.md) for bundle configuration details.
-
----
-
-### Install the Lingo Tracker Skill
-
-If you use Claude Code (or a compatible AI assistant), install the Lingo Tracker skill to enable guided i18n workflows — detecting hardcoded strings, creating translation resources, and updating components to use Transloco:
-
-```bash
-npx lingo-tracker install-skill
-```
-
-This writes a skill file to your project that Claude Code picks up automatically. See [`install-skill`](./cli.md#install-skill) in the CLI Reference for details.
-
-### Run the Lingo Tracker App
-
-The `lingo-tracker` package ships a built-in API server that hosts the Lingo Tracker web interface. 
-
-Then start the app server:
-
-```bash
-npx lingo-tracker-app
-```
-
-The server listens on port **3030** by default.
-
-#### Configuring the port
-
-Pass `--port` to override the port:
-
-```bash
-npx lingo-tracker-app --port 4000
-```
-
-Or set the `LINGO_TRACKER_PORT` environment variable. The `--port` flag takes precedence over the environment variable:
-
-```json
-{
-  "scripts": {
-    "lingo-tracker-app": "lingo-tracker-app --port 4000"
-  }
-}
-```
-
-### Initialize a project
-
-Run in your project root to create `.lingo-tracker.json`:
-
-```bash
-lingo-tracker init
-```
-
-If you run it interactively, you will be prompted for missing values. In non‑interactive environments, pass the required options.
-
-- Required when non‑interactive: `--collection-name`, `--translations-folder`
-- All options:
-  - `--collection-name <name>`: Name of the initial collection key (e.g., "Main").
-  - `--translations-folder <path>`: Path to the translations directory for this collection.
-  - `--export-folder <path>`: Output folder for exports. Default: `dist/lingo-export`.
-  - `--import-folder <path>`: Input folder for imports. Default: `dist/lingo-import`.
-  - `--base-locale <locale>`: Base/authoring locale. Default: `en`.
-  - `--locales <locales...>`: Supported locales list. Example: `en fr-ca es de`.
-  - `--setup-bundle <true|false>`: Customize the default bundle configuration.
-  - `--bundle-dist <path>`: Bundle output directory. Default: `./src/assets/i18n`.
-  - `--bundle-name <pattern>`: Bundle name pattern. Default: `{locale}`.
-  - `--token-casing <casing>`: Token key casing (`upperCase` or `camelCase`).
-  - `--type-dist-file <path>`: Path for generated TypeScript type definitions.
-  - `--token-constant-name <name>`: Custom name for the generated TypeScript constant.
-
-Example (CI-safe, no prompts):
-
-```bash
-lingo-tracker init \
-  --collection-name Main \
-  --translations-folder apps/web/src/assets/i18n \
-  --export-folder dist/lingo-export \
-  --import-folder dist/lingo-import \
-  --base-locale en \
-  --locales en fr-ca es de
-```
-
-Example with bundle customization:
-
-```bash
-lingo-tracker init \
-  --collection-name Main \
-  --translations-folder apps/web/src/assets/i18n \
-  --base-locale en \
-  --locales en fr-ca es de \
-  --setup-bundle true \
-  --bundle-dist ./src/assets/i18n \
-  --token-casing camelCase \
-  --type-dist-file ./src/generated/tokens.ts
-```
-
-### The configuration file
-
-Initialization writes a JSON config named `.lingo-tracker.json` at your project root. Structure:
+The result is a `.lingo-tracker.json` like this:
 
 ```json
 {
   "exportFolder": "dist/lingo-export",
   "importFolder": "dist/lingo-import",
   "baseLocale": "en",
-  "locales": [
-    "en"
-  ],
+  "locales": ["en", "fr-ca", "es"],
   "collections": {
-    "Main": {
-      "translationsFolder": "apps/web/src/assets/i18n"
+    "main": {
+      "translationsFolder": "src/i18n"
     }
   },
   "bundles": {
     "main": {
       "bundleName": "{locale}",
       "dist": "./src/assets/i18n",
-      "collections": "All"
+      "collections": "All",
+      "typeDistFile": "./src/generated/translation-tokens.ts"
     }
   }
 }
 ```
 
-- Global fields (`exportFolder`, `importFolder`, `baseLocale`, `locales`) apply to all collections by default.
-- Each collection requires `translationsFolder`. A collection may override any global field locally if needed.
-- A default `bundles` section is always created during init. If you customize the bundle, additional fields like `typeDistFile`, `tokenCasing`, and `tokenConstantName` may be present. See the [Bundle Generation Guide](./guides/bundling.md) for details.
+Commit this file. `init` writes nothing else. The translations folder is created when you add the first resource.
 
-Collection shape:
+Two things to know:
+
+- Without `--locales`, the global `locales` list is empty. Add locales before you bundle.
+- If a config file already exists, `init` prints a note and exits without changing it.
+
+The full field reference is in [Configuration](./configuration.md).
+
+## 2. Add a resource
+
+A resource is one source string with a dot-delimited key. The key decides where the files go: `common.buttons.save` is stored in `src/i18n/common/buttons/`.
+
+```bash
+npx lingo-tracker add-resource \
+  --key common.buttons.save \
+  --value "Save" \
+  --comment "Button label on every edit form"
+```
+
+With one collection configured there is no need to pass `--collection`. The command creates two files:
+
+`src/i18n/common/buttons/resource_entries.json`
 
 ```json
 {
-  "translationsFolder": "path/to/translations",
-  "exportFolder": "optional/override",
-  "importFolder": "optional/override",
-  "baseLocale": "en",
-  "locales": ["en", "fr-ca"],
-  "readOnly": false
-}
-```
-
-- `readOnly` (optional) marks the collection as read-only: its resources cannot be added, edited, deleted, moved, imported, or auto-translated through the CLI, API, or UI. The collection can still be unregistered and its config entry edited. This is intended for collections that belong to a component library and are vendored under `node_modules` of a consumer repo.
-
-### Add additional collections
-
-Use `add-collection` to register more translation sources within the same repo. This reuses global defaults and only persists overrides when they differ.
-
-```bash
-lingo-tracker add-collection
-```
-
-- Required when non‑interactive: `--collection-name`, `--translations-folder`
-- All options (same meanings as `init`):
-  - `--collection-name <name>`
-  - `--translations-folder <path>`
-  - `--export-folder <path>`
-  - `--import-folder <path>`
-  - `--base-locale <locale>`
-  - `--locales <locales...>`
-  - `--read-only` / `--no-read-only` (mark the collection read-only, or force it writable). When the folder is under `node_modules`, read-only defaults to on; use `--no-read-only` to override.
-
-Examples:
-
-- Simple, rely on global defaults:
-
-```bash
-lingo-tracker add-collection \
-  --collection-name Admin \
-  --translations-folder apps/admin/src/assets/i18n
-```
-
-- Override per-collection settings (only differences are saved under the collection):
-
-```bash
-lingo-tracker add-collection \
-  --collection-name Mobile \
-  --translations-folder apps/mobile/src/i18n \
-  --base-locale en-GB
-```
-
-- Register a component-library collection (vendored under `node_modules`) as read-only:
-
-```bash
-lingo-tracker add-collection \
-  --collection-name DesignSystem \
-  --translations-folder node_modules/@acme/design-system/i18n \
-  --read-only
-```
-
-Notes:
-- If `.lingo-tracker.json` is missing or invalid, the command will exit with a helpful message.
-- If the collection name already exists, the command will refuse to overwrite.
-- Collections under `node_modules` are marked read-only by default; pass `--no-read-only` to opt out.
-
-### Non-interactive and CI usage
-
-Both commands support fully non‑interactive runs; provide all required flags to avoid prompts. The CLI auto‑detects TTY and will throw if a required option is missing in non‑interactive mode.
-
-- Required flags in CI:
-  - `init`: `--collection-name`, `--translations-folder` (others optional)
-  - `add-collection`: `--collection-name`, `--translations-folder`
-
-### Quick checklist
-
-- Install `lingo-tracker`
-- Run `lingo-tracker init` once in the repo
-- Add more collections with `lingo-tracker add-collection`
-- Commit `.lingo-tracker.json`
-
-That's it. You're ready to track and manage translations with Lingo Tracker.
-
-### Maintaining Translation Consistency
-
-After setting up your project, you may need to normalize your translation files to ensure consistency. Normalization is particularly useful in these scenarios:
-
-#### When to Normalize
-
-**After Manual Edits**
-If you or your team manually edit JSON translation files, checksums and statuses may become outdated. Normalization recomputes all checksums and updates statuses accordingly.
-
-**After Adding New Locales**
-When you add a new locale to your configuration (e.g., adding `de` to your locales list), existing resources won't have entries for the new locale. Normalization creates these missing entries with the base value and marks them as `new`.
-
-**After Importing Translations**
-External translation tools or services may provide translations without proper metadata. Normalization ensures all entries have correct checksums and statuses.
-
-**Periodic Maintenance**
-Running normalize periodically helps maintain consistency and cleans up your folder structure by removing empty directories.
-
-**When Statuses Seem Wrong**
-If translation statuses don't match reality (e.g., translations marked as `stale` when they shouldn't be), normalization corrects these based on actual checksums.
-
-#### What Normalization Does
-
-The `normalize` command performs these operations:
-
-1. **Recomputes Checksums**: Updates MD5 checksums for the base locale and all translations to reflect current values
-2. **Adds Missing Locales**: Creates entries for any configured locales that don't exist in a resource, using the base value with status `new`
-3. **Updates Statuses**: Sets correct translation statuses based on checksums:
-   - `new` - Locale entry was just added or matches the base value
-   - `stale` - Base value changed since the translation was last updated
-   - `translated` / `verified` - Preserved when base value hasn't changed
-4. **Creates Missing Files**: Ensures both `resource_entries.json` and `tracker_meta.json` exist at every folder level
-5. **Cleans Up Empty Folders**: Removes directories that no longer contain translation entries
-
-#### Folder Cleanup Details
-
-Normalization automatically removes empty folders to keep your translations directory clean and organized:
-
-- **Empty Folder Definition**: A folder is considered empty if it has:
-  - No `resource_entries.json` file, OR
-  - An empty `resource_entries.json` (no entries or `{}`), AND
-  - No subfolders containing entries
-
-- **What Gets Removed**:
-  - Folders with only `tracker_meta.json` (metadata without entries)
-  - Folders with only hidden files like `.gitkeep` or `.DS_Store`
-  - Parent folders that become empty after their children are removed
-
-- **What's Protected**:
-  - The root translations folder is never removed, even if empty
-  - Any folder containing `resource_entries.json` with actual entries
-  - Any folder with subfolders that contain entries
-
-- **Bottom-Up Cleanup**: The cleanup process starts with the deepest folders and works up to the root, allowing recursive removal of entire empty folder trees
-
-#### Running Normalize
-
-Preview what would change (recommended first step):
-```bash
-lingo-tracker normalize --collection Main --dry-run
-```
-
-Normalize a specific collection:
-```bash
-lingo-tracker normalize --collection Main
-```
-
-Normalize all collections:
-```bash
-lingo-tracker normalize --all
-```
-
-Get JSON output for automation:
-```bash
-lingo-tracker normalize --collection Main --json
-```
-
-#### Understanding the Output
-
-After normalization, you'll see a summary like this:
-
-```
-🔄 Normalizing collection: Main
-
-   ✅ Entries processed: 42
-   ✅ Locales added: 7
-   ✅ Files created: 2
-   ✅ Files updated: 15
-   ✅ Folders removed: 3
-```
-
-- **Entries processed**: Total number of translation resources examined
-- **Locales added**: Number of missing locale entries that were created
-- **Files created**: Number of new JSON files created (resource_entries.json or tracker_meta.json)
-- **Files updated**: Number of existing files that had metadata updated
-- **Folders removed**: Number of empty folders that were deleted
-
-#### Best Practices
-
-1. **Use Dry-Run First**: Always run with `--dry-run` to preview changes before applying them
-2. **Commit Before Normalizing**: Ensure you have a clean Git state so you can review changes
-3. **Normalize After Config Changes**: Any time you modify locale settings, run normalize to update all resources
-4. **Regular Maintenance**: Consider adding normalize to your CI/CD pipeline or running it periodically
-5. **Check Folder Cleanup**: Review the "Folders removed" count to understand what's being cleaned up
-
-#### Non-Destructive Operation
-
-Normalization is designed to be safe:
-- **Preserves Translation Values**: Never modifies existing translation text
-- **Preserves Comments and Tags**: Keeps all metadata intact
-- **Only Adds/Corrects**: Fills in missing data and fixes incorrect metadata
-- **Dry-Run Available**: Preview all changes before applying
-
-### Configuring Auto-Translation
-
-LingoTracker can automatically translate new resources using machine translation providers such as Google Translate. To enable this, add a `translation` block to your `.lingo-tracker.json`:
-
-```json
-{
-  "translation": {
-    "enabled": true,
-    "provider": "google-translate",
-    "apiKeyEnv": "GOOGLE_TRANSLATE_API_KEY"
+  "save": {
+    "source": "Save",
+    "comment": "Button label on every edit form",
+    "fr-ca": "Save",
+    "es": "Save"
   }
 }
 ```
 
-Then set the API key in your environment:
+`src/i18n/common/buttons/tracker_meta.json`
 
-```bash
-export GOOGLE_TRANSLATE_API_KEY="your-api-key-here"
+```json
+{
+  "save": {
+    "en": { "checksum": "c9cc8cce247e49bae79f15173ce97354" },
+    "fr-ca": { "checksum": "c9cc8cce247e49bae79f15173ce97354", "baseChecksum": "c9cc8cce247e49bae79f15173ce97354", "status": "new" },
+    "es": { "checksum": "c9cc8cce247e49bae79f15173ce97354", "baseChecksum": "c9cc8cce247e49bae79f15173ce97354", "status": "new" }
+  }
+}
 ```
 
-Auto-translation handles plain text and simple placeholders (`{name}`, `{{ count }}`). Strings with complex ICU syntax (plural, select, number, date, time) are skipped and left for human translators.
+Each target locale starts as a copy of the source with status `new`. When a translation arrives, the status becomes `translated`. When the source changes later, it becomes `stale`. [Concepts](./concepts.md) explains the lifecycle.
 
-For full details on configuration, ICU handling, and best practices, see the [Auto-Translation Guide](./auto-translation.md).
+Add a translation now:
 
-### Next Steps
+```bash
+npx lingo-tracker edit-resource \
+  --key common.buttons.save \
+  --locale fr-ca \
+  --locale-value "Enregistrer"
+```
 
-- For managing translation resources and other CLI commands, see the [CLI Reference](./cli.md)
-- For programmatic access via REST API, see the [API Reference](./api.md)
-- For setting up machine translation, see the [Auto-Translation Guide](./auto-translation.md)
+## 3. Generate the bundle
+
+```bash
+npx lingo-tracker bundle
+```
+
+This writes `src/assets/i18n/en.json`, `fr-ca.json` and `es.json`, plus `src/generated/translation-tokens.ts`:
+
+```typescript
+export const MAIN_TOKENS = {
+  COMMON: {
+    BUTTONS: {
+      SAVE: 'common.buttons.save',
+    },
+  },
+} as const;
+
+export type MainTokens = typeof MAIN_TOKENS;
+```
+
+Configure your Transloco loader to load the generated files from `src/assets/i18n`, and use the constants in components. Add `lingo-tracker bundle` to a `prebuild` script so bundles are regenerated on every build. The [Bundling guide](./guides/bundling.md) covers multiple bundles, filtering and framework setup.
+
+## 4. Gate releases with validate
+
+```bash
+npx lingo-tracker validate
+```
+
+The command exits with code 1 while any translation is `new`, `stale` or `translated` but not `verified`, or when a value does not compile as an ICU message for its locale. Use `--allow-translated` for a staging gate. See [Validate](./features/validate.md) and the [CI/CD guide](./guides/ci-cd.md).
+
+## 5. Open the web UI
+
+```bash
+npx lingo-tracker-app
+```
+
+Open `http://localhost:3030`. The app reads `.lingo-tracker.json` from the directory you started it in. From the UI you can browse and edit resources, manage collections and bundles, and run exports and imports with a preview. See [Tracker UI](./tracker-ui.md).
+
+Options:
+
+| Setting | Flag | Environment variable | Default |
+|---|---|---|---|
+| Port | `--port 4000` | `LINGO_TRACKER_PORT` | `3030` |
+| Bind address | `--host 0.0.0.0` | `LINGO_TRACKER_HOST` | `127.0.0.1` |
+| Extra allowed host names | | `LINGO_TRACKER_ALLOWED_HOSTS` | none |
+
+The server binds to loopback by default, so only your machine can reach it. It has no authentication. If you bind to another address, every machine that can reach the port can read and write your translation files and list folders on the server. Keep it local unless you understand that trade-off. The [API reference](./api.md#running-the-server) describes the Host and Origin checks that apply in every mode.
+
+## Next steps
+
+- Add more collections with `add-collection` when several apps or a shared library keep separate translations. [Concepts](./concepts.md#collections) explains when to split.
+- Set up the vendor round trip: [Translation workflow](./guides/translation-workflow.md).
+- Enable machine translation for new strings: [Auto-Translation](./auto-translation.md).
+- Let your AI assistant do the i18n chores: [Working with an AI assistant](./guides/ai-assistant.md).
+- Moving from existing JSON files: [Migration](./guides/migration.md).

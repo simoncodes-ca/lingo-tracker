@@ -3,11 +3,11 @@ title: Glossary
 sidebar_position: 5
 ---
 
-# Glossary Feature
+# Glossary
 
-The Glossary feature extracts a glossary of relevant translations from a block of text. It was built to support **online help translation**: when help documentation is translated, the translators must reuse the same terminology that already exists in the app's UI so the help stays consistent with the product.
+The `glossary` command takes a block of base-locale text, finds the UI strings it mentions, and writes their existing translations as JSON. It was built for **online help translation**: whoever translates the help can reuse exactly the words the application already uses, instead of inventing a second translation of "Save" or "Settings".
 
-Given a paragraph of base-locale text, the `glossary` command pulls out the meaningful terms, finds the matching translation entries, and writes a JSON glossary containing each term's translations across all locales. That glossary can be handed to whoever (or whatever) translates the help content.
+The glossary is a reference that the command generates on demand. It checks nothing. To keep words unchanged in translations, use [protected terms](./protected-terms.md). To flag discouraged wording in your base-locale text, use [preferred terminology](./preferred-terminology.md).
 
 ## Usage
 
@@ -63,11 +63,12 @@ block → extract candidate terms → match against entries → rank → top-1 p
 }
 ```
 
-## The extraction seam
+## Extractors
 
-Extraction is a swappable stage. Internally it is a single boundary — `CandidateExtractor = (block) => Candidate[]` — with the deterministic n-gram extractor as the default implementation. The `--extractor` flag reserves room for a future **AI-based extractor** (for example, Claude pulling key terms and short phrases out of each sentence) to drop in behind the same interface without changing the matching, ranking, or output stages. Passing `--extractor ai` today returns a clear "not yet implemented" message.
+Only the `ngram` extractor is implemented. `--extractor ai` is reserved and returns an error.
 
 ## Design notes & limitations
 
 - **Precision over recall** — matching is deterministic and value-only with no fuzzy matching, so the glossary stays trustworthy for translators. Use `find-similar` when you want fuzzy near-duplicate detection instead.
-- **English-oriented stopwords** — the built-in stopword list assumes an English base locale, so extraction quality drops if the base locale is not English. The AI extractor seam is the long-term answer.
+- **English-oriented stopwords** — the built-in stopword list assumes an English base locale, so extraction quality drops if the base locale is not English.
+- **One base locale per run** — the collections searched must share a base locale; use `--collection` to run per collection otherwise.

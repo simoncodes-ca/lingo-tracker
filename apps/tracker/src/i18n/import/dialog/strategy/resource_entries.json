@@ -1,0 +1,122 @@
+{
+  "description": {
+    "source": "How imported values change what is stored.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Cómo los valores importados cambian lo almacenado.",
+    "fr-ca": "Comment les valeurs importées modifient ce qui est stocké.",
+    "ru": "Как импортируемые значения меняют сохранённые данные.",
+    "ja": "インポートした値が保存済みの内容をどう変更するかです。",
+    "de": "Wie importierte Werte den gespeicherten Bestand ändern."
+  },
+  "translationService": {
+    "source": "Translation service",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Servicio de traducción",
+    "fr-ca": "Service de traduction",
+    "ru": "Служба перевода",
+    "ja": "翻訳サービス",
+    "de": "Übersetzungsdienst"
+  },
+  "translationServiceHint": {
+    "source": "Translations coming back from a vendor. Values are stored as translated; the base text is kept; missing keys are skipped.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Traducciones que vuelven de un proveedor. Los valores se guardan como traducidos; se conserva el texto base; las claves que faltan se omiten.",
+    "fr-ca": "Traductions renvoyées par un fournisseur. Les valeurs sont enregistrées comme traduites; le texte de base est conservé; les clés manquantes sont ignorées.",
+    "ru": "Переводы, полученные от подрядчика. Значения сохраняются как переведённые; базовый текст сохраняется; отсутствующие ключи пропускаются.",
+    "ja": "ベンダーから戻ってきた翻訳です。値は「翻訳済み」として保存され、ベーステキストは保持され、存在しないキーはスキップされます。",
+    "de": "Übersetzungen, die von einem Dienstleister zurückkommen. Werte werden als übersetzt gespeichert; der Basistext bleibt erhalten; fehlende Schlüssel werden übersprungen."
+  },
+  "verification": {
+    "source": "Verification",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Verificación",
+    "fr-ca": "Vérification",
+    "ru": "Проверка",
+    "ja": "検証",
+    "de": "Überprüfung"
+  },
+  "verificationHint": {
+    "source": "A language expert's review. Matching values are marked verified; corrected values are stored and marked verified.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Revisión de un experto en el idioma. Los valores que coinciden se marcan como verificados; los corregidos se guardan y se marcan como verificados.",
+    "fr-ca": "Révision par un expert linguistique. Les valeurs identiques sont marquées comme vérifiées; les valeurs corrigées sont enregistrées et marquées comme vérifiées.",
+    "ru": "Проверка языковым экспертом. Совпадающие значения помечаются как подтверждённые; исправленные сохраняются и тоже помечаются как подтверждённые.",
+    "ja": "言語の専門家によるレビューです。一致する値は「検証済み」になり、修正された値は保存されて「検証済み」になります。",
+    "de": "Prüfung durch einen Sprachexperten. Übereinstimmende Werte werden als bestätigt markiert; korrigierte Werte werden gespeichert und als bestätigt markiert."
+  },
+  "migration": {
+    "source": "Migration",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Migración",
+    "fr-ca": "Migration",
+    "ru": "Миграция",
+    "ja": "移行",
+    "de": "Migration"
+  },
+  "migrationHint": {
+    "source": "Moving from another system. Creates missing keys, can write the base locale, resolves Transloco references and normalises plural syntax.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Para venir de otro sistema. Crea las claves que faltan, puede escribir el idioma base, resuelve referencias de Transloco y normaliza la sintaxis de plurales.",
+    "fr-ca": "Pour venir d’un autre système. Crée les clés manquantes, peut écrire la langue de base, résout les références Transloco et normalise la syntaxe des pluriels.",
+    "ru": "Переход с другой системы. Создаёт отсутствующие ключи, может записывать базовый язык, разрешает ссылки Transloco и нормализует синтаксис множественного числа.",
+    "ja": "他のシステムからの移行用です。存在しないキーを作成し、ベースロケールにも書き込め、Transloco の参照を解決し、複数形の構文を正規化します。",
+    "de": "Für den Umstieg von einem anderen System. Legt fehlende Schlüssel an, kann die Basissprache schreiben, löst Transloco-Verweise auf und normalisiert die Plural-Syntax."
+  },
+  "update": {
+    "source": "Update",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Actualización",
+    "fr-ca": "Mise à jour",
+    "ru": "Обновление",
+    "ja": "更新",
+    "de": "Aktualisierung"
+  },
+  "updateHint": {
+    "source": "Bulk corrections. Updates existing values and keeps each entry's current status.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Correcciones masivas. Actualiza los valores existentes y conserva el estado actual de cada entrada.",
+    "fr-ca": "Corrections en masse. Met à jour les valeurs existantes et conserve le statut actuel de chaque entrée.",
+    "ru": "Массовые исправления. Обновляет существующие значения и сохраняет текущий статус каждой записи.",
+    "ja": "一括修正用です。既存の値を更新し、各エントリの現在のステータスは維持されます。",
+    "de": "Sammelkorrekturen. Aktualisiert vorhandene Werte und behält den aktuellen Status jedes Eintrags bei."
+  },
+  "defaultTag": {
+    "source": "default",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "predeterminada",
+    "fr-ca": "par défaut",
+    "ru": "по умолчанию",
+    "ja": "既定",
+    "de": "Standard"
+  },
+  "protectedNote": {
+    "source": "Protected terms are checked: an entry whose source contains a protected term and whose translation drops it is reported as failed.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Se comprueban los términos protegidos: una entrada cuyo origen contiene un término protegido y cuya traducción lo omite se notifica como fallida.",
+    "fr-ca": "Les termes protégés sont vérifiés : une entrée dont la source contient un terme protégé et dont la traduction l’omet est signalée comme échouée.",
+    "ru": "Защищённые термины проверяются: запись, оригинал которой содержит защищённый термин, а перевод его не содержит, считается неудачной.",
+    "ja": "保護された用語は検査されます。原文に保護された用語が含まれ、訳文でそれが欠落しているエントリは失敗として報告されます。",
+    "de": "Geschützte Begriffe werden geprüft: Ein Eintrag, dessen Quelle einen geschützten Begriff enthält und dessen Übersetzung ihn weglässt, wird als fehlgeschlagen gemeldet."
+  },
+  "migrationNote": {
+    "source": "Writes the base locale when a file targets it. Preferred terminology warnings apply to base-locale values.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Escribe el idioma base cuando un archivo lo tiene como destino. Las advertencias de terminología preferida se aplican a los valores del idioma base.",
+    "fr-ca": "Écrit la langue de base lorsqu’un fichier la cible. Les avertissements de terminologie préférée s’appliquent aux valeurs de la langue de base.",
+    "ru": "Записывает базовый язык, если файл предназначен для него. Предупреждения о предпочтительной терминологии относятся к значениям базового языка.",
+    "ja": "ファイルがベースロケールを対象とする場合は、ベースロケールに書き込みます。推奨用語の警告はベースロケールの値に適用されます。",
+    "de": "Schreibt die Basissprache, wenn eine Datei sie als Ziel hat. Warnungen zur bevorzugten Terminologie gelten für Werte der Basissprache."
+  }
+}

@@ -1,14 +1,14 @@
 import {
   type ApplicationConfig,
+  isDevMode,
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
-  isDevMode,
 } from '@angular/core';
-import { provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
-import { appRoutes } from './app.routes';
-import { provideHttpClient } from '@angular/common/http';
+import { PreloadAllModules, provideRouter, withPreloading } from '@angular/router';
 import { provideTransloco } from '@jsverse/transloco';
 import { provideTranslocoMessageformat } from '@jsverse/transloco-messageformat';
+import { appRoutes } from './app.routes';
+import { provideTrackerHttpClient } from './shared/api-error/api-error';
 import { TranslocoHttpLoader } from './shared/services/transloco-loader';
 
 export const appConfig: ApplicationConfig = {
@@ -16,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(appRoutes, withPreloading(PreloadAllModules)),
-    provideHttpClient(),
+    provideTrackerHttpClient(),
     provideTransloco({
       config: {
         availableLangs: ['en', 'es', 'fr-ca', 'ru', 'ja', 'de'],

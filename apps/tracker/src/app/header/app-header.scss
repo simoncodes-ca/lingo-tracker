@@ -59,14 +59,22 @@
   }
 
   :host-context([data-theme='dark']) & {
-    .logo-light { display: none; }
-    .logo-dark { display: block; }
+    .logo-light {
+      display: none;
+    }
+    .logo-dark {
+      display: block;
+    }
   }
 
   @media (prefers-color-scheme: dark) {
     :host-context(:root:not([data-theme='light']):not([data-theme='dark'])) & {
-      .logo-light { display: none; }
-      .logo-dark { display: block; }
+      .logo-light {
+        display: none;
+      }
+      .logo-dark {
+        display: block;
+      }
     }
   }
 
@@ -166,8 +174,12 @@
 }
 
 @keyframes skeleton-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .collection-pipe {

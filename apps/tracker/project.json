@@ -28,6 +28,7 @@
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
       "dependsOn": ["^build", "generate-tokens"],
+      "defaultConfiguration": "production",
       "options": {
         "outputPath": "dist/apps/tracker",
         "browser": "apps/tracker/src/main.ts",
@@ -45,7 +46,18 @@
             "output": "/assets/"
           }
         ],
-        "styles": ["apps/tracker/src/styles.scss"],
+        "styles": [
+          "node_modules/@fontsource/nunito/400.css",
+          "node_modules/@fontsource/nunito/500.css",
+          "node_modules/@fontsource/nunito/600.css",
+          "node_modules/@fontsource/nunito/700.css",
+          "node_modules/@fontsource/ibm-plex-mono/400.css",
+          "node_modules/@fontsource/ibm-plex-mono/500.css",
+          "node_modules/@fontsource/ibm-plex-mono/600.css",
+          "node_modules/@fontsource/grechen-fuemen/latin-400.css",
+          "node_modules/material-icons/iconfont/filled.css",
+          "apps/tracker/src/styles.scss"
+        ],
         "allowedCommonJsDependencies": ["@messageformat/core", "@messageformat/parser"]
       },
       "configurations": {
@@ -53,13 +65,13 @@
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "1mb",
-              "maximumError": "1.2mb"
+              "maximumWarning": "1.5mb",
+              "maximumError": "2mb"
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "50kb",
-              "maximumError": "20kb"
+              "maximumWarning": "25kb",
+              "maximumError": "50kb"
             }
           ],
           "outputHashing": "all",
@@ -70,12 +82,16 @@
           "extractLicenses": false,
           "sourceMap": true
         }
-      },
-      "defaultConfiguration": "production"
+      }
     },
     "serve": {
       "continuous": true,
       "executor": "@angular/build:dev-server",
+      "defaultConfiguration": "development",
+      "dependsOn": ["generate-tokens", "api:serve"],
+      "readyWhen": {
+        "signal": true
+      },
       "configurations": {
         "production": {
           "buildTarget": "tracker:build:production"
@@ -84,9 +100,7 @@
           "buildTarget": "tracker:build:development",
           "proxyConfig": "apps/tracker/proxy.conf.json"
         }
-      },
-      "defaultConfiguration": "development",
-      "dependsOn": ["generate-tokens", "api:serve"]
+      }
     },
     "extract-i18n": {
       "executor": "@angular/build:extract-i18n",
@@ -94,14 +108,63 @@
         "buildTarget": "tracker:build"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint"
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["^typecheck", "typecheck-spec"],
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/tsconfig.base.json",
+        "{workspaceRoot}/types/**/*",
+        {
+          "dependentTasksOutputFiles": "**/*.{d.ts,tsbuildinfo}",
+          "transitive": true
+        },
+        {
+          "dependentTasksOutputFiles": "**/*.ts",
+          "transitive": true
+        }
+      ],
+      "outputs": [
+        "{workspaceRoot}/dist/out-tsc/apps/tracker/**/*.d.ts",
+        "{workspaceRoot}/dist/out-tsc/apps/tracker/tsconfig.app.tsbuildinfo"
+      ],
+      "options": {
+        "cwd": "apps/tracker",
+        "command": "tsc --build tsconfig.app.json --emitDeclarationOnly"
+      }
+    },
+    "typecheck-spec": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["generate-tokens"],
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/tsconfig.base.json",
+        {
+          "dependentTasksOutputFiles": "**/*.ts"
+        }
+      ],
+      "options": {
+        "cwd": "apps/tracker",
+        "command": "tsc --noEmit -p tsconfig.spec.json"
+      }
     },
     "test": {
-      "executor": "@nx/vitest:test",
+      "inputs": [
+        "default",
+        "^default",
+        "translationFixtures",
+        {
+          "dependentTasksOutputFiles": "**/*.ts"
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}", "{workspaceRoot}/dist/test-results/{projectRoot}"],
       "dependsOn": ["generate-tokens"],
       "options": {
-        "reportsDirectory": "../../coverage/apps/tracker"
+        "coverage.reportsDirectory": "../../coverage/apps/tracker"
       }
     },
     "serve-static": {
@@ -111,7 +174,11 @@
         "buildTarget": "tracker:build",
         "staticFilePath": "dist/apps/tracker/browser",
         "spa": true
-      }
+      },
+      "readyWhen": {
+        "signal": true
+      },
+      "dependsOn": ["build"]
     }
   }
 }

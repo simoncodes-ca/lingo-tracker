@@ -1,5 +1,7 @@
-import { Injectable, signal, computed, effect, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { computed, effect, Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
+import { LOCAL_STORAGE } from '../storage/browser-storage';
+import { KeyedStorage, raw } from '../storage/keyed-storage';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type EffectiveTheme = 'light' | 'dark';
@@ -12,6 +14,12 @@ const THEME_STORAGE_KEY = 'lingo-tracker-theme';
 export class ThemeService {
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
+
+  private readonly storage = new KeyedStorage<ThemeMode>(
+    inject(LOCAL_STORAGE),
+    THEME_STORAGE_KEY,
+    raw<ThemeMode>((value) => (this.isValidThemeMode(value) ? value : undefined)),
+  );
 
   // Current theme mode (user preference)
   readonly themeMode = signal<ThemeMode>('system');
@@ -57,27 +65,12 @@ export class ThemeService {
   private loadThemePreference(): void {
     if (!this.isBrowser) return;
 
-    try {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY);
-      if (stored && this.isValidThemeMode(stored)) {
-        this.themeMode.set(stored as ThemeMode);
-      }
-    } catch (error) {
-      console.error('Failed to load theme preference:', error);
-    }
+    const stored = this.storage.read();
+    if (stored) this.themeMode.set(stored);
   }
 
-  /**
-   * Save theme preference to localStorage
-   */
   private saveThemePreference(mode: ThemeMode): void {
-    if (!this.isBrowser) return;
-
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, mode);
-    } catch (error) {
-      console.error('Failed to save theme preference:', error);
-    }
+    this.storage.write(mode);
   }
 
   /**

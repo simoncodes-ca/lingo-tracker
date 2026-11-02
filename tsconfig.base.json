@@ -10,16 +10,22 @@
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2020", "dom"],
+    "lib": ["es2022", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "typeRoots": ["./node_modules/@types", "./types"],
     "paths": {
       "@simoncodes-ca/core": ["libs/core/src"],
+      "@simoncodes-ca/core/testing": ["libs/core/src/testing.ts"],
       "@simoncodes-ca/data-transfer": ["libs/data-transfer/src"],
       "@simoncodes-ca/domain": ["libs/domain/src"]
-    }
+    },
+    "strict": false,
+    "noUncheckedSideEffectImports": false,
+    "types": ["*"],
+    "esModuleInterop": false,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": ["node_modules", "tmp"]
 }

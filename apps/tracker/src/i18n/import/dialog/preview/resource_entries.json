@@ -1,0 +1,202 @@
+{
+  "files": {
+    "source": "Files",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Archivos",
+    "fr-ca": "Fichiers",
+    "ru": "Файлы",
+    "ja": "ファイル",
+    "de": "Dateien"
+  },
+  "filesLocalesX": {
+    "source": "{files} files · {locales} locales",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{files} archivos · {locales} idiomas",
+    "fr-ca": "{files} fichiers · {locales} langues",
+    "ru": "Файлов: {files} · языков: {locales}",
+    "ja": "{files} 個のファイル · {locales} ロケール",
+    "de": "{files} Dateien · {locales} Sprachen"
+  },
+  "entriesX": {
+    "source": "{ count, plural, =1 {1 entry} other {{count} entries} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 entrada} other {{count} entradas} }",
+    "fr-ca": "{ count, plural, =1 {1 entrée} other {{count} entrées} }",
+    "ru": "{ count, plural, one {{count} запись} few {{count} записи} many {{count} записей} other {{count} записи} }",
+    "ja": "{ count, plural, other {{count} 件のエントリ} }",
+    "de": "{ count, plural, =1 {1 Eintrag} other {{count} Einträge} }"
+  },
+  "summary": {
+    "source": "Summary",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Resumen",
+    "fr-ca": "Résumé",
+    "ru": "Сводка",
+    "ja": "概要",
+    "de": "Zusammenfassung"
+  },
+  "entries": {
+    "source": "Entries",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Entradas",
+    "fr-ca": "Entrées",
+    "ru": "Записи",
+    "ja": "エントリ",
+    "de": "Einträge"
+  },
+  "willImport": {
+    "source": "Will import",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Se importarán",
+    "fr-ca": "À importer",
+    "ru": "Будет импортировано",
+    "ja": "インポート予定",
+    "de": "Wird importiert"
+  },
+  "created": {
+    "source": "Created",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Creadas",
+    "fr-ca": "Créées",
+    "ru": "Создано",
+    "ja": "作成",
+    "de": "Erstellt"
+  },
+  "updated": {
+    "source": "Updated",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Actualizadas",
+    "fr-ca": "Mises à jour",
+    "ru": "Обновлено",
+    "ja": "更新",
+    "de": "Aktualisiert"
+  },
+  "skipped": {
+    "source": "Skipped",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Omitidas",
+    "fr-ca": "Ignorées",
+    "ru": "Пропущено",
+    "ja": "スキップ",
+    "de": "Übersprungen"
+  },
+  "willFail": {
+    "source": "Will fail",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Fallarán",
+    "fr-ca": "Échoueront",
+    "ru": "Завершатся ошибкой",
+    "ja": "失敗予定",
+    "de": "Schlagen fehl"
+  },
+  "statusChanges": {
+    "source": "Status changes",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Cambios de estado",
+    "fr-ca": "Changements de statut",
+    "ru": "Изменения статуса",
+    "ja": "ステータスの変更",
+    "de": "Statusänderungen"
+  },
+  "none": {
+    "source": "None",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Ninguno",
+    "fr-ca": "Aucun",
+    "ru": "Нет",
+    "ja": "なし",
+    "de": "Keine"
+  },
+  "autoFixes": {
+    "source": "Auto-fixes",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Correcciones automáticas",
+    "fr-ca": "Corrections automatiques",
+    "ru": "Автоисправления",
+    "ja": "自動修正",
+    "de": "Automatische Korrekturen"
+  },
+  "autoFixesX": {
+    "source": "{ count, plural, =1 {1 placeholder repaired} other {{count} placeholders repaired} }",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "{ count, plural, =1 {1 marcador reparado} other {{count} marcadores reparados} }",
+    "fr-ca": "{ count, plural, =1 {1 variable réparée} other {{count} variables réparées} }",
+    "ru": "{ count, plural, one {Исправлена {count} подстановка} few {Исправлено {count} подстановки} many {Исправлено {count} подстановок} other {Исправлено {count} подстановки} }",
+    "ja": "{ count, plural, other {{count} 件のプレースホルダーを修復} }",
+    "de": "{ count, plural, =1 {1 Platzhalter repariert} other {{count} Platzhalter repariert} }"
+  },
+  "issues": {
+    "source": "Issues",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Problemas",
+    "fr-ca": "Problèmes",
+    "ru": "Проблемы",
+    "ja": "問題",
+    "de": "Probleme"
+  },
+  "andMoreX": {
+    "source": "and {count} more",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "y {count} más",
+    "fr-ca": "et {count} de plus",
+    "ru": "и ещё {count}",
+    "ja": "他 {count} 件",
+    "de": "und {count} weitere"
+  },
+  "notes": {
+    "source": "Notes",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Notas",
+    "fr-ca": "Notes",
+    "ru": "Примечания",
+    "ja": "メモ",
+    "de": "Notizen"
+  },
+  "largeFileX": {
+    "source": "Large import file: {size} MB. Import may take longer than usual.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Archivo de importación grande: {size} MB. La importación puede tardar más de lo normal.",
+    "fr-ca": "Fichier d’importation volumineux : {size} Mo. L’importation peut prendre plus de temps que d’habitude.",
+    "ru": "Большой файл импорта: {size} МБ. Импорт может занять больше времени, чем обычно.",
+    "ja": "大きなインポートファイル: {size} MB。インポートに通常より時間がかかる場合があります。",
+    "de": "Große Importdatei: {size} MB. Der Import kann länger als üblich dauern."
+  },
+  "empty": {
+    "source": "Check at least one file to see what would change.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Marca al menos un archivo para ver qué cambiaría.",
+    "fr-ca": "Cochez au moins un fichier pour voir ce qui changerait.",
+    "ru": "Отметьте хотя бы один файл, чтобы увидеть, что изменится.",
+    "ja": "変更内容を確認するには、ファイルを1つ以上チェックしてください。",
+    "de": "Markiere mindestens eine Datei, um zu sehen, was sich ändern würde."
+  },
+  "failed": {
+    "source": "The preview could not be loaded.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "No se pudo cargar la vista previa.",
+    "fr-ca": "L’aperçu n’a pas pu être chargé.",
+    "ru": "Не удалось загрузить предварительный просмотр.",
+    "ja": "プレビューを読み込めませんでした。",
+    "de": "Die Vorschau konnte nicht geladen werden."
+  }
+}

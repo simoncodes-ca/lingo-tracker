@@ -1,5 +1,5 @@
-import type { ImportChange, StatusTransition } from './types';
 import type { TranslationStatus } from '@simoncodes-ca/domain';
+import type { ImportChange, StatusTransition } from './types';
 
 /**
  * Calculates summary statistics from an array of import changes.
@@ -36,6 +36,7 @@ import type { TranslationStatus } from '@simoncodes-ca/domain';
  * ```
  */
 export function calculateImportStatistics(changes: ImportChange[]): {
+  readonly resourcesImported: number;
   resourcesCreated: number;
   resourcesUpdated: number;
   resourcesSkipped: number;
@@ -47,6 +48,7 @@ export function calculateImportStatistics(changes: ImportChange[]): {
   const resourcesFailed = changes.filter((c) => c.type === 'failed').length;
 
   return {
+    resourcesImported: resourcesCreated + resourcesUpdated,
     resourcesCreated,
     resourcesUpdated,
     resourcesSkipped,
@@ -100,6 +102,8 @@ export function calculateStatusTransitions(changes: ImportChange[]): StatusTrans
   const transitionMap = new Map<string, number>();
 
   for (const change of changes) {
+    // Base-locale changes have no translation status, so they have no transition.
+    if (change.newStatus === undefined) continue;
     if (change.type === 'created' || change.type === 'updated' || change.type === 'value-changed') {
       const key = `${change.oldStatus || 'none'}→${change.newStatus}`;
       transitionMap.set(key, (transitionMap.get(key) || 0) + 1);

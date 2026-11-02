@@ -4,6 +4,9 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     { type: 'doc', id: 'about', label: 'About' },
     { type: 'doc', id: 'getting-started', label: 'Getting Started' },
+    { type: 'doc', id: 'concepts', label: 'Concepts' },
+    { type: 'doc', id: 'configuration', label: 'Configuration' },
+    { type: 'doc', id: 'tracker-ui', label: 'Tracker UI' },
     { type: 'doc', id: 'cli', label: 'CLI Reference' },
     { type: 'doc', id: 'api', label: 'API Reference' },
     { type: 'doc', id: 'auto-translation', label: 'Auto-Translation' },

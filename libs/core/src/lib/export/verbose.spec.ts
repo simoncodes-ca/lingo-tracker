@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { exportToJson } from './export-to-json';
 import { exportToXliff } from './export-to-xliff';
 import type { ExportOptions, FilteredResource } from './types';

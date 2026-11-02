@@ -628,6 +628,25 @@
 // Footer
 // ─────────────────────────────────────────────────────────────────────────────
 
+// The server's refusal of the whole submit (a name conflict goes on its field instead).
+.submit-error {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: var(--spacing-3) var(--spacing-6) 0;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+
+  mat-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
 .dialog-footer {
   flex-shrink: 0;
   padding: var(--spacing-4) var(--spacing-6) var(--spacing-5);

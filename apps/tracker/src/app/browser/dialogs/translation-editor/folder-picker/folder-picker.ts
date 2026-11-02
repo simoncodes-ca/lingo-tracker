@@ -1,24 +1,27 @@
+import { CommonModule } from '@angular/common';
 import {
-  Component,
   ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
   input,
+  type OnInit,
   output,
   signal,
-  computed,
-  inject,
-  type OnInit,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
-import { PickerFolderNode } from './picker-folder-node/picker-folder-node';
-import { BrowserStore } from '../../../store/browser.store';
-import { NotificationService } from '../../../../shared/notification';
-import type { HttpErrorResponse } from '@angular/common/http';
-import { TranslocoService } from '@jsverse/transloco';
+import { collectAncestorPaths } from '@simoncodes-ca/domain';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { injectFeedback } from '../../../feedback';
+import { BrowserStore } from '../../../store/browser.store';
+import { FolderDraftSession } from '../../../store/folder-draft';
+import { expandTreePath, navigateTree, PICKER_NAVIGATION } from '../../../store/tree-navigation';
+import { PickerFolderNode } from './picker-folder-node/picker-folder-node';
 
 /**
  * Folder picker component for the Translation Editor Dialog.
@@ -41,7 +44,8 @@ import { TranslocoPipe } from '@jsverse/transloco';
 })
 export class FolderPicker implements OnInit {
   readonly #store = inject(BrowserStore);
-  readonly #notifications = inject(NotificationService);
+  readonly #destroyRef = inject(DestroyRef);
+  readonly #feedback = injectFeedback();
   readonly #transloco = inject(TranslocoService);
   readonly TOKENS = TRACKER_TOKENS;
 
@@ -60,13 +64,41 @@ export class FolderPicker implements OnInit {
   /** When true, the folder tree is shown immediately and the currentPath ancestors are expanded */
   readonly initiallyExpanded = input(false);
 
+  /**
+   * Hides the picker's own "Folder: path" row. Inside the editor's location
+   * popover the pill that opened the popover already states the path, so a
+   * second copy of it above the tree is noise.
+   */
+  readonly hideHeader = input(false);
+
   readonly isExpanded = signal(false);
-  readonly expandedPaths = signal<Set<string>>(new Set());
+  readonly expandedPaths = signal<ReadonlySet<string>>(new Set());
   readonly selectedPath = signal<string | null>(null);
   readonly focusedPath = signal<string | null>(null);
-  readonly isAddingFolder = signal(false);
-  readonly addFolderParentPath = signal<string | null>(null);
-  readonly isCreatingFolder = signal(false);
+  readonly isAddingFolder = computed(() => this.#draftSession.state().isAddingFolder);
+  readonly addFolderParentPath = computed(() => this.#draftSession.state().addFolderParentPath);
+  readonly #draftSession = new FolderDraftSession({
+    create: (name, parent) => this.#store.createFolder(name, parent),
+    staleDraft: 'cancel',
+    revealParent: (path) => this.expandedPaths.update((expanded) => new Set(expanded).add(path)),
+    created: (folder) => {
+      this.folderCreated.emit(folder);
+      this.selectedPath.set(folder.fullPath);
+    },
+  });
+  readonly isCreatingFolder = this.#draftSession.isCreating;
+
+  /**
+   * The refusal of the last create, as Folder Writes decided it, shown under the still-open input.
+   * The picker keeps its own add-folder draft rather than the store's: the editor dialog is open
+   * over the sidebar, and a shared draft would also open (and focus) the sidebar's input behind
+   * the dialog. The store keeps the refusal for a create made from its own draft only, so the
+   * picker holds this one itself.
+   */
+  readonly createError = computed(() => {
+    const feedback = this.#draftSession.state().folderCreateError;
+    return feedback ? this.#feedback.text(feedback) : null;
+  });
 
   readonly displayPath = computed(() => {
     const rootLabel = this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.ROOTLABEL) || 'root';
@@ -95,12 +127,7 @@ export class FolderPicker implements OnInit {
         // Note: we intentionally don't emit folderConfirmed here because the
         // parent dialog already has the correct path from its data.
         // Expand all ancestor segments so the current path is visible
-        const segments = currentPath.split('.');
-        const pathsToExpand = new Set<string>();
-        for (let i = 0; i < segments.length; i++) {
-          pathsToExpand.add(segments.slice(0, i + 1).join('.'));
-        }
-        this.expandedPaths.set(pathsToExpand);
+        this.expandedPaths.set(new Set([...collectAncestorPaths(currentPath), currentPath]));
       }
     }
   }
@@ -126,166 +153,62 @@ export class FolderPicker implements OnInit {
   }
 
   onCreateFirstFolder(): void {
-    this.isAddingFolder.set(true);
-    this.addFolderParentPath.set('');
+    this.#draftSession.start('');
   }
 
   onAddFolder(parentPath: string): void {
-    this.isAddingFolder.set(true);
-    this.addFolderParentPath.set(parentPath);
-    // Auto-expand the parent folder to show the inline input
-    this.expandedPaths.update((expanded) => new Set(expanded).add(parentPath));
+    this.#draftSession.start(parentPath);
   }
 
   onFolderNameConfirmed(folderName: string): void {
-    const parentPath = this.addFolderParentPath();
-    if (parentPath === null) {
-      return;
-    }
+    if (this.addFolderParentPath() === null) return;
+    this.#draftSession
+      .confirm(folderName)
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((outcome) => this.#feedback.toast(outcome.feedback));
+  }
 
-    this.isCreatingFolder.set(true);
-
-    this.#store.createFolderAt(folderName, parentPath || null).subscribe({
-      next: (response) => {
-        this.isCreatingFolder.set(false);
-        this.isAddingFolder.set(false);
-        this.addFolderParentPath.set(null);
-
-        if (response) {
-          this.folderCreated.emit(response.folder);
-          this.selectedPath.set(response.folder.fullPath);
-
-          // Auto-expand parent to show the new folder
-          if (parentPath) {
-            this.expandedPaths.update((expanded) => new Set(expanded).add(parentPath));
-          }
-
-          if (response.created) {
-            this.#notifications.success(this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.FOLDERCREATED));
-          } else {
-            this.#notifications.info(
-              this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.FOLDERALREADYEXISTS),
-            );
-          }
-        }
-      },
-      error: (error: HttpErrorResponse) => {
-        this.isCreatingFolder.set(false);
-        this.isAddingFolder.set(false);
-        this.addFolderParentPath.set(null);
-
-        const errorMessage =
-          error.error?.message || this.#transloco.translate(TRACKER_TOKENS.BROWSER.FOLDERPICKER.CREATEFOLDERFAILED);
-        this.#notifications.error(errorMessage);
-      },
-    });
+  onFolderNameEdited(): void {
+    this.#draftSession.edit();
   }
 
   onFolderNameCancelled(): void {
-    this.isAddingFolder.set(false);
-    this.addFolderParentPath.set(null);
+    this.#draftSession.cancel();
   }
 
   onExpandToggle(folderPath: string): void {
-    this.expandedPaths.update((expanded) => {
-      const newSet = new Set(expanded);
-      if (newSet.has(folderPath)) {
-        newSet.delete(folderPath);
-      } else {
-        newSet.add(folderPath);
-      }
-      return newSet;
-    });
+    this.expandedPaths.update((expanded) => expandTreePath(expanded, folderPath));
   }
 
   onTreeKeydown(event: KeyboardEvent): void {
-    const visiblePaths = this.#getVisibleFolderPaths();
-    if (visiblePaths.length === 0) {
-      return;
-    }
-
-    const currentFocus = this.focusedPath();
-    const currentIndex = currentFocus !== null ? visiblePaths.indexOf(currentFocus) : -1;
-
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        if (currentIndex < visiblePaths.length - 1) {
-          this.focusedPath.set(visiblePaths[currentIndex + 1]);
-        } else if (currentIndex === -1) {
-          this.focusedPath.set(visiblePaths[0]);
-        }
+    const next = navigateTree(
+      {
+        focusedPath: this.focusedPath(),
+        expanded: this.expandedPaths().has(this.focusedPath() ?? ''),
+        hasChildren: false,
+        hasRows: this.rootFolders().length > 0,
+        tree: { nodes: this.rootFolders(), expandedPaths: this.expandedPaths() },
+      },
+      event.key,
+      PICKER_NAVIGATION,
+    );
+    if (next.preventDefault) event.preventDefault();
+    const intent = next.intent;
+    switch (intent.kind) {
+      case 'focus':
+        this.focusedPath.set(intent.path);
         break;
-
-      case 'ArrowUp':
-        event.preventDefault();
-        if (currentIndex > 0) {
-          this.focusedPath.set(visiblePaths[currentIndex - 1]);
-        }
+      case 'expand':
+        this.expandedPaths.update((paths) => expandTreePath(paths, intent.path, true));
         break;
-
-      case 'ArrowRight':
-        event.preventDefault();
-        if (currentFocus !== null) {
-          this.expandedPaths.update((expanded) => {
-            const newSet = new Set(expanded);
-            newSet.add(currentFocus);
-            return newSet;
-          });
-        }
+      case 'collapse':
+        this.expandedPaths.update((paths) => expandTreePath(paths, intent.path, false));
         break;
-
-      case 'ArrowLeft':
-        event.preventDefault();
-        if (currentFocus !== null) {
-          const expanded = this.expandedPaths();
-          if (expanded.has(currentFocus)) {
-            this.expandedPaths.update((exp) => {
-              const newSet = new Set(exp);
-              newSet.delete(currentFocus);
-              return newSet;
-            });
-          } else {
-            const parentPath = this.#getParentPath(currentFocus);
-            if (parentPath !== null) {
-              this.focusedPath.set(parentPath);
-            }
-          }
-        }
+      case 'select':
+        this.onFolderSelect(intent.path);
         break;
-
-      case 'Enter':
-      case ' ':
-        event.preventDefault();
-        if (currentFocus !== null) {
-          this.onFolderSelect(currentFocus);
-        }
+      case 'none':
         break;
     }
-  }
-
-  #getVisibleFolderPaths(): string[] {
-    const paths: string[] = [];
-    const expanded = this.expandedPaths();
-
-    const collectPaths = (folders: FolderNodeDto[], _parentPath = ''): void => {
-      for (const folder of folders) {
-        paths.push(folder.fullPath);
-        if (expanded.has(folder.fullPath) && folder.loaded && folder.tree?.children) {
-          collectPaths(folder.tree.children, folder.fullPath);
-        }
-      }
-    };
-
-    collectPaths(this.rootFolders());
-    return paths;
-  }
-
-  #getParentPath(path: string): string | null {
-    const lastDotIndex = path.lastIndexOf('.');
-    if (lastDotIndex === -1) {
-      return null;
-    }
-    return path.substring(0, lastDotIndex);
   }
 }

@@ -87,15 +87,44 @@ describe('Hierarchy Builder', () => {
       expect(result.children['common'].children['AGGRID']).toBeUndefined();
     });
 
-    it('should handle keys that are prefixes of other keys (mixed node)', () => {
+    it('rejects keys that are prefixes of other keys', () => {
       // This is the case where we have 'common' and 'common.title'
       // 'common' is a leaf value but also a parent
       const keys = ['common', 'common.title'];
-      const result = buildTypeHierarchy(keys);
+      expect(() => buildTypeHierarchy(keys)).toThrow("Hierarchical conflicts in bundle 'types': common.");
+      expect(() => buildTypeHierarchy([...keys].reverse())).toThrow(
+        "Hierarchical conflicts in bundle 'types': common.",
+      );
+    });
 
-      const commonNode = result.children['COMMON'];
-      expect(commonNode.value).toBe('common');
-      expect(commonNode.children['TITLE']).toBeDefined();
+    it('rejects parent conflicts introduced by token casing', () => {
+      expect(() => buildTypeHierarchy(['foo-bar', 'foo_bar.child'])).toThrow(
+        "Hierarchical conflicts in bundle 'types': foo-bar.",
+      );
+    });
+
+    it('rejects distinct source keys that collapse onto one token leaf', () => {
+      for (const keys of [
+        ['foo-bar.ok', 'foo_bar.ok'],
+        ['foo_bar.ok', 'foo-bar.ok'],
+      ]) {
+        expect(() => buildTypeHierarchy(keys)).toThrow('foo-bar.ok, foo_bar.ok');
+      }
+    });
+
+    it('treats __proto__ and constructor segments as ordinary children without touching Object.prototype', () => {
+      const result = buildTypeHierarchy(['__proto__.x', 'constructor.ok'], 'camelCase');
+
+      expect(Object.prototype).not.toHaveProperty('value');
+      expect(Object.prototype).not.toHaveProperty('x');
+      expect(Object.keys(result.children)).toEqual(['__proto__', 'constructor']);
+      expect(Object.getOwnPropertyDescriptor(result.children, '__proto__')?.value).toEqual({
+        children: { x: { children: {}, value: '__proto__.x' } },
+      });
+      expect(result.children.constructor).toEqual({
+        children: { ok: { children: {}, value: 'constructor.ok' } },
+      });
+      expect(serializeHierarchy(result, 'TOKENS')).toContain("ok: 'constructor.ok',");
     });
   });
 
@@ -143,7 +172,7 @@ describe('Hierarchy Builder', () => {
       expect(output).toContain("      ITEM: 'l1.l2.item',");
     });
 
-    it('should handle mixed nodes by prioritizing children structure', () => {
+    it('rejects manually supplied mixed serializer nodes', () => {
       const node: TypeHierarchyNode = {
         children: {
           COMMON: {
@@ -155,14 +184,9 @@ describe('Hierarchy Builder', () => {
         },
       };
 
-      const output = serializeHierarchy(node, 'MIXED_TOKENS');
-
-      // It should output COMMON as an object containing TITLE, ignoring the 'common' value leaf
-      // because it has children
-      expect(output).toContain('COMMON: {');
-      expect(output).toContain("TITLE: 'common.title',");
-      // Should NOT contain: COMMON: 'common'
-      expect(output).not.toMatch(/COMMON: 'common',/);
+      expect(() => serializeHierarchy(node, 'MIXED_TOKENS')).toThrow(
+        "Hierarchical conflicts in bundle 'types': common.",
+      );
     });
   });
 });

@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc/apps/tracker-e2e/spec",
+    "typeRoots": ["../../node_modules/@types", "../../node_modules", "../../types"],
+    "types": ["node", "@playwright/test"]
+  },
+  "include": ["playwright.config.ts", "src/**/*.ts"]
+}

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import { walkFolders } from './iterative-folder-walker';
 
 /**
  * A cheap, stat-only summary of a translations tree on disk.
@@ -32,13 +32,6 @@ export interface ComputeTreeFingerprintOptions {
   readonly cwd?: string;
 }
 
-const EMPTY_FINGERPRINT: TreeFingerprint = {
-  fileCount: 0,
-  folderCount: 0,
-  totalSize: 0,
-  maxMtimeMs: 0,
-};
-
 /**
  * Walks a translations folder and summarises its resource files.
  *
@@ -53,69 +46,22 @@ export function computeTreeFingerprint(options: ComputeTreeFingerprintOptions): 
   const { translationsFolder, cwd = process.cwd() } = options;
   const rootPath = path.resolve(cwd, translationsFolder);
 
-  if (!fs.existsSync(rootPath)) {
-    return EMPTY_FINGERPRINT;
-  }
-
   let fileCount = 0;
   let folderCount = 0;
   let totalSize = 0;
   let maxMtimeMs = 0;
 
-  const visitedPaths = new Set<string>();
-  const stack: string[] = [rootPath];
-
-  while (stack.length > 0) {
-    const folderPath = stack.pop();
-    if (!folderPath) {
-      continue;
-    }
-
-    // Symlinked folders can point back up the tree; realpath is what makes the
-    // visited set able to catch that.
-    let realPath: string;
-    try {
-      realPath = fs.realpathSync(folderPath);
-    } catch {
-      continue;
-    }
-
-    if (visitedPaths.has(realPath)) {
-      continue;
-    }
-    visitedPaths.add(realPath);
-
-    let dirEntries: fs.Dirent[];
-    try {
-      dirEntries = fs.readdirSync(folderPath, { withFileTypes: true });
-    } catch {
-      // A folder that disappeared mid-walk, or one we cannot read, simply does
-      // not contribute. The next fingerprint will disagree with this one, which
-      // is the correct outcome.
-      continue;
-    }
-
+  for (const visit of walkFolders(rootPath)) {
     folderCount++;
-
-    for (const dirEntry of dirEntries) {
-      const entryPath = path.join(folderPath, dirEntry.name);
-
-      if (dirEntry.isDirectory()) {
-        stack.push(entryPath);
-        continue;
-      }
-
-      if (dirEntry.name !== RESOURCE_ENTRIES_FILENAME && dirEntry.name !== TRACKER_META_FILENAME) {
-        continue;
-      }
-
+    for (const name of visit.resourceFileNames) {
+      const entryPath = path.join(visit.absolutePath, name);
       try {
         const stats = fs.statSync(entryPath);
         fileCount++;
         totalSize += stats.size;
         maxMtimeMs = Math.max(maxMtimeMs, stats.mtimeMs);
       } catch {
-        // Same reasoning as the unreadable-folder case above.
+        // A file that vanished or became unreadable does not contribute to this scan.
       }
     }
   }

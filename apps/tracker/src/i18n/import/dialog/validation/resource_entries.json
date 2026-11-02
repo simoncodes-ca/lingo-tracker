@@ -1,0 +1,52 @@
+{
+  "collectionRequired": {
+    "source": "Choose a collection.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Elige una colección.",
+    "fr-ca": "Choisissez une collection.",
+    "ru": "Выберите коллекцию.",
+    "ja": "コレクションを選択してください。",
+    "de": "Wähle eine Sammlung aus."
+  },
+  "collectionReadOnly": {
+    "source": "This collection is read-only.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Esta colección es de solo lectura.",
+    "fr-ca": "Cette collection est en lecture seule.",
+    "ru": "Эта коллекция только для чтения.",
+    "ja": "このコレクションは読み取り専用です。",
+    "de": "Diese Sammlung ist schreibgeschützt."
+  },
+  "filesRequired": {
+    "source": "Check at least one file.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Marca al menos un archivo.",
+    "fr-ca": "Cochez au moins un fichier.",
+    "ru": "Отметьте хотя бы один файл.",
+    "ja": "ファイルを1つ以上チェックしてください。",
+    "de": "Markiere mindestens eine Datei."
+  },
+  "localeRequired": {
+    "source": "Choose a locale for every checked file.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Elige un idioma para cada archivo marcado.",
+    "fr-ca": "Choisissez une langue pour chaque fichier coché.",
+    "ru": "Выберите язык для каждого отмеченного файла.",
+    "ja": "チェックした各ファイルのロケールを選択してください。",
+    "de": "Wähle für jede markierte Datei eine Sprache aus."
+  },
+  "baseLocaleNeedsMigration": {
+    "source": "Only the migration strategy can write the base locale.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Solo la estrategia de migración puede escribir el idioma base.",
+    "fr-ca": "Seule la stratégie de migration peut écrire la langue de base.",
+    "ru": "Базовый язык может записывать только стратегия миграции.",
+    "ja": "ベースロケールに書き込めるのは移行方式のみです。",
+    "de": "Nur die Migrationsstrategie kann die Basissprache schreiben."
+  }
+}

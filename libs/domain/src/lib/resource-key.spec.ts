@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   isValidSegment,
-  validateKey,
-  validateTargetFolder,
   resolveResourceKey,
   splitResolvedKey,
+  validateKey,
+  validateTargetFolder,
 } from './resource-key';
 
 describe('isValidSegment', () => {

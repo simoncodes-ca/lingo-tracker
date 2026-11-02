@@ -173,3 +173,8 @@ vitest.config.*.timestamp*
 .impeccable/live/
 .impeccable/mocks/
 .impeccable/review/
+
+# Local planning specs
+specs/
+
+.nx/migrate-runs

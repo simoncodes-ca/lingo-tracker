@@ -10,14 +10,14 @@
     "de": "Aktualisierung fehlgeschlagen: Ressourcendaten fehlen"
   },
   "keyRenamingNotSupported": {
-    "source": "Key renaming is not yet supported. Please use the same key or create a new resource.",
+    "source": "Renaming isn't supported yet; use Move from the list to relocate.",
     "comment": "Error when user tries to change resource key",
     "tags": ["browser"],
-    "es": "Aún no se admite el cambio de nombre de clave. Utilice la misma clave o cree un nuevo recurso.",
-    "fr-ca": "Le renommage des clés n'est pas encore pris en charge. Veuillez utiliser la même clé ou créer une nouvelle ressource.",
-    "ru": "Функция переименования ключей пока не поддерживается. Пожалуйста, используйте тот же ключ или создайте новый ресурс.",
-    "ja": "キー名の変更はまだサポートされていません。同じキーを使用するか、新しいリソースを作成してください。",
-    "de": "Das Umbenennen von Schlüsseln wird noch nicht unterstützt. Bitte verwenden Sie denselben Schlüssel oder erstellen Sie eine neue Ressource."
+    "es": "Todavía no se admite el cambio de nombre; use Mover en la lista para reubicar.",
+    "fr-ca": "Le renommage n’est pas encore pris en charge; utilisez Déplacer dans la liste pour relocaliser.",
+    "ru": "Переименование пока не поддерживается; используйте «Переместить» в списке.",
+    "ja": "名前の変更はまだ対応していません。一覧の「移動」で移してください。",
+    "de": "Umbenennen wird noch nicht unterstützt; verwenden Sie „Verschieben“ in der Liste."
   },
   "notFound": {
     "source": "Resource not found. It may have been deleted.",
@@ -68,5 +68,15 @@
     "ru": "Произошла непредвиденная ошибка.",
     "ja": "予期せぬエラーが発生しました",
     "de": "Es ist ein unerwarteter Fehler aufgetreten."
+  },
+  "keyExistsInFolderX": {
+    "source": "{key} already exists in this folder. Pick another key, or open the existing entry.",
+    "comment": "Error under the key field when the typed key is already taken in the target folder",
+    "tags": ["browser"],
+    "es": "{key} ya existe en esta carpeta. Elija otra clave o abra la entrada existente.",
+    "fr-ca": "{key} existe déjà dans ce dossier. Choisissez une autre clé ou ouvrez l’entrée existante.",
+    "ru": "{key} уже существует в этой папке. Выберите другой ключ или откройте существующую запись.",
+    "ja": "{key} はこのフォルダに既に存在します。別のキーを選ぶか、既存のエントリを開いてください。",
+    "de": "{key} existiert bereits in diesem Ordner. Wählen Sie einen anderen Schlüssel oder öffnen Sie den vorhandenen Eintrag."
   }
 }

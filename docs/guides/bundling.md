@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # Bundle Generation Guide
 
-This guide provides comprehensive examples and best practices for using LingoTracker's bundle generation feature to create optimized translation files for your applications.
+Bundles are the runtime files your application loads: one JSON file per locale, assembled from LingoTracker's source folders. This guide covers configuring bundles, selecting entries by key pattern and tag, merging collections, and wiring generation into your build.
 
 ## Table of Contents
 
@@ -26,9 +26,15 @@ This guide provides comprehensive examples and best practices for using LingoTra
 
 ### What Are Bundles?
 
-LingoTracker stores translations in a structured format optimized for management — version control friendly, metadata-rich, and split across many small files. Your application, however, needs deployment-ready JSON files per locale at runtime. Bundles are that output: **one or more domain-specific translation files** assembled from LingoTracker's source translations.
+LingoTracker stores translations split across many small files with metadata beside them, which is right for review and tracking but not what an application wants to load. A bundle is the runtime output: one nested JSON file per locale, built from whichever collections and keys you select.
 
-A single app might ship a `core` bundle loaded eagerly, an `admin` bundle loaded only for admin users, and a `reports` bundle lazy-loaded on demand. Each bundle is independently configured — you control which collections and keys go into it using key patterns, tags, or both. Tags in particular enable a high degree of customization: you can slice your translations by any cross-cutting concern (feature, audience, environment) regardless of how keys are structured in the folder hierarchy.
+An app might ship a `core` bundle loaded eagerly, an `admin` bundle loaded only for administrators, and a `reports` bundle loaded on demand. Each bundle picks its entries by collection, key pattern, tag, or a combination, so the split in runtime files does not have to mirror the folder layout.
+
+Three facts shape everything below:
+
+- Bundles are generated for the **global** `locales` list in `.lingo-tracker.json`. A locale that exists only on one collection is not bundled until it is added there too.
+- Every stored value is included **regardless of status**. Bundling never substitutes values based on status. A locale seeded as `new` holds the source text, so untranslated locales usually show the source language. Use [`validate`](../features/validate.md) before release to make sure that is intentional.
+- Bundle generation never changes source files.
 
 **Source (LingoTracker)**:
 ```
@@ -102,7 +108,7 @@ src/assets/i18n/
 └── es.json
 ```
 
-Each file contains hierarchical JSON with all translations for that locale.
+Each file contains nested JSON with every entry for that locale. By default `{name}` placeholders are written as `{{ name }}` for Transloco; see [ICU conversion](#icu-to-transloco-conversion) below.
 
 > **Want TypeScript type safety?** Add `typeDistFile` to your bundle config and LingoTracker will generate a typed constants file alongside the JSON bundles. See [Bundle Type Generation](../features/bundle-type-generation.md).
 
@@ -248,7 +254,7 @@ Generate different bundles for different purposes:
 
 ### Filename Patterns
 
-The `{locale}` placeholder in `bundleName` is replaced with each locale at generation time:
+`bundleName` must contain `{locale}`, which is replaced with each locale at generation time:
 
 | `bundleName` | Output files (locales: `en`, `fr-ca`) |
 |---|---|
@@ -257,6 +263,27 @@ The `{locale}` placeholder in `bundleName` is replaced with each locale at gener
 | `{locale}/main` | `dist/i18n/en/main.json`, `dist/i18n/fr-ca/main.json` |
 
 The subdirectory form (`{locale}/main`) is useful for frameworks that expect one folder per locale.
+
+### ICU to Transloco conversion
+
+Values are stored as ICU messages with `{name}` placeholders. By default bundles convert simple placeholders to Transloco's `{{ name }}` form; plural and select structures are kept as ICU, which Transloco's message-format plugin understands. Turn the conversion off for a runtime that consumes ICU directly:
+
+```json
+{
+  "transformICUToTransloco": false,
+  "bundles": { "api": { "bundleName": "{locale}", "dist": "./dist/i18n", "collections": "All", "transformICUToTransloco": false } }
+}
+```
+
+Precedence is the `--no-transform-icu-to-transloco` flag, then the bundle setting, then the global setting, then the default of `true`.
+
+### App runtime
+
+The global `runtime` setting picks which conversion runs. The default, `transloco-messageformat`, is described above. With `"runtime": "transloco"` (plain `@jsverse/transloco`), a single `{` or `'` is literal text, so bundling also unquotes stored ICU: `'{'name'}'` becomes `{name}` and `It''s` becomes `It's`. Simple arguments, including dotted ones such as `{user.name}`, still become `{{ name }}`.
+
+Plain Transloco cannot render `plural`, `select`, `selectordinal`, `number`, `date`, `time` or `duration`. Such a value is converted entirely as under `transloco-messageformat`, so its literal braces and apostrophes stay ICU-quoted. The bundle warns once per bundled key and set of constructs per run, not once per locale: `Key '<key>': uses ICU <kinds>, which the transloco runtime cannot render`. `<key>` includes any `bundledKeyPrefix`; a key whose locales use different constructs warns once for each set. Under `transloco` the quoted-`{{` warning does not apply. The exit code is unchanged; `validate` fails these values unless you pass `--skip-runtime`.
+
+With `transformICUToTransloco: false`, bundles hold stored ICU and `runtime` has no effect, so quoted literals keep their quotes. Under `runtime: "transloco"` this combination warns once per bundle.
 
 ---
 
@@ -389,12 +416,7 @@ Includes only the exact key `apps.common.buttons.ok`.
 }
 ```
 
-Includes:
-- `apps` (if it exists)
-- `apps.common.buttons.ok`
-- `apps.common.buttons.cancel`
-- `apps.admin.title`
-- Any key starting with `apps.`
+Includes the key `apps` itself, if it exists, and every key under it: `apps.common.buttons.ok`, `apps.admin.title`, and so on. A pattern without a wildcard is an exact match; `*` alone matches every key in the collection.
 
 ### Multiple Patterns
 
@@ -446,7 +468,7 @@ Tags allow you to filter translations based on metadata, independent of key stru
 }
 ```
 
-Includes all keys tagged with `ui`.
+Includes all keys tagged with `ui`. Tags are compared in their normalized lowercase form, so write `matchingTags` in lowercase; `"UI"` matches nothing. Tags a collection defines for all its resources count as well.
 
 ### Multiple Tags with "Any" Operator
 
@@ -640,12 +662,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         run: npm ci
@@ -725,7 +747,7 @@ export default defineConfig({
 
 ### Lazy-Loaded Modules
 
-Create separate bundles for lazy-loaded routes:
+Create separate bundles for lazy-loaded routes. Transloco loads a scope's file through your loader, so each bundle below becomes a scope:
 
 ```json
 {
@@ -736,9 +758,7 @@ Create separate bundles for lazy-loaded routes:
       "collections": [
         {
           "name": "Common",
-          "entriesSelectionRules": [
-            { "matchingPattern": "apps.common.*" }
-          ]
+          "entriesSelectionRules": "All"
         }
       ]
     },
@@ -748,9 +768,7 @@ Create separate bundles for lazy-loaded routes:
       "collections": [
         {
           "name": "Admin",
-          "entriesSelectionRules": [
-            { "matchingPattern": "apps.admin.*" }
-          ]
+          "entriesSelectionRules": "All"
         }
       ]
     },
@@ -760,9 +778,7 @@ Create separate bundles for lazy-loaded routes:
       "collections": [
         {
           "name": "Reports",
-          "entriesSelectionRules": [
-            { "matchingPattern": "apps.reports.*" }
-          ]
+          "entriesSelectionRules": "All"
         }
       ]
     }
@@ -770,12 +786,16 @@ Create separate bundles for lazy-loaded routes:
 }
 ```
 
-Load bundles on demand with Transloco:
+Each bundle takes a whole collection, because a bundle keeps the full path of every key. Give each scope its own collection and keep its keys short: the `Admin` collection holds `title`, and the scope addresses it as `admin.title`. A `matchingPattern` such as `apps.admin.*` on a shared collection would keep the keys nested, so the scope would have to address them as `admin.apps.admin.title`.
+
+Register each bundle as a Transloco scope and let the loader request `admin/en.json` or `admin.en.json` depending on your `bundleName`:
 
 ```typescript
-this.translocoService.setActiveLang('en');
-this.translocoService.load('admin').subscribe();
+// admin.routes.ts
+providers: [provideTranslocoScope('admin')]
 ```
+
+See the Transloco documentation on lazy-loaded scopes for the loader side.
 
 ### Tag-Driven Multi-Bundle Split
 
@@ -965,6 +985,12 @@ For example, if both `AppTranslations` and `LibraryTranslations` have a `buttons
 - `apps.buttons.ok` from AppTranslations → `app.apps.buttons.ok`
 - `buttons.ok` from LibraryTranslations → `lib.buttons.ok`
 
+The same collection may appear twice in one bundle only with different prefixes.
+
+### Keys that are both a value and a parent
+
+Storage allows `buttons` and `buttons.ok` to coexist, because they live in different folders. Nested JSON cannot hold both, so a bundle that contains such a pair **fails** with a hierarchical-conflict error and writes nothing. The bundle dialog in the Tracker UI shows these conflicts in its preview. Rename one of the keys, usually by moving the value under a child key such as `buttons.label`.
+
 ---
 
 ## Debug Bundles
@@ -1030,6 +1056,18 @@ ICU transformation is intentionally skipped for the debug bundle since the key s
 - Run `lingo-tracker bundle --name main --verbose`
 
 
+### Hierarchical conflict error
+
+**Problem**: `bundle` fails naming keys that are both a value and a parent.
+
+**Solution**: Rename or move one of the keys with `lingo-tracker move`. See [Keys that are both a value and a parent](#keys-that-are-both-a-value-and-a-parent).
+
+### Locale missing from the output
+
+**Problem**: A locale added with `add-locale` produces no file, or `--locale` reports an unknown locale.
+
+**Solution**: Bundles follow the global `locales` list. Add the locale to the top-level `locales` array in `.lingo-tracker.json`.
+
 ### Merge Conflicts
 
 **Problem**: Unexpected values in bundle (wrong value wins)
@@ -1084,21 +1122,8 @@ ICU transformation is intentionally skipped for the debug bundle since the key s
 
 ---
 
-## Summary
+## Further reading
 
-Bundle generation bridges translation management and application deployment: LingoTracker manages your translations in a structured, version-control-friendly format, and `lingo-tracker bundle` produces the runtime files your app actually loads.
-
-**Recommended next step**: Add bundle generation to your `prebuild` npm script so bundles are always up to date before each build:
-
-```json
-{
-  "scripts": {
-    "prebuild": "lingo-tracker bundle"
-  }
-}
-```
-
-**Further reading**:
-- [Bundle Type Generation](../features/bundle-type-generation.md) — generate TypeScript constants for type-safe translation keys
-- [CLI Reference](../cli.md) — full `bundle` command options and flags
-- [Getting Started](../getting-started.md) — initial project setup
+- [Bundle Type Generation](../features/bundle-type-generation.md): TypeScript constants for type-safe keys
+- [CI/CD](./ci-cd.md): running `bundle` and `validate` in pipelines
+- [CLI Reference](../cli.md#bundle): every `bundle` flag

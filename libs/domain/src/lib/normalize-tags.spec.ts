@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { normalizeTag, normalizeTags, MAX_TAG_LENGTH } from './normalize-tags';
+import { describe, expect, it } from 'vitest';
+import { MAX_TAG_LENGTH, normalizeTag, normalizeTags } from './normalize-tags';
 
 describe('normalizeTag', () => {
   it('lowercases input', () => {

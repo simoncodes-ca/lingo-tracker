@@ -219,6 +219,224 @@
   justify-content: flex-end;
 }
 
+// The export strip sits between the section head and the grid. Its details panel is
+// projected, so the list styling lives here (mirrors the bundle card).
+app-run-result-strip {
+  margin-bottom: var(--spacing-4);
+}
+
+.details-heading {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+}
+
+.details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    align-items: baseline;
+    display: flex;
+    gap: var(--spacing-3);
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .mono {
+    color: var(--color-text-primary);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .num {
+    flex: none;
+  }
+
+  .skipped-reason {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  // Skipped locales wrap as one inline run; the reason follows in secondary ink.
+  .skipped-run .mono {
+    margin-right: var(--spacing-2);
+  }
+
+  // Warnings and errors are prose paragraphs: show three lines, full text on hover.
+  &--warnings li,
+  &--errors li {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    display: -webkit-box;
+    line-height: var(--line-height-snug);
+    max-width: 62ch;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+
+    // Marker kept as inline content so it stays inside the clamped box.
+    &::before {
+      content: '•';
+      margin-right: var(--spacing-2);
+    }
+  }
+
+  &--warnings li {
+    color: var(--color-warning-text);
+  }
+
+  &--errors li {
+    color: color-mix(in srgb, var(--color-error) 70%, var(--color-text-primary));
+  }
+}
+
+// Import strip: the projected details lay out as columns of sections, as in the comp.
+.import-details {
+  display: grid;
+  gap: var(--spacing-4) var(--spacing-6);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+
+  .details-heading {
+    margin-bottom: var(--spacing-2);
+  }
+
+  .details-foot {
+    display: flex;
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  .details-list li {
+    justify-content: flex-start;
+  }
+
+  // Path and locale on one line, the figures under them: tight inside a file, a clear gap
+  // between files, so each count line reads with its own path.
+  .details-list--files {
+    gap: var(--spacing-2);
+
+    li {
+      flex-wrap: wrap;
+      gap: 0 var(--spacing-2);
+    }
+
+    .figures {
+      flex-basis: 100%;
+    }
+  }
+
+  .locale-pill {
+    background: var(--color-background-muted);
+    border-radius: var(--border-radius-full);
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-semibold);
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+
+  .figures,
+  .count {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .count {
+    margin-left: auto;
+  }
+
+  // Lowercase in running text, as the dialog preview's status changes.
+  .status-word {
+    text-transform: lowercase;
+
+    &--new {
+      color: var(--color-status-new);
+    }
+
+    &--stale {
+      color: var(--color-status-stale);
+    }
+
+    &--translated {
+      color: var(--color-status-translated);
+    }
+
+    &--verified {
+      color: var(--color-status-verified);
+    }
+  }
+
+  .arrow {
+    color: var(--color-text-tertiary);
+  }
+
+  // The reason follows its key in secondary ink; failures read in the warning tint.
+  .reason {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    min-width: 0;
+    overflow-wrap: anywhere;
+
+    &--failed {
+      color: var(--color-warning-text);
+    }
+  }
+
+  // Auto-fix text can be long: three lines, the full text sits on the title.
+  .clamp {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    display: -webkit-box;
+    font-family: var(--font-family-mono);
+    overflow: hidden;
+  }
+
+  // Key over its text: the same tight-inside, gap-between rhythm as the files list.
+  .details-list--fixes,
+  .details-list--issues {
+    gap: var(--spacing-2);
+
+    li {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+
+  .more-note {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    margin: var(--spacing-1) 0 0;
+  }
+
+  .summary-link {
+    align-items: center;
+    color: inherit;
+    display: inline-flex;
+    font-size: var(--font-size-xs);
+    gap: var(--spacing-1);
+    text-decoration: underline;
+
+    mat-icon {
+      font-size: 14px;
+      height: 14px;
+      width: 14px;
+    }
+  }
+}
+
+// A disabled menu item takes no pointer events, so its tooltip sits on this wrapper.
+.menu-item-tooltip {
+  display: block;
+}
 
 .bundles-stack {
   display: flex;
@@ -629,8 +847,15 @@
 }
 
 @keyframes ring-pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: var(--ring-opacity, 0.2); }
-  50% { transform: translate(-50%, -50%) scale(1.08); opacity: calc(var(--ring-opacity, 0.2) * 1.5); }
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: var(--ring-opacity, 0.2);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: calc(var(--ring-opacity, 0.2) * 1.5);
+  }
 }
 
 .empty-message {
@@ -928,10 +1153,7 @@
   height: 18px;
   opacity: 0.75;
   transform: translateX(-4px);
-  transition:
-    color var(--transition-normal),
-    opacity var(--transition-normal),
-    transform var(--transition-normal);
+  transition: color var(--transition-normal), opacity var(--transition-normal), transform var(--transition-normal);
   width: 18px;
 }
 
@@ -954,7 +1176,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
   }
-
 
   .empty-bundles {
     grid-column: 1 / -1;
@@ -1013,7 +1234,9 @@
 // Reduced motion
 // ---------------------------------------------------------------------------
 @media (prefers-reduced-motion: reduce) {
-  .ring { animation: none; }
+  .ring {
+    animation: none;
+  }
 
   .collection-card {
     animation: none;

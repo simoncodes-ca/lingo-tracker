@@ -1,5 +1,6 @@
 import MessageFormat from '@messageformat/core';
-import { normalizeTranslocoSyntax } from './normalize-transloco-syntax';
+import { type IcuParseOptions, type IcuRange, parseIcuMessage, spliceIcu, visitIcuNodes } from './icu-message';
+import { translocoToICU } from './transloco-to-icu';
 
 /**
  * Per-locale ICU compilation checks.
@@ -115,12 +116,24 @@ export function isIcuLocaleSupported(locale: string): boolean {
  * // → undefined
  * ```
  */
-export function findIcuCompileError(value: string, locale: string): string | undefined {
+export function findIcuCompileError(value: string, locale: string, options: IcuParseOptions = {}): string | undefined {
   const compiler = compilerFor(locale);
   if (!compiler) return undefined;
 
   try {
-    compiler.compile(normalizeTranslocoSyntax(value));
+    const normalized = translocoToICU(value);
+    // MessageFormat cannot compile dotted names. Substitute only simple arguments
+    // for this syntax/locale check; stored text and formatter names stay unchanged.
+    const edits: { range: IcuRange; text: string }[] = [];
+    if (options.simpleArgumentPaths) {
+      visitIcuNodes(parseIcuMessage(normalized, { ...options, lenient: true }).nodes, (node) => {
+        if (node.kind === 'argument' && node.format === undefined && node.name.includes('.')) {
+          edits.push({ range: node.range, text: '{_}' });
+        }
+        return node.kind !== 'argument';
+      });
+    }
+    compiler.compile(spliceIcu(normalized, edits));
     return undefined;
   } catch (error) {
     return summarizeCompileError(error);

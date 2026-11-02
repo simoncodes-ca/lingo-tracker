@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, vi } from 'vitest';
+import { afterAll, beforeAll, vi } from 'vitest';
 
 /**
  * Global test setup to suppress console output during test runs.

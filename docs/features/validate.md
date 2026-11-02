@@ -3,226 +3,86 @@ title: Validate
 sidebar_position: 4
 ---
 
-# Validate Feature
+# Validate
 
-The Validate feature provides a comprehensive translation validation system designed to ensure translation completeness and quality before production deployment. It serves as a quality gate in CI/CD pipelines, and answers two independent questions about every resource:
-
-1. **Status** — has a human approved this translation?
-2. **ICU** — does the stored value actually compile for the locale it is stored under?
-
-The second question matters because approval is about wording, not syntax. A value can be marked `verified` and still render nothing at runtime.
-
-## Overview
-
-The validate command is a CLI-only, non-interactive tool that performs exhaustive validation of your entire translation inventory. Unlike other commands that may focus on subsets of data, validate checks **everything** and collects **all** validation results before reporting. This comprehensive approach ensures you have complete visibility into translation status before release.
-
-### Key Characteristics
-
-- **CLI-only**: No API or UI implementation
-- **Non-interactive**: Designed for CI/CD environments, never prompts for input
-- **Comprehensive**: Validates ALL resources across ALL locales and collections (locales can optionally be excluded with `--skip-locales`)
-- **Non-short-circuiting**: Collects ALL validation results before reporting (does not stop at first error)
-- **Configurable strictness**: Supports both strict (production) and relaxed (staging) validation modes
-- **CI-friendly**: Clear exit codes and structured output for pipeline integration
-
-## Usage
+`lingo-tracker validate` is the release gate. It reads every collection and every target locale, collects every problem, prints a report and exits with code 1 when anything would ship broken or unreviewed. It never prompts and never writes.
 
 ```bash
-lingo-tracker validate [options]
+lingo-tracker validate [--allow-translated] [--skip-locales <a,b>] [--skip-icu] [--skip-placeholders] [--skip-protected-terms] [--require-portable-plurals]
 ```
 
-### Options
+## What it checks
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--allow-translated` | Treat 'translated' status as warning instead of failure | `false` |
-| `--skip-locales <locales>` | Comma-separated list of **target** locales to exclude from validation | None |
-| `--skip-icu` | Do not compile values as ICU for their own locale | `false` |
-| `--require-portable-plurals` | Warn when a base-locale plural selects by category instead of an exact `=N` match | `false` |
+Each resource and target locale is asked four independent questions. Any "no" is a failure.
 
-### Exit Codes
+| Question | Check | Disable with |
+|---|---|---|
+| Has a person approved this translation? | Status must be `verified`. `translated` is a failure unless `--allow-translated` turns it into a warning. `new`, `stale` and a missing metadata record always fail. | |
+| Does the value compile? | Every stored value, including the source, is compiled as an ICU message under the locale it is stored under. | `--skip-icu` |
+| Are the arguments intact? | The translation must use the same ICU argument names as the source. `{name}` becoming `{Name}` is a failure, because ICU renders a missing argument as empty text. | `--skip-placeholders` |
+| Are protected terms intact? | The translation must contain every [protected term](./protected-terms.md) found in the source, spelled exactly as stored. A missing or broken terms file only warns and supplies no terms. | `--skip-protected-terms` |
 
-- `0` - All validations passed (all resources verified or only warnings)
-- `1` - Validation failures found, OR configuration errors (config file missing or invalid JSON, no collections configured, no target locales configured, all target locales were skipped)
+Two further checks only warn:
 
-## Validation Rules
+- **Preferred terminology.** Source values are scanned for discouraged terms from the [preferred-terminology](./preferred-terminology.md) file. One warning per key and rule. There is no flag to turn this off; remove the rules instead. A rule file that exists but cannot be loaded is a failure, so a typo in the file cannot silently switch the check off in CI.
+- **Portable plurals**, with `--require-portable-plurals`. Warns when a source plural selects a branch by category (`one`, `few`) rather than an exact `=N` match. See below.
 
-The validate command categorizes resources based on their translation status:
+Folders whose `resource_entries.json` or `tracker_meta.json` is not valid JSON are listed as unreadable and fail the run.
 
-| Status | Default Behavior | With `--allow-translated` | Description |
-|--------|------------------|---------------------------|-------------|
-| `new` | ❌ Failure | ❌ Failure | Resource not yet translated |
-| `stale` | ❌ Failure | ❌ Failure | Base value changed, translation out of sync |
-| `translated` | ❌ Failure | ⚠️ Warning | Has translation but not verified |
-| `verified` | ✅ Success | ✅ Success | Reviewed and approved |
-| *(missing)* | ❌ Failure | ❌ Failure | No status entry for this locale — treated as `new` |
+## Why the ICU check matters even for verified strings
 
-### ICU Validation
+Status says a human approved the wording. It says nothing about whether the message parses. Plural categories belong to the language:
 
-Every stored value is compiled under the locale it is stored under, including the base-locale source value. A value that fails to compile is a failure regardless of its status.
-
-Compiling under the *right* locale is the whole point, because plural categories belong to the language:
-
-| Locale | counts selecting `one` |
+| Locale | Counts that select `one` |
 |---|---|
-| `en` `de` `es` `nl` `sv` `ar` | 1 |
+| `en` `de` `es` `nl` `sv` | 1 |
 | `fr` `pt` | 0 and 1 |
-| `is` | 1, 21, 31, 41 … |
-| `ja` `ko` | none — the category does not exist |
+| `is` | 1, 21, 31, 41, … |
+| `ja` `ko` `zh` | none; the category does not exist |
 
-ICU rejects the whole message rather than the offending branch, so the string does not degrade — it renders nothing:
+ICU rejects the whole message, not just the offending branch:
 
 ```
-ja  {count, plural, one {1 warning} other {# warnings}}     fails
+ja  {count, plural, one {1 warning} other {# warnings}}     fails to compile, renders nothing
 ja  {count, plural, other {# warnings}}                     renders
 ```
 
-Compiling a whole collection against a single locale reports nothing at all, which is how this kind of breakage sits undetected indefinitely.
+A source string copied into a `ja` slot as a `new` placeholder carries the `one` branch with it, and a translator who treats a selector as prose (`ein`, `andere`) or drops the `=` from `=1` produces the same failure. Compiling under one locale for the whole project would miss all of it, which is why each value is compiled under its own locale.
 
-Two shapes account for most real failures:
+Transloco's `{{ }}` interpolation is normalized to ICU before compiling, so `=1 {{{name}}}` is not reported.
 
-- **A category the locale does not define** — usually a base-locale value copied verbatim into a `ja`/`ko` slot, keeping the `one`/`other` scaffolding.
-- **A translated or malformed selector** — a translator treating the selector as prose (`ein`, `andere`), or dropping the `=` (`1 {…}` where `=1 {…}` was meant).
+A locale code that is not well-formed BCP 47, typically `fr_CA` for `fr-CA`, cannot be compiled against. It is reported once as a configuration problem rather than per value.
 
-#### Transloco interpolation
+### Portable plurals
 
-Transloco substitutes `{{ }}` before ICU parses, so a branch body that is a lone placeholder is correctly authored as `=1 {{{name}}}`. Values are normalised from Transloco to ICU syntax before compiling, so these are not reported as broken. No flag is needed.
-
-#### Locales that cannot be checked
-
-A locale code that is not well-formed BCP 47 — `fr_CA` instead of `fr-CA` is the usual cause — makes every value under it uncheckable. The locale is reported once as a configuration problem rather than blamed on each value.
-
-### Portable Plurals in the Base Locale
-
-`--require-portable-plurals` is an opt-in, warning-level rule that flags base-locale values selecting a plural branch by category (`zero`, `one`, `two`, `few`, `many`) rather than by an exact `=N` match:
+`--require-portable-plurals` flags source values that select by category:
 
 ```
 =1 {1 warning} other {# warnings}     portable
-one {1 warning} other {# warnings}    breaks when copied to ja/ko
+one {1 warning} other {# warnings}    breaks when copied to ja or ko
 ```
 
-The base-locale value is what gets copied into every translation slot, so an unsafe shape there propagates on every import. This rule stops recurrence rather than just reporting it.
+Because the source value is what gets copied into every new locale slot, fixing it at the source stops the failure from recurring on every import. The check applies to the base locale only, is a warning, and parses rather than compiles, so it still runs with `--skip-icu`. `selectordinal` is exempt: English ordinal `one` legitimately selects 1, 21, 31, and so on.
 
-It applies to the base locale only — translations keep their own categories, which are correct wherever the locale defines them. It never causes a failure, and because it parses rather than compiles, it still runs alongside `--skip-icu`.
+## Options
 
-`selectordinal` is deliberately exempt: English ordinal `one` selects 1, 21, 31 …, so rewriting it as `=1` would change behaviour rather than preserve it.
+| Flag | Effect |
+|---|---|
+| `--allow-translated` | `translated` is a warning. Use for staging. |
+| `--skip-locales <a,b>` | Exclude target locales still in progress. Unknown codes warn and are ignored; the base locale is ignored silently. Skipping every target locale exits 1 rather than passing vacuously. |
+| `--skip-icu` | Do not compile values. The braced-placeholder check still runs. |
+| `--skip-placeholders` | Do not compare argument names. |
+| `--skip-protected-terms` | Do not check protected terms. |
+| `--require-portable-plurals` | Add the portable-plural warning. |
 
-### Validation Philosophy
+## Exit codes
 
-1. **Strict by default**: Production deployments should only include verified translations
-2. **Configurable relaxation**: Staging environments may accept translated (but unverified) content
-3. **Never allow incomplete**: New and stale translations always fail validation
-4. **Comprehensive reporting**: Show all issues, not just the first one encountered
-5. **Approval is not syntax**: A value must compile for its own locale no matter who signed off on it
+| Code | Meaning |
+|---|---|
+| `0` | Every check passed, possibly with warnings |
+| `1` | Any failure above, or a configuration problem: no config file, no collections, no target locales, all target locales skipped, or an unreadable preferred-terminology file |
 
-## How It Works
-
-### Validation Process
-
-1. **Load Configuration**: Read `.lingo-tracker.json` from project root
-2. **Identify Scope**: Determine all collections and all target locales (excludes base locale)
-3. **Load Resources**: Read all translation resources from all collections
-4. **Validate Each Locale**: For every target locale, check the status of every resource
-5. **Collect Results**: Accumulate all failures and warnings (no early exit)
-6. **Generate Summary**: Create comprehensive report grouped by locale
-7. **Display Results**: Show complete validation summary to console
-8. **Exit**: Return appropriate exit code based on overall validation status
-
-### What Gets Validated
-
-- **Collections**: ALL configured collections (no filtering)
-- **Locales**: ALL target locales by default (base locale always excluded; use `--skip-locales` to exclude additional locales)
-- **Resources**: EVERY resource in every collection
-- **Statuses**: Checked against validation rules for each locale
-
-### What Doesn't Get Validated
-
-- Base locale (source translations are authoritative by definition)
-- ICU message format syntax (use separate linting tools)
-- File structure or JSON validity (handled during resource loading)
-
-Resources with no status entry for a locale are treated as `new` (failure), not skipped.
-
-## Skipping Locales
-
-Use `--skip-locales` to exclude one or more locales from validation. This is useful when a locale has been added to the project configuration but its translations are still being prepared and are not yet ready for validation.
-
-```bash
-# Skip a single locale
-lingo-tracker validate --skip-locales fr
-
-# Skip multiple locales
-lingo-tracker validate --skip-locales fr,de
-```
-
-**Behaviour:**
-
-- **Unknown locales** — locale codes not present in `config.locales` emit a console warning (`⚠️  Skipping unknown locale '...' — not in configured locales`) and are silently ignored.
-- **Base locale** — specifying the base locale in `--skip-locales` is silently ignored (the base locale is never validated regardless).
-- **All target locales skipped** — if every target locale is excluded, the command exits with code `1` rather than reporting a vacuous pass.
-- **Validation summary** — skipped locales appear in the summary between "Locales Validated" and "Collections Validated": `Skipped Locales: fr, de (2)`.
-
-**CI/CD example — skip a locale in-progress while still gating production:**
-
-```yaml
-- name: Validate translations (skip in-progress locale)
-  run: lingo-tracker validate --skip-locales de
-```
-
-Combine with `--allow-translated` for a staging-friendly gate that only validates the locales that are complete:
-
-```bash
-lingo-tracker validate --skip-locales de --allow-translated
-```
-
----
-
-## Examples
-
-### Basic Usage
-
-Strict validation (production):
-```bash
-lingo-tracker validate
-```
-
-Relaxed validation (staging):
-```bash
-lingo-tracker validate --allow-translated
-```
-
-### Output Examples
-
-#### All Verified (Success)
-
-```
-✅ Validation PASSED
-
-📊 Validation Statistics:
-──────────────────────────────────────────────────
-  Total Resources Validated: 102
-  Unique Resource Keys: 51
-  Locales Validated: 2
-  Collections Validated: 1
-
-📈 Status Breakdown:
-──────────────────────────────────────────────────
-  ✅ Verified: 102
-  ✏️  Translated: 0
-  ⚠️  Stale: 0
-  ❌ New: 0
-
-──────────────────────────────────────────────────
-📋 Summary:
-  Total Failures: 0
-  Total Successes: 102
-
-✅ Validation passed successfully!
-```
-
-Exit code: `0`
-
-#### Mixed Status (Failure)
+## Output
 
 ```
 ❌ Validation FAILED
@@ -245,468 +105,60 @@ Exit code: `0`
 ──────────────────────────────────────────────────
   Locale: es (6 failures)
     ❌ [main] apps.common.buttons.submit (new)
-    ❌ [main] apps.common.errors.network (new)
-    ❌ [main] apps.features.dashboard.title (new)
     ⚠️ [main] apps.common.buttons.save (stale)
-    ⚠️ [main] apps.features.settings.label (stale)
     ✏️ [main] apps.common.buttons.cancel (translated)
+  ...
 
-  Locale: fr-ca (3 failures)
-    ❌ [main] apps.common.buttons.submit (new)
-    ✏️ [main] apps.features.dashboard.subtitle (translated)
-    ✏️ [main] apps.features.profile.header (translated)
+⚠️  Preferred terminology warnings (1):
+──────────────────────────────────────────────────
+  [main] budget.summary: consider "Investment" instead of "Expenditure"
 
 ──────────────────────────────────────────────────
 📋 Summary:
   Total Failures: 9
+  Total Warnings: 1
   Total Successes: 93
 
 ❌ Validation failed. Please review the failures above.
 ```
 
-Exit code: `1`
+The report goes to stdout; warnings also go to stderr. Verified resources are not listed individually. Within each locale at most 100 failures and 100 warnings are printed, followed by `... and N more`; preferred-terminology warnings are capped at 100 in total. There is no JSON output and no summary file; capture stdout if you need a record.
 
-#### With --allow-translated Flag (Warnings)
+## Using it
 
-```
-✅ Validation PASSED
-
-📊 Validation Statistics:
-──────────────────────────────────────────────────
-  Total Resources Validated: 102
-  Unique Resource Keys: 51
-  Locales Validated: 2
-  Collections Validated: 1
-
-📈 Status Breakdown:
-──────────────────────────────────────────────────
-  ✅ Verified: 98
-  ✏️  Translated: 4
-  ⚠️  Stale: 0
-  ❌ New: 0
-
-⚠️  Warnings (4):
-──────────────────────────────────────────────────
-  Resources with "translated" status (not yet verified):
-  Locale: es (3 warnings)
-    ✏️  [main] apps.common.buttons.cancel (translated)
-    ✏️  [main] apps.features.dashboard.subtitle (translated)
-    ✏️  [main] apps.features.profile.header (translated)
-
-  Locale: fr-ca (1 warnings)
-    ✏️  [main] apps.common.buttons.apply (translated)
-
-──────────────────────────────────────────────────
-📋 Summary:
-  Total Failures: 0
-  Total Warnings: 4
-  Total Successes: 98
-
-✅ Validation passed with warnings.
-```
-
-Exit code: `0`
-
-## CI/CD Integration
-
-### GitHub Actions
-
-Production pipeline (strict):
-```yaml
-name: Production Deploy
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Validate translations
-        run: lingo-tracker validate
-
-      - name: Build
-        run: pnpm run build
-
-      - name: Deploy
-        run: pnpm run deploy:prod
-```
-
-Staging pipeline (relaxed):
-```yaml
-name: Staging Deploy
-
-on:
-  push:
-    branches: [develop]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Validate translations (allow translated)
-        run: lingo-tracker validate --allow-translated
-
-      - name: Build
-        run: pnpm run build
-
-      - name: Deploy
-        run: pnpm run deploy:staging
-```
-
-### Custom Script Integration
-
-```bash
-#!/bin/bash
-
-echo "Running pre-deployment validation..."
-
-# Validate translations
-lingo-tracker validate
-
-# Check exit code
-if [ $? -ne 0 ]; then
-    echo "❌ Translation validation failed. Deployment aborted."
-    exit 1
-fi
-
-echo "✅ Translation validation passed. Proceeding with deployment..."
-
-# Continue with build and deployment
-pnpm run build
-pnpm run deploy
-```
-
-## Use Cases
-
-### 1. Production Quality Gate
-
-**Scenario**: Ensure only complete, verified translations reach production
-
-**Configuration**: Default strict validation
+Strict gate for production and pull requests:
 
 ```bash
 lingo-tracker validate
 ```
 
-**Outcome**: Deployment blocked if any translations are new, stale, or unverified
-
-### 2. Staging Preview
-
-**Scenario**: Deploy to staging with translated but unverified content for review
-
-**Configuration**: Relaxed validation with `--allow-translated`
+Staging gate that accepts machine or vendor translations that nobody has reviewed yet:
 
 ```bash
 lingo-tracker validate --allow-translated
 ```
 
-**Outcome**: Deployment allowed with warnings for unverified translations
-
-### 3. Pull Request Checks
-
-**Scenario**: Validate translation status in pull requests before merge
-
-**Configuration**: Run as PR check with strict validation
-
-```yaml
-name: PR Checks
-
-on: [pull_request]
-
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate translations
-        run: lingo-tracker validate
-```
-
-**Outcome**: PR blocked if translations are incomplete
-
-### 4. Translation Readiness Report
-
-**Scenario**: Check translation completeness before sending to translators
-
-**Configuration**: Run validate to identify gaps
+A locale that was just added and is still being translated:
 
 ```bash
-lingo-tracker validate > translation-status.txt
+lingo-tracker validate --skip-locales de
 ```
 
-**Outcome**: Comprehensive report of all translation gaps
-
-### 5. Multi-Locale Deployment
-
-**Scenario**: Deploy to production with different locale rollout strategies
-
-**Configuration**: Use validation to verify each locale is ready
-
-```bash
-# Check if Spanish translations are production-ready
-lingo-tracker validate
-
-# If validation passes, deploy all locales
-pnpm run deploy
-```
-
-**Outcome**: All locales validated before deployment
-
-## Best Practices
-
-### 1. Use in CI/CD Pipelines
-
-Always integrate validate into your CI/CD pipeline as a quality gate:
-
-```yaml
-- name: Validate translations
-  run: lingo-tracker validate
-```
-
-This prevents incomplete translations from reaching production.
-
-### 2. Different Rules for Different Environments
-
-Use strict validation for production and relaxed for staging:
-
-**Production** (main branch):
-```bash
-lingo-tracker validate
-```
-
-**Staging** (develop branch):
-```bash
-lingo-tracker validate --allow-translated
-```
-
-### 3. Run Before Building
-
-Validate translations before building your application:
-
-```bash
-lingo-tracker validate && pnpm run build
-```
-
-This prevents wasted build time if translations are incomplete.
-
-### 4. Document Validation Requirements
-
-In your project's README or CONTRIBUTING guide, document validation requirements:
-
-```markdown
-## Translation Requirements
-
-Before deploying to production:
-- All translations must be in 'verified' status
-- Run `lingo-tracker validate` to check status
-- Translation validation is enforced in CI/CD pipeline
-```
-
-### 5. Review Validation Output
-
-Don't just check exit codes—review the output to understand what needs attention:
-
-```bash
-lingo-tracker validate | tee validation-report.txt
-```
-
-This creates a record of validation results for review.
-
-### 6. Combine with Export
-
-Use validate to identify gaps, then export for translation:
-
-```bash
-# Check status
-lingo-tracker validate
-
-# Export gaps for translation
-lingo-tracker export --format xliff --status new,stale
-```
-
-## Technical Details
-
-### Implementation
-
-The validate feature is implemented across two layers:
-
-#### Core Library (`libs/core/src/lib/validate/`)
-
-- `types.ts`: Type definitions for validation options, results, and resource details
-- `validate-resources.ts`: Core validation logic and resource status checking
-- `generate-validation-summary.ts`: Summary generation and formatting
-
-#### CLI Application (`apps/cli/src/commands/validate.ts`)
-
-- Command definition and option parsing
-- Configuration loading
-- Core library integration
-- Console output and exit code handling
-
-### Resource Loading
-
-The validate command reuses the existing `loadResourcesFromCollections` utility from the core library, ensuring consistency with export/import operations.
-
-### Translation Status Semantics
-
-Validate reads pre-computed status values from resource metadata — it does not re-evaluate checksums. The status for each resource/locale pair is determined during resource loading by `loadResourcesFromCollections`. Validate maps a missing status entry to `new` via a null-coalescing fallback.
-
-The meaning of each status value:
-
-- **new**: Resource has been added but not yet translated (explicitly stored status)
-- **stale**: Base checksum changed since the translation was last updated (source drifted)
-- **translated**: Translation exists and matches the current base checksum, but not yet verified
-- **verified**: Translation exists and has been explicitly marked as verified
-
-A missing metadata entry for a locale is coalesced to `new` at validation time (already covered by the *(missing)* row in the Validation Rules table above).
-
-### Performance
-
-- **Fast**: Validation only reads metadata, no heavy computation
-- **Scalable**: Handles projects with 10,000+ resources efficiently
-
-## Limitations
-
-### No Collection or Pattern Filtering
-
-Validate always checks ALL collections. There is no option to:
-- Validate specific collections only
-- Filter by tags or patterns
-
-Locales can be excluded with `--skip-locales`, but collection-level filtering is not supported.
-
-**Rationale**: Validation is a pre-release gate and should be comprehensive. Partial validation creates risk of missing incomplete translations.
-
-### No Verbose Mode
-
-Unlike export/import commands, validate does not have a `--verbose` flag. Output always includes:
-- Statistics (total resources, unique keys, locales, collections validated)
-- Status breakdown by count (verified, translated, stale, new)
-- Failures grouped by locale (with collection name and status)
-- Warnings grouped by locale (when `--allow-translated` is used)
-- Summary footer with total counts and final verdict
-
-Verified resources are not listed individually.
-
-**Rationale**: CI logs should be concise. Showing all verified resources adds noise.
-
-### Output Truncation
-
-Within each locale group, at most 100 failures or warnings are shown. The cap is applied independently per locale — a project with 5 locales could show up to 500 failure lines. When the per-locale limit is exceeded, the output includes `... and N more failures` (or `... and N more warnings` for the warnings section) to indicate additional items. This prevents extremely long CI logs for large projects with many missing translations.
-
-### No JSON Output
-
-Validate only outputs human-readable text. There is no `--json` flag for structured output.
-
-**Rationale**: CI systems capture console output effectively. JSON output can be added in future if needed.
-
-### No Summary File
-
-Unlike export/import, validate does not write a summary file to disk.
-
-**Rationale**: CI systems capture stdout/stderr. No clear storage location for files.
-
-## Future Enhancements
-
-Features explicitly not included but could be added:
-
-1. **Verbose Mode**: Show detailed per-resource status with `--verbose` flag
-2. **Collection Filtering**: Validate specific collections with a `--collection` flag
-3. **JSON Output**: Structured output for programmatic consumption with `--format=json`
-4. **Summary File**: Write markdown summary to disk with `--output` flag
-5. **Custom Exit Codes**: Different codes for different failure types
-6. **Threshold Configuration**: Allow X% translated with `--threshold=95`
-7. **Webhook Notifications**: Send results to Slack/Teams
-
-These enhancements can be added based on user feedback without breaking existing functionality.
-
-## Troubleshooting
-
-### Validation Fails with Many New Resources
-
-**Problem**: Validation shows many resources with 'new' status
-
-**Solution**:
-1. Export new resources: `lingo-tracker export --status new`
-2. Send to translators
-3. Import translated content: `lingo-tracker import`
-4. Validate again: `lingo-tracker validate`
-
-### Validation Fails with Stale Resources
-
-**Problem**: Resources marked as 'stale' after base value changes
-
-**Solution**:
-1. Export stale resources: `lingo-tracker export --status stale`
-2. Update translations
-3. Import updated content: `lingo-tracker import`
-4. Validate again: `lingo-tracker validate`
-
-### Validation Passes but Translations Seem Wrong
-
-**Problem**: All resources verified but translations contain errors
-
-**Solution**: Validation only checks status, not content quality. Review translations manually or use additional QA processes.
-
-### Validation Fails in CI but Passes Locally
-
-**Problem**: Inconsistent validation results between environments
-
-**Solution**:
-1. Ensure `.lingo-tracker.json` is committed to version control
-2. Verify translation files are committed
-3. Check that all required files are included in CI checkout
-4. Confirm same version of lingo-tracker is used
-
-### Exit Code Always 0 Even with Failures
-
-**Problem**: CI pipeline not detecting validation failures
-
-**Solution**: Ensure you're checking the exit code correctly:
-```bash
-lingo-tracker validate
-if [ $? -ne 0 ]; then
-    echo "Validation failed"
-    exit 1
-fi
-```
-
-## Related Commands
-
-- **export**: Export untranslated resources identified by validate
-- **import**: Import translations to resolve validation failures
-- **normalize**: Fix metadata issues that may affect validation
-- **bundle**: Generate deployment bundles after validation passes
-
-## Summary
-
-The validate command is an essential tool for maintaining translation quality in production deployments. By enforcing comprehensive validation as part of your CI/CD pipeline, you ensure that:
-
-- No incomplete translations reach production
-- Translation status is transparent and actionable
-- Quality standards are consistently enforced
-- Deployment confidence is high
-
-Use strict validation for production and relaxed validation for staging to balance quality requirements with development velocity.
+Typical pipeline order is validate, then bundle, then build, so a failed gate costs no build time. Complete examples are in the [CI/CD guide](../guides/ci-cd.md).
+
+## Limits
+
+- Always checks all collections. There is no collection or tag filter. Partial validation would defeat the purpose of a release gate.
+- Checks syntax and bookkeeping, not translation quality. A verified translation with the wrong meaning passes.
+- Reads statuses from metadata; it does not recompute checksums. Run `normalize` first if files were edited by hand or merged.
+
+## After a failed run
+
+| Failure | Next step |
+|---|---|
+| Many `new` or `stale` | `lingo-tracker export --format xliff` sends exactly those to a translator; import the result, then validate again. |
+| `translated` | A reviewer sets **Verified** in the editor, or imports the approved file with `--strategy verification`. |
+| ICU compile error | Fix the plural or select for that locale in the editor. For a copied source string, translate it properly or remove the categories the locale lacks. |
+| Argument mismatch | Restore the original placeholder name. Import repairs these automatically when it can; validate reports what remains. |
+| Protected term altered | Restore the term as spelled in the terms file. |
+| Unreadable folder | Fix the JSON by hand, usually a merge-conflict leftover, then run `normalize`. |

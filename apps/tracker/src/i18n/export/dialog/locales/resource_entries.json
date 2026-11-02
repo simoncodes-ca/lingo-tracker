@@ -1,0 +1,32 @@
+{
+  "description": {
+    "source": "Target locales to write. The base locale is never exported.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Idiomas de destino que se escribirán. El idioma base nunca se exporta.",
+    "fr-ca": "Langues cibles à écrire. La langue de base n’est jamais exportée.",
+    "ru": "Целевые языки для записи. Базовый язык никогда не экспортируется.",
+    "ja": "書き出すターゲットロケールです。ベースロケールはエクスポートされません。",
+    "de": "Zielsprachen, die geschrieben werden. Die Basissprache wird nie exportiert."
+  },
+  "allLabel": {
+    "source": "All target locales",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Todos los idiomas de destino",
+    "fr-ca": "Toutes les langues cibles",
+    "ru": "Все целевые языки",
+    "ja": "すべてのターゲットロケール",
+    "de": "Alle Zielsprachen"
+  },
+  "allHintX": {
+    "source": "{ count, plural, =1 {1 locale} other {{count} locales} } across the chosen collections.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {1 idioma} other {{count} idiomas} } en las colecciones elegidas.",
+    "fr-ca": "{ count, plural, =1 {1 langue} other {{count} langues} } dans les collections choisies.",
+    "ru": "{ count, plural, one {{count} язык} few {{count} языка} many {{count} языков} other {{count} языка} } в выбранных коллекциях.",
+    "ja": "{ count, plural, other {選択したコレクション全体で {count} 件のロケール} }です。",
+    "de": "{ count, plural, =1 {1 Sprache} other {{count} Sprachen} } in den gewählten Sammlungen."
+  }
+}

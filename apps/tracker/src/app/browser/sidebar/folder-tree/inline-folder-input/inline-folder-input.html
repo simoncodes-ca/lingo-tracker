@@ -16,7 +16,9 @@
         spellcheck="false"
       />
 
-      @if (shouldShowError()) {
+      @if (error(); as refusal) {
+        <div class="error-message" role="alert">{{ refusal }}</div>
+      } @else if (shouldShowError()) {
         <div class="error-message">
           {{ getErrorMessage() | transloco }}
         </div>

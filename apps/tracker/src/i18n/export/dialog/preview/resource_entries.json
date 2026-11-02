@@ -1,0 +1,142 @@
+{
+  "files": {
+    "source": "Files",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Archivos",
+    "fr-ca": "Fichiers",
+    "ru": "Файлы",
+    "ja": "ファイル",
+    "de": "Dateien"
+  },
+  "exists": {
+    "source": "exists",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "ya existe",
+    "fr-ca": "existe déjà",
+    "ru": "существует",
+    "ja": "既存",
+    "de": "vorhanden"
+  },
+  "skipped": {
+    "source": "no matching entries",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "sin entradas coincidentes",
+    "fr-ca": "aucune entrée correspondante",
+    "ru": "нет подходящих записей",
+    "ja": "一致するエントリなし",
+    "de": "keine passenden Einträge"
+  },
+  "summary": {
+    "source": "Summary",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Resumen",
+    "fr-ca": "Résumé",
+    "ru": "Сводка",
+    "ja": "概要",
+    "de": "Zusammenfassung"
+  },
+  "entries": {
+    "source": "Entries",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Entradas",
+    "fr-ca": "Entrées",
+    "ru": "Записи",
+    "ja": "エントリ",
+    "de": "Einträge"
+  },
+  "filesOfLocalesX": {
+    "source": "{files} of {locales} locales",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{files} de {locales} idiomas",
+    "fr-ca": "{files} de {locales} langues",
+    "ru": "{files} из {locales} языков",
+    "ja": "{locales} ロケール中 {files}",
+    "de": "{files} von {locales} Sprachen"
+  },
+  "collections": {
+    "source": "Collections",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Colecciones",
+    "fr-ca": "Collections",
+    "ru": "Коллекции",
+    "ja": "コレクション",
+    "de": "Sammlungen"
+  },
+  "overwrites": {
+    "source": "Overwrites",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Sobrescrituras",
+    "fr-ca": "Écrasements",
+    "ru": "Перезаписи",
+    "ja": "上書き",
+    "de": "Überschreibungen"
+  },
+  "warnings": {
+    "source": "Warnings",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Advertencias",
+    "fr-ca": "Avertissements",
+    "ru": "Предупреждения",
+    "ja": "警告",
+    "de": "Warnungen"
+  },
+  "shape": {
+    "source": "Entry shape",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Estructura de la entrada",
+    "fr-ca": "Structure des entrées",
+    "ru": "Структура записи",
+    "ja": "エントリの構造",
+    "de": "Eintragsstruktur"
+  },
+  "notes": {
+    "source": "Notes",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Notas",
+    "fr-ca": "Notes",
+    "ru": "Примечания",
+    "ja": "メモ",
+    "de": "Notizen"
+  },
+  "noLocales": {
+    "source": "No target locales. Add a locale to a collection first.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "No hay idiomas de destino. Primero agrega un idioma a una colección.",
+    "fr-ca": "Aucune langue cible. Ajoutez d’abord une langue à une collection.",
+    "ru": "Нет целевых языков. Сначала добавьте язык в коллекцию.",
+    "ja": "ターゲットロケールがありません。先にコレクションにロケールを追加してください。",
+    "de": "Keine Zielsprachen. Füge zuerst einer Sammlung eine Sprache hinzu."
+  },
+  "failed": {
+    "source": "The preview could not be loaded.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "No se pudo cargar la vista previa.",
+    "fr-ca": "L’aperçu n’a pas pu être chargé.",
+    "ru": "Не удалось загрузить предварительный просмотр.",
+    "ja": "プレビューを読み込めませんでした。",
+    "de": "Die Vorschau konnte nicht geladen werden."
+  },
+  "skippedLocalesX": {
+    "source": "{ count, plural, =1 {1 locale skipped} other {{count} locales skipped} }",
+    "comment": "Preview Files block: one line summarising the target locales with no matching entries. Followed by a separator and \"no matching entries\".",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {1 idioma omitido} other {{count} idiomas omitidos} }",
+    "fr-ca": "{ count, plural, =1 {1 langue ignorée} other {{count} langues ignorées} }",
+    "ru": "{ count, plural, one {Пропущена # локаль} few {Пропущено # локали} many {Пропущено # локалей} other {Пропущено # локали} }",
+    "ja": "{ count, plural, other {{count} 件のロケールをスキップ} }",
+    "de": "{ count, plural, =1 {1 Sprache übersprungen} other {{count} Sprachen übersprungen} }"
+  }
+}

@@ -1,16 +1,16 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { ThemeService, type ThemeMode } from '../shared/services/theme.service';
-import { HeaderContextService } from '../shared/services/header-context.service';
-import { LocalePickerComponent } from './locale-picker/locale-picker';
 import { TRACKER_TOKENS } from '../../i18n-types/tracker-resources';
+import { HeaderContextService } from '../shared/services/header-context.service';
+import { type ThemeMode, ThemeService } from '../shared/services/theme.service';
+import { LocalePickerComponent } from './locale-picker/locale-picker';
 
 @Component({
   selector: 'app-header',

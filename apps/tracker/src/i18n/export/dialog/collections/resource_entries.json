@@ -1,0 +1,42 @@
+{
+  "description": {
+    "source": "Which collections contribute entries.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Qué colecciones aportan entradas.",
+    "fr-ca": "Quelles collections fournissent des entrées.",
+    "ru": "Какие коллекции дают записи.",
+    "ja": "エントリを取り込むコレクションです。",
+    "de": "Welche Sammlungen Einträge beisteuern."
+  },
+  "includeAllLabel": {
+    "source": "Include every collection",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Incluir todas las colecciones",
+    "fr-ca": "Inclure toutes les collections",
+    "ru": "Включить все коллекции",
+    "ja": "すべてのコレクションを含める",
+    "de": "Alle Sammlungen einbeziehen"
+  },
+  "includeAllHintX": {
+    "source": "All {count} collections, including read-only ones.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Las {count} colecciones, incluidas las de solo lectura.",
+    "fr-ca": "Les {count} collections, y compris celles en lecture seule.",
+    "ru": "Все коллекции ({count}), включая доступные только для чтения.",
+    "ja": "読み取り専用を含む全 {count} 件のコレクションです。",
+    "de": "Alle {count} Sammlungen, auch schreibgeschützte."
+  },
+  "readOnlyTooltip": {
+    "source": "Read-only collection. Exporting reads it; nothing is changed.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Colección de solo lectura. Exportar solo la lee; no se cambia nada.",
+    "fr-ca": "Collection en lecture seule. L’exportation ne fait que la lire; rien n’est modifié.",
+    "ru": "Коллекция только для чтения. Экспорт только читает её, ничего не изменяется.",
+    "ja": "読み取り専用のコレクションです。エクスポートは読み取るだけで、何も変更しません。",
+    "de": "Schreibgeschützte Sammlung. Der Export liest sie nur; es wird nichts geändert."
+  }
+}

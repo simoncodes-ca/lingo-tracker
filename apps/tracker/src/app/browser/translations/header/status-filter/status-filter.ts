@@ -1,9 +1,15 @@
-import { Component, ChangeDetectionStrategy, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
-import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
-import { BrowserStore } from '../../../store/browser.store';
+import {
+  isNeedsWorkStatusSelection,
+  NEEDS_WORK_STATUSES,
+  STATUS_PRECEDENCE,
+  type TranslationStatus,
+} from '@simoncodes-ca/domain';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
+import { STATUS_PRESENTATION } from '../../../../shared/translation-status/translation-status-presentation';
+import { BrowserStore } from '../../../store/browser.store';
 
 /** One toggle in the rail. `statuses` is what it selects, not what it is called. */
 interface StatusToggle {
@@ -42,16 +48,6 @@ export class StatusFilter {
   readonly store = inject(BrowserStore);
   readonly TOKENS = TRACKER_TOKENS;
 
-  readonly statuses: readonly TranslationStatus[] = ['new', 'stale', 'translated', 'verified'];
-
-  /** Reads the shared status color spine, so a status means the same thing here as on the rows it filters. */
-  readonly statusLabels: Record<TranslationStatus, string> = {
-    new: TRACKER_TOKENS.BROWSER.STATUS.NEW,
-    stale: TRACKER_TOKENS.BROWSER.STATUS.STALE,
-    translated: TRACKER_TOKENS.BROWSER.STATUS.TRANSLATED,
-    verified: TRACKER_TOKENS.BROWSER.STATUS.VERIFIED,
-  };
-
   /**
    * "Needs work" is selected only when it is exactly what is selected. A user who
    * ticked `new` alone has not asked for the shortcut, and lighting it up would
@@ -59,7 +55,7 @@ export class StatusFilter {
    */
   readonly isNeedsWorkSelected = computed(() => {
     const selected = this.store.selectedStatuses();
-    return selected.length === 2 && selected.includes('new') && selected.includes('stale');
+    return isNeedsWorkStatusSelection(selected);
   });
 
   readonly toggles = computed<readonly StatusToggle[]>(() => {
@@ -70,13 +66,14 @@ export class StatusFilter {
       {
         id: 'needsWork',
         label: TRACKER_TOKENS.BROWSER.STATUSFILTER.NEEDSWORK,
-        statuses: ['new', 'stale'] as const,
+        statuses: NEEDS_WORK_STATUSES,
         count: this.store.needsWorkCount(),
         selected: this.isNeedsWorkSelected(),
       },
-      ...this.statuses.map((status) => ({
+      // The shared status labels, so a status reads the same here as on the rows it filters.
+      ...STATUS_PRECEDENCE.map((status) => ({
         id: status,
-        label: this.statusLabels[status],
+        label: STATUS_PRESENTATION[status].labelToken,
         statuses: [status] as const,
         count: counts[status],
         selected: selected.includes(status),

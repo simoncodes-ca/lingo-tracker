@@ -1,32 +1,32 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import type { LingoTrackerConfig } from '@simoncodes-ca/core';
-import { CONFIG_FILENAME } from '@simoncodes-ca/core';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  ConfigNotFoundError,
+  ConfigParseError,
+  InvalidConfigError,
+  type LingoTrackerConfig,
+  loadConfig,
+  type OpenedProject,
+} from '@simoncodes-ca/core';
 
 @Injectable()
 export class ConfigService {
-  private isNodeError(error: unknown): error is NodeJS.ErrnoException {
-    return error instanceof Error && 'code' in error;
+  get projectRoot(): string {
+    return process.cwd();
   }
 
+  openProject(): OpenedProject {
+    return { projectRoot: this.projectRoot, sourceConfig: this.getConfig() };
+  }
+
+  /** Reads once per call; read routes own their HTTP responses, including without a global filter. */
   getConfig(): LingoTrackerConfig {
-    const configPath = join(process.cwd(), CONFIG_FILENAME);
-    let configContent: string;
-
     try {
-      configContent = readFileSync(configPath, 'utf8');
-    } catch (error: unknown) {
-      if (this.isNodeError(error) && error.code === 'ENOENT') {
-        throw new NotFoundException('Configuration file not found');
-      }
-      throw new InternalServerErrorException('Failed to read configuration file');
-    }
-
-    try {
-      return JSON.parse(configContent) as LingoTrackerConfig;
-    } catch {
-      throw new InternalServerErrorException('Invalid configuration file format');
+      return loadConfig({ cwd: this.projectRoot });
+    } catch (error) {
+      if (error instanceof ConfigNotFoundError) throw new NotFoundException('Configuration file not found');
+      if (error instanceof ConfigParseError)
+        throw new InternalServerErrorException('Invalid configuration file format');
+      throw new InvalidConfigError('Failed to read configuration file', { cause: error });
     }
   }
 }

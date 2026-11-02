@@ -14,6 +14,7 @@
 
 import MessageFormat from '@messageformat/core';
 import { icuToTransloco } from './icu-to-transloco';
+import { toRuntimeValue, toStoredIcu } from './runtime-conversion';
 
 /** The parameters a consumer passes alongside a translation key. */
 type RuntimeParams = Record<string, unknown>;
@@ -207,6 +208,24 @@ const CASES: RoundTripCase[] = [
     expected: { rendered: 'Flood' },
   },
   {
+    // I2: the selector is glued to the offset, which the bundler used to leave unwrapped.
+    name: 'plural branch body that is only an argument, behind an unspaced offset, renders',
+    stored: '{p, plural, offset:2other{{x}}}',
+    params: { p: 2, x: 'Al' },
+    locale: 'en',
+    interpolated: '{p, plural, offset:2other{Al}}',
+    expected: { rendered: 'Al' },
+  },
+  {
+    // I2: a select key outside ASCII, which the bundler used to leave unwrapped.
+    name: 'select branch body that is only an argument, behind a non-ASCII key, renders',
+    stored: '{g, select, männlich {{x}} other {y}}',
+    params: { g: 'männlich', x: 'Al' },
+    locale: 'de',
+    interpolated: '{g, select, männlich {Al} other {y}}',
+    expected: { rendered: 'Al' },
+  },
+  {
     name: 'plural branch body that is text plus an argument renders',
     stored: DELETE_COUNT_PLURAL,
     params: { deleteCount: 1, itemName: 'Flood Risk' },
@@ -308,4 +327,10 @@ describe('transloco runtime round trip', () => {
   it('substitutes an empty string for an unresolved name, as the runtime does', () => {
     expect(transpileInterpolations('Hello {{ name }}!', {})).toBe('Hello !');
   });
+});
+
+it('renders Booklore literal braces unchanged through plain Transloco interpolation alone', () => {
+  const value = 'Showing {first} to {last} of {totalRecords} entries';
+  const emitted = toRuntimeValue(toStoredIcu(value, 'transloco'), 'transloco');
+  expect(transpileInterpolations(emitted, {})).toBe(value);
 });

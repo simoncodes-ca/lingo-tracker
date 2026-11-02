@@ -1,3 +1,4 @@
+import { buildKeyTree } from './key-tree';
 import { validateKey } from './resource-key';
 
 /**
@@ -60,18 +61,7 @@ export function isEmptyValue(value: string): boolean {
  * @returns Array of keys that have hierarchical conflicts
  */
 export function detectHierarchicalConflicts(keys: string[]): string[] {
-  const conflicts: string[] = [];
-
-  for (const key of keys) {
-    // Check if any other key starts with this key followed by a dot
-    const hasChildren = keys.some((otherKey) => otherKey !== key && otherKey.startsWith(`${key}.`));
-
-    if (hasChildren) {
-      conflicts.push(key);
-    }
-  }
-
-  return conflicts;
+  return buildKeyTree(keys.map((key) => [key, key] as const)).conflicts;
 }
 
 /**

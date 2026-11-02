@@ -1,5 +1,4 @@
 import type { ComponentFixture } from '@angular/core/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTranslocoTestingModule } from '../../../../../testing/transloco-testing.module';
@@ -13,7 +12,6 @@ describe('InlineFolderInput', () => {
   const createComponent = createComponentFactory({
     component: InlineFolderInput,
     imports: [getTranslocoTestingModule()],
-    providers: [provideNoopAnimations()],
   });
 
   beforeEach(() => {
@@ -24,6 +22,26 @@ describe('InlineFolderInput', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('shows a refusal under the input and emits edited when the name changes, re-arming blur-to-cancel', () => {
+    const edited = vi.fn();
+    const cancelled = vi.fn();
+    component.edited.subscribe(edited);
+    component.cancelInput.subscribe(cancelled);
+    fixture.componentRef.setInput('error', 'Already exists');
+    spectator.detectChanges();
+    expect(spectator.query('.error-message')?.textContent).toContain('Already exists');
+
+    component.folderNameControl.setValue('abc');
+    component.onEnterKey();
+    component.onBlur();
+    expect(cancelled).not.toHaveBeenCalled();
+
+    component.folderNameControl.setValue('abcd');
+    expect(edited).toHaveBeenCalled();
+    component.onBlur();
+    expect(cancelled).toHaveBeenCalledOnce();
   });
 
   it('should initialize with empty form control', () => {

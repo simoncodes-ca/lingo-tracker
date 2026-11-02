@@ -1,0 +1,752 @@
+<div class="dialog-wrapper" role="dialog" aria-labelledby="export-dialog-title">
+  <header class="dialog-header">
+    <div class="dialog-header-tile" aria-hidden="true">
+      <mat-icon>output</mat-icon>
+    </div>
+    <div class="dialog-header-text">
+      <h2 id="export-dialog-title" class="dialog-title">{{ TOKENS.EXPORT.DIALOG.TITLE | transloco }}</h2>
+      <p class="dialog-subtitle">{{ TOKENS.EXPORT.DIALOG.SUBTITLE | transloco }}</p>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="dialog-close"
+      data-testid="cancel"
+      (click)="onCancel()"
+      [disabled]="saving()"
+      [attr.aria-label]="TOKENS.COMMON.ACTIONS.CLOSE | transloco"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <form id="export-form" class="md" [formGroup]="model.form" (ngSubmit)="onSubmit()">
+    <!-- ───────────── Rail ───────────── -->
+    <nav class="rail" [attr.aria-label]="TOKENS.EXPORT.DIALOG.TITLE | transloco">
+      <button
+        type="button"
+        class="rail-item"
+        data-testid="rail-format"
+        [class.rail-item--on]="model.activeSection() === 'format'"
+        [attr.aria-current]="model.activeSection() === 'format' ? 'true' : null"
+        [attr.cdkFocusInitial]="model.activeSection() === 'format' ? '' : null"
+        (click)="activate('format')"
+      >
+        <mat-icon aria-hidden="true">description</mat-icon>
+        <span class="rail-stack">
+          <span class="rail-label">{{ TOKENS.EXPORT.DIALOG.SECTIONS.FORMAT | transloco }}</span>
+          <span class="rail-sub">{{
+            (model.draft().format === 'json' ? TOKENS.EXPORT.DIALOG.FORMAT.JSON : TOKENS.EXPORT.DIALOG.FORMAT.XLIFF)
+              | transloco
+          }}</span>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="rail-item"
+        data-testid="rail-collections"
+        [class.rail-item--on]="model.activeSection() === 'collections'"
+        [attr.aria-current]="model.activeSection() === 'collections' ? 'true' : null"
+        [attr.cdkFocusInitial]="model.activeSection() === 'collections' ? '' : null"
+        (click)="activate('collections')"
+      >
+        <mat-icon aria-hidden="true">folder_copy</mat-icon>
+        <span class="rail-stack">
+          <span class="rail-label">{{ TOKENS.EXPORT.DIALOG.SECTIONS.COLLECTIONS | transloco }}</span>
+          @if (model.draft().allCollections) {
+            <span class="rail-sub rail-sub--prose">{{ TOKENS.EXPORT.DIALOG.SECTIONS.EVERYCOLLECTION | transloco }}</span>
+          }
+        </span>
+        @if (railErrors().has('collections')) {
+          <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
+        } @else {
+          <span class="rail-count num">{{ collectionCount() }}</span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="rail-item"
+        data-testid="rail-locales"
+        [class.rail-item--on]="model.activeSection() === 'locales'"
+        [attr.aria-current]="model.activeSection() === 'locales' ? 'true' : null"
+        [attr.cdkFocusInitial]="model.activeSection() === 'locales' ? '' : null"
+        (click)="activate('locales')"
+      >
+        <mat-icon aria-hidden="true">translate</mat-icon>
+        <span class="rail-stack">
+          <span class="rail-label">{{ TOKENS.EXPORT.DIALOG.SECTIONS.LOCALES | transloco }}</span>
+          @if (model.draft().allLocales) {
+            <span class="rail-sub rail-sub--prose">{{ TOKENS.EXPORT.DIALOG.SECTIONS.ALLLOCALES | transloco }}</span>
+          }
+        </span>
+        @if (railErrors().has('locales')) {
+          <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
+        } @else {
+          <span class="rail-count num">{{ model.selectedLocales().length }}</span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="rail-item"
+        data-testid="rail-filters"
+        [class.rail-item--on]="model.activeSection() === 'filters'"
+        [attr.aria-current]="model.activeSection() === 'filters' ? 'true' : null"
+        [attr.cdkFocusInitial]="model.activeSection() === 'filters' ? '' : null"
+        (click)="activate('filters')"
+      >
+        <mat-icon aria-hidden="true">filter_list</mat-icon>
+        <span class="rail-stack">
+          <span class="rail-label">{{ TOKENS.EXPORT.DIALOG.SECTIONS.FILTERS | transloco }}</span>
+          <span
+            class="rail-sub"
+            [class.rail-sub--prose]="allStatuses()"
+            [class.rail-sub--empty]="statusSummary().length === 0"
+          >
+            @if (allStatuses()) {
+              {{ TOKENS.EXPORT.DIALOG.SECTIONS.ALLSTATUSES | transloco }}
+            } @else if (statusSummary().length === 0) {
+              {{ TOKENS.BROWSER.TRANSLATIONITEM.NOSTATUSES | transloco }}
+            } @else {
+              @for (status of statusSummary(); track status; let last = $last) {
+                {{ statusLabel(status) | transloco | lowercase }}{{ last ? '' : ',' }}
+              }
+            }
+            @if (model.draft().tags.length > 0) {
+              · {{ TOKENS.EXPORT.DIALOG.SECTIONS.TAGSX | transloco: { count: model.draft().tags.length } }}
+            }
+          </span>
+        </span>
+        @if (railErrors().has('filters')) {
+          <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="rail-item"
+        data-testid="rail-output"
+        [class.rail-item--on]="model.activeSection() === 'output'"
+        [attr.aria-current]="model.activeSection() === 'output' ? 'true' : null"
+        [attr.cdkFocusInitial]="model.activeSection() === 'output' ? '' : null"
+        (click)="activate('output')"
+      >
+        <mat-icon aria-hidden="true">output</mat-icon>
+        <span class="rail-stack">
+          <span class="rail-label">{{ TOKENS.EXPORT.DIALOG.SECTIONS.OUTPUT | transloco }}</span>
+          <span class="rail-sub">{{ model.draft().outputDirectory }}</span>
+        </span>
+        @if (railErrors().has('output')) {
+          <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
+        }
+      </button>
+
+      @if (model.draft().format === 'json') {
+        <div class="rail-rule rail-fade" role="separator"></div>
+        <button
+          type="button"
+          class="rail-item rail-fade"
+          data-testid="rail-json"
+          [class.rail-item--on]="model.activeSection() === 'json'"
+          [attr.aria-current]="model.activeSection() === 'json' ? 'true' : null"
+        [attr.cdkFocusInitial]="model.activeSection() === 'json' ? '' : null"
+          (click)="activate('json')"
+        >
+          <mat-icon aria-hidden="true">data_object</mat-icon>
+          <span class="rail-stack">
+            <span class="rail-label">{{ TOKENS.EXPORT.DIALOG.SECTIONS.JSON | transloco }}</span>
+            <span class="rail-sub">
+              {{
+                (model.draft().json.structure === 'flat'
+                  ? TOKENS.EXPORT.DIALOG.JSON.FLAT
+                  : TOKENS.EXPORT.DIALOG.JSON.HIERARCHICAL
+                ) | transloco | lowercase
+              }}
+              @if (model.draft().json.rich) {
+                · {{ TOKENS.EXPORT.DIALOG.SECTIONS.RICHSHORT | transloco }}
+              }
+            </span>
+          </span>
+          @if (railErrors().has('json')) {
+            <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
+          }
+        </button>
+      }
+    </nav>
+
+    <!-- ───────────── Pane ───────────── -->
+    <div class="pane" data-testid="pane">
+      @switch (model.activeSection()) {
+        @case ('format') {
+          <div class="pane-head">
+            <div class="pane-head-text">
+              <h3 id="export-format-heading">{{ TOKENS.EXPORT.DIALOG.SECTIONS.FORMAT | transloco }}</h3>
+              <p>{{ TOKENS.EXPORT.DIALOG.FORMAT.DESCRIPTION | transloco }}</p>
+            </div>
+          </div>
+          <div class="field">
+            <app-segmented-control
+              formControlName="format"
+              [options]="formatOptions"
+              [mono]="true"
+              labelledBy="export-format-heading"
+            />
+            <ul class="format-hints">
+              <li [class.format-hint--on]="model.draft().format === 'xliff'">
+                <mat-icon aria-hidden="true">description</mat-icon>
+                <span><b>{{ TOKENS.EXPORT.DIALOG.FORMAT.XLIFF | transloco }}</b> {{ TOKENS.EXPORT.DIALOG.FORMAT.XLIFFHINT | transloco }}</span>
+              </li>
+              <li [class.format-hint--on]="model.draft().format === 'json'">
+                <mat-icon aria-hidden="true">data_object</mat-icon>
+                <span><b>{{ TOKENS.EXPORT.DIALOG.FORMAT.JSON | transloco }}</b> {{ TOKENS.EXPORT.DIALOG.FORMAT.JSONHINT | transloco }}</span>
+              </li>
+            </ul>
+          </div>
+          <p class="field-hint field-hint--icon">
+            <mat-icon aria-hidden="true">shield</mat-icon>
+            <span>{{ TOKENS.EXPORT.DIALOG.FORMAT.PROTECTEDNOTE | transloco }}</span>
+          </p>
+        }
+
+        @case ('collections') {
+          <div class="pane-head">
+            <div class="pane-head-text">
+              <h3>{{ TOKENS.EXPORT.DIALOG.SECTIONS.COLLECTIONS | transloco }}</h3>
+              <p>{{ TOKENS.EXPORT.DIALOG.COLLECTIONS.DESCRIPTION | transloco }}</p>
+            </div>
+          </div>
+          <div class="switch-row" [class.switch-row--on]="model.draft().allCollections">
+            <div class="switch-tile" aria-hidden="true"><mat-icon>done_all</mat-icon></div>
+            <div class="switch-text">
+              <span class="switch-label" id="export-all-collections-label">{{ TOKENS.EXPORT.DIALOG.COLLECTIONS.INCLUDEALLLABEL | transloco }}</span>
+              <span class="switch-description" id="export-all-collections-description">
+                {{ TOKENS.EXPORT.DIALOG.COLLECTIONS.INCLUDEALLHINTX | transloco: { count: model.collectionNames().length } }}
+              </span>
+            </div>
+            <mat-slide-toggle
+              class="switch-control"
+              formControlName="allCollections"
+              color="primary"
+              hideIcon
+              aria-labelledby="export-all-collections-label"
+              aria-describedby="export-all-collections-description"
+            ></mat-slide-toggle>
+          </div>
+          @if (!model.draft().allCollections) {
+            <ul class="check-list" role="group" [attr.aria-label]="TOKENS.EXPORT.DIALOG.SECTIONS.COLLECTIONS | transloco" data-testid="collection-list">
+              @for (row of collectionRows(); track row.name) {
+                <li class="check-row">
+                  <mat-checkbox
+                    color="primary"
+                    [checked]="model.draft().collections.includes(row.name)"
+                    (change)="toggleCollection(row.name, $event.checked)"
+                    >{{ row.name }}</mat-checkbox
+                  >
+                  <span class="check-row-path">
+                    @for (part of row.folderParts; track $index) {
+                      <span>{{ part }}</span><wbr />
+                    }
+                  </span>
+                  @if (row.readOnly) {
+                    <mat-icon
+                      class="check-row-lock"
+                      [matTooltip]="TOKENS.EXPORT.DIALOG.COLLECTIONS.READONLYTOOLTIP | transloco"
+                      [attr.aria-label]="TOKENS.EXPORT.DIALOG.COLLECTIONS.READONLYTOOLTIP | transloco"
+                      role="img"
+                      >lock</mat-icon
+                    >
+                  }
+                </li>
+              }
+            </ul>
+            @if (model.sectionErrors().has('collections')) {
+              <p class="field-error" role="alert">{{ TOKENS.EXPORT.DIALOG.VALIDATION.COLLECTIONSEMPTY | transloco }}</p>
+            }
+          }
+        }
+
+        @case ('locales') {
+          <div class="pane-head">
+            <div class="pane-head-text">
+              <h3>{{ TOKENS.EXPORT.DIALOG.SECTIONS.LOCALES | transloco }}</h3>
+              <p>{{ TOKENS.EXPORT.DIALOG.LOCALES.DESCRIPTION | transloco }}</p>
+            </div>
+          </div>
+          @if (noTargetLocales()) {
+            <p class="preview-note">{{ TOKENS.EXPORT.DIALOG.PREVIEW.NOLOCALES | transloco }}</p>
+          }
+          <div class="switch-row" [class.switch-row--on]="model.draft().allLocales">
+            <div class="switch-tile" aria-hidden="true"><mat-icon>translate</mat-icon></div>
+            <div class="switch-text">
+              <span class="switch-label" id="export-all-locales-label">{{ TOKENS.EXPORT.DIALOG.LOCALES.ALLLABEL | transloco }}</span>
+              <span class="switch-description" id="export-all-locales-description">
+                {{ TOKENS.EXPORT.DIALOG.LOCALES.ALLHINTX | transloco: { count: model.availableLocales().length } }}
+              </span>
+            </div>
+            <mat-slide-toggle
+              class="switch-control"
+              formControlName="allLocales"
+              color="primary"
+              hideIcon
+              aria-labelledby="export-all-locales-label"
+              aria-describedby="export-all-locales-description"
+            ></mat-slide-toggle>
+          </div>
+          @if (!model.draft().allLocales) {
+            <div class="pills" data-testid="locale-pills">
+              @for (locale of model.baseLocales(); track locale) {
+                <span class="pill pill--base" data-testid="base-locale">
+                  <mat-icon aria-hidden="true">lock</mat-icon>
+                  <span class="pill-code">{{ locale }}</span>
+                  <span class="pill-tag">{{ TOKENS.COLLECTIONS.CARD.BASELOCALELABEL | transloco }}</span>
+                </span>
+              }
+              @for (locale of model.availableLocales(); track locale) {
+                <button
+                  type="button"
+                  class="pill pill--button"
+                  [attr.aria-pressed]="model.draft().locales.includes(locale)"
+                  (click)="toggleLocale(locale)"
+                >
+                  <span class="pill-code">{{ locale }}</span>
+                </button>
+              }
+            </div>
+            @if (model.sectionErrors().has('locales')) {
+              <p class="field-error" role="alert">{{ TOKENS.EXPORT.DIALOG.VALIDATION.LOCALESEMPTY | transloco }}</p>
+            }
+          }
+        }
+
+        @case ('filters') {
+          <div class="pane-head">
+            <div class="pane-head-text">
+              <h3>{{ TOKENS.EXPORT.DIALOG.SECTIONS.FILTERS | transloco }}</h3>
+              <p>{{ TOKENS.EXPORT.DIALOG.FILTERS.DESCRIPTION | transloco }}</p>
+            </div>
+          </div>
+          <div class="field">
+            <span class="field-label" id="export-status-label">
+              {{ TOKENS.EXPORT.DIALOG.FILTERS.STATUSLABEL | transloco }}
+              <button type="button" class="link" data-testid="select-all-statuses" (click)="selectAllStatuses()">
+                {{ TOKENS.EXPORT.DIALOG.FILTERS.SELECTALL | transloco }}
+              </button>
+            </span>
+            <div class="status-rail" role="group" aria-labelledby="export-status-label">
+              @for (status of STATUS_ORDER; track status) {
+                <button
+                  type="button"
+                  class="status-toggle"
+                  [attr.data-status]="status"
+                  [attr.data-testid]="'status-' + status"
+                  [attr.aria-pressed]="model.draft().statuses.includes(status)"
+                  (click)="toggleStatus(status)"
+                >
+                  <span class="status-dot" aria-hidden="true"></span>
+                  <span>{{ statusLabel(status) | transloco }}</span>
+                </button>
+              }
+            </div>
+            @if (model.sectionErrors().has('filters')) {
+              <p class="field-error" role="alert">{{ TOKENS.EXPORT.DIALOG.VALIDATION.STATUSEMPTY | transloco }}</p>
+            } @else {
+              <p class="field-hint">{{ TOKENS.EXPORT.DIALOG.FILTERS.STATUSHINT | transloco }}</p>
+            }
+          </div>
+          <div class="field">
+            <label class="field-label" for="export-tags">{{ TOKENS.EXPORT.DIALOG.FILTERS.TAGSLABEL | transloco }}</label>
+            <div class="tags-well" [class.tags-well--empty]="model.draft().tags.length === 0">
+              @for (tag of model.draft().tags; track tag) {
+                <span class="tag-chip">
+                  <span class="tag-chip-text">{{ tag }}</span>
+                  <button
+                    type="button"
+                    class="tag-chip-remove"
+                    (click)="removeTag(tag)"
+                    [attr.aria-label]="TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.REMOVETAGX | transloco: { tag }"
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </span>
+              }
+              @if (model.draft().tags.length === 0) {
+                <mat-icon class="tags-well-icon" aria-hidden="true">sell</mat-icon>
+              }
+              <input
+                id="export-tags"
+                type="text"
+                class="tags-input"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+                [appChipInput]="model.draft().tags"
+                [commitOnBlur]="true"
+                (chipAdd)="addTag($event)"
+                (chipRemove)="removeTag($event)"
+                [placeholder]="model.draft().tags.length === 0 ? (TOKENS.BROWSER.TRANSLATIONEDITOR.TAGS.ADDPLACEHOLDER | transloco) : ''"
+              />
+            </div>
+            <p class="field-hint">{{ TOKENS.EXPORT.DIALOG.FILTERS.TAGSHINT | transloco }}</p>
+          </div>
+        }
+
+        @case ('output') {
+          <div class="pane-head">
+            <div class="pane-head-text">
+              <h3>{{ TOKENS.EXPORT.DIALOG.SECTIONS.OUTPUT | transloco }}</h3>
+              <p>{{ TOKENS.EXPORT.DIALOG.OUTPUT.DESCRIPTION | transloco }}</p>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="export-folder">{{ TOKENS.EXPORT.DIALOG.OUTPUT.FOLDERLABEL | transloco }}</label>
+            <div class="text-input text-input--mono" [class.text-input--invalid]="plan()?.outputProblem">
+              <mat-icon aria-hidden="true">folder</mat-icon>
+              <input
+                id="export-folder"
+                type="text"
+                formControlName="outputDirectory"
+                autocomplete="off"
+                spellcheck="false"
+                [attr.aria-invalid]="!!plan()?.outputProblem"
+                [attr.aria-describedby]="plan()?.outputProblem ? 'export-folder-error' : 'export-folder-hint'"
+              />
+            </div>
+            @if (plan()?.outputProblem; as problem) {
+              <p id="export-folder-error" class="field-error" role="alert" [attr.title]="problem">
+                {{ TOKENS.EXPORT.DIALOG.VALIDATION.FOLDERNOTWRITABLE | transloco }}
+              </p>
+            } @else if (plan()) {
+              <p
+                id="export-folder-hint"
+                class="field-hint"
+                [innerHTML]="TOKENS.EXPORT.DIALOG.OUTPUT.FOLDERRESOLVEDX | transloco: { path: resolvedPathMarkup() }"
+              ></p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="export-pattern">{{ TOKENS.EXPORT.DIALOG.OUTPUT.PATTERNLABEL | transloco }}</label>
+            <div class="text-input text-input--mono" [class.text-input--invalid]="patternInvalid()">
+              <input
+                id="export-pattern"
+                type="text"
+                formControlName="filenamePattern"
+                autocomplete="off"
+                spellcheck="false"
+                [placeholder]="localePlaceholder"
+                [attr.aria-invalid]="patternInvalid()"
+                [attr.aria-describedby]="patternInvalid() ? 'export-pattern-error export-pattern-hint' : 'export-pattern-hint'"
+              />
+              <span class="text-input-trail" aria-hidden="true">{{ fileSuffix() }}</span>
+            </div>
+            @if (patternInvalid()) {
+              <p id="export-pattern-error" class="field-error" role="alert">{{ TOKENS.EXPORT.DIALOG.VALIDATION.PATTERNLOCALE | transloco }}</p>
+            }
+            <p id="export-pattern-hint" class="field-hint">{{ TOKENS.EXPORT.DIALOG.OUTPUT.PATTERNHINT | transloco }}</p>
+          </div>
+
+          <div class="switch-row" [class.switch-row--on]="model.draft().protectedTermNotes">
+            <div class="switch-tile" aria-hidden="true"><mat-icon>shield</mat-icon></div>
+            <div class="switch-text">
+              <span class="switch-label" id="export-protect-label">{{ TOKENS.EXPORT.DIALOG.OUTPUT.PROTECTLABEL | transloco }}</span>
+              <span class="switch-description" id="export-protect-description">{{ TOKENS.EXPORT.DIALOG.OUTPUT.PROTECTHINT | transloco }}</span>
+            </div>
+            <mat-slide-toggle
+              class="switch-control"
+              formControlName="protectedTermNotes"
+              color="primary"
+              hideIcon
+              aria-labelledby="export-protect-label"
+              aria-describedby="export-protect-description"
+            ></mat-slide-toggle>
+          </div>
+        }
+
+        @case ('json') {
+          <div class="pane-head">
+            <div class="pane-head-text">
+              <h3>{{ TOKENS.EXPORT.DIALOG.SECTIONS.JSON | transloco }}</h3>
+              <p>{{ TOKENS.EXPORT.DIALOG.JSON.DESCRIPTION | transloco }}</p>
+            </div>
+          </div>
+          <div class="pane-section" formGroupName="json">
+            <div class="field">
+              <span class="field-label" id="export-structure-label">{{ TOKENS.EXPORT.DIALOG.JSON.STRUCTURELABEL | transloco }}</span>
+              <app-segmented-control formControlName="structure" [options]="structureOptions" labelledBy="export-structure-label" />
+            </div>
+
+            <div class="switch-row" [class.switch-row--on]="model.draft().json.rich">
+              <div class="switch-tile" aria-hidden="true"><mat-icon>data_object</mat-icon></div>
+              <div class="switch-text">
+                <span class="switch-label" id="export-rich-label">{{ TOKENS.EXPORT.DIALOG.JSON.RICHLABEL | transloco }}</span>
+                <span class="switch-description" id="export-rich-description">{{ TOKENS.EXPORT.DIALOG.JSON.RICHHINT | transloco }}</span>
+              </div>
+              <mat-slide-toggle
+                class="switch-control"
+                formControlName="rich"
+                color="primary"
+                hideIcon
+                aria-labelledby="export-rich-label"
+                aria-describedby="export-rich-description"
+              ></mat-slide-toggle>
+            </div>
+
+            <div class="sub-fields">
+              <div class="dep-row" [class.dep-row--off]="!model.draft().json.rich">
+                <span id="export-include-base-label">{{ TOKENS.EXPORT.DIALOG.JSON.INCLUDEBASE | transloco }}</span>
+                <mat-slide-toggle formControlName="includeBase" color="primary" hideIcon aria-labelledby="export-include-base-label"></mat-slide-toggle>
+              </div>
+              @if (model.draft().json.rich && model.draft().json.includeBase) {
+                <div class="field">
+                  <label class="field-label" for="export-base-property">{{ TOKENS.EXPORT.DIALOG.JSON.BASEPROPERTYLABEL | transloco }}</label>
+                  <div
+                    class="text-input text-input--mono text-input--narrow"
+                    [class.text-input--invalid]="basePropertyInvalid()"
+                  >
+                    <input
+                      id="export-base-property"
+                      type="text"
+                      formControlName="basePropertyName"
+                      autocomplete="off"
+                      spellcheck="false"
+                      [attr.aria-invalid]="basePropertyInvalid()"
+                      [attr.aria-describedby]="basePropertyInvalid() ? 'export-base-property-error' : null"
+                    />
+                  </div>
+                  @if (basePropertyInvalid()) {
+                    <p id="export-base-property-error" class="field-error" role="alert">{{ TOKENS.EXPORT.DIALOG.VALIDATION.BASEPROPERTYRESERVED | transloco }}</p>
+                  }
+                </div>
+              }
+              <div class="dep-row" [class.dep-row--off]="!model.draft().json.rich">
+                <span id="export-include-status-label">{{ TOKENS.EXPORT.DIALOG.JSON.INCLUDESTATUS | transloco }}</span>
+                <mat-slide-toggle formControlName="includeStatus" color="primary" hideIcon aria-labelledby="export-include-status-label"></mat-slide-toggle>
+              </div>
+              <div class="dep-row" [class.dep-row--off]="!model.draft().json.rich">
+                <span id="export-include-comment-label">{{ TOKENS.EXPORT.DIALOG.JSON.INCLUDECOMMENT | transloco }}</span>
+                <mat-slide-toggle formControlName="includeComment" color="primary" hideIcon aria-labelledby="export-include-comment-label"></mat-slide-toggle>
+              </div>
+              <div class="dep-row" [class.dep-row--off]="!model.draft().json.rich">
+                <span id="export-include-tags-label">{{ TOKENS.EXPORT.DIALOG.JSON.INCLUDETAGS | transloco }}</span>
+                <mat-slide-toggle formControlName="includeTags" color="primary" hideIcon aria-labelledby="export-include-tags-label"></mat-slide-toggle>
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- Below 1200px the preview column is gone; the same blocks live here, behind a disclosure. -->
+      <div class="disclosure preview-disclosure" [class.disclosure--open]="previewOpen()">
+        <button
+          type="button"
+          class="disclosure-toggle"
+          data-testid="preview-toggle"
+          (click)="togglePreview()"
+          [attr.aria-expanded]="previewOpen()"
+          aria-controls="export-preview-panel"
+        >
+          <mat-icon class="disclosure-icon" aria-hidden="true">visibility</mat-icon>
+          <span class="disclosure-title">{{ TOKENS.BUNDLES.DIALOG.PREVIEW.DISCLOSURETITLE | transloco }}</span>
+          <span class="disclosure-summary num">
+            {{ TOKENS.EXPORT.DIALOG.FOOTER.FILESX | transloco: { count: plan()?.files?.length ?? 0 } }}
+            · {{ TOKENS.EXPORT.DIALOG.FOOTER.ENTRIESX | transloco: { count: plan()?.entriesTotal ?? 0 } }}
+          </span>
+          <mat-icon class="disclosure-chevron" aria-hidden="true">expand_more</mat-icon>
+        </button>
+        @if (previewOpen()) {
+          <div id="export-preview-panel" class="disclosure-panel preview" [attr.aria-busy]="model.preview.stale()" [class.preview--stale]="model.preview.stale()">
+            <ng-container *ngTemplateOutlet="previewBlocks" />
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ───────────── Preview column ───────────── -->
+    <aside
+      class="prev col preview"
+      data-testid="preview-column"
+      [attr.aria-busy]="model.preview.stale()"
+      [class.preview--stale]="model.preview.stale()"
+    >
+      <ng-container *ngTemplateOutlet="previewBlocks" />
+    </aside>
+  </form>
+
+  @if (model.submitErrors().length > 0) {
+    <div class="submit-errors" role="alert" data-testid="submit-errors">
+      @for (message of model.submitErrors(); track message) {
+        <p class="field-error">{{ message }}</p>
+      }
+    </div>
+  }
+
+  <!-- ───────────── Footer ───────────── -->
+  <footer class="dialog-footer">
+    <div class="footer-meta" role="status" data-testid="footer-meta">
+      @switch (footer().footerState) {
+        @case ('ready') {
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          <span class="num">
+            {{ TOKENS.EXPORT.DIALOG.FOOTER.FILESX | transloco: { count: plan()?.files?.length ?? 0 } }}
+            · {{ TOKENS.EXPORT.DIALOG.FOOTER.ENTRIESX | transloco: { count: plan()?.entriesTotal ?? 0 } }}
+            @if ((plan()?.overwriteCount ?? 0) > 0) {
+              · <span class="warn">{{ TOKENS.EXPORT.DIALOG.FOOTER.OVERWRITESX | transloco: { count: plan()?.overwriteCount ?? 0 } }}</span>
+            }
+          </span>
+        }
+        @case ('nothing') {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <span>
+            {{ TOKENS.EXPORT.DIALOG.FOOTER.NOTHINGMATCHES | transloco }}
+            @if (!allStatuses()) {
+              ·
+              <button type="button" class="link" data-testid="include-all-statuses" (click)="selectAllStatuses()">
+                {{ TOKENS.EXPORT.DIALOG.FOOTER.INCLUDEALLSTATUSES | transloco }}
+              </button>
+            }
+          </span>
+        }
+        @case ('checking') {
+          <mat-spinner diameter="14" aria-hidden="true"></mat-spinner>
+          <span>{{ TOKENS.EXPORT.DIALOG.FOOTER.CHECKING | transloco }}</span>
+        }
+        @case ('previewFailed') {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <span>
+            {{ TOKENS.EXPORT.DIALOG.PREVIEW.FAILED | transloco }}
+            ·
+            <button type="button" class="link" data-testid="retry-preview" (click)="retryPreview()">
+              {{ TOKENS.COMMON.ACTIONS.RETRY | transloco }}
+            </button>
+          </span>
+        }
+        @case ('planErrors') {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <!-- Server text, shown whole in the Notes block of the preview. -->
+          <span class="footer-reason" data-testid="plan-errors" [attr.title]="notes().join(' ')">{{ plan()?.errors?.[0] }}</span>
+        }
+        @case ('noLocales') {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <span>{{ TOKENS.EXPORT.DIALOG.PREVIEW.NOLOCALES | transloco }}</span>
+        }
+        @default {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <button type="button" class="link link--quiet" data-testid="fix-sections" (click)="fixSections()">
+            {{ TOKENS.EXPORT.DIALOG.FOOTER.FIXSECTIONS | transloco }}
+          </button>
+        }
+      }
+    </div>
+    <div class="footer-spacer"></div>
+    <button mat-button type="button" data-testid="cancel" (click)="onCancel()" [disabled]="saving()">
+      {{ TOKENS.COMMON.ACTIONS.CANCEL | transloco }}
+    </button>
+    <button mat-flat-button color="primary" type="submit" form="export-form" data-testid="submit" [disabled]="!footer().canSubmit">
+      {{ footer().primary.token | transloco: { count: footer().primary.count } }}
+    </button>
+  </footer>
+</div>
+
+<!-- Preview blocks, rendered once in the column and once in the disclosure. -->
+<ng-template #previewBlocks>
+  @if (noTargetLocales()) {
+    <p class="preview-note" data-testid="no-locales">{{ TOKENS.EXPORT.DIALOG.PREVIEW.NOLOCALES | transloco }}</p>
+  } @else {
+    <section class="preview-block">
+      <h4><mat-icon aria-hidden="true">description</mat-icon>{{ TOKENS.EXPORT.DIALOG.PREVIEW.FILES | transloco }}</h4>
+      @if (plan(); as current) {
+        <ul class="tree" data-testid="preview-files">
+          <li class="tree-dir">
+            <mat-icon aria-hidden="true">folder_open</mat-icon>
+            <span class="tree-dir-path">
+              @for (part of dirParts(); track $index) {
+                <span>{{ part }}</span><wbr />
+              }
+              <span>/</span>
+            </span>
+          </li>
+          @for (file of files(); track file.path) {
+            <li class="tree-file" [attr.data-testid]="'file-' + file.locale">
+              <mat-icon aria-hidden="true">description</mat-icon>
+              <span class="tree-file-name">
+                @for (part of file.parts; track $index) {
+                  <span>{{ part }}</span><wbr />
+                }
+              </span>
+              @if (file.exists) {
+                <span class="tree-exists">{{ TOKENS.EXPORT.DIALOG.PREVIEW.EXISTS | transloco }}</span>
+              }
+              <span class="tree-count num">{{ file.entriesCount }}</span>
+            </li>
+          }
+          @if (skipped().length > 0) {
+            <li class="tree-file tree-file--skipped" data-testid="skipped" [attr.title]="skippedCodes()">
+              <mat-icon aria-hidden="true">description</mat-icon>
+              <span>
+                {{ TOKENS.EXPORT.DIALOG.PREVIEW.SKIPPEDLOCALESX | transloco: { count: skipped().length } }}
+                · {{ TOKENS.EXPORT.DIALOG.PREVIEW.SKIPPED | transloco }}
+              </span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="preview-note">—</p>
+      }
+    </section>
+
+    <section class="preview-block" aria-live="polite">
+      <h4><mat-icon aria-hidden="true">summarize</mat-icon>{{ TOKENS.EXPORT.DIALOG.PREVIEW.SUMMARY | transloco }}</h4>
+      @if (model.preview.error(); as message) {
+        <p class="preview-error" data-testid="preview-error">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <span>{{ message }}</span>
+        </p>
+      } @else if (plan(); as current) {
+        <dl class="kv" data-testid="summary">
+          <dt>{{ TOKENS.EXPORT.DIALOG.PREVIEW.ENTRIES | transloco }}</dt>
+          <dd class="num">{{ current.entriesTotal }}</dd>
+          <dt>{{ TOKENS.EXPORT.DIALOG.PREVIEW.FILES | transloco }}</dt>
+          <dd class="num">
+            {{ TOKENS.EXPORT.DIALOG.PREVIEW.FILESOFLOCALESX | transloco: { files: current.files.length, locales: current.files.length + current.skippedLocales.length } }}
+          </dd>
+          <dt>{{ TOKENS.EXPORT.DIALOG.PREVIEW.COLLECTIONS | transloco }}</dt>
+          <dd class="num">{{ current.collections.length }}</dd>
+          <dt>{{ TOKENS.EXPORT.DIALOG.PREVIEW.OVERWRITES | transloco }}</dt>
+          <dd class="num" [class.warn]="current.overwriteCount > 0">{{ current.overwriteCount }}</dd>
+          @if (current.warnings.length > 0) {
+            <dt>{{ TOKENS.EXPORT.DIALOG.PREVIEW.WARNINGS | transloco }}</dt>
+            <dd class="num">{{ current.warnings.length }}</dd>
+          }
+        </dl>
+      } @else {
+        <dl class="kv kv--skeleton" aria-hidden="true">
+          <dt>{{ TOKENS.EXPORT.DIALOG.PREVIEW.ENTRIES | transloco }}</dt>
+          <dd>—</dd>
+          <dt>{{ TOKENS.EXPORT.DIALOG.PREVIEW.FILES | transloco }}</dt>
+          <dd>—</dd>
+          <dt>{{ TOKENS.EXPORT.DIALOG.PREVIEW.COLLECTIONS | transloco }}</dt>
+          <dd>—</dd>
+        </dl>
+      }
+    </section>
+
+    <section class="preview-block">
+      <h4><mat-icon aria-hidden="true">data_object</mat-icon>{{ TOKENS.EXPORT.DIALOG.PREVIEW.SHAPE | transloco }}</h4>
+      <!-- The sample text inside is example data produced by entryShape, not UI copy. -->
+      <pre class="shape" data-testid="entry-shape"><code>{{ shape().lines.join('\n') }}</code></pre>
+    </section>
+
+    @if (notes().length > 0) {
+      <section class="preview-block">
+        <h4><mat-icon aria-hidden="true">info</mat-icon>{{ TOKENS.EXPORT.DIALOG.PREVIEW.NOTES | transloco }}</h4>
+        <ul class="notes" data-testid="preview-notes">
+          @for (note of notes(); track $index) {
+            <li [attr.title]="note">{{ note }}</li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</ng-template>

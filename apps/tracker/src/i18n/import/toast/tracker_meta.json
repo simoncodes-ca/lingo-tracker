@@ -1,0 +1,32 @@
+{
+  "startFailed": {
+    "en": {
+      "checksum": "9e6f2b7abc811f4d0cf9c9198e323536"
+    },
+    "es": {
+      "checksum": "78ad7e0fe29154c006ff374d469afba3",
+      "baseChecksum": "9e6f2b7abc811f4d0cf9c9198e323536",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "395540a5e81ba9d71605e2849fedba1c",
+      "baseChecksum": "9e6f2b7abc811f4d0cf9c9198e323536",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "c1667314e2dfcb3786a661a9dc3eb168",
+      "baseChecksum": "9e6f2b7abc811f4d0cf9c9198e323536",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "d21ec67d4b46c7076cf72e7bd2ea5cc3",
+      "baseChecksum": "9e6f2b7abc811f4d0cf9c9198e323536",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "ecfed927aa77a8f63f778fba44892869",
+      "baseChecksum": "9e6f2b7abc811f4d0cf9c9198e323536",
+      "status": "translated"
+    }
+  }
+}

@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as jsonFileOps from '../file-io/json-file-operations';
 import { exportToJson } from './export-to-json';
 import type { ExportOptions, FilteredResource } from './types';
@@ -110,7 +110,7 @@ describe('export-to-json', () => {
     const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
     const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-    expect(content.common.buttons.ok).toEqual({
+    expect(content['common']['buttons']['ok']).toEqual({
       value: 'Aceptar',
       baseValue: 'OK',
       comment: 'OK button',
@@ -119,24 +119,21 @@ describe('export-to-json', () => {
     });
 
     // Cancel has no comment or tags, so those fields should be missing
-    expect(content.common.buttons.cancel).toEqual({
+    expect(content['common']['buttons']['cancel']).toEqual({
       value: 'Cancelar',
       baseValue: 'Cancel',
       status: 'translated',
     });
   });
 
-  it('should emit rich objects when includeBase is true without richJson', () => {
+  it('should ignore includeBase without richJson', () => {
     const options = { ...defaultOptions, includeBase: true };
     exportToJson(mockResources, options);
 
     const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
     const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-    expect(content.common.buttons.ok).toEqual({
-      value: 'Aceptar',
-      baseValue: 'OK',
-    });
+    expect(content['common']['buttons']['ok']).toBe('Aceptar');
   });
 
   describe('basePropertyName option', () => {
@@ -153,23 +150,23 @@ describe('export-to-json', () => {
       const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
       const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-      expect(content.common.buttons.ok).toEqual({
+      expect(content['common']['buttons']['ok']).toEqual({
         value: 'Aceptar',
         original: 'OK',
         comment: 'OK button',
       });
-      expect(content.common.buttons.ok).not.toHaveProperty('baseValue');
+      expect(content['common']['buttons']['ok']).not.toHaveProperty('baseValue');
     });
 
-    it('should use custom property name in non-rich --include-base mode', () => {
+    it('should ignore custom property name without rich JSON', () => {
       const options = { ...defaultOptions, includeBase: true, basePropertyName: 'source' };
       exportToJson(mockResources, options);
 
       const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
       const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-      expect(content.common.buttons.ok).toEqual({ value: 'Aceptar', source: 'OK' });
-      expect(content.common.buttons.ok).not.toHaveProperty('baseValue');
+      expect(content['common']['buttons']['ok']).toBe('Aceptar');
+      expect(content['common']['buttons']['ok']).not.toHaveProperty('baseValue');
     });
 
     it('should not emit any base property when includeBase is false', () => {
@@ -179,7 +176,7 @@ describe('export-to-json', () => {
       const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
       const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-      expect(content.common.buttons.ok).toBe('Aceptar');
+      expect(content['common']['buttons']['ok']).toBe('Aceptar');
     });
 
     it('should default to baseValue when basePropertyName is not provided', () => {
@@ -189,13 +186,13 @@ describe('export-to-json', () => {
       const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
       const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-      expect(content.common.buttons.ok).toHaveProperty('baseValue', 'OK');
+      expect(content['common']['buttons']['ok']).toHaveProperty('baseValue', 'OK');
     });
 
     it('should correctly detect hierarchical conflict when custom basePropertyName is used', () => {
       // 'a' is set first as a rich value with property name 'original'.
       // Then 'a.b' tries to traverse into 'a', which should be detected as a conflict
-      // (leaf treated as parent). Without threading basePropertyName into isRichValue,
+      // (leaf treated as parent). With incorrect rich leaf detection,
       // 'a' would not be recognised as a rich value and traversal would silently corrupt the tree.
       const conflictResources: FilteredResource[] = [
         { key: 'a', value: 'leaf', baseValue: 'Leaf', status: 'translated', collection: 'Core', locale: 'es' },
@@ -206,10 +203,11 @@ describe('export-to-json', () => {
         ...defaultOptions,
         includeBase: true,
         basePropertyName: 'original',
+        richJson: true,
       });
 
       expect(result.hierarchicalConflicts).toHaveLength(1);
-      expect(result.hierarchicalConflicts[0]).toContain('conflicts with parent');
+      expect(result.hierarchicalConflicts[0]).toContain('has a value and child keys; skipped');
     });
   });
 
@@ -233,43 +231,62 @@ describe('export-to-json', () => {
       },
     ];
 
-    const result = exportToJson(conflictResources, defaultOptions);
+    for (const ordered of [conflictResources, [...conflictResources].reverse()]) {
+      const result = exportToJson(ordered, defaultOptions);
+      expect(result.hierarchicalConflicts).toHaveLength(1);
+      expect(result.hierarchicalConflicts[0]).toContain('has a value and child keys; skipped');
+      expect(result.resourcesExported).toBe(1);
+      expect(result.hierarchicalConflicts).toEqual(['[es] a has a value and child keys; skipped a.b']);
+      const lastCall = vi.mocked(jsonFileOps.writeJsonFile).mock.calls.slice(-1)[0];
+      expect(lastCall?.[0].data).toEqual({ a: 'Value A' });
+    }
+  });
 
-    expect(result.hierarchicalConflicts).toHaveLength(1);
-    expect(result.hierarchicalConflicts[0]).toContain('conflicts with parent');
+  it('ignores all rich options in flat JSON without richJson', () => {
+    exportToJson(mockResources, {
+      ...defaultOptions,
+      jsonStructure: 'flat',
+      includeBase: true,
+      includeComment: true,
+      includeStatus: true,
+      includeTags: true,
+      basePropertyName: 'source',
+    });
+    const content = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0].data as Record<string, unknown>;
+    expect(content['common.buttons.ok']).toBe('Aceptar');
   });
 
   describe('standalone include-* flags without --rich', () => {
-    it('should emit rich objects when includeComment is true', () => {
+    it('should ignore includeComment without richJson', () => {
       const options = { ...defaultOptions, includeComment: true };
       exportToJson(mockResources, options);
 
       const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
       const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-      expect(content.common.buttons.ok).toEqual({ value: 'Aceptar', comment: 'OK button' });
-      expect(content.common.buttons.cancel).toEqual({ value: 'Cancelar' });
+      expect(content['common']['buttons']['ok']).toBe('Aceptar');
+      expect(content['common']['buttons']['cancel']).toBe('Cancelar');
     });
 
-    it('should emit rich objects when includeStatus is true', () => {
+    it('should ignore includeStatus without richJson', () => {
       const options = { ...defaultOptions, includeStatus: true };
       exportToJson(mockResources, options);
 
       const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
       const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-      expect(content.common.buttons.ok).toEqual({ value: 'Aceptar', status: 'translated' });
+      expect(content['common']['buttons']['ok']).toBe('Aceptar');
     });
 
-    it('should emit rich objects when includeTags is true', () => {
+    it('should ignore includeTags without richJson', () => {
       const options = { ...defaultOptions, includeTags: true };
       exportToJson(mockResources, options);
 
       const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
       const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-      expect(content.common.buttons.ok).toEqual({ value: 'Aceptar', tags: ['ui'] });
-      expect(content.common.buttons.cancel).toEqual({ value: 'Cancelar' });
+      expect(content['common']['buttons']['ok']).toBe('Aceptar');
+      expect(content['common']['buttons']['cancel']).toBe('Cancelar');
     });
 
     it('should emit bare string values when no include-* flag is set and richJson is false', () => {
@@ -278,8 +295,8 @@ describe('export-to-json', () => {
       const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls[0][0];
       const content = callArgs.data as Record<string, Record<string, Record<string, unknown>>>;
 
-      expect(content.common.buttons.ok).toBe('Aceptar');
-      expect(content.common.buttons.cancel).toBe('Cancelar');
+      expect(content['common']['buttons']['ok']).toBe('Aceptar');
+      expect(content['common']['buttons']['cancel']).toBe('Cancelar');
     });
   });
 
@@ -306,8 +323,9 @@ describe('export-to-json', () => {
 
     const singleFileContent = (resources: FilteredResource[], options: ExportOptions): Record<string, unknown> => {
       exportToJson(resources, { ...options, jsonStructure: 'flat' });
-      const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls.at(-1)?.[0];
-      return callArgs.data as Record<string, unknown>;
+      const callArgs = vi.mocked(jsonFileOps.writeJsonFile).mock.calls.slice(-1)[0]?.[0];
+      expect(callArgs).toBeDefined();
+      return callArgs?.data as Record<string, unknown>;
     };
 
     it('adds doNotTranslate in rich mode', () => {
@@ -331,5 +349,21 @@ describe('export-to-json', () => {
       const content = singleFileContent([baseRow], { ...defaultOptions, richJson: true });
       expect(content['brand.title']).toEqual({ value: 'Inicio iPhone' });
     });
+  });
+
+  it('names every skipped descendant and counts only surviving rich leaves', () => {
+    const keys = ['a.b.c', 'a.b', 'a.b.d', 'other'];
+    const resources: FilteredResource[] = keys.map((key) => ({
+      ...mockResources[0],
+      key,
+      value: key,
+    }));
+    for (const ordered of [resources, [...resources].reverse()]) {
+      const result = exportToJson(ordered, { ...defaultOptions, richJson: true });
+      expect(result.resourcesExported).toBe(2);
+      expect(result.hierarchicalConflicts).toEqual(['[es] a.b has a value and child keys; skipped a.b.c, a.b.d']);
+      const lastCall = vi.mocked(jsonFileOps.writeJsonFile).mock.calls.slice(-1)[0];
+      expect(lastCall?.[0].data).toEqual({ a: { b: { value: 'a.b' } }, other: { value: 'other' } });
+    }
   });
 });

@@ -141,5 +141,25 @@
     "ru": "View",
     "ja": "View",
     "de": "View"
+  },
+  "done": {
+    "source": "Done",
+    "comment": "Generic action label that closes a panel and keeps the changes",
+    "tags": ["common"],
+    "es": "Listo",
+    "fr-ca": "Terminé",
+    "ru": "Готово",
+    "ja": "完了",
+    "de": "Fertig"
+  },
+  "open": {
+    "source": "Open",
+    "comment": "Action label that leaves for an existing item",
+    "tags": ["common"],
+    "es": "Abrir",
+    "fr-ca": "Ouvrir",
+    "ru": "Открыть",
+    "ja": "開く",
+    "de": "Öffnen"
   }
 }

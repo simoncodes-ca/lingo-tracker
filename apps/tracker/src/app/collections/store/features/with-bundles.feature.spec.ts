@@ -5,22 +5,23 @@ import type { BundleDefinitionDto, BundleGenerateJobDto, LingoTrackerConfigDto }
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTranslocoTestingModule } from '../../../../testing/transloco-testing.module';
+import { toApiError } from '../../../shared/api-error/api-error';
 import { CollectionsApiService } from '../../services/collections-api.service';
+import { BUNDLE_RUNS_STORAGE_KEY } from '../bundle-batch-controller';
+import { JOB_POLL_INTERVAL_MS } from '../job-run-lifecycle';
 import { CollectionsStore } from '../collections.store';
-import { BUNDLE_JOB_POLL_INTERVAL_MS, BUNDLE_RUNS_STORAGE_KEY } from './with-bundles.feature';
 
 describe('withBundlesFeature', () => {
   let store: InstanceType<typeof CollectionsStore>;
-  let spectator: SpectatorService<CollectionsStore>;
+  let spectator: SpectatorService<InstanceType<typeof CollectionsStore>>;
   let reloadInjector: EnvironmentInjector | undefined;
 
+  // The definition writes are covered in ../config-write.spec.ts; this file covers the runs.
   const api = {
     getConfig: vi.fn(),
-    createBundle: vi.fn(),
-    updateBundle: vi.fn(),
-    deleteBundle: vi.fn(),
     generateBundle: vi.fn(),
     getBundleJob: vi.fn(),
+    dryRunBundle: vi.fn(),
   };
 
   const trackerBundle: BundleDefinitionDto = {
@@ -96,6 +97,7 @@ describe('withBundlesFeature', () => {
 
   afterEach(() => {
     reloadInjector?.destroy();
+    reloadInjector = undefined;
     vi.useRealTimers();
   });
 
@@ -122,71 +124,17 @@ describe('withBundlesFeature', () => {
     });
   });
 
-  describe('definition mutations', () => {
-    beforeEach(createStoreInstance);
+  it('passes a bundle dry run through the store and preserves the API Error', () => {
+    createStoreInstance();
+    const request = { name: 'main', bundle: mainBundle };
+    const failure = toApiError(new HttpErrorResponse({ status: 400, error: { message: 'Invalid bundle' } }));
+    api.dryRunBundle.mockReturnValue(throwError(() => failure));
+    const received = vi.fn();
 
-    it('createBundle posts the DTO and refetches config', () => {
-      api.createBundle.mockReturnValue(of({ message: 'ok' }));
-      api.getConfig.mockReturnValue(of(config));
+    store.dryRunBundle(request).subscribe({ error: received });
 
-      store.createBundle({ name: 'tracker', bundle: trackerBundle });
-
-      expect(api.createBundle).toHaveBeenCalledWith({ name: 'tracker', bundle: trackerBundle });
-      expect(api.getConfig).toHaveBeenCalled();
-      expect(store.config()).toEqual(config);
-      expect(store.isLoading()).toBe(false);
-      expect(store.error()).toBeNull();
-    });
-
-    it('createBundle surfaces the API error body message', () => {
-      api.createBundle.mockReturnValue(
-        throwError(
-          () => new HttpErrorResponse({ status: 409, error: { message: 'A bundle named tracker already exists.' } }),
-        ),
-      );
-
-      store.createBundle({ name: 'tracker', bundle: trackerBundle });
-
-      expect(store.error()).toBe('A bundle named tracker already exists.');
-      expect(store.isLoading()).toBe(false);
-      expect(api.getConfig).not.toHaveBeenCalled();
-    });
-
-    it('createBundle falls back to a generic message when the error has none', () => {
-      api.createBundle.mockReturnValue(throwError(() => ({ weird: true })));
-
-      store.createBundle({ name: 'tracker', bundle: trackerBundle });
-
-      expect(store.error()).toBe('Failed to create bundle.');
-    });
-
-    it('updateBundle sends the rename DTO and refetches config', () => {
-      api.updateBundle.mockReturnValue(of({ message: 'ok' }));
-      api.getConfig.mockReturnValue(of(config));
-
-      store.updateBundle({ oldName: 'old', newName: 'tracker', bundle: trackerBundle });
-
-      expect(api.updateBundle).toHaveBeenCalledWith('old', { name: 'tracker', bundle: trackerBundle });
-      expect(store.config()).toEqual(config);
-      expect(store.error()).toBeNull();
-    });
-
-    it('deleteBundle removes the bundle, its run state, and refetches config', () => {
-      api.getConfig.mockReturnValue(of(config));
-      api.generateBundle.mockReturnValue(of(completedJob));
-      store.generateBundle('tracker');
-      expect(store.bundleRuns()['tracker']?.status).toBe('completed');
-
-      api.deleteBundle.mockReturnValue(of({ message: 'ok' }));
-      const configAfterDelete = { ...config, bundles: { main: mainBundle } };
-      api.getConfig.mockReturnValue(of(configAfterDelete));
-
-      store.deleteBundle('tracker');
-
-      expect(api.deleteBundle).toHaveBeenCalledWith('tracker');
-      expect(store.config()).toEqual(configAfterDelete);
-      expect(store.bundleRuns()['tracker']).toBeUndefined();
-    });
+    expect(api.dryRunBundle).toHaveBeenCalledWith(request);
+    expect(received).toHaveBeenCalledWith(failure);
   });
 
   describe('generateBundle', () => {
@@ -260,12 +208,12 @@ describe('withBundlesFeature', () => {
       store.generateBundle('tracker', ['en', 'fr']);
       expect(api.generateBundle).toHaveBeenCalledWith('tracker', { locales: ['en', 'fr'] });
 
-      vi.advanceTimersByTime(BUNDLE_JOB_POLL_INTERVAL_MS);
+      vi.advanceTimersByTime(JOB_POLL_INTERVAL_MS);
       expect(api.getBundleJob).toHaveBeenCalledTimes(1);
       expect(store.bundleRuns()['tracker']?.status).toBe('running');
       expect(store.bundleRuns()['tracker']?.progress).toEqual({ current: 1, total: 2 });
 
-      vi.advanceTimersByTime(BUNDLE_JOB_POLL_INTERVAL_MS);
+      vi.advanceTimersByTime(JOB_POLL_INTERVAL_MS);
       expect(api.getBundleJob).toHaveBeenCalledTimes(2);
       const run = store.bundleRuns()['tracker'];
       expect(run?.status).toBe('completed');
@@ -275,7 +223,7 @@ describe('withBundlesFeature', () => {
       expect(store.isAnyBundleRunning()).toBe(false);
 
       // Polling stops once finished.
-      vi.advanceTimersByTime(BUNDLE_JOB_POLL_INTERVAL_MS * 3);
+      vi.advanceTimersByTime(JOB_POLL_INTERVAL_MS * 3);
       expect(api.getBundleJob).toHaveBeenCalledTimes(2);
     });
 
@@ -301,7 +249,7 @@ describe('withBundlesFeature', () => {
       );
 
       store.generateBundle('tracker');
-      vi.advanceTimersByTime(BUNDLE_JOB_POLL_INTERVAL_MS);
+      vi.advanceTimersByTime(JOB_POLL_INTERVAL_MS);
 
       const run = store.bundleRuns()['tracker'];
       expect(run?.status).toBe('failed');
@@ -312,7 +260,9 @@ describe('withBundlesFeature', () => {
 
     it('marks the run failed when the generate request is rejected', () => {
       api.generateBundle.mockReturnValue(
-        throwError(() => new HttpErrorResponse({ status: 404, error: { message: 'Bundle tracker not found' } })),
+        throwError(() =>
+          toApiError(new HttpErrorResponse({ status: 404, error: { message: 'Bundle tracker not found' } })),
+        ),
       );
 
       store.generateBundle('tracker');
@@ -335,7 +285,11 @@ describe('withBundlesFeature', () => {
     });
 
     it('retryBundle re-runs a failed bundle', () => {
-      api.generateBundle.mockReturnValueOnce(throwError(() => new Error('boom'))).mockReturnValueOnce(of(completedJob));
+      api.generateBundle
+        .mockReturnValueOnce(
+          throwError(() => toApiError(new HttpErrorResponse({ status: 500, error: { message: 'boom' } }))),
+        )
+        .mockReturnValueOnce(of(completedJob));
 
       store.generateBundle('tracker');
       expect(store.bundleRuns()['tracker']?.status).toBe('failed');
@@ -359,6 +313,125 @@ describe('withBundlesFeature', () => {
       expect(api.generateBundle).toHaveBeenCalledWith('tracker', {});
       expect(store.bundleRuns()['main']?.jobId).toBe('job-main');
       expect(store.bundleRuns()['tracker']?.jobId).toBe('job-tracker');
+    });
+
+    it('counts only started bundles and finishes the batch while a skipped run is still running', () => {
+      vi.useFakeTimers();
+      api.getConfig.mockReturnValue(of(config));
+      store.loadCollections();
+      api.generateBundle.mockImplementation((name: string) =>
+        of({ ...runningJob, jobId: `job-${name}`, bundleName: name }),
+      );
+      api.getBundleJob.mockImplementation((jobId: string) =>
+        of(jobId === 'job-main' ? { ...completedJob, jobId, bundleName: 'main' } : runningJob),
+      );
+      store.generateBundle('tracker');
+
+      store.generateAllBundles();
+
+      expect(api.generateBundle).toHaveBeenCalledTimes(2);
+      expect(store.bundleBatch()).toEqual(['main']);
+      expect(store.batchTotal()).toBe(1);
+      expect(store.batchPosition()).toBe(1);
+      expect(store.isBatchRunning()).toBe(true);
+
+      vi.advanceTimersByTime(JOB_POLL_INTERVAL_MS);
+
+      expect(store.batchPosition()).toBe(1);
+      expect(store.isBatchRunning()).toBe(false);
+      expect(store.bundleRuns()['main']?.status).toBe('completed');
+      expect(store.bundleRuns()['tracker']?.status).toBe('running');
+      expect(store.isAnyBundleRunning()).toBe(true);
+    });
+
+    it('advances batch progress for completed and failed runs and caps the final position', () => {
+      vi.useFakeTimers();
+      api.getConfig.mockReturnValue(of(config));
+      store.loadCollections();
+      api.generateBundle.mockImplementation((name: string) =>
+        of({ ...runningJob, jobId: `job-${name}`, bundleName: name }),
+      );
+      api.getBundleJob.mockImplementation((jobId: string) =>
+        of(jobId === 'job-main' ? { ...completedJob, jobId } : runningJob),
+      );
+
+      store.generateAllBundles();
+      expect(store.batchTotal()).toBe(2);
+      expect(store.batchPosition()).toBe(1);
+      store.generateAllBundles();
+      expect(api.generateBundle).toHaveBeenCalledTimes(2);
+      expect(store.bundleBatch()).toEqual(['main', 'tracker']);
+      expect(store.batchTotal()).toBe(2);
+      expect(store.isBatchRunning()).toBe(true);
+
+      vi.advanceTimersByTime(JOB_POLL_INTERVAL_MS);
+      expect(store.batchPosition()).toBe(2);
+      expect(store.isBatchRunning()).toBe(true);
+      store.generateAllBundles();
+      expect(api.generateBundle).toHaveBeenCalledTimes(2);
+      expect(store.bundleBatch()).toEqual(['main', 'tracker']);
+      expect(store.batchTotal()).toBe(2);
+      expect(store.batchPosition()).toBe(2);
+      expect(store.isBatchRunning()).toBe(true);
+
+      api.getBundleJob.mockReturnValue(of({ ...runningJob, status: 'failed', error: 'Failed' }));
+      vi.advanceTimersByTime(JOB_POLL_INTERVAL_MS);
+      expect(store.batchPosition()).toBe(2);
+      expect(store.isBatchRunning()).toBe(false);
+    });
+
+    it('records synchronous failures, replaces a finished batch and preserves a running batch', () => {
+      api.getConfig.mockReturnValue(of(config));
+      store.loadCollections();
+      api.generateBundle.mockReturnValue(throwError(() => toApiError(new HttpErrorResponse({ status: 500 }))));
+      store.generateAllBundles();
+      expect(store.bundleBatch()).toEqual(['main', 'tracker']);
+      expect(store.batchTotal()).toBe(2);
+      expect(store.batchPosition()).toBe(2);
+      expect(store.isBatchRunning()).toBe(false);
+
+      api.getConfig.mockReturnValue(of({ ...config, bundles: { main: mainBundle } }));
+      store.loadCollections();
+      api.generateBundle.mockReturnValue(of(completedJob));
+      store.generateAllBundles();
+      expect(store.bundleBatch()).toEqual(['main']);
+      expect(store.batchTotal()).toBe(1);
+
+      api.generateBundle.mockReturnValue(of(runningJob));
+      api.getBundleJob.mockReturnValue(of(runningJob));
+      store.generateAllBundles();
+      expect(store.isBatchRunning()).toBe(true);
+      const batch = store.bundleBatch();
+
+      // A new configured bundle must not replace the batch that is still in flight.
+      api.getConfig.mockReturnValue(of(config));
+      store.loadCollections();
+      store.generateAllBundles();
+      expect(api.generateBundle).toHaveBeenCalledTimes(4);
+      expect(store.bundleBatch()).toBe(batch);
+      expect(store.bundleBatch()).toEqual(['main']);
+      expect(store.batchTotal()).toBe(1);
+      expect(store.batchPosition()).toBe(1);
+      expect(store.isBatchRunning()).toBe(true);
+      expect(store.bundleRuns()['tracker']?.status).toBe('failed');
+    });
+
+    it('has an empty batch when all configured bundles are already running or none are configured', () => {
+      expect(store.batchTotal()).toBe(0);
+      expect(store.isBatchRunning()).toBe(false);
+      store.generateAllBundles();
+      expect(store.bundleBatch()).toEqual([]);
+
+      api.getConfig.mockReturnValue(of(config));
+      store.loadCollections();
+      api.generateBundle.mockReturnValue(of(runningJob));
+      store.generateBundle('main');
+      store.generateBundle('tracker');
+      store.generateAllBundles();
+      expect(api.generateBundle).toHaveBeenCalledTimes(2);
+      expect(store.bundleBatch()).toEqual([]);
+      expect(store.batchTotal()).toBe(0);
+      expect(store.isBatchRunning()).toBe(false);
     });
 
     it('clearBundleRun removes only the named run', () => {
@@ -408,13 +481,39 @@ describe('withBundlesFeature', () => {
       api.getBundleJob.mockReturnValue(of(runningJob));
       store.generateBundle('tracker');
 
-      api.getBundleJob.mockReturnValue(throwError(() => new Error('job not found')));
+      api.getBundleJob.mockReturnValue(
+        throwError(() => toApiError(new HttpErrorResponse({ status: 404, error: { message: 'job not found' } }))),
+      );
       reloadStore();
       await Promise.resolve();
 
       // A stale "Generating" strip the user cannot act on is worse than no strip.
       expect(store.bundleRuns()['tracker']).toBeUndefined();
     });
+
+    for (const message of ['Job evicted', 'Job missing after API restart']) {
+      it(`drops and persists removal of a restored job: ${message}`, () => {
+        createStoreInstance();
+        sessionStorage.setItem(
+          BUNDLE_RUNS_STORAGE_KEY,
+          JSON.stringify({
+            tracker: { status: 'running', jobId: 'missing-job' },
+            main: { status: 'completed', result: completedJob.result },
+          }),
+        );
+        api.getBundleJob.mockReturnValue(
+          throwError(() => toApiError(new HttpErrorResponse({ status: 404, error: { message } }))),
+        );
+
+        reloadStore();
+
+        expect(store.bundleRuns()['tracker']).toBeUndefined();
+        expect(store.bundleRuns()['main']?.status).toBe('completed');
+        expect(JSON.parse(sessionStorage.getItem(BUNDLE_RUNS_STORAGE_KEY) ?? '{}')).toEqual(store.bundleRuns());
+        expect(store.batchTotal()).toBe(0);
+        expect(store.isBatchRunning()).toBe(false);
+      });
+    }
 
     it('dismissing a run keeps it dismissed across a reload', async () => {
       createStoreInstance();
@@ -425,6 +524,24 @@ describe('withBundlesFeature', () => {
       reloadStore();
 
       expect(store.bundleRuns()['tracker']).toBeUndefined();
+    });
+
+    it('ignores unavailable session storage without clearing existing runs', () => {
+      createStoreInstance();
+      api.generateBundle.mockReturnValue(of(completedJob));
+      store.generateBundle('tracker');
+      const runs = store.bundleRuns();
+      const read = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('Storage unavailable');
+      });
+
+      try {
+        expect(() => store.restoreBundleRuns()).not.toThrow();
+        expect(store.bundleRuns()).toBe(runs);
+        expect(api.getBundleJob).not.toHaveBeenCalled();
+      } finally {
+        read.mockRestore();
+      }
     });
 
     it('ignores corrupt persisted state', async () => {

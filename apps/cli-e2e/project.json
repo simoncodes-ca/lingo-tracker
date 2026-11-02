@@ -1,0 +1,42 @@
+{
+  "name": "cli-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/cli-e2e/src",
+  "projectType": "application",
+  "implicitDependencies": ["cli"],
+  "targets": {
+    "e2e": {
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/package.json",
+        {
+          "dependentTasksOutputFiles": "**/*",
+          "transitive": false
+        },
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}", "{workspaceRoot}/dist/test-results/{projectRoot}"],
+      "dependsOn": [
+        {
+          "projects": ["cli"],
+          "target": "build"
+        }
+      ],
+      "options": {
+        "watch": false,
+        "config": "./vite.config.mts"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default", "{workspaceRoot}/tsconfig.base.json"],
+      "options": {
+        "command": "tsc --noEmit -p apps/cli-e2e/tsconfig.spec.json"
+      }
+    }
+  }
+}

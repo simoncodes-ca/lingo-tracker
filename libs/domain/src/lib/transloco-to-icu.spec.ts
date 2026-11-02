@@ -1,5 +1,5 @@
 import { parse, type Token } from '@messageformat/parser';
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { translocoToICU } from './transloco-to-icu';
 
 describe('translocoToICU', () => {
@@ -58,6 +58,10 @@ describe('translocoToICU', () => {
   });
 
   describe('multiple placeholders', () => {
+    it('converts two named placeholders separated by a space', () => {
+      expect(translocoToICU('{{ greeting }} {{ name }}')).toBe('{greeting} {name}');
+    });
+
     it('converts two separate placeholders', () => {
       expect(translocoToICU('Hello {{ firstName }} {{ lastName }}')).toBe('Hello {firstName} {lastName}');
     });
@@ -76,6 +80,10 @@ describe('translocoToICU', () => {
   });
 
   describe('already-ICU values pass through correctly', () => {
+    it('keeps an ICU argument beside a Transloco placeholder', () => {
+      expect(translocoToICU('{count} items for {{ name }}')).toBe('{count} items for {name}');
+    });
+
     it('does not alter single-brace ICU placeholders', () => {
       expect(translocoToICU('{name}')).toBe('{name}');
     });
@@ -87,6 +95,10 @@ describe('translocoToICU', () => {
   });
 
   describe('edge cases', () => {
+    it('leaves a multi-word placeholder name unchanged', () => {
+      expect(translocoToICU('{{ first name }}')).toBe('{{ first name }}');
+    });
+
     it('does not alter a lone opening brace that is not a Transloco pattern', () => {
       expect(translocoToICU('use { for sets')).toBe('use { for sets');
     });
@@ -325,6 +337,29 @@ describe('translocoToICU sub-message boundaries', () => {
 
   it('converts a placeholder that follows branch text', () => {
     expect(translocoToICU('=1 {Delete {{itemName}}}')).toBe('=1 {Delete {itemName}}');
+  });
+});
+
+describe('translocoToICU glued and non-ASCII selectors', () => {
+  // I1: HEAD bug fixed. These selectors pass the strict grammar, so `{{x}}` is a case body.
+  for (const value of [
+    '{p, plural, offset:2other{{x}}}',
+    '{p, plural, offset:1one {{x}} other {y}}',
+    '{p, plural, offset:2=2{{x}} other {y}}',
+    '{g, select, männlich {{x}} other {y}}',
+    '{g, select, 日本 {{x}} other {y}}',
+  ]) {
+    it(`leaves ${value} unchanged`, () => {
+      expect(translocoToICU(value)).toBe(value);
+    });
+  }
+
+  it('still converts the interpolation behind a malformed multi-digit offset', () => {
+    expect(translocoToICU('{p, plural, offset:12 {{x}} other{y}}')).toBe('{p, plural, offset:12 {x} other{y}}');
+  });
+
+  it('still converts the interpolation behind a dotted select key', () => {
+    expect(translocoToICU('{g, select, a.b {{x}} other {y}}')).toBe('{g, select, a.b {x} other {y}}');
   });
 });
 

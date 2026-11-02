@@ -1,76 +1,49 @@
-import { normalizeTags } from '@simoncodes-ca/domain';
+import { resolve } from 'node:path';
 import type { LingoTrackerCollection } from '../config/lingo-tracker-collection';
-import { updateConfig } from '../lib/config/config-file-operations';
-import { ErrorMessages } from '../lib/errors/error-messages';
+import { addCollectionEntry } from '../lib/config/collection-entry';
+import { guardedConfigWrite } from '../lib/config/config-file-operations';
+import type { OpenedProject } from '../lib/config/open-collection';
+import { assertProtectedTerms } from '../lib/config/protected-terms-request';
+import { reindexResourceCollection } from '../lib/resource/resource-folder';
+import { prepareCollectionProtectedTerms } from './collection-protected-terms';
 
 export interface AddCollectionOptions {
-  cwd?: string;
+  protectedTerms?: string[];
 }
 
+/**
+ * Registers a collection in the config. The stored record is the [Collection Entry]
+ * (`lib/config/collection-entry.ts`): `translationsFolder` plus the settings that differ
+ * from the global config; a folder under `node_modules` is read-only unless told otherwise.
+ * All preconditions are checked before writing. The write order is config, then terms.
+ * A failed terms write restores the config and companion file bytes.
+ *
+ * @throws {CollectionAlreadyExistsError} A collection with this name exists.
+ * @throws {InvalidCollectionError} `translationsFolder` is missing or blank.
+ * @throws {InvalidCollectionError} Protected terms are not an array of strings.
+ * @throws {ProtectedTermsFileNotSetError} Terms were supplied without a file pointer.
+ * @throws {ParentDirectoryMissingError} The terms file's parent directory is missing.
+ */
 export function addCollection(
+  project: OpenedProject,
   collectionName: string,
   collection: LingoTrackerCollection,
   options: AddCollectionOptions = {},
 ): { message: string } {
-  if (!collection || !collection.translationsFolder || !collection.translationsFolder.trim()) {
-    throw new Error('translationsFolder is required');
-  }
-
-  const trimmedTranslationsFolder = collection.translationsFolder.trim();
-
-  updateConfig((config) => {
-    if (!config.collections) {
-      config.collections = {};
-    }
-
-    if (config.collections[collectionName]) {
-      throw new Error(ErrorMessages.collectionAlreadyExists(collectionName));
-    }
-
-    const minimalCollection: LingoTrackerCollection = {
-      translationsFolder: trimmedTranslationsFolder,
-    };
-
-    // Append only properties that are explicitly different from the root config
-    if (collection.exportFolder !== undefined && collection.exportFolder !== config.exportFolder) {
-      minimalCollection.exportFolder = collection.exportFolder;
-    }
-
-    if (collection.importFolder !== undefined && collection.importFolder !== config.importFolder) {
-      minimalCollection.importFolder = collection.importFolder;
-    }
-
-    if (collection.baseLocale !== undefined && collection.baseLocale !== config.baseLocale) {
-      minimalCollection.baseLocale = collection.baseLocale;
-    }
-
-    if (collection.locales !== undefined && JSON.stringify(collection.locales) !== JSON.stringify(config.locales)) {
-      minimalCollection.locales = collection.locales;
-    }
-
-    // Persist read-only only when set, keeping writable collections clean.
-    if (collection.readOnly) {
-      minimalCollection.readOnly = true;
-    }
-
-    const normalizedTags = normalizeTags(collection.tags ?? []);
-    if (normalizedTags.length > 0) {
-      minimalCollection.tags = normalizedTags;
-    }
-
-    const protectedTermsFile = collection.protectedTermsFile?.trim();
-    if (protectedTermsFile) {
-      minimalCollection.protectedTermsFile = protectedTermsFile;
-    }
-
-    return {
-      ...config,
-      collections: {
-        ...config.collections,
-        [collectionName]: minimalCollection,
-      },
-    };
-  }, options.cwd);
+  if (options.protectedTerms !== undefined) assertProtectedTerms(options.protectedTerms);
+  const configWrite = guardedConfigWrite(project);
+  const nextConfig = addCollectionEntry(project.sourceConfig, collectionName, collection);
+  const writeTerms = prepareCollectionProtectedTerms(
+    nextConfig,
+    collectionName,
+    options.protectedTerms,
+    project.projectRoot,
+  );
+  configWrite.transaction(nextConfig, writeTerms === undefined ? [] : [writeTerms]);
+  reindexResourceCollection(
+    { translationsFolder: project.projectRoot, onMutation: project.onMutation },
+    resolve(project.projectRoot, collection.translationsFolder.trim()),
+  );
 
   return { message: `Collection "${collectionName}" added successfully` };
 }

@@ -1,5 +1,6 @@
 <div class="folder-picker">
   <!-- Folder Display Header (Clickable) -->
+  @if (!hideHeader()) {
   <div
     class="folder-header"
     (click)="toggleExpanded()"
@@ -15,6 +16,7 @@
     <span class="folder-path">{{ displayPath() }}</span>
     <mat-icon class="chevron-icon">{{ chevronIcon() }}</mat-icon>
   </div>
+  }
 
   <!-- Expandable Folder Picker Section -->
   @if (isExpanded()) {
@@ -52,11 +54,13 @@
               [expandedPaths]="expandedPaths()"
               [isAddingFolder]="isAddingFolder()"
               [addFolderParentPath]="addFolderParentPath()"
+              [createError]="createError()"
               (folderSelect)="onFolderSelect($event)"
               (toggleExpand)="onExpandToggle($event)"
               (addFolder)="onAddFolder($event)"
               (confirmNewFolder)="onFolderNameConfirmed($event)"
               (cancelNewFolder)="onFolderNameCancelled()"
+              (newFolderEdited)="onFolderNameEdited()"
             />
           }
         </div>

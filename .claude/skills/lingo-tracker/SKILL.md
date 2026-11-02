@@ -52,7 +52,7 @@ Before calling `add-resource` for any detected string, run:
 bash .claude/skills/lingo-tracker/scripts/find-similar.sh "<the string value>"
 ```
 
-**If the command returns any results, evaluate each match** (the tool already filters to ≥ 80% similarity):
+**If the command returns any results, evaluate each match** (the tool shows values that are ≥ 80% similar, or that contain the string or are contained in it as whole words with ≥ 40% similarity; such a containment match shows its real similarity, between 40% and 80%):
 
 - **Reuse the existing key if**:
   - The stored value is identical or nearly identical (≥ 95% similarity)
@@ -65,6 +65,8 @@ bash .claude/skills/lingo-tracker/scripts/find-similar.sh "<the string value>"
   - The command outputs "No similar values found" (no results returned)
 
 When reusing, use the existing key directly in the code — do not call `add-resource`.
+
+If the key already exists the command exits 1; reuse the key, use `edit-resource`, or pass `--override` to replace it.
 
 ## Default Collection & Bundle
 
@@ -137,7 +139,8 @@ npx lingo-tracker delete-resource \
 ### Other useful commands
 ```bash
 npx lingo-tracker normalize --collection trackerResources
-npx lingo-tracker validate --collection trackerResources
+# validate checks every collection; strict by default (all translations must be verified)
+npx lingo-tracker validate --allow-translated
 ```
 
 ### Extract a help-translation glossary

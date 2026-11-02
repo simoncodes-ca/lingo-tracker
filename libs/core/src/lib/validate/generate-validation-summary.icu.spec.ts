@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { generateValidationSummary } from './generate-validation-summary';
 import type { IcuValidationResult, ResourceValidationResult, ValidationOptions } from './types';
 

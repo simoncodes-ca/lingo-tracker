@@ -1,4 +1,5 @@
-import type { ResourceTreeNode, ResourceTreeEntry } from './load-resource-tree';
+import { folderPathFromSegments, folderPathSegments, joinFolderPath } from '@simoncodes-ca/domain';
+import type { ResourceTreeEntry, ResourceTreeNode } from './resource-tree-types';
 
 /**
  * Extracts a subtree from a resource tree at the specified path.
@@ -16,7 +17,7 @@ export function extractSubtree(tree: ResourceTreeNode, path: string): ResourceTr
 
   // Parse path into segments, filtering out empty segments
   // This handles leading/trailing dots and consecutive dots
-  const pathSegments = path.split('.').filter((segment) => segment.length > 0);
+  const pathSegments = folderPathSegments(path).filter((segment) => segment.length > 0);
 
   // Empty after filtering means invalid path (e.g., just dots)
   if (pathSegments.length === 0) {
@@ -75,12 +76,12 @@ export function extractResourcesRecursively(node: ResourceTreeNode): ResourceTre
         continue;
       }
 
-      const relativePath = childSegments.slice(startingSegments.length).join('.');
+      const relativePath = folderPathFromSegments(childSegments.slice(startingSegments.length));
 
       for (const resource of child.tree.resources) {
         allResources.push({
           ...resource,
-          key: relativePath ? `${relativePath}.${resource.key}` : resource.key,
+          key: joinFolderPath(relativePath, resource.key),
         });
       }
 

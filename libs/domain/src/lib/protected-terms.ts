@@ -49,7 +49,7 @@ export function buildProtectedTermRegex(term: string, opts: { caseInsensitive: b
  * the stored canonical term (not the matched substring) for each term found,
  * preserving input order and deduped.
  */
-export function findProtectedTerms(value: string, terms: string[]): string[] {
+export function findProtectedTerms(value: string, terms: readonly string[]): string[] {
   const found = new Set<string>();
   const result: string[] = [];
   for (const term of terms) {
@@ -69,7 +69,11 @@ export function findProtectedTerms(value: string, terms: string[]): string[] {
  * appears verbatim (case-sensitively) in `translatedValue`. Returns the terms
  * that are present in the source but absent verbatim from the translation.
  */
-export function findProtectedTermViolations(sourceValue: string, translatedValue: string, terms: string[]): string[] {
+export function findProtectedTermViolations(
+  sourceValue: string,
+  translatedValue: string,
+  terms: readonly string[],
+): string[] {
   const violations: string[] = [];
   for (const term of terms) {
     const presentInSource = buildProtectedTermRegex(term, { caseInsensitive: true }).test(sourceValue);

@@ -1,137 +1,88 @@
 import { computed } from '@angular/core';
-import { signalStoreFeature, withState, withComputed, withMethods, patchState, type } from '@ngrx/signals';
+import { patchState, signalStoreFeature, type, withComputed, withMethods } from '@ngrx/signals';
 import type { TranslationStatus } from '@simoncodes-ca/data-transfer';
+import { NEEDS_WORK_STATUSES } from '@simoncodes-ca/domain';
+import type { SortDirection, SortField } from '../../translations/utils/sort-translations';
+import { type CollectionLifecycleRegistry, withCollectionState } from '../collection-reset';
+import {
+  clearAll,
+  compactDisplayLocale,
+  filterableLocales,
+  filteredLocales,
+  isShowingAllLocales,
+  type LocaleContext,
+  type LocaleSelection,
+  localeFilterLabel,
+  selectAll,
+  selectLocales,
+  toggleLocale,
+} from '../locale-selection';
 
-interface FilterState {
+export interface FilterState {
   selectedLocales: string[];
   selectedStatuses: TranslationStatus[];
-  sortField: 'key' | 'status';
-  sortDirection: 'asc' | 'desc';
+  sortField: SortField;
+  sortDirection: SortDirection;
 }
 
-const initialFilterState: FilterState = {
+export const initialFilterState: FilterState = {
   selectedLocales: [],
   selectedStatuses: [],
   sortField: 'key',
   sortDirection: 'asc',
 };
 
-/**
- * The one locale a compact row shows: the single selection when there is one,
- * otherwise the base locale, otherwise the collection's first locale. Compact
- * never shows a pair, so this is also what the locale filter must report.
- */
-function resolveCompactDisplayLocale(selected: string[], available: string[], base: string): string {
-  const picked = selected.find((locale) => available.includes(locale));
-  if (picked) return picked;
-  if (base && available.includes(base)) return base;
-  return available[0] ?? base;
-}
-
 export function withFilterFeature<_>() {
   return signalStoreFeature(
     {
-      state: type<{
-        availableLocales: string[];
-        baseLocale: string;
-        densityMode: string;
-        compactLocale: string | undefined;
-        compactLocaleManuallyChanged: boolean;
-      }>(),
+      props: type<CollectionLifecycleRegistry>(),
+      state: type<
+        Pick<LocaleSelection, 'densityMode' | 'compactLocale' | 'compactLocaleManuallyChanged'> & LocaleContext
+      >(),
     },
-    withState(initialFilterState),
-    withComputed(({ selectedLocales, selectedStatuses, availableLocales, baseLocale, densityMode }) => ({
-      isShowingAllLocales: computed(() => {
-        const selected = selectedLocales();
-        const available = availableLocales();
-        return selected.length === 0 || selected.length === available.length;
-      }),
-
-      localeFilterText: computed(() => {
-        const selected = selectedLocales();
-        const available = availableLocales();
-
-        // Compact shows exactly one locale, so "All locales" would be a lie about
-        // what is on screen. Name the locale the rows are actually showing.
-        if (densityMode() === 'compact') {
-          return resolveCompactDisplayLocale(selected, available, baseLocale());
-        }
-
-        if (selected.length === 0 || selected.length === available.length) return 'All locales';
-        if (selected.length === 1) return selected[0];
-        return `${selected.length} locales`;
-      }),
-
-      filteredLocales: computed(() => {
-        const selected = selectedLocales();
-        const available = availableLocales();
-        const base = baseLocale();
-
-        const result: string[] = base ? [base] : [];
-        const nonBaseAvailable = available.filter((locale) => locale !== base);
-        const selectedNonBase = selected.filter((locale) => locale !== base);
-
-        if (selected.length === 0) result.push(...nonBaseAvailable);
-        else result.push(...selectedNonBase);
-
-        return result;
-      }),
-
-      /**
-       * The single locale a compact row displays.
-       *
-       * Compact shows one value per row, never a pair. The selection is the
-       * single-select locale filter; when nothing is selected the row shows the
-       * base locale, because that is the string the developer wrote and arrived
-       * looking for. A collection with no base locale among its files falls back
-       * to its first locale so the row is never blank.
-       */
-      compactDisplayLocale: computed(() =>
-        resolveCompactDisplayLocale(selectedLocales(), availableLocales(), baseLocale()),
+    withCollectionState(initialFilterState),
+    withComputed(({ selectedLocales, densityMode, availableLocales, baseLocale, selectedStatuses }) => ({
+      isShowingAllLocales: computed(() =>
+        isShowingAllLocales(selectedLocales(), { availableLocales: availableLocales() }),
       ),
-
-      filterableLocales: computed(() => {
-        const available = availableLocales();
-        const base = baseLocale();
-        return available.filter((locale) => locale !== base);
-      }),
-
+      localeFilterLabel: computed(() =>
+        localeFilterLabel(
+          { densityMode: densityMode(), selectedLocales: selectedLocales() },
+          { availableLocales: availableLocales(), baseLocale: baseLocale() },
+        ),
+      ),
+      filteredLocales: computed(() =>
+        filteredLocales(selectedLocales(), { availableLocales: availableLocales(), baseLocale: baseLocale() }),
+      ),
+      compactDisplayLocale: computed(() =>
+        compactDisplayLocale(selectedLocales(), { availableLocales: availableLocales(), baseLocale: baseLocale() }),
+      ),
+      filterableLocales: computed(() =>
+        filterableLocales({ availableLocales: availableLocales(), baseLocale: baseLocale() }),
+      ),
       hasStatusFilter: computed(() => selectedStatuses().length > 0),
     })),
     withMethods((store) => ({
       setSelectedLocales(locales: string[]): void {
-        const isCompactMode = store.densityMode() === 'compact';
-        patchState(store, {
-          selectedLocales: locales,
-          // In compact the selection *is* the compact locale, so it is remembered
-          // as soon as it changes — not only when the user leaves compact. That is
-          // what lets a reload land on the locale they were looking at.
-          compactLocale: isCompactMode ? locales.at(0) : store.compactLocale(),
-          compactLocaleManuallyChanged: isCompactMode ? true : store.compactLocaleManuallyChanged(),
-        });
+        patchState(store, selectLocales({ densityMode: store.densityMode() }, locales));
       },
 
       toggleLocale(locale: string): void {
-        const current = store.selectedLocales();
-        const isCompactMode = store.densityMode() === 'compact';
-        const newLocales = current.includes(locale) ? current.filter((l) => l !== locale) : [...current, locale];
-
-        patchState(store, {
-          selectedLocales: newLocales,
-          compactLocale: isCompactMode ? newLocales.at(0) : store.compactLocale(),
-          compactLocaleManuallyChanged: isCompactMode ? true : store.compactLocaleManuallyChanged(),
-        });
+        patchState(
+          store,
+          toggleLocale({ densityMode: store.densityMode(), selectedLocales: store.selectedLocales() }, locale),
+        );
       },
 
       selectAllLocales(): void {
-        patchState(store, { selectedLocales: [...store.availableLocales()] });
+        patchState(store, selectAll({ availableLocales: store.availableLocales() }));
       },
 
       clearAllLocales(): void {
-        patchState(store, { selectedLocales: [] });
+        patchState(store, clearAll());
       },
 
-      setSortField(field: 'key' | 'status'): void {
+      setSortField(field: SortField): void {
         patchState(store, { sortField: field });
       },
 
@@ -152,7 +103,7 @@ export function withFilterFeature<_>() {
       },
 
       selectNeedsWorkStatuses(): void {
-        patchState(store, { selectedStatuses: ['new', 'stale'] });
+        patchState(store, { selectedStatuses: [...NEEDS_WORK_STATUSES] });
       },
 
       clearAllStatuses(): void {

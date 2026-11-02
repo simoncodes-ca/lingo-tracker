@@ -1,21 +1,23 @@
 ---
 title: Auto-Translation
-sidebar_position: 5
+sidebar_position: 8
 ---
 
 # Auto-Translation
 
-LingoTracker can automatically translate new and stale resources using machine translation providers. This feature is opt-in and configured per-project or per-collection in `.lingo-tracker.json`.
+LingoTracker can machine-translate `new` and `stale` resources through Google Cloud Translation. The feature is off until you configure it, and it only ever produces the `translated` status, so a human review step stays in the workflow.
 
 ## Overview
 
-When auto-translation is enabled, adding or editing a resource automatically triggers machine translation for all target locales — provided no explicit translations are supplied by the caller. The system classifies each string by its ICU content and applies the appropriate translation strategy:
+When auto-translation is enabled, adding a resource machine-translates every target locale for which the caller supplied no translation, and editing the source text machine-translates every locale that needs work. The system classifies each string by its ICU content and applies the appropriate translation strategy:
 
 - **Plain text** is sent directly to the translation provider.
 - **Simple placeholders** (`{name}`, `{{ count }}`) are protected with markers before translation, then restored afterward.
-- **Complex ICU** (plural, select, number, date, time) is skipped entirely -- these strings cannot be translated reliably with Google Cloud Translate as of yet.
+- **Complex ICU** (plural, select, number, date, time) is skipped entirely. A machine translator would translate the branch keywords and break the message, so these strings are left for a person.
 
-Translated entries receive the `translated` status. Skipped entries retain their current status (typically `new` or `stale`) so they surface clearly in the UI and CLI for manual handling.
+A translation is also skipped when the provider loses a placeholder marker, or when it drops a [protected term](./features/protected-terms.md) that is in the source (the same check that import applies).
+
+Translated entries receive the `translated` status and are stored in ICU format. Skipped entries retain their current status (typically `new` or `stale`) so they surface clearly in the UI and CLI for manual handling.
 
 ## Supported Providers
 
@@ -23,7 +25,7 @@ Translated entries receive the `translated` status. Skipped entries retain their
 |---|---|---|
 | Google Cloud Translation | `google-translate` | [v2 REST API](https://cloud.google.com/translate/docs/reference/rest/v2/translations/translate) |
 
-Additional providers can be added by implementing the `TranslationProvider` interface in `libs/core/src/lib/translation/translation-provider.ts`.
+Only this provider is implemented. Any other `provider` value fails with `UNKNOWN_PROVIDER` when a translation is requested.
 
 ## Configuration
 
@@ -64,7 +66,7 @@ The `translation` block accepts the following fields:
 
 ### 2. Per-collection overrides
 
-A collection can override the global translation config. This is useful when different collections target different provider accounts or when you want to disable auto-translation for a specific collection:
+A collection can carry its own `translation` block. The block **replaces** the global one rather than merging with it, so an override that enables translation must repeat `provider` and `apiKeyEnv`. Disabling is the common case and needs only `enabled: false`:
 
 ```json
 {
@@ -97,23 +99,23 @@ export GOOGLE_TRANSLATE_API_KEY="your-api-key-here"
 
 For CI/CD pipelines, use your platform's secret management (e.g., GitHub Actions secrets, GitLab CI variables).
 
-If the environment variable is not set when a translation is requested, the system throws a `TranslationError` with code `MISSING_API_KEY`.
+If the variable is unset when a translation is requested, the operation fails with `MISSING_API_KEY`. The CLI exits 1 and the API returns 500. Nothing is written for `add-resource`; an `edit-resource` keeps the saved edit.
 
 ## How It Works
 
-### Translation Orchestrator
+### The Translator
 
-The translation orchestrator sits between callers and the translation provider. For each string, it:
+Every auto-translation (add-resource, edit-resource, translate one resource, translate a locale) goes through one Translator, opened for the collection. It reads the API key, and then for each string it:
 
 1. **Classifies** the string using the ICU classifier (see below).
 2. **Routes** the string based on classification:
    1. `plain` -- sends to the provider directly.
    2. `simple-placeholders` -- protects placeholders, sends, then restores.
-   3. `complex-icu` -- returns the original value unchanged with `kind: 'skipped'`.
-3. **Returns** a result with `kind` indicating what happened:
-   - `'translated'` -- plain text was translated.
-   - `'translated-with-placeholders'` -- simple-placeholder text was translated with marker protection.
-   - `'skipped'` -- complex ICU or a marker restoration failure; the value is unchanged.
+   3. `complex-icu` -- does not send it; the string is skipped.
+3. **Checks** the translation: a lost or duplicated placeholder marker, or a dropped protected term, skips the string.
+4. **Normalizes** the translation to ICU (`{{ name }}` becomes `{name}`).
+
+For add-resource, edit-resource and translating one resource, all strings for one locale go to the provider in one request. `translate-locale` sends one request per batch of `batchSize` resources (default 5), with `delayMs` between batches. The provider may split a request further (Google: chunks of 128).
 
 ### Placeholder Protection
 
@@ -181,7 +183,7 @@ For this reason, complex ICU strings are always skipped and left for human trans
 
 #### Transloco double-brace format
 
-The classifier normalizes Transloco's double-brace format (`{{ name }}`) to single-brace (`{name}`) before analysis. Both formats are treated identically for classification purposes. The placeholder protector preserves the original format in the translated output -- if your source uses `{{ name }}`, the translated string will too.
+The classifier normalizes Transloco's double-brace format (`{{ name }}`) to single-brace (`{name}`) before analysis. Both formats are treated identically for classification purposes. Translations are always stored in ICU format: if your source uses `{{ name }}`, the stored translation uses `{name}`.
 
 ## Usage
 
@@ -189,10 +191,14 @@ The classifier normalizes Transloco's double-brace format (`{{ name }}`) to sing
 
 Auto-translation runs automatically during the `add-resource` and `edit-resource` CLI commands when `translation.enabled` is `true` in your config. No extra flags are needed.
 
-- **add-resource**: When no explicit translations are provided (interactively or via flags), the command delegates all target locales to the translation provider instead of populating them with the base value.
+- **add-resource**: Each target locale without an explicitly supplied translation goes to the provider instead of being filled with the base value. Locales you supply are stored as given.
 - **edit-resource**: When the base value is updated, the command triggers translation for any locale whose status is `new` or `stale`.
 
-Skipped locales (complex ICU strings) are left at their current status and surfaced in the CLI output for manual handling.
+Skipped locales (complex ICU, a lost placeholder, or a dropped protected term) are surfaced in the CLI output for manual handling. On add, a skipped locale gets a copy of the base value with status `new`. On edit, a skipped locale that has no value, or only an untranslated copy of the old base value, gets the new base value with status `new`; a locale that holds a real translation keeps it, marked `stale`.
+
+### Web UI
+
+In the translation browser, the row menu of a resource has **Translate** when the collection has auto-translation enabled. It translates every locale of that resource that is `new` or `stale` and reports skipped locales. The editor also fills locales you leave empty when creating a resource. There is no whole-locale translation in the UI; use `translate-locale` for that.
 
 ### Translating existing resources via the API
 
@@ -217,7 +223,7 @@ The response includes the updated resource, the number of locales translated, an
 }
 ```
 
-If the base value uses complex ICU, `skippedLocales` will list the locales that could not be auto-translated:
+If the base value uses complex ICU (or a translation lost a placeholder or a protected term), `skippedLocales` will list the locales that could not be auto-translated:
 
 ```json
 {
@@ -241,7 +247,7 @@ The `translate-locale` operation translates **all** `new` and `stale` resources 
 lingo-tracker translate-locale --collection <name> --locale <locale> [--verbose]
 ```
 
-In interactive mode (TTY), the command prompts for collection and locale when they are not provided. In non-interactive mode (CI/CD), both `--collection` and `--locale` are required.
+In interactive mode (TTY), the command prompts for the collection and locale when they are not provided. In non-interactive mode, pass `--locale`, and also `--collection` when more than one collection is configured.
 
 **Summary mode (default):**
 
@@ -250,7 +256,7 @@ Translating locale 'fr' in collection 'playground'...
 Done.
 
 Translated: 45 resources
-Skipped (ICU): 3 resources
+Skipped (needs human translation): 3 resources
 Failed: 0 resources
 ```
 
@@ -314,14 +320,12 @@ The Google Translate v2 provider:
 
 1. **Always review auto-translated strings.** Machine translation provides a starting point, not a final result. Use the `translated` status to distinguish auto-translated strings from human-`verified` ones.
 
-2. **Translate complex ICU strings manually.** When `skippedLocales` is non-empty, those strings need a human translator who understands plural rules, gender selection, and other ICU constructs for the target language.
+2. **Translate skipped strings manually.** When `skippedLocales` is non-empty, those strings need a human translator: complex ICU needs someone who understands plural rules, gender selection, and other ICU constructs for the target language, and a translation that lost a protected term must keep it.
 
 3. **Use environment variables for API keys.** Never commit API keys to `.lingo-tracker.json` or any other file in version control.
 
-4. **Start with a dry run.** Before enabling auto-translation across a large resource set, test with a small collection to verify the provider setup and review output quality.
+4. **Start small.** Enable the feature on one collection first and read the output before turning it on everywhere.
 
-5. **Normalize after bulk translation.** If you auto-translate many resources at once, run `lingo-tracker normalize` to ensure all checksums and statuses are consistent.
+5. **Be mindful of API costs.** Each string sent to the provider is billed. Strings classified as `complex-icu` are not sent.
 
-6. **Be mindful of API costs.** Each string sent to the provider incurs a charge. Strings classified as `complex-icu` are not sent, so they do not incur costs.
-
-7. **Consider per-collection overrides.** Disable auto-translation for collections that contain primarily complex ICU strings or that require specialized translation quality.
+6. **Disable it where it does not help.** A per-collection `translation` block with `enabled: false` turns it off for collections that are mostly plurals or need specialist translators.

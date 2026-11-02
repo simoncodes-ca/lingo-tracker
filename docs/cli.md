@@ -1,2081 +1,487 @@
 ---
 title: CLI Reference
-sidebar_position: 3
+sidebar_position: 6
 ---
 
 # CLI Reference
 
-This document provides a comprehensive reference for all Lingo Tracker CLI commands. For initial setup instructions, see the [Getting Started Guide](./getting-started.md).
-
-## Overview
-
-The Lingo Tracker CLI provides commands to manage translation collections and resources from the command line. All commands support both interactive mode (with prompts) and non-interactive mode (for CI/CD environments).
-
-### General Usage
+Every command of the `lingo-tracker` CLI, with its flags, prompts and exit codes. For a walkthrough see [Getting Started](./getting-started.md); for config fields see [Configuration](./configuration.md).
 
 ```bash
 lingo-tracker <command> [options]
+lingo-tracker <command> --help     # or: lingo-tracker help <command>
+lingo-tracker --version            # -V
 ```
 
-## Interactive vs Non-Interactive Mode
+## How the CLI behaves
 
-- **Interactive Mode**: When running in a TTY environment without all required options, the CLI will prompt you for missing values.
-- **Non-Interactive Mode**: In CI/CD environments or when all required options are provided, no prompts will appear.
+**Project root and config.** The CLI reads `.lingo-tracker.json` from `INIT_CWD` when a package manager sets it, otherwise from the current directory. It never searches parent directories. A missing file exits 1 with a hint to run `init`; `init` and `install-skill` do not need the file.
 
-### Common Options
+**Interactive or not.** A run is interactive only when both stdin and stdout are terminals. Piping output or redirecting it to a file makes the run non-interactive. Interactive runs prompt for missing values. Some commands also ask for confirmation in a terminal: `delete-resource`, `delete-collection`, `normalize --all`, and `add-resource` when the key exists. `remove-locale` does not ask. Non-interactive runs never prompt: a missing required value exits 1 with `Missing required options in non-interactive mode: --…`, and confirmations are skipped because the flags count as consent. `--yes` therefore matters only in a terminal.
 
-- Most commands accept configuration options that can override defaults from `.lingo-tracker.json`
-- Options use `--kebab-case` naming convention
-- Multi-value options (like `--locales`) accept space-separated values
+**Choosing a collection.** Most commands take `--collection <name>`. When the flag is omitted and the project has exactly one collection, that collection is used. With several, an interactive run shows a selection prompt and a non-interactive run exits 1. `normalize` is the exception: it always needs `--collection` or `--all` outside a terminal.
+
+**Read-only collections.** Commands that write resources refuse a read-only collection and exit 1. `normalize --all` skips read-only collections with a warning instead. `edit-collection` and `delete-collection` still work because they change only the config.
+
+**Output streams.** Results go to stdout. Errors (`❌`) and warnings (`⚠️`) go to stderr. So `glossary --stdout | jq` and `normalize --json > report.json` are safe.
+
+**Exit codes.** `0` on success, and after a cancelled prompt. `1` for a reported failure, a thrown error, missing required options, or an unknown command. Warnings never change the exit code.
+
+**Lists.** Comma-separated flags trim each item and drop blanks. For optional list flags such as `--tags`, an exactly empty value counts as not given and `--tags ,` means an empty list. `--set-tags ""` and `--set ""` deliberately clear, and `export --status ""` is an error.
+
+**Summary files.** Outside dry runs, `export` and `import` write a Markdown summary to the operating system's temp directory as `lingo-tracker-export-summary-<timestamp>.md` or `lingo-tracker-import-summary-<timestamp>.md` and print the path. The timestamp has millisecond precision, and a run never overwrites an existing summary: if the name is taken, it adds `-1`, `-2` and so on. They are not written into your project.
+
+## Command index
+
+| Area | Commands |
+|---|---|
+| Project | [`init`](#init), [`install-skill`](#install-skill) |
+| Collections | [`add-collection`](#add-collection), [`edit-collection`](#edit-collection), [`delete-collection`](#delete-collection), [`add-locale`](#add-locale), [`remove-locale`](#remove-locale) |
+| Resources | [`add-resource`](#add-resource), [`edit-resource`](#edit-resource), [`delete-resource`](#delete-resource), [`move`](#move), [`find-similar`](#find-similar), [`normalize`](#normalize) |
+| Output | [`bundle`](#bundle), [`validate`](#validate) |
+| Exchange | [`export`](#export), [`import`](#import), [`glossary`](#glossary) |
+| Terminology | [`protected-terms`](#protected-terms), [`preferred-terminology`](#preferred-terminology) |
+| Machine translation | [`translate-locale`](#translate-locale) |
 
 ---
 
-## Collection Commands
+## Project commands
 
 ### init
 
-Initialize a new Lingo Tracker project by creating a `.lingo-tracker.json` configuration file.
-
-**Usage:**
+Create `.lingo-tracker.json` in the current directory.
 
 ```bash
 lingo-tracker init [options]
 ```
 
-**Options:**
+| Flag | Default | Notes |
+|---|---|---|
+| `--collection-name <name>` | prompt | Required outside a terminal |
+| `--translations-folder <path>` | prompt | Required outside a terminal |
+| `--base-locale <locale>` | `en` | |
+| `--locales <locales...>` | none | Space-separated. Include the base locale. |
+| `--export-folder <path>` | `dist/lingo-export` | |
+| `--import-folder <path>` | `dist/lingo-import` | |
+| `--setup-bundle <true\|false>` | prompt | Inferred `true` when any bundle flag is given |
+| `--bundle-dist <path>` | `./src/assets/i18n` | |
+| `--bundle-name <pattern>` | `{locale}` | |
+| `--type-dist-file <path>` | none | Enables TypeScript key generation |
+| `--token-casing <upperCase\|camelCase>` | none | |
+| `--token-constant-name <name>` | derived from bundle key | |
+| `--runtime <transloco-messageformat\|transloco>` | detected, else `transloco-messageformat` | App runtime for bundles. Detection reads `package.json`: a `transloco-messageformat` package gives `transloco-messageformat`, otherwise `@jsverse/transloco` or `@ngneat/transloco` gives `transloco`. An explicit value is always written; a default is not. Detection reads `dependencies` and `devDependencies` only, not `peerDependencies`, so a library repo should pass `--runtime`. Interactive and non-interactive runs both print `Detected runtime: <value> (from package.json)` when detection found a value and `--runtime` was not given. |
+| `--enable-auto-translation` | off | Writes a `translation` block |
+| `--translation-provider <name>` | `google-translate` | |
+| `--translation-api-key-env <var>` | `GOOGLE_TRANSLATE_API_KEY` | |
 
-- `--collection-name <name>` - Name of the initial collection key, e.g., "Main" (required in non-interactive mode)
-- `--translations-folder <path>` - Path to the translations directory for this collection (required in non-interactive mode)
-- `--export-folder <path>` - Output folder for exports (default: `dist/lingo-export`)
-- `--import-folder <path>` - Input folder for imports (default: `dist/lingo-import`)
-- `--base-locale <locale>` - Base/authoring locale (default: `en`)
-- `--locales <locales...>` - Space-separated list of supported locales (e.g., `en fr-ca es de`)
+Behaviour:
 
-**Bundle options:**
+- Writes only the config file. The translations folder is created by the first resource.
+- Always creates a bundle named `main`. Without bundle flags, outside a terminal, it is `{ "bundleName": "{locale}", "dist": "./src/assets/i18n", "collections": "All" }`. In a terminal, accepting every default also enables type generation at `./src/generated/tokens.ts` with `upperCase` casing.
+- Without `--locales` the global `locales` list is empty.
+- Does not apply the `node_modules` read-only default; use `add-collection` for vendored folders.
+- If the config file already exists, prints a note and exits 0 without changes.
 
-- `--setup-bundle <true|false>` - Customize bundle configuration (default: prompted interactively). When omitted and any bundle flag is provided, automatically inferred as `true`
-- `--bundle-dist <path>` - Bundle output directory (default: `./src/assets/i18n`)
-- `--bundle-name <pattern>` - Bundle name pattern (default: `{locale}`)
-- `--token-casing <casing>` - Token property key casing: `upperCase` or `camelCase`
-- `--type-dist-file <path>` - Path for generated TypeScript type definitions file (default: `./src/generated/tokens.ts`)
-- `--token-constant-name <name>` - Custom name for the generated TypeScript constant (auto-derived from bundle key when omitted)
-
-**Auto-translation options:**
-
-- `--enable-auto-translation` - Enable automatic translation via an external provider
-- `--translation-provider <provider>` - Translation provider to use (default: `google-translate`). Required when `--enable-auto-translation` is set
-- `--translation-api-key-env <envVar>` - Name of the environment variable holding the provider API key (default: `GOOGLE_TRANSLATE_API_KEY`). Required when `--enable-auto-translation` is set
-
-**Examples:**
-
-Interactive mode (prompts for values):
-```bash
-lingo-tracker init
-```
-
-Non-interactive mode (CI-safe, all required options provided):
 ```bash
 lingo-tracker init \
-  --collection-name Main \
-  --translations-folder apps/web/src/assets/i18n \
-  --export-folder dist/lingo-export \
-  --import-folder dist/lingo-import \
+  --collection-name main \
+  --translations-folder src/i18n \
   --base-locale en \
-  --locales en fr-ca es de
-```
-
-Non-interactive mode with bundle configuration:
-```bash
-lingo-tracker init \
-  --collection-name Main \
-  --translations-folder apps/web/src/assets/i18n \
-  --base-locale en \
-  --locales en fr-ca es de \
+  --locales en fr-ca es \
   --setup-bundle true \
-  --bundle-dist ./src/assets/i18n \
-  --bundle-name "{locale}" \
-  --token-casing camelCase \
   --type-dist-file ./src/generated/tokens.ts
 ```
 
-Non-interactive mode with auto-translation enabled:
-```bash
-lingo-tracker init \
-  --collection-name Main \
-  --translations-folder apps/web/src/assets/i18n \
-  --base-locale en \
-  --locales en fr-ca es de \
-  --enable-auto-translation \
-  --translation-provider google-translate \
-  --translation-api-key-env GOOGLE_TRANSLATE_API_KEY
-```
-
-**Notes:**
-- Run this command once in your project root to create `.lingo-tracker.json`
-- Creates the initial configuration with one collection and a default bundle
-- In interactive mode, you will be prompted to customize the bundle configuration (dist path, name pattern, token casing, type generation)
-- If you decline bundle customization, a default bundle is still created with `dist: ./src/assets/i18n`, `bundleName: {locale}`, and `collections: All`
-- Commit `.lingo-tracker.json` to version control
-- When `--enable-auto-translation` is set, the `translation` block is written to `.lingo-tracker.json` and new/edited resources are automatically translated via the configured provider
-
----
-
-### add-collection
-
-Add a new translation collection to an existing Lingo Tracker project. Collections allow you to manage multiple translation sources within the same repository (e.g., main app, admin panel, mobile app).
-
-**Usage:**
-
-```bash
-lingo-tracker add-collection [options]
-```
-
-**Options:**
-
-- `--collection-name <name>` - Name of the new collection (required in non-interactive mode)
-- `--translations-folder <path>` - Path to the translations directory for this collection (required in non-interactive mode)
-- `--export-folder <path>` - Override global export folder for this collection
-- `--import-folder <path>` - Override global import folder for this collection
-- `--base-locale <locale>` - Override global base locale
-- `--locales <locales...>` - Override global locales list
-- `--read-only` - Mark the collection as read-only (its resources cannot be modified)
-- `--no-read-only` - Force the collection writable, overriding `node_modules` auto-detection
-
-**Examples:**
-
-Interactive mode (prompts for collection details, including a read-only confirmation):
-```bash
-lingo-tracker add-collection
-```
-
-Simple, using global defaults:
-```bash
-lingo-tracker add-collection \
-  --collection-name Admin \
-  --translations-folder apps/admin/src/assets/i18n
-```
-
-With collection-specific overrides (only differences are saved):
-```bash
-lingo-tracker add-collection \
-  --collection-name Mobile \
-  --translations-folder apps/mobile/src/i18n \
-  --base-locale en-GB
-```
-
-Register a component library's collection as read-only:
-```bash
-lingo-tracker add-collection \
-  --collection-name DesignSystem \
-  --translations-folder node_modules/@acme/design-system/i18n \
-  --read-only
-```
-
-**Notes:**
-- Requires an existing `.lingo-tracker.json` configuration file (run `init` first)
-- Reuses global defaults; only saves overrides when they differ
-- Will refuse to add a collection if the name already exists
-- Only persists per-collection settings that differ from global configuration
-
-**Read-only collections:**
-- A collection can be marked read-only via the `readOnly` flag on its config entry. When `true`, the CLI, API, and web UI refuse to modify its resources — `add-resource`, `edit-resource`, `delete-resource`, `move`, `normalize`, `import`, `add-locale`, `remove-locale`, and `translate-locale` are all blocked (the CLI exits with a non-zero status so CI fails). Read-only commands (`bundle`, `export`, `validate`, `find-similar`, `glossary`) are unaffected.
-- `normalize --all` is the one exception: it **skips** read-only collections with an informational message and does not fail the run (so bulk normalization stays green even when a vendored read-only collection is present). Targeting a read-only collection explicitly (`normalize --collection <name>`) still fails.
-- The lock protects a collection's **resources**, not its registration: you can still `delete-collection` (unregister it) and edit its config entry — including turning `readOnly` off.
-- When the `--translations-folder` is under `node_modules`, read-only defaults to `true` (in interactive mode the prompt is pre-checked; in non-interactive mode pass `--no-read-only` to override). This is convenient for component-library collections vendored into a consumer repo, which should not be edited locally.
-- The stored `readOnly` flag is the single source of truth. A `node_modules` path only sets the default at add time — it never forces read-only at runtime, and existing collections are never auto-migrated.
-
----
-
-### edit-collection
-
-Edit an existing collection's configuration. Currently supports managing collection-level tags that are inherited by all resources in the collection.
-
-**Usage:**
-
-```bash
-lingo-tracker edit-collection <name> [options]
-```
-
-**Options:**
-
-- `--add-tag <tag>` - Add a tag to the collection's tag list (repeatable, normalized automatically)
-- `--remove-tag <tag>` - Remove a tag from the collection's tag list (repeatable)
-- `--set-tags <a,b,c>` - Replace the entire tag list with a comma-separated set; pass `""` to clear all tags (mutually exclusive with `--add-tag`/`--remove-tag`)
-
-**Examples:**
-
-Add a tag:
-```bash
-lingo-tracker edit-collection myApp --add-tag team-x
-```
-
-Remove a tag:
-```bash
-lingo-tracker edit-collection myApp --remove-tag team-x
-```
-
-Add multiple tags at once:
-```bash
-lingo-tracker edit-collection myApp --add-tag team-x --add-tag mobile
-```
-
-Replace all tags:
-```bash
-lingo-tracker edit-collection myApp --set-tags "team-x,mobile,legal"
-```
-
-Clear all tags:
-```bash
-lingo-tracker edit-collection myApp --set-tags ""
-```
-
-**Notes:**
-- `--set-tags` and `--add-tag`/`--remove-tag` are mutually exclusive
-- Tags are normalized automatically (lowercase, hyphens, max 50 chars)
-- Collection-level tags are inherited by every resource in the collection at read time; they are not written into `resource_entries.json` files
-- These tags are respected by `export --tags`, bundle filtering, and the Tracker UI
-
----
-
-### protected-terms
-
-Manage protected terms. A protected term is a brand name or a piece of jargon that stays unchanged through translation. LingoTracker stores the terms in a JSON file of their own, outside `.lingo-tracker.json`. This command reads and writes that file.
-
-**Usage:**
-
-```bash
-lingo-tracker protected-terms [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Use a collection's own list instead of the global one
-- `--add <term>` - Add a term. Repeatable.
-- `--remove <term>` - Remove a term. Repeatable.
-- `--set <a,b,c>` - Replace the whole list with a comma-separated set. Pass `""` to empty it. Cannot be combined with `--add` or `--remove`.
-- `--list` - Print the terms that apply, and the file that holds them
-- `--file <path>` - Name the protected-terms file for this scope, carrying any existing terms across. Pass `""` to remove the setting.
-
-**Examples:**
-
-List the global terms and their file:
-```bash
-lingo-tracker protected-terms --list
-```
-
-Add terms. The file is created if it is absent:
-```bash
-lingo-tracker protected-terms --add iPhone --add Node.js
-```
-
-Remove a term:
-```bash
-lingo-tracker protected-terms --remove Node.js
-```
-
-Replace the whole list:
-```bash
-lingo-tracker protected-terms --set "iPhone,Node.js,Acme"
-```
-
-Move the list to a different file:
-```bash
-lingo-tracker protected-terms --file config/protected-terms.json
-```
-
-Give a collection its own file, then add to it:
-```bash
-lingo-tracker protected-terms --collection app --file src/i18n/protected-terms.json
-lingo-tracker protected-terms --collection app --add Widget
-```
-
-**Notes:**
-- The global list lives in `.lingo-tracker-protected-terms.json` beside `.lingo-tracker.json` by default. You can use it straight away, with no configuration.
-- A collection has **no** default file. Give it one with `--file` before you add terms to it. Otherwise `--add` fails and tells you so.
-- LingoTracker sorts each file alphabetically and writes one term per line. Adding a term therefore produces a one-line diff.
-- LingoTracker keeps your casing and punctuation exactly. It stores `iPhone`, `Node.js`, and `C++` as you typed them.
-- A malformed terms file produces an error rather than an empty list. See [Protected Terms](./features/protected-terms.md#error-handling).
-
-The [Protected Terms](./features/protected-terms.md) page explains how export and import use the list.
-
----
-
-### delete-collection
-
-Delete a translation collection from the project.
-
-**Usage:**
-
-```bash
-lingo-tracker delete-collection [options]
-```
-
-**Options:**
-
-- `--collection-name <name>` - Name of the collection to delete (required in non-interactive mode)
-
-**Examples:**
-
-Interactive mode (prompts for collection):
-```bash
-lingo-tracker delete-collection
-```
-
-Non-interactive mode:
-```bash
-lingo-tracker delete-collection --collection-name Mobile
-```
-
-**Notes:**
-- Removes the collection entry from `.lingo-tracker.json`
-- Does NOT delete translation files from disk (data is preserved)
-- Will prompt for confirmation before deletion (in interactive mode)
-
----
-
-### add-locale
-
-Add a locale to a collection and backfill all existing resources with the new locale.
-
-**Usage:**
-
-```bash
-lingo-tracker add-locale [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Name of the collection (required in non-interactive mode)
-- `--locale <locale>` - Locale to add, e.g. `fr-ca`, `de`, `es` (required in non-interactive mode)
-
-**Examples:**
-
-Interactive mode (prompts for collection and locale):
-```bash
-lingo-tracker add-locale
-```
-
-Non-interactive mode:
-```bash
-lingo-tracker add-locale --collection Main --locale de
-```
-
-**Notes:**
-- Validates locale format (e.g. `en`, `fr-ca`, `zh-Hans`)
-- Errors if the locale already exists in the collection
-- Cannot add the base locale
-- If the collection inherits global locales (no explicit `locales` in its config), global locales are copied into the collection first, then the new locale is appended
-- All existing `resource_entries.json` files are updated with the new locale value set to the base (`source`) value, and `tracker_meta.json` is updated with `status: "new"`
-
----
-
-### remove-locale
-
-Remove a locale from a collection and purge all of its translation data from resource files.
-
-**Usage:**
-
-```bash
-lingo-tracker remove-locale [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Name of the collection (required in non-interactive mode)
-- `--locale <locale>` - Locale to remove (required in non-interactive mode)
-
-**Examples:**
-
-Interactive mode (prompts for collection, then shows a list of removable locales):
-```bash
-lingo-tracker remove-locale
-```
-
-Non-interactive mode:
-```bash
-lingo-tracker remove-locale --collection Main --locale de
-```
-
-**Notes:**
-- Errors if the locale does not exist in the collection
-- Cannot remove the base locale
-- Removes the locale key from all `resource_entries.json` and `tracker_meta.json` files in the collection
-- Translation data for the locale is permanently deleted from files (recoverable via git)
-- Removing the last non-base locale is allowed (results in a monolingual collection)
-- If the collection inherits global locales, global locales are copied into the collection first, then the target locale is removed
-
----
-
-## Resource Commands
-
-### add-resource
-
-Add a translation resource to a collection.
-
-**Usage:**
-
-```bash
-lingo-tracker add-resource [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Collection to add the resource to (required in non-interactive mode)
-- `--key <key>` - Dot-delimited resource key, e.g., `apps.common.buttons.ok` (required in non-interactive mode)
-- `--value <text>` - Base (source) text in the base locale (required in non-interactive mode)
-- `--comment <text>` - Optional context for translators
-- `--tags <tags>` - Optional comma-separated tags for filtering/exporting. Values are normalized on write: lowercased, whitespace replaced with hyphens, non-`[a-z0-9-]` characters stripped, max 50 chars.
-- `--target-folder <folder>` - Optional dot-delimited path override for folder placement
-- `--translations <json>` - Optional JSON array with translation objects
-
-**Translation Object Format:**
-
-The `--translations` option accepts a JSON array of objects with the following structure:
-
-```json
-[
-  {
-    "locale": "es",
-    "value": "Aplicar",
-    "status": "translated"
-  },
-  {
-    "locale": "fr-ca",
-    "value": "Appliquer",
-    "status": "verified"
-  }
-]
-```
-
-Valid status values: `new`, `translated`, `verified`, `stale`
-
-**Examples:**
-
-Interactive mode (prompt for all values):
-```bash
-lingo-tracker add-resource
-```
-
-Non-interactive, minimal (key placed directly in translation folder):
-```bash
-lingo-tracker add-resource \
-  --collection Main \
-  --key buttons.ok \
-  --value OK
-```
-
-Non-interactive, full options (key nested under `apps.common`, tagged, with translations):
-```bash
-lingo-tracker add-resource \
-  --collection Main \
-  --key buttons.ok \
-  --value OK \
-  --comment "OK button in dialogs" \
-  --tags "ui,buttons,dialogs" \
-  --target-folder apps.common \
-  --translations '[{"locale":"es","value":"Aceptar","status":"translated"},{"locale":"fr-ca","value":"OK","status":"new"}]'
-```
-
-**Notes:**
-- In interactive mode, you'll be prompted if you want to provide translations for each configured locale
-- Resources are placed in the appropriate folder based on the key and optional `--target-folder`
-- If a translation's checksum matches the base value's checksum, the status will automatically be set to `new` regardless of the provided status
-
----
-
-### delete-resource
-
-Delete one or more translation resources from a collection.
-
-**Usage:**
-
-```bash
-lingo-tracker delete-resource [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Collection to delete resources from (required in non-interactive mode)
-- `--key <keys>` - Resource key(s) - single key or comma-separated (required in non-interactive mode)
-- `--yes` - Skip confirmation prompt (useful for scripts)
-
-**Examples:**
-
-Interactive mode (prompts for collection and key):
-```bash
-lingo-tracker delete-resource
-```
-
-Delete a single resource:
-```bash
-lingo-tracker delete-resource \
-  --collection Main \
-  --key apps.common.buttons.ok
-```
-
-Delete multiple resources (comma-separated):
-```bash
-lingo-tracker delete-resource \
-  --collection Main \
-  --key "apps.common.buttons.ok,apps.common.buttons.cancel,apps.common.buttons.save"
-```
-
-Skip confirmation prompt (useful for scripts):
-```bash
-lingo-tracker delete-resource \
-  --collection Main \
-  --key apps.common.buttons.ok \
-  --yes
-```
-
-**Behavior:**
-
-- **Bulk Operations**: The command uses a best-effort approach. If some keys fail validation or are not found, the operation continues processing remaining keys and reports the count of successful deletions.
-- **File Cleanup**: When the last resource entry is deleted from a folder, both `resource_entries.json` and `tracker_meta.json` are removed. Empty parent folders are preserved (keeps Git structure stable).
-- **Confirmation**: In interactive mode (TTY), you'll be asked to confirm the deletion unless the `--yes` flag is provided. The confirmation shows all keys that will be deleted.
-- **Partial Success**: If some keys succeed and others fail, the command completes successfully and reports both the deletion count and any errors encountered.
-
-**Output:**
-
-```bash
-# Successful deletion
-✅ Deleted 3 resource(s)
-
-# Partial success with errors
-✅ Deleted 2 resource(s)
-
-⚠️  Some operations failed:
-   - invalid..key: Invalid key format
-   - nonexistent.key: Resource not found
-```
-
-**Notes:**
-- This command removes translations for ALL locales for the specified keys
-- In non-interactive mode, you must provide all required options
-- Errors for individual keys don't halt the operation; other keys continue to be processed
-
-
----
-
-### edit-resource
-
-Edit an existing translation resource.
-
-**Usage:**
-
-```bash
-lingo-tracker edit-resource [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Collection containing the resource (required in non-interactive mode)
-- `--key <key>` - Resource key (required in non-interactive mode)
-- `--base-value <text>` - New base value (updates source text)
-- `--comment <text>` - New comment
-- `--tags <tags>` - New tags (comma-separated, replaces existing). Values are normalized on write: lowercased, whitespace replaced with hyphens, non-`[a-z0-9-]` characters stripped, max 50 chars.
-- `--target-folder <folder>` - New target folder
-- `--locale <locale>` - Locale to update (requires `--locale-value`)
-- `--locale-value <text>` - New translation value for the specified locale
-
-**Examples:**
-
-Interactive mode:
-```bash
-lingo-tracker edit-resource
-```
-
-Update base value (marks other locales as stale):
-```bash
-lingo-tracker edit-resource \
-  --collection Main \
-  --key buttons.save \
-  --base-value "Save Item"
-```
-
-Update a specific translation:
-```bash
-lingo-tracker edit-resource \
-  --collection Main \
-  --key buttons.save \
-  --locale fr-ca \
-  --locale-value "Enregistrer l'article"
-```
-
-Update metadata:
-```bash
-lingo-tracker edit-resource \
-  --collection Main \
-  --key buttons.save \
-  --comment "Main save button" \
-  --tags "ui,primary"
-```
-
-**Notes:**
-- Updating `--base-value` triggers a checksum update and marks all other existing translations as `stale`.
-- Updating a locale value sets its status to `translated` and updates its checksum.
-- If no changes are detected (values match existing), the command reports "No changes detected".
-
----
-
-### translate-locale
-
-Auto-translate all `new` and `stale` resources in a collection for a single target locale. Requires auto-translation to be enabled in `.lingo-tracker.json`.
-
-**Usage:**
-
-```bash
-lingo-tracker translate-locale [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Collection name (prompted if not provided)
-- `--locale <locale>` - Target locale to translate (prompted if not provided)
-- `--verbose` - Show per-batch progress (default: summary only)
-
-**Interactive mode:**
-
-When running in a TTY environment without `--collection` or `--locale`, the command prompts for the missing values.
-
-**Non-interactive mode:**
-
-Both `--collection` and `--locale` are required. The command exits with a non-zero code if either is missing.
-
-**Examples:**
-
-Interactive mode (prompts for collection and locale):
-```bash
-lingo-tracker translate-locale
-```
-
-Non-interactive mode:
-```bash
-lingo-tracker translate-locale \
-  --collection Main \
-  --locale fr
-```
-
-With verbose progress:
-```bash
-lingo-tracker translate-locale \
-  --collection Main \
-  --locale fr \
-  --verbose
-```
-
-**Output (summary mode):**
-
-```
-Translating locale 'fr' in collection 'playground'...
-Done.
-
-Translated: 45 resources
-Skipped (ICU): 3 resources
-Failed: 0 resources
-```
-
-**Output (verbose mode):**
-
-```
-[batch 1/9] translated: 5, skipped: 0, failed: 0
-[batch 2/9] translated: 10, skipped: 0, failed: 0
-...
-```
-
-**Notes:**
-- Only resources with status `new` or `stale` are translated; `translated` and `verified` resources are left unchanged
-- Resources whose base value uses complex ICU syntax are skipped and reported in the "Skipped (ICU)" count
-- Throttling is controlled by `batchSize` and `delayMs` in the `translation` config block; see [Auto-Translation](./auto-translation.md) for recommended settings
-- Requires `translation.enabled: true` in `.lingo-tracker.json`
-
----
-
-### move
-
-Move or rename translation resources. Supports moving single resources as well as bulk moves using wildcard patterns.
-
-**Usage:**
-
-```bash
-lingo-tracker move [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Collection to move resources in (required in non-interactive mode)
-- `--source <key>` - Source key or pattern (e.g., `common.buttons.ok` or `common.buttons.*`) (required in non-interactive mode)
-- `--dest <key>` - Destination key (e.g., `common.actions.ok` or `common.actions`) (required in non-interactive mode)
-- `--override` - Overwrite destination if it already exists
-- `--verbose` - Print detailed output for each moved resource
-
-**Examples:**
-
-Interactive mode:
-```bash
-lingo-tracker move
-```
-
-Move a single resource:
-```bash
-lingo-tracker move \
-  --collection Main \
-  --source common.buttons.ok \
-  --dest common.actions.ok
-```
-
-Move multiple resources using a wildcard pattern:
-```bash
-lingo-tracker move \
-  --collection Main \
-  --source "common.buttons.*" \
-  --dest "common.actions"
-```
-*Result: `common.buttons.ok` -> `common.actions.ok`, `common.buttons.cancel` -> `common.actions.cancel`*
-
-Force move (overwrite destination):
-```bash
-lingo-tracker move \
-  --collection Main \
-  --source old.key \
-  --dest new.key \
-  --override
-```
-
-**Notes:**
-- When using wildcard patterns, the suffix matched by `*` is appended to the destination key.
-- Moving a resource preserves its comments, tags, and translations.
-- The source resource is deleted after a successful move.
-
----
-
-### normalize
-
-Normalize translation resources by recomputing checksums, adding missing locale entries, updating statuses, and cleaning up empty folders. This is a maintenance operation that ensures translation files are consistent and correct after manual edits, configuration changes, or imports.
-
-**Usage:**
-
-```bash
-lingo-tracker normalize [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Collection name to normalize (required unless `--all` is used)
-- `--all` - Normalize all collections in the project
-- `--dry-run` - Preview changes without applying them (reports what would be changed)
-- `--json` - Output results as JSON (useful for scripts and automation)
-
-**What Normalization Does:**
-
-1. **Recomputes checksums**: Updates MD5 checksums for base locale and all translations
-2. **Adds missing locales**: Creates entries for any missing locales using the base value with status `new`
-3. **Updates statuses**: Sets correct translation status based on checksums
-   - `new` - Locale entry was just added or matches base value
-   - `stale` - Base value changed since last translation (checksum mismatch)
-   - `translated` / `verified` - Preserved when base value unchanged
-4. **Normalizes tags**: Coerces all tag values to lowercase, hyphenated form (`[a-z0-9-]`, max 50 chars). For example `"Common UI"` → `"common-ui"`. Deduplicates tags within each resource. This is the recommended way to clean up legacy tag data that pre-dates strict validation.
-5. **Creates missing files**: Ensures `resource_entries.json` and `tracker_meta.json` exist at every folder level
-6. **Cleans up empty folders**: Removes folders with no entries (bottom-up recursive cleanup)
-
-**Folder Cleanup Behavior:**
-
-Normalization automatically removes empty folders to keep the translations directory clean:
-
-- Folders are considered **empty** if they contain:
-  - No `resource_entries.json` file, OR
-  - An empty `resource_entries.json` (no entries or `{}`), AND
-  - No subfolders
-- Folders containing only `tracker_meta.json` or hidden files (`.gitkeep`, `.DS_Store`) are removed
-- Cleanup uses bottom-up traversal (deepest folders first) to handle recursive removal
-- The root translations folder is **never removed**, even if empty
-
-**When to Use Normalize:**
-
-- After manually editing JSON translation files
-- After adding new locales to configuration
-- After importing translations from external sources
-- Periodically to maintain consistency and clean up the folder structure
-- When translation statuses seem incorrect
-
-**Examples:**
-
-Interactive mode (prompts for collection):
-```bash
-lingo-tracker normalize
-```
-
-Normalize a specific collection:
-```bash
-lingo-tracker normalize --collection Main
-```
-
-Normalize all collections:
-```bash
-lingo-tracker normalize --all
-```
-
-Preview changes without applying (dry-run):
-```bash
-lingo-tracker normalize --collection Main --dry-run
-```
-
-Output results as JSON (useful for scripts):
-```bash
-lingo-tracker normalize --collection Main --json
-```
-
-Normalize all collections with JSON output:
-```bash
-lingo-tracker normalize --all --json
-```
-
-**Output:**
-
-Human-readable format (default):
-```
-🔄 Normalizing collection: Main
-
-   ✅ Entries processed: 42
-   ✅ Locales added: 7
-   ✅ Values converted to ICU: 0
-   ✅ Tags normalized: 5
-   ✅ Files created: 2
-   ✅ Files updated: 15
-   ✅ Folders removed: 3
-```
-
-> Note: "Tags normalized" only appears when at least one tag was coerced.
-
-JSON format (`--json` flag):
-```json
-{
-  "collections": [
-    {
-      "collectionName": "Main",
-      "entriesProcessed": 42,
-      "localesAdded": 7,
-      "valuesConverted": 0,
-      "tagsNormalized": 5,
-      "filesCreated": 2,
-      "filesUpdated": 15,
-      "foldersRemoved": 3
-    }
-  ],
-  "totals": {
-    "collectionsProcessed": 1,
-    "entriesProcessed": 42,
-    "localesAdded": 7,
-    "valuesConverted": 0,
-    "tagsNormalized": 5,
-    "filesCreated": 2,
-    "filesUpdated": 15,
-    "foldersRemoved": 3
-  }
-}
-```
-
-**Notes:**
-- Normalization is **non-destructive**: it preserves existing translation values and comments
-- Tag values are coerced to normalized form (lowercase, hyphens, max 50 chars) — this is the intended cleanup path for legacy tags
-- Only fills in missing data and corrects metadata
-- Dry-run mode counts folders that would be removed but doesn't delete them
-- In interactive mode, you'll be prompted to confirm when using `--all`
-- Best practice: run with `--dry-run` first to preview changes before applying
-
----
-
-### bundle
-
-Generate translation bundles for deployment.
-
-**Usage:**
-
-```bash
-lingo-tracker bundle [options]
-```
-
-**Options:**
-
-- `--name <names>` - Bundle name(s) to generate (comma-separated). If not specified, generates all configured bundles
-- `--locale <locales>` - Specific locale(s) to generate (comma-separated). If not specified, generates all locales
-- `--token-casing <casing>` - Casing style for generated type token keys: `upperCase` or `camelCase`. Overrides any `tokenCasing` set in the config file. Default: `upperCase`
-- `--token-constant-name <name>` - Custom name for the generated TypeScript constant. Must be a valid JavaScript identifier. Only works when targeting a single bundle (via `--name`). Overrides `tokenConstantName` in the bundle config
-- `--no-transform-icu-to-transloco` - Disable ICU to Transloco format conversion in bundle output
-- `--debug-keys [locale]` - Also emit a debug bundle where every value equals its own dot-delimited key. Useful for visually locating untranslated strings at runtime by switching your app to this locale. If no locale code is provided, defaults to `99` (e.g. `main.99.json`). ICU transformation is skipped for the debug bundle.
-- `--quiet` - Suppress progress and success output (warnings and errors are still shown)
-- `--verbose` - Show detailed output including all warnings
-
-**What Bundle Generation Does:**
-
-1. **Reads bundle configuration** from `.lingo-tracker.json` `bundles` section
-2. **Collects translations** from specified collections based on selection rules
-3. **Applies filters** using pattern matching and tag-based selection
-4. **Resolves conflicts** using merge strategies (merge or override)
-5. **Transforms to hierarchical JSON** (flat keys → nested objects)
-6. **Writes bundle files** to configured output directories with `{locale}` placeholder replacement
-
-**When to Use Bundle:**
-
-- Before deploying your application to production
-- As part of your build pipeline
-- After translator completes translations
-- When you need to generate bundles for specific locales only
-- To preview bundle contents with `--verbose` flag
-
-**Examples:**
-
-Interactive mode (prompts for bundle selection):
-```bash
-lingo-tracker bundle
-```
-
-Generate all configured bundles:
-```bash
-lingo-tracker bundle
-```
-
-Generate specific bundle(s):
-```bash
-lingo-tracker bundle --name core
-lingo-tracker bundle --name core,admin
-```
-
-Generate bundles for specific locale(s):
-```bash
-lingo-tracker bundle --locale en,fr
-```
-
-Verbose output (shows all warnings):
-```bash
-lingo-tracker bundle --verbose
-```
-
-Combined options:
-```bash
-lingo-tracker bundle --name core --locale en,fr --verbose
-```
-
-Override token casing for generated types:
-```bash
-lingo-tracker bundle --token-casing camelCase
-```
-
-Custom constant name for a single bundle:
-```bash
-lingo-tracker bundle --name core --token-constant-name MY_KEYS
-```
-
-Generate debug bundle with default locale `99`:
-```bash
-lingo-tracker bundle --debug-keys
-```
-
-Generate debug bundle with a custom locale code:
-```bash
-lingo-tracker bundle --debug-keys debug
-```
-
-**Output:**
-
-Normal output (default):
-```
-🔄 Generating bundle: core
-
-   ✅ Files generated: 3
-   ✅ Locales: en, fr-ca, es
-   ⚠️  Warnings: 2
-```
-
-Verbose output (`--verbose` flag):
-```
-🔄 Generating bundle: core
-   Locales: en, fr-ca
-
-   ✅ Files generated: 2
-   ✅ Locales: en, fr-ca
-   ⚠️  Warnings: 1
-      - Bundle 'core' for locale 'es' is empty
-```
-
-Summary for multiple bundles:
-```
-🔄 Generating bundle: core
-
-   ✅ Files generated: 3
-   ✅ Locales: en, fr-ca, es
-
-🔄 Generating bundle: admin
-
-   ✅ Files generated: 3
-   ✅ Locales: en, fr-ca, es
-
-📊 Summary (2 bundles):
-   Total files generated: 6
-```
-
-**Bundle Configuration:**
-
-Bundles are configured in `.lingo-tracker.json`:
-
-```json
-{
-  "tokenCasing": "upperCase",
-  "bundles": {
-    "main": {
-      "bundleName": "{locale}",
-      "dist": "./dist/i18n",
-      "collections": "All"
-    },
-    "admin": {
-      "bundleName": "admin-{locale}",
-      "dist": "./dist/admin/i18n",
-      "tokenCasing": "camelCase",
-      "collections": [
-        {
-          "name": "Admin",
-          "entriesSelectionRules": "All"
-        }
-      ]
-    },
-    "core": {
-      "bundleName": "resources.{locale}",
-      "dist": "./src/assets/i18n",
-      "collections": [
-        {
-          "name": "Common",
-          "bundledKeyPrefix": "common",
-          "entriesSelectionRules": [
-            {
-              "matchingPattern": "apps.common.*",
-              "matchingTags": ["ui"],
-              "matchingTagOperator": "All"
-            }
-          ],
-          "mergeStrategy": "merge"
-        }
-      ]
-    }
-  }
-}
-```
-
-**Bundle Definition Fields:**
-
-- `bundleName` - Output filename pattern (use `{locale}` placeholder for locale substitution)
-- `dist` - Output directory path (relative to project root)
-- `tokenCasing` (optional) - Casing style for generated type token keys: `"upperCase"` (default) or `"camelCase"`. When set on a bundle, overrides the global `tokenCasing`. See [Bundle Type Generation](./features/bundle-type-generation.md) for details
-- `tokenConstantName` (optional) - Custom name for the generated TypeScript constant. Must be a valid JavaScript identifier. When omitted, derived from the bundle key (e.g., `common` → `COMMON_TOKENS`). See [Bundle Type Generation](./features/bundle-type-generation.md) for details
-- `collections` - Either `"All"` or array of collection definitions
-  - `name` - Collection name from config
-  - `bundledKeyPrefix` (optional) - Prefix to add to all keys from this collection
-  - `entriesSelectionRules` - Either `"All"` or array of selection rules
-    - `matchingPattern` - Pattern to match keys: `"*"` (all), `"apps.*"` (wildcard), or exact key
-    - `matchingTags` (optional) - Tags to filter by
-    - `matchingTagOperator` (optional) - `"All"` (requires all tags) or `"Any"` (requires any tag, default)
-  - `mergeStrategy` (optional) - `"merge"` (first wins, default) or `"override"` (later wins)
-
-**Merge Strategies:**
-
-When multiple collections contribute the same key:
-
-- **`merge`** (default): First collection wins - key from earlier collection is kept
-- **`override`**: Later collection wins - key from later collection overwrites previous
-
-**Pattern Matching:**
-
-- `"*"` - Matches all keys
-- `"apps.*"` - Matches `apps` and all keys starting with `apps.`
-- `"apps.common.buttons.ok"` - Exact match only
-
-**Tag Filtering:**
-
-- `matchingTags: ["ui"]` with `matchingTagOperator: "Any"` - Entry must have `ui` tag
-- `matchingTags: ["ui", "buttons"]` with `matchingTagOperator: "All"` - Entry must have both tags
-- `matchingTags: ["*"]` - Entry must have at least one tag (any tag)
-
-**Notes:**
-- Bundle generation is **read-only**: it never modifies source translation files
-- Empty bundles (no matching entries) generate a warning but don't create files
-- Base locale translations use the `source` property; other locales use their locale key
-- Warnings include empty bundles, missing collections, and missing translations
-- For detailed examples and integration guides, see [Bundling Guide](./guides/bundling.md)
-
----
-
-## Search Commands
-
-### find-similar
-
-Find existing translation resources whose base locale value is similar to a given string. Useful for detecting duplicate or near-duplicate translations before adding a new resource.
-
-**Usage:**
-
-```bash
-lingo-tracker find-similar [options]
-```
-
-**Options:**
-
-- `--collection <name>` - Collection to search (required)
-- `--value <text>` - Base locale text to compare against (required)
-- `--max-results <n>` - Maximum number of results to return (default: `5`)
-
-**Examples:**
-
-Find resources similar to "Save":
-```bash
-lingo-tracker find-similar \
-  --collection Main \
-  --value "Save"
-```
-
-Limit results:
-```bash
-lingo-tracker find-similar \
-  --collection Main \
-  --value "Are you sure you want to delete this item?" \
-  --max-results 3
-```
-
-**Output:**
-
-When matches are found:
-```
-Similar values found for "Save":
-  buttons.save → "Save" (similarity: 100%)
-  buttons.saveAndClose → "Save and Close" (similarity: 89%)
-```
-
-When no matches meet the similarity threshold:
-```
-No similar values found for "Save draft".
-```
-
-**How It Works:**
-
-1. Runs a broad substring pre-filter via `searchTranslations` (up to 50 candidates)
-2. Scores each candidate using normalised Levenshtein distance (case-insensitive)
-3. Keeps only results with a similarity score ≥ 80%
-4. Returns top N results sorted by score descending
-
-**Notes:**
-- Only the base locale value is compared (not translations)
-- Only `exact-value` and `partial-value` match types are considered; key-based matches are excluded
-- Similarity threshold is fixed at 80% — results below this are not shown
-- Non-interactive only; does not prompt for missing options
-
----
-
-### glossary
-
-Extract a glossary of relevant translations from a block of text. Given a paragraph of base-locale text (for example a page of online help), the command pulls out the meaningful terms, finds the matching translation entries, and writes a JSON glossary containing each term's translations across all locales. The glossary can then be handed to whoever (or whatever) translates the help content so they reuse the app's existing terminology.
-
-**Usage:**
-
-```bash
-lingo-tracker glossary [options]
-```
-
-**Options:**
-
-- `--text <text>` - Inline text block to extract terms from
-- `--input <file>` - Path to a file whose contents are the input text block
-- `--output <file>` - Output JSON file path (default: `./lingo-tracker-glossary-<timestamp>.json`)
-- `--stdout` - Print the glossary JSON to stdout instead of writing a file (status messages go to stderr)
-- `--collection <name>` - Limit matching to a single collection (default: all collections)
-- `--locales <list>` - Comma-separated locales to include (default: all configured locales)
-- `--include-all` - Include `new`/`stale` entries (default: only `translated` + `verified`)
-- `--extractor <mode>` - Term extraction strategy: `ngram` (default). `ai` is reserved for a future release.
-
-Input precedence is `--text` → `--input` → piped stdin.
-
-**Examples:**
-
-From a file:
-```bash
-lingo-tracker glossary --input help-page.md
-```
-
-Inline snippet, French only, printed to stdout:
-```bash
-lingo-tracker glossary --text "Click Save in Settings to update your profile" --locales fr --stdout
-```
-
-Piped from another command:
-```bash
-cat help-page.md | lingo-tracker glossary --stdout | jq '.terms[].key'
-```
-
-**Output:**
-
-```json
-{
-  "baseLocale": "en",
-  "locales": ["fr", "es"],
-  "source": { "chars": 1234, "candidates": 18 },
-  "matchCount": 2,
-  "terms": [
-    {
-      "key": "apps.common.buttons.save",
-      "collection": "app",
-      "base": "Save",
-      "matchedTerm": "save",
-      "score": 1.0,
-      "translations": { "fr": "Enregistrer", "es": "Guardar" },
-      "status": { "fr": "verified", "es": "translated" }
-    }
-  ]
-}
-```
-
-**How It Works:**
-
-1. **Extract** — the block is split into sentences and tokenized; stopwords and very short tokens are dropped, leaving content-word unigrams and bigrams as candidate terms.
-2. **Match** — each candidate is matched against entries' **base-locale values only** (key names are ignored). Scoring: exact value match (`1.0`) beats whole-word/phrase containment.
-3. **Rank** — the single best entry per candidate is kept; an entry matched by several candidates appears once (highest score wins). Results are sorted by score.
-4. **Filter & write** — only `translated`/`verified` locales are included by default (`--include-all` adds `new`/`stale`); each collection's base locale is omitted from `translations` since it appears as `base`.
-
-**Notes:**
-
-- Matching is deterministic and value-only — no fuzzy matching, which keeps the glossary precise (favouring precision over recall).
-- The extractor is a swappable stage: the `--extractor` flag reserves room for a future AI-based extractor.
-- The stopword list is English-oriented, so extraction is weaker when the base locale is not English.
-
----
-
-## Validation Commands
-
-### validate
-
-Validate translation completeness and readiness for production release. This command checks all resources across all locales and collections, ensuring translations meet quality standards before deployment.
-
-**Usage:**
-
-```bash
-lingo-tracker validate [options]
-```
-
-**Options:**
-
-- `--allow-translated` - Treat 'translated' status as warning instead of failure (default: false)
-- `--skip-locales <locales>` - Comma-separated list of target locales to exclude from validation (e.g. `fr` or `fr,de`). Useful when a locale has been added to the config but its translations are still in progress. Unknown locales (not in `config.locales`) emit a warning and are ignored. The base locale is silently ignored, and is still compiled by the ICU check. If all target locales are skipped, the command exits with code `1`.
-- `--skip-icu` - Do not compile values as ICU for their own locale (default: false). Does not disable `--require-portable-plurals`, which parses rather than compiles.
-- `--require-portable-plurals` - Warn when a base-locale plural selects a branch by category (`one`, `few`, …) instead of an exact `=N` match (default: false). Warnings never fail the run.
-
-**What Validate Does:**
-
-1. **Loads all resources** from all configured collections
-2. **Checks translation status** for every resource in every target locale
-3. **Compiles every value as ICU** under the locale it is stored under, including the base locale (unless `--skip-icu`)
-4. **Collects all validation results** (does not stop at first error)
-5. **Categorizes findings** into failures, warnings, and successes
-6. **Reports comprehensive results** grouped by locale
-
-**Validation Rules:**
-
-| Status | Default Behavior | With `--allow-translated` |
-|--------|------------------|---------------------------|
-| `new` | ❌ Failure | ❌ Failure |
-| `stale` | ❌ Failure | ❌ Failure |
-| `translated` | ❌ Failure | ⚠️ Warning |
-| `verified` | ✅ Success | ✅ Success |
-
-A value that does not compile as ICU for its own locale is a failure whatever its status says — plural categories are per-language, so `{count, plural, one {…} other {…}}` is valid in `en` and fatal in `ja`, where the `one` category does not exist. Status records that a human approved the wording; it says nothing about the syntax.
-
-**Exit Codes:**
-
-- `0` - All validations passed (all resources verified)
-- `1` - Validation failures found (new/stale resources, translated without `--allow-translated`, or values that fail to compile as ICU)
-
-**When to Use Validate:**
-
-- As a quality gate in CI/CD pipelines before release
-- Before deploying to production environments
-- To verify all translations are complete and verified
-- To enforce translation quality standards in automated builds
-- During staging deployments (with `--allow-translated` for relaxed requirements)
-
-**Examples:**
-
-Strict validation (production):
-```bash
-lingo-tracker validate
-```
-
-Output on failure:
-```
-❌ Translation Validation FAILED
-
-Validation Summary by Locale:
-  es:
-    new: 3
-    stale: 2
-    translated: 1
-    verified: 45
-
-  fr-ca:
-    new: 1
-    stale: 0
-    translated: 2
-    verified: 48
-
-Failures (6 resources):
-  es:
-    - apps.common.buttons.submit (new)
-    - apps.common.errors.network (new)
-    - apps.features.dashboard.title (new)
-    - apps.common.buttons.save (stale)
-    - apps.features.settings.label (stale)
-    - apps.common.buttons.cancel (translated)
-
-  fr-ca:
-    - apps.common.buttons.submit (new)
-    - apps.features.dashboard.subtitle (translated)
-    - apps.features.profile.header (translated)
-
-Total: 6 failures, 0 warnings
-```
-
-Relaxed validation (staging):
-```bash
-lingo-tracker validate --allow-translated
-```
-
-Output with warnings:
-```
-⚠️  Translation Validation PASSED with warnings
-
-Validation Summary by Locale:
-  es:
-    new: 3
-    stale: 2
-    translated: 1
-    verified: 45
-
-  fr-ca:
-    new: 1
-    stale: 0
-    translated: 2
-    verified: 48
-
-Failures (5 resources):
-  es:
-    - apps.common.buttons.submit (new)
-    - apps.common.errors.network (new)
-    - apps.features.dashboard.title (new)
-    - apps.common.buttons.save (stale)
-    - apps.features.settings.label (stale)
-
-  fr-ca:
-    - apps.common.buttons.submit (new)
-
-Warnings (3 resources):
-  es:
-    - apps.common.buttons.cancel (translated)
-
-  fr-ca:
-    - apps.features.dashboard.subtitle (translated)
-    - apps.features.profile.header (translated)
-
-Total: 5 failures, 3 warnings
-```
-
-Skip a locale that is still in progress:
-```bash
-lingo-tracker validate --skip-locales fr
-lingo-tracker validate --skip-locales fr,de
-```
-
-Status gate only, without compiling values as ICU:
-
-```bash
-lingo-tracker validate --skip-icu
-```
-
-Also warn about base-locale plurals that break when copied to `ja`/`ko`:
-
-```bash
-lingo-tracker validate --require-portable-plurals
-```
-
-CI/CD Integration Examples:
-
-**GitHub Actions:**
-```yaml
-- name: Validate translations
-  run: lingo-tracker validate
-```
-
-**GitLab CI:**
-```yaml
-validate-translations:
-  script:
-    - lingo-tracker validate
-```
-
-**Jenkins:**
-```groovy
-sh 'lingo-tracker validate'
-```
-
-**CircleCI:**
-```yaml
-- run:
-    name: Validate translations
-    command: lingo-tracker validate
-```
-
-Staging pipeline (allow translated):
-```yaml
-- name: Validate translations (staging)
-  run: lingo-tracker validate --allow-translated
-```
-
-**Comprehensive Validation:**
-
-The validate command performs a comprehensive check:
-- Validates **ALL** collections (no filtering)
-- Validates **ALL** target locales by default (excludes base locale)
-- Collects **ALL** validation results before reporting
-- Shows **COMPLETE** summary of all failures and warnings
-- Does **NOT** stop at first error
-
-**Notes:**
-
-- Non-interactive only (designed for CI/CD, never prompts)
-- Validates all target locales by default (base locale is excluded)
-- Use `--skip-locales` to exclude specific locales; skipped locales appear in the validation summary
-- Unknown locale values in `--skip-locales` emit a warning and are ignored
-- Validates all collections (no collection filtering)
-- Reports all issues comprehensively before exiting
-- Exit code reflects overall validation status after checking everything
-- Use `--allow-translated` for staging deployments where not all translations may be verified yet
-
----
-
-## Data Exchange Commands
-
-### export
-
-Export translation resources to XLIFF or JSON format for integration with translation services, external systems, and third-party tools.
-
-**Usage:**
-
-```bash
-lingo-tracker export [options]
-```
-
-**Options:**
-
-- `-f, --format <format>` - Export format: `xliff` or `json` (required in non-interactive mode)
-- `-c, --collection <names>` - Specific collection(s) to export (comma-separated). If not specified, exports all collections
-- `-l, --locale <locales>` - Target locale(s) to export (comma-separated). If not specified, exports all target locales (excludes base locale)
-- `-s, --status <statuses>` - Filter by translation status (comma-separated). Default: `new,stale`
-  - Valid values: `new`, `translated`, `stale`, `verified`
-- `-t, --tags <tags>` - Filter by tags (comma-separated). Only resources with matching tags are included
-- `-o, --output <path>` - Output directory path. Default: from config `exportFolder` or `dist/lingo-export`
-- `--filename <pattern>` - Custom filename pattern with placeholders
-- `--dry-run` - Preview export without writing files (shows what would be exported)
-- `--verbose` - Show detailed export progress
-
-**JSON-Specific Options:**
-
-- `--structure <type>` - JSON structure: `hierarchical` (nested objects) or `flat` (dot-delimited keys). Default: `hierarchical`
-- `--rich` - Include metadata in JSON objects (creates objects instead of string values). Default: `false`
-- `--include-base` - Include base locale value in the output object. Default: `false`
-- `--include-status` - Include translation status in the output object. Default: `false`
-- `--include-comment` - Include translator comments in the output object. Default: `false`
-- `--include-tags` - Include tags array in the output object. Default: `false`
-- `--base-property-name <name>` - Property name used for the base locale value in JSON output. Only applies with `--include-base`. Default: `baseValue`. The names `value`, `comment`, `status`, and `tags` are reserved and will cause an error.
-
-**Filename Placeholders:**
-
-Customize output filenames using these placeholders:
-
-- `{locale}` - Target locale code (e.g., `es`, `fr-ca`)
-- `{target}` - Alias for `{locale}`
-- `{source}` - Base locale code (e.g., `en`)
-- `{date}` - Current date in YYYY-MM-DD format
-
-**What Export Does:**
-
-1. **Loads resources** from specified collections
-2. **Filters resources** by locale, status, and tags
-3. **Transforms data** to target format (XLIFF or JSON)
-4. **Writes files** to output directory (one file per locale)
-5. **Generates summary** report with statistics, warnings, and errors
-
-**When to Use Export:**
-
-- Sending translations to translation agencies (use XLIFF format)
-- Integrating with Translation Management Systems (TMS)
-- Extracting translations for review or backup
-- Generating custom translation deliverables
-- Exporting subsets of translations using status/tag filters
-
-**Examples:**
-
-Interactive mode (prompts for options):
-```bash
-lingo-tracker export
-```
-
-Export all collections to XLIFF for all target locales:
-```bash
-lingo-tracker export --format xliff
-```
-
-Export specific collection to JSON:
-```bash
-lingo-tracker export --format json --collection Main
-```
-
-Export multiple collections for Spanish only:
-```bash
-lingo-tracker export --format xliff --collection Main,Admin --locale es
-```
-
-Export only untranslated and stale translations (default):
-```bash
-lingo-tracker export --format xliff --locale es
-# Same as: --status new,stale
-```
-
-Export all translations regardless of status:
-```bash
-lingo-tracker export --format json --locale es --status new,translated,stale,verified
-```
-
-Export only verified translations:
-```bash
-lingo-tracker export --format xliff --status verified
-```
-
-Export with tag filtering:
-```bash
-lingo-tracker export --format json --tags ui,buttons
-```
-
-Export with custom filename pattern:
-```bash
-lingo-tracker export --format xliff --filename "translation-{source}-{target}-{date}"
-# Generates: translation-en-es-2025-12-14.xliff
-```
-
-JSON export with hierarchical structure (default):
-```bash
-lingo-tracker export --format json --locale es
-```
-
-Output:
-```json
-{
-  "common": {
-    "buttons": {
-      "ok": "Aceptar",
-      "cancel": "Cancelar"
-    }
-  }
-}
-```
-
-JSON export with flat structure:
-```bash
-lingo-tracker export --format json --locale es --structure flat
-```
-
-Output:
-```json
-{
-  "common.buttons.ok": "Aceptar",
-  "common.buttons.cancel": "Cancelar"
-}
-```
-
-JSON export with rich objects (includes metadata):
-```bash
-lingo-tracker export --format json --locale es --rich --include-base --include-status
-```
-
-Output:
-```json
-{
-  "common": {
-    "buttons": {
-      "ok": {
-        "value": "Aceptar",
-        "baseValue": "OK",
-        "status": "translated",
-        "comment": "OK button in dialogs"
-      }
-    }
-  }
-}
-```
-
-Dry-run to preview export:
-```bash
-lingo-tracker export --format json --collection Main --locale es --dry-run
-```
-
-Output:
-```
-🔄 Exporting to JSON...
-   Collections: Main
-   Locales: es
-   Output: /path/to/dist/lingo-export
-   [DRY RUN]
-   Processing es (42 resources)
-
-📊 Export Summary:
-   Files Created: 0
-   Resources Exported: 42
-```
-
-Verbose output for detailed progress:
-```bash
-lingo-tracker export --format json --locale es --verbose
-```
-
-Output:
-```
-🔄 Exporting to JSON...
-   Collections: Main
-   Locales: es
-   Output: /path/to/dist/lingo-export
-   Processing es (42 resources)
-   Writing /path/to/dist/lingo-export/es.json
-   ✅ es: Exported 42 resources to es.json
-
-📊 Export Summary:
-   Files Created: 1
-   Resources Exported: 42
-
-📄 Summary written to: /path/to/dist/lingo-export/export-summary.md
-```
-
-**Export Summary Report:**
-
-Every export generates an `export-summary.md` file in the output directory containing:
-
-- Export configuration (format, collections, locales, filters)
-- Statistics (resources exported, files created)
-- List of created files with resource counts
-- Warnings (overwritten files, empty results)
-- Errors (malformed files, missing metadata, hierarchical conflicts)
-
-**XLIFF Format Notes:**
-
-- Generates XLIFF 1.2 format (industry standard)
-- One file per source-target locale pair
-- `<source>` contains base locale value
-- `<target>` contains translation
-- `<note>` contains translator comments (if present)
-- Compatible with professional translation tools (SDL Trados, MemoQ, etc.)
-- ICU message format preserved as-is
-
-**JSON Format Notes:**
-
-- Flexible format for custom integrations
-- Supports both hierarchical (nested) and flat (dot-delimited) structures
-- Simple format (string values) ideal for direct use in applications
-- Rich format (object values) includes metadata for validation and processing
-- Collections are merged into single output (last write wins for duplicate keys)
-
-**Filtering Behavior:**
-
-- **Status filtering** is per-locale: a resource is included in a locale if it matches the filter for that locale
-- **Tag filtering** uses OR logic: resource must have at least one of the specified tags
-- **Base locale** is never exported (only target locales)
-- Resources without metadata are omitted and logged in errors
-- Empty export results don't create files (warning logged)
-
-**Error Handling:**
-
-- Malformed files: Skipped with detailed warning, export continues
-- Missing metadata: Resource omitted, logged in errors
-- Hierarchical conflicts: Logged when a key is both a parent and leaf value (JSON hierarchical only)
-- Non-writable output directory: Fails with clear error message
-- Empty results: No files created, warning shown
-
-**Notes:**
-
-- Export is **read-only**: never modifies source translation files
-- Multiple collections merge into single output file per locale (last write wins)
-- Base locale is excluded from export (use bundle command for base locale)
-- Dry-run shows accurate resource counts without creating files
-- For detailed format specifications and examples, see [Export Feature Documentation](./features/export.md)
-
----
-
-### import
-
-Import translation resources from XLIFF or JSON files into a collection. Supports professional translation workflows, language expert verification, system migrations, and bulk corrections.
-
-For full format specifications, workflow examples, and ICU auto-fix details, see the [Import Feature Documentation](./features/import.md).
-
-**Usage:**
-
-```bash
-lingo-tracker import --source <file> --locale <locale> [options]
-```
-
-**Options:**
-
-- `-f, --format <format>` - Import format: `xliff` or `json`. Default: auto-detected from file extension (`.xlf`/`.xliff` → xliff; `.json` → json)
-- `-s, --source <path>` - Path to the import file (required)
-- `-l, --locale <locale>` - Target locale for the import, e.g., `es`, `fr-ca` (required)
-- `-c, --collection <name>` - Target collection to import into. If not specified, prompts or auto-selects
-- `--strategy <strategy>` - Import strategy (see below). Default: `translation-service`
-- `--update-comments` - Update resource comments from import data. Default: `false`
-- `--update-tags` - Update resource tags from rich JSON. Default: `false`
-- `--preserve-status` - Allow rich JSON to specify status (advanced). Default: `false`
-- `--create-missing` - Create new resources if they don't exist
-- `--validate-base` - Warn if the source base value differs from existing. Default: `true`
-- `--dry-run` - Preview what would be imported without modifying files. Default: `false`
-- `--verbose` - Show detailed import progress. Default: `false`
-
-**Import Strategies:**
-
-| Strategy | Description |
-|----------|-------------|
-| `translation-service` (default) | Sets status to `translated`. For translation agencies. Does not create missing resources. |
-| `verification` | Sets status to `verified`. For native-speaker review and approval. Does not create missing resources. |
-| `migration` | Sets status to `translated`. Creates missing resources (`--create-missing` defaults to `true`). Resolves Transloco-style key refs. Updates comments and tags by default. |
-| `update` | Preserves existing status. Bulk-updates values without changing metadata. Does not create missing resources. |
-
-**Examples:**
-
-Interactive mode (prompts for all required values):
-```bash
-lingo-tracker import
-```
-
-Import XLIFF from a translation service (default strategy):
-```bash
-lingo-tracker import \
-  --source dist/lingo-import/es.xliff \
-  --locale es
-```
-
-Import with explicit strategy:
-```bash
-lingo-tracker import \
-  --source dist/lingo-import/fr.xliff \
-  --locale fr \
-  --strategy translation-service
-```
-
-Import for language expert verification:
-```bash
-lingo-tracker import \
-  --source fr-reviewed.xliff \
-  --locale fr \
-  --strategy verification
-```
-
-Migrate from another translation system (creates missing resources):
-```bash
-lingo-tracker import \
-  --source old-system-fr.json \
-  --locale fr \
-  --strategy migration
-```
-
-Bulk-correct existing translations without changing status:
-```bash
-lingo-tracker import \
-  --source corrections-de.json \
-  --locale de \
-  --strategy update
-```
-
-Dry-run to preview what would be imported:
-```bash
-lingo-tracker import \
-  --source translations-es.xliff \
-  --locale es \
-  --dry-run
-```
-
-Verbose output to see detailed progress:
-```bash
-lingo-tracker import \
-  --source translations-es.xliff \
-  --locale es \
-  --verbose
-```
-
-Import into a specific collection:
-```bash
-lingo-tracker import \
-  --source admin-es.xliff \
-  --locale es \
-  --collection Admin \
-  --strategy translation-service
-```
-
-**Round-Trip Workflow:**
-
-```bash
-# 1. Export resources needing translation
-lingo-tracker export --format xliff --locale es --status new,stale
-
-# 2. (Send es.xliff to translation agency, receive back translated file)
-
-# 3. Import translated file
-lingo-tracker import --source es.xliff --locale es --strategy translation-service
-
-# 4. Optionally verify with a language expert
-lingo-tracker import --source es-reviewed.xliff --locale es --strategy verification
-```
-
-**Notes:**
-- Format is auto-detected from the file extension; use `--format` to override
-- Every import generates an `import-summary.md` in the import folder with statistics, status transitions, ICU auto-fixes, warnings, and errors
-- ICU message placeholder errors (renamed or missing placeholders) are automatically detected and fixed where possible; all auto-fixes are reported in the summary
-- Dry-run mode produces the same summary report using "Would" language, with no files modified
-- In interactive mode, a wizard guides you through source file selection, locale, collection, and strategy
-
----
-
-## AI Tooling Commands
-
 ### install-skill
 
-Generate a customised LingoTracker AI skill for use in another Angular/Transloco repository. The skill guides AI assistants (Claude Code and compatible tools) through the i18n workflow — detecting hardcoded strings, adding resources, bundling, and updating components to use Transloco.
-
-The generated skill is pre-configured with the collection names, bundle names, and token constants of the target repository, so the AI assistant can follow the correct workflow without guessing project-specific details.
-
-**Usage:**
+Write an AI assistant skill, pre-filled with your collection and bundle names, into the repository. See [Working with an AI assistant](./guides/ai-assistant.md).
 
 ```bash
 lingo-tracker install-skill [options]
 ```
 
-**Options:**
+| Flag | Default | Notes |
+|---|---|---|
+| `--collection <name:bundle:CONSTANT:tokenFile>` | prompt | Repeatable. All four colon-separated parts are required. |
+| `--dir <path>` | `.claude` | Output root. Ignored when the interactive prompts run. |
+| `--token-casing <upperCase\|camelCase>` | none | When omitted, the generated commands pass no casing flag. |
 
-- `--collection <spec>` - Collection specification in the format `name:bundle:TokenConstant:tokenFilePath`. Repeatable — pass once per collection
-- `--dir <path>` - Output directory for the skill files (default: `.claude`)
-- `--token-casing <casing>` - Casing style for token keys: `upperCase` or `camelCase` (default: `upperCase`)
+Writes `<dir>/skills/lingo-tracker/SKILL.md` and `<dir>/skills/lingo-tracker/references/patterns.md`, overwriting existing files. In a terminal without `--collection`, it prompts for the directory (`.claude`, `.agents` or `.cursor`), then for each collection, then for casing. Outside a terminal `--collection` is required.
 
-**Output:**
-
-Writes two files to `{dir}/skills/lingo-tracker/`:
-
-- `SKILL.md` — the main skill file, customised with the provided collection, bundle, and token values
-- `references/patterns.md` — static Angular/Transloco code pattern reference
-
-**Examples:**
-
-Interactive mode (prompts for AI tool directory, collection details, and token casing):
-```bash
-lingo-tracker install-skill
-```
-
-Interactive mode prompts:
-1. AI tool directory: `.claude` (default) | `.agents` | `.cursor`
-2. Collection details (looping — name, bundle name, token constant, token file path), with an option to add more after each
-3. Token casing: `upperCase` | `camelCase`
-
-Non-interactive mode with a single collection:
 ```bash
 lingo-tracker install-skill \
-  --collection trackerResources:tracker:TRACKER_TOKENS:apps/tracker/src/i18n-types/tracker-resources.ts
+  --collection main:web:MAIN_TOKENS:src/generated/tokens.ts \
+  --dir .claude
 ```
-
-Non-interactive mode with multiple collections and camelCase tokens:
-```bash
-lingo-tracker install-skill \
-  --collection trackerResources:tracker:TRACKER_TOKENS:apps/tracker/src/i18n-types/tracker-resources.ts \
-  --collection adminResources:admin:ADMIN_TOKENS:apps/admin/src/i18n-types/admin-resources.ts \
-  --token-casing camelCase
-```
-
-Output to a custom directory (e.g. for Cursor):
-```bash
-lingo-tracker install-skill \
-  --collection myApp:main:MY_APP_TOKENS:src/i18n-types/my-app.ts \
-  --dir .cursor
-```
-
-**Collection Specification Format:**
-
-Each `--collection` value is a colon-separated string with four parts:
-
-| Part | Description | Example |
-|------|-------------|---------|
-| `name` | Collection name as registered in `.lingo-tracker.json` | `trackerResources` |
-| `bundle` | Bundle name used with `lingo-tracker bundle --name` | `tracker` |
-| `TokenConstant` | Name of the exported TypeScript token constant | `TRACKER_TOKENS` |
-| `tokenFilePath` | Path to the generated token file (relative to project root) | `apps/tracker/src/i18n-types/tracker-resources.ts` |
-
-**Notes:**
-- Run this command once after setting up LingoTracker in a new repository
-- Commit the generated skill files (`.claude/skills/lingo-tracker/`) to version control so the entire team benefits
-- If you change collection names, bundle names, or token constants, re-run the command to regenerate the skill
-- The `--dir` option should match the AI tool your team uses (`.claude` for Claude Code, `.cursor` for Cursor, etc.)
 
 ---
 
-## Configuration
+## Collection commands
 
-All commands read from `.lingo-tracker.json` in the project root. This file is created by the `init` command.
+### add-collection
 
-### Configuration Structure
+Register another translations folder.
 
-```json
-{
-  "exportFolder": "dist/lingo-export",
-  "importFolder": "dist/lingo-import",
-  "baseLocale": "en",
-  "locales": ["en", "fr-ca", "es"],
-  "tokenCasing": "upperCase",
-  "protectedTermsFile": "config/protected-terms.json",
-  "collections": {
-    "Main": {
-      "translationsFolder": "apps/web/src/assets/i18n"
-    },
-    "Admin": {
-      "translationsFolder": "apps/admin/src/assets/i18n",
-      "baseLocale": "en-GB"
-    },
-    "DesignSystem": {
-      "translationsFolder": "node_modules/@acme/design-system/i18n",
-      "readOnly": true,
-      "protectedTermsFile": "node_modules/@acme/design-system/protected-terms.json"
-    }
-  }
-}
+```bash
+lingo-tracker add-collection [options]
 ```
 
-- **Global fields** (`exportFolder`, `importFolder`, `baseLocale`, `locales`, `tokenCasing`) apply to all collections and bundles by default
-- **Per-collection fields** can override global settings for specific collections
-- **`readOnly`** (optional, per-collection) - When `true`, resource mutations to this collection are blocked across the CLI, API, and UI. The collection can still be unregistered and its config entry edited. Defaults to `true` for `node_modules` paths when added via `add-collection`. See [add-collection](#add-collection) for details.
-- **`tokenCasing`** (optional) - Controls the casing style for generated type token keys. Accepts `"upperCase"` (default, SCREAMING_SNAKE_CASE) or `"camelCase"`. Can be set globally or per-bundle. See [Bundle Type Generation](./features/bundle-type-generation.md) for details. Precedence: CLI flag `--token-casing` > per-bundle config > global config > default (`"upperCase"`)
-- **`protectedTermsFile`** (optional, global and per-collection) - Path to a JSON file that holds protected terms. LingoTracker resolves the path against the directory that contains `.lingo-tracker.json`. Omit it globally and the list falls back to `.lingo-tracker-protected-terms.json`. A collection has no default, so a collection without this setting contributes no terms of its own. LingoTracker adds a collection's terms to the global ones. See [Protected Terms](./features/protected-terms.md) for details.
+| Flag | Notes |
+|---|---|
+| `--collection-name <name>` | Required outside a terminal. Must be unused. |
+| `--translations-folder <path>` | Required outside a terminal |
+| `--base-locale <locale>`, `--locales <locales...>`, `--export-folder <path>`, `--import-folder <path>` | Per-collection overrides. Only values that differ from the global ones are stored. |
+| `--read-only` / `--no-read-only` | Force the flag either way |
+
+When neither read-only flag is given: in a terminal the command asks, with the default on for a folder under `node_modules`; outside a terminal a `node_modules` folder becomes read-only and any other folder stays writable.
+
+```bash
+lingo-tracker add-collection --collection-name admin --translations-folder apps/admin/src/i18n
+lingo-tracker add-collection --collection-name design --translations-folder node_modules/@acme/ds/i18n
+```
+
+### edit-collection
+
+Manage a collection's inherited tags. Renaming a collection is available only through the API.
+
+```bash
+lingo-tracker edit-collection <name> [--add-tag <tag>]... [--remove-tag <tag>]... [--set-tags <a,b>]
+```
+
+`--set-tags` replaces the list and cannot be combined with the other two; `--set-tags ""` clears it. Tags are normalized to lowercase hyphenated form. Works on read-only collections because it changes only the config.
+
+### delete-collection
+
+Remove a collection from the config. Files on disk are kept.
+
+```bash
+lingo-tracker delete-collection [--collection-name <name>] [--yes]
+```
+
+Also removes the collection from explicit bundle collection lists. If a bundle would be left with no collections, the command refuses and names the bundle. In a terminal it asks for confirmation unless `--yes` is given.
+
+### add-locale
+
+Add a target locale to one collection and seed every existing resource with a `new` copy of the source.
+
+```bash
+lingo-tracker add-locale [--collection <name>] --locale <locale>
+```
+
+The locale must be well-formed, must not be the base locale and must not already exist. The result is written as the collection's own `locales` list, copied from the global list first if the collection inherited it.
+
+**Note:** bundles use the global `locales`. After `add-locale`, also add the locale to the top-level `locales` array, or `bundle` will not emit a file for it and `bundle --locale <l>` will report an unknown locale.
+
+### remove-locale
+
+Remove a target locale from one collection and delete its values and metadata from every resource file.
+
+```bash
+lingo-tracker remove-locale [--collection <name>] --locale <locale>
+```
+
+The base locale cannot be removed. Removing the last target locale leaves a monolingual collection. The data is gone from the files; recover it from Git if needed.
 
 ---
 
-## CI/CD Usage
+## Resource commands
 
-All commands support non-interactive mode for use in CI/CD pipelines. To ensure non-interactive behavior:
+### add-resource
 
-1. Provide all required options via command-line flags
-2. Use the `--yes` flag for commands that require confirmation (like `delete-resource`)
-3. The CLI auto-detects TTY and will throw an error if required options are missing in non-interactive environments
-
-**Example CI/CD workflow:**
+Create one resource.
 
 ```bash
-# Initialize a project in CI
-lingo-tracker init \
-  --collection-name Main \
-  --translations-folder src/assets/i18n \
-  --base-locale en \
-  --locales en fr-ca es
+lingo-tracker add-resource [options]
+```
 
-# Add a collection in CI
-lingo-tracker add-collection \
-  --collection-name Admin \
-  --translations-folder src/admin/i18n
+| Flag | Notes |
+|---|---|
+| `--collection <name>` | |
+| `--key <key>` | Required. Dot-delimited. |
+| `--value <text>` | Required. The source text. Cannot be blank. |
+| `--comment <text>` | Context for translators |
+| `--tags <a,b>` | Normalized on write |
+| `--target-folder <path>` | Dot-delimited folder prepended to the key |
+| `--translations <json>` | JSON array of `{ "locale", "value", "status"? }` |
+| `--override` | Replace an existing resource |
 
-# Add a resource in CI
+Locales not supplied through `--translations` are machine-translated when auto-translation is enabled, otherwise seeded as `new` copies of the source. In a terminal without `--translations`, the command offers to enter a value and pick a status for each target locale. An explicit `status` is stored as given; when omitted it is `translated`, or `new` if the value equals the source.
+
+If the key already exists: with `--override` the resource is replaced without a question; without it, a terminal run asks whether to replace, and a non-interactive run exits 1 with `Resource already exists`. After saving, the command prints a warning for each [preferred terminology](./features/preferred-terminology.md) rule the source text breaks; warnings do not change the exit code.
+
+```bash
 lingo-tracker add-resource \
-  --collection Main \
-  --key feature.new.title \
-  --value "New Feature" \
-  --comment "Title for the new feature page"
-
-# Delete resources in CI
-lingo-tracker delete-resource \
-  --collection Main \
-  --key "deprecated.old.feature" \
-  --yes
-
-# Validate translations before deployment (production)
-lingo-tracker validate
-
-# Validate translations with relaxed requirements (staging)
-lingo-tracker validate --allow-translated
-
-# Export translations to XLIFF for translation agency
-lingo-tracker export \
-  --format xliff \
-  --collection Main \
-  --status new,stale \
-  --verbose
-
-# Export all translations to JSON for backup
-lingo-tracker export \
-  --format json \
-  --status new,translated,stale,verified \
-  --filename "backup-{locale}-{date}"
+  --key buttons.ok --value OK --comment "Dialog confirm button" --tags ui,dialogs \
+  --target-folder common \
+  --translations '[{"locale":"es","value":"Aceptar"},{"locale":"fr-ca","value":"OK","status":"verified"}]'
 ```
 
-**Complete CI/CD Pipeline Example:**
+### edit-resource
 
-```yaml
-# GitHub Actions example
-name: Build and Deploy
+Change an existing resource.
 
-on:
-  push:
-    branches: [main]
+```bash
+lingo-tracker edit-resource [options]
+```
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+| Flag | Notes |
+|---|---|
+| `--collection <name>` | |
+| `--key <key>` | Required |
+| `--base-value <text>` | New source text. Marks every real translation `stale`. |
+| `--comment <text>` | `--comment ""` clears it |
+| `--tags <a,b>` | Replaces the list. `--tags ,` clears it; `--tags ""` is ignored. |
+| `--target-folder <path>` | Moves the entry. `""` means the collection root. |
+| `--locale <locale>` with `--locale-value <text>` | Set one translation. When the value changes, its status becomes `translated`, or `new` if it equals the source. An unchanged value keeps its status. |
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+In a terminal, only the key and base value are prompted for; a blank answer keeps the current base value. When the source changes, locales that hold an untranslated copy get the new source, or a machine translation if enabled, and real translations become `stale`. Giving only one of `--locale` and `--locale-value` prints a warning and skips the translation; the other edits in the same command still apply. `No changes detected` is reported when nothing differs.
 
-      - name: Install dependencies
-        run: pnpm install
+A resource that has values but no metadata record cannot be edited until `normalize` has created the record.
 
-      # Validate translations as quality gate
-      - name: Validate translations
-        run: lingo-tracker validate
+### delete-resource
 
-      # Only build and deploy if validation passes
-      - name: Build
-        run: pnpm run build
+Delete one or more resources, in every locale.
 
-      - name: Deploy
-        run: pnpm run deploy
+```bash
+lingo-tracker delete-resource [--collection <name>] --key <key[,key...]> [--yes]
+```
+
+Deletion is best-effort: valid keys are removed even when others fail. Failures are listed under `Errors (N):` on stderr and make the exit code 1. Folders left empty are removed, deepest first, stopping at a folder that still holds other files such as `.gitkeep`. The translations folder itself is never removed. In a terminal the command shows the keys and asks for confirmation unless `--yes` is given.
+
+### move
+
+Move or rename resources, within a collection or into another one.
+
+```bash
+lingo-tracker move [--collection <name>] --source <key|pattern> --dest <key> [--dest-collection <name>] [--override]
+```
+
+- `--source` is a key, or a pattern ending in `*` such as `common.buttons.*`. With a pattern, `--dest` is the new prefix: `common.buttons.ok` becomes `common.actions.ok`.
+- Comments, tags and statuses move unchanged, and nothing is machine-translated. Stored `{{ name }}` placeholders are converted to `{name}` on the way, with checksums updated to match.
+- A destination that already exists is skipped with a warning and exit code 0 unless `--override` is given.
+- `--dest-collection` moves into another writable collection. Both collections must share a base locale. Locales the destination lacks are dropped; locales the entry lacks are seeded as `new`. The flag is never prompted for.
+- Emptied source folders are removed, as for `delete-resource`.
+
+```bash
+lingo-tracker move --source "common.buttons.*" --dest common.actions
+lingo-tracker move --source common.buttons.ok --dest shared.ok --dest-collection shared
+```
+
+### find-similar
+
+List resources whose source text is close to a given string. Use it before adding a resource to avoid duplicates; the editor's **Similar values** panel uses the same rule.
+
+```bash
+lingo-tracker find-similar [--collection <name>] --value <text> [--max-results <n>]
+```
+
+Scoring is normalized Levenshtein similarity on trimmed, lowercased source values. A resource is listed when its similarity is at least 80%, or when one text contains the other as whole words and the similarity is at least 40%. Results are ranked by similarity, with a key that contains the query winning ties. `--max-results` defaults to 5 and is capped at 500. The thresholds are fixed.
+
+```
+Similar values found for "Save":
+  buttons.save → "Save" (similarity: 100%)
+  labels.saved → "Saved" (similarity: 80%)
+  buttons.saveDraft → "Save draft" (similarity: 40%)
+```
+
+### normalize
+
+Repair and tidy a collection's files. See the [Normalize guide](./guides/normalize.md) for when to run it.
+
+```bash
+lingo-tracker normalize (--collection <name> | --all) [--dry-run] [--json] [--yes]
+```
+
+For every entry it:
+
+- converts `{{ x }}` to `{x}`
+- normalizes tags
+- recomputes checksums and re-applies the staleness rule
+- seeds missing target locales as `new`
+- drops a stray base-locale property
+- writes both files where something changed
+
+Then it removes empty folders bottom-up. It never changes translated text beyond the placeholder syntax, never removes values for locales that are no longer configured, and never removes the translations folder itself or any folder holding other files.
+
+Outside a terminal, `--collection` or `--all` is required even with one collection. `--all` skips read-only collections with a warning and asks for confirmation in a terminal unless `--yes` is given. `--json` prints one object with per-collection counts, `problems`, `findings` and `totals` to stdout.
+
+```
+🔄 Normalizing collection: main
+
+   ✅ Entries processed: 42
+   ✅ Locales added: 7
+   ✅ Values converted to ICU: 0
+   ✅ Files created: 2
+   ✅ Files updated: 15
+   ✅ Folders removed: 3
 ```
 
 ---
 
-## Tips and Best Practices
+## Output commands
 
-### Key Naming Conventions
+### bundle
 
-- Use dot-delimited keys that reflect the hierarchy: `apps.common.buttons.ok`
-- Keys decompose into folder paths: `apps.common.buttons.ok` → `apps/common/buttons/` folder
-- Keep keys descriptive and consistent across your project
+Write the runtime JSON files and optional TypeScript keys defined in `bundles`. See the [Bundling guide](./guides/bundling.md).
 
-### Tags for Organization
+```bash
+lingo-tracker bundle [options]
+```
 
-- Use tags to organize related resources: `--tags "ui,buttons,dialogs"`
-- Tags can be used for filtering during export/import operations
-- Tags are comma-separated and stored in metadata
-- For cross-collection tagging, use **collection-level tags** via `edit-collection --add-tag <tag>` — every resource in the collection inherits the tag without modifying individual `resource_entries.json` files
-- Collection-level tags are reflected in `export --tags`, bundle filtering, and the Tracker UI
+| Flag | Notes |
+|---|---|
+| `--name <a,b>` | Bundles to generate. Default: all. In a terminal with no flag, a selection prompt is shown. |
+| `--locale <a,b>` | Locales to generate, from the global `locales`. Default: all. |
+| `--token-casing <upperCase\|camelCase>` | Overrides config |
+| `--token-constant-name <name>` | Overrides config. Requires a single bundle: pass `--name`, or have only one bundle configured. |
+| `--[no-]transform-icu-to-transloco` | Convert `{name}` to `{{ name }}`, or keep `{name}`. Overrides config; when omitted, the bundle and global settings apply. |
+| `--debug-keys [locale]` | Also write a bundle where every value is its own key, under locale code `99` unless given |
+| `--quiet` | Suppress progress and success lines |
+| `--verbose` | Print every warning |
 
-### Working with Multiple Collections
+Each bundle writes `<dist>/<bundleName>.json` per locale and, when `typeDistFile` is set, the token file. Stored values are included whatever their status; a locale seeded as `new` therefore holds source text. A locale with no matching entries writes no file and warns. A key that is both a value and a parent fails the bundle. One failing bundle does not stop the others, but the exit code becomes 1.
 
-- Use collections to separate translation sources (e.g., main app, admin panel, mobile app)
-- Each collection can have its own configuration overrides
-- Collections share global defaults unless explicitly overridden
+### validate
 
-### Error Handling
+Check every collection and target locale for release readiness. See [Validate](./features/validate.md) for the rules in depth.
 
-- Commands report errors clearly with actionable messages
-- Bulk operations (like `delete-resource` with multiple keys) use best-effort approach
-- Check exit codes in scripts: 0 for success, non-zero for errors
+```bash
+lingo-tracker validate [options]
+```
+
+| Flag | Effect |
+|---|---|
+| `--allow-translated` | `translated` becomes a warning instead of a failure |
+| `--skip-locales <a,b>` | Exclude target locales. Unknown codes warn; skipping every target locale exits 1. |
+| `--skip-icu` | Do not compile values as ICU |
+| `--skip-runtime` | Do not check that the configured `runtime` can render each value's ICU constructs |
+| `--skip-placeholders` | Do not compare argument names with the source |
+| `--skip-protected-terms` | Do not check protected terms |
+| `--require-portable-plurals` | Warn when a source plural selects by category instead of `=N` |
+
+Failures, each of which exits 1: a locale that is `new`, `stale`, `translated` without `--allow-translated`, or has no metadata; a value that does not compile as ICU for its locale; under `runtime: "transloco"`, a value with ICU `plural`, `select`, `selectordinal`, `number`, `date`, `time` or `duration`; a translation whose ICU argument names differ from the source; a translation missing a protected term; a folder whose files are not valid JSON; a preferred-terminology file that exists but cannot be loaded. Preferred-terminology findings and portable-plural findings are warnings. `validate` reports a runtime failure for each locale that holds the value, while `bundle` warns once per bundled key and set of constructs. The command never prompts and has no collection filter.
+
+---
+
+## Exchange commands
+
+### export
+
+Write translations to XLIFF 1.2 or JSON for a translator or another system. See [Export](./features/export.md).
+
+```bash
+lingo-tracker export --format <xliff|json> [options]
+```
+
+| Flag | Default | Notes |
+|---|---|---|
+| `-f, --format <xliff\|json>` | prompt | Required outside a terminal |
+| `-c, --collection <a,b>` | all | Collections must share a base locale |
+| `-l, --locale <a,b>` | all target locales | The base locale is never exported |
+| `-s, --status <a,b>` | `new,stale` | Any of `new`, `stale`, `translated`, `verified` |
+| `-t, --tags <a,b>` | none | Entries with any of these tags, counting inherited tags |
+| `-o, --output <dir>` | config `exportFolder` | |
+| `--filename <pattern>` | `{locale}` | Placeholders `{locale}`, `{target}`, `{source}`, `{date}`; extension added if missing |
+| `--no-protect-notes` | | Omit "Do not translate" annotations for protected terms |
+| `--dry-run` | | Print the plan and summary; write nothing, not even the folder |
+| `--verbose` | | |
+
+JSON-only flags: `--structure <hierarchical|flat>` (default hierarchical), `--rich`, `--include-base`, `--include-status`, `--include-comment`, `--include-tags`, `--base-property-name <name>` (default `baseValue`; `value`, `comment`, `status` and `tags` are reserved). The `--include-*` flags and `--base-property-name` apply only with `--rich`; without it they print an advisory and have no effect. Given with XLIFF these flags have no effect.
+
+One file is written per target locale. Errors and hierarchical key conflicts exit 1. A completed dry run exits 0 even when its plan reports errors; a dry run that cannot start, for example because the output folder is unusable, exits 1.
+
+### import
+
+Read translations from an XLIFF 1.2 or JSON file into one collection and locale. See [Import](./features/import.md).
+
+```bash
+lingo-tracker import --source <file> --locale <locale> [options]
+```
+
+| Flag | Default | Notes |
+|---|---|---|
+| `-s, --source <file>` | prompt | Required |
+| `-l, --locale <locale>` | prompt | Required. The base locale is allowed only with `--strategy migration`. |
+| `-c, --collection <name>` | | |
+| `-f, --format <xliff\|json>` | from extension | |
+| `--strategy <name>` | `translation-service` | See the table |
+| `--create-missing` | on for migration | Create resources the file has but the collection lacks |
+| `--update-comments` | on for migration | |
+| `--update-tags` | on for migration | Rich JSON only |
+| `--preserve-status` | off | Honour a `status` field in rich JSON instead of the strategy's status |
+| `--validate-base` / `--no-validate-base` | on | Warn when the file's source text differs from the stored one |
+| `--dry-run`, `--verbose` | | |
+
+| Strategy | Resulting status | Creates missing | Typical use |
+|---|---|---|---|
+| `translation-service` | changed values `translated`; unchanged values keep their status, except that `stale` ones, or ones whose recorded base checksum differs from the current source, become `translated` | no | files back from a vendor |
+| `verification` | `verified` | no | a reviewer's approved file |
+| `migration` | changed or new values `translated`, or the file's own status with `--preserve-status`; unchanged values keep their status | yes | moving in from another system, including the base locale |
+| `update` | unchanged | no | bulk corrections |
+
+Passing `--create-missing`, `--update-comments` or `--update-tags` with a strategy other than `migration` prints an advisory warning and has no effect; these flags apply only to `migration`. Entries that fail, for example because a protected term was altered, are reported and make the exit code 1; entries skipped because the key does not exist do not. Files over 5 MB print a size warning.
+
+### glossary
+
+Extract the terms used in a block of text and output their existing translations. Meant for translating help content consistently with the UI. See [Glossary](./features/glossary.md).
+
+```bash
+lingo-tracker glossary (--text <text> | --input <file> | <stdin>) [options]
+```
+
+| Flag | Default |
+|---|---|
+| `--text <text>` / `--input <file>` / piped stdin | precedence in that order |
+| `--output <file>` | `./lingo-tracker-glossary-<timestamp>.json` |
+| `--stdout` | print JSON to stdout, status to stderr |
+| `--collection <name>` | all collections, which must share a base locale |
+| `--locales <a,b>` | all target locales |
+| `--include-all` | also include `new` and `stale` translations |
+| `--extractor <ngram>` | `ngram`. `ai` is reserved and currently errors. |
+
+---
+
+## Terminology commands
+
+### protected-terms
+
+Edit the global protected-terms file or a collection's own file. See [Protected Terms](./features/protected-terms.md).
+
+```bash
+lingo-tracker protected-terms [--collection <name>] ([--add <term>]... | [--remove <term>]... | --set <a,b> | --list | --file <path>)
+```
+
+`--list` prints the terms and the file behind them; with `--collection` it prints the global, collection and combined lists. `--file` points the scope at another file and carries existing terms across; `--file ""` removes the setting. A collection has no default file, so give it one with `--file` before adding terms. `--set` cannot be combined with `--add` or `--remove`. Files are written sorted, one term per line.
+
+### preferred-terminology
+
+Edit the preferred-terminology rules. See [Preferred Terminology](./features/preferred-terminology.md).
+
+```bash
+lingo-tracker preferred-terminology (--list | --add <discouraged> --preferred <preferred> [--reason <text>] | --remove <discouraged>)
+```
+
+`--add` replaces an existing rule for the same discouraged term, compared without case, so omitting `--reason` clears an earlier reason. Invalid rule sets, such as chains, cycles or self-mappings, are rejected without touching the file. If the file cannot be read, `--add` and `--remove` refuse to run.
+
+---
+
+## Machine translation
+
+### translate-locale
+
+Machine-translate every resource of one collection whose target locale is `new`, `stale` or has no metadata yet. Requires `translation.enabled`. See [Auto-Translation](./auto-translation.md).
+
+```bash
+lingo-tracker translate-locale [--collection <name>] --locale <locale> [--verbose]
+```
+
+Resources that use plural, select, number, date or time ICU forms, that lose a placeholder in translation, or whose translation drops a protected term are skipped and counted as needing a human. Requests are sent in batches of `translation.batchSize` with `translation.delayMs` between them. `--verbose` prints one line per batch. The exit code is 1 when any resource failed.
+
+---
+
+## Scripting notes
+
+- Pass every required value as a flag. Do not rely on auto-selection of a single collection in scripts that may later run against several.
+- Check exit codes. Partial failures in `delete-resource`, `import`, `bundle` and `translate-locale` exit 1 while still having done the successful part.
+- `validate` and `bundle` together make a release gate: validate first, then bundle, then build.
+- The [CI/CD guide](./guides/ci-cd.md) has complete pipeline examples.

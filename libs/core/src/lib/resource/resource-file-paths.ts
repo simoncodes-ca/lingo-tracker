@@ -1,6 +1,6 @@
-import { resolve, join } from 'node:path';
-import { validateKey, validateTargetFolder, resolveResourceKey, splitResolvedKey } from '@simoncodes-ca/domain';
-import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
+import { splitResolvedKey } from '@simoncodes-ca/domain';
+import { resolveFolderAddress } from './folder-address';
+import { resolveCheckedResourceKey } from './resource-key';
 
 export interface ResolvedResourcePaths {
   /** The fully resolved key (targetFolder.key) */
@@ -11,10 +11,6 @@ export interface ResolvedResourcePaths {
   readonly folderPathSegments: readonly string[];
   /** Full path to the folder containing the resource files */
   readonly folderPath: string;
-  /** Full path to resource_entries.json */
-  readonly resourceEntriesPath: string;
-  /** Full path to tracker_meta.json */
-  readonly trackerMetaPath: string;
 }
 
 export interface ResourcePathResolutionParams {
@@ -29,15 +25,16 @@ export interface ResourcePathResolutionParams {
 }
 
 /**
- * Resolves a resource key to all necessary file system paths.
+ * Resolves a resource key to its entry key and folder address.
  *
  * This function encapsulates the logic for:
- * 1. Combining targetFolder and key into a resolved key
+ * 1. Validating and combining targetFolder and key into a resolved key
  * 2. Splitting the resolved key into folder path and entry key
- * 3. Resolving absolute paths for resource files
+ * 3. Resolving the absolute folder path
  *
  * @param params - Path resolution parameters
- * @returns Object containing all resolved paths
+ * @returns The folder address, resolved full key, entry key, and folder path segments
+ * @throws {InvalidResourceKeyError} The key or target folder is malformed (domain message unchanged).
  *
  * @example
  * ```typescript
@@ -53,44 +50,32 @@ export interface ResourcePathResolutionParams {
  * // entryKey: "ok"
  * // folderPathSegments: ["apps", "common", "buttons"]
  * // folderPath: "/app/translations/apps/common/buttons"
- * // resourceEntriesPath: "/app/translations/apps/common/buttons/resource_entries.json"
- * // trackerMetaPath: "/app/translations/apps/common/buttons/tracker_meta.json"
  * ```
  */
 export function resolveResourcePaths(params: ResourcePathResolutionParams): ResolvedResourcePaths {
-  const { key, translationsFolder, targetFolder, cwd = process.cwd() } = params;
+  return resolveResolvedResourcePaths({
+    key: resolveCheckedResourceKey(params.key, params.targetFolder),
+    translationsFolder: params.translationsFolder,
+    cwd: params.cwd,
+  });
+}
 
-  const resolvedKey = resolveResourceKey(key, targetFolder);
+/**
+ * Maps a full key already validated by its caller or read from storage to its paths.
+ * Does not validate key syntax. Collection folder policy still applies.
+ */
+export function resolveResolvedResourcePaths(
+  params: Omit<ResourcePathResolutionParams, 'targetFolder'>,
+): ResolvedResourcePaths {
+  const { key: resolvedKey, translationsFolder, cwd = process.cwd() } = params;
   const { folderPath: folderPathSegments, entryKey } = splitResolvedKey(resolvedKey);
 
-  const relativeFolderPath = folderPathSegments.length
-    ? join(translationsFolder, ...folderPathSegments)
-    : translationsFolder;
-
-  const folderPath = resolve(cwd, relativeFolderPath);
-  const resourceEntriesPath = join(folderPath, RESOURCE_ENTRIES_FILENAME);
-  const trackerMetaPath = join(folderPath, TRACKER_META_FILENAME);
+  const folderPath = resolveFolderAddress(translationsFolder, folderPathSegments.join('.'), cwd);
 
   return {
     resolvedKey,
     entryKey,
     folderPathSegments,
     folderPath,
-    resourceEntriesPath,
-    trackerMetaPath,
   };
-}
-
-/**
- * Validates a key and resolves all paths in one operation.
- * Throws if key or targetFolder are invalid.
- */
-export function validateAndResolvePaths(params: ResourcePathResolutionParams): ResolvedResourcePaths {
-  validateKey(params.key);
-
-  if (params.targetFolder) {
-    validateTargetFolder(params.targetFolder);
-  }
-
-  return resolveResourcePaths(params);
 }

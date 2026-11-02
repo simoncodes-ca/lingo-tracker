@@ -1,0 +1,57 @@
+// The status toggle recipe shared by the Tracker's status rail and the export dialog's status
+// picker. Mixins rather than rules: each component `@use`s this and includes them under its own
+// selectors, so Angular's view encapsulation still scopes every rule to that component. Colour per
+// status stays with the caller, which passes custom-property values to `pressed`.
+
+// The pill: resting look, hover and keyboard focus. Callers add what is genuinely theirs.
+@mixin toggle {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-full);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  gap: var(--spacing-1);
+  // Sits inside the 40px control row without matching it — a toggle in a set of
+  // five is not the same weight of object as the search field beside it.
+  height: var(--spacing-8);
+  line-height: 1;
+  padding: 0 var(--spacing-2) 0 var(--spacing-1);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover {
+    background-color: var(--color-background-muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+  }
+}
+
+// The status dot's geometry. Its colour is the caller's.
+@mixin dot {
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 7px;
+  margin-left: var(--spacing-1);
+  width: 7px;
+}
+
+// The selected state, filled from a surface / border / ink set (CSS values, e.g. `var(--x)`).
+@mixin pressed($surface, $border, $ink) {
+  background-color: $surface;
+  border-color: $border;
+  color: $ink;
+
+  .status-dot {
+    // Once the chip is filled, a separate coloured dot is a second mark saying
+    // the same thing; it drops to the label's ink and reads as a bullet.
+    background-color: currentcolor;
+  }
+}

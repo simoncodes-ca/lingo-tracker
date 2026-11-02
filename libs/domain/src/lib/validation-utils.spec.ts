@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  validateImportKey,
-  isKeyTooLong,
-  validateLocale,
-  isEmptyValue,
-  detectHierarchicalConflicts,
   detectDuplicateKeys,
+  detectHierarchicalConflicts,
+  isEmptyValue,
+  isKeyTooLong,
+  validateImportKey,
+  validateLocale,
 } from './validation-utils';
 
 describe('validateImportKey', () => {

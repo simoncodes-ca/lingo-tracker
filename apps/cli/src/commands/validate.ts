@@ -1,6 +1,9 @@
-import * as path from 'path';
-import { validateResources, generateValidationSummary } from '@simoncodes-ca/core';
-import { loadConfiguration } from '../utils';
+import { type Collection, runValidate } from '@simoncodes-ca/core';
+import { CommandOutput } from '../runner/command-output';
+import { type CommandResult, defineCommand } from '../runner/command-runner';
+import { exitForRunOutcome } from '../runner/run-outcome';
+import { ConsoleFormatter } from '../utils';
+import { VALIDATE_FLAGS } from './validate-options';
 
 /**
  * Options for the validate command.
@@ -16,9 +19,9 @@ export interface ValidateCommandOptions {
   allowTranslated?: boolean;
 
   /**
-   * Locales to exclude from validation. Values that are unknown (not in config.locales)
-   * emit a warning. The base locale is silently ignored. If all target locales are skipped,
-   * the command exits with code 1.
+   * Locales to exclude from validation. Values that are no collection's target locale emit a
+   * warning, unless they are a collection's base locale (silently ignored). If all target
+   * locales are skipped, the command exits with code 1.
    */
   skipLocales?: readonly string[];
 
@@ -34,6 +37,9 @@ export interface ValidateCommandOptions {
    */
   skipIcu?: boolean;
 
+  /** When true, do not check whether the configured app runtime can render ICU constructs. */
+  skipRuntime?: boolean;
+
   /**
    * When true, translations are not checked against their base value for the
    * placeholders they interpolate.
@@ -44,6 +50,9 @@ export interface ValidateCommandOptions {
    * translations deliberately diverge from the base value's arguments.
    */
   skipPlaceholders?: boolean;
+
+  /** When true, do not check translations for dropped or altered protected terms. */
+  skipProtectedTerms?: boolean;
 
   /**
    * When true, base-locale values selecting a plural branch by category
@@ -64,8 +73,8 @@ export interface ValidateCommandOptions {
  *
  * **Validation Process:**
  * 1. Loads configuration from .lingo-tracker.json
- * 2. Identifies all collections and target locales
- * 3. Validates EVERY resource in EVERY locale (comprehensive check)
+ * 2. Opens every collection with its own base locale and target locales
+ * 3. Validates EVERY resource of each collection in EVERY one of its target locales
  * 4. Collects ALL failures and warnings
  * 5. Displays complete validation summary
  * 6. Exits with code 1 if any failures found, 0 if all passed
@@ -76,8 +85,12 @@ export interface ValidateCommandOptions {
  * - 'translated' status → FAILURE (default) or WARNING (with --allow-translated)
  * - 'verified' status → SUCCESS (translation reviewed and approved)
  * - Missing metadata → treated as 'new' (FAILURE)
+ * - Folder whose files cannot be read (malformed JSON) → FAILURE (its resources are not validated)
  * - Value does not compile as ICU for its own locale → FAILURE (unless --skip-icu)
  * - Translation interpolates different placeholders than its base value → FAILURE (unless --skip-placeholders)
+ * - Translation drops or alters a protected term → FAILURE (unless --skip-protected-terms)
+ * - Base-locale value uses a discouraged term from the preferred-terminology file → WARNING (never fails)
+ * - Preferred-terminology file exists but cannot be loaded → FAILURE
  *
  * **ICU Validation:**
  * Status validation asks whether a human approved a translation. It says
@@ -87,9 +100,15 @@ export interface ValidateCommandOptions {
  * marked 'verified' and still throw. Every value, including the base-locale
  * source, is compiled under the locale it is stored under.
  *
+ * **Preferred Terminology:**
+ * Each collection's base-locale values are scanned for discouraged terms from
+ * the preferred-terminology file. Findings are advisory — reported once per
+ * key and rule, never affecting the exit code. A file that exists but cannot be
+ * loaded is a failure, because then nothing was checked. There is no opt-out flag.
+ *
  * **Exit Codes:**
- * - 0: All validations passed (all resources verified)
- * - 1: Validation failures found OR configuration errors
+ * - 0: All validations passed (all resources verified); terminology warnings allowed
+ * - 1: Status, ICU, placeholder, or protected-term failures, unreadable preferred-terminology file, OR configuration errors
  *
  * **Use Cases:**
  * - Pre-release quality gate in CI/CD pipelines
@@ -97,8 +116,7 @@ export interface ValidateCommandOptions {
  * - Prevent deployment of incomplete translations
  * - Enforce translation verification requirements
  *
- * @param options - Validation options (status strictness, locale and ICU flags)
- * @throws Never throws - exits process with appropriate code instead
+ * Options: status strictness, locale and ICU flags. Every failure sets exit code 1.
  *
  * @example
  * ```typescript
@@ -108,7 +126,7 @@ export interface ValidateCommandOptions {
  * // Relaxed validation - allow translated status with warnings
  * await validateCommand({ allowTranslated: true });
  *
- * // Status gate only, no ICU compilation
+ * // Skip ICU compilation; other checks still apply
  * await validateCommand({ skipIcu: true });
  * ```
  *
@@ -120,11 +138,14 @@ export interface ValidateCommandOptions {
  * # Relaxed mode (staging environments)
  * $ lingo-tracker validate --allow-translated
  *
- * # Status gate only, without compiling values as ICU
+ * # Skip ICU compilation; other checks still apply
  * $ lingo-tracker validate --skip-icu
  *
- * # Status and ICU gates only, without comparing placeholders
+ * # Skip placeholder agreement; other checks still apply
  * $ lingo-tracker validate --skip-placeholders
+ *
+ * # Skip protected-term preservation; other checks still apply
+ * $ lingo-tracker validate --skip-protected-terms
  *
  * # Also warn about base-locale plurals that will not survive being copied
  * $ lingo-tracker validate --require-portable-plurals
@@ -133,82 +154,20 @@ export interface ValidateCommandOptions {
  * $ lingo-tracker validate || exit 1
  * ```
  */
-export async function validateCommand(options: ValidateCommandOptions): Promise<void> {
-  const loaded = loadConfiguration();
-  if (!loaded) return;
-  const { config, cwd } = loaded;
+export const validateCommand = defineCommand<ValidateCommandOptions>()({
+  flags: VALIDATE_FLAGS,
+  name: 'Validate',
+  collection: 'many',
+  run: ({ collections, answers }) => validate(answers, collections),
+});
 
-  const allCollections = Object.entries(config.collections || {}).map(([name, collectionConfig]) => ({
-    name,
-    path: path.resolve(cwd, collectionConfig.translationsFolder),
-  }));
-
-  if (allCollections.length === 0) {
-    console.error('❌ No collections found in configuration.');
-    process.exit(1);
+function validate(options: ValidateCommandOptions, collections: Collection[]): CommandResult {
+  const result = runValidate(collections, options);
+  for (const warning of result.warnings) ConsoleFormatter.warning(warning);
+  if (result.status === 'failed') {
+    ConsoleFormatter.error(result.error, result.details);
+    return exitForRunOutcome(result.outcome);
   }
-
-  const targetLocales = (config.locales || []).filter((locale: string) => locale !== config.baseLocale);
-
-  if (targetLocales.length === 0) {
-    console.error('❌ No target locales found in configuration.');
-    console.error('Target locales are all configured locales except the base locale.');
-    process.exit(1);
-  }
-
-  const configuredLocales = new Set(config.locales || []);
-  const requestedSkip = options.skipLocales ?? [];
-  const effectiveSkipped: string[] = [];
-
-  for (const locale of requestedSkip) {
-    if (locale === config.baseLocale) {
-      // Base locale is already excluded from targetLocales — silently ignore
-      continue;
-    }
-    if (!configuredLocales.has(locale)) {
-      console.warn(`⚠️  Skipping unknown locale '${locale}' — not in configured locales`);
-      continue;
-    }
-    effectiveSkipped.push(locale);
-  }
-
-  const localesToValidate = targetLocales.filter((l: string) => !effectiveSkipped.includes(l));
-
-  if (localesToValidate.length === 0) {
-    console.error('❌ All target locales were skipped; nothing to validate.');
-    process.exit(1);
-  }
-
-  const compileValues = !options.skipIcu;
-  const requirePortablePlurals = options.requirePortablePlurals ?? false;
-
-  const validationOptions = {
-    allowTranslated: options.allowTranslated ?? false,
-    skippedLocales: effectiveSkipped,
-    // The portability rule is a static parse, not a compilation, so an explicit
-    // request for it is honoured even alongside --skip-icu.
-    icu:
-      compileValues || requirePortablePlurals
-        ? {
-            // The base locale carries the source value copied into every
-            // translation slot, so ICU checks it alongside the targets.
-            baseLocale: config.baseLocale,
-            compileValues,
-            requirePortablePlurals,
-          }
-        : undefined,
-    // A renamed placeholder renders as empty text instead of raising, so the
-    // ICU pass above cannot see it and the status gate has no opinion on it.
-    placeholders: options.skipPlaceholders ? undefined : { baseLocale: config.baseLocale },
-  };
-
-  const validationResult = validateResources(allCollections, localesToValidate, validationOptions);
-
-  const summary = generateValidationSummary(validationResult, validationOptions);
-
-  console.log(summary);
-
-  if (!validationResult.passed) {
-    process.exit(1);
-  }
+  CommandOutput.log(result.summary);
+  return exitForRunOutcome(result.outcome);
 }

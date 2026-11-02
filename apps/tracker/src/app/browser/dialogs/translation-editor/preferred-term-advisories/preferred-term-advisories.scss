@@ -1,0 +1,78 @@
+// Same amber tint as the dialog's lock notice, at the field-hint's scale: this
+// is advice beside a field, not a banner over the form.
+:host {
+  display: block;
+}
+
+.term-advisories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.term-advisory {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px var(--spacing-2);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
+  border-radius: var(--border-radius-md);
+  background: color-mix(in srgb, var(--color-warning) 9%, transparent);
+  color: var(--color-warning-text);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+}
+
+.term-advisory-icon {
+  flex: none;
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+}
+
+.term-advisory-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.term-advisory-message,
+.term-advisory-reason {
+  margin: 0;
+}
+
+.term-advisory-reason {
+  color: var(--color-text-secondary);
+}
+
+// The fix rides the first line, like the key collision's "Open existing", but
+// reads as a button: people were mistaking the bare text for part of the note.
+.term-advisory-act {
+  flex: none;
+  margin: -1px 0;
+  padding: 2px var(--spacing-2);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 55%, transparent);
+  border-radius: var(--border-radius-sm);
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: var(--font-weight-semibold);
+  line-height: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--color-warning) 75%, transparent);
+    background: color-mix(in srgb, var(--color-warning) 28%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 1px;
+  }
+
+  &:active {
+    background: color-mix(in srgb, var(--color-warning) 36%, transparent);
+  }
+}

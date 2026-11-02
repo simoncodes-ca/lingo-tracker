@@ -1,0 +1,119 @@
+name: Test Report
+
+on:
+  workflow_run:
+    workflows: [PR Check, Tracker E2E]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  report:
+    name: ${{ github.event.workflow_run.name == 'PR Check' && 'unit' || 'e2e' }}
+    if: contains(fromJSON('["success","failure"]'), github.event.workflow_run.conclusion)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      checks: write
+      pull-requests: write
+    env:
+      # PR Check publishes unit results; Tracker E2E publishes Playwright results.
+      KIND: ${{ github.event.workflow_run.name == 'PR Check' && 'unit' || 'e2e' }}
+      ARTIFACT: ${{ github.event.workflow_run.name == 'PR Check' && 'unit-test-results' || 'tracker-e2e-results' }}
+      TITLE: ${{ github.event.workflow_run.name == 'PR Check' && 'Unit test results' || 'Tracker E2E results' }}
+
+    steps:
+      - name: Resolve PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          HEAD_OWNER: ${{ github.event.workflow_run.head_repository.owner.login }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          # $ENV is evaluated by jq, not the shell.
+          # shellcheck disable=SC2016
+          number=$(gh api -X GET "repos/$GITHUB_REPOSITORY/pulls" -f state=open -f head="$HEAD_OWNER:$HEAD_BRANCH" --jq '[.[] | select(.head.sha==$ENV.SHA and .head.repo.full_name==$ENV.HEAD_REPO) | .number] | first // empty') || number=''
+          if [[ "$number" =~ ^[0-9]+$ ]]; then
+            echo "number=$number" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download test results
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        continue-on-error: true
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: results
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Detect test results
+        id: detect
+        run: find results -name junit.xml 2>/dev/null | grep -q . && echo found=true >> "$GITHUB_OUTPUT" || true
+
+      - name: Publish test results
+        id: publish
+        if: steps.detect.outputs.found == 'true'
+        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
+        with:
+          report_paths: results/**/junit.xml
+          check_name: ${{ env.TITLE }}
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_annotations: false
+          detailed_summary: true
+          # The e2e check lists every journey; the unit check lists only failures.
+          include_passed: ${{ env.KIND == 'e2e' }}
+          require_tests: false
+          comment: false
+
+      - name: Comment on PR
+        if: github.event.workflow_run.event == 'pull_request' && steps.publish.outcome == 'success' && steps.pr.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.pr.outputs.number }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          TOTAL: ${{ steps.publish.outputs.total }}
+          PASSED: ${{ steps.publish.outputs.passed }}
+          SKIPPED: ${{ steps.publish.outputs.skipped }}
+          FAILED: ${{ steps.publish.outputs.failed }}
+          REPORT_URL: ${{ steps.publish.outputs.report_url }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          for count in "$TOTAL" "$PASSED" "$SKIPPED" "$FAILED"; do
+            if [[ ! "$count" =~ ^[0-9]+$ ]]; then
+              exit 0
+            fi
+          done
+          if (( TOTAL == 0 )); then
+            exit 0
+          fi
+
+          status='✅'
+          if [[ "$FAILED" =~ [1-9] ]]; then
+            status='❌'
+          fi
+
+          # One comment per kind, updated in place on every run.
+          marker="<!-- lingo-tracker:test-report:$KIND -->"
+          body=$(mktemp "$RUNNER_TEMP/$KIND-test-comment.XXXXXX")
+          trap 'rm -f "$body"' EXIT
+          {
+            printf '### %s\n\n' "$TITLE"
+            printf '%s %s tests · %s passed · %s skipped · %s failed\n\n' "$status" "$TOTAL" "$PASSED" "$SKIPPED" "$FAILED"
+            printf 'Commit %s' "${SHA:0:7}"
+            if [[ -n "$REPORT_URL" ]]; then
+              printf ' · [Check run](%s)' "$REPORT_URL"
+            fi
+            printf ' · [Workflow run](%s)\n\n' "$RUN_URL"
+            printf '%s' "$marker"
+          } > "$body"
+
+          comment_id=$(MARKER="$marker" gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains(env.MARKER))) | .id')
+          comment_id=${comment_id%%$'\n'*}
+          if [[ "$comment_id" =~ ^[0-9]+$ ]]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -F "body=@$body"
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F "body=@$body"
+          fi

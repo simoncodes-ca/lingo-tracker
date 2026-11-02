@@ -38,5 +38,45 @@
     "ru": "Bundle not found. Reload the page and try again.",
     "ja": "Bundle not found. Reload the page and try again.",
     "de": "Bundle not found. Reload the page and try again."
+  },
+  "createFailed": {
+    "source": "Failed to create bundle",
+    "comment": "Fallback error shown in the bundle dialog when creating a bundle fails without a server message",
+    "tags": ["bundles"],
+    "es": "Failed to create bundle",
+    "fr-ca": "Failed to create bundle",
+    "ru": "Failed to create bundle",
+    "ja": "Failed to create bundle",
+    "de": "Failed to create bundle"
+  },
+  "updateFailed": {
+    "source": "Failed to update bundle",
+    "comment": "Fallback error shown in the bundle dialog when saving a bundle fails without a server message",
+    "tags": ["bundles"],
+    "es": "Failed to update bundle",
+    "fr-ca": "Failed to update bundle",
+    "ru": "Failed to update bundle",
+    "ja": "Failed to update bundle",
+    "de": "Failed to update bundle"
+  },
+  "deleteFailed": {
+    "source": "Failed to delete bundle",
+    "comment": "Error toast when deleting a bundle fails",
+    "tags": ["bundles"],
+    "es": "Failed to delete bundle",
+    "fr-ca": "Failed to delete bundle",
+    "ru": "Failed to delete bundle",
+    "ja": "Failed to delete bundle",
+    "de": "Failed to delete bundle"
+  },
+  "generateFailed": {
+    "source": "Failed to generate bundle.",
+    "comment": "Fallback error shown on a bundle card when generating the bundle fails without a server message",
+    "tags": ["bundles"],
+    "es": "Failed to generate bundle.",
+    "fr-ca": "Failed to generate bundle.",
+    "ru": "Failed to generate bundle.",
+    "ja": "Failed to generate bundle.",
+    "de": "Failed to generate bundle."
   }
 }

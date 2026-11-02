@@ -1,5 +1,17 @@
+import { hasFsErrorCode } from '@simoncodes-ca/core';
 import fs from 'fs';
 import path from 'path';
+import { ADD_RESOURCE_FLAGS } from '../add-resource/add-resource-flags';
+import { CommandOutput } from '../runner/command-output';
+import { type Ask, defineCommand } from '../runner/command-runner';
+import { flagName } from '../runner/flag-record';
+import { requiredText } from '../utils';
+import { BUNDLE_FLAGS } from './bundle-flags';
+import { DELETE_RESOURCE_FLAGS } from './delete-resource-flags';
+import { EDIT_RESOURCE_FLAGS } from './edit-resource-flags';
+import { INSTALL_SKILL_FLAGS } from './install-skill-flags';
+import { NORMALIZE_FLAGS } from './normalize-flags';
+import { PREFERRED_TERMINOLOGY_FLAGS } from './preferred-terminology-flags';
 
 export interface CollectionSpec {
   name: string;
@@ -28,61 +40,54 @@ export function parseCollectionArg(raw: string): CollectionSpec {
   return { name, bundle, tokenConstant, tokenFilePath };
 }
 
-async function promptForCollections(): Promise<CollectionSpec[]> {
-  const prompts = (await import('prompts')).default;
+async function promptForCollections(ask: Ask): Promise<CollectionSpec[]> {
   const collections: CollectionSpec[] = [];
+  const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
   let addMore = true;
 
   while (addMore) {
-    const collectionNum = collections.length + 1;
-    console.log(`\nCollection ${collectionNum}:`);
+    CommandOutput.log(`\nCollection ${collections.length + 1}:`);
 
-    const answers = await prompts([
+    const answers = await ask([
       {
         type: 'text',
         name: 'name',
         message: 'Collection name (e.g., trackerResources)',
-        validate: (v: string) => v.trim().length > 0 || 'Required',
+        validate: requiredText,
       },
       {
         type: 'text',
         name: 'bundle',
         message: 'Bundle name (e.g., tracker)',
-        validate: (v: string) => v.trim().length > 0 || 'Required',
+        validate: requiredText,
       },
       {
         type: 'text',
         name: 'tokenConstant',
         message: 'Token constant name (e.g., TRACKER_TOKENS)',
-        validate: (v: string) => v.trim().length > 0 || 'Required',
+        validate: requiredText,
       },
       {
         type: 'text',
         name: 'tokenFilePath',
         message: 'Token file path (e.g., src/i18n-types/tracker-resources.ts)',
-        validate: (v: string) => v.trim().length > 0 || 'Required',
+        validate: requiredText,
       },
     ]);
 
-    if (!answers.name) {
-      // User cancelled
-      break;
-    }
-
     collections.push({
-      name: answers.name.trim(),
-      bundle: answers.bundle.trim(),
-      tokenConstant: answers.tokenConstant.trim(),
-      tokenFilePath: answers.tokenFilePath.trim(),
+      name: text(answers.name),
+      bundle: text(answers.bundle),
+      tokenConstant: text(answers.tokenConstant),
+      tokenFilePath: text(answers.tokenFilePath),
     });
 
-    const more = await prompts({
+    const more = await ask({
       type: 'confirm',
       name: 'value',
       message: 'Add another collection?',
       initial: false,
     });
-    if (more.value === undefined) break;
     addMore = more.value === true;
   }
 
@@ -107,8 +112,10 @@ export function generateCollectionsSection(collections: CollectionSpec[]): strin
 export function generateCliCommandsSection(collections: CollectionSpec[], tokenCasing?: string): string {
   const primary = collections[0];
   const bundleFlag =
-    collections.length === 1 ? `--name ${primary.bundle}` : `--name ${collections.map((c) => c.bundle).join(',')}`;
-  const casingFlag = tokenCasing ? ` --token-casing ${tokenCasing}` : '';
+    collections.length === 1
+      ? `${flagName(BUNDLE_FLAGS.name)} ${primary.bundle}`
+      : `${flagName(BUNDLE_FLAGS.name)} ${collections.map((c) => c.bundle).join(',')}`;
+  const casingFlag = tokenCasing ? ` ${flagName(BUNDLE_FLAGS.tokenCasing)} ${tokenCasing}` : '';
 
   const multiCollectionNote =
     collections.length > 1
@@ -122,11 +129,11 @@ export function generateCliCommandsSection(collections: CollectionSpec[], tokenC
   return `${notePrefix}### Add a resource
 \`\`\`bash
 npx lingo-tracker add-resource \\
-  --collection ${primary.name} \\
-  --key <dot.delimited.key> \\
-  --value "<base locale text>" \\
-  --comment "<context for translators>" \\
-  --tags "<single top-level domain tag>"
+  ${flagName(ADD_RESOURCE_FLAGS.collection)} ${primary.name} \\
+  ${flagName(ADD_RESOURCE_FLAGS.key)} <dot.delimited.key> \\
+  ${flagName(ADD_RESOURCE_FLAGS.value)} "<base locale text>" \\
+  ${flagName(ADD_RESOURCE_FLAGS.comment)} "<context for translators>" \\
+  ${flagName(ADD_RESOURCE_FLAGS.tags)} "<single top-level domain tag>"
 \`\`\`
 
 ### Regenerate bundle (after adding/editing resources)
@@ -138,23 +145,31 @@ This regenerates both the JSON bundle files and the typed TypeScript token const
 ### Edit a resource
 \`\`\`bash
 npx lingo-tracker edit-resource \\
-  --collection ${primary.name} \\
-  --key <dot.delimited.key> \\
-  --base-value "<new text>"
+  ${flagName(EDIT_RESOURCE_FLAGS.collection)} ${primary.name} \\
+  ${flagName(EDIT_RESOURCE_FLAGS.key)} <dot.delimited.key> \\
+  ${flagName(EDIT_RESOURCE_FLAGS.baseValue)} "<new text>"
 \`\`\`
 
 ### Delete a resource
 \`\`\`bash
 npx lingo-tracker delete-resource \\
-  --collection ${primary.name} \\
-  --key <dot.delimited.key> \\
-  --yes
+  ${flagName(DELETE_RESOURCE_FLAGS.collection)} ${primary.name} \\
+  ${flagName(DELETE_RESOURCE_FLAGS.key)} <dot.delimited.key> \\
+  ${flagName(DELETE_RESOURCE_FLAGS.yes)}
 \`\`\`
+
+### Preferred terminology (project-wide)
+\`\`\`bash
+npx lingo-tracker preferred-terminology ${flagName(PREFERRED_TERMINOLOGY_FLAGS.list)}
+npx lingo-tracker preferred-terminology ${flagName(PREFERRED_TERMINOLOGY_FLAGS.add)} "<discouraged term>" ${flagName(PREFERRED_TERMINOLOGY_FLAGS.preferred)} "<preferred term>" ${flagName(PREFERRED_TERMINOLOGY_FLAGS.reason)} "<optional reason>"
+npx lingo-tracker preferred-terminology ${flagName(PREFERRED_TERMINOLOGY_FLAGS.remove)} "<discouraged term>"
+\`\`\`
+Base-locale values that use a discouraged term get a warning suggesting the preferred term.
 
 ### Other useful commands
 \`\`\`bash
-npx lingo-tracker normalize --collection ${primary.name}
-npx lingo-tracker validate --collection ${primary.name}
+npx lingo-tracker normalize ${flagName(NORMALIZE_FLAGS.collection)} ${primary.name}
+npx lingo-tracker validate
 \`\`\``;
 }
 
@@ -189,7 +204,8 @@ export async function generateSkillMd(collections: CollectionSpec[], tokenCasing
     const template = await fs.promises.readFile(filePath, 'utf-8');
     return substituteSkillTemplate(template, collections, tokenCasing);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+    if (hasFsErrorCode(err, 'ENOENT')) {
+      // eslint-disable-next-line preserve-caught-error -- printCliError prints a cause as a second line; this message already says enough.
       throw new Error(
         `Template file not found: ${filePath}. Make sure the CLI was built with pnpm run build:cli before running.`,
       );
@@ -204,7 +220,8 @@ export async function readPatternsMdTemplate(): Promise<string> {
   try {
     return await fs.promises.readFile(filePath, 'utf-8');
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+    if (hasFsErrorCode(err, 'ENOENT')) {
+      // eslint-disable-next-line preserve-caught-error -- printCliError prints a cause as a second line; this message already says enough.
       throw new Error(
         `Template file not found: ${filePath}. Make sure the CLI was built with pnpm run build:cli before running.`,
       );
@@ -213,82 +230,72 @@ export async function readPatternsMdTemplate(): Promise<string> {
   }
 }
 
-export async function installSkillCommand(options: InstallSkillOptions): Promise<void> {
-  const isTTY = process.stdin.isTTY;
+export const installSkillCommand = defineCommand<InstallSkillOptions>()({
+  flags: INSTALL_SKILL_FLAGS,
+  name: 'Install skill',
+  // Generates a skill file from templates; reads no project configuration.
+  collection: 'none',
+  config: false,
+  run: async ({ answers: options, cwd, interactive, ask }) => {
+    let collections: CollectionSpec[];
+    let outputDir: string;
+    let tokenCasing = options.tokenCasing; // may be overridden by interactive prompt
 
-  let collections: CollectionSpec[];
-  let outputDir: string;
-  let tokenCasing = options.tokenCasing; // may be overridden by interactive prompt
-
-  if (options.collection && options.collection.length > 0) {
-    // Non-interactive: parse from flags
-    try {
+    if (options.collection && options.collection.length > 0) {
+      // Non-interactive: parse from flags (a malformed spec throws; the runner exits 1)
       collections = options.collection.map(parseCollectionArg);
-    } catch (err) {
-      console.error(`Error: ${(err as Error).message}`);
-      process.exit(1);
+      outputDir = options.dir ?? '.claude';
+    } else if (interactive) {
+      const dirAnswer = await ask({
+        type: 'select',
+        name: 'value',
+        message: 'Install skill into which AI tool directory?',
+        choices: [
+          { title: '.claude (default)', value: '.claude' },
+          { title: '.agents', value: '.agents' },
+          { title: '.cursor', value: '.cursor' },
+        ],
+        initial: 0,
+      });
+      outputDir = typeof dirAnswer.value === 'string' ? dirAnswer.value : '.claude';
+
+      collections = await promptForCollections(ask);
+
+      const casingAnswer = await ask({
+        type: 'select',
+        name: 'value',
+        message: 'Token property key casing?',
+        choices: [
+          { title: 'upperCase (default)', value: 'upperCase' },
+          { title: 'camelCase', value: 'camelCase' },
+        ],
+        initial: 0,
+      });
+
+      if (casingAnswer.value === 'camelCase') {
+        tokenCasing = casingAnswer.value;
+      }
+    } else {
+      throw new Error(
+        `Missing required option in non-interactive mode: ${flagName(INSTALL_SKILL_FLAGS.collection)}\n` +
+          `Usage: npx lingo-tracker install-skill ${flagName(INSTALL_SKILL_FLAGS.collection)} name:bundle:TokenConstant:tokenFilePath`,
+      );
     }
-    outputDir = options.dir ?? '.claude';
-  } else if (isTTY) {
-    // Interactive mode
-    const prompts = (await import('prompts')).default;
 
-    const dirAnswer = await prompts({
-      type: 'select',
-      name: 'value',
-      message: 'Install skill into which AI tool directory?',
-      choices: [
-        { title: '.claude (default)', value: '.claude' },
-        { title: '.agents', value: '.agents' },
-        { title: '.cursor', value: '.cursor' },
-      ],
-      initial: 0,
-    });
+    // Relative to the project root (INIT_CWD under pnpm), not to wherever node was started.
+    const skillDir = path.resolve(cwd, outputDir, 'skills', 'lingo-tracker');
+    const referencesDir = path.join(skillDir, 'references');
 
-    if (dirAnswer.value === undefined) {
-      console.log('Cancelled.');
-      return;
-    }
-    outputDir = dirAnswer.value;
+    fs.mkdirSync(referencesDir, { recursive: true });
 
-    collections = await promptForCollections();
-    if (collections.length === 0) {
-      console.error('Error: at least one collection is required.');
-      process.exit(1);
-    }
+    const skillMdPath = path.join(skillDir, 'SKILL.md');
+    const patternsMdPath = path.join(referencesDir, 'patterns.md');
 
-    const casingAnswer = await prompts({
-      type: 'select',
-      name: 'value',
-      message: 'Token property key casing?',
-      choices: [
-        { title: 'upperCase (default)', value: 'upperCase' },
-        { title: 'camelCase', value: 'camelCase' },
-      ],
-      initial: 0,
-    });
+    fs.writeFileSync(skillMdPath, await generateSkillMd(collections, tokenCasing), 'utf-8');
+    fs.writeFileSync(patternsMdPath, await readPatternsMdTemplate(), 'utf-8');
 
-    if (casingAnswer.value && casingAnswer.value !== 'upperCase') {
-      tokenCasing = casingAnswer.value;
-    }
-  } else {
-    console.error('Error: --collection is required in non-interactive mode.');
-    console.error('Usage: npx lingo-tracker install-skill --collection name:bundle:TokenConstant:tokenFilePath');
-    process.exit(1);
-  }
-
-  const skillDir = path.join(outputDir, 'skills', 'lingo-tracker');
-  const referencesDir = path.join(skillDir, 'references');
-
-  fs.mkdirSync(referencesDir, { recursive: true });
-
-  const skillMdPath = path.join(skillDir, 'SKILL.md');
-  const patternsMdPath = path.join(referencesDir, 'patterns.md');
-
-  fs.writeFileSync(skillMdPath, await generateSkillMd(collections, tokenCasing), 'utf-8');
-  fs.writeFileSync(patternsMdPath, await readPatternsMdTemplate(), 'utf-8');
-
-  console.log('Skill installed successfully:');
-  console.log(`  ${skillMdPath}`);
-  console.log(`  ${patternsMdPath}`);
-}
+    CommandOutput.log('Skill installed successfully:');
+    CommandOutput.log(`  ${skillMdPath}`);
+    CommandOutput.log(`  ${patternsMdPath}`);
+  },
+});

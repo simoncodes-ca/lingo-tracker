@@ -12,11 +12,15 @@ declare module 'xliff' {
 
   export interface XliffResource {
     source: string;
-    target: string;
+    /** Absent when a trans-unit has no `<target>` (an untranslated unit). */
+    target?: string;
+    /** A string for one `<note>`; an array when the trans-unit has several. */
     note?: string | string[];
   }
 
   export interface XliffData {
+    sourceLanguage?: string;
+    targetLanguage?: string;
     resources: {
       [namespace: string]: {
         [key: string]: XliffResource;

@@ -1,108 +1,33 @@
-import {
-  Controller,
-  Post,
-  Delete,
-  Param,
-  Body,
-  HttpException,
-  HttpStatus,
-  NotFoundException,
-  UseGuards,
-} from '@nestjs/common';
-import { addLocaleToCollection, removeLocaleFromCollection } from '@simoncodes-ca/core';
+import { Controller, Delete, Param, Post } from '@nestjs/common';
+import { addLocaleToCollection, type OpenedCollection, removeLocaleFromCollection } from '@simoncodes-ca/core';
 import type { AddLocaleDto, AddLocaleResponseDto, RemoveLocaleResponseDto } from '@simoncodes-ca/data-transfer';
-import { ConfigService } from '../../config/config.service';
-import { CollectionCacheService } from '../../cache/collection-cache.service';
-import { WritableCollectionGuard } from '../guards/writable-collection.guard';
+import { addLocaleBody } from '../../validation/dto-schemas';
+import { ValidBody } from '../../validation/valid-body';
+import { RouteCollection } from '../route-collection';
 
-@UseGuards(WritableCollectionGuard)
+/**
+ * Core locale errors (invalid, missing, duplicate, base locale; read-only collection)
+ * propagate to `LingoTrackerExceptionFilter`, which answers 400 / 403 / 404.
+ */
 @Controller('collections/:collectionName/locales')
 export class LocalesController {
-  readonly #configService: ConfigService;
-  readonly #cacheService: CollectionCacheService;
-
-  constructor(configService: ConfigService, cacheService: CollectionCacheService) {
-    this.#configService = configService;
-    this.#cacheService = cacheService;
-  }
-
   @Post()
   async addLocale(
-    @Param('collectionName') collectionName: string,
-    @Body() body: AddLocaleDto,
+    @RouteCollection() collection: OpenedCollection,
+    @ValidBody(addLocaleBody) body: AddLocaleDto,
   ): Promise<AddLocaleResponseDto> {
-    try {
-      const config = this.#configService.getConfig();
+    const response = await addLocaleToCollection(collection, body.locale);
 
-      if (!config.collections || !config.collections[collectionName]) {
-        throw new NotFoundException(`Collection "${collectionName}" not found`);
-      }
-
-      const result = await addLocaleToCollection(collectionName, body.locale);
-
-      this.#cacheService.clearCache(collectionName);
-
-      return result;
-    } catch (error: unknown) {
-      if (error instanceof NotFoundException || error instanceof HttpException) {
-        throw error;
-      }
-
-      const errorMessage = error instanceof Error ? error.message : 'Error adding locale';
-
-      if (errorMessage.includes('not found') || errorMessage.includes('not found in collection')) {
-        throw new NotFoundException(errorMessage);
-      }
-
-      if (
-        errorMessage.includes('already exists') ||
-        errorMessage.includes('base locale') ||
-        errorMessage.includes('Invalid locale')
-      ) {
-        throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
-      }
-
-      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    return response;
   }
 
   @Delete(':locale')
   async removeLocale(
-    @Param('collectionName') collectionName: string,
+    @RouteCollection() collection: OpenedCollection,
     @Param('locale') locale: string,
   ): Promise<RemoveLocaleResponseDto> {
-    try {
-      const config = this.#configService.getConfig();
+    const response = await removeLocaleFromCollection(collection, locale);
 
-      if (!config.collections || !config.collections[collectionName]) {
-        throw new NotFoundException(`Collection "${collectionName}" not found`);
-      }
-
-      const result = await removeLocaleFromCollection(collectionName, locale);
-
-      this.#cacheService.clearCache(collectionName);
-
-      return result;
-    } catch (error: unknown) {
-      if (error instanceof NotFoundException || error instanceof HttpException) {
-        throw error;
-      }
-
-      const errorMessage = error instanceof Error ? error.message : 'Error removing locale';
-
-      if (errorMessage.includes('Collection') && errorMessage.includes('not found')) {
-        throw new NotFoundException(errorMessage);
-      }
-
-      if (
-        errorMessage.includes('not found in collection') ||
-        errorMessage.includes('base locale') ||
-        errorMessage.includes('Invalid locale')
-      ) {
-        throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
-      }
-
-      throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    return response;
   }
 }

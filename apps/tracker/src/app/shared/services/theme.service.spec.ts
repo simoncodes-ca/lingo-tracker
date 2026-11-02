@@ -1,13 +1,22 @@
 import { PLATFORM_ID } from '@angular/core';
 import { createServiceFactory, type SpectatorService } from '@ngneat/spectator/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LOCAL_STORAGE } from '../storage/browser-storage';
+import type { StorageAdapter } from '../storage/keyed-storage';
 import { ThemeService } from './theme.service';
 
 describe('ThemeService', () => {
   let service: ThemeService;
   let spectator: SpectatorService<ThemeService>;
   let mockLocalStorage: Record<string, string>;
-  let mockMediaQueryList: MediaQueryList;
+  let failingAdapter: StorageAdapter | undefined;
+  /** The parts of `MediaQueryList` the service reads; `matches` stays writable so a test can flip it. */
+  let mockMediaQueryList: {
+    matches: boolean;
+    media: string;
+    addEventListener: ReturnType<typeof vi.fn>;
+    removeEventListener: ReturnType<typeof vi.fn>;
+  };
   let mediaQueryListeners: Array<(event: MediaQueryListEvent) => void>;
 
   /**
@@ -21,7 +30,10 @@ describe('ThemeService', () => {
 
   const createService = createServiceFactory({
     service: ThemeService,
-    providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
+    providers: [
+      { provide: PLATFORM_ID, useValue: 'browser' },
+      { provide: LOCAL_STORAGE, useValue: () => failingAdapter ?? window.localStorage },
+    ],
   });
 
   /**
@@ -37,6 +49,7 @@ describe('ThemeService', () => {
   beforeEach(() => {
     // Reset mocks
     mockLocalStorage = {};
+    failingAdapter = undefined;
     mediaQueryListeners = [];
 
     // Mock localStorage
@@ -64,9 +77,10 @@ describe('ThemeService', () => {
         }
       }),
       removeEventListener: vi.fn(),
-    } as unknown as MediaQueryList;
+    };
 
-    window.matchMedia = vi.fn(() => mockMediaQueryList);
+    // A partial fake: the service never touches onchange, addListener or dispatchEvent.
+    window.matchMedia = vi.fn(() => mockMediaQueryList as unknown as MediaQueryList);
 
     // Mock document.documentElement
     const mockRoot = {
@@ -269,26 +283,32 @@ describe('ThemeService', () => {
   describe('LocalStorage Error Handling', () => {
     it('should handle localStorage getItem errors gracefully', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-      window.localStorage.getItem = vi.fn(() => {
-        throw new Error('Storage error');
-      });
+      failingAdapter = {
+        ...{ getItem: () => null, setItem: () => undefined, removeItem: () => undefined },
+        getItem: () => {
+          throw new Error('Storage error');
+        },
+      };
       recreateService();
 
       expect(service.themeMode()).toBe('system'); // Should fall back to default
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
     it('should handle localStorage setItem errors gracefully', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-      window.localStorage.setItem = vi.fn(() => {
-        throw new Error('Storage error');
-      });
+      failingAdapter = {
+        ...{ getItem: () => null, setItem: () => undefined, removeItem: () => undefined },
+        setItem: () => {
+          throw new Error('Storage error');
+        },
+      };
       recreateService();
 
       service.setTheme('dark');
 
       expect(service.themeMode()).toBe('dark'); // Should still update in-memory
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
     it('should ignore invalid theme mode values from localStorage', () => {

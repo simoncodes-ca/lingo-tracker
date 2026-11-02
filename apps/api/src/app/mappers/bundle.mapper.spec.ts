@@ -1,113 +1,7 @@
-import type { BundleDefinition, BundlePlan, GenerateBundleResult } from '@simoncodes-ca/core';
-import type { BundleDefinitionDto } from '@simoncodes-ca/data-transfer';
-import {
-  MAX_CONFLICT_KEYS,
-  mapBundleDefinitionToDto,
-  mapBundlePlanToDto,
-  mapDtoToBundleDefinition,
-  mapGenerateBundleResultToJobResult,
-} from './bundle.mapper';
+import type { BundlePlan, GenerateBundleResult } from '@simoncodes-ca/core';
+import { MAX_CONFLICT_KEYS, mapBundlePlanToDto, mapGenerateBundleResultToJobResult } from './bundle.mapper';
 
 describe('bundle.mapper', () => {
-  const fullDefinition: BundleDefinition = {
-    bundleName: 'main.{locale}',
-    dist: './dist/i18n',
-    collections: [
-      {
-        name: 'app',
-        bundledKeyPrefix: 'app',
-        entriesSelectionRules: [{ matchingPattern: 'apps.*', matchingTags: ['ui'], matchingTagOperator: 'All' }],
-        mergeStrategy: 'override',
-      },
-    ],
-    typeDistFile: './dist/i18n-types/main.ts',
-    tokenCasing: 'camelCase',
-    tokenConstantName: 'MAIN_KEYS',
-    transformICUToTransloco: false,
-  };
-
-  describe('mapBundleDefinitionToDto', () => {
-    it('maps every field and copies nested arrays', () => {
-      const dto = mapBundleDefinitionToDto(fullDefinition);
-
-      expect(dto).toEqual(fullDefinition);
-      expect(dto.collections).not.toBe(fullDefinition.collections);
-      const [collection] = dto.collections as Exclude<typeof dto.collections, 'All'>;
-      const [sourceCollection] = fullDefinition.collections as Exclude<typeof fullDefinition.collections, 'All'>;
-      expect(collection.entriesSelectionRules).not.toBe(sourceCollection.entriesSelectionRules);
-    });
-
-    it("passes 'All' through and omits absent optionals", () => {
-      const dto = mapBundleDefinitionToDto({ bundleName: '{locale}', dist: './dist', collections: 'All' });
-
-      expect(dto).toEqual({ bundleName: '{locale}', dist: './dist', collections: 'All' });
-      expect('typeDistFile' in dto).toBe(false);
-      expect('transformICUToTransloco' in dto).toBe(false);
-    });
-  });
-
-  describe('mapDtoToBundleDefinition', () => {
-    it('trims strings and drops empty optionals', () => {
-      const dto: BundleDefinitionDto = {
-        bundleName: '  main.{locale} ',
-        dist: ' ./dist ',
-        collections: [
-          {
-            name: ' app ',
-            bundledKeyPrefix: '   ',
-            entriesSelectionRules: [{ matchingPattern: ' apps.* ', matchingTags: [' ui ', ''] }],
-          },
-        ],
-        typeDistFile: '',
-        tokenConstantName: '  ',
-      };
-
-      const definition = mapDtoToBundleDefinition(dto);
-
-      expect(definition).toEqual({
-        bundleName: 'main.{locale}',
-        dist: './dist',
-        collections: [{ name: 'app', entriesSelectionRules: [{ matchingPattern: 'apps.*', matchingTags: ['ui'] }] }],
-      });
-      expect('typeDistFile' in definition).toBe(false);
-      expect('tokenConstantName' in definition).toBe(false);
-    });
-
-    it('keeps explicit false for transformICUToTransloco and passes All through', () => {
-      const definition = mapDtoToBundleDefinition({
-        bundleName: '{locale}',
-        dist: './dist',
-        collections: 'All',
-        transformICUToTransloco: false,
-        tokenCasing: 'upperCase',
-      });
-
-      expect(definition.transformICUToTransloco).toBe(false);
-      expect(definition.tokenCasing).toBe('upperCase');
-      expect(definition.collections).toBe('All');
-    });
-
-    it('does not alias arrays from the DTO', () => {
-      const tags = ['ui'];
-      const dto: BundleDefinitionDto = {
-        bundleName: '{locale}',
-        dist: './dist',
-        collections: [{ name: 'app', entriesSelectionRules: [{ matchingPattern: '*', matchingTags: tags }] }],
-      };
-
-      const definition = mapDtoToBundleDefinition(dto);
-      const [collection] = definition.collections as Exclude<BundleDefinition['collections'], 'All'>;
-      const [rule] = collection.entriesSelectionRules as Exclude<typeof collection.entriesSelectionRules, 'All'>;
-
-      expect(rule.matchingTags).toEqual(['ui']);
-      expect(rule.matchingTags).not.toBe(tags);
-    });
-
-    it('round-trips a full definition', () => {
-      expect(mapDtoToBundleDefinition(mapBundleDefinitionToDto(fullDefinition))).toEqual(fullDefinition);
-    });
-  });
-
   describe('mapBundlePlanToDto', () => {
     const plan: BundlePlan = {
       bundleKey: 'main',
@@ -172,29 +66,22 @@ describe('bundle.mapper', () => {
   });
 
   describe('mapGenerateBundleResultToJobResult', () => {
-    const definition: BundleDefinition = {
-      bundleName: 'main.{locale}',
-      dist: './dist/i18n',
-      collections: 'All',
-      typeDistFile: './dist/types/main.ts',
-    };
-
     const result: GenerateBundleResult = {
+      outcome: 'succeeded',
       bundleKey: 'main',
       filesGenerated: 2,
-      warnings: ['Bundle empty for de'],
+      writtenFiles: ['dist/i18n/main.en.json', 'dist/i18n/main.fr.json', 'dist/types/main.ts'],
+      findings: {
+        messages: ['Bundle empty for de'],
+        byOrigin: { generation: ['Bundle empty for de'], config: [], type: [] },
+        types: { status: 'written', path: 'dist/types/main.ts', keysCount: 4 },
+      },
       localesProcessed: ['en', 'fr'],
       keysPerLocale: { en: 4, fr: 4 },
-      typeGenerationResult: {
-        bundleKey: 'main',
-        typeDistFile: './dist/types/main.ts',
-        keysCount: 4,
-        fileGenerated: true,
-      },
     };
 
-    it('rebuilds written paths from processed locales and appends the types file', () => {
-      const dto = mapGenerateBundleResultToJobResult(result, definition, '/workspace');
+    it('copies written paths and the types file metadata', () => {
+      const dto = mapGenerateBundleResultToJobResult(result);
 
       expect(dto.filesGenerated).toEqual(['dist/i18n/main.en.json', 'dist/i18n/main.fr.json', 'dist/types/main.ts']);
       expect(dto.typeDistFile).toBe('dist/types/main.ts');
@@ -204,52 +91,90 @@ describe('bundle.mapper', () => {
       expect(dto.warnings).toEqual(['Bundle empty for de']);
     });
 
-    it('makes an absolute types path relative to cwd', () => {
-      const dto = mapGenerateBundleResultToJobResult(
-        {
-          ...result,
-          typeGenerationResult: {
-            ...result.typeGenerationResult,
-            typeDistFile: '/workspace/dist/types/main.ts',
-          } as never,
-        },
-        definition,
-        '/workspace',
-      );
+    it('keeps a debug-keys path in the reported file list', () => {
+      const dto = mapGenerateBundleResultToJobResult({
+        ...result,
+        writtenFiles: [...result.writtenFiles, 'dist/i18n/main.99.json'],
+      });
 
-      expect(dto.typeDistFile).toBe('dist/types/main.ts');
-      expect(dto.filesGenerated).toContain('dist/types/main.ts');
+      expect(dto.filesGenerated).toContain('dist/i18n/main.99.json');
     });
 
-    it('leaves paths outside cwd untouched', () => {
-      const dto = mapGenerateBundleResultToJobResult(
-        {
-          ...result,
-          typeGenerationResult: { ...result.typeGenerationResult, typeDistFile: '/elsewhere/types/main.ts' } as never,
+    it('copies warnings independently of type metadata', () => {
+      const warnings = ['first', 'second'];
+      const dto = mapGenerateBundleResultToJobResult({
+        ...result,
+        findings: {
+          messages: warnings,
+          byOrigin: { generation: warnings, config: [], type: [] },
+          types: { status: 'none' },
         },
-        definition,
-        '/workspace',
-      );
-
-      expect(dto.typeDistFile).toBe('/elsewhere/types/main.ts');
-    });
-
-    it('omits type fields when no types file was written', () => {
-      const dto = mapGenerateBundleResultToJobResult(
-        { ...result, typeGenerationResult: { ...result.typeGenerationResult, fileGenerated: false } as never },
-        definition,
-      );
+        writtenFiles: result.writtenFiles.slice(0, 2),
+      });
 
       expect(dto.filesGenerated).toHaveLength(2);
       expect('typeDistFile' in dto).toBe(false);
       expect('typesKeysCount' in dto).toBe(false);
+      expect(dto.warnings).toEqual(['first', 'second']);
+    });
+
+    it('copies the core warning for a failed type file with the bundle key', () => {
+      for (const bundleKey of ['main', 'second']) {
+        const dto = mapGenerateBundleResultToJobResult({
+          ...result,
+          bundleKey,
+          outcome: 'failed',
+          findings: {
+            messages: [...result.findings.messages, `Type generation failed for '${bundleKey}': disk full`],
+            byOrigin: { ...result.findings.byOrigin, type: [`Type generation failed for '${bundleKey}': disk full`] },
+            types: { status: 'failed', reason: 'disk full' },
+          },
+          writtenFiles: result.writtenFiles.slice(0, 2),
+        });
+        expect(dto.warnings).toEqual(['Bundle empty for de', `Type generation failed for '${bundleKey}': disk full`]);
+        expect(dto.typeDistFile).toBeUndefined();
+        expect(dto.typesKeysCount).toBeUndefined();
+      }
+    });
+
+    it('merges config and run warnings without repeating the skipped type warning', () => {
+      const warnings = ['generation warning'];
+      const dto = mapGenerateBundleResultToJobResult({
+        ...result,
+        findings: {
+          messages: [
+            ...warnings,
+            'prepared deprecation warning',
+            "Type generation skipped for 'main': bundle is empty",
+          ],
+          byOrigin: {
+            generation: warnings,
+            config: ['prepared deprecation warning'],
+            type: ["Type generation skipped for 'main': bundle is empty"],
+          },
+          types: { status: 'skipped', reason: 'bundle is empty' },
+        },
+        writtenFiles: result.writtenFiles.slice(0, 2),
+      });
+      expect(dto.warnings).toEqual([
+        ...warnings,
+        'prepared deprecation warning',
+        "Type generation skipped for 'main': bundle is empty",
+      ]);
+      expect(dto.typeDistFile).toBeUndefined();
+      expect(dto.typesKeysCount).toBeUndefined();
     });
 
     it('omits type fields when type generation did not run', () => {
-      const dto = mapGenerateBundleResultToJobResult({ ...result, typeGenerationResult: undefined }, definition);
+      const dto = mapGenerateBundleResultToJobResult({
+        ...result,
+        writtenFiles: result.writtenFiles.slice(0, 2),
+        findings: { ...result.findings, types: { status: 'none' } },
+      });
 
       expect(dto.filesGenerated).toHaveLength(2);
       expect(dto.typeDistFile).toBeUndefined();
+      expect(dto.warnings).toEqual(['Bundle empty for de']);
     });
   });
 });

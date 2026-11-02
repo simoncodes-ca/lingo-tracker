@@ -67,11 +67,15 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 | List the terms that apply (global or per collection) | Yes (`protected-terms --list`) | Yes (resolved on `GET /config`) | Yes (Settings page, and collection edit dialog) |
 | Add, remove, or replace terms | Yes (`protected-terms --add/--remove/--set`) | Yes (`PUT /config`, and `PUT /collections/:name`) | Yes (chip editors. Collection chips need a terms file first.) |
 | Name the terms file for a scope | Yes (`protected-terms --file`) | Yes (`protectedTermsFile` on `PUT /collections/:name`) | — (shows the resolved path, read-only) |
+| **[Preferred Terminology](glossary.md#preferred-terminology)** | | | |
+| List the rules | Yes (`preferred-terminology --list`) | Yes (`GET /config`, with the file path and any load error) | Yes (Settings page) |
+| Add, edit, or remove rules | Yes (`preferred-terminology --add/--remove`. `--add` replaces an existing rule.) | Yes (`PUT /config` with the full rule list. Invalid rules return `400` with per-row errors.) | Yes (Settings page rule table) |
+| Warn about discouraged terms in base-locale values | Yes (`add-resource`, `edit-resource`, base-locale `import`, `validate`) | — (create and update responses carry no findings) | Yes (translation editor notes, with a "Use …" fix that does not save) |
 | **Validation** | | | |
 | Validate all resources (CI gate) | Yes (`validate`) | — | — |
 | View resource status per locale | — | — | Yes (status badge per locale row in item) |
 | **Cache / Indexing** | | | |
-| Poll [indexing](glossary.md#indexing) cache state | — | Yes (`GET /collections/:name/resources/cache/status`) | Yes (via `withCacheStatusFeature` — auto-polls on collection load) |
+| Poll [Collection Index](glossary.md#collection-index) state | — | Yes (`GET /collections/:name/resources/cache/status`) | Yes (via Index Readiness — unbounded 2 s polling on collection load; sequential status polling after a tree 202, 1 s after each response, with a final tree read at the 5 s deadline) |
 | Trigger cache re-index | — | Yes (implicit on `GET /tree` when state is `NOT_STARTED` or `ERROR`) | Yes (implicit on collection switch in `BrowserStore`) |
 
 ---
@@ -80,7 +84,7 @@ Each cell shows whether the operation is supported (`Yes`), not supported (`—`
 
 ### API Only
 
-- **In-memory collection cache** — `CollectionCacheService` is an API-only system. It holds a single-slot, incrementally-updated in-memory tree of the active collection, making browsing fast for the Tracker UI. The CLI bypasses the cache entirely and reads files directly on every invocation. See [`api.md — Collection Cache`](api.md#collection-cache).
+- **In-memory Collection Index** — `CollectionIndex` is an API-only system. It holds an incrementally updated in-memory tree of each open collection (at most 4 by default), making browsing fast for the Tracker UI. API writes pass its sink to core; CLI writes do not, and the CLI reads files directly on every invocation. See [`api.md — Collection Index`](api.md#collection-index).
 - **Async translation jobs** — The `TranslationJobService` (fire-and-forget job map with UUID-based polling) is API-only. The CLI's `translate-locale` command runs synchronously in-process and prints progress inline.
 - **Async bundle jobs** — `BundleJobService` runs bundle generation through a sequential job queue with UUID-based polling. The CLI's `bundle` command runs synchronously in-process. See [`bundle-generation.md`](bundle-generation.md) for the shared pipeline.
 - **Batch resource creation** — The `POST /collections/:name/resources` endpoint accepts an array of `CreateResourceDto` objects. The CLI's `add-resource` and the UI's editor dialog only create one resource at a time.

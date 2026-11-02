@@ -152,6 +152,7 @@
   --shadow-xl: 0 20px 30px -5px rgb(44 36 28 / 0.12), 0 8px 12px -6px rgb(44 36 28 / 0.08);
 
   // Watercolor-specific
+  // biome-ignore format: Sass copies custom property values verbatim; keep the data URI on one line
   --wc-paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
 }
 
@@ -268,6 +269,7 @@
   --shadow-xl: 0 20px 30px -5px rgb(0 0 0 / 0.4), 0 8px 12px -6px rgb(0 0 0 / 0.3);
 
   // Paper grain — lighter for dark mode
+  // biome-ignore format: Sass copies custom property values verbatim; keep the data URI on one line
   --wc-paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 
@@ -285,30 +287,30 @@
 
 // Spacing scale
 :root {
-  --spacing-1: 0.25rem;   // 4px
-  --spacing-2: 0.5rem;    // 8px
-  --spacing-3: 0.75rem;   // 12px
-  --spacing-4: 1rem;      // 16px
-  --spacing-5: 1.25rem;   // 20px
-  --spacing-6: 1.5rem;    // 24px
-  --spacing-8: 2rem;      // 32px
-  --spacing-10: 2.5rem;   // 40px
-  --spacing-12: 3rem;     // 48px
-  --spacing-16: 4rem;     // 64px
-  --spacing-20: 5rem;     // 80px
-  --spacing-24: 6rem;     // 96px
+  --spacing-1: 0.25rem; // 4px
+  --spacing-2: 0.5rem; // 8px
+  --spacing-3: 0.75rem; // 12px
+  --spacing-4: 1rem; // 16px
+  --spacing-5: 1.25rem; // 20px
+  --spacing-6: 1.5rem; // 24px
+  --spacing-8: 2rem; // 32px
+  --spacing-10: 2.5rem; // 40px
+  --spacing-12: 3rem; // 48px
+  --spacing-16: 4rem; // 64px
+  --spacing-20: 5rem; // 80px
+  --spacing-24: 6rem; // 96px
 }
 
 // Typography scale
 :root {
-  --font-size-xs: 0.75rem;    // 12px
-  --font-size-sm: 0.875rem;   // 14px
-  --font-size-base: 1rem;     // 16px
-  --font-size-lg: 1.125rem;   // 18px
-  --font-size-xl: 1.25rem;    // 20px
-  --font-size-2xl: 1.5rem;    // 24px
-  --font-size-3xl: 1.875rem;  // 30px
-  --font-size-4xl: 2.25rem;   // 36px
+  --font-size-xs: 0.75rem; // 12px
+  --font-size-sm: 0.875rem; // 14px
+  --font-size-base: 1rem; // 16px
+  --font-size-lg: 1.125rem; // 18px
+  --font-size-xl: 1.25rem; // 20px
+  --font-size-2xl: 1.5rem; // 24px
+  --font-size-3xl: 1.875rem; // 30px
+  --font-size-4xl: 2.25rem; // 36px
 
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -329,10 +331,10 @@
 
 // Border radius
 :root {
-  --border-radius-sm: 0.25rem;  // 4px
+  --border-radius-sm: 0.25rem; // 4px
   --border-radius-md: 0.375rem; // 6px
-  --border-radius-lg: 0.5rem;   // 8px
-  --border-radius-xl: 0.75rem;  // 12px
+  --border-radius-lg: 0.5rem; // 8px
+  --border-radius-xl: 0.75rem; // 12px
   --border-radius-full: 9999px;
 }
 

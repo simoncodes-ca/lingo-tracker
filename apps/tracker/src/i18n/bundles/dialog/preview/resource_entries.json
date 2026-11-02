@@ -153,11 +153,11 @@
     "source": "Preview",
     "comment": "Disclosure title for the preview shown under the pane on narrow screens",
     "tags": ["bundles"],
-    "es": "Preview",
-    "fr-ca": "Preview",
-    "ru": "Preview",
-    "ja": "Preview",
-    "de": "Preview"
+    "es": "Vista previa",
+    "fr-ca": "Aperçu",
+    "ru": "Предпросмотр",
+    "ja": "プレビュー",
+    "de": "Vorschau"
   },
   "hierarchicalConflictsX": {
     "source": "Generation would fail — these keys have both a value and child keys: {keys}",

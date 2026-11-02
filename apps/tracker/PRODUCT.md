@@ -71,7 +71,7 @@ Constraints:
   Every user-visible string goes through the resource workflow — no hardcoded copy. Shipped
   UI locales: `en`, `de`, `es`, `fr-ca`, `ja`, `ru`. Layouts must survive long German and
   Russian strings and Japanese line-breaking.
-- Angular 20 standalone components, Angular Material, NgRx Signals, OnPush change detection.
+- Angular 21 standalone components, Angular Material, NgRx Signals, OnPush change detection.
 - Terminology is domain vocabulary and is not up for renaming: collection, resource, key,
   locale, base locale, bundle, glossary, protected term, and the status lifecycle
   `new` → `translated` → `stale` → `verified`.

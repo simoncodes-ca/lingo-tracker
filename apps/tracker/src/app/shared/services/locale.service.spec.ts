@@ -2,12 +2,15 @@ import { createEnvironmentInjector, EnvironmentInjector, PLATFORM_ID } from '@an
 import { TranslocoService } from '@jsverse/transloco';
 import { createServiceFactory, type SpectatorService } from '@ngneat/spectator/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LOCAL_STORAGE } from '../storage/browser-storage';
+import type { StorageAdapter } from '../storage/keyed-storage';
 import { LocaleService } from './locale.service';
 
 describe('LocaleService', () => {
   let service: LocaleService;
   let spectator: SpectatorService<LocaleService>;
   let mockLocalStorage: Record<string, string>;
+  let failingAdapter: StorageAdapter | undefined;
   let mockTranslocoService: { setActiveLang: ReturnType<typeof vi.fn> };
   let platformId: 'browser' | 'server' = 'browser';
 
@@ -19,6 +22,10 @@ describe('LocaleService', () => {
     service: LocaleService,
     providers: [
       { provide: PLATFORM_ID, useFactory: () => platformId },
+      {
+        provide: LOCAL_STORAGE,
+        useValue: () => (platformId === 'browser' ? (failingAdapter ?? window.localStorage) : undefined),
+      },
       { provide: TranslocoService, useFactory: () => mockTranslocoService },
     ],
   });
@@ -30,6 +37,7 @@ describe('LocaleService', () => {
 
   beforeEach(() => {
     mockLocalStorage = {};
+    failingAdapter = undefined;
     mockTranslocoService = buildMockTranslocoService();
     platformId = 'browser';
 
@@ -146,28 +154,34 @@ describe('LocaleService', () => {
   describe('localStorage error handling', () => {
     it('should fall back to "en" and log an error when localStorage.getItem throws', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-      window.localStorage.getItem = vi.fn(() => {
-        throw new Error('Storage unavailable');
-      });
+      failingAdapter = {
+        ...{ getItem: () => null, setItem: () => undefined, removeItem: () => undefined },
+        getItem: () => {
+          throw new Error('Storage unavailable');
+        },
+      };
       createSpectatorService();
 
       expect(service.currentLocale()).toBe('en');
       expect(mockTranslocoService.setActiveLang).toHaveBeenCalledWith('en');
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
     it('should still update the in-memory signal and call setActiveLang when localStorage.setItem throws', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-      window.localStorage.setItem = vi.fn(() => {
-        throw new Error('Storage unavailable');
-      });
+      failingAdapter = {
+        ...{ getItem: () => null, setItem: () => undefined, removeItem: () => undefined },
+        setItem: () => {
+          throw new Error('Storage unavailable');
+        },
+      };
       createSpectatorService();
 
       service.setLocale('es');
 
       expect(service.currentLocale()).toBe('es');
       expect(mockTranslocoService.setActiveLang).toHaveBeenCalledWith('es');
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
   });
 

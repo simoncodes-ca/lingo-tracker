@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { validateImportResources } from './import-validation';
 import type { ImportedResource } from './types';
 
@@ -51,12 +51,12 @@ describe('import-validation', () => {
           warnOnLongKeys: false,
         });
 
-        expect(result.errors.length).toBeGreaterThan(0);
-        expect(result.errors[0]).toContain('Hierarchical conflict');
-        expect(result.errors[0]).toContain('common');
-        expect(result.failedChanges).toHaveLength(1);
-        expect(result.failedChanges[0].type).toBe('failed');
-        expect(result.failedChanges[0].reason).toContain('Hierarchical conflict');
+        expect(result.issues.filter((issue) => issue.error !== undefined).length).toBeGreaterThan(0);
+        expect(result.issues[0].error).toContain('Hierarchical conflict');
+        expect(result.issues[0].error).toContain('common');
+        expect(result.issues).toHaveLength(1);
+        expect(result.issues[0].type).toBe('failed');
+        expect(result.issues[0].reason).toContain('Hierarchical conflict');
       });
 
       it('should detect multiple hierarchical conflicts', () => {
@@ -72,9 +72,47 @@ describe('import-validation', () => {
           warnOnLongKeys: false,
         });
 
-        expect(result.errors).toHaveLength(2);
-        expect(result.failedChanges).toHaveLength(2);
+        expect(result.issues.filter((issue) => issue.error !== undefined)).toHaveLength(2);
+        expect(result.issues).toHaveLength(2);
       });
+    });
+
+    it('keeps conflict diagnostics first, duplicate conflict changes, and skips in input order', () => {
+      const result = validateImportResources(
+        [
+          { key: 'invalid key', value: 'Invalid' },
+          { key: 'empty', value: '' },
+          { key: 'parent', value: 'First' },
+          { key: 'parent.child', value: 'Child' },
+          { key: 'parent', value: 'Second' },
+        ],
+        { skipEmptyValues: true, warnOnLongKeys: false },
+      );
+
+      expect(result.issues).toEqual([
+        {
+          key: 'invalid key',
+          type: 'failed',
+          reason: expect.stringContaining('Invalid key format: '),
+          error: expect.stringContaining('Invalid key format: "invalid key" ('),
+          diagnosticOrder: 1,
+        },
+        { key: 'empty', type: 'skipped', reason: 'Empty value' },
+        {
+          key: 'parent',
+          type: 'failed',
+          reason: 'Hierarchical conflict (has value and child keys)',
+          error: 'Hierarchical conflict: "parent" (has value and child keys)',
+          diagnosticOrder: 0,
+        },
+        {
+          key: 'parent',
+          type: 'failed',
+          reason: 'Hierarchical conflict (has value and child keys)',
+          error: undefined,
+          diagnosticOrder: 0,
+        },
+      ]);
     });
 
     describe('key format validation', () => {
@@ -92,8 +130,8 @@ describe('import-validation', () => {
 
         expect(result.validResources).toHaveLength(1);
         expect(result.validResources[0].key).toBe('valid.key');
-        expect(result.errors.length).toBeGreaterThan(0);
-        expect(result.failedChanges).toHaveLength(2);
+        expect(result.issues.filter((issue) => issue.error !== undefined).length).toBeGreaterThan(0);
+        expect(result.issues).toHaveLength(2);
       });
     });
 
@@ -143,7 +181,7 @@ describe('import-validation', () => {
         expect(result.validResources).toHaveLength(1);
         expect(result.validResources[0].key).toBe('key3');
         expect(result.warnings.some((w) => w.includes('Empty value skipped'))).toBe(true);
-        expect(result.failedChanges.filter((c) => c.type === 'skipped')).toHaveLength(2);
+        expect(result.issues.filter((c) => c.type === 'skipped')).toHaveLength(2);
       });
 
       it('should not skip empty values when skipEmptyValues is false', () => {
@@ -181,8 +219,8 @@ describe('import-validation', () => {
 
         expect(result.validResources.length).toBeLessThan(resources.length);
         expect(result.warnings.length).toBeGreaterThan(0);
-        expect(result.errors.length).toBeGreaterThan(0);
-        expect(result.failedChanges.length).toBeGreaterThan(0);
+        expect(result.issues.filter((issue) => issue.error !== undefined).length).toBeGreaterThan(0);
+        expect(result.issues.length).toBeGreaterThan(0);
       });
 
       it('should return all valid resources when no issues', () => {
@@ -199,8 +237,8 @@ describe('import-validation', () => {
 
         expect(result.validResources).toHaveLength(3);
         expect(result.warnings).toHaveLength(0);
-        expect(result.errors).toHaveLength(0);
-        expect(result.failedChanges).toHaveLength(0);
+        expect(result.issues.filter((issue) => issue.error !== undefined)).toHaveLength(0);
+        expect(result.issues).toHaveLength(0);
       });
 
       it('should handle empty resource array', () => {
@@ -213,8 +251,8 @@ describe('import-validation', () => {
 
         expect(result.validResources).toHaveLength(0);
         expect(result.warnings).toHaveLength(0);
-        expect(result.errors).toHaveLength(0);
-        expect(result.failedChanges).toHaveLength(0);
+        expect(result.issues.filter((issue) => issue.error !== undefined)).toHaveLength(0);
+        expect(result.issues).toHaveLength(0);
       });
     });
 
@@ -230,7 +268,7 @@ describe('import-validation', () => {
           warnOnLongKeys: false,
         });
 
-        const failedChange = result.failedChanges[0];
+        const failedChange = result.issues[0];
         expect(failedChange.key).toBe('common');
         expect(failedChange.type).toBe('failed');
         expect(failedChange.reason).toContain('Hierarchical conflict');
@@ -244,7 +282,7 @@ describe('import-validation', () => {
           warnOnLongKeys: false,
         });
 
-        const failedChange = result.failedChanges[0];
+        const failedChange = result.issues[0];
         expect(failedChange.key).toBe('invalid key!');
         expect(failedChange.type).toBe('failed');
         expect(failedChange.reason).toContain('Invalid key format');
@@ -258,7 +296,7 @@ describe('import-validation', () => {
           warnOnLongKeys: false,
         });
 
-        const skippedChange = result.failedChanges[0];
+        const skippedChange = result.issues[0];
         expect(skippedChange.key).toBe('empty.key');
         expect(skippedChange.type).toBe('skipped');
         expect(skippedChange.reason).toBe('Empty value');

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { applyICUAutoFixToResource, applyICUAutoFixToResources } from './apply-icu-auto-fix';
 import type { ImportedResource } from './types';
 
@@ -294,7 +294,6 @@ describe('apply-icu-auto-fix', () => {
         resource: {
           key: 'test.key',
           value: 'Créer {{ name }}?',
-          locale: 'fr',
         },
       });
       expect(result.resource.value).toBe('Créer {{ name }}?');
@@ -309,7 +308,6 @@ describe('apply-icu-auto-fix', () => {
         resource: {
           key: 'test.key',
           value: 'Créer {{ nom }}?',
-          locale: 'fr',
         },
       });
       expect(result.resource.value).toBe('Créer {{ name }}?');
@@ -323,7 +321,6 @@ describe('apply-icu-auto-fix', () => {
         resource: {
           key: 'test.key',
           value: 'Hola',
-          locale: 'es',
         },
       });
       expect(result.autoFix).toBeUndefined();

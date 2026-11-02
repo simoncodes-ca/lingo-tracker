@@ -1,13 +1,13 @@
-import { Component, ChangeDetectionStrategy, inject, input, computed, viewChild, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule, type MatMenu } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { type MatMenu, MatMenuModule } from '@angular/material/menu';
 import { MatRadioModule } from '@angular/material/radio';
-import { BrowserStore } from '../../../store/browser.store';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
+import { BrowserStore } from '../../../store/browser.store';
 
 /**
  * LocaleFilter component provides a dropdown for filtering

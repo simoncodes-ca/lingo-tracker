@@ -1,9 +1,9 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import type { ResourceEntries } from '../../resource/resource-entry';
-import type { TrackerMetadata } from '../../resource/tracker-metadata';
-import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
 import { ErrorMessages } from '../errors/error-messages';
+import { CoreOperationError } from '../errors/lingo-tracker-error';
+import type { ResourceEntries } from '../resource/resource-entry';
+import type { TrackerMetadata } from '../resource/tracker-metadata';
 
 export interface JsonFileReadOptions<T> {
   /** Path to the JSON file */
@@ -56,7 +56,7 @@ export function readJsonFile<T>(options: JsonFileReadOptions<T>): T {
       return defaultValue;
     }
     const context = errorContext ? `${errorContext}: ` : '';
-    throw new Error(`${context}${ErrorMessages.fileNotFound(filePath)}`);
+    throw new CoreOperationError(`${context}${ErrorMessages.fileNotFound(filePath)}`);
   }
 
   try {
@@ -65,7 +65,7 @@ export function readJsonFile<T>(options: JsonFileReadOptions<T>): T {
   } catch (error) {
     const context = errorContext ? `${errorContext}: ` : '';
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`${context}${ErrorMessages.jsonParseFailed(filePath, errorMessage)}`);
+    throw new CoreOperationError(`${context}${ErrorMessages.jsonParseFailed(filePath, errorMessage)}`);
   }
 }
 
@@ -100,7 +100,7 @@ export function writeJsonFile(options: JsonFileWriteOptions): void {
     writeFileSync(filePath, content, 'utf8');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(ErrorMessages.fileWriteFailed(filePath, errorMessage));
+    throw new CoreOperationError(ErrorMessages.fileWriteFailed(filePath, errorMessage));
   }
 }
 
@@ -123,15 +123,5 @@ export function readTrackerMetadata(filePath: string, defaultValue?: TrackerMeta
     filePath,
     defaultValue,
     errorContext: 'Reading tracker metadata',
-  });
-}
-
-/**
- * Type-safe helper for reading configuration files.
- */
-export function readLingoConfig(filePath: string): LingoTrackerConfig {
-  return readJsonFile<LingoTrackerConfig>({
-    filePath,
-    errorContext: 'Reading LingoTracker configuration',
   });
 }

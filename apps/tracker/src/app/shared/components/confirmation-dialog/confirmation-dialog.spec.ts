@@ -9,7 +9,8 @@ describe('ConfirmationDialog', () => {
   let component: ConfirmationDialog;
   let spectator: Spectator<ConfirmationDialog>;
   let mockDialogRef: Partial<MatDialogRef<ConfirmationDialog>>;
-  let mockTransloco: Partial<TranslocoService>;
+  /** The dialog only calls `translate` for its default button labels. */
+  let mockTransloco: { translate: ReturnType<typeof vi.fn<(key: string) => string>> };
 
   const defaultData: ConfirmationDialogData = {
     title: 'Test Title',

@@ -40,6 +40,42 @@ describe('FolderNode', () => {
     expect(component).toBeTruthy();
   });
 
+  it('accepts a root-level resource on a folder', () => {
+    fixture.componentRef.setInput('folder', folderWithChildren);
+    fixture.componentRef.setInput('activeDragData', { type: 'resource', key: 'welcome', folderPath: '' });
+
+    expect(component.isValidDropTarget()).toBe(true);
+    expect(
+      component.canDrop({ data: { type: 'resource', key: 'welcome', folderPath: '' } } as Parameters<
+        typeof component.canDrop
+      >[0]),
+    ).toBe(true);
+  });
+
+  it('emits a folder dropped onto its current parent', () => {
+    fixture.componentRef.setInput('folder', folderWithChildren);
+    const dragData = { type: 'folder' as const, path: 'common.buttons' };
+    fixture.componentRef.setInput('activeDragData', dragData);
+    const dropped = vi.fn();
+    component.folderDropped.subscribe(dropped);
+
+    expect(component.isValidDropTarget()).toBe(true);
+    expect(component.canDrop({ data: dragData } as Parameters<typeof component.canDrop>[0])).toBe(true);
+    component.onDrop({ item: { data: dragData } } as Parameters<typeof component.onDrop>[0]);
+
+    expect(dropped).toHaveBeenCalledWith({ dragData, targetFolderPath: 'common' });
+  });
+
+  it('passes its own path with a confirmed folder name to the sidebar', () => {
+    fixture.componentRef.setInput('folder', folderWithChildren);
+    const create = vi.fn();
+    component.createFolder.subscribe(create);
+
+    component.onFolderConfirm('icons');
+
+    expect(create).toHaveBeenCalledWith({ folderName: 'icons', parentPath: 'common' });
+  });
+
   it('should accept folder input', () => {
     const folder: FolderNodeDto = {
       name: 'common',
@@ -159,18 +195,47 @@ describe('FolderNode', () => {
     component.toggleExpanded.subscribe(toggleSpy);
 
     // Collapsed: ArrowRight opens, ArrowLeft does nothing.
-    component.onExpandKeydown(new KeyboardEvent('keydown'));
-    component.onCollapseKeydown(new KeyboardEvent('keydown'));
+    component.onTreeKeydown(new KeyboardEvent('keydown'), 'ArrowRight');
+    component.onTreeKeydown(new KeyboardEvent('keydown'), 'ArrowLeft');
     expect(expandSpy).toHaveBeenCalledWith('common');
     expect(toggleSpy).not.toHaveBeenCalled();
 
     // Expanded: ArrowLeft closes, ArrowRight does nothing more.
     expandSpy.mockClear();
     fixture.componentRef.setInput('expandedPaths', new Set(['common']));
-    component.onExpandKeydown(new KeyboardEvent('keydown'));
-    component.onCollapseKeydown(new KeyboardEvent('keydown'));
+    component.onTreeKeydown(new KeyboardEvent('keydown'), 'ArrowRight');
+    component.onTreeKeydown(new KeyboardEvent('keydown'), 'ArrowLeft');
     expect(expandSpy).not.toHaveBeenCalled();
     expect(toggleSpy).toHaveBeenCalledWith('common');
+  });
+
+  it.each([
+    { key: 'ArrowRight', open: false, expanded: true, collapsed: false, selected: false, prevent: true },
+    { key: 'ArrowRight', open: true, expanded: false, collapsed: false, selected: false, prevent: false },
+    { key: 'ArrowLeft', open: true, expanded: false, collapsed: true, selected: false, prevent: true },
+    { key: 'ArrowLeft', open: false, expanded: false, collapsed: false, selected: false, prevent: false },
+    { key: 'Enter', open: false, expanded: true, collapsed: false, selected: true, prevent: false },
+    { key: 'Enter', open: true, expanded: false, collapsed: false, selected: true, prevent: false },
+    { key: ' ', open: false, expanded: true, collapsed: false, selected: true, prevent: false },
+    { key: 'ArrowUp', open: false, expanded: false, collapsed: false, selected: false, prevent: false },
+    { key: 'ArrowDown', open: false, expanded: false, collapsed: false, selected: false, prevent: false },
+  ])('wires $key with open=$open to the intended outputs', (test) => {
+    fixture.componentRef.setInput('folder', folderWithChildren);
+    fixture.componentRef.setInput('expandedPaths', new Set(test.open ? ['common'] : []));
+    fixture.detectChanges();
+    const expanded = vi.fn();
+    const collapsed = vi.fn();
+    const selected = vi.fn();
+    component.expandRequested.subscribe(expanded);
+    component.toggleExpanded.subscribe(collapsed);
+    component.folderClick.subscribe(selected);
+    const event = new KeyboardEvent('keydown', { key: test.key, bubbles: true, cancelable: true });
+    const header: HTMLElement | null = fixture.nativeElement.querySelector('.folder-header');
+    header?.dispatchEvent(event);
+    expect(expanded.mock.calls).toEqual(test.expanded ? [['common']] : []);
+    expect(collapsed.mock.calls).toEqual(test.collapsed ? [['common']] : []);
+    expect(selected.mock.calls).toEqual(test.selected ? [[folderWithChildren]] : []);
+    expect(event.defaultPrevented).toBe(test.prevent);
   });
 
   it('should render folder name', () => {

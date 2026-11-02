@@ -1,30 +1,12 @@
 import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { readJsonFile } from '../file-io/json-file-operations';
-import { RESOURCE_ENTRIES_FILENAME, TRACKER_META_FILENAME } from '../../constants';
-import { walkFolders } from '../normalize/iterative-folder-walker';
-import type { ResourceEntries } from '../../resource/resource-entry';
-import type { TrackerMetadata } from '../../resource/tracker-metadata';
-import {
-  effectiveTags,
-  effectiveProtectedTerms,
-  findProtectedTerms,
-  type TranslationStatus,
-} from '@simoncodes-ca/domain';
+import { dirname, resolve } from 'node:path';
+import { findProtectedTerms, type TranslationStatus } from '@simoncodes-ca/domain';
+import { type CollectionSetResource, collectionResourceStatus } from '../collection-set/collection-set';
+import { CoreOperationError, InvalidExportBasePropertyNameError } from '../errors/lingo-tracker-error';
 import type { FilteredResource } from './types';
 
-export interface LoadedResource {
-  key: string;
-  fullKey: string;
-  source: string;
-  translations: Record<string, string>;
-  tags?: string[];
-  collectionTags?: string[];
-  collectionProtectedTerms?: string[];
-  comment?: string;
-  status: Record<string, TranslationStatus>;
-  collection: string;
-}
+/** Project Terms are attached only for export filtering and notes. */
+export type ExportResource = CollectionSetResource & { protectedTerms?: string[] };
 
 /**
  * Validates that the output directory exists or can be created, and is writable.
@@ -33,10 +15,37 @@ const RESERVED_RICH_KEYS = ['value', 'comment', 'status', 'tags'] as const;
 
 export function validateBasePropertyName(name: string): void {
   if (name.length === 0) {
-    throw new Error('basePropertyName cannot be empty');
+    throw new InvalidExportBasePropertyNameError('basePropertyName cannot be empty');
   }
   if ((RESERVED_RICH_KEYS as readonly string[]).includes(name)) {
-    throw new Error(`basePropertyName "${name}" is a reserved key. Reserved: ${RESERVED_RICH_KEYS.join(', ')}`);
+    throw new InvalidExportBasePropertyNameError(
+      `basePropertyName "${name}" is a reserved key. Reserved: ${RESERVED_RICH_KEYS.join(', ')}`,
+    );
+  }
+}
+
+/** Inspects the destination or its nearest existing ancestor without creating directories. */
+export function inspectOutputDirectory(directory: string): { ok: true } | { ok: false; problem: string } {
+  let ancestor = resolve(directory);
+  try {
+    while (!fs.existsSync(ancestor)) {
+      const parent = dirname(ancestor);
+      if (parent === ancestor) return { ok: false, problem: `Output directory '${directory}' is not writable.` };
+      ancestor = parent;
+    }
+    if (!fs.statSync(ancestor).isDirectory()) {
+      return {
+        ok: false,
+        problem:
+          ancestor === resolve(directory)
+            ? `Output directory '${directory}' is not a directory.`
+            : `Could not create output directory '${directory}': ENOTDIR: not a directory, mkdir '${directory}'`,
+      };
+    }
+    fs.accessSync(ancestor, fs.constants.W_OK);
+    return { ok: true };
+  } catch {
+    return { ok: false, problem: `Output directory '${directory}' is not writable.` };
   }
 }
 
@@ -45,100 +54,14 @@ export function validateOutputDirectory(directory: string): void {
     try {
       fs.mkdirSync(directory, { recursive: true });
     } catch (error) {
-      throw new Error(`Could not create output directory '${directory}': ${(error as Error).message}`);
+      throw new CoreOperationError(`Could not create output directory '${directory}': ${(error as Error).message}`);
     }
   }
 
   try {
     fs.accessSync(directory, fs.constants.W_OK);
   } catch {
-    throw new Error(`Output directory '${directory}' is not writable.`);
-  }
-}
-
-/**
- * Loads all resources and metadata from a list of collections.
- */
-export function loadResourcesFromCollections(
-  collections: { name: string; path: string; tags?: string[]; protectedTerms?: string[] }[],
-): LoadedResource[] {
-  const allResources: Map<string, LoadedResource> = new Map();
-
-  for (const collection of collections) {
-    if (!fs.existsSync(collection.path)) {
-      console.warn(`Collection path not found: ${collection.path}`);
-      continue;
-    }
-
-    // The collection.path should point directly to where translations are stored
-    loadFolderResources(collection.path, collection.name, allResources, collection.tags, collection.protectedTerms);
-  }
-
-  return Array.from(allResources.values());
-}
-
-function loadFolderResources(
-  collectionPath: string,
-  collectionName: string,
-  allResources: Map<string, LoadedResource>,
-  collectionTags?: string[],
-  collectionProtectedTerms?: string[],
-): void {
-  for (const visit of walkFolders(collectionPath, { skipHidden: false })) {
-    const entriesPath = path.join(visit.absolutePath, RESOURCE_ENTRIES_FILENAME);
-    const metaPath = path.join(visit.absolutePath, TRACKER_META_FILENAME);
-
-    if (!fs.existsSync(entriesPath) || !fs.existsSync(metaPath)) continue;
-
-    try {
-      const entries = readJsonFile<ResourceEntries>({ filePath: entriesPath });
-      const metadata = readJsonFile<TrackerMetadata>({ filePath: metaPath });
-
-      for (const [key, entry] of Object.entries(entries)) {
-        const fullKey = visit.keyPrefix ? `${visit.keyPrefix}.${key}` : key;
-        const meta = metadata[key];
-
-        if (!meta) {
-          // Skip if no metadata (will be reported as omitted in summary if we track it)
-          continue;
-        }
-
-        const loadedResource: LoadedResource = {
-          key,
-          fullKey,
-          source: entry.source,
-          translations: {},
-          tags: entry.tags,
-          collectionTags,
-          collectionProtectedTerms,
-          comment: entry.comment,
-          status: {},
-          collection: collectionName,
-        };
-
-        // Extract translations and status
-        // We assume the entry has keys for locales like 'es', 'fr', etc.
-        // But ResourceEntry type is flexible.
-        // We'll iterate over keys that are not source, tags, comment
-        for (const [prop, value] of Object.entries(entry)) {
-          if (prop !== 'source' && prop !== 'tags' && prop !== 'comment' && typeof value === 'string') {
-            loadedResource.translations[prop] = value;
-          }
-        }
-
-        // Extract status
-        for (const [locale, localeMeta] of Object.entries(meta)) {
-          if (localeMeta && typeof localeMeta === 'object' && 'status' in localeMeta) {
-            loadedResource.status[locale] = localeMeta.status as TranslationStatus;
-          }
-        }
-
-        // Add to map (last write wins for same fullKey)
-        allResources.set(fullKey, loadedResource);
-      }
-    } catch (e) {
-      console.warn(`Error loading files in ${visit.absolutePath}: ${(e as Error).message}`);
-    }
+    throw new CoreOperationError(`Output directory '${directory}' is not writable.`);
   }
 }
 
@@ -146,12 +69,11 @@ function loadFolderResources(
  * Filters resources based on status and tags for a specific target locale.
  */
 export function filterResources(
-  resources: LoadedResource[],
+  resources: ExportResource[],
   targetLocale: string,
   statusFilter: TranslationStatus[] | undefined,
   tagFilter: string[] | undefined,
   protectedTermsOptions?: {
-    globalProtectedTerms?: string[];
     augmentProtectedTerms?: boolean;
     baseLocale?: string;
   },
@@ -159,13 +81,7 @@ export function filterResources(
   return resources
     .filter((res) => {
       // Status filter
-      const status = res.status[targetLocale];
-      // If status is undefined, it's effectively 'new' if we consider untranslated as new,
-      // but usually metadata should exist. If no metadata for locale, it's untracked/new.
-      // For now, let's assume if status is missing, it might be 'new' or we skip.
-      // The requirement says: "Resources with no translation in target locale are considered new"
-
-      const effectiveStatus = status || 'new';
+      const effectiveStatus = collectionResourceStatus(res, targetLocale);
 
       if (statusFilter && !statusFilter.includes(effectiveStatus)) {
         return false;
@@ -173,8 +89,7 @@ export function filterResources(
 
       // Tag filter — use effective tags (collection-level union resource-level)
       if (tagFilter && tagFilter.length > 0) {
-        const tags = effectiveTags(res.collectionTags, res.tags);
-        const hasMatch = tagFilter.some((tag) => tags.includes(tag));
+        const hasMatch = tagFilter.some((tag) => res.effectiveTags.includes(tag));
         if (!hasMatch) {
           return false;
         }
@@ -186,19 +101,14 @@ export function filterResources(
       const augment =
         protectedTermsOptions?.augmentProtectedTerms !== false &&
         (!protectedTermsOptions?.baseLocale || targetLocale !== protectedTermsOptions.baseLocale);
-      const protectedTermsFound = augment
-        ? findProtectedTerms(
-            res.source,
-            effectiveProtectedTerms(protectedTermsOptions?.globalProtectedTerms, res.collectionProtectedTerms),
-          )
-        : undefined;
+      const protectedTermsFound = augment ? findProtectedTerms(res.source, res.protectedTerms ?? []) : undefined;
 
       return {
         key: res.fullKey,
         value: res.translations[targetLocale] || '',
         baseValue: res.source,
         comment: res.comment,
-        status: res.status[targetLocale] || 'new',
+        status: collectionResourceStatus(res, targetLocale),
         tags: res.tags,
         collection: res.collection,
         locale: targetLocale,

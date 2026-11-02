@@ -1,0 +1,152 @@
+{
+  "exporting": {
+    "source": "Exporting…",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Exportando…",
+    "fr-ca": "Exportation en cours…",
+    "ru": "Экспорт…",
+    "ja": "エクスポート中…",
+    "de": "Wird exportiert…"
+  },
+  "localesProgressX": {
+    "source": "{current} of {total} locales",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{current} de {total} idiomas",
+    "fr-ca": "{current} de {total} langues",
+    "ru": "{current} из {total} языков",
+    "ja": "{total} ロケール中 {current}",
+    "de": "{current} von {total} Sprachen"
+  },
+  "exported": {
+    "source": "Exported",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Exportado",
+    "fr-ca": "Exporté",
+    "ru": "Экспортировано",
+    "ja": "エクスポート完了",
+    "de": "Exportiert"
+  },
+  "filesX": {
+    "source": "{ count, plural, =1 {1 file} other {{count} files} }",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {1 archivo} other {{count} archivos} }",
+    "fr-ca": "{ count, plural, =1 {1 fichier} other {{count} fichiers} }",
+    "ru": "{ count, plural, one {{count} файл} few {{count} файла} many {{count} файлов} other {{count} файла} }",
+    "ja": "{ count, plural, other {{count} 個のファイル} }",
+    "de": "{ count, plural, =1 {1 Datei} other {{count} Dateien} }"
+  },
+  "entriesX": {
+    "source": "{ count, plural, =1 {1 entry} other {{count} entries} }",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {1 entrada} other {{count} entradas} }",
+    "fr-ca": "{ count, plural, =1 {1 entrée} other {{count} entrées} }",
+    "ru": "{ count, plural, one {{count} запись} few {{count} записи} many {{count} записей} other {{count} записи} }",
+    "ja": "{ count, plural, other {{count} 件のエントリ} }",
+    "de": "{ count, plural, =1 {1 Eintrag} other {{count} Einträge} }"
+  },
+  "warningsX": {
+    "source": "{ count, plural, =1 {1 warning} other {{count} warnings} }",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {1 advertencia} other {{count} advertencias} }",
+    "fr-ca": "{ count, plural, =1 {1 avertissement} other {{count} avertissements} }",
+    "ru": "{ count, plural, one {{count} предупреждение} few {{count} предупреждения} many {{count} предупреждений} other {{count} предупреждения} }",
+    "ja": "{ count, plural, other {{count} 件の警告} }",
+    "de": "{ count, plural, =1 {1 Warnung} other {{count} Warnungen} }"
+  },
+  "failed": {
+    "source": "Export failed",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Error al exportar",
+    "fr-ca": "Échec de l’exportation",
+    "ru": "Не удалось выполнить экспорт",
+    "ja": "エクスポートに失敗しました",
+    "de": "Export fehlgeschlagen"
+  },
+  "details": {
+    "source": "Details",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Detalles",
+    "fr-ca": "Détails",
+    "ru": "Подробности",
+    "ja": "詳細",
+    "de": "Details"
+  },
+  "detailsAriaLabel": {
+    "source": "Export details",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Detalles de la exportación",
+    "fr-ca": "Détails de l’exportation",
+    "ru": "Подробности экспорта",
+    "ja": "エクスポートの詳細",
+    "de": "Exportdetails"
+  },
+  "dismissAriaLabel": {
+    "source": "Dismiss export result",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Descartar el resultado de la exportación",
+    "fr-ca": "Fermer le résultat de l’exportation",
+    "ru": "Закрыть результат экспорта",
+    "ja": "エクスポート結果を閉じる",
+    "de": "Exportergebnis schließen"
+  },
+  "filesWritten": {
+    "source": "Files written",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Archivos escritos",
+    "fr-ca": "Fichiers écrits",
+    "ru": "Записанные файлы",
+    "ja": "書き込んだファイル",
+    "de": "Geschriebene Dateien"
+  },
+  "skippedLocales": {
+    "source": "Skipped locales",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Idiomas omitidos",
+    "fr-ca": "Langues ignorées",
+    "ru": "Пропущенные языки",
+    "ja": "スキップしたロケール",
+    "de": "Übersprungene Sprachen"
+  },
+  "warningsHeading": {
+    "source": "Warnings",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Advertencias",
+    "fr-ca": "Avertissements",
+    "ru": "Предупреждения",
+    "ja": "警告",
+    "de": "Warnungen"
+  },
+  "errorsHeading": {
+    "source": "Errors",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Errores",
+    "fr-ca": "Erreurs",
+    "ru": "Ошибки",
+    "ja": "エラー",
+    "de": "Fehler"
+  },
+  "writing": {
+    "source": "Writing",
+    "comment": "Verb label shown before the mono name of the file being written in the export result strip",
+    "tags": ["export"],
+    "es": "Escribiendo",
+    "fr-ca": "Écriture de",
+    "ru": "Запись",
+    "ja": "書き込み中:",
+    "de": "Schreibe"
+  }
+}

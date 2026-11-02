@@ -1,142 +1,172 @@
-import prompts from 'prompts';
+import { DEFAULT_CONFIG } from '@simoncodes-ca/domain';
+import type prompts from 'prompts';
+import { CommandCancelledError } from '../runner/command-cancelled-error';
+import type { Ask } from '../runner/command-runner';
+import type { InitOptions } from '../types/init-options';
+import { parseCommaSeparatedList } from './string-parsers';
 
-/**
- * Sentinel value used to represent "all items" in multiselect prompts
- */
-export const ALL_ITEMS_SENTINEL = '__ALL__';
+/** The CLI choice of one, several, or all named items. */
+export type Selection = { readonly kind: 'all' } | { readonly kind: 'some'; readonly names: string[] };
 
-/**
- * Processes multiselect prompt results that may include an "All" option.
- *
- * @param selectedValues - Array of selected values from prompt (may include __ALL__)
- * @param allAvailableItems - Complete list of all possible items
- * @returns Array of items to process, or undefined if "All" was selected
- *
- * @example
- * // User selected specific items
- * processMultiselectWithAll(["en", "fr"], ["en", "fr", "de", "es"])
- * // → ["en", "fr"]
- *
- * // User selected "All"
- * processMultiselectWithAll(["__ALL__"], ["en", "fr", "de", "es"])
- * // → undefined (meaning process all)
- *
- * // User selected "All" plus other items (All takes precedence)
- * processMultiselectWithAll(["__ALL__", "en"], ["en", "fr", "de", "es"])
- * // → undefined (meaning process all)
- */
-export function processMultiselectWithAll(
-  selectedValues: string[] | undefined,
-  _allAvailableItems: string[],
-): string[] | undefined {
-  if (!selectedValues || selectedValues.length === 0) {
-    return undefined;
-  }
+/** Private prompt value; flags can still name an item with this spelling. */
+const ALL_ITEMS_SENTINEL = '__ALL__';
 
-  // If __ALL__ is selected, return undefined to signal "process all"
-  if (selectedValues.includes(ALL_ITEMS_SENTINEL)) {
-    return undefined;
-  }
-
-  // Return selected items
-  return selectedValues;
+interface SelectionPromptOptions {
+  readonly name: string;
+  readonly message: string;
+  readonly choices: readonly string[];
+  /** Omit this title for a prompt without an all choice. */
+  readonly allTitle?: string;
+  readonly mode: 'single' | 'multiple';
 }
 
-/**
- * Converts undefined (all) or array result into comma-separated string or undefined.
- * Useful for storing multiselect results in command options.
- *
- * @example
- * multiselectResultToString(undefined) → undefined
- * multiselectResultToString(["en", "fr"]) → "en,fr"
- * multiselectResultToString([]) → undefined
- */
-export function multiselectResultToString(items: string[] | undefined): string | undefined {
-  if (!items || items.length === 0) {
-    return undefined;
+/** Builds the CLI's single or multiple selection prompt, with its existing all-choice order and defaults. */
+export function selectionPrompt(options: SelectionPromptOptions): prompts.PromptObject {
+  const choices: prompts.Choice[] = options.choices.map((name) => ({ title: name, value: name }));
+  if (options.allTitle) {
+    const all = { title: options.allTitle, value: ALL_ITEMS_SENTINEL };
+    if (options.mode === 'multiple') choices.unshift({ ...all, selected: true });
+    else choices.push(all);
   }
-  return items.join(',');
+  return options.mode === 'multiple'
+    ? {
+        type: 'multiselect',
+        name: options.name,
+        message: options.message,
+        choices,
+        min: 1,
+        hint: 'Space to select. Return to submit',
+        instructions: false,
+      }
+    : { type: 'select', name: options.name, message: options.message, choices };
 }
 
-/**
- * Checks if the current terminal session is interactive (has both stdin and stdout as TTY).
- * Use this to determine whether to show interactive prompts or require command-line options.
- *
- * @returns true if both stdin and stdout are TTY (interactive terminal)
- *
- * @example
- * if (isInteractiveTerminal()) {
- *   // Show prompts
- * } else {
- *   // Require CLI options
- * }
- */
-export function isInteractiveTerminal(): boolean {
-  return Boolean(process.stdin.isTTY && process.stdout.isTTY);
+/** Resolves a literal single-name flag or prompt answer. A supplied flag takes precedence, including an empty flag. */
+export function parseNameSelection(flagValue: string | undefined, answerValue?: unknown): Selection | undefined {
+  if (flagValue !== undefined) return namedSelection(flagValue ? [flagValue] : undefined);
+  return parsePromptSelection(answerValue);
 }
 
-/**
- * Options for executing prompts with automatic fallback to validation in non-interactive mode
- */
-export interface PromptExecutionOptions<TValues extends object = Record<string, unknown>> {
-  /** Array of prompts to show in interactive mode */
-  questions: prompts.PromptObject[];
-  /** Current values (from CLI options) */
-  currentValues: TValues;
-  /** Fields that must be present in non-interactive mode */
-  requiredFields?: string[];
-  /** Name of the operation for error messages (e.g., "Add resource") */
-  operationName?: string;
-}
-
-/**
- * Executes prompts in interactive mode or validates required fields in non-interactive mode.
- * Provides consistent behavior across CLI commands for TTY vs non-TTY environments.
- *
- * @param params - Prompt execution configuration
- * @returns Merged values from currentValues and prompt responses
- * @throws Error if operation is cancelled or required fields are missing in non-interactive mode
- *
- * @example
- * const answers = await executePromptsWithFallback({
- *   questions: [
- *     { type: 'text', name: 'key', message: 'Resource key' }
- *   ],
- *   currentValues: options,
- *   requiredFields: ['collection', 'key'],
- *   operationName: 'Add resource'
- * });
- */
-export async function executePromptsWithFallback<TValues extends object>(
-  params: PromptExecutionOptions<TValues>,
-): Promise<Record<string, unknown>> {
-  const { questions, currentValues, requiredFields, operationName } = params;
-  const values = currentValues as Record<string, unknown>;
-
-  // No questions needed - return current values
-  if (questions.length === 0) {
-    return values;
+/** Resolves a comma-list flag or prompt answer. A supplied flag takes precedence, including an empty flag. */
+export function parseListSelection(
+  flagValue: string[] | string | undefined,
+  answerValue?: unknown,
+): Selection | undefined {
+  if (flagValue !== undefined) {
+    return namedSelection(typeof flagValue === 'string' ? parseCommaSeparatedList(flagValue) : flagValue);
   }
+  return parsePromptSelection(answerValue);
+}
 
-  // Interactive mode - show prompts
-  if (isInteractiveTerminal()) {
-    const result = await prompts(questions, {
-      onCancel: () => {
-        const opName = operationName || 'Operation';
-        throw new Error(`${opName} cancelled`);
-      },
+/** Decodes the private all choice; multiple answers retain the existing comma-list parsing. */
+function parsePromptSelection(answerValue: unknown): Selection | undefined {
+  if (answerValue === ALL_ITEMS_SENTINEL) return { kind: 'all' };
+  if (typeof answerValue === 'string') return namedSelection(answerValue ? [answerValue] : undefined);
+  if (!Array.isArray(answerValue)) return undefined;
+  const names = answerValue.filter((item): item is string => typeof item === 'string');
+  if (names.includes(ALL_ITEMS_SENTINEL)) return { kind: 'all' };
+  return namedSelection(names.flatMap((name) => parseCommaSeparatedList(name) ?? []));
+}
+
+/** Empty input has no selection; the command decides whether it defaults to all or fails. */
+function namedSelection(names: string[] | undefined): Selection | undefined {
+  return names && names.length > 0 ? { kind: 'some', names } : undefined;
+}
+
+/** Maps a Selection to core's optional name filter: undefined means all. */
+export function selectionNames(selection: Selection | undefined): string[] | undefined {
+  return selection?.kind === 'some' ? selection.names : undefined;
+}
+
+/** The required text rule, also used by conditional text prompts. */
+export function requiredText(value: string): true | 'Required' {
+  return value && value.trim().length > 0 ? true : 'Required';
+}
+
+interface TextField<Name extends string> {
+  readonly name: Name;
+  readonly message: string;
+  readonly required?: boolean;
+  readonly initial?: prompts.PromptObject['initial'];
+  readonly validate?: prompts.PromptObject['validate'];
+}
+
+/** Empty strings are missing, matching the commands' existing text prompt rule. */
+export function missingTextQuestions<Options extends object>(
+  options: Options,
+  fields: readonly TextField<keyof Options & string>[],
+): prompts.PromptObject[] {
+  return fields
+    .filter((field) => !options[field.name])
+    .map(({ required, validate: customValidate, ...field }) => {
+      const validate = customValidate ?? (required ? requiredText : undefined);
+      return {
+        type: 'text',
+        ...field,
+        ...(validate === undefined ? {} : { validate }),
+      };
     });
+}
 
-    return { ...values, ...result };
+/** Shared collection questions; init alone supplies the existing name default. */
+export function collectionSetupQuestions(
+  options: InitOptions,
+  defaults: {
+    readonly collectionName?: string;
+    readonly exportFolder?: string;
+    readonly importFolder?: string;
+    readonly baseLocale?: string;
+    readonly locales?: readonly string[];
+  } = {},
+): prompts.PromptObject[] {
+  const questions = missingTextQuestions(options, [
+    {
+      name: 'collectionName',
+      message: 'Collection name',
+      required: true,
+      ...(defaults.collectionName === undefined ? {} : { initial: defaults.collectionName }),
+    },
+    { name: 'translationsFolder', message: 'Path to translations folder', required: true },
+    { name: 'exportFolder', message: 'Export folder', initial: defaults.exportFolder || DEFAULT_CONFIG.exportFolder },
+    { name: 'importFolder', message: 'Import folder', initial: defaults.importFolder || DEFAULT_CONFIG.importFolder },
+    {
+      name: 'baseLocale',
+      message: 'Base locale',
+      initial: defaults.baseLocale || DEFAULT_CONFIG.baseLocale,
+      required: true,
+    },
+  ]);
+  if (!options.locales) {
+    questions.push({
+      type: 'list',
+      name: 'locales',
+      message: 'Supported locales (comma-separated)',
+      initial: (defaults.locales ?? DEFAULT_CONFIG.locales).join(','),
+      separator: ',',
+    });
   }
+  return questions;
+}
 
-  // Non-interactive mode - validate required fields
-  if (requiredFields) {
-    const missing = requiredFields.filter((field) => values[field] === undefined || values[field] === null);
-    if (missing.length > 0) {
-      throw new Error(`Missing required options in non-interactive mode: ${missing.map((f) => `--${f}`).join(', ')}`);
-    }
-  }
+interface ConfirmationOptions {
+  readonly ask: Ask;
+  readonly interactive: boolean;
+  readonly yes?: boolean;
+  readonly message: string;
+  /** Explain the action only when the confirmation will be asked. */
+  readonly beforeAsk?: () => void;
+}
 
-  return values;
+/** A decline cancels; explicit consent and non-interactive mode skip the question. */
+export async function confirmOrCancel({
+  ask,
+  interactive,
+  yes,
+  message,
+  beforeAsk,
+}: ConfirmationOptions): Promise<void> {
+  if (yes || !interactive) return;
+  beforeAsk?.();
+  const answer = await ask({ type: 'confirm', name: 'confirmed', message, initial: false });
+  if (answer.confirmed !== true) throw new CommandCancelledError();
 }

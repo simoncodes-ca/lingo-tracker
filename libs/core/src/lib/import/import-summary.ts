@@ -1,5 +1,13 @@
-import type { ImportOptions, ImportResult, ImportChange, StatusTransition, ICUAutoFix, ICUAutoFixError } from './types';
-import { formatMarkdownList, capitalize, formatISODate } from '../summary-utils';
+import { importStrategyPolicy } from '@simoncodes-ca/domain';
+import { capitalize, formatISODate, formatMarkdownList } from '../summary-utils';
+import type {
+  ICUAutoFix,
+  ICUAutoFixError,
+  ImportChange,
+  ImportResult,
+  ImportSummaryOptions,
+  StatusTransition,
+} from './types';
 
 /**
  * Generates a comprehensive markdown summary of the import operation.
@@ -13,7 +21,7 @@ import { formatMarkdownList, capitalize, formatISODate } from '../summary-utils'
  * - Detailed changes by category (created, updated, skipped, failed)
  *
  * @param result - The import result containing all statistics and changes
- * @param options - The import options used for the operation
+ * @param options - The import options used for the operation, with the file's format and path
  * @returns A markdown-formatted string ready to be written to a file
  *
  * @example
@@ -22,7 +30,7 @@ import { formatMarkdownList, capitalize, formatISODate } from '../summary-utils'
  * fs.writeFileSync('import-summary.md', summary);
  * ```
  */
-export function generateImportSummary(result: ImportResult, options: ImportOptions): string {
+export function generateImportSummary(result: ImportResult, options: ImportSummaryOptions): string {
   const isDryRun = result.dryRun;
   const title = isDryRun ? '# Import Summary (DRY RUN)' : '# Import Summary';
   const date = formatISODate();
@@ -30,12 +38,12 @@ export function generateImportSummary(result: ImportResult, options: ImportOptio
   let summary = `${title}
 
 **Date**: ${date}
-**Format**: ${result.format.toUpperCase()}
-**Source File**: ${result.sourceFile}
+**Format**: ${options.format.toUpperCase()}
+**Source File**: ${options.source}
 **Target Locale**: ${result.locale}
 **Collection**: ${result.collection || '(default)'}
 **Strategy**: ${result.strategy}
-**Flags**: ${formatFlags(options)}
+**Flags**: ${formatFlags(options, result.strategy)}
 
 ## Results
 
@@ -62,11 +70,11 @@ ${formatStatusTransitions(result.statusTransitions)}
 
 ${formatFilesModified(result.filesModified)}
 `;
-  } else if (isDryRun && result.filesModified.length > 0) {
+  } else if (isDryRun && result.filesAffected.length > 0) {
     summary += `
 ## Files That Would Be Modified
 
-${formatFilesModified(result.filesModified)}
+${formatFilesModified(result.filesAffected)}
 `;
   }
 
@@ -75,7 +83,7 @@ ${formatFilesModified(result.filesModified)}
     summary += `
 ## Warnings
 
-${formatMarkdownList(result.warnings)}
+${formatMarkdownList(result.warnings, Infinity)}
 `;
   }
 
@@ -84,7 +92,7 @@ ${formatMarkdownList(result.warnings)}
     summary += `
 ## Errors
 
-${formatMarkdownList(result.errors)}
+${formatMarkdownList(result.errors, Infinity)}
 `;
   }
 
@@ -119,23 +127,24 @@ ${formatDetailedChanges(result.changes, isDryRun)}
 /**
  * Formats the import flags/options as a comma-separated string.
  *
- * Only includes flags that were explicitly set in the options.
+ * Only includes applicable flags that were explicitly set in the options.
  * Returns "None" if no flags were specified.
  *
  * @param options - The import options
  * @returns Formatted string like "--update-comments=true, --create-missing=false" or "None"
  * @internal
  */
-function formatFlags(options: ImportOptions): string {
+function formatFlags(options: ImportSummaryOptions, strategy: ImportResult['strategy']): string {
+  const { honoursOptionOverrides } = importStrategyPolicy(strategy);
   const flags: string[] = [];
 
-  if (options.updateComments !== undefined) {
+  if (honoursOptionOverrides && options.updateComments !== undefined) {
     flags.push(`--update-comments=${options.updateComments}`);
   }
-  if (options.updateTags !== undefined) {
+  if (honoursOptionOverrides && options.updateTags !== undefined) {
     flags.push(`--update-tags=${options.updateTags}`);
   }
-  if (options.createMissing !== undefined) {
+  if (honoursOptionOverrides && options.createMissing !== undefined) {
     flags.push(`--create-missing=${options.createMissing}`);
   }
   if (options.preserveStatus !== undefined) {

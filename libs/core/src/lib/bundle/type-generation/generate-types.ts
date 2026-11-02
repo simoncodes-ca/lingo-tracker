@@ -1,188 +1,130 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { LingoTrackerConfig } from '../../../config/lingo-tracker-config';
-import { type BundleDefinition, hasTypeDistConfigured, type TokenCasing } from '../../../config/bundle-definition';
-import { loadCollectionResources } from '../resource-loader';
-import { matchesPattern } from '../pattern-matcher';
-import { matchesTags } from '../tag-filter';
-import { effectiveTags } from '@simoncodes-ca/domain';
-import { buildTypeHierarchy, serializeHierarchy } from './hierarchy-builder';
+import {
+  type BundleDefinition,
+  hasTypeDistConfigured,
+  type TokenCasing,
+  validateJavaScriptIdentifier,
+} from '@simoncodes-ca/domain';
+import { BundleHierarchicalConflictError } from '../../errors/internal';
+import type { BundleTypeOutcome } from '../generate-bundle';
+import { resolveBundleSettings } from '../resolve-bundle-settings';
 import { generateFileHeader } from './file-header';
-import { bundleKeyToConstantName, validateJavaScriptIdentifier } from './key-transformer';
+import { buildTypeHierarchy, serializeHierarchy } from './hierarchy-builder';
 
-export interface GenerateTypesResult {
-  bundleKey: string;
-  typeDistFile: string | undefined;
-  keysCount: number;
-  fileGenerated: boolean;
-  skippedReason?: 'not-configured' | 'empty-bundle';
-  errorReason?: string;
+export interface GenerateBundleTypesParams {
+  readonly bundleKey: string;
+  readonly definition: BundleDefinition;
+  /** The bundle's keys, from the Bundle Selection (any order; the file lists them sorted). */
+  readonly keys: readonly string[];
+  /** Resolved casing: CLI override → bundle config → global config → default. */
+  readonly tokenCasing: TokenCasing;
+  /** CLI override for the constant name; wins over `definition.tokenConstantName`. */
+  readonly tokenConstantName?: string;
+  /** The project directory `typeDistFile` resolves against. Default: `process.cwd()`. */
+  readonly cwd?: string;
 }
 
-export async function generateBundleTypes(
-  bundleKey: string,
-  config: LingoTrackerConfig,
-  tokenCasing: TokenCasing = 'upperCase',
-  tokenConstantName?: string,
-  bundleDefinition?: BundleDefinition,
-): Promise<GenerateTypesResult> {
-  // An explicitly passed definition wins over the one stored in config, so
-  // callers can generate types for an unsaved or renamed bundle.
-  const bundleDef = bundleDefinition ?? config.bundles?.[bundleKey];
+/**
+ * Writes a bundle's type file: the keys as an `as const` tree plus its type alias, at
+ * `typeDistFile` (or the deprecated `typeDist`). Selecting the keys is the caller's
+ * job (see Bundle Selection). Returns a not-configured or skipped outcome when there are no
+ * configured files or keys, and a failed outcome for a path that does not end in `.ts`, a path that is a directory, or an
+ * invalid constant name. Hierarchical conflicts throw `BundleHierarchicalConflictError` before writes.
+ */
+export function generateBundleTypes(params: GenerateBundleTypesParams): BundleTypeOutcome {
+  const { bundleKey, definition: bundleDef, tokenCasing, tokenConstantName } = params;
 
-  // Support deprecated 'typeDist' property — read the legacy value without mutating the config object
-  const legacyTypeDist = (bundleDef as unknown as Record<string, unknown>)?.['typeDist'];
-  const resolvedTypeDistFile =
-    bundleDef?.typeDistFile ?? (typeof legacyTypeDist === 'string' ? legacyTypeDist : undefined);
+  const resolvedTypeDistFile = bundleTypeOutputFile(bundleDef);
 
-  if (bundleDef && typeof legacyTypeDist === 'string' && !bundleDef.typeDistFile) {
-    console.warn(
-      `Warning: Bundle '${bundleKey}': 'typeDist' is deprecated and will be removed in the next major version. Please rename to 'typeDistFile' in your .lingo-tracker.json config.`,
-    );
-  }
-
-  if (!bundleDef || !hasTypeDistConfigured(bundleDef) || !resolvedTypeDistFile) {
-    return {
-      bundleKey,
-      typeDistFile: undefined,
-      keysCount: 0,
-      fileGenerated: false,
-      skippedReason: 'not-configured',
-    };
-  }
-
-  // Validate: typeDistFile must end with .ts (checked before resolving to an absolute path
-  // so the error message reflects the value as configured, not the resolved path)
-  if (!resolvedTypeDistFile.endsWith('.ts')) {
-    return {
-      bundleKey,
-      typeDistFile: resolvedTypeDistFile,
-      keysCount: 0,
-      fileGenerated: false,
-      errorReason: `typeDistFile must end with a .ts extension (e.g. './src/types/tokens.ts'), but got: ${resolvedTypeDistFile}`,
-    };
-  }
-
-  // resolvedTypeDistFile is narrowed to string by the guard above
-  const outputPath = path.resolve(resolvedTypeDistFile);
-
-  // Validate: typeDistFile must not point to an existing directory
-  if (fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()) {
-    return {
-      bundleKey,
-      typeDistFile: resolvedTypeDistFile,
-      keysCount: 0,
-      fileGenerated: false,
-      errorReason: `typeDistFile must be a file path (e.g. './src/types/tokens.ts'), but '${resolvedTypeDistFile}' resolves to a directory at: ${outputPath}`,
-    };
-  }
-
-  // Collect all keys for the bundle (reusing logic from generate-bundle)
-  // We don't need to process values, just keys
-  const allKeys = new Set<string>();
-  const collections =
-    bundleDef.collections === 'All'
-      ? Object.keys(config.collections).map((name) => ({
-          name,
-          entriesSelectionRules: 'All' as const,
-          bundledKeyPrefix: undefined,
-        }))
-      : bundleDef.collections;
-
-  for (const collectionDef of collections) {
-    const collectionConfig = config.collections[collectionDef.name];
-
-    if (!collectionConfig) {
-      console.warn(`Collection '${collectionDef.name}' not found in configuration`);
-      continue;
-    }
-
-    // Load resources (using base locale as source of truth for keys)
-    const resources = loadCollectionResources(
-      collectionConfig.translationsFolder,
-      config.baseLocale,
-      config.baseLocale,
-      undefined,
-      collectionConfig.tags,
-    );
-
-    for (const resource of resources) {
-      // Apply filters
-      let isMatch = false;
-
-      if (collectionDef.entriesSelectionRules === 'All') {
-        isMatch = true;
-      } else {
-        const tags = effectiveTags(resource.collectionTags, resource.tags);
-        for (const rule of collectionDef.entriesSelectionRules) {
-          if (
-            matchesPattern(resource.key, rule.matchingPattern) &&
-            matchesTags(tags.length > 0 ? tags : undefined, rule.matchingTags, rule.matchingTagOperator)
-          ) {
-            isMatch = true;
-            break;
-          }
-        }
-      }
-
-      if (isMatch) {
-        // Apply prefix if configured
-        const finalKey = collectionDef.bundledKeyPrefix
-          ? `${collectionDef.bundledKeyPrefix}.${resource.key}`
-          : resource.key;
-
-        allKeys.add(finalKey);
-      }
-    }
-  }
-
-  const sortedKeys = Array.from(allKeys).sort();
-
-  if (sortedKeys.length === 0) {
-    console.warn(`Warning: Bundle '${bundleKey}' is empty. Skipping type generation.`);
-    return {
-      bundleKey,
-      typeDistFile: resolvedTypeDistFile,
-      keysCount: 0,
-      fileGenerated: false,
-      skippedReason: 'empty-bundle',
-    };
-  }
-
-  // Resolve constant name: explicit override (from CLI or bundle config) → derive from bundle key
-  const nameOverride = tokenConstantName ?? bundleDef.tokenConstantName;
-  if (nameOverride) {
-    const validationError = validateJavaScriptIdentifier(nameOverride);
-    if (validationError) {
+  try {
+    if (!hasTypeDistConfigured(bundleDef) || !resolvedTypeDistFile) {
       return {
-        bundleKey,
-        typeDistFile: resolvedTypeDistFile,
-        keysCount: 0,
-        fileGenerated: false,
-        errorReason: `Invalid tokenConstantName for bundle '${bundleKey}': ${validationError}`,
+        status: 'not-configured',
       };
     }
+
+    // Validate: typeDistFile must end with .ts (checked before resolving to an absolute path
+    // so the error message reflects the value as configured, not the resolved path)
+    if (!resolvedTypeDistFile.endsWith('.ts')) {
+      return {
+        status: 'failed',
+        reason: `typeDistFile must end with a .ts extension (e.g. './src/types/tokens.ts'), but got: ${resolvedTypeDistFile}`,
+      };
+    }
+
+    // resolvedTypeDistFile is narrowed to string by the guard above
+    const outputPath = path.resolve(params.cwd ?? process.cwd(), resolvedTypeDistFile);
+
+    // Validate: typeDistFile must not point to an existing directory
+    if (fs.existsSync(outputPath) && fs.statSync(outputPath).isDirectory()) {
+      return {
+        status: 'failed',
+        reason: `typeDistFile must be a file path (e.g. './src/types/tokens.ts'), but '${resolvedTypeDistFile}' resolves to a directory at: ${outputPath}`,
+      };
+    }
+
+    const sortedKeys = [...params.keys].sort();
+
+    if (sortedKeys.length === 0) {
+      return {
+        status: 'skipped',
+        reason: 'empty-bundle',
+      };
+    }
+
+    const resolvedConstantName = resolveBundleSettings(bundleKey, {}, bundleDef, {
+      tokenConstantName,
+    }).tokenConstantName;
+    const explicitName = tokenConstantName ?? bundleDef.tokenConstantName;
+    const validationError = explicitName ? validateJavaScriptIdentifier(explicitName) : undefined;
+    if (validationError) {
+      return {
+        status: 'failed',
+        reason: `Invalid tokenConstantName for bundle '${bundleKey}': ${validationError}`,
+      };
+    }
+
+    // Generate content
+    const hierarchy = buildTypeHierarchy(sortedKeys, tokenCasing, bundleKey);
+    const fileContent = `${generateFileHeader(bundleKey)}\n\n${serializeHierarchy(hierarchy, resolvedConstantName, bundleKey)}`;
+
+    const outputDir = path.dirname(outputPath);
+
+    // Ensure directory exists
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Write file
+    fs.writeFileSync(outputPath, fileContent, 'utf-8');
+
+    return {
+      status: 'written',
+      path: path
+        .relative(params.cwd ?? process.cwd(), outputPath)
+        .split(path.sep)
+        .join('/'),
+      keysCount: sortedKeys.length,
+    };
+  } catch (error) {
+    if (error instanceof BundleHierarchicalConflictError) throw error;
+    return {
+      status: 'failed',
+      reason: error instanceof Error ? error.message : String(error),
+    };
   }
-  const resolvedConstantName = nameOverride ?? bundleKeyToConstantName(bundleKey);
+}
 
-  // Generate content
-  const hierarchy = buildTypeHierarchy(sortedKeys, tokenCasing);
-  const fileContent = `${generateFileHeader(bundleKey)}\n\n${serializeHierarchy(hierarchy, resolvedConstantName)}`;
+/** Shared output path for planning and generation, including saved legacy definitions. */
+export function bundleTypeOutputFile(definition: BundleDefinition): string | undefined {
+  const legacy = (definition as BundleDefinition & { typeDist?: unknown }).typeDist;
+  return definition.typeDistFile ?? (typeof legacy === 'string' ? legacy : undefined);
+}
 
-  const outputDir = path.dirname(outputPath);
-
-  // Ensure directory exists
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  // Write file
-  fs.writeFileSync(outputPath, fileContent, 'utf-8');
-
-  return {
-    bundleKey,
-    typeDistFile: outputPath,
-    keysCount: sortedKeys.length,
-    fileGenerated: true,
-  };
+export function legacyTypeDistWarning(bundleKey: string, definition: BundleDefinition): string | undefined {
+  const legacyTypeDist = (definition as BundleDefinition & { typeDist?: unknown }).typeDist;
+  return typeof legacyTypeDist === 'string' && !definition.typeDistFile
+    ? `Warning: Bundle '${bundleKey}': 'typeDist' is deprecated and will be removed in the next major version. Please rename to 'typeDistFile' in your .lingo-tracker.json config.`
+    : undefined;
 }

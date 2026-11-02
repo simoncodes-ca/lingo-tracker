@@ -1,3 +1,5 @@
+import { folderPathSegments, joinFolderPath } from './folder-path';
+
 /**
  * Regex pattern for validating individual key segments.
  * Each segment may contain only alphanumeric characters, _, or -.
@@ -50,7 +52,7 @@ export function validateKey(key: string, options: KeyValidationOptions = {}): vo
     throw new Error(`${errorContext}: Invalid key format "${key}" (leading or trailing dot not allowed)`);
   }
 
-  const segments = key.split('.');
+  const segments = folderPathSegments(key);
   for (const segment of segments) {
     if (!isValidSegment(segment)) {
       throw new Error(`${errorContext}: Invalid key segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`);
@@ -70,7 +72,7 @@ export function validateTargetFolder(targetFolder: string): void {
     return;
   }
 
-  const segments = targetFolder.split('.');
+  const segments = folderPathSegments(targetFolder);
   for (const segment of segments) {
     if (!isValidSegment(segment)) {
       throw new Error(`Invalid targetFolder segment "${segment}". Segments must match pattern [A-Za-z0-9_-]+`);
@@ -87,7 +89,7 @@ export function validateTargetFolder(targetFolder: string): void {
  * @returns The resolved key as a dot-delimited string
  */
 export function resolveResourceKey(key: string, targetFolder?: string): string {
-  return targetFolder && targetFolder.trim() !== '' ? `${targetFolder}.${key}` : key;
+  return joinFolderPath(targetFolder && targetFolder.trim() !== '' ? targetFolder : '', key);
 }
 
 /**
@@ -101,8 +103,8 @@ export function splitResolvedKey(resolvedKey: string): {
   folderPath: string[];
   entryKey: string;
 } {
-  const segments = resolvedKey.split('.');
-  const entryKey = segments[segments.length - 1];
+  const segments = folderPathSegments(resolvedKey);
+  const entryKey = segments.at(-1) ?? '';
   const folderPath = segments.slice(0, -1);
 
   return {

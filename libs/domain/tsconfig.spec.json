@@ -1,7 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
+    "outDir": "../../dist/out-tsc/libs/domain/spec",
+    "moduleResolution": "bundler",
+    "tsBuildInfoFile": "../../dist/out-tsc/libs/domain/spec/tsconfig.spec.tsbuildinfo",
     "composite": true,
     "declaration": true,
     "skipLibCheck": true,

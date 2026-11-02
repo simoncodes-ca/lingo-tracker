@@ -7,10 +7,14 @@ sidebar_position: 6
 
 A protected term is a word that must stay unchanged through translation. Brand names, product names, and technical jargon all qualify. `iPhone` stays `iPhone` in every locale, and `Node.js` stays `Node.js`.
 
-LingoTracker applies the list in two places.
+LingoTracker applies the list in four places.
 
 - **Export** marks each exported string with the protected terms found in its source. Translators and machine-translation services then see which words to leave alone.
 - **Import** rejects an incoming translation when a protected term from the source is missing from it.
+- **Auto-translation** does not store a machine translation when a protected term from the source is missing from it. The locale is reported as skipped. See [Auto-Translation](../auto-translation.md).
+- **Validate** fails a translation that lost or altered a protected term, so the release gate catches terms changed by hand. See [Validate](./validate.md).
+
+Protected terms are not [preferred terminology](./preferred-terminology.md). Preferred terminology suggests better wording for your base-locale text, and it only warns. Protected terms keep words intact in translations, and import enforces them.
 
 The terms live in a **JSON file** of their own, outside `.lingo-tracker.json`. A terminology list grows to hundreds of entries. It also changes on a different schedule from the rest of your configuration. A separate file keeps your configuration diffs short, and it lets reviewers read the terminology on its own.
 
@@ -42,7 +46,7 @@ To keep the list somewhere else, name the path in your configuration with `prote
 }
 ```
 
-LingoTracker resolves the path against the directory that holds `.lingo-tracker.json`. The path therefore works from any directory you run the CLI in.
+LingoTracker resolves the path against the directory that holds `.lingo-tracker.json`. Run the CLI from that directory.
 
 ### How LingoTracker writes the file
 
@@ -108,7 +112,7 @@ The [CLI reference](../cli.md#protected-terms) holds the full option table.
 
 ## Matching rules
 
-A term matches only as a whole word. `iPhone` matches in `Buy an iPhone today`. It stays unmatched in `iPhones` and in `myiPhone`.
+A term matches only as a whole word. `iPhone` matches in `Buy an iPhone today`. It stays unmatched in `iPhones` and in `myiPhone`. An underscore counts as a word boundary here, unlike in [preferred terminology](./preferred-terminology.md#what-counts-as-a-match).
 
 Punctuation inside a term is literal. `Node.js` and `C++` therefore match exactly as you wrote them.
 
@@ -126,19 +130,19 @@ That difference is the whole point of the check. It catches a translator who cha
 Export marks every target-locale row with the protected terms it finds in the source value.
 
 - **JSON (rich)** adds a `doNotTranslate` array to each entry.
-- **XLIFF** adds a `Do not translate: …` note.
+- **XLIFF** adds a `Do not translate: …` note. XLIFF import ignores this note, so it does not become part of the entry's comment.
 
 Base-locale rows stay unmarked, because a base-locale row holds nothing to translate. To turn off marking entirely, pass `--no-protect-notes`.
 
 ```bash
-lingo-tracker export --format json --rich --locale es
+lingo-tracker export --format json --structure flat --rich --include-base --locale es
 ```
 
 ```json
 {
   "app.checkout.title": {
     "value": "Comprar con iPhone",
-    "base": "Buy with iPhone",
+    "baseValue": "Buy with iPhone",
     "doNotTranslate": ["iPhone"]
   }
 }
@@ -156,6 +160,14 @@ Base-locale imports skip the check. A base-locale import defines the source rath
 
 The [Import](./import.md) page explains how LingoTracker reports failures.
 
+## Auto-translation behavior
+
+Auto-translation applies the same check as import to every machine translation. A translation that is missing a protected term from the source is not stored. The locale is reported in `skippedLocales` (or in the skipped count of `translate-locale`). When a resource is added, that locale gets a copy of the base value with status `new`. When a base value is edited, a locale with no value or an untranslated copy gets the new base value as `new`, and a locale with a real translation keeps it, marked `stale`.
+
+Because it is the same rule as import, the source is matched in any case, but the translation must hold the term exactly as stored. So a source that has the term in a different case (for example `IPHONE` for the term `iPhone`) is always skipped, even when the provider keeps `IPHONE` unchanged.
+
+A malformed terms file makes auto-translation fail with an error (for add-resource and edit-resource only when auto-translation is on), just as it does for import.
+
 ## Web UI
 
 **Settings** edits the global list as chips. It names the file underneath the field.
@@ -167,9 +179,9 @@ The **collection dialog** does the same for one collection. It requires that col
 | Situation | Behavior |
 |-----------|----------|
 | The file is absent at the default path | LingoTracker reads an empty list and stays quiet. This is the normal state before you add your first term. |
-| The file is absent at a path you configured | LingoTracker reads an empty list and warns you. A pointer at nothing is usually a typo. |
+| The file is absent at a path you configured | LingoTracker reads an empty list and warns you once. A pointer at nothing is usually a typo. |
 | The JSON is malformed | LingoTracker reports an error. |
 | The JSON holds something other than an array of strings | LingoTracker reports an error. |
 | The parent directory of the target path is absent | LingoTracker reports an error. It creates no directories for you, and it leaves your configuration unchanged. |
 
-A corrupt file is a hard error rather than an empty list, and this is deliberate. An empty list would protect nothing. Altered brand names would then reach your resources through import, and nobody would see it happen.
+A corrupt file is a hard error rather than an empty list, and this is deliberate. An empty list would protect nothing. Altered brand names would then reach your resources through import or auto-translation, and nobody would see it happen.

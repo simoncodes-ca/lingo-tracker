@@ -1,0 +1,793 @@
+<div class="dialog-wrapper" role="dialog" aria-labelledby="import-dialog-title">
+  <header class="dialog-header">
+    <div class="dialog-header-tile" aria-hidden="true">
+      <mat-icon>input</mat-icon>
+    </div>
+    <div class="dialog-header-text">
+      <h2 id="import-dialog-title" class="dialog-title">{{ TOKENS.IMPORT.DIALOG.TITLE | transloco }}</h2>
+      <p class="dialog-subtitle">{{ TOKENS.IMPORT.DIALOG.SUBTITLE | transloco }}</p>
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="dialog-close"
+      data-testid="cancel"
+      (click)="onCancel()"
+      [disabled]="saving()"
+      [attr.aria-label]="TOKENS.COMMON.ACTIONS.CLOSE | transloco"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <form id="import-form" class="md" [formGroup]="model.form" (ngSubmit)="onSubmit()">
+    <!-- ───────────── Rail ───────────── -->
+    <nav class="rail" [attr.aria-label]="TOKENS.IMPORT.DIALOG.TITLE | transloco">
+      <button
+        type="button"
+        class="rail-item"
+        data-testid="rail-source"
+        [class.rail-item--on]="model.activeSection() === 'source'"
+        [attr.aria-current]="model.activeSection() === 'source' ? 'true' : null"
+        [attr.cdkFocusInitial]="model.activeSection() === 'source' ? '' : null"
+        (click)="activate('source', $event)"
+      >
+        <mat-icon aria-hidden="true">folder_copy</mat-icon>
+        <span class="rail-stack">
+          <span class="rail-label">{{ TOKENS.IMPORT.DIALOG.SECTIONS.SOURCE | transloco }}</span>
+          <span class="rail-sub" [class.rail-sub--empty]="!model.draft().collection">{{ model.draft().collection || '—' }}</span>
+        </span>
+        @if (railErrors().has('source')) {
+          <span class="rail-dot" role="img" [attr.aria-label]="TOKENS.BUNDLES.DIALOG.SECTIONS.HASERRORS | transloco"></span>
+        } @else {
+          <span class="rail-count num">{{ TOKENS.IMPORT.DIALOG.SECTIONS.FILESX | transloco: { count: model.checkedCount() } }}</span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="rail-item"
+        data-testid="rail-strategy"
+        [class.rail-item--on]="model.activeSection() === 'strategy'"
+        [attr.aria-current]="model.activeSection() === 'strategy' ? 'true' : null"
+        [attr.cdkFocusInitial]="model.activeSection() === 'strategy' ? '' : null"
+        (click)="activate('strategy', $event)"
+      >
+        <mat-icon aria-hidden="true">tune</mat-icon>
+        <span class="rail-stack">
+          <span class="rail-label">{{ TOKENS.IMPORT.DIALOG.SECTIONS.STRATEGY | transloco }}</span>
+          <span class="rail-sub rail-sub--prose">{{ strategyTitle() | transloco }}</span>
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="rail-item"
+        data-testid="rail-options"
+        [class.rail-item--on]="model.activeSection() === 'options'"
+        [attr.aria-current]="model.activeSection() === 'options' ? 'true' : null"
+        [attr.cdkFocusInitial]="model.activeSection() === 'options' ? '' : null"
+        (click)="activate('options', $event)"
+      >
+        <mat-icon aria-hidden="true">toggle_on</mat-icon>
+        <span class="rail-stack">
+          <span class="rail-label">{{ TOKENS.IMPORT.DIALOG.SECTIONS.OPTIONS | transloco }}</span>
+          <span class="rail-sub rail-sub--prose">
+            @if (changedOptions() === 0) {
+              {{ TOKENS.IMPORT.DIALOG.SECTIONS.DEFAULTS | transloco }}
+            } @else {
+              {{ TOKENS.IMPORT.DIALOG.SECTIONS.CHANGEDX | transloco: { count: changedOptions() } }}
+            }
+          </span>
+        </span>
+      </button>
+    </nav>
+
+    <!-- ───────────── Pane ───────────── -->
+    <div class="pane" data-testid="pane">
+      @switch (model.activeSection()) {
+        @case ('source') {
+          <div class="pane-head">
+            <div class="pane-head-text">
+              <h3>{{ TOKENS.IMPORT.DIALOG.SECTIONS.SOURCE | transloco }}</h3>
+              <p>{{ TOKENS.IMPORT.DIALOG.SOURCE.DESCRIPTION | transloco }}</p>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="field-label" id="import-collection-label">{{ TOKENS.IMPORT.DIALOG.SOURCE.COLLECTIONLABEL | transloco }}</span>
+            <ul class="check-list" role="radiogroup" aria-labelledby="import-collection-label" data-testid="collection-list">
+              @for (row of collectionRows(); track row.name) {
+                <li class="check-row" [class.check-row--locked]="row.readOnly">
+                  <label class="check-label">
+                    <input
+                      type="radio"
+                      class="radio-input"
+                      name="import-collection"
+                      [value]="row.name"
+                      [checked]="model.draft().collection === row.name"
+                      [disabled]="row.readOnly"
+                      [attr.data-testid]="'collection-' + row.name"
+                      (change)="chooseCollection(row.name)"
+                    />
+                    <span class="radio" aria-hidden="true"></span>
+                    <span class="check-name">{{ row.name }}</span>
+                  </label>
+                  <span class="check-row-path">
+                    @for (part of row.folderParts; track $index) {
+                      <span>{{ part }}</span><wbr />
+                    }
+                  </span>
+                  @if (row.readOnly) {
+                    <mat-icon
+                      class="check-row-lock"
+                      [matTooltip]="TOKENS.IMPORT.CARD.READONLYTOOLTIP | transloco"
+                      [attr.aria-label]="TOKENS.IMPORT.CARD.READONLYTOOLTIP | transloco"
+                      role="img"
+                      >lock</mat-icon
+                    >
+                  }
+                </li>
+              }
+            </ul>
+            @if (collectionError(); as errorToken) {
+              <p class="field-error" role="alert" data-testid="collection-error">{{ errorToken | transloco }}</p>
+            }
+          </div>
+
+          @if (model.readOnly()) {
+            <p class="field-hint field-hint--icon" data-testid="read-only-hint">
+              <mat-icon aria-hidden="true">lock</mat-icon>
+              <span>{{ TOKENS.IMPORT.DIALOG.SOURCE.READONLY | transloco }}</span>
+            </p>
+          }
+
+          <div class="locked-group" [class.locked-group--on]="model.readOnly()" [attr.inert]="model.readOnly() ? '' : null" data-testid="source-group">
+            <div class="field">
+              <label class="field-label" for="import-folder">
+                {{ TOKENS.IMPORT.DIALOG.SOURCE.FOLDERLABEL | transloco }}
+                @if (model.folderIsCustom()) {
+                  <button type="button" class="link" data-testid="reset-folder" (click)="model.resetFolder()">
+                    {{ TOKENS.IMPORT.DIALOG.SOURCE.RESETFOLDER | transloco }}
+                  </button>
+                }
+              </label>
+              <div class="text-input text-input--mono">
+                <mat-icon aria-hidden="true">folder</mat-icon>
+                <input
+                  id="import-folder"
+                  type="text"
+                  formControlName="folder"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-describedby="import-folder-hint"
+                />
+              </div>
+              <p id="import-folder-hint" class="field-hint">
+                {{ TOKENS.IMPORT.DIALOG.SOURCE.FOLDERHINT | transloco }}
+                @if (model.listingStatus() === 'ready') {
+                  <span data-testid="folder-resolved" [innerHTML]="TOKENS.IMPORT.DIALOG.SOURCE.FOLDERRESOLVEDX | transloco: { path: folderMarkup() }"></span>
+                }
+              </p>
+            </div>
+
+            <div class="field">
+              <span class="field-label" id="import-files-label">
+                {{ TOKENS.IMPORT.DIALOG.SOURCE.FILESLABEL | transloco }}
+                <button
+                  type="button"
+                  class="link"
+                  data-testid="upload-files"
+                  [disabled]="!model.canUpload()"
+                  (click)="fileInput.click()"
+                >
+                  {{ TOKENS.IMPORT.DIALOG.SOURCE.UPLOADFILES | transloco }}
+                </button>
+                <input
+                  #fileInput
+                  type="file"
+                  multiple
+                  class="sr-only"
+                  tabindex="-1"
+                  aria-hidden="true"
+                  data-testid="upload-input"
+                  [accept]="uploadAccept"
+                  (change)="onFilesPicked($event)"
+                />
+                @if (fileRows().length > 0) {
+                  <button type="button" class="link" data-testid="toggle-all-files" (click)="toggleAllFiles()">
+                    {{ (allChecked() ? TOKENS.IMPORT.DIALOG.SOURCE.CLEAR : TOKENS.IMPORT.DIALOG.SOURCE.SELECTALL) | transloco }}
+                  </button>
+                }
+              </span>
+              @if (!model.uploadAllowed() && !model.readOnly()) {
+                <p class="field-hint" data-testid="upload-not-allowed">{{ TOKENS.IMPORT.DIALOG.SOURCE.UPLOADNOTALLOWEDFOLDER | transloco }}</p>
+              }
+
+              <!-- Dropping files anywhere on the well uploads them; the button above is the other way. -->
+              <div
+                class="drop-zone"
+                data-testid="drop-zone"
+                [class.drop-zone--over]="dragOver()"
+                (dragenter)="onDragEnter($event)"
+                (dragover)="onDragOver($event)"
+                (dragleave)="onDragLeave()"
+                (drop)="onDrop($event)"
+              >
+              @switch (model.listingStatus()) {
+                @case ('loading') {
+                  <div class="file-skeleton" data-testid="listing-loading" aria-busy="true">
+                    <p class="field-hint" [innerHTML]="TOKENS.IMPORT.DIALOG.SOURCE.LOOKING | transloco: { path: folderMarkup() }"></p>
+                    <span class="file-skeleton-row" aria-hidden="true"></span>
+                    <span class="file-skeleton-row" aria-hidden="true"></span>
+                    <span class="file-skeleton-row" aria-hidden="true"></span>
+                  </div>
+                }
+                @case ('error') {
+                  <p class="field-error" role="alert" data-testid="listing-error">
+                    {{ TOKENS.IMPORT.DIALOG.SOURCE.LISTFAILED | transloco }}
+                    <button type="button" class="link" data-testid="retry-listing" (click)="retryListing()">
+                      {{ TOKENS.IMPORT.DIALOG.SOURCE.TRYAGAIN | transloco }}
+                    </button>
+                  </p>
+                }
+                @case ('ready') {
+                  @if (folderMissing()) {
+                    <div class="empty-well" data-testid="folder-missing">
+                      <p [innerHTML]="TOKENS.IMPORT.DIALOG.SOURCE.NOFOLDERX | transloco: { path: folderMarkup() }"></p>
+                      <p class="field-hint">{{ TOKENS.IMPORT.DIALOG.SOURCE.NOFOLDERHINT | transloco }}</p>
+                      @if (model.canUpload()) {
+                        <p class="field-hint" data-testid="drop-here-missing">{{ TOKENS.IMPORT.DIALOG.SOURCE.DROPHERE | transloco }}</p>
+                      }
+                    </div>
+                  } @else if (folderEmpty()) {
+                    <div class="empty-well" data-testid="folder-empty">
+                      <p [innerHTML]="TOKENS.IMPORT.DIALOG.SOURCE.NOFILESX | transloco: { path: folderMarkup() }"></p>
+                      @if (model.canUpload()) {
+                        <p class="field-hint" data-testid="drop-here-empty">{{ TOKENS.IMPORT.DIALOG.SOURCE.DROPHERE | transloco }}</p>
+                      }
+                    </div>
+                  } @else {
+                    <ul class="file-list" role="group" aria-labelledby="import-files-label" data-testid="file-list">
+                      @for (row of fileRows(); track row.file.path; let index = $index) {
+                        <li
+                          class="file-row file-row--enter"
+                          [class.file-row--muted]="row.blocked"
+                          [class.file-row--invalid]="row.localeMissing"
+                          [style.animation-delay.ms]="index < stagger ? index * 40 : 0"
+                          [attr.data-testid]="'file-row-' + row.file.name"
+                        >
+                          <mat-checkbox
+                            color="primary"
+                            [checked]="row.checked"
+                            [disabled]="row.blocked"
+                            [aria-labelledby]="'import-file-name-' + index"
+                            [attr.data-testid]="'file-check-' + row.file.name"
+                            (change)="toggleFile(row.file.path, $event.checked)"
+                          ></mat-checkbox>
+                          <span class="file-stack">
+                            <span class="file-name" [id]="'import-file-name-' + index" [attr.title]="row.file.path">{{ row.file.name }}</span>
+                            <span class="file-meta">
+                              <span>{{ row.formatToken | transloco }}</span>
+                              <span class="sep" aria-hidden="true">·</span>
+                              <span class="num">{{ row.size }}</span>
+                              <span class="sep file-meta-date" aria-hidden="true">·</span>
+                              <span class="file-meta-date">{{ row.modified }}</span>
+                            </span>
+                            @if (row.blocked) {
+                              <span class="file-note" data-testid="base-locale-hint">
+                                <mat-icon aria-hidden="true">lock</mat-icon>{{ TOKENS.IMPORT.DIALOG.SOURCE.BASELOCALEHINT | transloco }}
+                              </span>
+                            }
+                            @if (row.sharedLocale) {
+                              <span class="file-note file-note--warn" data-testid="duplicate-locale-hint">
+                                <mat-icon aria-hidden="true">swap_vert</mat-icon>{{ TOKENS.IMPORT.DIALOG.SOURCE.DUPLICATELOCALEX | transloco: { locale: row.locale } }}
+                              </span>
+                            }
+                            @if (row.fromTargetLanguage) {
+                              <span class="file-note" data-testid="provenance-hint">{{ TOKENS.IMPORT.DIALOG.SOURCE.FROMTARGETLANGUAGE | transloco }}</span>
+                            }
+                          </span>
+                          <span class="loc-wrap">
+                            <select
+                              class="loc"
+                              [class.loc--empty]="!row.locale"
+                              [class.loc--base]="row.blocked"
+                              [attr.aria-label]="TOKENS.IMPORT.DIALOG.SOURCE.LOCALELABELX | transloco: { file: row.file.name }"
+                              [attr.aria-invalid]="row.localeMissing"
+                              [attr.data-testid]="'locale-' + row.file.name"
+                              (change)="onLocaleChange(row.file.path, $event)"
+                            >
+                              @if (!row.locale) {
+                                <option value="" selected>{{ TOKENS.IMPORT.DIALOG.SOURCE.CHOOSE | transloco }}</option>
+                              }
+                              @for (locale of row.localeOptions; track locale) {
+                                <option [value]="locale" [selected]="locale === row.locale">{{ locale }}</option>
+                              }
+                            </select>
+                            <mat-icon class="loc-chevron" aria-hidden="true">expand_more</mat-icon>
+                          </span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                }
+              }
+              </div>
+
+              @if (model.uploadStatus() === 'uploading') {
+                <!-- Plain text: the sr-only live region below is the one announcement. -->
+                <p class="upload-status" data-testid="upload-status">
+                  <mat-spinner diameter="14" aria-hidden="true"></mat-spinner>
+                  <span>{{ TOKENS.IMPORT.DIALOG.SOURCE.UPLOADINGX | transloco: { count: model.uploadingCount() } }}</span>
+                </p>
+              }
+              @if (uploadMessage(); as message) {
+                <p class="field-hint" data-testid="upload-notice">{{ message.token | transloco: message.params }}</p>
+              }
+              @if (model.uploadErrors().length > 0) {
+                <div class="submit-errors upload-errors" role="alert" data-testid="upload-errors">
+                  @for (message of model.uploadErrors(); track message) {
+                    <p class="field-error">{{ message }}</p>
+                  }
+                </div>
+              }
+              @if (model.uploadClash(); as clash) {
+                <div class="upload-clash" role="alert" data-testid="upload-clash">
+                  <p class="field-hint">{{ TOKENS.IMPORT.DIALOG.SOURCE.UPLOADCLASHX | transloco: { names: clash.names.join(', ') } }}</p>
+                  <span class="upload-clash-actions">
+                    <button mat-flat-button color="primary" type="button" data-testid="upload-replace" (click)="model.replaceClashing()">
+                      {{ TOKENS.IMPORT.DIALOG.SOURCE.REPLACE | transloco }}
+                    </button>
+                    <button mat-button type="button" data-testid="upload-keep" (click)="model.dismissClash()">
+                      {{ TOKENS.IMPORT.DIALOG.SOURCE.KEEPEXISTING | transloco }}
+                    </button>
+                  </span>
+                </div>
+              }
+
+              @if (model.droppedCount() > 0) {
+                <p class="field-hint" role="status" data-testid="dropped-hint">
+                  {{ TOKENS.IMPORT.DIALOG.SOURCE.DROPPEDX | transloco: { count: model.droppedCount() } }}
+                </p>
+              }
+              @if (filesError(); as errorToken) {
+                <p class="field-error" role="alert" data-testid="files-error">{{ errorToken | transloco }}</p>
+              }
+            </div>
+          </div>
+        }
+
+        @case ('strategy') {
+          <div class="pane-head">
+            <div class="pane-head-text">
+              <h3 id="import-strategy-heading">{{ TOKENS.IMPORT.DIALOG.SECTIONS.STRATEGY | transloco }}</h3>
+              <p>{{ TOKENS.IMPORT.DIALOG.STRATEGY.DESCRIPTION | transloco }}</p>
+            </div>
+          </div>
+          <div class="choices" role="radiogroup" aria-labelledby="import-strategy-heading">
+            @for (card of strategyCards; track card.value) {
+              <label class="choice" [class.choice--on]="model.draft().strategy === card.value">
+                <input
+                  type="radio"
+                  class="radio-input"
+                  name="import-strategy"
+                  [value]="card.value"
+                  [checked]="model.draft().strategy === card.value"
+                  [attr.data-testid]="'strategy-' + card.value"
+                  (change)="chooseStrategy(card.value)"
+                />
+                <span class="radio" aria-hidden="true"></span>
+                <span class="choice-text">
+                  <span class="choice-title">{{ card.title | transloco }}</span>
+                  <span class="choice-desc">{{ card.hint | transloco }}</span>
+                </span>
+                @if (card.value === 'translation-service') {
+                  <span class="choice-tag">{{ TOKENS.IMPORT.DIALOG.STRATEGY.DEFAULTTAG | transloco }}</span>
+                }
+              </label>
+            }
+          </div>
+          <p class="field-hint field-hint--icon" data-testid="strategy-note">
+            <mat-icon aria-hidden="true">{{ isMigration() ? 'info' : 'shield' }}</mat-icon>
+            <span>{{ strategyNote() | transloco }}</span>
+          </p>
+        }
+
+        @case ('options') {
+          <div class="pane-head">
+            <div class="pane-head-text">
+              <h3>{{ TOKENS.IMPORT.DIALOG.SECTIONS.OPTIONS | transloco }}</h3>
+              <p>{{ TOKENS.IMPORT.DIALOG.OPTIONS.DESCRIPTION | transloco }}</p>
+            </div>
+          </div>
+
+          @if (isMigration()) {
+            <div class="switch-row" [class.switch-row--on]="options().createMissing">
+              <div class="switch-tile" aria-hidden="true"><mat-icon>add_circle</mat-icon></div>
+              <div class="switch-text">
+                <span class="switch-label" id="import-create-label">{{ TOKENS.IMPORT.DIALOG.OPTIONS.CREATEMISSING | transloco }}</span>
+                <span class="switch-description" id="import-create-description">{{ TOKENS.IMPORT.DIALOG.OPTIONS.CREATEMISSINGHINT | transloco }}</span>
+              </div>
+              <mat-slide-toggle
+                class="switch-control"
+                color="primary"
+                hideIcon
+                data-testid="option-createMissing"
+                [checked]="options().createMissing"
+                (change)="setOption('createMissing', $event.checked)"
+                aria-labelledby="import-create-label"
+                aria-describedby="import-create-description"
+              ></mat-slide-toggle>
+            </div>
+            <div class="switch-row" [class.switch-row--on]="options().updateComments">
+              <div class="switch-tile" aria-hidden="true"><mat-icon>chat_bubble</mat-icon></div>
+              <div class="switch-text">
+                <span class="switch-label" id="import-comments-label">{{ TOKENS.IMPORT.DIALOG.OPTIONS.UPDATECOMMENTS | transloco }}</span>
+                <span class="switch-description" id="import-comments-description">{{ TOKENS.IMPORT.DIALOG.OPTIONS.UPDATECOMMENTSHINT | transloco }}</span>
+              </div>
+              <mat-slide-toggle
+                class="switch-control"
+                color="primary"
+                hideIcon
+                data-testid="option-updateComments"
+                [checked]="options().updateComments"
+                (change)="setOption('updateComments', $event.checked)"
+                aria-labelledby="import-comments-label"
+                aria-describedby="import-comments-description"
+              ></mat-slide-toggle>
+            </div>
+            <div class="switch-row" [class.switch-row--on]="options().updateTags">
+              <div class="switch-tile" aria-hidden="true"><mat-icon>sell</mat-icon></div>
+              <div class="switch-text">
+                <span class="switch-label" id="import-tags-label">{{ TOKENS.IMPORT.DIALOG.OPTIONS.UPDATETAGS | transloco }}</span>
+                <span class="switch-description" id="import-tags-description">{{ TOKENS.IMPORT.DIALOG.OPTIONS.UPDATETAGSHINT | transloco }}</span>
+              </div>
+              <mat-slide-toggle
+                class="switch-control"
+                color="primary"
+                hideIcon
+                data-testid="option-updateTags"
+                [checked]="options().updateTags"
+                (change)="setOption('updateTags', $event.checked)"
+                aria-labelledby="import-tags-label"
+                aria-describedby="import-tags-description"
+              ></mat-slide-toggle>
+            </div>
+          } @else {
+            <p class="field-hint field-hint--icon" data-testid="create-missing-off">
+              <mat-icon aria-hidden="true">info</mat-icon>
+              <span>{{ TOKENS.IMPORT.DIALOG.OPTIONS.CREATEMISSINGOFFX | transloco: { strategy: strategyTitle() | transloco } }}</span>
+            </p>
+          }
+
+          <div class="disclosure" [class.disclosure--open]="advancedOpen()">
+            <button
+              type="button"
+              class="disclosure-toggle"
+              data-testid="advanced-toggle"
+              [attr.aria-expanded]="advancedOpen()"
+              aria-controls="import-advanced-panel"
+              (click)="toggleAdvanced()"
+            >
+              <mat-icon class="disclosure-icon" aria-hidden="true">tune</mat-icon>
+              <span class="disclosure-title">{{ TOKENS.IMPORT.DIALOG.OPTIONS.ADVANCED | transloco }}</span>
+              <span class="disclosure-summary">
+                @if (changedAdvanced() === 0) {
+                  {{ TOKENS.IMPORT.DIALOG.SECTIONS.DEFAULTS | transloco }}
+                } @else {
+                  {{ TOKENS.IMPORT.DIALOG.SECTIONS.CHANGEDX | transloco: { count: changedAdvanced() } }}
+                }
+              </span>
+              <mat-icon class="disclosure-chevron" aria-hidden="true">expand_more</mat-icon>
+            </button>
+            @if (advancedOpen()) {
+              <div id="import-advanced-panel" class="disclosure-panel">
+                <div class="switch-row" [class.switch-row--on]="options().preserveStatus">
+                  <div class="switch-tile" aria-hidden="true"><mat-icon>flag</mat-icon></div>
+                  <div class="switch-text">
+                    <span class="switch-label" id="import-preserve-label">{{ TOKENS.IMPORT.DIALOG.OPTIONS.PRESERVESTATUS | transloco }}</span>
+                    <span class="switch-description" id="import-preserve-description">{{ TOKENS.IMPORT.DIALOG.OPTIONS.PRESERVESTATUSHINT | transloco }}</span>
+                  </div>
+                  <mat-slide-toggle
+                    class="switch-control"
+                    color="primary"
+                    hideIcon
+                    data-testid="option-preserveStatus"
+                    [checked]="options().preserveStatus"
+                    (change)="setOption('preserveStatus', $event.checked)"
+                    aria-labelledby="import-preserve-label"
+                    aria-describedby="import-preserve-description"
+                  ></mat-slide-toggle>
+                </div>
+                <div class="switch-row" [class.switch-row--on]="options().validateBase">
+                  <div class="switch-tile" aria-hidden="true"><mat-icon>rule</mat-icon></div>
+                  <div class="switch-text">
+                    <span class="switch-label" id="import-validate-label">{{ TOKENS.IMPORT.DIALOG.OPTIONS.VALIDATEBASE | transloco }}</span>
+                    <span class="switch-description" id="import-validate-description">{{ TOKENS.IMPORT.DIALOG.OPTIONS.VALIDATEBASEHINT | transloco }}</span>
+                  </div>
+                  <mat-slide-toggle
+                    class="switch-control"
+                    color="primary"
+                    hideIcon
+                    data-testid="option-validateBase"
+                    [checked]="options().validateBase"
+                    (change)="setOption('validateBase', $event.checked)"
+                    aria-labelledby="import-validate-label"
+                    aria-describedby="import-validate-description"
+                  ></mat-slide-toggle>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+
+      <!-- Below 1200px the preview column is gone; the same blocks live here, behind a disclosure. -->
+      <div class="disclosure preview-disclosure" [class.disclosure--open]="previewOpen()">
+        <button
+          type="button"
+          class="disclosure-toggle"
+          data-testid="preview-toggle"
+          (click)="togglePreview()"
+          [attr.aria-expanded]="previewOpen()"
+          aria-controls="import-preview-panel"
+        >
+          <mat-icon class="disclosure-icon" aria-hidden="true">visibility</mat-icon>
+          <span class="disclosure-title">{{ TOKENS.BUNDLES.DIALOG.PREVIEW.DISCLOSURETITLE | transloco }}</span>
+          <span class="disclosure-summary num">
+            {{ TOKENS.IMPORT.DIALOG.FOOTER.FILESENTRIESX | transloco: { files: plan()?.files?.length ?? 0, entries: plan()?.totals?.imported ?? 0 } }}
+          </span>
+          <mat-icon class="disclosure-chevron" aria-hidden="true">expand_more</mat-icon>
+        </button>
+        @if (previewOpen()) {
+          <div id="import-preview-panel" class="disclosure-panel preview" [attr.aria-busy]="model.preview.stale()" [class.preview--stale]="model.preview.stale()">
+            <ng-container *ngTemplateOutlet="previewBlocks" />
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ───────────── Preview column ───────────── -->
+    <aside
+      class="prev col preview"
+      data-testid="preview-column"
+      [attr.aria-busy]="model.preview.stale()"
+      [class.preview--stale]="model.preview.stale()"
+    >
+      <ng-container *ngTemplateOutlet="previewBlocks" />
+    </aside>
+  </form>
+
+  <!-- Mirrors the upload status for screen readers. -->
+  <span class="sr-only" aria-live="polite" data-testid="upload-live">
+    @if (model.uploadStatus() === 'uploading') {
+      {{ TOKENS.IMPORT.DIALOG.SOURCE.UPLOADINGX | transloco: { count: model.uploadingCount() } }}
+    } @else if (uploadMessage(); as message) {
+      {{ message.token | transloco: message.params }}
+    }
+  </span>
+
+  <!-- Announces only when the number of entries that would fail changes. -->
+  <span class="sr-only" aria-live="polite" data-testid="will-fail-live">
+    @if (presentation().willFail > 0) {
+      {{ TOKENS.IMPORT.DIALOG.FOOTER.WILLFAILX | transloco: { count: presentation().willFail } }}
+    }
+  </span>
+
+  @if (model.submitErrors().length > 0) {
+    <div class="submit-errors" role="alert" data-testid="submit-errors">
+      @for (message of model.submitErrors(); track message) {
+        <p class="field-error">{{ message }}</p>
+      }
+    </div>
+  }
+
+  <!-- ───────────── Footer ───────────── -->
+  <footer class="dialog-footer">
+    <div class="footer-meta" role="status" data-testid="footer-meta">
+      @switch (footer().footerState) {
+        @case ('ready') {
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          <span class="num">
+            {{ TOKENS.IMPORT.DIALOG.FOOTER.FILESENTRIESX | transloco: { files: plan()?.files?.length ?? 0, entries: plan()?.totals?.imported ?? 0 } }}
+            @if (presentation().willFail > 0) {
+              · <span class="warn">{{ TOKENS.IMPORT.DIALOG.FOOTER.WILLFAILX | transloco: { count: presentation().willFail } }}</span>
+            }
+          </span>
+        }
+        @case ('checking') {
+          <mat-spinner diameter="14" aria-hidden="true"></mat-spinner>
+          <span>{{ TOKENS.IMPORT.DIALOG.FOOTER.CHECKING | transloco }}</span>
+        }
+        @case ('nothing') {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <span>{{ TOKENS.IMPORT.DIALOG.FOOTER.NOTHING | transloco }}</span>
+        }
+        @case ('noFiles') {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <span>{{ TOKENS.IMPORT.DIALOG.FOOTER.NOFILES | transloco }}</span>
+        }
+        @case ('readOnly') {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">lock</mat-icon>
+          <span>{{ TOKENS.IMPORT.DIALOG.FOOTER.READONLY | transloco }}</span>
+        }
+        @case ('previewFailed') {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <span>
+            {{ TOKENS.IMPORT.DIALOG.PREVIEW.FAILED | transloco }}
+            ·
+            <button type="button" class="link" data-testid="retry-preview" (click)="retryPreview()">
+              {{ TOKENS.COMMON.ACTIONS.RETRY | transloco }}
+            </button>
+          </span>
+        }
+        @case ('planErrors') {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <span>{{ TOKENS.IMPORT.DIALOG.FOOTER.NOFILEREADABLE | transloco }}</span>
+        }
+        @default {
+          <mat-icon aria-hidden="true" class="footer-meta-icon--idle">radio_button_unchecked</mat-icon>
+          <button type="button" class="link link--quiet" data-testid="fix-sections" (click)="fixSections()">
+            {{ TOKENS.IMPORT.DIALOG.FOOTER.FIXSECTIONS | transloco }}
+          </button>
+        }
+      }
+    </div>
+    <div class="footer-spacer"></div>
+    <button mat-button type="button" data-testid="cancel" (click)="onCancel()" [disabled]="saving()">
+      {{ TOKENS.COMMON.ACTIONS.CANCEL | transloco }}
+    </button>
+    <button mat-flat-button color="primary" type="submit" form="import-form" data-testid="submit" [disabled]="!footer().canSubmit">
+      {{ footer().primary.token | transloco: { count: footer().primary.count } }}
+    </button>
+  </footer>
+</div>
+
+<!-- Preview blocks, rendered once in the column and once in the disclosure. -->
+<ng-template #previewBlocks>
+  @if (model.checkedCount() === 0) {
+    <p class="preview-note" data-testid="preview-empty">{{ TOKENS.IMPORT.DIALOG.PREVIEW.EMPTY | transloco }}</p>
+  } @else {
+    <section class="preview-block">
+      <h4><mat-icon aria-hidden="true">description</mat-icon>{{ TOKENS.IMPORT.DIALOG.PREVIEW.FILES | transloco }}</h4>
+      @if (plan(); as current) {
+        <ul class="tree" data-testid="preview-files">
+          @for (file of presentation().planFiles; track file.path) {
+            <li class="plan-file" [attr.data-testid]="'plan-file-' + file.name">
+              <span class="plan-file-line">
+                <mat-icon aria-hidden="true">description</mat-icon>
+                <span class="tree-file-name">
+                  @for (part of file.parts; track $index) {
+                    <span>{{ part }}</span><wbr />
+                  }
+                </span>
+                <span class="loc-pill">{{ file.locale }}</span>
+                <span class="tree-count num">{{ TOKENS.IMPORT.DIALOG.PREVIEW.ENTRIESX | transloco: { count: file.entries } }}</span>
+              </span>
+              @if (file.sourceProblem) {
+                <span class="plan-file-problem" data-testid="source-problem">{{ file.sourceProblem }}</span>
+              }
+            </li>
+          }
+        </ul>
+        <p class="preview-caption num">{{ TOKENS.IMPORT.DIALOG.PREVIEW.FILESLOCALESX | transloco: { files: presentation().planFiles.length, locales: presentation().localeCount } }}</p>
+      } @else {
+        <p class="preview-note">—</p>
+      }
+    </section>
+
+    <section class="preview-block">
+      <h4><mat-icon aria-hidden="true">summarize</mat-icon>{{ TOKENS.IMPORT.DIALOG.PREVIEW.SUMMARY | transloco }}</h4>
+      @if (model.preview.error(); as message) {
+        <p class="preview-error" data-testid="preview-error">
+          <mat-icon aria-hidden="true">error_outline</mat-icon>
+          <span>{{ message }}</span>
+        </p>
+        <button type="button" class="link" data-testid="retry-preview-block" (click)="retryPreview()">
+          {{ TOKENS.IMPORT.DIALOG.SOURCE.TRYAGAIN | transloco }}
+        </button>
+      } @else if (plan(); as current) {
+        <dl class="kv" data-testid="summary">
+          <dt>{{ TOKENS.IMPORT.DIALOG.PREVIEW.ENTRIES | transloco }}</dt>
+          <dd class="num">{{ current.totals.entries }}</dd>
+          <dt>{{ TOKENS.IMPORT.DIALOG.PREVIEW.WILLIMPORT | transloco }}</dt>
+          <dd class="num">{{ current.totals.imported }}</dd>
+          <dt>{{ TOKENS.IMPORT.DIALOG.PREVIEW.CREATED | transloco }}</dt>
+          <dd class="num">{{ current.totals.created }}</dd>
+          <dt>{{ TOKENS.IMPORT.DIALOG.PREVIEW.UPDATED | transloco }}</dt>
+          <dd class="num">{{ current.totals.updated }}</dd>
+          <dt>{{ TOKENS.IMPORT.DIALOG.PREVIEW.SKIPPED | transloco }}</dt>
+          <dd class="num">{{ current.totals.skipped }}</dd>
+          <dt>{{ TOKENS.IMPORT.DIALOG.PREVIEW.WILLFAIL | transloco }}</dt>
+          <dd class="num" [class.warn]="current.totals.failed > 0">{{ current.totals.failed }}</dd>
+        </dl>
+      } @else {
+        <dl class="kv kv--skeleton" aria-hidden="true">
+          <dt>{{ TOKENS.IMPORT.DIALOG.PREVIEW.ENTRIES | transloco }}</dt>
+          <dd>—</dd>
+          <dt>{{ TOKENS.IMPORT.DIALOG.PREVIEW.WILLIMPORT | transloco }}</dt>
+          <dd>—</dd>
+          <dt>{{ TOKENS.IMPORT.DIALOG.PREVIEW.WILLFAIL | transloco }}</dt>
+          <dd>—</dd>
+        </dl>
+      }
+    </section>
+
+    @if (plan(); as current) {
+      <section class="preview-block">
+        <h4><mat-icon aria-hidden="true">swap_horiz</mat-icon>{{ TOKENS.IMPORT.DIALOG.PREVIEW.STATUSCHANGES | transloco }}</h4>
+        @if (presentation().statusChanges.length > 0) {
+          <ul class="transitions" data-testid="status-changes">
+            @for (transition of presentation().statusChanges; track $index) {
+              <li>
+                <span class="transition-path">
+                  @if (transition.from; as from) {
+                    <span class="status-word" [attr.data-status]="from">{{ statusLabel(from) | transloco | lowercase }}</span>
+                  } @else {
+                    <span>—</span>
+                  }
+                  <span aria-hidden="true">→</span>
+                  <span class="status-word" [attr.data-status]="transition.to">{{ statusLabel(transition.to) | transloco | lowercase }}</span>
+                </span>
+                <span class="tree-count num">{{ transition.count }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="preview-note">{{ TOKENS.IMPORT.DIALOG.PREVIEW.NONE | transloco }}</p>
+        }
+      </section>
+
+      @if (presentation().autoFixCount > 0) {
+        <section class="preview-block">
+          <h4><mat-icon aria-hidden="true">auto_fix_high</mat-icon>{{ TOKENS.IMPORT.DIALOG.PREVIEW.AUTOFIXES | transloco }}</h4>
+          <p class="preview-note">{{ TOKENS.IMPORT.DIALOG.PREVIEW.AUTOFIXESX | transloco: { count: presentation().autoFixCount } }}</p>
+          <ul class="fixes" data-testid="auto-fixes">
+            @for (fix of presentation().shownAutoFixes; track $index) {
+              <li [attr.title]="fix.originalValue + ' → ' + fix.fixedValue">
+                <span class="fix-key">{{ fix.key }} · {{ fix.locale }}</span>
+                <span class="fix-change">{{ fix.originalValue }} → <b>{{ fix.fixedValue }}</b></span>
+              </li>
+            }
+          </ul>
+          @if (presentation().moreAutoFixes > 0) {
+            <p class="preview-note">{{ TOKENS.IMPORT.DIALOG.PREVIEW.ANDMOREX | transloco: { count: presentation().moreAutoFixes } }}</p>
+          }
+        </section>
+      }
+
+      @if (current.issues.length > 0) {
+        <section class="preview-block">
+          <h4><mat-icon aria-hidden="true">report</mat-icon>{{ TOKENS.IMPORT.DIALOG.PREVIEW.ISSUES | transloco }}</h4>
+          <ul class="fixes" data-testid="issues">
+            @for (issue of presentation().shownIssues; track $index) {
+              <li [attr.title]="issue.reason">
+                <span class="fix-key">{{ issue.key }} · {{ issue.locale }}</span>
+                <span class="issue-reason">{{ issue.reason }}</span>
+              </li>
+            }
+          </ul>
+          @if (presentation().moreIssues > 0) {
+            <p class="preview-note">{{ TOKENS.IMPORT.DIALOG.PREVIEW.ANDMOREX | transloco: { count: presentation().moreIssues } }}</p>
+          }
+        </section>
+      }
+
+      @if (presentation().notes.length > 0) {
+        <section class="preview-block">
+          <h4><mat-icon aria-hidden="true">info</mat-icon>{{ TOKENS.IMPORT.DIALOG.PREVIEW.NOTES | transloco }}</h4>
+          <ul class="notes" data-testid="preview-notes">
+            @for (note of presentation().notes; track $index) {
+              @if (note.token) {
+                <li>{{ note.token | transloco: note.params }}</li>
+              } @else {
+                <li [attr.title]="note.text">{{ note.text }}</li>
+              }
+            }
+          </ul>
+        </section>
+      }
+    }
+  }
+</ng-template>

@@ -11,7 +11,7 @@
  * @returns true if entry matches tag criteria
  */
 export function matchesTags(
-  entryTags: string[] | undefined,
+  entryTags: readonly string[] | undefined,
   matchingTags: string[] | undefined,
   matchingTagOperator: 'All' | 'Any' = 'Any',
 ): boolean {

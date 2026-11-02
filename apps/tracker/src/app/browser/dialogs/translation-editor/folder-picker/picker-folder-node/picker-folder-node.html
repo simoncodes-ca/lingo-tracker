@@ -54,7 +54,9 @@
       @if (shouldShowInlineInput()) {
         <app-inline-folder-input
           [parentPath]="folder().fullPath"
+          [error]="createError()"
           (confirm)="onFolderConfirm($event)"
+          (edited)="newFolderEdited.emit()"
           (cancelInput)="onFolderCancel()"
         />
       }
@@ -67,11 +69,13 @@
             [focusedPath]="focusedPath()"
             [isAddingFolder]="isAddingFolder()"
             [addFolderParentPath]="addFolderParentPath()"
+            [createError]="createError()"
             (folderSelect)="folderSelect.emit($event)"
             (toggleExpand)="toggleExpand.emit($event)"
             (addFolder)="addFolder.emit($event)"
             (confirmNewFolder)="confirmNewFolder.emit($event)"
             (cancelNewFolder)="cancelNewFolder.emit()"
+            (newFolderEdited)="newFolderEdited.emit()"
           />
         }
       }

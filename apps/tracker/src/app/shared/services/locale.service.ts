@@ -1,6 +1,8 @@
-import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
+import { LOCAL_STORAGE } from '../storage/browser-storage';
+import { KeyedStorage, raw } from '../storage/keyed-storage';
 
 export type LocaleCode = 'en' | 'es' | 'fr-ca' | 'ru' | 'ja' | 'de';
 
@@ -31,6 +33,12 @@ export class LocaleService {
   readonly #isBrowser = isPlatformBrowser(this.#platformId);
   readonly #transloco = inject(TranslocoService);
 
+  private readonly storage = new KeyedStorage<LocaleCode>(
+    inject(LOCAL_STORAGE),
+    LOCALE_STORAGE_KEY,
+    raw<LocaleCode>((value) => (this.#isValidLocale(value) ? value : undefined)),
+  );
+
   readonly currentLocale = signal<LocaleCode>(DEFAULT_LOCALE);
   readonly availableLocales: readonly LocaleOption[] = AVAILABLE_LOCALES;
 
@@ -47,23 +55,13 @@ export class LocaleService {
   }
 
   #loadLocalePreference(): void {
-    try {
-      const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
-      const locale = stored && this.#isValidLocale(stored) ? stored : DEFAULT_LOCALE;
-      this.currentLocale.set(locale);
-      this.#transloco.setActiveLang(locale);
-    } catch (error) {
-      console.error('Failed to load locale preference:', error);
-      this.#transloco.setActiveLang(DEFAULT_LOCALE);
-    }
+    const locale = this.storage.read() ?? DEFAULT_LOCALE;
+    this.currentLocale.set(locale);
+    this.#transloco.setActiveLang(locale);
   }
 
   #saveLocalePreference(code: LocaleCode): void {
-    try {
-      localStorage.setItem(LOCALE_STORAGE_KEY, code);
-    } catch (error) {
-      console.error('Failed to save locale preference:', error);
-    }
+    this.storage.write(code);
   }
 
   #isValidLocale(value: string): value is LocaleCode {

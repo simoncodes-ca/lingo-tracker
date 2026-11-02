@@ -1,5 +1,6 @@
-import { mkdirSync, accessSync, constants } from 'node:fs';
+import { accessSync, constants, mkdirSync } from 'node:fs';
 import { ErrorMessages } from '../errors/error-messages';
+import { CoreOperationError } from '../errors/lingo-tracker-error';
 
 export interface EnsureDirectoryOptions {
   /** Path to the directory to ensure exists */
@@ -36,7 +37,7 @@ export function ensureDirectoryExists(options: EnsureDirectoryOptions): void {
   } catch (error) {
     const context = errorContext ? `${errorContext}: ` : '';
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`${context}${ErrorMessages.directoryCreationFailed(directoryPath, errorMessage)}`);
+    throw new CoreOperationError(`${context}${ErrorMessages.directoryCreationFailed(directoryPath, errorMessage)}`);
   }
 
   if (checkWritable) {
@@ -44,7 +45,7 @@ export function ensureDirectoryExists(options: EnsureDirectoryOptions): void {
       accessSync(directoryPath, constants.W_OK);
     } catch {
       const context = errorContext ? `${errorContext}: ` : '';
-      throw new Error(`${context}Directory '${directoryPath}' is not writable`);
+      throw new CoreOperationError(`${context}Directory '${directoryPath}' is not writable`);
     }
   }
 }

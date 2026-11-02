@@ -1,0 +1,132 @@
+{
+  "description": {
+    "source": "Defaults follow the strategy. Change them only for this run.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Los valores predeterminados dependen de la estrategia. Cámbialos solo para esta ejecución.",
+    "fr-ca": "Les valeurs par défaut suivent la stratégie. Modifiez-les uniquement pour cette exécution.",
+    "ru": "Значения по умолчанию зависят от стратегии. Изменения действуют только для этого запуска.",
+    "ja": "既定値は方式によって決まります。変更はこの実行にのみ適用されます。",
+    "de": "Die Standardwerte richten sich nach der Strategie. Änderungen gelten nur für diesen Durchlauf."
+  },
+  "createMissing": {
+    "source": "Create missing keys",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Crear claves que faltan",
+    "fr-ca": "Créer les clés manquantes",
+    "ru": "Создавать отсутствующие ключи",
+    "ja": "存在しないキーを作成",
+    "de": "Fehlende Schlüssel anlegen"
+  },
+  "createMissingHint": {
+    "source": "Add entries the collection does not have yet. Off: unknown keys are skipped.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Agrega las entradas que la colección aún no tiene. Desactivado: las claves desconocidas se omiten.",
+    "fr-ca": "Ajoute les entrées que la collection n’a pas encore. Désactivé : les clés inconnues sont ignorées.",
+    "ru": "Добавляет записи, которых в коллекции ещё нет. Выключено: неизвестные ключи пропускаются.",
+    "ja": "コレクションにまだないエントリを追加します。オフの場合、未知のキーはスキップされます。",
+    "de": "Fügt Einträge hinzu, die die Sammlung noch nicht hat. Aus: Unbekannte Schlüssel werden übersprungen."
+  },
+  "createMissingOffX": {
+    "source": "Unknown keys are skipped with the {strategy} strategy.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Las claves desconocidas se omiten con la estrategia {strategy}.",
+    "fr-ca": "Les clés inconnues sont ignorées avec la stratégie {strategy}.",
+    "ru": "При стратегии «{strategy}» неизвестные ключи пропускаются.",
+    "ja": "{strategy} 方式では、未知のキーはスキップされます。",
+    "de": "Bei der Strategie {strategy} werden unbekannte Schlüssel übersprungen."
+  },
+  "updateComments": {
+    "source": "Update comments",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Actualizar comentarios",
+    "fr-ca": "Mettre à jour les commentaires",
+    "ru": "Обновлять комментарии",
+    "ja": "コメントを更新",
+    "de": "Kommentare aktualisieren"
+  },
+  "updateCommentsHint": {
+    "source": "Take each entry's comment from the file. An empty comment removes the stored one.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Toma el comentario de cada entrada del archivo. Un comentario vacío elimina el guardado.",
+    "fr-ca": "Prend le commentaire de chaque entrée dans le fichier. Un commentaire vide supprime celui qui est enregistré.",
+    "ru": "Берёт комментарий каждой записи из файла. Пустой комментарий удаляет сохранённый.",
+    "ja": "各エントリのコメントをファイルから取り込みます。空のコメントは保存済みのコメントを削除します。",
+    "de": "Übernimmt den Kommentar jedes Eintrags aus der Datei. Ein leerer Kommentar entfernt den gespeicherten."
+  },
+  "updateTags": {
+    "source": "Update tags",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Actualizar etiquetas",
+    "fr-ca": "Mettre à jour les étiquettes",
+    "ru": "Обновлять теги",
+    "ja": "タグを更新",
+    "de": "Tags aktualisieren"
+  },
+  "updateTagsHint": {
+    "source": "Replace each entry's tags with the file's tags (rich JSON only).",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Reemplaza las etiquetas de cada entrada por las del archivo (solo JSON enriquecido).",
+    "fr-ca": "Remplace les étiquettes de chaque entrée par celles du fichier (JSON enrichi seulement).",
+    "ru": "Заменяет теги каждой записи тегами из файла (только расширенный JSON).",
+    "ja": "各エントリのタグをファイルのタグで置き換えます(リッチ JSON のみ)。",
+    "de": "Ersetzt die Tags jedes Eintrags durch die Tags der Datei (nur erweitertes JSON)."
+  },
+  "advanced": {
+    "source": "Advanced",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Avanzado",
+    "fr-ca": "Avancé",
+    "ru": "Дополнительно",
+    "ja": "詳細設定",
+    "de": "Erweitert"
+  },
+  "preserveStatus": {
+    "source": "Keep status from file",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Conservar el estado del archivo",
+    "fr-ca": "Conserver le statut du fichier",
+    "ru": "Сохранять статус из файла",
+    "ja": "ファイルのステータスを維持",
+    "de": "Status aus Datei beibehalten"
+  },
+  "preserveStatusHint": {
+    "source": "Rich JSON may carry a status. On, it wins over the strategy's status rule.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "El JSON enriquecido puede incluir un estado. Activado, prevalece sobre la regla de estado de la estrategia.",
+    "fr-ca": "Le JSON enrichi peut contenir un statut. Activé, il l’emporte sur la règle de statut de la stratégie.",
+    "ru": "Расширенный JSON может содержать статус. Если включено, он приоритетнее правила статуса стратегии.",
+    "ja": "リッチ JSON にはステータスが含まれる場合があります。オンの場合、方式のステータス規則よりも優先されます。",
+    "de": "Erweitertes JSON kann einen Status enthalten. Wenn aktiv, hat er Vorrang vor der Statusregel der Strategie."
+  },
+  "validateBase": {
+    "source": "Warn when the base text differs",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Avisar si el texto base difiere",
+    "fr-ca": "Avertir si le texte de base diffère",
+    "ru": "Предупреждать, если базовый текст отличается",
+    "ja": "ベーステキストが異なる場合に警告",
+    "de": "Warnen, wenn der Basistext abweicht"
+  },
+  "validateBaseHint": {
+    "source": "Report entries whose source in the file is not the stored base text. The stored text is always kept.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Informa de las entradas cuyo origen en el archivo no es el texto base guardado. El texto guardado siempre se conserva.",
+    "fr-ca": "Signale les entrées dont la source dans le fichier n’est pas le texte de base enregistré. Le texte enregistré est toujours conservé.",
+    "ru": "Сообщает о записях, оригинал которых в файле не совпадает с сохранённым базовым текстом. Сохранённый текст всегда остаётся.",
+    "ja": "ファイル内の原文が保存済みのベーステキストと異なるエントリを報告します。保存済みのテキストは常に保持されます。",
+    "de": "Meldet Einträge, deren Quelle in der Datei nicht dem gespeicherten Basistext entspricht. Der gespeicherte Text bleibt immer erhalten."
+  }
+}

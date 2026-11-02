@@ -1,134 +1,69 @@
-import { existsSync } from 'node:fs';
-import type { TranslationConfig } from '../../config/translation-config';
-import type { ResourceTreeEntry } from '../resource/load-resource-tree';
-import { validateAndResolvePaths } from '../resource/resource-file-paths';
-import { readResourceEntries, readTrackerMetadata, writeJsonFile } from '../file-io/json-file-operations';
-import { calculateChecksum } from '../../resource/checksum';
-import { autoTranslateResource } from './auto-translate-resources';
+import type { Collection } from '../config/open-collection';
+import { ResourceNotFoundError } from '../errors/lingo-tracker-error';
+import { assertAutoTranslationEnabled } from '../machine-translation/translator';
+import { resolveResourcePaths } from '../resource/resource-file-paths';
+import { openResourceFolder } from '../resource/resource-folder';
+import type { ResourceTreeEntry } from '../resource/resource-tree-types';
+import { executeTranslationRun, selectTranslationRow, type TranslationRunOptions } from './translation-run';
 
-export interface TranslateExistingResourceOptions {
-  readonly key: string;
-  readonly translationsFolder: string;
-  readonly translationConfig: TranslationConfig;
-  readonly allLocales: string[];
-  readonly baseLocale: string;
-  readonly cwd?: string;
-}
+export type TranslateExistingResourceOptions = Omit<TranslationRunOptions, 'delay'>;
 
 export interface TranslateExistingResourceResult {
   readonly translatedCount: number;
+  /** Locales the Translator skipped, or whose value changed on disk during the provider call. */
   readonly skippedLocales: string[];
   readonly entry: ResourceTreeEntry;
+  /** Problems that did not stop the Translator (a named protected-terms file that does not exist). */
+  readonly warnings: string[];
 }
 
 /**
- * Translates an existing resource entry for all locales with 'new' or 'stale' status.
+ * Auto-translates an existing resource entry of a collection through the Translator, for every
+ * target locale that needs translation by the Staleness rule (no metadata, or status `new` or
+ * `stale`). Translated values are stored ICU-normalised with status `translated`; skipped locales
+ * are left as they are.
  *
- * Resolves the resource key to its file paths, reads the current state, identifies
- * which locales still need translation (status is 'new' or 'stale'), calls the
- * auto-translate provider, updates the resource entries and tracker metadata, and
- * writes both files to disk.
+ * Returns early with `translatedCount: 0` when no locales require translation, without opening the
+ * Translator (so without needing an API key).
  *
- * Returns early with `translatedCount: 0` when no locales require translation.
- *
- * Throws {@link TranslationError} if the translation provider fails — callers
- * should map this to an appropriate HTTP error (e.g. 502 Bad Gateway).
- *
- * @param options - Resolution and translation parameters for this resource.
- * @returns The updated resource entry along with translation and skip counts.
+ * @param key - The entry's full key.
+ * @param options - `provider` / `protectedTerms`: used instead of the collection's (see {@link openTranslator}).
+ * @throws {AutoTranslationDisabledError} The collection has no enabled translation config.
+ * @throws {InvalidResourceKeyError} The key is malformed.
+ * @throws {ResourceNotFoundError} No entry exists at the key.
+ * @throws {TranslationError} Some locale needs work and the API key is not set, or the provider failed.
+ * @throws {ProtectedTermsFileError} Some locale needs work and a protected-terms file is malformed.
  */
 export async function translateExistingResource(
-  options: TranslateExistingResourceOptions,
+  collection: Collection,
+  key: string,
+  options: TranslateExistingResourceOptions = {},
 ): Promise<TranslateExistingResourceResult> {
-  const { key, translationsFolder, translationConfig, allLocales, baseLocale, cwd = process.cwd() } = options;
-
-  const paths = validateAndResolvePaths({ key, translationsFolder, cwd });
-
-  if (!existsSync(paths.resourceEntriesPath) || !existsSync(paths.trackerMetaPath)) {
-    throw new Error(`Resource not found: ${paths.resolvedKey}`);
-  }
-
-  const resourceEntries = readResourceEntries(paths.resourceEntriesPath);
-  const trackerMeta = readTrackerMetadata(paths.trackerMetaPath);
-
-  if (!resourceEntries[paths.entryKey] || !trackerMeta[paths.entryKey]) {
-    throw new Error(`Resource not found: ${paths.resolvedKey}`);
-  }
-
-  const resourceEntry = resourceEntries[paths.entryKey];
-  const metaEntry = trackerMeta[paths.entryKey];
-  const baseValue = resourceEntry.source;
-
-  const targetLocales = allLocales.filter((locale) => {
-    if (locale === baseLocale) return false;
-    const localeMeta = metaEntry[locale];
-    return !localeMeta || localeMeta.status === 'new' || localeMeta.status === 'stale';
+  const config = assertAutoTranslationEnabled(collection);
+  const { resolvedKey, entryKey, folderPath } = resolveResourcePaths({
+    key,
+    translationsFolder: collection.translationsFolder,
   });
-
-  if (targetLocales.length === 0) {
-    const translations: Record<string, string> = {};
-    for (const [prop, value] of Object.entries(resourceEntry)) {
-      if (prop !== 'source' && prop !== 'tags' && prop !== 'comment' && typeof value === 'string') {
-        translations[prop] = value;
-      }
-    }
-
-    return {
-      translatedCount: 0,
-      skippedLocales: [],
-      entry: {
-        key: paths.entryKey,
-        source: baseValue,
-        translations,
-        metadata: metaEntry,
-        ...(resourceEntry.comment !== undefined && { comment: resourceEntry.comment }),
-        ...(resourceEntry.tags !== undefined && resourceEntry.tags.length > 0 && { tags: resourceEntry.tags }),
-      },
-    };
-  }
-
-  const { translations: translatedEntries, skippedLocales } = await autoTranslateResource({
-    baseValue,
-    baseLocale,
-    targetLocales,
-    translationConfig,
+  const folder = openResourceFolder(folderPath, collection);
+  const entry = folder.treeEntry(entryKey, { requireMetadata: true });
+  if (!entry) throw new ResourceNotFoundError(resolvedKey);
+  const { row, locales } = selectTranslationRow(resolvedKey, entry, collection.targetLocales);
+  if (locales.length === 0) return { translatedCount: 0, skippedLocales: [], entry, warnings: [] };
+  const { tally, warnings } = await executeTranslationRun({
+    ...options,
+    collection,
+    translationConfig: config,
+    rows: [row],
+    locales,
+    failurePolicy: 'throw-first',
   });
-
-  const baseChecksum = metaEntry[baseLocale]?.checksum ?? calculateChecksum(baseValue);
-
-  for (const { locale, value } of translatedEntries) {
-    resourceEntry[locale] = value;
-
-    const newChecksum = calculateChecksum(value);
-    metaEntry[locale] = {
-      checksum: newChecksum,
-      baseChecksum,
-      status: 'translated',
-    };
-  }
-
-  if (translatedEntries.length > 0) {
-    writeJsonFile({ filePath: paths.resourceEntriesPath, data: resourceEntries });
-    writeJsonFile({ filePath: paths.trackerMetaPath, data: trackerMeta });
-  }
-
-  const finalTranslations: Record<string, string> = {};
-  for (const [prop, value] of Object.entries(resourceEntry)) {
-    if (prop !== 'source' && prop !== 'tags' && prop !== 'comment' && typeof value === 'string') {
-      finalTranslations[prop] = value;
-    }
-  }
-
+  const outcomes = tally.outcomes;
+  const freshEntry = outcomes.find((outcome) => outcome.status !== 'failed')?.entry;
+  if (!freshEntry) throw new ResourceNotFoundError(resolvedKey);
   return {
-    translatedCount: translatedEntries.length,
-    skippedLocales,
-    entry: {
-      key: paths.entryKey,
-      source: baseValue,
-      translations: finalTranslations,
-      metadata: metaEntry,
-      ...(resourceEntry.comment !== undefined && { comment: resourceEntry.comment }),
-      ...(resourceEntry.tags !== undefined && resourceEntry.tags.length > 0 && { tags: resourceEntry.tags }),
-    },
+    translatedCount: outcomes.filter((outcome) => outcome.status === 'written').length,
+    skippedLocales: outcomes.filter((outcome) => outcome.status === 'skipped').map(({ locale }) => locale),
+    entry: freshEntry,
+    warnings,
   };
 }

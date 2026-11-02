@@ -1,397 +1,86 @@
-import * as path from 'path';
+import { type ImportResult, type ImportRunOptions, type RunImportResult, runImport } from '@simoncodes-ca/core';
 import * as fs from 'fs';
-import prompts from 'prompts';
-import {
-  type LingoTrackerConfig,
-  type ImportOptions,
-  type ImportFormat,
-  type ImportStrategy,
-  importFromJson,
-  importFromXliff,
-  detectImportFormat,
-  type ImportResult,
-  generateImportSummary,
-  readEffectiveProtectedTerms,
-} from '@simoncodes-ca/core';
-import {
-  loadConfiguration,
-  promptForCollection,
-  resolveWritableCollection,
-  ConsoleFormatter,
-  ErrorMessages,
-  isInteractiveTerminal,
-  buildSummaryPath,
-} from '../utils';
+import * as path from 'path';
+import { cliErrorWording } from '../runner/cli-error-wording';
+import { flagAdvisories, withoutFlagPrompts } from '../runner/flag-record';
+import { CommandOutput } from '../runner/command-output';
+import { defineCommand } from '../runner/command-runner';
+import { ConsoleFormatter, reportRun, RunTiming } from '../utils';
+import { IMPORT_FLAGS } from './import-cmd-flags';
+import { type ImportCommandOptions, importQuestions, resolveImportOptions } from './import-options';
 
-export const LARGE_FILE_SIZE_THRESHOLD = 5;
+export type { ImportCommandOptions } from './import-options';
 
-export interface ImportCommandOptions {
-  format?: ImportFormat;
-  source?: string;
-  locale?: string;
-  collection?: string;
-  strategy?: ImportStrategy;
-  updateComments?: boolean;
-  updateTags?: boolean;
-  preserveStatus?: boolean;
-  createMissing?: boolean;
-  validateBase?: boolean;
-  dryRun?: boolean;
-  verbose?: boolean;
-}
+export const importCommand = defineCommand<ImportCommandOptions>()({
+  flags: withoutFlagPrompts(IMPORT_FLAGS),
+  name: 'Import',
+  collection: 'writable',
+  prompts: (options, { collection, cwd }) =>
+    importQuestions(options, {
+      configuredLocales: collection.locales,
+      baseLocale: collection.baseLocale,
+      sourceExists: (source) => fs.existsSync(path.resolve(cwd, source)),
+    }),
+  required: ['source', 'locale'],
+  run: async ({ cwd, collection, answers, summaryDirectory, now }) => {
+    const options = resolveImportOptions(answers);
+    for (const message of flagAdvisories<ImportCommandOptions>(IMPORT_FLAGS, answers))
+      ConsoleFormatter.warning(message);
+    const { source, locale } = answers;
+    const runOptions: ImportRunOptions = {
+      ...options,
+      locale,
+      onProgress: options.verbose ? (msg: string) => CommandOutput.log(`  ${msg}`) : undefined,
+    };
 
-export async function importCommand(options: ImportCommandOptions): Promise<void> {
-  const loaded = loadConfiguration({ exitOnError: false });
-  if (!loaded) return;
-  const { config, cwd } = loaded;
-
-  const collectionName = await promptForCollection(config, options.collection);
-  if (!collectionName) return;
-
-  const collection = resolveWritableCollection(collectionName, config, cwd);
-  if (!collection) return;
-
-  let answers: Partial<ImportCommandOptions>;
-  try {
-    answers = await promptForMissing({ ...options, collection: collectionName }, config);
-  } catch (error) {
-    if ((error as Error).message === 'Import cancelled') {
-      ConsoleFormatter.error(ErrorMessages.OPERATION_CANCELLED('Import'));
-      return;
-    }
-    throw error;
-  }
-
-  // Validate required options
-  if (!answers.source) {
-    ConsoleFormatter.error('Source file is required. Use --source or run in interactive mode.');
-    return;
-  }
-
-  if (!answers.locale) {
-    ConsoleFormatter.error('Target locale is required. Use --locale or run in interactive mode.');
-    return;
-  }
-
-  // Check file size and warn if large
-  try {
-    const sourceFilePath = path.resolve(process.cwd(), answers.source);
-    if (fs.existsSync(sourceFilePath)) {
-      const stats = fs.statSync(sourceFilePath);
-      const fileSizeMB = stats.size / (1024 * 1024);
-
-      if (fileSizeMB > LARGE_FILE_SIZE_THRESHOLD) {
-        ConsoleFormatter.warning(`Large import file detected: ${fileSizeMB.toFixed(2)} MB`);
-        ConsoleFormatter.indent('Import may take longer than usual.');
-      }
-    }
-  } catch (_error) {
-    // File size check is non-critical, continue with import
-  }
-
-  // Update options with answers
-  const finalOptions: ImportOptions = {
-    source: answers.source,
-    locale: answers.locale,
-    collection: collectionName,
-    format: answers.format,
-    strategy: answers.strategy || 'translation-service',
-    updateComments: answers.updateComments,
-    updateTags: answers.updateTags,
-    preserveStatus: answers.preserveStatus,
-    createMissing: answers.createMissing,
-    validateBase: answers.validateBase !== false, // Default true
-    dryRun: answers.dryRun || false,
-    verbose: answers.verbose || false,
-    protectedTerms: readEffectiveProtectedTerms(config, collection.config, cwd),
-    onProgress: answers.verbose ? (msg: string) => console.log(`  ${msg}`) : undefined,
-  };
-
-  // Auto-detect format if not specified
-  if (!finalOptions.format) {
+    const timing = new RunTiming(now, Boolean(runOptions.verbose));
+    let run: Awaited<ReturnType<typeof runImport>>;
     try {
-      finalOptions.format = detectImportFormat(finalOptions.source);
-      if (finalOptions.verbose) {
-        console.log(`Detected format: ${finalOptions.format}`);
-      }
+      run = await runImport(collection, {
+        ...runOptions,
+        source,
+        cwd,
+        format: options.format,
+        onWarning: ({ message, details }) => ConsoleFormatter.warning(message, details),
+        onStart: (format) => {
+          if (!answers.format && runOptions.verbose) CommandOutput.log(`Detected format: ${format}`);
+          CommandOutput.log('');
+          ConsoleFormatter.progress('Starting import...');
+          ConsoleFormatter.indent(`Format: ${format}`);
+          ConsoleFormatter.indent(`Source: ${source}`);
+          ConsoleFormatter.indent(`Locale: ${runOptions.locale}`);
+          ConsoleFormatter.indent(`Strategy: ${runOptions.strategy}`);
+          ConsoleFormatter.indent(`Collection: ${collection.name}`);
+          if (runOptions.dryRun) ConsoleFormatter.indent('Mode: DRY RUN (no changes will be made)');
+          CommandOutput.log('');
+          timing.start();
+        },
+      });
     } catch (error) {
-      ConsoleFormatter.error((error as Error).message);
-      return;
+      // Typed failures use the shared wording. Only untyped import execution failures
+      // keep this command-specific prefix; later reporting failures use the runner unchanged.
+      if (cliErrorWording(error) !== undefined) throw error;
+      ConsoleFormatter.error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
+      return { exitCode: 1 };
     }
-  }
+    const { result } = run;
 
-  const translationsFolderPath = collection.translationsFolderPath;
+    // Log elapsed time in verbose mode
+    timing.complete();
 
-  // Display import summary
-  console.log('');
-  ConsoleFormatter.progress('Starting import...');
-  ConsoleFormatter.indent(`Format: ${finalOptions.format}`);
-  ConsoleFormatter.indent(`Source: ${finalOptions.source}`);
-  ConsoleFormatter.indent(`Locale: ${finalOptions.locale}`);
-  ConsoleFormatter.indent(`Strategy: ${finalOptions.strategy}`);
-  ConsoleFormatter.indent(`Collection: ${finalOptions.collection}`);
-  if (finalOptions.dryRun) {
-    ConsoleFormatter.indent('Mode: DRY RUN (no changes will be made)');
-  }
-  console.log('');
-
-  // Performance logging for verbose mode
-  const startTime = finalOptions.verbose ? Date.now() : 0;
-  if (finalOptions.verbose) {
-    console.log(`Started at: ${new Date(startTime).toLocaleTimeString()}`);
-  }
-
-  let result: ImportResult;
-  try {
-    if (finalOptions.format === 'json') {
-      result = importFromJson(translationsFolderPath, finalOptions);
-    } else {
-      result = await importFromXliff(translationsFolderPath, finalOptions);
-    }
-  } catch (error) {
-    ConsoleFormatter.error(`Import failed: ${(error as Error).message}`);
-    return;
-  }
-
-  // Log elapsed time in verbose mode
-  if (finalOptions.verbose) {
-    const endTime = Date.now();
-    const elapsedMilliseconds = endTime - startTime;
-    const elapsedSeconds = (elapsedMilliseconds / 1000).toFixed(2);
-    console.log(`\nCompleted at: ${new Date(endTime).toLocaleTimeString()}`);
-    console.log(`Elapsed time: ${elapsedSeconds}s (${elapsedMilliseconds}ms)`);
-  }
-
-  // Display results
-  displayResults(result, finalOptions);
-
-  // Generate and write summary
-  const summaryPath = buildSummaryPath('import');
-  if (!finalOptions.dryRun) {
-    try {
-      const summary = generateImportSummary(result, finalOptions);
-      fs.writeFileSync(summaryPath, summary, 'utf8');
-      console.log('');
-      console.log(`Import summary written to: ${summaryPath}`);
-    } catch (error) {
-      ConsoleFormatter.warning(`Failed to write summary file: ${(error as Error).message}`);
-    }
-  } else {
-    console.log('');
-    console.log(`Import summary would be written to: ${summaryPath}`);
-  }
-
-  // Exit with appropriate code
-  if (result.resourcesFailed > 0 || result.errors.length > 0) {
-    process.exit(1);
-  }
-}
-
-async function promptForMissing(
-  options: ImportCommandOptions,
-  config: LingoTrackerConfig,
-): Promise<ImportCommandOptions> {
-  const answers = { ...options };
-
-  // If not in TTY mode, return options as-is (non-interactive mode)
-  if (!isInteractiveTerminal()) {
-    return answers;
-  }
-
-  // Prompt for source file
-  if (!answers.source) {
-    const sourceAnswer = await prompts({
-      type: 'text',
-      name: 'source',
-      message: 'Enter path to import file:',
-      validate: (value: string) => {
-        if (!value || value.trim() === '') {
-          return 'Source file is required';
-        }
-        const resolvedPath = path.resolve(process.cwd(), value);
-        if (!fs.existsSync(resolvedPath)) {
-          return `File not found: ${value}`;
-        }
-        return true;
-      },
+    return reportRun({
+      summary: { kind: 'import', text: run.summary, directory: summaryDirectory },
+      printBody: () => displayResults(result, runOptions),
+      printCompletion: () => displayCompletion(run, runOptions),
+      warnings: result.warnings,
+      errors: result.errors,
+      outcome: run.outcome,
+      dryRun: Boolean(runOptions.dryRun),
     });
+  },
+});
 
-    if (!sourceAnswer.source) {
-      throw new Error('Import cancelled');
-    }
-
-    answers.source = sourceAnswer.source;
-  }
-
-  // Auto-detect format from source file extension
-  if (!answers.format && answers.source) {
-    try {
-      answers.format = detectImportFormat(answers.source);
-    } catch {
-      // Will prompt if detection fails
-    }
-  }
-
-  // Prompt for format if still not determined
-  if (!answers.format) {
-    const formatAnswer = await prompts({
-      type: 'select',
-      name: 'format',
-      message: 'Select import format:',
-      choices: [
-        {
-          title: 'JSON',
-          value: 'json',
-          description: 'JSON format (flat or hierarchical)',
-        },
-        {
-          title: 'XLIFF 1.2',
-          value: 'xliff',
-          description: 'XLIFF format for professional translation services',
-        },
-      ],
-    });
-
-    if (!formatAnswer.format) {
-      throw new Error('Import cancelled');
-    }
-
-    answers.format = formatAnswer.format;
-  }
-
-  // Get configured locales
-  const configuredLocales = config.locales || [];
-  const baseLocale = config.baseLocale || 'en';
-
-  // Prompt for import strategy
-  if (!answers.strategy) {
-    const strategyAnswer = await prompts({
-      type: 'select',
-      name: 'strategy',
-      message: 'Select import strategy:',
-      choices: [
-        {
-          title: 'Translation Service',
-          value: 'translation-service',
-          description: 'Import from professional translation services (default)',
-        },
-        {
-          title: 'Verification',
-          value: 'verification',
-          description: 'Language expert verification workflow',
-        },
-        {
-          title: 'Migration',
-          value: 'migration',
-          description: 'Migrate from another translation system',
-        },
-        {
-          title: 'Update',
-          value: 'update',
-          description: 'Bulk update existing translations',
-        },
-      ],
-    });
-
-    if (!strategyAnswer.strategy) {
-      throw new Error('Import cancelled');
-    }
-
-    answers.strategy = strategyAnswer.strategy;
-  }
-
-  // For migration strategy, include base locale in the available choices.
-  // This must be computed after the strategy prompt so answers.strategy reflects the user's choice.
-  const strategy = answers.strategy || 'translation-service';
-  const allowBaseLocale = strategy === 'migration';
-  const targetLocales = allowBaseLocale ? configuredLocales : configuredLocales.filter((loc) => loc !== baseLocale);
-
-  // Prompt for target locale
-  if (!answers.locale) {
-    const localeAnswer = await prompts({
-      type: targetLocales.length > 0 ? 'select' : 'text',
-      name: 'locale',
-      message: 'Select target locale for import:',
-      choices:
-        targetLocales.length > 0
-          ? targetLocales.map((loc) => ({
-              title: loc === baseLocale ? `${loc} (base locale)` : loc,
-              value: loc,
-            }))
-          : undefined,
-      validate:
-        targetLocales.length === 0
-          ? (value: string) => {
-              if (!value || value.trim() === '') {
-                return 'Locale is required';
-              }
-              if (value === baseLocale && !allowBaseLocale) {
-                return `Cannot import into base locale "${baseLocale}" with strategy "${strategy}"`;
-              }
-              return true;
-            }
-          : undefined,
-    });
-
-    if (!('locale' in localeAnswer)) {
-      throw new Error('Import cancelled');
-    }
-
-    answers.locale = localeAnswer.locale;
-  }
-
-  // For migration strategy, ask about flags if not already set
-  if (answers.strategy === 'migration') {
-    if (answers.updateComments === undefined) {
-      const updateCommentsAnswer = await prompts({
-        type: 'confirm',
-        name: 'updateComments',
-        message: 'Update comments from import data?',
-        initial: true,
-      });
-
-      if (!('updateComments' in updateCommentsAnswer)) {
-        throw new Error('Import cancelled');
-      }
-
-      answers.updateComments = updateCommentsAnswer.updateComments;
-    }
-
-    if (answers.updateTags === undefined) {
-      const updateTagsAnswer = await prompts({
-        type: 'confirm',
-        name: 'updateTags',
-        message: 'Update tags from import data?',
-        initial: true,
-      });
-
-      if (!('updateTags' in updateTagsAnswer)) {
-        throw new Error('Import cancelled');
-      }
-
-      answers.updateTags = updateTagsAnswer.updateTags;
-    }
-
-    if (answers.createMissing === undefined) {
-      const createMissingAnswer = await prompts({
-        type: 'confirm',
-        name: 'createMissing',
-        message: 'Create missing resources?',
-        initial: true,
-      });
-
-      if (!('createMissing' in createMissingAnswer)) {
-        throw new Error('Import cancelled');
-      }
-
-      answers.createMissing = createMissingAnswer.createMissing;
-    }
-  }
-
-  return answers;
-}
-
-function displayResults(result: ImportResult, options: ImportOptions): void {
+function displayResults(result: ImportResult, options: ImportRunOptions): void {
   ConsoleFormatter.section('Import Results');
 
   if (options.dryRun) {
@@ -412,7 +101,7 @@ function displayResults(result: ImportResult, options: ImportOptions): void {
 
   // Display status transitions
   if (result.statusTransitions && result.statusTransitions.length > 0) {
-    console.log('');
+    CommandOutput.log('');
     ConsoleFormatter.indent('Status Transitions:');
     for (const transition of result.statusTransitions) {
       const from = transition.from || 'none';
@@ -423,7 +112,7 @@ function displayResults(result: ImportResult, options: ImportOptions): void {
 
   // Display files modified
   if (!options.dryRun && result.filesModified.length > 0) {
-    console.log('');
+    CommandOutput.log('');
     ConsoleFormatter.keyValue('Files Modified', result.filesModified.length);
     if (options.verbose) {
       result.filesModified.forEach((file) => {
@@ -431,38 +120,16 @@ function displayResults(result: ImportResult, options: ImportOptions): void {
       });
     }
   }
+}
 
-  // Display warnings
-  if (result.warnings.length > 0) {
-    console.log('');
-    ConsoleFormatter.warning(`Warnings (${result.warnings.length}):`);
-    result.warnings.slice(0, 10).forEach((warning) => {
-      ConsoleFormatter.indent(warning);
-    });
-    if (result.warnings.length > 10) {
-      ConsoleFormatter.indent(`... and ${result.warnings.length - 10} more warnings`);
-    }
-  }
-
-  // Display errors
-  if (result.errors.length > 0) {
-    console.log('');
-    ConsoleFormatter.error(`Errors (${result.errors.length}):`);
-    result.errors.slice(0, 10).forEach((error) => {
-      ConsoleFormatter.indent(error);
-    });
-    if (result.errors.length > 10) {
-      ConsoleFormatter.indent(`... and ${result.errors.length - 10} more errors`);
-    }
-  }
-
-  console.log('─'.repeat(50));
+function displayCompletion({ result, outcome }: RunImportResult, options: ImportRunOptions): void {
+  CommandOutput.log('─'.repeat(50));
 
   // Summary message
-  console.log('');
+  CommandOutput.log('');
   if (options.dryRun) {
     ConsoleFormatter.success('Dry run complete. No changes were made.');
-  } else if (result.resourcesFailed > 0 || result.errors.length > 0) {
+  } else if (outcome === 'failed') {
     ConsoleFormatter.warning('Import completed with errors.');
   } else if (result.warnings.length > 0) {
     ConsoleFormatter.success('Import completed with warnings.');

@@ -6,7 +6,7 @@ export interface ExportOptions {
   format: ExportFormat;
   collections?: string[]; // If undefined, all collections
   locales?: string[]; // If undefined, all target locales
-  status?: TranslationStatus[]; // Default: ['new', 'stale']
+  status?: TranslationStatus[]; // If undefined, all statuses
   tags?: string[]; // Default: undefined (no tag filtering)
   outputDirectory: string;
   filenamePattern?: string;

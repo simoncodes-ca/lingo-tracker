@@ -1,9 +1,11 @@
 import type {
-  ResourceValidationResult,
-  ValidationOptions,
-  ResourceValidationDetail,
   IcuValidationDetail,
   IcuValidationResult,
+  ResourceValidationDetail,
+  ResourceValidationResult,
+  TerminologyValidationResult,
+  UnreadableFolderDetail,
+  ValidationOptions,
 } from './types';
 
 /**
@@ -39,6 +41,7 @@ const MAX_RESOURCES_TO_DISPLAY = 100;
  *
  * @param result - The validation result containing all validation data
  * @param options - The validation options used (particularly allowTranslated flag)
+ * @param skippedLocales - The resolved scope's skipped locales, for display only
  * @returns Formatted string ready for console output
  *
  * @example
@@ -47,12 +50,20 @@ const MAX_RESOURCES_TO_DISPLAY = 100;
  * console.log(summary);
  * ```
  */
-export function generateValidationSummary(result: ResourceValidationResult, options: ValidationOptions): string {
+export function generateValidationSummary(
+  result: ResourceValidationResult,
+  options: ValidationOptions,
+  skippedLocales: readonly string[] = [],
+): string {
   const sections: string[] = [];
 
   sections.push(buildHeaderSection(result));
-  sections.push(buildStatisticsSection(result, options));
+  sections.push(buildStatisticsSection(result, options, skippedLocales));
   sections.push(buildStatusBreakdownSection(result));
+
+  if (result.unreadableFolders && result.unreadableFolders.length > 0) {
+    sections.push(buildUnreadableFoldersSection(result.unreadableFolders));
+  }
 
   if (result.failures.length > 0) {
     sections.push(buildFailuresSection(result.failures));
@@ -70,6 +81,17 @@ export function generateValidationSummary(result: ResourceValidationResult, opti
         result.placeholders.failures,
       ),
     );
+  }
+  if (result.protectedTerms && result.protectedTerms.failures.length > 0) {
+    sections.push(
+      buildDetailSection(
+        `❌ Protected Term Failures (${result.protectedTerms.failures.length})`,
+        result.protectedTerms.failures,
+      ),
+    );
+  }
+  if (result.terminology) {
+    sections.push(...buildTerminologySections(result.terminology));
   }
 
   sections.push(buildFooterSection(result, options));
@@ -97,7 +119,11 @@ function buildHeaderSection(result: ResourceValidationResult): string {
  * @returns Formatted statistics string
  * @internal
  */
-function buildStatisticsSection(result: ResourceValidationResult, options: ValidationOptions): string {
+function buildStatisticsSection(
+  result: ResourceValidationResult,
+  options: ValidationOptions,
+  skippedLocales: readonly string[],
+): string {
   const lines = [
     '📊 Validation Statistics:',
     '─'.repeat(50),
@@ -106,8 +132,8 @@ function buildStatisticsSection(result: ResourceValidationResult, options: Valid
     `  Locales Validated: ${result.localesValidated}`,
   ];
 
-  if (options.skippedLocales && options.skippedLocales.length > 0) {
-    lines.push(`  Skipped Locales: ${options.skippedLocales.join(', ')} (${options.skippedLocales.length})`);
+  if (skippedLocales.length > 0) {
+    lines.push(`  Skipped Locales: ${skippedLocales.join(', ')} (${skippedLocales.length})`);
   }
 
   lines.push(`  Collections Validated: ${result.collectionsValidated}`);
@@ -120,6 +146,12 @@ function buildStatisticsSection(result: ResourceValidationResult, options: Valid
 
   if (result.placeholders) {
     lines.push(`  Placeholders Compared: ${result.placeholders.valuesChecked}`);
+  }
+
+  // Suppressed when there were no rules, where a count of 0 would read as
+  // "nothing used a discouraged term" rather than "nothing was scanned".
+  if (result.terminology && result.terminology.configError === undefined && options.terminology?.rules.length) {
+    lines.push(`  Terminology Values Scanned: ${result.terminology.valuesChecked}`);
   }
 
   return lines.join('\n');
@@ -188,6 +220,54 @@ function buildDetailSection(heading: string, details: readonly ExplainedDetail[]
 }
 
 /**
+ * Builds the sections describing the preferred-terminology pass.
+ *
+ * An unreadable rule file is a failure and gets its own section. Findings are
+ * advisory and listed flat rather than by locale — only base-locale values are
+ * scanned, so every finding would share one locale per collection anyway. Both
+ * sections are omitted when empty, so a project without rules sees nothing.
+ *
+ * @param terminology - The terminology pass result
+ * @returns Zero or more formatted sections
+ * @internal
+ */
+function buildTerminologySections(terminology: TerminologyValidationResult): string[] {
+  const sections: string[] = [];
+
+  if (terminology.configError !== undefined) {
+    sections.push(
+      [
+        '❌ Preferred terminology file error:',
+        '─'.repeat(50),
+        `  ${terminology.configError}`,
+        '  No value was checked for preferred terminology. Fix the file, or',
+        '  remove it, and run validate again.',
+      ].join('\n'),
+    );
+  }
+
+  if (terminology.warnings.length > 0) {
+    const lines = [`⚠️  Preferred terminology warnings (${terminology.warnings.length}):`, '─'.repeat(50)];
+
+    for (const warning of terminology.warnings.slice(0, MAX_RESOURCES_TO_DISPLAY)) {
+      lines.push(`  [${warning.collection}] ${warning.key}: ${warning.message}`);
+      if (warning.reason) {
+        lines.push(`    ${warning.reason}`);
+      }
+    }
+
+    const remaining = terminology.warnings.length - MAX_RESOURCES_TO_DISPLAY;
+    if (remaining > 0) {
+      lines.push(`  ... and ${remaining} more`);
+    }
+
+    sections.push(lines.join('\n'));
+  }
+
+  return sections;
+}
+
+/**
  * Builds the notice for locales whose values could not be compiled at all.
  *
  * This is a configuration problem rather than a translation one, so it is
@@ -205,6 +285,28 @@ function buildUnsupportedLocalesSection(locales: readonly string[]): string {
     '  Not a valid locale tag, so no value could be compiled. Check the locale',
     "  codes in .lingo-tracker.json — BCP 47 uses a hyphen, as in 'fr-CA'.",
   ].join('\n');
+}
+
+/**
+ * Builds the list of folders the Collection Reader could not read.
+ *
+ * Each one fails validation: its resources were never checked, so a clean
+ * result would otherwise hide them.
+ *
+ * @param folders - The unreadable folders, with their collection and message
+ * @returns Formatted section string
+ * @internal
+ */
+function buildUnreadableFoldersSection(folders: readonly UnreadableFolderDetail[]): string {
+  const lines = [`❌ Unreadable Folders (${folders.length}):`, '─'.repeat(50)];
+
+  for (const folder of folders) {
+    lines.push(`  [${folder.collection}] ${folder.folderPath || '(root)'}`);
+    lines.push(`    ${folder.message}`);
+  }
+
+  lines.push('  The resources in these folders were not validated. Fix the files and run validate again.');
+  return lines.join('\n');
 }
 
 /**
@@ -330,15 +432,28 @@ function buildFooterSection(result: ResourceValidationResult, options: Validatio
   if (result.placeholders && result.placeholders.failures.length > 0) {
     lines.push(`  Total Placeholder Failures: ${result.placeholders.failures.length}`);
   }
+  if (result.unreadableFolders && result.unreadableFolders.length > 0) {
+    lines.push(`  Unreadable Folders: ${result.unreadableFolders.length}`);
+  }
+  if (result.terminology?.configError !== undefined) {
+    lines.push('  Preferred Terminology File: failed to load');
+  }
+  if (result.protectedTerms && result.protectedTerms.failures.length > 0) {
+    lines.push(`  Total Protected Term Failures: ${result.protectedTerms.failures.length}`);
+  }
   if (options.allowTranslated && result.warnings.length > 0) {
     lines.push(`  Total Warnings: ${result.warnings.length}`);
+  }
+  const terminologyWarnings = result.terminology?.warnings.length ?? 0;
+  if (terminologyWarnings > 0) {
+    lines.push(`  Total Preferred Terminology Warnings: ${terminologyWarnings}`);
   }
   lines.push(`  Total Successes: ${result.successes.length}`);
 
   // Final verdict
   lines.push('');
   if (result.passed) {
-    if (result.warnings.length > 0) {
+    if (result.warnings.length > 0 || terminologyWarnings > 0) {
       lines.push('✅ Validation passed with warnings.');
     } else {
       lines.push('✅ Validation passed successfully!');

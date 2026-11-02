@@ -1,0 +1,12 @@
+{
+  "menuItem": {
+    "source": "Export…",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Exportar…",
+    "fr-ca": "Exporter…",
+    "ru": "Экспорт…",
+    "ja": "エクスポート…",
+    "de": "Exportieren…"
+  }
+}

@@ -1,0 +1,612 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Commander surface baseline > keeps choice and custom parser errors 1`] = `[CommanderError: error: option '--token-casing <casing>' argument 'invalid' is invalid. Allowed choices are upperCase, camelCase.]`;
+
+exports[`Commander surface baseline > keeps choice and custom parser errors 2`] = `[Error: --setup-bundle must be "true" or "false", got "invalid"]`;
+
+exports[`Commander surface baseline > snapshots root and every command helpInformation and parsed options 1`] = `
+{
+  "add-collection": {
+    "help": "Usage: lingo-tracker add-collection [options]
+
+Add a new translation collection to the project
+
+Options:
+  --collection-name <name>      Name for the translation collection
+  --translations-folder <path>
+  --export-folder <path>        dist/lingo-export
+  --import-folder <path>        dist/lingo-import
+  --base-locale <locale>        en
+  --locales <locales...>        supported locales
+  --read-only                   Mark the collection as read-only (its resources
+                                cannot be modified)
+  --no-read-only                Force the collection writable, overriding
+                                node_modules auto-detection
+  -h, --help                    display help for command
+",
+    "options": {
+      "collectionName": "app",
+      "locales": [
+        "en",
+        "fr",
+      ],
+      "readOnly": false,
+    },
+  },
+  "add-locale": {
+    "help": "Usage: lingo-tracker add-locale [options]
+
+Add a locale to a collection and backfill all existing resources
+
+Options:
+  --collection <name>  Name of the collection
+  --locale <locale>    Locale to add (e.g., fr-ca, de, es)
+  -h, --help           display help for command
+",
+    "options": {
+      "collection": "app",
+      "locale": "fr",
+    },
+  },
+  "add-resource": {
+    "help": "Usage: lingo-tracker add-resource [options]
+
+Add a translation resource to a collection
+
+Options:
+  --collection <name>       Name of the collection
+  --key <key>               Resource key (dot-delimited, e.g.,
+                            apps.common.buttons.ok)
+  --value <value>           Base value (source text)
+  --comment <comment>       Optional context for translators
+  --tags <tags>             Optional tags (comma-separated)
+  --target-folder <folder>  Optional target folder (dot-delimited)
+  --override                Replace the resource if it already exists
+  --translations <json>     Optional translations as JSON array, e.g.,
+                            '[{"locale":"es","value":"Aplicar","status":"translated"}]'
+  -h, --help                display help for command
+",
+    "options": {
+      "collection": "app",
+      "key": "a.b",
+      "override": true,
+      "translations": "[{"locale":"fr"}]",
+      "value": "Hello",
+    },
+  },
+  "bundle": {
+    "help": "Usage: lingo-tracker bundle [options]
+
+Generate translation bundles for deployment
+
+Options:
+  --name <names>                   Bundle name(s) - single name or
+                                   comma-separated (e.g., core,admin)
+  --locale <locales>               Locale(s) to generate - comma-separated
+                                   (e.g., en,fr)
+  --quiet                          Suppress progress and success output
+                                   (warnings and errors are still shown)
+  --verbose                        Show detailed output including warnings
+  --token-casing <casing>          Token property key casing (choices:
+                                   "upperCase", "camelCase")
+  --token-constant-name <name>     Custom name for the generated TypeScript
+                                   constant (single bundle only, e.g. MY_TOKENS)
+  --transform-icu-to-transloco     Enable ICU to Transloco format conversion in
+                                   bundle output
+  --no-transform-icu-to-transloco  Disable ICU to Transloco format conversion in
+                                   bundle output
+  --debug-keys [locale]            Also emit a debug bundle where each value is
+                                   its own dot-delimited key. Optional locale
+                                   code (default: 99)
+  -h, --help                       display help for command
+",
+    "options": {
+      "debugKeys": "99",
+      "name": [
+        "app",
+      ],
+      "tokenCasing": "upperCase",
+      "transformICUToTransloco": false,
+    },
+  },
+  "delete-collection": {
+    "help": "Usage: lingo-tracker delete-collection [options]
+
+Delete a translation collection from the project
+
+Options:
+  --collection-name <name>  Name of the collection to delete
+  --yes                     Skip confirmation prompt
+  -h, --help                display help for command
+",
+    "options": {
+      "collectionName": "app",
+      "yes": true,
+    },
+  },
+  "delete-resource": {
+    "help": "Usage: lingo-tracker delete-resource [options]
+
+Delete one or more translation resources from a collection
+
+Options:
+  --collection <name>  Name of the collection
+  --key <keys>         Resource key(s) - single key or comma-separated (e.g.,
+                       key1,key2,key3)
+  --yes                Skip confirmation prompt
+  -h, --help           display help for command
+",
+    "options": {
+      "collection": "app",
+      "key": [
+        "a.b",
+      ],
+      "yes": true,
+    },
+  },
+  "edit-collection": {
+    "help": "Usage: lingo-tracker edit-collection [options] <name>
+
+Edit a collection configuration (currently: manage collection-level tags)
+
+Arguments:
+  name                Collection name
+
+Options:
+  --add-tag <tag>     Add a tag to the collection (repeatable) (default: [])
+  --remove-tag <tag>  Remove a tag from the collection (repeatable) (default:
+                      [])
+  --set-tags <tags>   Replace all collection tags with a comma-separated list
+                      (use "" to clear)
+  -h, --help          display help for command
+",
+    "options": {
+      "addTag": [
+        "one",
+        "two",
+      ],
+      "name": undefined,
+      "removeTag": [
+        "old",
+      ],
+    },
+  },
+  "edit-resource": {
+    "help": "Usage: lingo-tracker edit-resource [options]
+
+Edit an existing translation resource
+
+Options:
+  --collection <name>       Name of the collection
+  --key <key>               Resource key (dot-delimited)
+  --base-value <value>      New base value (source text)
+  --comment <comment>       New comment
+  --tags <tags>             New tags (comma-separated)
+  --target-folder <folder>  Move the resource into this folder (dot-delimited;
+                            "" for the collection root)
+  --locale <locale>         Locale to update (requires --locale-value)
+  --locale-value <value>    New value for the specified locale
+  -h, --help                display help for command
+",
+    "options": {
+      "collection": "app",
+      "key": "a.b",
+      "locale": "fr",
+      "localeValue": "Bonjour",
+    },
+  },
+  "export": {
+    "help": "Usage: lingo-tracker export [options]
+
+Export translation resources to XLIFF or JSON
+
+Options:
+  -f, --format <format>        Export format (xliff | json)
+  -c, --collection <names>     Specific collection(s) to export
+                               (comma-separated)
+  -l, --locale <locales>       Target locale(s) to export (comma-separated)
+  -s, --status <statuses>      Filter by translation status (comma-separated)
+                               (default: "new,stale")
+  -t, --tags <tags>            Filter by tags (comma-separated)
+  -o, --output <path>          Output directory path
+  --structure <type>           JSON structure (flat | hierarchical) (default:
+                               "hierarchical")
+  --rich                       Include metadata in JSON objects (default: false)
+  --include-base               Include base locale value (JSON only) (default:
+                               false)
+  --include-status             Include translation status (JSON only) (default:
+                               false)
+  --include-comment            Include comment (JSON only) (default: false)
+  --include-tags               Include tags array (JSON only) (default: false)
+  --no-protect-notes           Do not emit do-not-translate instructions for
+                               protected terms
+  --base-property-name <name>  Property name for base locale value in JSON
+                               output (default: baseValue)
+  --filename <pattern>         Custom filename pattern
+  --dry-run                    Show what would be exported without writing files
+                               (default: false)
+  --verbose                    Show detailed export progress (default: false)
+  -h, --help                   display help for command
+",
+    "options": {
+      "collection": [
+        "app",
+      ],
+      "dryRun": false,
+      "format": "json",
+      "includeBase": true,
+      "protectNotes": false,
+      "verbose": false,
+    },
+  },
+  "find-similar": {
+    "help": "Usage: lingo-tracker find-similar [options]
+
+Find existing translation resources with similar base locale values
+
+Options:
+  --collection <name>  Name of the collection to search
+  --value <text>       Base locale text to search for similar values
+  --max-results <n>    Maximum number of results to return (default: 5)
+                       (default: "5")
+  -h, --help           display help for command
+",
+    "options": {
+      "collection": "app",
+      "maxResults": 8,
+      "value": "Hello",
+    },
+  },
+  "glossary": {
+    "help": "Usage: lingo-tracker glossary [options]
+
+Extract translations for terms found in a block of text (e.g. for online help)
+
+Options:
+  --text <text>        Inline text block to extract terms from
+  --input <file>       Path to a file whose contents are the input text block
+  --output <file>      Output JSON file path (default:
+                       ./lingo-tracker-glossary-<timestamp>.json)
+  --stdout             Print the glossary JSON to stdout instead of writing a
+                       file
+  --collection <name>  Limit matching to a single collection (default: all
+                       collections)
+  --locales <list>     Comma-separated locales to include (default: all
+                       configured locales)
+  --include-all        Include new/stale entries (default: only translated +
+                       verified)
+  --extractor <mode>   Term extraction strategy (choices: "ngram", "ai",
+                       default: "ngram")
+  -h, --help           display help for command
+",
+    "options": {
+      "collection": "app",
+      "extractor": "ai",
+      "includeAll": true,
+      "text": "Hello",
+    },
+  },
+  "import": {
+    "help": "Usage: lingo-tracker import [options]
+
+Import translation resources from XLIFF or JSON
+
+Options:
+  -f, --format <format>    Import format (xliff | json) - auto-detected from
+                           file extension if omitted
+  -s, --source <path>      Path to import file (required)
+  -l, --locale <locale>    Target locale for import (e.g., es, fr-ca)
+  -c, --collection <name>  Target collection to import into
+  --strategy <strategy>    Import strategy (translation-service | verification |
+                           migration | update) (default: "translation-service")
+  --update-comments        Update resource comments from import data (migration:
+                           true) (default: false)
+  --update-tags            Update resource tags from rich JSON (migration: true)
+                           (default: false)
+  --preserve-status        Allow rich JSON to specify status (advanced)
+                           (default: false)
+  --create-missing         Create new resources if they don't exist (migration:
+                           true) (default: false)
+  --validate-base          Warn if source base value differs from existing
+                           (default: true)
+  --no-validate-base       Do not warn when source base value differs from
+                           existing
+  --dry-run                Show what would be imported without modifying files
+                           (default: false)
+  --verbose                Show detailed import progress (default: false)
+  -h, --help               display help for command
+",
+    "options": {
+      "createMissing": true,
+      "dryRun": false,
+      "locale": "fr",
+      "source": "app.xlf",
+      "validateBase": true,
+      "verbose": false,
+    },
+  },
+  "init": {
+    "help": "Usage: lingo-tracker init [options]
+
+Initialize Lingo Tracker in the current project
+
+Options:
+  --collection-name <name>            Name for the translation collection
+  --translations-folder <path>
+  --export-folder <path>              dist/lingo-export
+  --import-folder <path>              dist/lingo-import
+  --base-locale <locale>              en
+  --locales <locales...>              supported locales
+  --runtime <value>                   App runtime for translation bundles
+                                      (choices: "transloco-messageformat",
+                                      "transloco")
+  --setup-bundle <bool>               Setup bundle configuration during init
+                                      (true/false)
+  --bundle-dist <path>                Bundle output directory
+  --bundle-name <pattern>             Bundle name pattern (e.g. {locale})
+  --token-casing <casing>             Token property key casing (choices:
+                                      "upperCase", "camelCase")
+  --type-dist-file <path>             Path for generated TypeScript type
+                                      definitions file
+  --token-constant-name <name>        Custom name for the generated TypeScript
+                                      constant
+  --enable-auto-translation           Enable automatic translation
+  --translation-provider <provider>   Translation provider (e.g.,
+                                      google-translate)
+  --translation-api-key-env <envVar>  Environment variable name for the
+                                      translation API key
+  -h, --help                          display help for command
+",
+    "options": {
+      "collectionName": "app",
+      "locales": [
+        "en",
+        "fr",
+      ],
+      "setupBundle": false,
+      "tokenCasing": "camelCase",
+    },
+  },
+  "install-skill": {
+    "help": "Usage: lingo-tracker install-skill [options]
+
+Generate a lingo-tracker AI skill configured for this repository
+
+Options:
+  --collection <spec>      Collection spec:
+                           name:bundle:TokenConstant:tokenFilePath (repeatable)
+                           (default: [])
+  --dir <path>             Output directory (default: .claude)
+  --token-casing <casing>  Token property key casing (choices: "upperCase",
+                           "camelCase")
+  -h, --help               display help for command
+",
+    "options": {
+      "collection": [
+        "app:bundle:Tokens:path",
+        "other:bundle:Tokens:path",
+      ],
+      "tokenCasing": "camelCase",
+    },
+  },
+  "move": {
+    "help": "Usage: lingo-tracker move [options]
+
+Move or rename translation resources
+
+Options:
+  --collection <name>       Name of the collection
+  --source <source>         Source key or pattern (e.g., common.buttons.ok or
+                            common.buttons.*)
+  --dest <dest>             Destination key (e.g., common.actions.ok)
+  --dest-collection <name>  Move into another collection; the destination key is
+                            relative to that collection
+  --override                Override destination if it exists
+  -h, --help                display help for command
+",
+    "options": {
+      "collection": "app",
+      "dest": "c.d",
+      "override": true,
+      "source": "a.b",
+    },
+  },
+  "normalize": {
+    "help": "Usage: lingo-tracker normalize [options]
+
+Normalize translation resources (fix checksums, add missing locales, clean up
+empty folders)
+
+Options:
+  --collection <name>  Collection name (required unless --all)
+  --all                Normalize all collections
+  --dry-run            Preview changes without applying them
+  --json               Output results as JSON
+  --yes                Skip confirmation prompt
+  -h, --help           display help for command
+",
+    "options": {
+      "collection": "app",
+      "dryRun": true,
+      "json": true,
+    },
+  },
+  "preferred-terminology": {
+    "help": "Usage: lingo-tracker preferred-terminology [options]
+
+Manage preferred terminology rules. A base-locale value using a discouraged term
+gets a warning suggesting the preferred term.
+
+Options:
+  --list                   List the rules and the file that holds them
+  --add <discouraged>      Add a rule for a discouraged term, or replace the
+                           existing one (case-insensitive)
+  --preferred <preferred>  Preferred term for --add (required with --add)
+  --reason <reason>        Optional reason shown with the suggestion (used with
+                           --add)
+  --remove <discouraged>   Remove the rule for a discouraged term
+                           (case-insensitive)
+  -h, --help               display help for command
+",
+    "options": {
+      "add": "bad",
+      "preferred": "good",
+      "reason": "style",
+    },
+  },
+  "protected-terms": {
+    "help": "Usage: lingo-tracker protected-terms [options]
+
+Manage protected terms (global or per-collection). Terms are kept verbatim and
+never translated.
+
+Options:
+  --collection <name>  Target collection (absent = global scope)
+  --add <term>         Add a protected term (repeatable) (default: [])
+  --remove <term>      Remove a protected term (repeatable) (default: [])
+  --set <terms>        Replace protected terms with a comma-separated list (use
+                       "" to clear)
+  --list               List protected terms (effective union for a collection)
+  --file <path>        Point this scope at a protected terms JSON file (use ""
+                       to clear)
+  -h, --help           display help for command
+",
+    "options": {
+      "add": [
+        "Brand",
+        "Product",
+      ],
+      "collection": "app",
+      "remove": [
+        "Old",
+      ],
+    },
+  },
+  "remove-locale": {
+    "help": "Usage: lingo-tracker remove-locale [options]
+
+Remove a locale from a collection and purge all locale data
+
+Options:
+  --collection <name>  Name of the collection
+  --locale <locale>    Locale to remove
+  -h, --help           display help for command
+",
+    "options": {
+      "collection": "app",
+      "locale": "fr",
+    },
+  },
+  "root": {
+    "help": "Usage: lingo-tracker [options] [command]
+
+Effortlessly track, validate, and manage your translations
+
+Options:
+  -V, --version                     output the version number
+  -h, --help                        display help for command
+
+Commands:
+  init [options]                    Initialize Lingo Tracker in the current
+                                    project
+  add-collection [options]          Add a new translation collection to the
+                                    project
+  delete-collection [options]       Delete a translation collection from the
+                                    project
+  add-locale [options]              Add a locale to a collection and backfill
+                                    all existing resources
+  remove-locale [options]           Remove a locale from a collection and purge
+                                    all locale data
+  add-resource [options]            Add a translation resource to a collection
+  edit-resource [options]           Edit an existing translation resource
+  delete-resource [options]         Delete one or more translation resources
+                                    from a collection
+  move [options]                    Move or rename translation resources
+  normalize [options]               Normalize translation resources (fix
+                                    checksums, add missing locales, clean up
+                                    empty folders)
+  translate-locale [options]        Auto-translate all new/stale resources for a
+                                    target locale
+  bundle [options]                  Generate translation bundles for deployment
+  export [options]                  Export translation resources to XLIFF or
+                                    JSON
+  import [options]                  Import translation resources from XLIFF or
+                                    JSON
+  validate [options]                Verify translation completeness and
+                                    readiness for production release
+  find-similar [options]            Find existing translation resources with
+                                    similar base locale values
+  glossary [options]                Extract translations for terms found in a
+                                    block of text (e.g. for online help)
+  edit-collection [options] <name>  Edit a collection configuration (currently:
+                                    manage collection-level tags)
+  protected-terms [options]         Manage protected terms (global or
+                                    per-collection). Terms are kept verbatim and
+                                    never translated.
+  preferred-terminology [options]   Manage preferred terminology rules. A
+                                    base-locale value using a discouraged term
+                                    gets a warning suggesting the preferred
+                                    term.
+  install-skill [options]           Generate a lingo-tracker AI skill configured
+                                    for this repository
+  help [command]                    display help for command
+",
+    "options": {},
+  },
+  "translate-locale": {
+    "help": "Usage: lingo-tracker translate-locale [options]
+
+Auto-translate all new/stale resources for a target locale
+
+Options:
+  --collection <name>  Collection name
+  --locale <locale>    Target locale to translate
+  --verbose            Show per-batch progress
+  -h, --help           display help for command
+",
+    "options": {
+      "collection": "app",
+      "locale": "fr",
+      "verbose": true,
+    },
+  },
+  "validate": {
+    "help": "Usage: lingo-tracker validate [options]
+
+Verify translation completeness and readiness for production release
+
+Options:
+  --allow-translated          Treat translated status as warning instead of
+                              error (default: false)
+  --skip-locales <locales>    Comma-separated list of locales to exclude from
+                              validation
+  --skip-icu                  Do not compile values as ICU for their own locale
+                              (--require-portable-plurals still applies)
+                              (default: false)
+  --skip-runtime              Do not check whether the configured app runtime
+                              can render ICU constructs (default: false)
+  --require-portable-plurals  Warn when a base-locale plural selects by category
+                              (one, few, ...) instead of an exact '=N' match
+                              (default: false)
+  --skip-placeholders         Do not check that each translation interpolates
+                              the same placeholders as its base value (default:
+                              false)
+  --skip-protected-terms      Do not check translations for dropped or altered
+                              protected terms (default: false)
+  -h, --help                  display help for command
+",
+    "options": {
+      "allowTranslated": true,
+      "requirePortablePlurals": true,
+      "skipIcu": true,
+      "skipLocales": [
+        "fr",
+        "de",
+      ],
+      "skipPlaceholders": false,
+      "skipProtectedTerms": false,
+      "skipRuntime": true,
+    },
+  },
+}
+`;

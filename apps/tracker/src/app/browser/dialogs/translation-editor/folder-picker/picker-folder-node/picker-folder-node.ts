@@ -1,7 +1,7 @@
-import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { TranslocoPipe } from '@jsverse/transloco';
 import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
 import { TRACKER_TOKENS } from '../../../../../../i18n-types/tracker-resources';
@@ -31,7 +31,7 @@ export class PickerFolderNode {
   readonly selectedPath = input<string | null>(null);
 
   /** Set of expanded folder paths */
-  readonly expandedPaths = input.required<Set<string>>();
+  readonly expandedPaths = input.required<ReadonlySet<string>>();
 
   /** Currently focused folder path for keyboard navigation */
   readonly focusedPath = input<string | null>(null);
@@ -43,6 +43,9 @@ export class PickerFolderNode {
   readonly addFolderParentPath = input<string | null>(null);
 
   /** Emitted when a folder is selected */
+  /** The refusal of the last create, shown under the open input. */
+  readonly createError = input<string | null>(null);
+
   readonly folderSelect = output<string>();
 
   /** Emitted when expand/collapse is toggled */
@@ -56,6 +59,9 @@ export class PickerFolderNode {
 
   /** Emitted when new folder creation is cancelled */
   readonly cancelNewFolder = output<void>();
+
+  /** Emitted when the user edits the name in the open input. */
+  readonly newFolderEdited = output<void>();
 
   /** Whether this folder is currently selected */
   readonly isSelected = computed(() => {

@@ -1,4 +1,5 @@
 <button
+  data-testid="locale-picker"
   mat-button
   [matMenuTriggerFor]="localeMenu"
   class="locale-button"
@@ -11,6 +12,7 @@
 <mat-menu #localeMenu="matMenu" [attr.aria-label]="TOKENS.LOCALE.SELECTLANGUAGE | transloco">
   @for (locale of availableLocales; track locale.code) {
     <button
+      [attr.data-testid]="'locale-option-' + locale.code"
       mat-menu-item
       role="menuitemradio"
       [attr.aria-checked]="isActive(locale.code)"

@@ -38,5 +38,15 @@
     "ru": "Выберите другой ключ",
     "ja": "別のキーを選択してください",
     "de": "Anderen Schlüssel wählen"
+  },
+  "openExisting": {
+    "source": "Open existing",
+    "comment": "Action beside the key error that opens the entry already holding the key",
+    "tags": ["browser"],
+    "es": "Abrir existente",
+    "fr-ca": "Ouvrir l’existant",
+    "ru": "Открыть существующий",
+    "ja": "既存を開く",
+    "de": "Vorhandenen öffnen"
   }
 }

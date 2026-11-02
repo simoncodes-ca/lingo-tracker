@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { calculateImportStatistics, calculateStatusTransitions } from './import-statistics';
 import type { ImportChange } from './types';
 
@@ -163,6 +163,8 @@ describe('import-statistics', () => {
 
       const stats = calculateImportStatistics(changes);
 
+      expect(stats.resourcesImported).toBe(3);
+      expect(stats.resourcesImported).toBe(stats.resourcesCreated + stats.resourcesUpdated);
       expect(stats.resourcesCreated).toBe(1);
       expect(stats.resourcesUpdated).toBe(2);
       expect(stats.resourcesSkipped).toBe(1);
@@ -272,6 +274,15 @@ describe('import-statistics', () => {
         to: 'translated',
         count: 2,
       });
+    });
+
+    it('should ignore base-locale changes, which have no status', () => {
+      const changes: ImportChange[] = [
+        { key: 'key1', type: 'created', oldValue: '', newValue: 'New' },
+        { key: 'key2', type: 'value-changed', oldValue: 'Old', newValue: 'New' },
+      ];
+
+      expect(calculateStatusTransitions(changes)).toEqual([]);
     });
 
     it('should ignore skipped and failed changes', () => {

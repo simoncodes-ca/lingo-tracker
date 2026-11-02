@@ -1,14 +1,18 @@
-import { Component, ChangeDetectionStrategy, input, output, computed, inject, signal } from '@angular/core';
+import { CdkDrag, type CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { CdkDrag, CdkDragHandle, CdkDropList, type CdkDragDrop } from '@angular/cdk/drag-drop';
-import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import { MatIconModule } from '@angular/material/icon';
 import { TranslocoModule } from '@jsverse/transloco';
+import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import { isDescendantFolderPath } from '@simoncodes-ca/domain';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
-import { InlineFolderInput } from '../inline-folder-input/inline-folder-input';
+import { injectFeedback } from '../../../feedback';
 import { BrowserStore } from '../../../store/browser.store';
+import { folderDrop } from '../../../store/folder-drop';
+import { navigateTree, SIDEBAR_NAVIGATION } from '../../../store/tree-navigation';
 import type { DragData } from '../../../types/drag-data';
+import { InlineFolderInput } from '../inline-folder-input/inline-folder-input';
 
 /**
  * Recursive component for rendering folder tree nodes.
@@ -69,6 +73,9 @@ export class FolderNode {
   /** Emitted when delete button is clicked or Delete key is pressed */
   deleteFolder = output<string>();
 
+  /** Emitted when the inline input confirms a folder name. */
+  createFolder = output<{ folderName: string; parentPath: string }>();
+
   /** Whether this folder is currently being deleted */
   isDeleting = input<boolean>(false);
 
@@ -116,6 +123,14 @@ export class FolderNode {
   /** Signal exposing the path of the newly created folder */
   readonly newlyCreatedFolderPath = this.store.newlyCreatedFolderPath;
 
+  readonly #feedback = injectFeedback();
+
+  /** The refusal of the last create typed into this tree, as the store decided it. */
+  readonly createError = computed(() => {
+    const feedback = this.store.folderCreateError();
+    return feedback ? this.#feedback.text(feedback) : null;
+  });
+
   /** Whether the inline input should be shown for this folder */
   readonly shouldShowInlineInput = computed(() => {
     return this.isAddingFolder() && this.addFolderParentPath() === this.folder().fullPath;
@@ -131,7 +146,7 @@ export class FolderNode {
     const selected = this.selectedPath();
     const myPath = this.folder().fullPath;
     if (!selected || !myPath) return false;
-    return myPath.startsWith(`${selected}.`);
+    return isDescendantFolderPath(selected, myPath);
   });
 
   /** Determines which icon to display for the folder */
@@ -149,8 +164,6 @@ export class FolderNode {
    * is the chevron's job.
    */
   onFolderClick(): void {
-    if (this.disabled()) return;
-
     this.folderClick.emit(this.folder());
 
     if (this.hasChildren() && !this.isExpanded()) {
@@ -164,22 +177,37 @@ export class FolderNode {
    */
   onToggleExpandedClick(event: Event): void {
     event.stopPropagation();
-    if (this.disabled()) return;
     this.toggleExpanded.emit(this.folder().fullPath);
   }
 
-  /** ArrowRight opens a shut folder; on an open one it does nothing. */
-  onExpandKeydown(event: Event): void {
-    if (this.disabled() || !this.hasChildren() || this.isExpanded()) return;
-    event.preventDefault();
-    this.expandRequested.emit(this.folder().fullPath);
-  }
-
-  /** ArrowLeft shuts an open folder; on a shut one it does nothing. */
-  onCollapseKeydown(event: Event): void {
-    if (this.disabled() || !this.isExpanded()) return;
-    event.preventDefault();
-    this.toggleExpanded.emit(this.folder().fullPath);
+  onTreeKeydown(event: Event, key: string): void {
+    const next = navigateTree(
+      {
+        focusedPath: this.folder().fullPath,
+        expanded: this.isExpanded(),
+        hasChildren: this.hasChildren(),
+        hasRows: true,
+      },
+      key,
+      SIDEBAR_NAVIGATION,
+    );
+    if (next.preventDefault) event.preventDefault();
+    const intent = next.intent;
+    switch (intent.kind) {
+      case 'expand':
+        this.expandRequested.emit(intent.path);
+        break;
+      case 'collapse':
+        this.toggleExpanded.emit(intent.path);
+        break;
+      case 'select':
+        this.folderClick.emit(this.folder());
+        if (intent.open) this.expandRequested.emit(intent.path);
+        break;
+      case 'focus':
+      case 'none':
+        break;
+    }
   }
 
   /**
@@ -194,7 +222,7 @@ export class FolderNode {
    * Calls the store to create the folder.
    */
   onFolderConfirm(folderName: string): void {
-    this.store.createFolder(folderName);
+    this.createFolder.emit({ folderName, parentPath: this.folder().fullPath });
   }
 
   /**
@@ -242,42 +270,7 @@ export class FolderNode {
    * Returns true if this folder can accept the currently dragged item.
    */
   readonly isValidDropTarget = computed(() => {
-    const dragData = this.activeDragData();
-    if (!dragData) return false;
-
-    const targetFolderPath = this.folder().fullPath;
-
-    if (dragData.type === 'folder') {
-      const sourceFolderPath = dragData.path;
-      if (!sourceFolderPath) return false;
-
-      // Cannot drop folder onto itself
-      if (sourceFolderPath === targetFolderPath) {
-        return false;
-      }
-
-      // Cannot drop folder onto its own descendant (circular dependency)
-      // Target is a descendant if it starts with source path followed by "."
-      if (targetFolderPath.startsWith(`${sourceFolderPath}.`)) {
-        return false;
-      }
-
-      return true;
-    }
-
-    if (dragData.type === 'resource') {
-      const currentFolderPath = dragData.folderPath;
-      if (!currentFolderPath) return false;
-
-      // Cannot drop resource onto its current parent folder
-      if (currentFolderPath === targetFolderPath) {
-        return false;
-      }
-
-      return true;
-    }
-
-    return false;
+    return folderDrop(this.activeDragData(), this.folder().fullPath, this.readOnly()).canLand;
   });
 
   /**
@@ -290,10 +283,7 @@ export class FolderNode {
     const dragData = event.item.data as DragData;
     const targetFolderPath = this.folder().fullPath;
 
-    // Skip if dropped back into same container (no-op)
-    if (dragData.type === 'folder' && dragData.path === targetFolderPath) {
-      return;
-    }
+    if (!folderDrop(dragData, targetFolderPath, this.readOnly()).canLand) return;
 
     if (dragData.type === 'resource') {
       this.resourceDropped.emit({ dragData, targetFolderPath });
@@ -351,28 +341,6 @@ export class FolderNode {
    * Predicate function for CDK drop list to determine if drop is allowed.
    */
   canDrop = (drag: CdkDrag<DragData>): boolean => {
-    if (this.readOnly()) return false;
-
-    const dragData = drag.data;
-    if (!dragData) return false;
-
-    const targetFolderPath = this.folder().fullPath;
-
-    if (dragData.type === 'folder') {
-      const sourceFolderPath = dragData.path;
-      if (!sourceFolderPath) return false;
-      if (sourceFolderPath === targetFolderPath) return false;
-      if (targetFolderPath.startsWith(`${sourceFolderPath}.`)) return false;
-      return true;
-    }
-
-    if (dragData.type === 'resource') {
-      const currentFolderPath = dragData.folderPath;
-      if (!currentFolderPath) return false;
-      if (currentFolderPath === targetFolderPath) return false;
-      return true;
-    }
-
-    return false;
+    return folderDrop(drag.data, this.folder().fullPath, this.readOnly()).canLand;
   };
 }

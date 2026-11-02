@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  normalizeProtectedTerms,
-  effectiveProtectedTerms,
   buildProtectedTermRegex,
+  effectiveProtectedTerms,
   findProtectedTerms,
   findProtectedTermViolations,
+  normalizeProtectedTerms,
 } from './protected-terms';
 
 describe('normalizeProtectedTerms', () => {

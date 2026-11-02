@@ -1,1221 +1,343 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { join } from 'node:path';
+import { Command } from 'commander';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { runCommand } from '../runner/command-runner';
+import { flagValues, registerFlags } from '../runner/flag-record';
 import { validateCommand } from './validate';
-import * as fs from 'node:fs';
+import { VALIDATE_FLAGS } from './validate-options';
 
-const fsMocks = vi.hoisted(() => ({
-  existsSync: vi.fn(),
-  readFileSync: vi.fn(),
-}));
-
-vi.mock('node:fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:fs')>();
-  return { ...actual, ...fsMocks, default: { ...actual.default, ...fsMocks } };
+vi.mock('@simoncodes-ca/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@simoncodes-ca/core')>();
+  return {
+    ...actual,
+    loadConfig: vi.fn(),
+    runValidate: vi.fn(),
+  };
 });
-vi.mock('fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fs')>();
-  return { ...actual, ...fsMocks, default: { ...actual.default, ...fsMocks } };
-});
-
-vi.mock('@simoncodes-ca/core', () => ({
-  CONFIG_FILENAME: '.lingo-tracker.json',
-  validateResources: vi.fn(),
-  generateValidationSummary: vi.fn(),
-}));
 
 import * as core from '@simoncodes-ca/core';
-const mockValidateResources = vi.mocked(core.validateResources);
-const mockGenerateValidationSummary = vi.mocked(core.generateValidationSummary);
+
+const mockRunValidate = vi.mocked(core.runValidate);
+
+const passed = {
+  status: 'complete' as const,
+  outcome: 'succeeded' as const,
+  summary: 'Validation summary output',
+  warnings: [],
+  validation: {
+    totalResourcesValidated: 0,
+    totalUniqueKeys: 0,
+    localesValidated: 0,
+    collectionsValidated: 2,
+    statusCounts: { new: 0, translated: 0, stale: 0, verified: 0 },
+    failures: [],
+    warnings: [],
+    successes: [],
+    passed: true,
+  },
+};
+
+const config = {
+  exportFolder: 'dist/lingo-export',
+  importFolder: 'dist/lingo-import',
+  baseLocale: 'en',
+  locales: ['en', 'fr', 'es', 'de'],
+  collections: {
+    common: { translationsFolder: 'translations/common' },
+    admin: { translationsFolder: 'translations/admin' },
+  },
+};
 
 describe('validateCommand', () => {
-  const mockConfig = {
-    baseLocale: 'en',
-    locales: ['en', 'fr', 'es', 'de'],
-    collections: {
-      common: {
-        translationsFolder: 'translations/common',
-      },
-      admin: {
-        translationsFolder: 'translations/admin',
-      },
-    },
+  const parsedFlags = (...args: string[]) => {
+    const command = new Command();
+    registerFlags(command, VALIDATE_FLAGS);
+    command.parse(args, { from: 'user' });
+    return flagValues(VALIDATE_FLAGS, command.opts(), []);
   };
-
   const originalLog = console.log;
   const originalError = console.error;
   const originalWarn = console.warn;
-  const originalExit = process.exit;
 
   beforeEach(() => {
     vi.clearAllMocks();
     console.log = vi.fn();
     console.error = vi.fn();
     console.warn = vi.fn();
-    process.exit = vi.fn() as unknown as (code?: number | string | null | undefined) => never;
-
-    vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockConfig));
-
-    mockGenerateValidationSummary.mockReturnValue('Validation summary output');
+    process.env.INIT_CWD = '/project';
+    process.exitCode = undefined;
+    vi.mocked(core.loadConfig).mockReturnValue(config);
+    mockRunValidate.mockReturnValue(passed);
   });
 
   afterEach(() => {
     console.log = originalLog;
     console.error = originalError;
     console.warn = originalWarn;
-    process.exit = originalExit;
+    process.exitCode = undefined;
   });
 
-  describe('configuration validation', () => {
-    it('should error when config file is missing', async () => {
-      vi.mocked(fs.existsSync).mockReturnValue(false);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      expect(console.error).toHaveBeenCalledWith('❌ Configuration file .lingo-tracker.json not found.');
-      expect(console.error).toHaveBeenCalledWith('Run "lingo-tracker init" to initialize a project.');
+  it('passes every validation flag and the opened collections to the Validate Run', async () => {
+    await validateCommand({
+      allowTranslated: true,
+      skipLocales: ['fr'],
+      skipIcu: true,
+      skipRuntime: true,
+      skipPlaceholders: true,
+      skipProtectedTerms: true,
+      requirePortablePlurals: true,
     });
 
-    it('should error when config file is malformed', async () => {
-      vi.mocked(fs.readFileSync).mockReturnValue('invalid json');
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('❌ Failed to parse configuration file'));
-    });
-
-    it('should error when no collections are configured', async () => {
-      const configWithoutCollections = {
-        ...mockConfig,
-        collections: {},
-      };
-      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(configWithoutCollections));
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      expect(console.error).toHaveBeenCalledWith('❌ No collections found in configuration.');
-    });
-
-    it('should error when no target locales are configured', async () => {
-      const configWithoutTargetLocales = {
-        ...mockConfig,
-        locales: ['en'], // Only base locale
-      };
-      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(configWithoutTargetLocales));
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      expect(console.error).toHaveBeenCalledWith('❌ No target locales found in configuration.');
-      expect(console.error).toHaveBeenCalledWith('Target locales are all configured locales except the base locale.');
-    });
-  });
-
-  describe('successful validation', () => {
-    it('should pass validation when all resources are verified', async () => {
-      const successResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: {
-          new: 0,
-          translated: 0,
-          stale: 0,
-          verified: 6,
-        },
-        failures: [],
-        warnings: [],
-        successes: [
-          {
-            key: 'common.hello',
-            locale: 'fr',
-            collection: 'common',
-            status: 'verified' as const,
-          },
-          {
-            key: 'common.hello',
-            locale: 'es',
-            collection: 'common',
-            status: 'verified' as const,
-          },
-          {
-            key: 'common.hello',
-            locale: 'de',
-            collection: 'common',
-            status: 'verified' as const,
-          },
-          {
-            key: 'admin.title',
-            locale: 'fr',
-            collection: 'admin',
-            status: 'verified' as const,
-          },
-          {
-            key: 'admin.title',
-            locale: 'es',
-            collection: 'admin',
-            status: 'verified' as const,
-          },
-          {
-            key: 'admin.title',
-            locale: 'de',
-            collection: 'admin',
-            status: 'verified' as const,
-          },
-        ],
-        passed: true,
-      };
-
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({});
-
-      expect(mockValidateResources).toHaveBeenCalledWith(
-        [
-          {
-            name: 'common',
-            path: expect.stringContaining(join('translations', 'common')),
-          },
-          {
-            name: 'admin',
-            path: expect.stringContaining(join('translations', 'admin')),
-          },
-        ],
-        ['fr', 'es', 'de'],
-        {
-          allowTranslated: false,
-          skippedLocales: [],
-          icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
-          placeholders: { baseLocale: 'en' },
-        },
-      );
-
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(successResult, {
-        allowTranslated: false,
-        skippedLocales: [],
-        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
-        placeholders: { baseLocale: 'en' },
-      });
-
-      expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(process.exit).not.toHaveBeenCalled();
-    });
-
-    it('should validate all collections from configuration', async () => {
-      const successResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: { new: 0, translated: 0, stale: 0, verified: 6 },
-        failures: [],
-        warnings: [],
-        successes: [],
-        passed: true,
-      };
-
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({});
-
-      const validateCall = mockValidateResources.mock.calls[0];
-      const collections = validateCall[0];
-
-      expect(collections).toHaveLength(2);
-      expect(collections[0]).toMatchObject({ name: 'common' });
-      expect(collections[1]).toMatchObject({ name: 'admin' });
-    });
-
-    it('should validate all target locales from configuration', async () => {
-      const successResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: { new: 0, translated: 0, stale: 0, verified: 6 },
-        failures: [],
-        warnings: [],
-        successes: [],
-        passed: true,
-      };
-
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({});
-
-      const validateCall = mockValidateResources.mock.calls[0];
-      const targetLocales = validateCall[1];
-
-      expect(targetLocales).toEqual(['fr', 'es', 'de']);
-      expect(targetLocales).not.toContain('en'); // Base locale should be excluded
-    });
-  });
-
-  describe('validation failures', () => {
-    it('should fail validation with new resources', async () => {
-      const failureResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: {
-          new: 3,
-          translated: 0,
-          stale: 0,
-          verified: 3,
-        },
-        failures: [
-          {
-            key: 'common.goodbye',
-            locale: 'fr',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'common.goodbye',
-            locale: 'es',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'common.goodbye',
-            locale: 'de',
-            collection: 'common',
-            status: 'new' as const,
-          },
-        ],
-        warnings: [],
-        successes: [],
-        passed: false,
-      };
-
-      mockValidateResources.mockReturnValue(failureResult);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, {
-        allowTranslated: false,
-        skippedLocales: [],
-        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
-        placeholders: { baseLocale: 'en' },
-      });
-    });
-
-    it('should fail validation with stale resources', async () => {
-      const failureResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: {
-          new: 0,
-          translated: 0,
-          stale: 3,
-          verified: 3,
-        },
-        failures: [
-          {
-            key: 'admin.subtitle',
-            locale: 'fr',
-            collection: 'admin',
-            status: 'stale' as const,
-          },
-          {
-            key: 'admin.subtitle',
-            locale: 'es',
-            collection: 'admin',
-            status: 'stale' as const,
-          },
-          {
-            key: 'admin.subtitle',
-            locale: 'de',
-            collection: 'admin',
-            status: 'stale' as const,
-          },
-        ],
-        warnings: [],
-        successes: [],
-        passed: false,
-      };
-
-      mockValidateResources.mockReturnValue(failureResult);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(failureResult, {
-        allowTranslated: false,
-        skippedLocales: [],
-        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
-        placeholders: { baseLocale: 'en' },
-      });
-    });
-
-    it('should fail validation with translated resources by default', async () => {
-      const failureResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: {
-          new: 0,
-          translated: 3,
-          stale: 0,
-          verified: 3,
-        },
-        failures: [
-          {
-            key: 'common.welcome',
-            locale: 'fr',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'common.welcome',
-            locale: 'es',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'common.welcome',
-            locale: 'de',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-        ],
-        warnings: [],
-        successes: [],
-        passed: false,
-      };
-
-      mockValidateResources.mockReturnValue(failureResult);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
-        allowTranslated: false,
-        skippedLocales: [],
-        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
-        placeholders: { baseLocale: 'en' },
-      });
-    });
-
-    it('should collect and report all failures from multiple locales', async () => {
-      const failureResult = {
-        totalResourcesValidated: 9,
-        totalUniqueKeys: 3,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: {
-          new: 6,
-          translated: 0,
-          stale: 3,
-          verified: 0,
-        },
-        failures: [
-          {
-            key: 'common.hello',
-            locale: 'fr',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'common.hello',
-            locale: 'es',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'common.hello',
-            locale: 'de',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'admin.title',
-            locale: 'fr',
-            collection: 'admin',
-            status: 'new' as const,
-          },
-          {
-            key: 'admin.title',
-            locale: 'es',
-            collection: 'admin',
-            status: 'new' as const,
-          },
-          {
-            key: 'admin.title',
-            locale: 'de',
-            collection: 'admin',
-            status: 'new' as const,
-          },
-          {
-            key: 'admin.subtitle',
-            locale: 'fr',
-            collection: 'admin',
-            status: 'stale' as const,
-          },
-          {
-            key: 'admin.subtitle',
-            locale: 'es',
-            collection: 'admin',
-            status: 'stale' as const,
-          },
-          {
-            key: 'admin.subtitle',
-            locale: 'de',
-            collection: 'admin',
-            status: 'stale' as const,
-          },
-        ],
-        warnings: [],
-        successes: [],
-        passed: false,
-      };
-
-      mockValidateResources.mockReturnValue(failureResult);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      // Verify that all failures are passed to the summary generator
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        expect.objectContaining({
-          failures: expect.arrayContaining([
-            expect.objectContaining({
-              key: 'common.hello',
-              locale: 'fr',
-              status: 'new',
-            }),
-            expect.objectContaining({
-              key: 'common.hello',
-              locale: 'es',
-              status: 'new',
-            }),
-            expect.objectContaining({
-              key: 'common.hello',
-              locale: 'de',
-              status: 'new',
-            }),
-            expect.objectContaining({
-              key: 'admin.title',
-              locale: 'fr',
-              status: 'new',
-            }),
-            expect.objectContaining({
-              key: 'admin.title',
-              locale: 'es',
-              status: 'new',
-            }),
-            expect.objectContaining({
-              key: 'admin.title',
-              locale: 'de',
-              status: 'new',
-            }),
-            expect.objectContaining({
-              key: 'admin.subtitle',
-              locale: 'fr',
-              status: 'stale',
-            }),
-            expect.objectContaining({
-              key: 'admin.subtitle',
-              locale: 'es',
-              status: 'stale',
-            }),
-            expect.objectContaining({
-              key: 'admin.subtitle',
-              locale: 'de',
-              status: 'stale',
-            }),
-          ]),
-        }),
-        expect.any(Object),
-      );
-    });
-
-    it('should collect and report all failures from multiple collections', async () => {
-      const failureResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: {
-          new: 6,
-          translated: 0,
-          stale: 0,
-          verified: 0,
-        },
-        failures: [
-          {
-            key: 'common.button',
-            locale: 'fr',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'common.button',
-            locale: 'es',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'common.button',
-            locale: 'de',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'admin.panel',
-            locale: 'fr',
-            collection: 'admin',
-            status: 'new' as const,
-          },
-          {
-            key: 'admin.panel',
-            locale: 'es',
-            collection: 'admin',
-            status: 'new' as const,
-          },
-          {
-            key: 'admin.panel',
-            locale: 'de',
-            collection: 'admin',
-            status: 'new' as const,
-          },
-        ],
-        warnings: [],
-        successes: [],
-        passed: false,
-      };
-
-      mockValidateResources.mockReturnValue(failureResult);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      // Verify failures from both collections are included
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        expect.objectContaining({
-          failures: expect.arrayContaining([
-            expect.objectContaining({ collection: 'common' }),
-            expect.objectContaining({ collection: 'admin' }),
-          ]),
-        }),
-        expect.any(Object),
-      );
-    });
-  });
-
-  describe('allowTranslated option', () => {
-    it('should treat translated resources as warnings when allowTranslated is true', async () => {
-      const warningResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: {
-          new: 0,
-          translated: 3,
-          stale: 0,
-          verified: 3,
-        },
-        failures: [],
-        warnings: [
-          {
-            key: 'common.welcome',
-            locale: 'fr',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'common.welcome',
-            locale: 'es',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'common.welcome',
-            locale: 'de',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-        ],
-        successes: [],
-        passed: true,
-      };
-
-      mockValidateResources.mockReturnValue(warningResult);
-
-      await validateCommand({ allowTranslated: true });
-
-      expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
+    expect(mockRunValidate).toHaveBeenCalledExactlyOnceWith(
+      [
+        expect.objectContaining({ name: 'common', baseLocale: 'en', targetLocales: ['fr', 'es', 'de'] }),
+        expect.objectContaining({ name: 'admin', baseLocale: 'en', targetLocales: ['fr', 'es', 'de'] }),
+      ],
+      {
         allowTranslated: true,
-        skippedLocales: [],
-        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
-        placeholders: { baseLocale: 'en' },
-      });
-
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(warningResult, {
-        allowTranslated: true,
-        skippedLocales: [],
-        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
-        placeholders: { baseLocale: 'en' },
-      });
-
-      expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(process.exit).not.toHaveBeenCalled();
-    });
-
-    it('should pass validation with warnings when allowTranslated is true', async () => {
-      const warningResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: {
-          new: 0,
-          translated: 6,
-          stale: 0,
-          verified: 0,
-        },
-        failures: [],
-        warnings: [
-          {
-            key: 'common.hello',
-            locale: 'fr',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'common.hello',
-            locale: 'es',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'common.hello',
-            locale: 'de',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'admin.title',
-            locale: 'fr',
-            collection: 'admin',
-            status: 'translated' as const,
-          },
-          {
-            key: 'admin.title',
-            locale: 'es',
-            collection: 'admin',
-            status: 'translated' as const,
-          },
-          {
-            key: 'admin.title',
-            locale: 'de',
-            collection: 'admin',
-            status: 'translated' as const,
-          },
-        ],
-        successes: [],
-        passed: true,
-      };
-
-      mockValidateResources.mockReturnValue(warningResult);
-
-      await validateCommand({ allowTranslated: true });
-
-      expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(process.exit).not.toHaveBeenCalled();
-    });
-
-    it('should use allowTranslated: false by default', async () => {
-      const successResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: { new: 0, translated: 0, stale: 0, verified: 6 },
-        failures: [],
-        warnings: [],
-        successes: [],
-        passed: true,
-      };
-
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({});
-
-      expect(mockValidateResources).toHaveBeenCalledWith(expect.any(Array), expect.any(Array), {
-        allowTranslated: false,
-        skippedLocales: [],
-        icu: { baseLocale: 'en', compileValues: true, requirePortablePlurals: false },
-        placeholders: { baseLocale: 'en' },
-      });
-    });
+        skipLocales: ['fr'],
+        skipIcu: true,
+        skipRuntime: true,
+        skipPlaceholders: true,
+        skipProtectedTerms: true,
+        requirePortablePlurals: true,
+      },
+    );
   });
 
-  describe('placeholder checking', () => {
-    const successResult = {
-      totalResourcesValidated: 6,
-      totalUniqueKeys: 2,
-      localesValidated: 3,
-      collectionsValidated: 2,
-      statusCounts: { new: 0, translated: 0, stale: 0, verified: 6 },
-      failures: [],
+  it('resolves parsed --skip-locales "" to the empty-list default', async () => {
+    const flags = parsedFlags('--skip-locales', '');
+    expect(flags.skipLocales).toBeUndefined();
+    const result = await runCommand(validateCommand, flags, { cwd: '/project' });
+    expect(result.exitCode).toBe(0);
+    expect(mockRunValidate).toHaveBeenCalledExactlyOnceWith(
+      expect.any(Array),
+      expect.objectContaining({ skipLocales: [] }),
+    );
+  });
+
+  it('reports a missing config file', async () => {
+    vi.mocked(core.loadConfig).mockImplementation(() => {
+      throw new core.ConfigNotFoundError('/project/.lingo-tracker.json');
+    });
+    await validateCommand({});
+    expect(process.exitCode).toBe(1);
+    expect(console.error).toHaveBeenCalledWith('❌ Configuration file .lingo-tracker.json not found.');
+    expect(console.error).toHaveBeenCalledWith('Run "lingo-tracker init" to initialize a project.');
+  });
+
+  it('reports a malformed config file', async () => {
+    vi.mocked(core.loadConfig).mockImplementation(() => {
+      throw new core.ConfigParseError('/project/.lingo-tracker.json', 'Unexpected token i in JSON');
+    });
+    await validateCommand({});
+    expect(process.exitCode).toBe(1);
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('❌ Failed to parse configuration file'));
+  });
+
+  it('prints no-collections failure', async () => {
+    vi.mocked(core.loadConfig).mockReturnValue({ ...config, collections: {} });
+    mockRunValidate.mockReturnValue({
+      status: 'failed',
+      outcome: 'failed',
+      error: 'No collections found in configuration.',
+      details: [],
       warnings: [],
-      successes: [],
-      passed: true,
-    };
-
-    it('should check placeholders against the base locale by default', async () => {
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({});
-
-      expect(mockValidateResources).toHaveBeenCalledWith(
-        expect.any(Array),
-        expect.any(Array),
-        expect.objectContaining({ placeholders: { baseLocale: 'en' } }),
-      );
     });
-
-    it('should skip the check when --skip-placeholders is given', async () => {
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({ skipPlaceholders: true });
-
-      expect(mockValidateResources).toHaveBeenCalledWith(
-        expect.any(Array),
-        expect.any(Array),
-        expect.objectContaining({ placeholders: undefined }),
-      );
-    });
-
-    it('should keep checking placeholders when ICU compilation is skipped', async () => {
-      // The two passes answer different questions, so opting out of one must
-      // not quietly opt out of the other.
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({ skipIcu: true });
-
-      expect(mockValidateResources).toHaveBeenCalledWith(
-        expect.any(Array),
-        expect.any(Array),
-        expect.objectContaining({ placeholders: { baseLocale: 'en' } }),
-      );
-    });
+    await validateCommand({});
+    expect(process.exitCode).toBe(1);
+    expect(console.error).toHaveBeenCalledWith('❌ No collections found. Run `lingo-tracker add-collection` first.');
+    expect(console.log).not.toHaveBeenCalled();
   });
 
-  describe('comprehensive validation behavior', () => {
-    it('should display summary output before exiting', async () => {
-      const failureResult = {
-        totalResourcesValidated: 3,
-        totalUniqueKeys: 1,
-        localesValidated: 3,
-        collectionsValidated: 1,
-        statusCounts: {
-          new: 3,
-          translated: 0,
-          stale: 0,
-          verified: 0,
-        },
-        failures: [
-          {
-            key: 'test.key',
-            locale: 'fr',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'test.key',
-            locale: 'es',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'test.key',
-            locale: 'de',
-            collection: 'common',
-            status: 'new' as const,
-          },
-        ],
-        warnings: [],
-        successes: [],
-        passed: false,
-      };
-
-      mockValidateResources.mockReturnValue(failureResult);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      // Verify summary is logged before exit
-      expect(console.log).toHaveBeenCalledWith('Validation summary output');
-      expect(process.exit).toHaveBeenCalledWith(1);
-    });
-
-    it('should exit with code 1 only after validation completes', async () => {
-      const failureResult = {
-        totalResourcesValidated: 100,
-        totalUniqueKeys: 100,
-        localesValidated: 1,
-        collectionsValidated: 1,
-        statusCounts: {
-          new: 100,
-          translated: 0,
-          stale: 0,
-          verified: 0,
-        },
-        failures: Array.from({ length: 100 }, (_, i) => ({
-          key: `resource.${i}`,
-          locale: 'fr',
-          collection: 'common',
-          status: 'new' as const,
-        })),
-        warnings: [],
-        successes: [],
-        passed: false,
-      };
-
-      mockValidateResources.mockReturnValue(failureResult);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      // Verify all 100 failures were passed to summary generator
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        expect.objectContaining({
-          failures: expect.arrayContaining([
-            expect.objectContaining({ key: 'resource.0' }),
-            expect.objectContaining({ key: 'resource.99' }),
-          ]),
-        }),
-        expect.any(Object),
-      );
-      expect(mockGenerateValidationSummary.mock.calls[0][0].failures).toHaveLength(100);
-    });
-
-    it('should validate with mixed statuses and report comprehensively', async () => {
-      const mixedResult = {
-        totalResourcesValidated: 12,
-        totalUniqueKeys: 4,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: {
-          new: 3,
-          translated: 3,
-          stale: 3,
-          verified: 3,
-        },
-        failures: [
-          {
-            key: 'res1',
-            locale: 'fr',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'res1',
-            locale: 'es',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'res1',
-            locale: 'de',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'res2',
-            locale: 'fr',
-            collection: 'admin',
-            status: 'stale' as const,
-          },
-          {
-            key: 'res2',
-            locale: 'es',
-            collection: 'admin',
-            status: 'stale' as const,
-          },
-          {
-            key: 'res2',
-            locale: 'de',
-            collection: 'admin',
-            status: 'stale' as const,
-          },
-          {
-            key: 'res3',
-            locale: 'fr',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'res3',
-            locale: 'es',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'res3',
-            locale: 'de',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-        ],
-        warnings: [],
-        successes: [
-          {
-            key: 'res4',
-            locale: 'fr',
-            collection: 'admin',
-            status: 'verified' as const,
-          },
-          {
-            key: 'res4',
-            locale: 'es',
-            collection: 'admin',
-            status: 'verified' as const,
-          },
-          {
-            key: 'res4',
-            locale: 'de',
-            collection: 'admin',
-            status: 'verified' as const,
-          },
-        ],
-        passed: false,
-      };
-
-      mockValidateResources.mockReturnValue(mixedResult);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      // Verify comprehensive reporting of all statuses
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        expect.objectContaining({
-          failures: expect.arrayContaining([
-            expect.objectContaining({ status: 'new' }),
-            expect.objectContaining({ status: 'stale' }),
-            expect.objectContaining({ status: 'translated' }),
-          ]),
-          successes: expect.arrayContaining([expect.objectContaining({ status: 'verified' })]),
-        }),
-        expect.any(Object),
-      );
-    });
-  });
-
-  describe('skipLocales option', () => {
-    const successResult = {
-      totalResourcesValidated: 4,
-      totalUniqueKeys: 2,
-      localesValidated: 2,
-      collectionsValidated: 2,
-      statusCounts: { new: 0, translated: 0, stale: 0, verified: 4 },
-      failures: [],
+  it('prints the no-target-locales hint', async () => {
+    mockRunValidate.mockReturnValue({
+      status: 'failed',
+      outcome: 'failed',
+      error: 'No target locales found in configuration.',
+      details: ["Target locales are each collection's locales except its base locale."],
       warnings: [],
-      successes: [],
-      passed: true,
-    };
-
-    it('should exclude a known locale from validation and report it as skipped', async () => {
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({ skipLocales: ['fr'] });
-
-      // fr is excluded from the locales passed to validateResources
-      const localeArg = mockValidateResources.mock.calls[0][1];
-      expect(localeArg).not.toContain('fr');
-      expect(localeArg).toContain('es');
-      expect(localeArg).toContain('de');
-
-      // skippedLocales is forwarded to generateValidationSummary
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.objectContaining({ skippedLocales: ['fr'] }),
-      );
     });
-
-    it('should warn about unknown locales and not filter them', async () => {
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({ skipLocales: ['xx'] });
-
-      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("Skipping unknown locale 'xx'"));
-
-      // All original target locales are still validated
-      const localeArg = mockValidateResources.mock.calls[0][1];
-      expect(localeArg).toEqual(['fr', 'es', 'de']);
-
-      // skippedLocales in summary is empty (unknown locale was not effectively skipped)
-      expect(mockGenerateValidationSummary).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.objectContaining({ skippedLocales: [] }),
-      );
-    });
-
-    it('should silently ignore the base locale in skip list', async () => {
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({ skipLocales: ['en'] });
-
-      // No warning logged
-      expect(console.warn).not.toHaveBeenCalled();
-
-      // All target locales still validated (base locale was never a target)
-      const localeArg = mockValidateResources.mock.calls[0][1];
-      expect(localeArg).toEqual(['fr', 'es', 'de']);
-    });
-
-    it('should exit with code 1 when all target locales are skipped', async () => {
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({ skipLocales: ['fr', 'es', 'de'] })).rejects.toThrow(
-        'process.exit called with code 1',
-      );
-
-      expect(console.error).toHaveBeenCalledWith('❌ All target locales were skipped; nothing to validate.');
-      expect(mockValidateResources).not.toHaveBeenCalled();
-    });
+    await validateCommand({});
+    expect(process.exitCode).toBe(1);
+    expect(console.error).toHaveBeenCalledWith('❌ No target locales found in configuration.');
+    expect(console.error).toHaveBeenCalledWith(
+      "  Target locales are each collection's locales except its base locale.",
+    );
   });
 
-  describe('exit codes', () => {
-    it('should exit with code 1 when validation fails', async () => {
-      const failureResult = {
-        totalResourcesValidated: 3,
-        totalUniqueKeys: 1,
-        localesValidated: 3,
-        collectionsValidated: 1,
-        statusCounts: { new: 3, translated: 0, stale: 0, verified: 0 },
-        failures: [
-          {
-            key: 'test.key',
-            locale: 'fr',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'test.key',
-            locale: 'es',
-            collection: 'common',
-            status: 'new' as const,
-          },
-          {
-            key: 'test.key',
-            locale: 'de',
-            collection: 'common',
-            status: 'new' as const,
-          },
-        ],
-        warnings: [],
-        successes: [],
-        passed: false,
-      };
+  it('prints the summary on success and leaves exit code zero', async () => {
+    await validateCommand({});
+    expect(console.log).toHaveBeenCalledWith('Validation summary output');
+    expect(process.exitCode).toBe(0);
+  });
 
-      mockValidateResources.mockReturnValue(failureResult);
-      vi.mocked(process.exit).mockImplementation((code?: string | number | null | undefined) => {
-        throw new Error(`process.exit called with code ${code}`);
-      });
-
-      await expect(validateCommand({})).rejects.toThrow('process.exit called with code 1');
-
-      expect(process.exit).toHaveBeenCalledWith(1);
+  it('prints the summary and exits one when validation fails', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      outcome: 'failed',
+      validation: { ...passed.validation, passed: false },
     });
+    await validateCommand({});
+    expect(console.log).toHaveBeenCalledWith('Validation summary output');
+    expect(process.exitCode).toBe(1);
+  });
 
-    it('should exit with code 0 (implicit) when validation passes', async () => {
-      const successResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: { new: 0, translated: 0, stale: 0, verified: 6 },
-        failures: [],
-        warnings: [],
-        successes: [],
-        passed: true,
-      };
-
-      mockValidateResources.mockReturnValue(successResult);
-
-      await validateCommand({});
-
-      expect(process.exit).not.toHaveBeenCalled();
+  it('reports new-resource failures in the summary', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      outcome: 'failed',
+      summary: 'new: title (fr)',
+      validation: { ...passed.validation, passed: false },
     });
+    await validateCommand({});
+    expect(console.log).toHaveBeenCalledWith('new: title (fr)');
+    expect(process.exitCode).toBe(1);
+  });
 
-    it('should exit with code 0 when validation passes with warnings', async () => {
-      const warningResult = {
-        totalResourcesValidated: 6,
-        totalUniqueKeys: 2,
-        localesValidated: 3,
-        collectionsValidated: 2,
-        statusCounts: { new: 0, translated: 3, stale: 0, verified: 3 },
-        failures: [],
-        warnings: [
-          {
-            key: 'test.key',
-            locale: 'fr',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'test.key',
-            locale: 'es',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-          {
-            key: 'test.key',
-            locale: 'de',
-            collection: 'common',
-            status: 'translated' as const,
-          },
-        ],
-        successes: [],
-        passed: true,
-      };
-
-      mockValidateResources.mockReturnValue(warningResult);
-
-      await validateCommand({ allowTranslated: true });
-
-      expect(process.exit).not.toHaveBeenCalled();
+  it('reports stale-resource failures in the summary', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      outcome: 'failed',
+      summary: 'stale: title (fr)',
+      validation: { ...passed.validation, passed: false },
     });
+    await validateCommand({});
+    expect(console.log).toHaveBeenCalledWith('stale: title (fr)');
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('reports translated-resource failures in strict mode', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      outcome: 'failed',
+      summary: 'translated: title (fr)',
+      validation: { ...passed.validation, passed: false },
+    });
+    await validateCommand({});
+    expect(console.log).toHaveBeenCalledWith('translated: title (fr)');
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('prints a summary with failures from multiple locales', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      outcome: 'failed',
+      summary: 'fr: title\nes: title',
+      validation: { ...passed.validation, passed: false },
+    });
+    await validateCommand({});
+    expect(console.log).toHaveBeenCalledWith('fr: title\nes: title');
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('prints a summary with failures from multiple collections', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      outcome: 'failed',
+      summary: 'common: title\nadmin: title',
+      validation: { ...passed.validation, passed: false },
+    });
+    await validateCommand({});
+    expect(console.log).toHaveBeenCalledWith('common: title\nadmin: title');
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('prints a large failure summary without changing the exit code', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      outcome: 'failed',
+      summary: '100 failures and more',
+      validation: { ...passed.validation, passed: false },
+    });
+    await validateCommand({});
+    expect(console.log).toHaveBeenCalledWith('100 failures and more');
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('keeps a successful exit when validation has findings', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      validation: {
+        ...passed.validation,
+        warnings: [{ key: 'title', locale: 'fr', collection: 'common', status: 'translated' }],
+      },
+    });
+    await validateCommand({ allowTranslated: true });
+    expect(process.exitCode).toBe(0);
+    expect(console.log).toHaveBeenCalledWith('Validation summary output');
+  });
+
+  it('prints unknown skip-locale warnings to stderr before the summary', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      warnings: ["Skipping unknown locale 'xx' — not in configured locales"],
+    });
+    await validateCommand({ skipLocales: ['xx'] });
+    expect(console.error).toHaveBeenCalledWith("⚠️  Skipping unknown locale 'xx' — not in configured locales");
+    expect(console.log).toHaveBeenCalledWith('Validation summary output');
+  });
+
+  it('prints the skipped-locale summary without a warning for a known locale', async () => {
+    mockRunValidate.mockReturnValue({ ...passed, summary: 'Skipped Locales: fr (1)' });
+    await validateCommand({ skipLocales: ['fr'] });
+    expect(console.log).toHaveBeenCalledWith('Skipped Locales: fr (1)');
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it('keeps the base locale silent in the skip list', async () => {
+    await validateCommand({ skipLocales: ['en'] });
+    expect(console.error).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(0);
+  });
+
+  it('prints warnings before an all-skipped failure', async () => {
+    mockRunValidate.mockReturnValue({
+      status: 'failed',
+      outcome: 'failed',
+      error: 'All target locales were skipped; nothing to validate.',
+      details: [],
+      warnings: ["Skipping unknown locale 'xx' — not in configured locales"],
+    });
+    await validateCommand({ skipLocales: ['xx', 'fr', 'es', 'de'] });
+    expect(console.error).toHaveBeenCalledWith("⚠️  Skipping unknown locale 'xx' — not in configured locales");
+    expect(console.error).toHaveBeenCalledWith('❌ All target locales were skipped; nothing to validate.');
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('prints term-file warnings once and keeps the result exit code', async () => {
+    mockRunValidate.mockReturnValue({ ...passed, warnings: ['Protected terms checks skipped: broken file'] });
+    await validateCommand({});
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith('⚠️  Protected terms checks skipped: broken file');
+    expect(process.exitCode).toBe(0);
+  });
+
+  it('prints each missing named term-file warning to stderr', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      warnings: ['Protected terms file not found', 'Preferred terminology file not found'],
+    });
+    await validateCommand({});
+    expect(console.error).toHaveBeenCalledWith('⚠️  Protected terms file not found');
+    expect(console.error).toHaveBeenCalledWith('⚠️  Preferred terminology file not found');
+    expect(console.error).toHaveBeenCalledTimes(2);
+    expect(process.exitCode).toBe(0);
+  });
+
+  it('prints terminology findings in the summary without failing', async () => {
+    mockRunValidate.mockReturnValue({ ...passed, summary: '⚠️  Preferred Terminology Warnings (1)' });
+    await validateCommand({});
+    expect(console.log).toHaveBeenCalledWith('⚠️  Preferred Terminology Warnings (1)');
+    expect(process.exitCode).toBe(0);
+  });
+
+  it('exits one when validation reports a broken terminology file', async () => {
+    mockRunValidate.mockReturnValue({
+      ...passed,
+      outcome: 'failed',
+      validation: { ...passed.validation, passed: false },
+    });
+    await validateCommand({});
+    expect(process.exitCode).toBe(1);
   });
 });

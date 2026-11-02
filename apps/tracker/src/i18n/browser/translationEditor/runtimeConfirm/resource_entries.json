@@ -1,0 +1,42 @@
+{
+  "title": {
+    "source": "Plain Transloco can't render this",
+    "comment": "Dialog title when saving a value with ICU constructs plain Transloco cannot render",
+    "tags": ["browser"],
+    "es": "Transloco simple no puede renderizar esto",
+    "fr-ca": "Transloco simple ne peut pas rendre ceci",
+    "ru": "Обычный Transloco не может это отобразить",
+    "ja": "標準の Transloco ではこれを表示できません",
+    "de": "Einfaches Transloco kann dies nicht darstellen"
+  },
+  "messageX": {
+    "source": "This project uses plain Transloco, which shows these values as raw ICU text: {details}. lingo-tracker validate will fail until they change.",
+    "comment": "Confirmation message before saving; details lists locales and ICU constructs, such as English: plural; French (Canada): select",
+    "tags": ["browser"],
+    "es": "Este proyecto usa Transloco simple, que muestra estos valores como texto ICU sin procesar: {details}. lingo-tracker validate fallará hasta que se modifiquen.",
+    "fr-ca": "Ce projet utilise Transloco simple, qui affiche ces valeurs sous forme de texte ICU brut : {details}. lingo-tracker validate échouera tant qu’elles ne seront pas modifiées.",
+    "ru": "В этом проекте используется обычный Transloco, который показывает эти значения как необработанный текст ICU: {details}. Пока они не будут изменены, lingo-tracker validate будет завершаться с ошибкой.",
+    "ja": "このプロジェクトは標準の Transloco を使用しており、次の値は ICU の生テキストとして表示されます: {details}。変更するまで lingo-tracker validate は失敗します。",
+    "de": "Dieses Projekt verwendet einfaches Transloco, das diese Werte als rohen ICU-Text anzeigt: {details}. lingo-tracker validate schlägt fehl, bis sie geändert werden."
+  },
+  "saveAnyway": {
+    "source": "Save anyway",
+    "comment": "Button to save despite values plain Transloco cannot render",
+    "tags": ["browser"],
+    "es": "Guardar de todos modos",
+    "fr-ca": "Enregistrer quand même",
+    "ru": "Всё равно сохранить",
+    "ja": "このまま保存",
+    "de": "Trotzdem speichern"
+  },
+  "goBack": {
+    "source": "Go back and edit",
+    "comment": "Button to return to the editor and change the flagged values",
+    "tags": ["browser"],
+    "es": "Volver y editar",
+    "fr-ca": "Revenir et modifier",
+    "ru": "Вернуться к редактированию",
+    "ja": "戻って編集",
+    "de": "Zurück zur Bearbeitung"
+  }
+}

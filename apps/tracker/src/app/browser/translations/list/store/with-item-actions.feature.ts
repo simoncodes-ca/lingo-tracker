@@ -1,18 +1,15 @@
-import { inject, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
-import { MatDialog } from '@angular/material/dialog';
+import { DestroyRef, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
-import { NotificationService } from '../../../../shared/notification';
-import { BrowserApiService } from '../../../services/browser-api.service';
-import { BrowserStore } from '../../../store/browser.store';
+import { signalStoreFeature, type, withMethods } from '@ngrx/signals';
+import type { ResourceSummaryDto } from '@simoncodes-ca/data-transfer';
+import { tap } from 'rxjs';
 import { TRACKER_TOKENS } from '../../../../../i18n-types/tracker-resources';
-import { TranslationEditorDialog } from '../../../dialogs/translation-editor';
-import type { TranslationEditorDialogData, TranslationEditorResult } from '../../../dialogs/translation-editor';
-import { ConfirmationDialog } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
-import type { ConfirmationDialogData } from '../../../../shared/components/confirmation-dialog/confirmation-dialog-data';
-import type { ResourceSummaryDto, TranslateResourceResponseDto } from '@simoncodes-ca/data-transfer';
-import { resolveFullKey, resolveEffectiveFolderPath, resolveResourceForDialog } from './key-resolution';
+import { copyWithFeedback } from '../../../../shared/clipboard';
+import { injectConfirmedWrite } from '../../../../shared/confirmed-write';
+import { NotificationService } from '../../../../shared/notification';
+import { TranslationEditorLauncher } from '../../../services/translation-editor-launcher';
+import { BrowserStore } from '../../../store/browser.store';
+import { translationChangedRow } from '../../../store/resource-write-outcome';
 
 export function withItemActions() {
   return signalStoreFeature(
@@ -25,189 +22,52 @@ export function withItemActions() {
       }>(),
     },
     withMethods((store) => {
-      const api = inject(BrowserApiService);
       const browserStore = inject(BrowserStore);
-      const dialog = inject(MatDialog);
+      const write = injectConfirmedWrite();
+      const launcher = inject(TranslationEditorLauncher);
       const destroyRef = inject(DestroyRef);
       const notifications = inject(NotificationService);
       const transloco = inject(TranslocoService);
 
       return {
-        copyKey(key: string): void {
-          if (!navigator.clipboard?.writeText) {
-            notifications.error(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED));
-            return;
-          }
-          navigator.clipboard
-            .writeText(key)
-            .then(() => notifications.success(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD)))
-            .catch(() => notifications.error(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED)));
+        copyKey(translation: ResourceSummaryDto): void {
+          void copyWithFeedback(translation.fullKey, {
+            successMessage: transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPIEDTOCLIPBOARD),
+            failedMessage: transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.COPYFAILED),
+            notifications,
+          });
         },
 
-        editTranslation(translation: ResourceSummaryDto, collectionName: string): void {
-          const folderPath = resolveEffectiveFolderPath(
-            translation.key,
-            browserStore.isSearchMode(),
-            browserStore.showNestedResources(),
-            browserStore.currentFolderPath(),
-          );
-          const originalKey = browserStore.isSearchMode() ? translation.key : undefined;
+        /** Opens the editor on a row; a save that keeps the entry in this list flashes its row. */
+        editTranslation(translation: ResourceSummaryDto): void {
+          void launcher.openEdit(translation).then((outcome) => {
+            if (outcome.kind === 'saved') store.flashRecentlyUpdated(outcome.fullKey);
+          });
+        },
 
-          const dialogData: TranslationEditorDialogData = {
-            mode: 'edit',
-            resource: resolveResourceForDialog(
-              translation,
-              browserStore.isSearchMode(),
-              browserStore.showNestedResources(),
+        deleteTranslation(translation: ResourceSummaryDto): Promise<void> {
+          const { fullKey } = translation;
+          const confirm = write.confirmDestructive({
+            title: TRACKER_TOKENS.BROWSER.DIALOG.DELETERESOURCE.TITLE,
+            message: { token: TRACKER_TOKENS.BROWSER.DIALOG.DELETERESOURCE.MESSAGEX, params: { key: fullKey } },
+            cancelButtonText: TRACKER_TOKENS.COMMON.ACTIONS.CANCEL,
+          });
+          return write.runWrite(browserStore.requestEntryDelete(fullKey, confirm));
+        },
+
+        translateResource(translation: ResourceSummaryDto): void {
+          const { fullKey } = translation;
+          store.addTranslatingKey(fullKey);
+
+          void write.runWrite(
+            browserStore.translateResource(fullKey).pipe(
+              tap((outcome) => {
+                if (destroyRef.destroyed) return;
+                store.removeTranslatingKey(fullKey);
+                if (translationChangedRow(outcome)) store.flashRecentlyUpdated(fullKey);
+              }),
             ),
-            collectionName,
-            folderPath,
-            availableLocales: browserStore.availableLocales(),
-            baseLocale: browserStore.baseLocale(),
-            readOnly: browserStore.isReadOnly(),
-          };
-
-          const dialogRef = dialog.open(TranslationEditorDialog, {
-            // Size, max-height and the small-viewport full-screen mode live in
-            // `.translation-editor-dialog-panel` (styles.scss) so the two call
-            // sites don't each carry their own copy of the numbers. `maxWidth`
-            // is overridden only to lift the CDK's inline 80vw default, which
-            // would otherwise beat the stylesheet.
-            panelClass: 'translation-editor-dialog-panel',
-            maxWidth: '100vw',
-            data: dialogData,
-            autoFocus: false,
-            ariaLabelledBy: 'dialog-title',
-            restoreFocus: false,
-          });
-
-          dialogRef
-            .afterClosed()
-            .pipe(takeUntilDestroyed(destroyRef))
-            .subscribe((result: TranslationEditorResult | undefined) => {
-              if (!result?.success) return;
-              if (!result.resource) return;
-              const cacheKey = originalKey ?? result.key;
-              if (result.folderPath !== folderPath) {
-                browserStore.removeResourceFromCache(cacheKey);
-              } else {
-                const storeResource = { ...result.resource, key: translation.key };
-                browserStore.updateTranslationInCache(storeResource);
-                store.flashRecentlyUpdated(translation.key);
-                notifications.success(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.TRANSLATIONUPDATED));
-                if (result.skippedLocales?.length) {
-                  const skippedList = result.skippedLocales.join(', ');
-                  notifications.warning(
-                    transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, { locales: skippedList }),
-                  );
-                }
-              }
-            });
-        },
-
-        deleteTranslation(translation: ResourceSummaryDto, collectionName: string): void {
-          // Last line of defence for every caller. A read-only collection must
-          // never reach the confirmation dialog: asking the user to confirm a
-          // deletion the API will refuse is a promise the UI cannot keep.
-          if (browserStore.isReadOnly()) return;
-
-          const fullKey = resolveFullKey(
-            translation.key,
-            browserStore.isSearchMode(),
-            browserStore.currentFolderPath(),
           );
-
-          const dialogData: ConfirmationDialogData = {
-            title: transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETERESOURCE.TITLE),
-            message: transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETERESOURCE.MESSAGEX, { key: fullKey }),
-            confirmButtonText: transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DELETE),
-            cancelButtonText: transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.CANCEL),
-            actionType: 'destructive',
-          };
-
-          const dialogRef = dialog.open(ConfirmationDialog, {
-            data: dialogData,
-            autoFocus: true,
-            restoreFocus: true,
-          });
-
-          dialogRef
-            .afterClosed()
-            .pipe(takeUntilDestroyed(destroyRef))
-            .subscribe((confirmed: boolean | undefined) => {
-              if (!confirmed) return;
-              api
-                .deleteResource(collectionName, [fullKey])
-                .pipe(takeUntilDestroyed(destroyRef))
-                .subscribe({
-                  next: (response) => {
-                    if (response.entriesDeleted > 0) {
-                      // Cache is indexed by the relative key, not the full key used for the API call.
-                      browserStore.removeResourceFromCache(translation.key);
-                      notifications.success(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.RESOURCEDELETED));
-                    } else {
-                      notifications.error(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.DELETEFAILED));
-                    }
-                  },
-                  error: (error: unknown) => {
-                    const message =
-                      error instanceof Error
-                        ? error.message
-                        : transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.DELETEFAILED);
-                    notifications.error(message);
-                  },
-                });
-            });
-        },
-
-        translateResource(translation: ResourceSummaryDto, collectionName: string): void {
-          const fullKey = resolveFullKey(
-            translation.key,
-            browserStore.isSearchMode(),
-            browserStore.currentFolderPath(),
-          );
-          store.addTranslatingKey(translation.key);
-
-          api
-            .translateResource(collectionName, fullKey)
-            .pipe(takeUntilDestroyed(destroyRef))
-            .subscribe({
-              next: (response: TranslateResourceResponseDto) => {
-                store.removeTranslatingKey(translation.key);
-                // Cache uses the relative key; rewrite from the bare API key before updating.
-                const storeResource = { ...response.resource, key: translation.key };
-                browserStore.updateTranslationInCache(storeResource);
-                store.flashRecentlyUpdated(translation.key);
-
-                const { translatedCount, skippedLocales } = response;
-                if (translatedCount > 0) {
-                  const successMessage =
-                    translatedCount === 1
-                      ? transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.LOCALETRANSLATED)
-                      : transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.LOCALESTRANSLATEDX, {
-                          count: translatedCount,
-                        });
-                  notifications.success(successMessage);
-                } else if (skippedLocales.length === 0) {
-                  notifications.info(transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.ALLLOCALESUPTODATE));
-                }
-                if (skippedLocales.length > 0) {
-                  notifications.warning(
-                    transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.SKIPPEDLOCALESX, {
-                      locales: skippedLocales.join(', '),
-                    }),
-                  );
-                }
-              },
-              error: (error: unknown) => {
-                store.removeTranslatingKey(translation.key);
-                const message =
-                  error instanceof Error
-                    ? error.message
-                    : transloco.translate(TRACKER_TOKENS.BROWSER.TOAST.TRANSLATEFAILED);
-                notifications.error(message);
-              },
-            });
         },
       };
     }),

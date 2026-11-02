@@ -1,5 +1,4 @@
-import { parse, type Token } from '@messageformat/parser';
-import { normalizeTranslocoSyntax } from './normalize-transloco-syntax';
+import { type IcuNode, type IcuParseOptions, parseIcuMessage } from './icu-message';
 
 /**
  * Base-locale plural portability.
@@ -59,40 +58,41 @@ export interface UnportablePluralCase {
  * // → []
  * ```
  */
-export function findUnportablePluralCases(value: string): readonly UnportablePluralCase[] {
-  let tokens: Token[];
-  try {
-    tokens = parse(normalizeTranslocoSyntax(value));
-  } catch {
+export function findUnportablePluralCases(
+  value: string,
+  options: IcuParseOptions = {},
+): readonly UnportablePluralCase[] {
+  const message = parseIcuMessage(value, { ...options, interpolation: true, lenient: true });
+  if (!message.ok) {
     return [];
   }
 
   const found: UnportablePluralCase[] = [];
-  collectUnportableCases(tokens, found);
+  collectUnportableCases(message.nodes, found);
   return found;
 }
 
 /**
- * Walks a parsed token tree, appending every locale-dependent plural branch.
+ * Walks a parsed tree, appending every locale-dependent plural branch.
  *
  * Recurses through the branch bodies of every `plural`, `selectordinal` and
  * `select`, so a plural nested inside a `select` branch is reported too.
  *
  * @internal
  */
-function collectUnportableCases(tokens: readonly Token[], found: UnportablePluralCase[]): void {
-  for (const token of tokens) {
-    if (token.type !== 'plural' && token.type !== 'selectordinal' && token.type !== 'select') {
+function collectUnportableCases(nodes: readonly IcuNode[], found: UnportablePluralCase[]): void {
+  for (const node of nodes) {
+    if (node.kind !== 'group') {
       continue;
     }
 
-    for (const branch of token.cases) {
+    for (const branch of node.cases) {
       // `other` is defined by every locale, and `=N` is an exact match; both travel.
-      if (token.type === 'plural' && branch.key !== 'other' && !branch.key.startsWith('=')) {
-        found.push({ arg: token.arg, key: branch.key });
+      if (node.type === 'plural' && branch.selector !== 'other' && !branch.selector.startsWith('=')) {
+        found.push({ arg: node.name, key: branch.selector });
       }
 
-      collectUnportableCases(branch.tokens, found);
+      collectUnportableCases(branch.nodes, found);
     }
   }
 }

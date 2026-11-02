@@ -10,12 +10,12 @@
       "dependsOn": ["^build", "^typecheck"],
       "options": {
         "command": "webpack-cli build",
-        "args": ["--node-env=production"],
+        "args": ["--config-node-env=production"],
         "cwd": "apps/api"
       },
       "configurations": {
         "development": {
-          "args": ["--node-env=development"]
+          "args": ["--config-node-env=development"]
         }
       }
     },
@@ -23,10 +23,25 @@
       "dependsOn": ["build"],
       "cache": true,
       "executor": "@nx/js:prune-lockfile",
-      "outputs": ["{workspaceRoot}/dist/apps/api/package.json", "{workspaceRoot}/dist/apps/api/pnpm-lock.yaml"],
+      "outputs": [
+        "{workspaceRoot}/dist/apps/api/package.json",
+        "{workspaceRoot}/dist/apps/api/pnpm-lock.yaml",
+        "{workspaceRoot}/dist/apps/api/pnpm-workspace.yaml",
+        "{workspaceRoot}/dist/apps/api/patches",
+        "{workspaceRoot}/dist/apps/api/local_path_modules"
+      ],
       "options": {
         "buildTarget": "build"
-      }
+      },
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/pnpm-workspace.yaml",
+        "{workspaceRoot}/package.json",
+        {
+          "runtime": "node -e \"try{console.log('pnpm major '+require('child_process').execSync('pnpm --version',{stdio:['ignore','pipe','ignore']}).toString().trim().split('.')[0])}catch{console.log('pnpm major unavailable')}\""
+        }
+      ]
     },
     "copy-workspace-modules": {
       "dependsOn": ["build"],
@@ -59,9 +74,45 @@
         }
       }
     },
-    "test": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["^typecheck", "typecheck-spec"],
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/tsconfig.base.json",
+        "{workspaceRoot}/types/**/*",
+        {
+          "dependentTasksOutputFiles": "**/*.{d.ts,tsbuildinfo}",
+          "transitive": true
+        }
+      ],
+      "outputs": [
+        "{workspaceRoot}/dist/out-tsc/apps/api/**/*.d.ts",
+        "{workspaceRoot}/dist/out-tsc/apps/api/tsconfig.app.tsbuildinfo"
+      ],
       "options": {
-        "passWithNoTests": true
+        "cwd": "apps/api",
+        "command": "tsc --build tsconfig.app.json --emitDeclarationOnly"
+      }
+    },
+    "typecheck-spec": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default", "{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/types/**/*"],
+      "options": {
+        "cwd": "apps/api",
+        "command": "tsc --noEmit -p tsconfig.spec.json"
+      }
+    },
+    "test": {
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}", "{workspaceRoot}/dist/test-results/{projectRoot}"],
+      "options": {
+        "passWithNoTests": true,
+        "env": {
+          "NODE_OPTIONS": "--experimental-vm-modules"
+        }
       }
     }
   }

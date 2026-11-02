@@ -1,0 +1,92 @@
+{
+  "filesX": {
+    "source": "{ count, plural, =1 {1 file} other {{count} files} }",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {1 archivo} other {{count} archivos} }",
+    "fr-ca": "{ count, plural, =1 {1 fichier} other {{count} fichiers} }",
+    "ru": "{ count, plural, one {{count} файл} few {{count} файла} many {{count} файлов} other {{count} файла} }",
+    "ja": "{ count, plural, other {{count} 個のファイル} }",
+    "de": "{ count, plural, =1 {1 Datei} other {{count} Dateien} }"
+  },
+  "entriesX": {
+    "source": "{ count, plural, =1 {1 entry} other {{count} entries} }",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {1 entrada} other {{count} entradas} }",
+    "fr-ca": "{ count, plural, =1 {1 entrée} other {{count} entrées} }",
+    "ru": "{ count, plural, one {{count} запись} few {{count} записи} many {{count} записей} other {{count} записи} }",
+    "ja": "{ count, plural, other {{count} 件のエントリ} }",
+    "de": "{ count, plural, =1 {1 Eintrag} other {{count} Einträge} }"
+  },
+  "overwritesX": {
+    "source": "{ count, plural, =1 {1 will be overwritten} other {{count} will be overwritten} }",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {1 se sobrescribirá} other {{count} se sobrescribirán} }",
+    "fr-ca": "{ count, plural, =1 {1 sera écrasé} other {{count} seront écrasés} }",
+    "ru": "{ count, plural, one {{count} будет перезаписан} few {{count} будут перезаписаны} many {{count} будут перезаписаны} other {{count} будет перезаписано} }",
+    "ja": "{ count, plural, other {{count} 件が上書きされます} }",
+    "de": "{ count, plural, =1 {1 wird überschrieben} other {{count} werden überschrieben} }"
+  },
+  "nothingMatches": {
+    "source": "Nothing matches these filters",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Nada coincide con estos filtros",
+    "fr-ca": "Rien ne correspond à ces filtres",
+    "ru": "Ничего не соответствует этим фильтрам",
+    "ja": "これらのフィルターに一致するものはありません",
+    "de": "Nichts entspricht diesen Filtern"
+  },
+  "includeAllStatuses": {
+    "source": "Include all statuses",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Incluir todos los estados",
+    "fr-ca": "Inclure tous les statuts",
+    "ru": "Включить все статусы",
+    "ja": "すべてのステータスを含める",
+    "de": "Alle Status einbeziehen"
+  },
+  "fixSections": {
+    "source": "Fix the marked sections",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Corrige las secciones marcadas",
+    "fr-ca": "Corrigez les sections signalées",
+    "ru": "Исправьте отмеченные разделы",
+    "ja": "マークされたセクションを修正してください",
+    "de": "Markierte Abschnitte korrigieren"
+  },
+  "checking": {
+    "source": "Checking…",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Comprobando…",
+    "fr-ca": "Vérification…",
+    "ru": "Проверка…",
+    "ja": "確認中…",
+    "de": "Wird geprüft…"
+  },
+  "exportX": {
+    "source": "{ count, plural, =1 {Export 1 file} other {Export {count} files} }",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {Exportar 1 archivo} other {Exportar {count} archivos} }",
+    "fr-ca": "{ count, plural, =1 {Exporter 1 fichier} other {Exporter {count} fichiers} }",
+    "ru": "{ count, plural, one {Экспортировать {count} файл} few {Экспортировать {count} файла} many {Экспортировать {count} файлов} other {Экспортировать {count} файла} }",
+    "ja": "{ count, plural, other {{count} 個のファイルをエクスポート} }",
+    "de": "{ count, plural, =1 {1 Datei exportieren} other {{count} Dateien exportieren} }"
+  },
+  "exportOverwriteX": {
+    "source": "{ count, plural, =1 {Export and overwrite 1 file} other {Export and overwrite {count} files} }",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "{ count, plural, =1 {Exportar y sobrescribir 1 archivo} other {Exportar y sobrescribir {count} archivos} }",
+    "fr-ca": "{ count, plural, =1 {Exporter et écraser 1 fichier} other {Exporter et écraser {count} fichiers} }",
+    "ru": "{ count, plural, one {Экспортировать и перезаписать {count} файл} few {Экспортировать и перезаписать {count} файла} many {Экспортировать и перезаписать {count} файлов} other {Экспортировать и перезаписать {count} файла} }",
+    "ja": "{ count, plural, other {{count} 個のファイルをエクスポートして上書き} }",
+    "de": "{ count, plural, =1 {1 Datei exportieren und überschreiben} other {{count} Dateien exportieren und überschreiben} }"
+  }
+}

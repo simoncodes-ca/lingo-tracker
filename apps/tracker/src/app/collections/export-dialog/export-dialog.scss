@@ -1,0 +1,397 @@
+// The outer box (width, top rule, zero container padding) is owned by
+// `.export-dialog-panel` in styles.scss, because the CDK appends the
+// overlay pane outside this component. Everything here is the inside.
+@use '../../../styles/master-detail-dialog';
+@use '../../../styles/status-toggle';
+
+// Under 800px the rail becomes a horizontal strip of sections above the pane.
+@media (max-width: 799px) {
+  .md {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .rail {
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--spacing-1);
+    flex-wrap: wrap;
+    row-gap: var(--spacing-1);
+    padding: var(--spacing-2) var(--spacing-3);
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .rail-item {
+    width: auto;
+    flex: none;
+  }
+
+  .rail-stack {
+    flex: none;
+  }
+
+  .rail-sub {
+    max-width: 120px;
+  }
+
+  .rail-count,
+  .rail-dot {
+    margin-left: 0;
+  }
+
+  .rail-rule {
+    flex-basis: 100%;
+    width: auto;
+    height: 1px;
+    margin: 4px 0;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Export-specific
+// ─────────────────────────────────────────────────────────────────────────────
+
+.rail-fade {
+  animation: rail-fade-in var(--transition-normal) both;
+}
+
+@keyframes rail-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.text-input--narrow {
+  max-width: 280px;
+}
+
+.warn {
+  color: var(--color-warning-text, var(--color-warning));
+}
+
+.format-hints {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin: var(--spacing-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+  }
+
+  mat-icon {
+    flex: none;
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    margin-top: 2px;
+    color: var(--color-text-tertiary);
+  }
+
+  b {
+    font-family: var(--font-family-mono);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .format-hint--on {
+    color: var(--color-text-primary);
+
+    mat-icon {
+      color: var(--color-primary);
+    }
+  }
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary-text);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+  }
+}
+
+.field-label .link {
+  margin-left: auto;
+}
+
+.check-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: var(--dialog-well);
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: 0 var(--spacing-3) 0 var(--spacing-1);
+
+  & + & {
+    border-top: 1px solid var(--color-border-subtle);
+  }
+}
+
+.check-row-lock {
+  margin-left: auto;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--color-warning-text, var(--color-warning));
+}
+
+// Locale pills: toggles for target locales, plus the locked base locale.
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: 3px var(--spacing-3);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-full);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+  font: inherit;
+  line-height: 1.5;
+
+  &--button {
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+
+    &:hover {
+      color: var(--color-text-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--focus-ring-color);
+      outline-offset: 1px;
+    }
+
+    &[aria-pressed='true'] {
+      background: color-mix(in srgb, var(--color-secondary) 16%, transparent);
+      border-color: color-mix(in srgb, var(--color-secondary) 35%, transparent);
+      color: color-mix(in srgb, var(--color-secondary) 45%, var(--color-text-primary));
+    }
+  }
+
+  &--base {
+    border-style: dashed;
+    border-color: var(--color-border-strong);
+    background: transparent;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+.pill-code {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pill-tag {
+  font-size: 0.625rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+// Status toggles: the browser status rail's look, without counts.
+.status-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+}
+
+.status-toggle {
+  // The shorthand comes first: it resets the size, weight and line height the recipe sets.
+  font: inherit;
+  @include status-toggle.toggle;
+
+  background: transparent;
+}
+
+.status-dot {
+  @include status-toggle.dot;
+}
+
+// One tone per status, read by the shared dot and pressed rules below.
+@each $status in (new, stale, translated, verified) {
+  .status-toggle[data-status='#{$status}'] {
+    --tone: var(--color-status-#{$status});
+    --tone-surface: var(--color-status-#{$status}-surface);
+    --tone-border: var(--color-status-#{$status}-border);
+    --tone-ink: var(--color-status-#{$status}-ink);
+  }
+}
+
+.status-dot {
+  background-color: var(--tone);
+}
+
+.status-toggle[aria-pressed='true'] {
+  @include status-toggle.pressed(var(--tone-surface), var(--tone-border), var(--tone-ink));
+}
+
+// Dependent JSON toggles hang off the Rich switch.
+.dep-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+
+  &--off {
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+  }
+}
+
+// Preview additions.
+.tree-count {
+  margin-left: auto;
+  color: var(--color-text-secondary);
+}
+
+.tree-file--skipped {
+  // Placeholder ink, not tertiary: this is text to read (Text-Weight Rule).
+  color: var(--color-text-placeholder);
+}
+
+.shape {
+  margin: 0;
+  padding: var(--spacing-2) 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--dialog-well);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+
+  li {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+  }
+}
+
+.footer-meta mat-spinner {
+  flex: none;
+}
+
+// Full-screen below 640px, like the translation editor (panel box is in styles.scss).
+@media (max-width: 639px) {
+  .dialog-wrapper {
+    height: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-panel,
+  .rail-fade {
+    animation: none;
+  }
+
+  .disclosure-chevron,
+  .preview,
+  .rail-item,
+  .switch-row,
+  .status-toggle,
+  .pill--button {
+    transition: none;
+  }
+}
+
+.footer-reason {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kv dd {
+  text-align: right;
+}
+
+.kv dd.warn {
+  color: var(--color-warning-text);
+}
+
+.link--quiet {
+  color: var(--color-text-secondary);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.field > app-segmented-control {
+  width: fit-content;
+}
+
+.check-row-path {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}

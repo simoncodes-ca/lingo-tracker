@@ -1,0 +1,62 @@
+{
+  "button": {
+    "en": {
+      "checksum": "d1c1663066338d9c653131835b5a4006"
+    },
+    "es": {
+      "checksum": "b31844ce516a72036bbb47d17ad22a5f",
+      "baseChecksum": "d1c1663066338d9c653131835b5a4006",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "418eb5fdf6fd48ea20162062aefb198d",
+      "baseChecksum": "d1c1663066338d9c653131835b5a4006",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "c5f199bf93d95a376ea880b0e05192fe",
+      "baseChecksum": "d1c1663066338d9c653131835b5a4006",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "c8bcddcb7a0fd50cd026992d7ec810c8",
+      "baseChecksum": "d1c1663066338d9c653131835b5a4006",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "056b1118f312d38fec6fb5f56f0a971d",
+      "baseChecksum": "d1c1663066338d9c653131835b5a4006",
+      "status": "translated"
+    }
+  },
+  "buttonBusy": {
+    "en": {
+      "checksum": "d24e41338a9cc7a753860d17df1ae3eb"
+    },
+    "es": {
+      "checksum": "35a825a45c7cc71e23c89d069ed6c19a",
+      "baseChecksum": "d24e41338a9cc7a753860d17df1ae3eb",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "3bc208ea848ac5aca9110b1360037eeb",
+      "baseChecksum": "d24e41338a9cc7a753860d17df1ae3eb",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "c5f199bf93d95a376ea880b0e05192fe",
+      "baseChecksum": "d24e41338a9cc7a753860d17df1ae3eb",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "4b8a30b44674eaf030b0dc01dd0fd0ed",
+      "baseChecksum": "d24e41338a9cc7a753860d17df1ae3eb",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "71ff524804bf16cb698b90d2dfd53fa5",
+      "baseChecksum": "d24e41338a9cc7a753860d17df1ae3eb",
+      "status": "translated"
+    }
+  }
+}

@@ -1,1534 +1,1167 @@
-import * as path from 'node:path';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as fs from 'fs';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { BundleDefinition } from '../../config/bundle-definition';
+import type { BundleDefinition } from '@simoncodes-ca/domain';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
-import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
-import { type GenerateBundleParams, generateBundle } from './generate-bundle';
-import type { FlatResource } from './resource-loader';
-import * as resourceLoader from './resource-loader';
+import { type SeedResource, seedResources, testCollection, useTempDir } from '../../testing/temp-dir.spec-helpers';
+import type { Collection } from '../config/open-collection';
+import { BundleNotFoundError, type InvalidBundleLocalesError } from '../errors/internal';
+import {
+  type BundleProgressEvent,
+  type BundleTypeOutcome,
+  bundleTypeOutcomeDetail,
+  type GenerateBundleParams,
+  type GenerateBundleResult,
+  generatePreparedBundle,
+} from './generate-bundle';
+import { prepareBundleRun, validateBundleLocales } from './prepare-bundle-run';
 
-// Mock fs and resourceLoader modules
-vi.mock('fs');
-vi.mock('./resource-loader');
-vi.mock('./type-generation/generate-types');
-vi.mock('@simoncodes-ca/domain', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@simoncodes-ca/domain')>();
-  return { ...original, icuToTransloco: vi.fn((value: string) => value) };
+describe('bundleTypeOutcomeDetail', () => {
+  it('returns details for every status without status words, framing or deprecated-setting warnings', () => {
+    const cases: ReadonlyArray<{ outcome: BundleTypeOutcome; detail: string }> = [
+      {
+        outcome: { status: 'written', path: 'types/main.ts', keysCount: 2 },
+        detail: 'types/main.ts (2 keys)',
+      },
+      {
+        outcome: { status: 'skipped', reason: 'empty-bundle' },
+        detail: 'bundle is empty',
+      },
+      {
+        outcome: { status: 'not-configured' },
+        detail: 'no typeDistFile configured',
+      },
+      {
+        outcome: { status: 'failed', reason: 'disk full' },
+        detail: 'disk full',
+      },
+    ];
+
+    for (const { outcome, detail } of cases) {
+      expect(bundleTypeOutcomeDetail(outcome)).toBe(detail);
+    }
+  });
 });
 
-import * as icuToTranslocoModule from '@simoncodes-ca/domain';
-import { generateBundleTypes } from './type-generation/generate-types';
+function generationWarnings(result: GenerateBundleResult): readonly string[] {
+  return result.findings.byOrigin.generation;
+}
 
-describe('generate-bundle', () => {
-  let mockConfig: LingoTrackerConfig;
+async function generateBundleByName(params: GenerateBundleParams) {
+  return generatePreparedBundle(prepareBundleRun({ ...params, source: 'saved' }), params);
+}
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+async function generateBundle(params: GenerateBundleParams & { bundleDefinition: BundleDefinition }) {
+  const { bundleDefinition, ...request } = params;
+  const prepared = prepareBundleRun({
+    ...request,
+    source: 'saved',
+    config: { ...request.config, bundles: { ...request.config.bundles, [request.bundleKey]: bundleDefinition } },
+  });
+  return generatePreparedBundle(prepared, request);
+}
 
-    mockConfig = {
+describe('generatePreparedBundle (real fs)', () => {
+  const root = useTempDir('bundle-generate-');
+
+  afterEach(() => vi.restoreAllMocks());
+
+  function seed(name: string, resources: Record<string, SeedResource>, overrides: Partial<Collection> = {}): string {
+    const folder = join(root(), name);
+    seedResources(testCollection(folder, { name, ...overrides }), resources);
+    return folder;
+  }
+
+  function config(
+    collections: Record<string, string>,
+    overrides: Partial<LingoTrackerConfig> = {},
+  ): LingoTrackerConfig {
+    return {
       exportFolder: 'dist/export',
       importFolder: 'dist/import',
       baseLocale: 'en',
       locales: ['en', 'fr', 'es'],
-      collections: {
-        default: {
-          translationsFolder: '/translations/default',
-        },
-        admin: {
-          translationsFolder: '/translations/admin',
-        },
-      },
+      collections: Object.fromEntries(
+        Object.entries(collections).map(([name, translationsFolder]) => [name, { translationsFolder }]),
+      ),
+      ...overrides,
     };
+  }
 
-    // Mock fs.existsSync to return true for directories
-    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-    vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+  function definition(overrides: Partial<BundleDefinition> = {}): BundleDefinition {
+    return { bundleName: '{locale}', dist: 'dist/bundles', collections: 'All', ...overrides };
+  }
 
-    // Default icuToTransloco to a pass-through so existing tests are unaffected.
-    // Individual describe blocks that test the transformation behaviour override this.
-    vi.spyOn(icuToTranslocoModule, 'icuToTransloco').mockImplementation((value) => value);
+  function readJson(path: string): Record<string, unknown> {
+    return JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
+  }
+
+  it('rejects an unknown saved bundle name before writing', async () => {
+    await expect(
+      generateBundleByName({ bundleKey: 'missing', config: config({}), cwd: root() }),
+    ).rejects.toBeInstanceOf(BundleNotFoundError);
+    expect(existsSync(join(root(), 'dist/bundles/en.json'))).toBe(false);
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it.each(['constructor', '__proto__'])('rejects prototype-member bundle name %s', async (bundleKey) => {
+    await expect(
+      generateBundleByName({ bundleKey, config: config({}, { bundles: { main: definition() } }), cwd: root() }),
+    ).rejects.toBeInstanceOf(BundleNotFoundError);
   });
 
-  describe('generateBundle', () => {
-    /**
-     * The surrounding suite stubs icuToTransloco with an identity function, which would
-     * make an assertion on bundled output read back its own input. A block that asserts on
-     * what the emitter produces installs the real implementation over that stub instead.
-     */
-    async function useRealEmitter(): Promise<void> {
-      const domain = await vi.importActual<typeof import('@simoncodes-ca/domain')>('@simoncodes-ca/domain');
+  it('rejects an unconfigured locale filter with the API message', async () => {
+    await expect(
+      generateBundleByName({
+        bundleKey: 'main',
+        config: config({}, { bundles: { main: definition() } }),
+        locales: ['en', 'xx'],
+        cwd: root(),
+      }),
+    ).rejects.toMatchObject({
+      name: 'InvalidBundleLocalesError',
+      message: 'Unknown locale "xx": must be defined in the project locales',
+    } satisfies Partial<InvalidBundleLocalesError>);
+  });
 
-      vi.spyOn(icuToTranslocoModule, 'icuToTransloco').mockImplementation(domain.icuToTransloco);
-    }
+  it('reports multiple unconfigured locales with the plural API message', async () => {
+    await expect(
+      generateBundleByName({
+        bundleKey: 'main',
+        config: config({}, { bundles: { main: definition() } }),
+        locales: ['xx', 'yy'],
+        cwd: root(),
+      }),
+    ).rejects.toThrow('Unknown locales "xx", "yy": must be defined in the project locales');
+  });
+
+  it('lists an output outside cwd with a leading parent segment', async () => {
+    const common = seed('common', { welcome: { source: 'Welcome' } });
+    const result = await generateBundleByName({
+      bundleKey: 'main',
+      config: config({ common }, { bundles: { main: definition({ dist: '../shared' }) } }),
+      locales: ['en'],
+      cwd: join(root(), 'project'),
+    });
+
+    expect(result.writtenFiles).toEqual(['../shared/en.json']);
+    expect(existsSync(join(root(), 'shared/en.json'))).toBe(true);
+  });
+
+  it('rejects a malformed locale filter with the API message', () => {
+    expect(() => validateBundleLocales('en' as never, config({}))).toThrow('locales must be an array of strings');
+  });
+
+  it('generates every configured locale by default', async () => {
+    const common = seed('common', {
+      welcome: { source: 'Welcome', translations: { fr: 'Bienvenue', es: 'Bienvenido' } },
+    });
+
+    const result = await generateBundle({
+      bundleKey: 'main',
+      bundleDefinition: definition(),
+      config: config({ common }),
+      cwd: root(),
+    });
+
+    expect(result.filesGenerated).toBe(3);
+    expect(result.writtenFiles).toEqual(['dist/bundles/en.json', 'dist/bundles/fr.json', 'dist/bundles/es.json']);
+    expect(result.localesProcessed).toEqual(['en', 'fr', 'es']);
+    expect(generationWarnings(result)).toEqual([]);
+  });
+
+  it('generates from the prepared bundle key and root', async () => {
+    const common = seed('common', { welcome: { source: 'Welcome' } });
+    const prepared = prepareBundleRun({
+      source: 'saved',
+      bundleKey: 'prepared',
+      config: config({ common }, { bundles: { prepared: definition({ typeDistFile: 'types/prepared.ts' }) } }),
+      locales: ['en'],
+      cwd: root(),
+    });
+
+    const result = await generatePreparedBundle(prepared);
+
+    expect(result.bundleKey).toBe('prepared');
+    expect(result.writtenFiles).toEqual(['dist/bundles/en.json', 'types/prepared.ts']);
+    expect(existsSync(join(root(), 'dist/bundles/en.json'))).toBe(true);
+    expect(existsSync(join(root(), 'types/prepared.ts'))).toBe(true);
+  });
+
+  it('generates only the requested locale subset', async () => {
+    const common = seed('common', {
+      welcome: { source: 'Welcome', translations: { fr: 'Bienvenue', es: 'Bienvenido' } },
+    });
+    const result = await generateBundle({
+      bundleKey: 'main',
+      bundleDefinition: definition(),
+      config: config({ common }),
+      locales: ['en', 'fr'],
+      cwd: root(),
+    });
+
+    expect(result.filesGenerated).toBe(2);
+    expect(result.localesProcessed).toEqual(['en', 'fr']);
+    expect(existsSync(join(root(), 'dist/bundles/es.json'))).toBe(false);
+  });
+
+  it('warns for every empty locale and generates no files', async () => {
+    const result = await generateBundle({
+      bundleKey: 'main',
+      bundleDefinition: definition(),
+      config: config({}),
+      cwd: root(),
+    });
+
+    expect(result.filesGenerated).toBe(0);
+    expect(generationWarnings(result)).toContain("Bundle 'main' for locale 'en' is empty");
+    expect(generationWarnings(result)).toContain("Bundle 'main' for locale 'fr' is empty");
+    expect(generationWarnings(result)).toContain("Bundle 'main' for locale 'es' is empty");
+  });
+
+  it('warns for a missing collection once per run and writes the remaining files', async () => {
+    const common = seed('common', {
+      welcome: { source: 'Welcome', translations: { fr: 'Bienvenue' } },
+    });
+    const result = await generateBundle({
+      bundleKey: 'main',
+      bundleDefinition: definition({
+        collections: [
+          { name: 'nonexistent', entriesSelectionRules: 'All' },
+          { name: 'common', entriesSelectionRules: 'All' },
+        ],
+      }),
+      config: config({ common }, { locales: ['en', 'fr'] }),
+      cwd: root(),
+    });
+    expect(
+      generationWarnings(result).filter((warning) => warning === "Collection 'nonexistent' not found in config"),
+    ).toHaveLength(1);
+    expect(result.writtenFiles).toEqual(['dist/bundles/en.json', 'dist/bundles/fr.json']);
+    expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ welcome: 'Welcome' });
+  });
+
+  it.each([
+    { label: 'legacy bundle key', bundleKey: 'legacy.name', overrides: {} },
+    { label: 'filename without a locale placeholder', bundleKey: 'main', overrides: { bundleName: 'fixed' } },
+    {
+      label: 'duplicate collection without a prefix',
+      bundleKey: 'main',
+      overrides: {
+        collections: [
+          { name: 'common', entriesSelectionRules: 'All' as const },
+          { name: 'common', entriesSelectionRules: 'All' as const },
+        ],
+      },
+    },
+    {
+      label: 'unknown merge strategy',
+      bundleKey: 'main',
+      overrides: {
+        collections: [{ name: 'common', entriesSelectionRules: 'All' as const, mergeStrategy: 'unknown' as never }],
+      },
+    },
+    { label: 'unknown token casing', bundleKey: 'main', overrides: { tokenCasing: 'unknown' as never } },
+    {
+      label: 'unknown tag operator',
+      bundleKey: 'main',
+      overrides: {
+        collections: [
+          {
+            name: 'common',
+            entriesSelectionRules: [
+              { matchingPattern: '*', matchingTags: ['ui'], matchingTagOperator: 'unknown' as never },
+            ],
+          },
+        ],
+      },
+    },
+  ])('still generates JSON from a saved bundle with $label', async ({ bundleKey, overrides }) => {
+    const common = seed('common', { welcome: { source: 'Welcome', tags: ['ui'] } });
+    const result = await generateBundle({
+      bundleKey,
+      bundleDefinition: definition(overrides as Partial<BundleDefinition>),
+      config: config({ common }),
+      locales: ['en'],
+      cwd: root(),
+    });
+    const file = 'bundleName' in overrides && overrides.bundleName === 'fixed' ? 'fixed.json' : 'en.json';
+    expect(result.writtenFiles).toEqual([`dist/bundles/${file}`]);
+    expect(readJson(join(root(), 'dist/bundles', file))).toEqual({ welcome: 'Welcome' });
+  });
+
+  it('uses {locale} in a filename', async () => {
+    const common = seed('common', { welcome: { source: 'Welcome' } });
+    await generateBundle({
+      bundleKey: 'main',
+      bundleDefinition: definition({ bundleName: 'main.{locale}' }),
+      config: config({ common }),
+      locales: ['en'],
+      cwd: root(),
+    });
+
+    expect(existsSync(join(root(), 'dist/bundles/main.en.json'))).toBe(true);
+  });
+
+  it('uses {locale} in a subdirectory and creates missing output directories', async () => {
+    const common = seed('common', { welcome: { source: 'Welcome' } });
+    await generateBundle({
+      bundleKey: 'main',
+      bundleDefinition: definition({ bundleName: '{locale}/main' }),
+      config: config({ common }),
+      locales: ['en'],
+      cwd: root(),
+    });
+
+    expect(existsSync(join(root(), 'dist/bundles/en/main.json'))).toBe(true);
+  });
+
+  it('writes two-space-formatted JSON with nested dot-key hierarchy', async () => {
+    const common = seed('common', {
+      'buttons.ok': { source: 'OK' },
+      'buttons.cancel': { source: 'Cancel' },
+    });
+    await generateBundle({
+      bundleKey: 'main',
+      bundleDefinition: definition(),
+      config: config({ common }),
+      locales: ['en'],
+      cwd: root(),
+    });
+
+    const expected = { buttons: { ok: 'OK', cancel: 'Cancel' } };
+    expect(readFileSync(join(root(), 'dist/bundles/en.json'), 'utf8')).toBe(JSON.stringify(expected, null, 2));
+  });
+
+  it('resolves relative dist and typeDistFile paths against cwd', async () => {
+    const common = seed('common', { welcome: { source: 'Welcome' } });
+    const result = await generateBundle({
+      bundleKey: 'main',
+      bundleDefinition: definition({ typeDistFile: 'types/tokens.ts' }),
+      config: config({ common }),
+      locales: ['en'],
+      cwd: root(),
+    });
+
+    expect(existsSync(join(root(), 'dist/bundles/en.json'))).toBe(true);
+    expect(existsSync(join(root(), 'types/tokens.ts'))).toBe(true);
+    expect(result.findings.types).toMatchObject({ status: 'written', path: 'types/tokens.ts' });
+    expect(result.writtenFiles).toEqual(['dist/bundles/en.json', 'types/tokens.ts']);
+  });
+
+  it('uses cwd to resolve a relative collection translationsFolder', async () => {
+    seed('translations/common', { welcome: { source: 'Welcome' } });
+    const result = await generateBundle({
+      bundleKey: 'main',
+      bundleDefinition: definition(),
+      config: config({ common: 'translations/common' }),
+      locales: ['en'],
+      cwd: root(),
+    });
+
+    expect(result.filesGenerated).toBe(1);
+    expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ welcome: 'Welcome' });
+  });
+
+  describe('type generation', () => {
+    it('carries ordered warnings with origins for every type status', async () => {
+      for (const legacy of [false, true]) {
+        for (const status of ['written', 'skipped', 'failed', 'not-configured'] as const) {
+          const name = `${status}-${legacy}`;
+          const folder = seed(name, status === 'skipped' ? {} : { hello: { source: 'Hello' } });
+          const typePath =
+            status === 'not-configured' ? '' : status === 'failed' ? 'types/invalid.txt' : `types/${name}.ts`;
+          const bundleDefinition = {
+            ...definition({
+              collections: [
+                { name: 'deleted', entriesSelectionRules: 'All' },
+                { name, entriesSelectionRules: 'All' },
+              ],
+            }),
+            ...(legacy ? { typeDist: typePath } : { typeDistFile: typePath }),
+          };
+          const result = await generateBundle({
+            bundleKey: 'main',
+            bundleDefinition,
+            config: config({ [name]: folder }),
+            locales: ['en'],
+            cwd: root(),
+          });
+          const preparedWarning =
+            "Warning: Bundle 'main': 'typeDist' is deprecated and will be removed in the next major version. Please rename to 'typeDistFile' in your .lingo-tracker.json config.";
+          const ordinary = [
+            "Collection 'deleted' not found in config",
+            ...(status === 'skipped' ? ["Bundle 'main' for locale 'en' is empty"] : []),
+          ];
+          const outcomeWarning =
+            status === 'skipped'
+              ? ["Type generation skipped for 'main': bundle is empty"]
+              : status === 'failed'
+                ? [
+                    "Type generation failed for 'main': typeDistFile must end with a .ts extension (e.g. './src/types/tokens.ts'), but got: types/invalid.txt",
+                  ]
+                : [];
+          expect(result.findings.types.status).toBe(status === 'not-configured' ? 'none' : status);
+          expect(result.findings.messages).toEqual([
+            ...ordinary,
+            ...(legacy ? [preparedWarning] : []),
+            ...outcomeWarning,
+          ]);
+          expect(result.findings.byOrigin).toEqual({
+            generation: ordinary,
+            config: legacy ? [preparedWarning] : [],
+            type: outcomeWarning,
+          });
+        }
+      }
+    });
+
+    it('writes types and reports the generated file and key count when configured', async () => {
+      const common = seed('common', { 'buttons.ok': { source: 'OK' }, 'buttons.cancel': { source: 'Cancel' } });
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ typeDistFile: 'types/main.ts' }),
+        config: config({ common }),
+        locales: ['en'],
+        cwd: root(),
+      });
+
+      expect(result.findings.types.status).toBe('written');
+      expect(result.findings.types).toMatchObject({ status: 'written', keysCount: 2 });
+      expect(result.findings.types).toMatchObject({ status: 'written', path: 'types/main.ts' });
+      expect(existsSync(join(root(), 'types/main.ts'))).toBe(true);
+    });
+
+    it('does not run type generation when no type output is configured', async () => {
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition(),
+        config: config({ common }),
+        locales: ['en'],
+        cwd: root(),
+      });
+
+      expect(result.findings.types.status).toBe('none');
+    });
+
+    it('supports deprecated typeDist and returns its deprecation warning', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      const legacy = { ...definition(), typeDist: 'types/legacy.ts' } as unknown as BundleDefinition;
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: legacy,
+        config: config({ common }),
+        locales: ['en'],
+        cwd: root(),
+      });
+
+      expect(result.findings.types.status).toBe('written');
+      expect(existsSync(join(root(), 'types/legacy.ts'))).toBe(true);
+      expect(result.findings.byOrigin.config[0]).toContain("'typeDist' is deprecated");
+      expect(generationWarnings(result)).toEqual([]);
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('uses typeDistFile without warning when current and deprecated keys are both present', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      const withBoth = {
+        ...definition({ typeDistFile: 'types/current.ts' }),
+        typeDist: 'types/legacy.ts',
+      } as unknown as BundleDefinition;
+      await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: withBoth,
+        config: config({ common }),
+        locales: ['en'],
+        cwd: root(),
+      });
+
+      expect(existsSync(join(root(), 'types/current.ts'))).toBe(true);
+      expect(existsSync(join(root(), 'types/legacy.ts'))).toBe(false);
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('passes tokenConstantName to the generated file', async () => {
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ typeDistFile: 'types/main.ts' }),
+        config: config({ common }),
+        locales: ['en'],
+        tokenConstantName: 'CUSTOM_TOKENS',
+        cwd: root(),
+      });
+
+      expect(readFileSync(join(root(), 'types/main.ts'), 'utf8')).toContain('export const CUSTOM_TOKENS');
+    });
+
+    it('describes thrown type generation errors from the structured outcome', async () => {
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      writeFileSync(join(root(), 'blocked'), 'not a directory');
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ typeDistFile: 'blocked/tokens.ts' }),
+        config: config({ common }),
+        locales: ['en'],
+        cwd: root(),
+      });
+
+      expect(result.findings.types).toMatchObject({ status: 'failed' });
+      expect(result.outcome).toBe('failed');
+      expect(generationWarnings(result)).toEqual([]);
+      expect(result.findings.byOrigin.type[0]).toMatch(/^Type generation failed for 'main': /);
+    });
+
+    it('describes a rejected type file path as a failed outcome', async () => {
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ typeDistFile: 'types/main.txt' }),
+        config: config({ common }),
+        locales: ['en'],
+        cwd: root(),
+      });
+      expect(result.findings.types).toMatchObject({
+        status: 'failed',
+        reason: expect.stringContaining('.ts extension'),
+      });
+      expect(result.outcome).toBe('failed');
+      expect(generationWarnings(result)).toEqual([]);
+      expect(result.findings.byOrigin.type[0]).toMatch(/^Type generation failed for 'main': /);
+      expect(result.writtenFiles).toEqual(['dist/bundles/en.json']);
+    });
+
+    it('writes JSON and reports a failed type outcome for an invalid saved constant name', async () => {
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ typeDistFile: 'types/main.ts', tokenConstantName: '1bad' }),
+        config: config({ common }),
+        locales: ['en'],
+        cwd: root(),
+      });
+      expect(result.writtenFiles).toEqual(['dist/bundles/en.json']);
+      expect(result.findings.types).toMatchObject({
+        status: 'failed',
+        reason: expect.stringContaining('Invalid tokenConstantName'),
+      });
+      expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ welcome: 'Welcome' });
+    });
+
+    it('reports an empty type key set as a skipped outcome', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const empty = join(root(), 'empty');
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ typeDistFile: 'types/main.ts' }),
+        config: config({ empty }, { locales: [] }),
+        cwd: root(),
+      });
+
+      expect(result.findings.types).toEqual({ status: 'skipped', reason: 'bundle is empty' });
+      expect(generationWarnings(result)).toEqual([]);
+      expect(result.findings.byOrigin.type[0]).toBe("Type generation skipped for 'main': bundle is empty");
+      expect(existsSync(join(root(), 'types/main.ts'))).toBe(false);
+    });
+
+    it.each([
+      {
+        name: 'CLI parameter over bundle and global config',
+        parameter: 'camelCase' as const,
+        bundle: 'upperCase' as const,
+        global: 'upperCase' as const,
+        expected: 'buttons: {',
+      },
+      {
+        name: 'bundle config over global config',
+        parameter: undefined,
+        bundle: 'camelCase' as const,
+        global: 'upperCase' as const,
+        expected: 'buttons: {',
+      },
+      {
+        name: 'global config when no higher override exists',
+        parameter: undefined,
+        bundle: undefined,
+        global: 'camelCase' as const,
+        expected: 'buttons: {',
+      },
+      {
+        name: 'upperCase by default',
+        parameter: undefined,
+        bundle: undefined,
+        global: undefined,
+        expected: 'BUTTONS: {',
+      },
+    ])('uses $name for token casing', async ({ parameter, bundle, global, expected }) => {
+      const common = seed('common', { 'buttons.ok': { source: 'OK' } });
+      await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ typeDistFile: 'types/main.ts', tokenCasing: bundle }),
+        config: config({ common }, { tokenCasing: global }),
+        locales: ['en'],
+        tokenCasing: parameter,
+        cwd: root(),
+      });
+
+      expect(readFileSync(join(root(), 'types/main.ts'), 'utf8')).toContain(expected);
+    });
+  });
+
+  describe('progress and key counts', () => {
+    it('emits ordered 1-based progress events with configured output paths', async () => {
+      const common = seed('common', {
+        welcome: { source: 'Welcome', translations: { fr: 'Bienvenue' } },
+      });
+      const events: BundleProgressEvent[] = [];
+      const bundleDefinition = definition({ bundleName: 'main.{locale}' });
+      await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition,
+        config: config({ common }),
+        locales: ['en', 'fr'],
+        onProgress: (event) => events.push(event),
+        cwd: root(),
+      });
+
+      expect(events).toEqual([
+        { locale: 'en', index: 1, total: 2, file: 'dist/bundles/main.en.json' },
+        { locale: 'fr', index: 2, total: 2, file: 'dist/bundles/main.fr.json' },
+      ]);
+    });
+
+    it('counts the debug locale in progress and emits it last', async () => {
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      const events: BundleProgressEvent[] = [];
+      const bundleDefinition = definition();
+      await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition,
+        config: config({ common }),
+        locales: ['en'],
+        debugKeysLocale: '99',
+        onProgress: (event) => events.push(event),
+        cwd: root(),
+      });
+
+      expect(events).toEqual([
+        { locale: 'en', index: 1, total: 2, file: 'dist/bundles/en.json' },
+        { locale: '99', index: 2, total: 2, file: 'dist/bundles/99.json' },
+      ]);
+    });
+
+    it('emits progress for a locale that turns out empty', async () => {
+      const events: BundleProgressEvent[] = [];
+      await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition(),
+        config: config({}),
+        locales: ['en'],
+        onProgress: (event) => events.push(event),
+        cwd: root(),
+      });
+
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({ locale: 'en', index: 1, total: 1 });
+    });
+
+    it('reports key counts for each processed locale', async () => {
+      const common = seed('common', {
+        one: { source: 'One', translations: { fr: 'Un' } },
+        two: { source: 'Two', translations: { fr: 'Deux' } },
+      });
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition(),
+        config: config({ common }),
+        locales: ['en', 'fr'],
+        cwd: root(),
+      });
+
+      expect(result.keysPerLocale).toEqual({ en: 2, fr: 2 });
+    });
+
+    it('omits empty locales from key counts and includes the debug locale', async () => {
+      const common = seed('common', { one: { source: 'One' } });
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition(),
+        config: config({ common }),
+        locales: ['en', 'fr'],
+        debugKeysLocale: '99',
+        cwd: root(),
+      });
+
+      expect(result.keysPerLocale).toEqual({ en: 1, '99': 1 });
+    });
+  });
+
+  describe('debugKeysLocale', () => {
+    it('lists locale, debug and type files in write order', async () => {
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ typeDistFile: 'types/main.ts' }),
+        config: config({ common }),
+        locales: ['en'],
+        debugKeysLocale: '99',
+        cwd: root(),
+      });
+
+      expect(result.writtenFiles).toEqual(['dist/bundles/en.json', 'dist/bundles/99.json', 'types/main.ts']);
+      expect(result.findings.types).toEqual({ status: 'written', path: 'types/main.ts', keysCount: 1 });
+    });
+
+    it('emits one extra file whose values equal their keys', async () => {
+      const common = seed('common', {
+        'buttons.ok': { source: 'OK' },
+        'buttons.cancel': { source: 'Cancel' },
+      });
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition(),
+        config: config({ common }),
+        locales: ['en'],
+        debugKeysLocale: '99',
+        cwd: root(),
+      });
+
+      expect(result.filesGenerated).toBe(2);
+      expect(result.writtenFiles).toEqual(['dist/bundles/en.json', 'dist/bundles/99.json']);
+      expect(readJson(join(root(), 'dist/bundles/99.json'))).toEqual({
+        buttons: { ok: 'buttons.ok', cancel: 'buttons.cancel' },
+      });
+    });
+
+    it('uses prefixed bundled keys as debug values', async () => {
+      const common = seed('common', { 'buttons.ok': { source: 'OK' } });
+      await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({
+          collections: [{ name: 'common', entriesSelectionRules: 'All', bundledKeyPrefix: 'shared' }],
+        }),
+        config: config({ common }),
+        locales: [],
+        debugKeysLocale: 'debug',
+        cwd: root(),
+      });
+
+      expect(readJson(join(root(), 'dist/bundles/debug.json'))).toEqual({
+        shared: { buttons: { ok: 'shared.buttons.ok' } },
+      });
+    });
+
+    it('uses a custom locale code in the filename', async () => {
+      const common = seed('common', { welcome: { source: 'Welcome' } });
+      await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ bundleName: 'main.{locale}' }),
+        config: config({ common }),
+        locales: [],
+        debugKeysLocale: 'keys',
+        cwd: root(),
+      });
+
+      expect(existsSync(join(root(), 'dist/bundles/main.keys.json'))).toBe(true);
+    });
+
+    it('warns and writes no debug file for an empty bundle', async () => {
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition(),
+        config: config({}),
+        locales: [],
+        debugKeysLocale: '99',
+        cwd: root(),
+      });
+
+      expect(generationWarnings(result)).toContain("Bundle 'main' debug bundle is empty");
+      expect(result.filesGenerated).toBe(0);
+      expect(existsSync(join(root(), 'dist/bundles/99.json'))).toBe(false);
+    });
+
+    it('reports base-selection ICU warnings during the debug-only pass', async () => {
+      const common = seed('common', { greeting: { source: 'Hello {name' } });
+      const result = await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition(),
+        config: config({ common }),
+        locales: [],
+        debugKeysLocale: '99',
+        transformICUToTransloco: true,
+        cwd: root(),
+      });
+
+      expect(readJson(join(root(), 'dist/bundles/99.json'))).toEqual({ greeting: 'greeting' });
+      expect(generationWarnings(result).some((warning) => warning.includes("Key 'greeting'"))).toBe(true);
+    });
+  });
+
+  describe('transformICUToTransloco precedence', () => {
+    it.each([
+      { name: 'true parameter', parameter: true, bundle: undefined, global: undefined, expected: 'Hello {{ name }}' },
+      { name: 'false parameter', parameter: false, bundle: undefined, global: undefined, expected: 'Hello {name}' },
+      { name: 'default', parameter: undefined, bundle: undefined, global: undefined, expected: 'Hello {{ name }}' },
+      { name: 'bundle setting', parameter: undefined, bundle: false, global: undefined, expected: 'Hello {name}' },
+      { name: 'global setting', parameter: undefined, bundle: undefined, global: false, expected: 'Hello {name}' },
+      {
+        name: 'parameter over bundle and global',
+        parameter: true,
+        bundle: false,
+        global: false,
+        expected: 'Hello {{ name }}',
+      },
+    ])('uses the $name', async ({ parameter, bundle, global, expected }) => {
+      const common = seed('common', { greeting: { source: 'Hello {name}' } });
+      await generateBundle({
+        bundleKey: 'main',
+        bundleDefinition: definition({ transformICUToTransloco: bundle }),
+        config: config({ common }, { transformICUToTransloco: global }),
+        locales: ['en'],
+        transformICUToTransloco: parameter,
+        cwd: root(),
+      });
+
+      expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ greeting: expected });
+    });
+  });
+
+  describe('branch bodies the bundler cannot rewrite', () => {
+    const UNBUNDLABLE_VALUE = '{count, plural, =1 {{n, number}} other {# items}}';
+    const UNRESOLVABLE_NAME_VALUE = '{a, plural, one {{some text}} other {z}}';
+    const EXPANDED_VALUE =
+      'This will delete {nameExists, select, hasName {{name}} other {this item}} and cannot be undone.';
+    const EXPANDED_OUTPUT =
+      'This will delete {nameExists, select, hasName {{{name}}} other {this item}} and cannot be undone.';
+    const SELECTORDINAL_CASES: readonly { description: string; stored: string; emitted: string }[] = [
+      {
+        description: 'a selectordinal group with its branches intact',
+        stored: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+        emitted: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
+      },
+      {
+        description: 'a bare-argument selectordinal branch body as the triple',
+        stored: '{rank, selectordinal, one {{itemName}} other {#th}}',
+        emitted: '{rank, selectordinal, one {{{itemName}}} other {#th}}',
+      },
+    ];
+    const SAFE_VALUES: readonly string[] = [
+      'x {{name} extra}',
+      'x {pre {name}}',
+      'x {{b, plural, one {p} other {q}}}',
+      '{a, plural, one {{b, plural, one {p} other {q}}} other {z}}',
+    ];
 
     function branchBodyWarnings(warnings: readonly string[]): string[] {
       return warnings.filter((warning) => warning.includes('cannot be carried to a Transloco runtime'));
     }
 
-    it('should generate bundle for all locales by default', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: 'main.{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'welcome', value: 'Welcome', tags: undefined },
-      ]);
-
-      const params: GenerateBundleParams = {
+    async function bundleValue(
+      key: string,
+      source: string,
+      options: { translations?: Record<string, string>; locales?: string[]; transform?: boolean } = {},
+    ): Promise<Awaited<ReturnType<typeof generateBundle>>> {
+      const common = seed('common', {
+        [key]: { source, ...(options.translations && { translations: options.translations }) },
+      });
+      return generateBundle({
         bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-      };
+        bundleDefinition: definition(),
+        config: config({ common }, { locales: options.locales ?? ['en'] }),
+        locales: options.locales ?? ['en'],
+        transformICUToTransloco: options.transform ?? true,
+        cwd: root(),
+      });
+    }
 
-      const result = await generateBundle(params);
+    it('warns once for a format-carrying branch body', async () => {
+      const result = await bundleValue('itemCount', UNBUNDLABLE_VALUE);
+      const reported = branchBodyWarnings(generationWarnings(result));
 
-      expect(result.filesGenerated).toBe(3); // en, fr, es
-      expect(result.localesProcessed).toEqual(['en', 'fr', 'es']);
-      expect(result.warnings).toHaveLength(0);
+      expect(reported).toHaveLength(1);
+      expect(reported[0]).toContain("Key 'itemCount':");
+      expect(reported[0]).toContain('does not render as written');
+      expect(reported[0]).toContain('an argument carrying a format');
+      expect(reported[0]).toContain(`value: ${UNBUNDLABLE_VALUE}`);
+      expect(reported[0]).not.toContain('malformed');
     });
 
-    it('should generate bundle for specific locales when provided', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
+    it('warns and emits malformed selector/body structure unchanged, including nested values', async () => {
+      for (const malformed of [
+        '{n, plural, one x other {y}}',
+        '{n, select, a {x} {y} other {z}}',
+        '{n, plural, other {x}{y}}',
+        '{n, plural, }',
+      ]) {
+        for (const value of [malformed, `{outer, select, other {${malformed}}}`]) {
+          const result = await bundleValue('choice', value);
+          expect(generationWarnings(result)).toContain(
+            "Key 'choice': value has malformed ICU syntax and was included as-is",
+          );
+          expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ choice: value });
+        }
+      }
+    });
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'welcome', value: 'Welcome' }]);
+    it('warns for a double-brace branch run that is not a parameter name', async () => {
+      const result = await bundleValue('choice', UNRESOLVABLE_NAME_VALUE);
+      const reported = branchBodyWarnings(generationWarnings(result));
 
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
+      expect(reported).toHaveLength(1);
+      expect(reported[0]).toContain("Key 'choice':");
+      expect(reported[0]).toContain('a run that is no parameter name');
+      expect(reported[0]).toContain(`value: ${UNRESOLVABLE_NAME_VALUE}`);
+      expect(generationWarnings(result)).toContain(
+        "Key 'choice': value has malformed ICU syntax and was included as-is",
+      );
+      expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ choice: UNRESOLVABLE_NAME_VALUE });
+    });
+
+    it('warns once per key per locale and once across each locale', async () => {
+      const result = await bundleValue('itemCount', UNBUNDLABLE_VALUE, {
+        translations: { fr: UNBUNDLABLE_VALUE },
         locales: ['en', 'fr'],
-      };
+      });
 
-      const result = await generateBundle(params);
-
-      expect(result.filesGenerated).toBe(2);
-      expect(result.localesProcessed).toEqual(['en', 'fr']);
+      expect(branchBodyWarnings(generationWarnings(result))).toHaveLength(2);
     });
 
-    it('should warn about empty bundles', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: 'main.{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
+    it('bundles the emitted value and still generates the file', async () => {
+      const result = await bundleValue('itemCount', UNBUNDLABLE_VALUE);
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-      };
-
-      const result = await generateBundle(params);
-
-      expect(result.filesGenerated).toBe(0);
-      expect(result.warnings).toContain("Bundle 'main' for locale 'en' is empty");
-      expect(result.warnings).toContain("Bundle 'main' for locale 'fr' is empty");
-      expect(result.warnings).toContain("Bundle 'main' for locale 'es' is empty");
+      expect(result.filesGenerated).toBe(1);
+      expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ itemCount: UNBUNDLABLE_VALUE });
     });
 
-    it('should process all collections when collections is "All"', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      const loadSpy = vi
-        .spyOn(resourceLoader, 'loadCollectionResources')
-        .mockReturnValue([{ key: 'test', value: 'Test' }]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      expect(loadSpy).toHaveBeenCalledWith('/translations/default', 'en', 'en', expect.any(Map), undefined);
-      expect(loadSpy).toHaveBeenCalledWith('/translations/admin', 'en', 'en', expect.any(Map), undefined);
+    it('does not warn when ICU transformation is disabled', async () => {
+      const result = await bundleValue('itemCount', UNBUNDLABLE_VALUE, { transform: false });
+      expect(branchBodyWarnings(generationWarnings(result))).toHaveLength(0);
     });
 
-    it('should process specific collections with selection rules', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: [
-          {
-            name: 'default',
-            entriesSelectionRules: [{ matchingPattern: 'apps.*' }],
-          },
-        ],
-      };
+    it('bundles a bare-argument branch body as the triple', async () => {
+      const result = await bundleValue('deleteConfirm', EXPANDED_VALUE);
 
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'apps.welcome', value: 'Welcome' },
-        { key: 'other.test', value: 'Test' },
-      ]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-      const writtenData = JSON.parse(writeCall[1] as string);
-
-      expect(writtenData).toHaveProperty('apps');
-      expect(writtenData).not.toHaveProperty('other');
+      expect(branchBodyWarnings(generationWarnings(result))).toHaveLength(0);
+      expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ deleteConfirm: EXPANDED_OUTPUT });
     });
 
-    it('should warn about non-existent collections', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: [
-          {
-            name: 'nonexistent',
-            entriesSelectionRules: 'All',
-          },
-        ],
-      };
+    for (const { description, stored, emitted } of SELECTORDINAL_CASES) {
+      it(`bundles ${description}`, async () => {
+        const result = await bundleValue('rank', stored);
 
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      const result = await generateBundle(params);
-
-      expect(result.warnings).toContain("Collection 'nonexistent' not found in config");
-    });
-
-    it('should apply bundledKeyPrefix', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: [
-          {
-            name: 'default',
-            bundledKeyPrefix: 'common',
-            entriesSelectionRules: 'All',
-          },
-        ],
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-      const writtenData = JSON.parse(writeCall[1] as string);
-
-      expect(writtenData).toHaveProperty('common');
-      expect(writtenData.common).toHaveProperty('buttons');
-      expect(writtenData.common.buttons.ok).toBe('OK');
-    });
-
-    it('should apply merge strategy "merge" (first wins)', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: [
-          {
-            name: 'default',
-            entriesSelectionRules: 'All',
-            mergeStrategy: 'merge',
-          },
-          {
-            name: 'admin',
-            entriesSelectionRules: 'All',
-            mergeStrategy: 'merge',
-          },
-        ],
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockImplementation((folder) => {
-        if (folder === '/translations/default') {
-          return [{ key: 'shared.title', value: 'Default Title' }];
-        }
-        if (folder === '/translations/admin') {
-          return [{ key: 'shared.title', value: 'Admin Title' }];
-        }
-        return [];
+        expect(branchBodyWarnings(generationWarnings(result))).toHaveLength(0);
+        expect(readJson(join(root(), 'dist/bundles/en.json'))).toEqual({ rank: emitted });
       });
+    }
 
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-      const writtenData = JSON.parse(writeCall[1] as string);
-
-      expect(writtenData.shared.title).toBe('Default Title');
-    });
-
-    it('should apply merge strategy "override"', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: [
-          {
-            name: 'default',
-            entriesSelectionRules: 'All',
-          },
-          {
-            name: 'admin',
-            entriesSelectionRules: 'All',
-            mergeStrategy: 'override',
-          },
-        ],
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockImplementation((folder) => {
-        if (folder === '/translations/default') {
-          return [{ key: 'shared.title', value: 'Default Title' }];
-        }
-        if (folder === '/translations/admin') {
-          return [{ key: 'shared.title', value: 'Admin Title' }];
-        }
-        return [];
+    for (const value of SAFE_VALUES) {
+      it(`does not warn for ${value}`, async () => {
+        const result = await bundleValue('safe', value);
+        expect(branchBodyWarnings(generationWarnings(result))).toHaveLength(0);
       });
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-      const writtenData = JSON.parse(writeCall[1] as string);
-
-      expect(writtenData.shared.title).toBe('Admin Title');
-    });
-
-    it('should filter by tags with "Any" operator', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: [
-          {
-            name: 'default',
-            entriesSelectionRules: [
-              {
-                matchingPattern: '*',
-                matchingTags: ['ui', 'critical'],
-                matchingTagOperator: 'Any',
-              },
-            ],
-          },
-        ],
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'button.ok', value: 'OK', tags: ['ui'] },
-        { key: 'error.critical', value: 'Error', tags: ['critical'] },
-        { key: 'internal.log', value: 'Log', tags: ['debug'] },
-      ]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-      const writtenData = JSON.parse(writeCall[1] as string);
-
-      expect(writtenData.button.ok).toBe('OK');
-      expect(writtenData.error.critical).toBe('Error');
-      expect(writtenData.internal).toBeUndefined();
-    });
-
-    it('should filter by tags with "All" operator', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: [
-          {
-            name: 'default',
-            entriesSelectionRules: [
-              {
-                matchingPattern: '*',
-                matchingTags: ['ui', 'critical'],
-                matchingTagOperator: 'All',
-              },
-            ],
-          },
-        ],
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-        { key: 'button.ok', value: 'OK', tags: ['ui'] },
-        { key: 'error.critical', value: 'Error', tags: ['ui', 'critical'] },
-        { key: 'internal.log', value: 'Log', tags: ['debug'] },
-      ]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-      const writtenData = JSON.parse(writeCall[1] as string);
-
-      expect(writtenData.button).toBeUndefined();
-      expect(writtenData.error.critical).toBe('Error');
-      expect(writtenData.internal).toBeUndefined();
-    });
-
-    it('should handle bundle naming with {locale} placeholder in filename', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: 'main.{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        path.join('/dist/bundles', 'main.en.json'),
-        expect.any(String),
-        'utf8',
-      );
-    });
-
-    it('should handle bundle naming with {locale} placeholder in subdirectory', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}/main',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['fr'],
-      };
-
-      await generateBundle(params);
-
-      expect(fs.writeFileSync).toHaveBeenCalledWith(
-        path.join('/dist/bundles', 'fr', 'main.json'),
-        expect.any(String),
-        'utf8',
-      );
-    });
-
-    it('should create output directory if it does not exist', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      expect(fs.mkdirSync).toHaveBeenCalledWith(path.join('/dist', 'bundles'), {
-        recursive: true,
-      });
-    });
-
-    it('should write properly formatted JSON', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'apps.welcome', value: 'Welcome' }]);
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-      const writtenJson = writeCall[1] as string;
-
-      // Should be formatted with 2-space indentation
-      expect(writtenJson).toContain('{\n  "apps": {\n    "welcome": "Welcome"');
-      // Should be valid JSON
-      expect(() => JSON.parse(writtenJson)).not.toThrow();
-    });
-
-    it('should invoke type generation when typeDistFile is configured', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-        typeDistFile: 'src/generated/types.ts',
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-      vi.mocked(generateBundleTypes).mockResolvedValue({
-        bundleKey: 'main',
-        typeDistFile: 'src/generated/types.ts',
-        keysCount: 1,
-        fileGenerated: true,
-      });
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      expect(generateBundleTypes).toHaveBeenCalledWith('main', mockConfig, 'upperCase', undefined, bundleDefinition);
-    });
-
-    it('should not invoke type generation when typeDistFile is missing', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-      vi.mocked(generateBundleTypes).mockClear();
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      expect(generateBundleTypes).not.toHaveBeenCalled();
-    });
-
-    it('should invoke type generation when the deprecated typeDist key is present', async () => {
-      const bundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All' as const,
-        // Simulating a user config that still uses the old key name
-        ...({ typeDist: 'src/generated/types.ts' } as unknown as object),
-      } as BundleDefinition;
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-      vi.mocked(generateBundleTypes).mockResolvedValue({
-        bundleKey: 'main',
-        typeDistFile: 'src/generated/types.ts',
-        keysCount: 1,
-        fileGenerated: true,
-      });
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      expect(generateBundleTypes).toHaveBeenCalledWith('main', mockConfig, 'upperCase', undefined, bundleDefinition);
-    });
-
-    it('should use typeDistFile and not emit a deprecation warning when both typeDist and typeDistFile are present', async () => {
-      const bundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All' as const,
-        typeDistFile: 'src/generated/types.ts',
-        // Simulating a partially-migrated config that still has the old key alongside the new one
-        ...({ typeDist: 'src/generated/old-types.ts' } as unknown as object),
-      } as BundleDefinition;
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-      vi.mocked(generateBundleTypes).mockResolvedValue({
-        bundleKey: 'main',
-        typeDistFile: 'src/generated/types.ts',
-        keysCount: 1,
-        fileGenerated: true,
-      });
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      await generateBundle(params);
-
-      // generateBundleTypes is mocked here so no real deprecation logic runs.
-      // The no-warn behaviour for the both-keys-present scenario is verified in generate-types.spec.ts.
-      expect(generateBundleTypes).toHaveBeenCalledWith('main', mockConfig, 'upperCase', undefined, bundleDefinition);
-    });
-
-    it('should pass tokenConstantName through to generateBundleTypes', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-        typeDistFile: 'src/generated/types.ts',
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-      vi.mocked(generateBundleTypes).mockResolvedValue({
-        bundleKey: 'main',
-        typeDistFile: 'src/generated/types.ts',
-        keysCount: 1,
-        fileGenerated: true,
-      });
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-        tokenConstantName: 'CUSTOM_TOKENS',
-      };
-
-      await generateBundle(params);
-
-      expect(vi.mocked(generateBundleTypes)).toHaveBeenCalledWith(
-        'main',
-        mockConfig,
-        'upperCase',
-        'CUSTOM_TOKENS',
-        bundleDefinition,
-      );
-    });
-
-    it('should capture type generation errors in warnings', async () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-        typeDistFile: 'src/generated/types.ts',
-      };
-
-      vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-      vi.mocked(generateBundleTypes).mockRejectedValue(new Error('Type gen failed'));
-
-      const params: GenerateBundleParams = {
-        bundleKey: 'main',
-        bundleDefinition,
-        config: mockConfig,
-        locales: ['en'],
-      };
-
-      const result = await generateBundle(params);
-
-      expect(result.warnings).toContain("Type generation failed for 'main': Type gen failed");
-    });
-
-    describe('tokenCasing precedence', () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-        typeDistFile: 'src/generated/types.ts',
-      };
-
-      beforeEach(() => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'test', value: 'Test' }]);
-        vi.mocked(generateBundleTypes).mockResolvedValue({
-          bundleKey: 'main',
-          typeDistFile: 'src/generated/types.ts',
-          keysCount: 1,
-          fileGenerated: true,
-        });
-      });
-
-      it('should use CLI tokenCasing override when provided', async () => {
-        const params: GenerateBundleParams = {
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en'],
-          tokenCasing: 'camelCase',
-        };
-
-        await generateBundle(params);
-
-        expect(vi.mocked(generateBundleTypes)).toHaveBeenCalledWith(
-          'main',
-          mockConfig,
-          'camelCase',
-          undefined,
-          bundleDefinition,
-        );
-      });
-
-      it('should use bundle-level tokenCasing when no CLI override is given', async () => {
-        const bundleDefWithCasing: BundleDefinition = {
-          ...bundleDefinition,
-          tokenCasing: 'camelCase',
-        };
-
-        const params: GenerateBundleParams = {
-          bundleKey: 'main',
-          bundleDefinition: bundleDefWithCasing,
-          config: mockConfig,
-          locales: ['en'],
-        };
-
-        await generateBundle(params);
-
-        expect(vi.mocked(generateBundleTypes)).toHaveBeenCalledWith(
-          'main',
-          mockConfig,
-          'camelCase',
-          undefined,
-          bundleDefWithCasing,
-        );
-      });
-
-      it('should use global config tokenCasing when no CLI or bundle-level override is given', async () => {
-        const configWithCasing: LingoTrackerConfig = {
-          ...mockConfig,
-          tokenCasing: 'camelCase',
-        };
-
-        const params: GenerateBundleParams = {
-          bundleKey: 'main',
-          bundleDefinition,
-          config: configWithCasing,
-          locales: ['en'],
-        };
-
-        await generateBundle(params);
-
-        expect(vi.mocked(generateBundleTypes)).toHaveBeenCalledWith(
-          'main',
-          configWithCasing,
-          'camelCase',
-          undefined,
-          bundleDefinition,
-        );
-      });
-    });
-
-    describe('onProgress', () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: 'main.{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      it('emits one event per locale, in order, with a 1-based index and the output file', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
-        const onProgress = vi.fn();
-
-        await generateBundle({ bundleKey: 'main', bundleDefinition, config: mockConfig, onProgress });
-
-        expect(onProgress.mock.calls.map((call) => call[0])).toEqual([
-          { locale: 'en', index: 1, total: 3, file: path.join('/dist/bundles', 'main.en.json') },
-          { locale: 'fr', index: 2, total: 3, file: path.join('/dist/bundles', 'main.fr.json') },
-          { locale: 'es', index: 3, total: 3, file: path.join('/dist/bundles', 'main.es.json') },
-        ]);
-      });
-
-      it('counts the debug-keys locale in total and emits it last', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
-        const onProgress = vi.fn();
-
-        await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en', 'fr'],
-          debugKeysLocale: '99',
-          onProgress,
-        });
-
-        expect(onProgress).toHaveBeenCalledTimes(3);
-        expect(onProgress.mock.calls.map((call) => call[0].total)).toEqual([3, 3, 3]);
-        expect(onProgress).toHaveBeenLastCalledWith({
-          locale: '99',
-          index: 3,
-          total: 3,
-          file: path.join('/dist/bundles', 'main.99.json'),
-        });
-      });
-
-      it('still emits for a locale whose bundle turns out empty', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([]);
-        const onProgress = vi.fn();
-
-        await generateBundle({ bundleKey: 'main', bundleDefinition, config: mockConfig, locales: ['en'], onProgress });
-
-        expect(onProgress).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe('keysPerLocale', () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: 'main.{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      it('reports the number of keys written for each processed locale', async () => {
-        // Two collections ('default' and 'admin') each return the same two keys,
-        // so the merged bundle holds two keys per locale.
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'buttons.ok', value: 'OK' },
-          { key: 'buttons.cancel', value: 'Cancel' },
-        ]);
-
-        const result = await generateBundle({ bundleKey: 'main', bundleDefinition, config: mockConfig });
-
-        expect(result.keysPerLocale).toEqual({ en: 2, fr: 2, es: 2 });
-      });
-
-      it('omits empty locales and includes the debug-keys locale', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockImplementation((_folder, locale) =>
-          locale === 'fr' ? [] : [{ key: 'buttons.ok', value: 'OK' }],
-        );
-
-        const result = await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en', 'fr'],
-          debugKeysLocale: '99',
-        });
-
-        expect(result.keysPerLocale).toEqual({ en: 1, '99': 1 });
-        expect(result.keysPerLocale).not.toHaveProperty('fr');
-      });
-    });
-
-    describe('debugKeysLocale', () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: 'main.{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      it('emits one extra file in addition to normal locale files', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
-
-        const result = await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en'],
-          debugKeysLocale: '99',
-        });
-
-        // 1 real locale + 1 debug
-        expect(result.filesGenerated).toBe(2);
-        expect(result.localesProcessed).toEqual(['en', '99']);
-      });
-
-      it('writes debug file where every value equals its key', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'buttons.ok', value: 'OK' },
-          { key: 'header.title', value: 'Title' },
-        ]);
-
-        await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en'],
-          debugKeysLocale: '99',
-        });
-
-        const debugWriteCall = vi
-          .mocked(fs.writeFileSync)
-          .mock.calls.find((call) => (call[0] as string).includes('99'));
-        expect(debugWriteCall).toBeDefined();
-        const writtenData = JSON.parse(debugWriteCall?.[1] as string);
-        expect(writtenData.buttons.ok).toBe('buttons.ok');
-        expect(writtenData.header.title).toBe('header.title');
-      });
-
-      it('uses the bundledKeyPrefix in the value (post-prefix key)', async () => {
-        const bundleDefWithPrefix: BundleDefinition = {
-          ...bundleDefinition,
-          collections: [{ name: 'default', bundledKeyPrefix: 'app', entriesSelectionRules: 'All' }],
-        };
-
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'buttons.ok', value: 'OK' }]);
-
-        await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition: bundleDefWithPrefix,
-          config: mockConfig,
-          locales: ['en'],
-          debugKeysLocale: '99',
-        });
-
-        const debugWriteCall = vi
-          .mocked(fs.writeFileSync)
-          .mock.calls.find((call) => (call[0] as string).includes('99'));
-        const writtenData = JSON.parse(debugWriteCall?.[1] as string);
-        // Value should reflect the prefixed key
-        expect(writtenData.app.buttons.ok).toBe('app.buttons.ok');
-      });
-
-      it('uses a custom locale code in the output filename', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'msg', value: 'Hello' }]);
-
-        await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en'],
-          debugKeysLocale: 'keys',
-        });
-
-        expect(fs.writeFileSync).toHaveBeenCalledWith(
-          path.join('/dist/bundles', 'main.keys.json'),
-          expect.any(String),
-          'utf8',
-        );
-      });
-
-      it('emits a warning and no debug file when the bundle is empty', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([]);
-
-        const result = await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en'],
-          debugKeysLocale: '99',
-        });
-
-        expect(result.warnings).toContain("Bundle 'main' debug bundle is empty");
-        expect(vi.mocked(fs.writeFileSync).mock.calls.some((c) => (c[0] as string).includes('99'))).toBe(false);
-      });
-
-      it('does not call icuToTransloco for the debug pass', async () => {
-        const icuSpy = vi.spyOn(icuToTranslocoModule, 'icuToTransloco');
-
-        const singleCollectionConfig: LingoTrackerConfig = {
-          ...mockConfig,
-          collections: {
-            default: { translationsFolder: '/translations/default' },
-          },
-        };
-
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'greeting', value: 'Hello {name}' },
-        ]);
-
-        await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: singleCollectionConfig,
-          locales: ['en'],
-          transformICUToTransloco: true,
-          debugKeysLocale: '99',
-        });
-
-        // 1 call for the real 'en' locale pass (1 collection × 1 resource); 0 for the debug pass
-        expect(icuSpy).toHaveBeenCalledTimes(1);
-      });
-    });
-
-    describe('transformICUToTransloco', () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      beforeEach(() => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'greeting', value: 'Hello {name}' },
-        ]);
-        vi.spyOn(icuToTranslocoModule, 'icuToTransloco').mockImplementation((value) =>
-          value.replace(/\{(\w+)\}/g, '{{ $1 }}'),
-        );
-      });
-
-      it('should transform ICU values to Transloco format when transformICUToTransloco is true', async () => {
-        const params: GenerateBundleParams = {
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en'],
-          transformICUToTransloco: true,
-        };
-
-        await generateBundle(params);
-
-        expect(icuToTranslocoModule.icuToTransloco).toHaveBeenCalledWith('Hello {name}');
-        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-        const writtenData = JSON.parse(writeCall[1] as string);
-        expect(writtenData.greeting).toBe('Hello {{ name }}');
-      });
-
-      it('should preserve ICU values when transformICUToTransloco is false', async () => {
-        const params: GenerateBundleParams = {
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en'],
-          transformICUToTransloco: false,
-        };
-
-        await generateBundle(params);
-
-        expect(icuToTranslocoModule.icuToTransloco).not.toHaveBeenCalled();
-        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-        const writtenData = JSON.parse(writeCall[1] as string);
-        expect(writtenData.greeting).toBe('Hello {name}');
-      });
-
-      it('should default transformICUToTransloco to true when not specified', async () => {
-        const params: GenerateBundleParams = {
-          bundleKey: 'main',
-          bundleDefinition,
-          config: mockConfig,
-          locales: ['en'],
-          // transformICUToTransloco not set — should default to true
-        };
-
-        await generateBundle(params);
-
-        expect(icuToTranslocoModule.icuToTransloco).toHaveBeenCalledWith('Hello {name}');
-      });
-
-      it('should use bundle-level transformICUToTransloco when no CLI override is given', async () => {
-        const bundleDefWithFlag: BundleDefinition = {
-          ...bundleDefinition,
-          transformICUToTransloco: false,
-        };
-
-        const params: GenerateBundleParams = {
-          bundleKey: 'main',
-          bundleDefinition: bundleDefWithFlag,
-          config: mockConfig,
-          locales: ['en'],
-        };
-
-        await generateBundle(params);
-
-        expect(icuToTranslocoModule.icuToTransloco).not.toHaveBeenCalled();
-      });
-
-      it('should use global config transformICUToTransloco when no CLI or bundle-level override is given', async () => {
-        const configWithFlag: LingoTrackerConfig = {
-          ...mockConfig,
-          transformICUToTransloco: false,
-        };
-
-        const params: GenerateBundleParams = {
-          bundleKey: 'main',
-          bundleDefinition,
-          config: configWithFlag,
-          locales: ['en'],
-        };
-
-        await generateBundle(params);
-
-        expect(icuToTranslocoModule.icuToTransloco).not.toHaveBeenCalled();
-      });
-
-      it('should let CLI override take precedence over bundle and global config', async () => {
-        const bundleDefWithFlag: BundleDefinition = {
-          ...bundleDefinition,
-          transformICUToTransloco: false,
-        };
-        const configWithFlag: LingoTrackerConfig = {
-          ...mockConfig,
-          transformICUToTransloco: false,
-        };
-
-        const params: GenerateBundleParams = {
-          bundleKey: 'main',
-          bundleDefinition: bundleDefWithFlag,
-          config: configWithFlag,
-          locales: ['en'],
-          transformICUToTransloco: true, // CLI override wins
-        };
-
-        await generateBundle(params);
-
-        expect(icuToTranslocoModule.icuToTransloco).toHaveBeenCalledWith('Hello {name}');
-      });
-    });
-
-    describe('branch bodies the bundler cannot rewrite', () => {
-      const bundleDefinition: BundleDefinition = {
-        bundleName: '{locale}',
-        dist: '/dist/bundles',
-        collections: 'All',
-      };
-
-      const singleCollectionConfig: LingoTrackerConfig = {
-        exportFolder: 'dist/export',
-        importFolder: 'dist/import',
-        baseLocale: 'en',
-        locales: ['en', 'fr'],
-        collections: {
-          default: { translationsFolder: '/translations/default' },
-        },
-      };
-
-      /** A branch body that is an argument carrying a format. */
-      const UNBUNDLABLE_VALUE = '{count, plural, =1 {{n, number}} other {# items}}';
-
-      /** A branch body whose double-brace run is not a parameter name. */
-      const UNRESOLVABLE_NAME_VALUE = '{a, plural, one {{some text}} other {z}}';
-
-      /** A branch body that is a bare argument, which the emitter carries as the triple. */
-      const EXPANDED_VALUE =
-        'This will delete {nameExists, select, hasName {{name}} other {this item}} and cannot be undone.';
-      const EXPANDED_OUTPUT =
-        'This will delete {nameExists, select, hasName {{{name}}} other {this item}} and cannot be undone.';
-
-      /**
-       * `selectordinal` groups the emitter must carry the same way it carries `plural` and
-       * `select`: the structure stands, and a bare-argument branch body gains the triple.
-       */
-      const SELECTORDINAL_CASES: readonly { description: string; stored: string; emitted: string }[] = [
-        {
-          description: 'a selectordinal group with its branches intact',
-          stored: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
-          emitted: '{rank, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}',
-        },
-        {
-          description: 'a bare-argument selectordinal branch body as the triple',
-          stored: '{rank, selectordinal, one {{itemName}} other {#th}}',
-          emitted: '{rank, selectordinal, one {{{itemName}}} other {#th}}',
-        },
-      ];
-
-      /** The safe shapes that must never be reported. */
-      const SAFE_VALUES: readonly string[] = [
-        'x {{name} extra}',
-        'x {pre {name}}',
-        'x {{b, plural, one {p} other {q}}}',
-        '{a, plural, one {{b, plural, one {p} other {q}}} other {z}}',
-      ];
-
-      beforeEach(async () => {
-        await useRealEmitter();
-      });
-
-      it('runs the real emitter rather than the suite-level pass-through', () => {
-        // Every assertion about bundled output in this suite holds only while this hook does.
-        // Under the pass-through they would read back their own input and stay green.
-        expect(icuToTranslocoModule.icuToTransloco(EXPANDED_VALUE)).toBe(EXPANDED_OUTPUT);
-      });
-
-      it('warns once for a key whose branch body is an argument carrying a format', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'itemCount', value: UNBUNDLABLE_VALUE },
-        ]);
-
-        const result = await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: singleCollectionConfig,
-          locales: ['en'],
-          transformICUToTransloco: true,
-        });
-
-        const reported = branchBodyWarnings(result.warnings);
-
-        expect(reported).toHaveLength(1);
-        expect(reported[0]).toContain("Key 'itemCount':");
-        expect(reported[0]).toContain('does not render as written');
-        expect(reported[0]).toContain('an argument carrying a format');
-        expect(reported[0]).toContain(`value: ${UNBUNDLABLE_VALUE}`);
-        expect(reported[0]).not.toContain('malformed');
-      });
-
-      it('warns for a branch body whose double-brace run is not a parameter name', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'choice', value: UNRESOLVABLE_NAME_VALUE },
-        ]);
-
-        const result = await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: singleCollectionConfig,
-          locales: ['en'],
-          transformICUToTransloco: true,
-        });
-
-        const reported = branchBodyWarnings(result.warnings);
-
-        expect(reported).toHaveLength(1);
-        expect(reported[0]).toContain("Key 'choice':");
-        expect(reported[0]).toContain('a run that is no parameter name');
-        expect(reported[0]).toContain(`value: ${UNRESOLVABLE_NAME_VALUE}`);
-      });
-
-      it('warns once per locale', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'itemCount', value: UNBUNDLABLE_VALUE },
-        ]);
-
-        const result = await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: singleCollectionConfig,
-          locales: ['en', 'fr'],
-          transformICUToTransloco: true,
-        });
-
-        expect(branchBodyWarnings(result.warnings)).toHaveLength(2);
-      });
-
-      it('bundles the value unchanged and generates the file', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'itemCount', value: UNBUNDLABLE_VALUE },
-        ]);
-
-        const result = await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: singleCollectionConfig,
-          locales: ['en'],
-          transformICUToTransloco: true,
-        });
-
-        expect(result.filesGenerated).toBe(1);
-
-        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-        const writtenData = JSON.parse(writeCall[1] as string);
-
-        expect(writtenData.itemCount).toBe(UNBUNDLABLE_VALUE);
-      });
-
-      it('does not warn when the ICU transformation is off', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'itemCount', value: UNBUNDLABLE_VALUE },
-        ]);
-
-        const result = await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: singleCollectionConfig,
-          locales: ['en'],
-          transformICUToTransloco: false,
-        });
-
-        expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
-      });
-
-      it('bundles a bare-argument branch body as the triple', async () => {
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([
-          { key: 'deleteConfirm', value: EXPANDED_VALUE },
-        ]);
-
-        const result = await generateBundle({
-          bundleKey: 'main',
-          bundleDefinition,
-          config: singleCollectionConfig,
-          locales: ['en'],
-          transformICUToTransloco: true,
-        });
-
-        expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
-        expect(result.filesGenerated).toBe(1);
-
-        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-        const writtenData = JSON.parse(writeCall[1] as string);
-
-        expect(writtenData.deleteConfirm).toBe(EXPANDED_OUTPUT);
-      });
-
-      for (const { description, stored, emitted } of SELECTORDINAL_CASES) {
-        it(`bundles ${description}`, async () => {
-          vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'rank', value: stored }]);
-
-          const result = await generateBundle({
-            bundleKey: 'main',
-            bundleDefinition,
-            config: singleCollectionConfig,
-            locales: ['en'],
-            transformICUToTransloco: true,
-          });
-
-          expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
-
-          const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-          const writtenData = JSON.parse(writeCall[1] as string);
-
-          expect(writtenData.rank).toBe(emitted);
-        });
-      }
-
-      for (const value of SAFE_VALUES) {
-        it(`does not warn for ${value}`, async () => {
-          vi.spyOn(resourceLoader, 'loadCollectionResources').mockReturnValue([{ key: 'safe', value }]);
-
-          const result = await generateBundle({
-            bundleKey: 'main',
-            bundleDefinition,
-            config: singleCollectionConfig,
-            locales: ['en'],
-            transformICUToTransloco: true,
-          });
-
-          expect(branchBodyWarnings(result.warnings)).toHaveLength(0);
-        });
-      }
-    });
-
-    describe('the icu-edge-cases fixture collection', () => {
-      /** Repository root, five directories above this spec. */
-      const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..');
-
-      const FIXTURE_COLLECTION = 'icuEdgeCases';
-
-      /** The locales the collection is configured for. Narrowing this set narrows the coverage. */
-      const EXPECTED_FIXTURE_LOCALES: readonly string[] = ['en', 'fr-ca', 'ja'];
-
-      /** The one fixture key whose branch body is an argument carrying a format. */
-      const FORMAT_CARRYING_KEY = 'status.syncedRecordCount';
-
-      interface FixtureConfigFile {
-        readonly baseLocale: string;
-        readonly locales?: string[];
-        readonly collections: Record<string, { readonly translationsFolder: string; readonly locales?: string[] }>;
-      }
-
-      let realFs: typeof import('node:fs');
-      let fixtureConfig: LingoTrackerConfig;
-      let fixtureLocales: string[];
-
-      /**
-       * Reads the stored fixture entries the way `loadCollectionResources` does. The
-       * surrounding suite mocks `fs` and `./resource-loader`, so the real loader cannot
-       * reach disk here. This walk stands in for it and reads through the unmocked module.
-       */
-      function loadFixtureResources(translationsFolder: string, locale: string, baseLocale: string): FlatResource[] {
-        const resources: FlatResource[] = [];
-
-        const walk = (directory: string, keyPrefix: string): void => {
-          for (const dirent of realFs.readdirSync(directory, { withFileTypes: true })) {
-            const childPath = path.join(directory, dirent.name);
-
-            if (dirent.isDirectory()) {
-              walk(childPath, keyPrefix ? `${keyPrefix}.${dirent.name}` : dirent.name);
-              continue;
-            }
-
-            if (dirent.name !== RESOURCE_ENTRIES_FILENAME) continue;
-
-            const entries = JSON.parse(realFs.readFileSync(childPath, 'utf8')) as Record<
-              string,
-              Record<string, unknown>
-            >;
-
-            for (const [entryKey, entry] of Object.entries(entries)) {
-              const value = locale === baseLocale ? entry.source : entry[locale];
-
-              if (typeof value === 'string') {
-                resources.push({ key: keyPrefix ? `${keyPrefix}.${entryKey}` : entryKey, value });
-              }
-            }
-          }
-        };
-
-        walk(path.resolve(REPO_ROOT, translationsFolder), '');
-
-        return resources;
-      }
-
-      /** Bundle output nests by key segment. The harness works on whole keys. */
-      function flattenBundle(data: Record<string, unknown>, prefix = ''): Record<string, string> {
-        const flat: Record<string, string> = {};
-
-        for (const [key, value] of Object.entries(data)) {
-          const fullKey = prefix ? `${prefix}.${key}` : key;
-
-          if (typeof value === 'string') {
-            flat[fullKey] = value;
-          } else if (value && typeof value === 'object') {
-            Object.assign(flat, flattenBundle(value as Record<string, unknown>, fullKey));
-          }
-        }
-
-        return flat;
-      }
-
-      /** Bundles one locale and hands back every warning the run produced, unfiltered. */
-      async function bundleFixtureLocale(
-        locale: string,
-      ): Promise<{ emitted: Record<string, string>; warnings: string[] }> {
-        vi.mocked(fs.writeFileSync).mockClear();
-
-        const result = await generateBundle({
-          bundleKey: 'icu-edge-cases',
-          bundleDefinition: { bundleName: '{locale}', dist: 'dist/fixture-bundles', collections: 'All' },
-          config: fixtureConfig,
-          locales: [locale],
-          transformICUToTransloco: true,
-        });
-
-        expect(result.filesGenerated).toBe(1);
-
-        const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-        expect(writeCall).toBeDefined();
-
-        return {
-          emitted: flattenBundle(JSON.parse(String(writeCall?.[1])) as Record<string, unknown>),
-          warnings: result.warnings,
-        };
-      }
-
-      beforeEach(async () => {
-        await useRealEmitter();
-
-        realFs = await vi.importActual<typeof import('node:fs')>('node:fs');
-
-        const rawConfig = JSON.parse(
-          realFs.readFileSync(path.join(REPO_ROOT, '.lingo-tracker.json'), 'utf8'),
-        ) as FixtureConfigFile;
-
-        const collection = rawConfig.collections[FIXTURE_COLLECTION];
-        expect(collection).toBeDefined();
-
-        fixtureLocales = collection?.locales ?? rawConfig.locales ?? [];
-        fixtureConfig = {
+    }
+  });
+
+  describe('the icu-edge-cases fixture collection', () => {
+    const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
+    const FIXTURE_COLLECTION = 'icuEdgeCases';
+    const EXPECTED_FIXTURE_LOCALES: readonly string[] = ['en', 'fr-ca', 'ja'];
+    const FORMAT_CARRYING_KEY = 'status.syncedRecordCount';
+
+    interface FixtureConfigFile {
+      readonly baseLocale: string;
+      readonly locales?: string[];
+      readonly collections: Record<string, { readonly translationsFolder: string; readonly locales?: string[] }>;
+    }
+
+    function fixture(): { config: LingoTrackerConfig; locales: string[] } {
+      const raw = JSON.parse(readFileSync(join(REPO_ROOT, '.lingo-tracker.json'), 'utf8')) as FixtureConfigFile;
+      const collection = raw.collections[FIXTURE_COLLECTION];
+      expect(collection).toBeDefined();
+      const locales = collection?.locales ?? raw.locales ?? [];
+      return {
+        locales,
+        config: {
           exportFolder: 'dist/export',
           importFolder: 'dist/import',
-          baseLocale: rawConfig.baseLocale,
-          locales: fixtureLocales,
-          collections: collection ? { [FIXTURE_COLLECTION]: collection } : {},
-        };
+          baseLocale: raw.baseLocale,
+          locales,
+          collections: collection
+            ? {
+                [FIXTURE_COLLECTION]: {
+                  ...collection,
+                  translationsFolder: resolve(REPO_ROOT, collection.translationsFolder),
+                },
+              }
+            : {},
+        },
+      };
+    }
 
-        vi.spyOn(resourceLoader, 'loadCollectionResources').mockImplementation(
-          (translationsFolder, locale, baseLocale) => loadFixtureResources(translationsFolder, locale, baseLocale),
-        );
-      });
-
-      it('runs the real emitter rather than the suite-level pass-through', () => {
-        // Under the pass-through every assertion in this suite would run against stored
-        // ICU, so nothing would exercise the triple and the suite would stay green.
-        expect(icuToTranslocoModule.icuToTransloco('Cannot delete {n, plural, =1 {{itemName}} other {items}}')).toBe(
-          'Cannot delete {n, plural, =1 {{{itemName}}} other {items}}',
-        );
-      });
-
-      it('produces one file per configured locale, including ja', async () => {
-        expect(fixtureLocales).toEqual(EXPECTED_FIXTURE_LOCALES);
-
-        const result = await generateBundle({
-          bundleKey: 'icu-edge-cases',
-          bundleDefinition: { bundleName: '{locale}', dist: 'dist/fixture-bundles', collections: 'All' },
-          config: fixtureConfig,
-          locales: fixtureLocales,
-          transformICUToTransloco: true,
-        });
-
-        expect(result.filesGenerated).toBe(fixtureLocales.length);
-        expect(result.localesProcessed).toEqual(fixtureLocales);
-      });
-
-      it('carries both branch-body shapes under one key, keyed on the position and not the key', async () => {
-        const base = await bundleFixtureLocale('en');
-        const japanese = await bundleFixtureLocale('ja');
-
-        // The stored source is a placeholder followed by branch text, so it stays as written.
-        expect(base.emitted['errors.restrictedChildren']).toContain('=1 {{itemName} contains}');
-        // The ja value puts a bare placeholder in the same branch, so it gains the brace pair.
-        expect(japanese.emitted['errors.restrictedChildren']).toContain('=1 {{{itemName}}}');
-      });
-
-      it('bundles every value and warns once per locale, only for the format-carrying branch body', async () => {
-        const warned: string[] = [];
-
-        for (const locale of fixtureLocales) {
-          const { emitted, warnings } = await bundleFixtureLocale(locale);
-
-          expect(Object.keys(emitted).length).toBeGreaterThan(0);
-
-          for (const warning of warnings) {
-            warned.push(`${locale}:${warning}`);
-          }
+    function flattenBundle(data: Record<string, unknown>, prefix = ''): Record<string, string> {
+      const flat: Record<string, string> = {};
+      for (const [key, value] of Object.entries(data)) {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        if (typeof value === 'string') flat[fullKey] = value;
+        else if (value && typeof value === 'object') {
+          Object.assign(flat, flattenBundle(value as Record<string, unknown>, fullKey));
         }
+      }
+      return flat;
+    }
 
-        // The complete warning set, not the branch-body subset. A malformed stored value or
-        // an empty bundle warns too, and either one means the collection stopped bundling
-        // cleanly.
-        expect(warned).toHaveLength(fixtureLocales.length);
-        for (const warning of warned) {
-          expect(warning).toContain(`Key '${FORMAT_CARRYING_KEY}'`);
-          expect(warning).toContain('cannot be carried to a Transloco runtime');
-        }
+    async function bundleFixtureLocale(
+      locale: string,
+    ): Promise<{ emitted: Record<string, string>; warnings: readonly string[] }> {
+      const fixtureData = fixture();
+      const result = await generateBundle({
+        bundleKey: 'icu-edge-cases',
+        bundleDefinition: { bundleName: '{locale}', dist: join(root(), 'fixture-bundles'), collections: 'All' },
+        config: fixtureData.config,
+        locales: [locale],
+        transformICUToTransloco: true,
+        cwd: root(),
       });
+      expect(result.filesGenerated).toBe(1);
+      return {
+        emitted: flattenBundle(readJson(join(root(), 'fixture-bundles', `${locale}.json`))),
+        warnings: generationWarnings(result),
+      };
+    }
+
+    it('produces one file per configured locale, including ja', async () => {
+      const fixtureData = fixture();
+      expect(fixtureData.locales).toEqual(EXPECTED_FIXTURE_LOCALES);
+
+      const result = await generateBundle({
+        bundleKey: 'icu-edge-cases',
+        bundleDefinition: { bundleName: '{locale}', dist: join(root(), 'fixture-bundles'), collections: 'All' },
+        config: fixtureData.config,
+        locales: fixtureData.locales,
+        transformICUToTransloco: true,
+        cwd: root(),
+      });
+
+      expect(result.filesGenerated).toBe(fixtureData.locales.length);
+      expect(result.localesProcessed).toEqual(fixtureData.locales);
+      for (const locale of fixtureData.locales) {
+        expect(existsSync(join(root(), 'fixture-bundles', `${locale}.json`))).toBe(true);
+      }
     });
+
+    it('carries both branch-body shapes based on position rather than key', async () => {
+      const base = await bundleFixtureLocale('en');
+      const japanese = await bundleFixtureLocale('ja');
+
+      expect(base.emitted['errors.restrictedChildren']).toContain('=1 {{itemName} contains}');
+      expect(japanese.emitted['errors.restrictedChildren']).toContain('=1 {{{itemName}}}');
+    });
+
+    it('bundles every value and reports distinct locale and base warnings only for the format-carrying key', async () => {
+      const { locales } = fixture();
+      const warned: string[] = [];
+
+      for (const locale of locales) {
+        const { emitted, warnings } = await bundleFixtureLocale(locale);
+        expect(Object.keys(emitted).length).toBeGreaterThan(0);
+        for (const warning of warnings) warned.push(`${locale}:${warning}`);
+      }
+
+      // The French value differs from the base value, so its run reports both.
+      expect(warned).toHaveLength(locales.length + 1);
+      for (const locale of locales) {
+        const localeWarnings = warned.filter((warning) => warning.startsWith(`${locale}:`));
+        expect(localeWarnings).toHaveLength(locale === 'fr-ca' ? 2 : 1);
+        expect(localeWarnings.filter((warning) => warning.includes('value: Synced '))).toHaveLength(1);
+        if (locale === 'fr-ca') {
+          expect(localeWarnings.filter((warning) => warning.includes('value: Synchronisé '))).toHaveLength(1);
+        }
+      }
+      for (const warning of warned) {
+        expect(warning).toContain(`Key '${FORMAT_CARRYING_KEY}'`);
+        expect(warning).toContain('cannot be carried to a Transloco runtime');
+      }
+    });
+  });
+});
+
+describe('generated bundle findings', () => {
+  const root = useTempDir('bundle-findings-');
+  const config = (typeDistFile?: string): LingoTrackerConfig => ({
+    exportFolder: 'export',
+    importFolder: 'import',
+    baseLocale: 'en',
+    locales: ['en'],
+    collections: { app: { translationsFolder: 'resources' } },
+    bundles: { main: { bundleName: '{locale}', dist: 'out', collections: 'All', typeDistFile } },
+  });
+
+  it('preserves ordered and repeated findings without mutating prepared advisories', async () => {
+    const prepared = prepareBundleRun({ source: 'saved', bundleKey: 'main', config: config('types.ts'), cwd: root() });
+    const warnings = Object.freeze([
+      { origin: 'config' as const, message: 'same advisory' },
+      { origin: 'config' as const, message: 'same advisory' },
+    ]);
+    const result = await generatePreparedBundle({ ...prepared, warnings });
+    expect(result.findings).toEqual({
+      messages: [
+        "Bundle 'main' for locale 'en' is empty",
+        'same advisory',
+        'same advisory',
+        "Type generation skipped for 'main': bundle is empty",
+      ],
+      byOrigin: {
+        generation: ["Bundle 'main' for locale 'en' is empty"],
+        config: ['same advisory', 'same advisory'],
+        type: ["Type generation skipped for 'main': bundle is empty"],
+      },
+      types: { status: 'skipped', reason: 'bundle is empty' },
+    });
+    expect(warnings).toEqual([
+      { origin: 'config', message: 'same advisory' },
+      { origin: 'config', message: 'same advisory' },
+    ]);
+    expect(result).not.toHaveProperty('warnings');
+    expect(result).not.toHaveProperty('typeOutcome');
+  });
+
+  const cases = [
+    {
+      status: 'written',
+      path: 'types.ts',
+      populated: true,
+      expected: { status: 'written', path: 'types.ts', keysCount: 1 },
+    },
+    {
+      status: 'failed',
+      path: 'types.txt',
+      populated: true,
+      expected: { status: 'failed', reason: expect.stringContaining('.ts extension') },
+    },
+    {
+      status: 'skipped',
+      path: 'types.ts',
+      populated: false,
+      expected: { status: 'skipped', reason: 'bundle is empty' },
+    },
+    { status: 'none', path: undefined, populated: true, expected: { status: 'none' } },
+  ];
+  it.each(cases)('returns $status type findings on the finished result', async ({ path, populated, expected }) => {
+    if (populated)
+      seedResources(testCollection(join(root(), 'resources'), { name: 'app', locales: ['en'] }), {
+        hello: { source: 'Hello' },
+      });
+    const result = await generatePreparedBundle(
+      prepareBundleRun({ source: 'saved', bundleKey: 'main', config: config(path), cwd: root() }),
+    );
+    expect(result.findings.types).toEqual(expected);
+    expect(result.findings.byOrigin.config).toEqual([]);
+    expect(result.findings.messages).toEqual([
+      ...result.findings.byOrigin.generation,
+      ...result.findings.byOrigin.type,
+    ]);
   });
 });

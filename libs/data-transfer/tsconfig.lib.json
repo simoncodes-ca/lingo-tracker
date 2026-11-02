@@ -1,7 +1,8 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
+    "outDir": "../../dist/out-tsc/libs/data-transfer",
+    "tsBuildInfoFile": "../../dist/out-tsc/libs/data-transfer/tsconfig.lib.tsbuildinfo",
     "composite": true,
     "declaration": true,
     "types": ["node"]
@@ -20,5 +21,10 @@
     "src/**/*.spec.js",
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx"
+  ],
+  "references": [
+    {
+      "path": "../domain/tsconfig.lib.json"
+    }
   ]
 }

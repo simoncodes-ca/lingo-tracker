@@ -1,4 +1,4 @@
-import type { LingoTrackerCollection } from '@simoncodes-ca/core';
+import { assertCollectionFields, assertProtectedTerms, type LingoTrackerCollection } from '@simoncodes-ca/core';
 import type { LingoTrackerCollectionDto } from '@simoncodes-ca/data-transfer';
 
 /** Resolved protected-terms data for one collection, read from its file by the caller. */
@@ -27,20 +27,14 @@ export function mapCollectionToDto(
 }
 
 /**
- * Maps a collection DTO back to config. `protectedTerms` is deliberately dropped —
- * terms live in a file, so the controller writes them there separately; only the
- * pointer belongs in the config.
+ * Maps a collection DTO back to config: the config fields pass through as sent, and the
+ * Collection Entry in core decides what is stored. `protectedTerms` and
+ * `protectedTermsFilePath` are dropped — terms live in a file, so the controller writes them
+ * there separately; only the pointer belongs in the config.
  */
 export function mapDtoToCollection(dto: LingoTrackerCollectionDto): LingoTrackerCollection {
-  return {
-    translationsFolder: dto.translationsFolder,
-    exportFolder: dto.exportFolder,
-    importFolder: dto.importFolder,
-    baseLocale: dto.baseLocale,
-    locales: dto.locales ? [...dto.locales] : undefined,
-    translation: dto.translation,
-    readOnly: dto.readOnly,
-    tags: dto.tags ? [...dto.tags] : undefined,
-    protectedTermsFile: dto.protectedTermsFile,
-  };
+  assertCollectionFields(dto, { requireTranslationsFolder: true });
+  if (dto.protectedTerms !== undefined) assertProtectedTerms(dto.protectedTerms);
+  const { protectedTerms: _terms, protectedTermsFilePath: _path, ...collection } = dto;
+  return collection;
 }

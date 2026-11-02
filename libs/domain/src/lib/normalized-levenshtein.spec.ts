@@ -15,14 +15,12 @@ describe('normalizedLevenshtein', () => {
     expect(normalizedLevenshtein('x', 'x')).toBe(1);
   });
 
-  it.each([
-    'add item',
-    'cancel',
-    'clear selection',
-    'hello world',
-  ])('scores identical multi-character strings as a perfect match: %s', (value) => {
-    expect(normalizedLevenshtein(value, value)).toBe(1);
-  });
+  it.each(['add item', 'cancel', 'clear selection', 'hello world'])(
+    'scores identical multi-character strings as a perfect match: %s',
+    (value) => {
+      expect(normalizedLevenshtein(value, value)).toBe(1);
+    },
+  );
 
   it('scores a single trailing insertion by edit distance over the longer length', () => {
     expect(normalizedLevenshtein('save', 'saved')).toBeCloseTo(0.8);

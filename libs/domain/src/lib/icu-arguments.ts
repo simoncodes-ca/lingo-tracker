@@ -1,5 +1,4 @@
-import { parse, type Token } from '@messageformat/parser';
-import { normalizeTranslocoSyntax } from './normalize-transloco-syntax';
+import { type IcuParseOptions, parseIcuMessage, visitIcuNodes } from './icu-message';
 
 /**
  * The set of arguments a message interpolates.
@@ -19,7 +18,8 @@ import { normalizeTranslocoSyntax } from './normalize-transloco-syntax';
  */
 
 /**
- * Collects the names of every argument a message interpolates.
+ * Collects the names of every argument a message interpolates, or reports that
+ * it could not be parsed.
  *
  * Counts plain arguments (`{name}`), formatted ones (`{count, number}`), and
  * the argument a `plural`, `selectordinal` or `select` switches on — each of
@@ -36,86 +36,33 @@ import { normalizeTranslocoSyntax } from './normalize-transloco-syntax';
  * translation may legitimately mention an argument more times than the base
  * value does, or fewer, provided it mentions the same ones.
  *
- * Values that do not parse yield an empty set. An unparseable value is the ICU
- * compile check's business, and reporting one defect as two helps nobody. Use
- * `compareIcuArguments` rather than comparing two of these sets by hand: it
- * tells an unparseable value apart from one that genuinely has no arguments.
- *
  * Accepts either syntax: Transloco's `{{ name }}` is normalized to `{name}`
  * first, so stored values and bundled values give the same answer.
  *
- * @param value - The translation string, in ICU or Transloco syntax.
- * @returns The distinct argument names the value interpolates.
- *
- * @example
- * ```typescript
- * findIcuArguments('Folder {name}');
- * // → Set { 'name' }
- *
- * findIcuArguments('Folder {{ name }}');
- * // → Set { 'name' } — same answer in either syntax
- *
- * findIcuArguments('{count, plural, one {1 file in {dir}} other {# files in {dir}}}');
- * // → Set { 'count', 'dir' }
- *
- * findIcuArguments('No placeholders here');
- * // → Set {}
- * ```
- */
-export function findIcuArguments(value: string): ReadonlySet<string> {
-  return parseArguments(value) ?? new Set();
-}
-
-/**
- * Collects a value's arguments, or reports that it could not be parsed.
- *
- * The distinction matters to `compareIcuArguments` and nowhere else: a value
- * that does not parse has no arguments to speak of, which is not the same as a
- * value that parses and interpolates none. Treating the two alike makes every
- * malformed translation look as though it had dropped every placeholder.
+ * Returns null for a value that does not parse. A value that does not parse has
+ * no arguments to speak of, which is not the same as a value that parses and
+ * interpolates none. Treating the two alike makes every malformed translation
+ * look as though it had dropped every placeholder.
  *
  * @internal
  */
-function parseArguments(value: string): Set<string> | null {
-  let tokens: Token[];
-  try {
-    tokens = parse(normalizeTranslocoSyntax(value));
-  } catch {
-    return null;
-  }
+function parseArguments(value: string, options: IcuParseOptions): Set<string> | null {
+  const message = parseIcuMessage(value, { ...options, interpolation: true, lenient: true });
+  if (!message.ok) return null;
 
   const found = new Set<string>();
-  collectArguments(tokens, found);
-  return found;
-}
-
-/**
- * Walks a parsed token tree, adding the name of every argument it interpolates.
- *
- * @internal
- */
-function collectArguments(tokens: readonly Token[], found: Set<string>): void {
-  for (const token of tokens) {
-    switch (token.type) {
-      case 'content':
-      case 'octothorpe':
-        break;
-
-      case 'argument':
-      case 'function':
-        found.add(token.arg);
-        break;
-
-      // The argument a sub-message switches on is supplied by the caller like
-      // any other, so it counts, and its branches can hold arguments of their own.
-      default:
-        found.add(token.arg);
-        for (const branch of token.cases) {
-          collectArguments(branch.tokens, found);
-        }
-        break;
+  visitIcuNodes(message.nodes, (node) => {
+    if (node.kind === 'argument') {
+      found.add(node.name);
+      // A style is formatter syntax, not message content.
+      return false;
     }
-  }
+    // The argument a sub-message switches on is supplied by the caller like
+    // any other, so it counts, and its branches can hold arguments of their own.
+    if (node.kind === 'group') found.add(node.name);
+    return true;
+  });
+  return found;
 }
 
 /**
@@ -161,9 +108,13 @@ export interface ArgumentMismatch {
  * // → null — a parse error, reported by the ICU pass rather than as a mismatch
  * ```
  */
-export function compareIcuArguments(baseValue: string, translatedValue: string): ArgumentMismatch | null {
-  const expected = parseArguments(baseValue);
-  const actual = parseArguments(translatedValue);
+export function compareIcuArguments(
+  baseValue: string,
+  translatedValue: string,
+  options: IcuParseOptions = {},
+): ArgumentMismatch | null {
+  const expected = parseArguments(baseValue, options);
+  const actual = parseArguments(translatedValue, options);
 
   // A value that will not parse has no arguments to compare, which is not the
   // same as having none. Reporting it here would dress a syntax error up as a

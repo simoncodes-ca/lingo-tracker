@@ -1,0 +1,192 @@
+{
+  "whereItLands": {
+    "source": "Where it lands",
+    "comment": "Heading of the context column block showing the folder tree",
+    "tags": ["browser"],
+    "es": "Dónde se guardará",
+    "fr-ca": "Où cela sera enregistré",
+    "ru": "Куда попадёт",
+    "ja": "保存先",
+    "de": "Wo es landet"
+  },
+  "fullKey": {
+    "source": "Full key",
+    "comment": "Heading of the context column block showing the complete resource key",
+    "tags": ["browser"],
+    "es": "Clave completa",
+    "fr-ca": "Clé complète",
+    "ru": "Полный ключ",
+    "ja": "完全なキー",
+    "de": "Vollständiger Schlüssel"
+  },
+  "available": {
+    "source": "Available",
+    "comment": "Status line saying the key is not taken in the target folder",
+    "tags": ["browser"],
+    "es": "Disponible",
+    "fr-ca": "Disponible",
+    "ru": "Свободно",
+    "ja": "使用可能",
+    "de": "Verfügbar"
+  },
+  "similarValues": {
+    "source": "Similar values",
+    "comment": "Heading of the context column block listing similar existing translations",
+    "tags": ["browser"],
+    "es": "Valores similares",
+    "fr-ca": "Valeurs similaires",
+    "ru": "Похожие значения",
+    "ja": "類似の値",
+    "de": "Ähnliche Werte"
+  },
+  "similarCaption": {
+    "source": "Pinned until the English text changes. Pick one to reuse its key instead of adding a duplicate.",
+    "comment": "Caption under the similar values block in the context column",
+    "tags": ["browser"],
+    "es": "Se mantiene fijo hasta que cambie el texto en inglés. Elija uno para reutilizar su clave en lugar de crear un duplicado.",
+    "fr-ca": "Épinglé jusqu’à ce que le texte anglais change. Choisissez-en un pour réutiliser sa clé au lieu d’ajouter un doublon.",
+    "ru": "Закреплено, пока не изменится английский текст. Выберите одно, чтобы повторно использовать его ключ вместо создания дубликата.",
+    "ja": "英語のテキストが変わるまで固定されます。重複を追加せず、いずれかを選んでそのキーを再利用してください。",
+    "de": "Bleibt angeheftet, bis sich der englische Text ändert. Wählen Sie einen Eintrag, um dessen Schlüssel wiederzuverwenden, statt ein Duplikat anzulegen."
+  },
+  "locales": {
+    "source": "Locales",
+    "comment": "Heading of the context column block summarising locale values",
+    "tags": ["browser"],
+    "es": "Idiomas",
+    "fr-ca": "Langues",
+    "ru": "Локали",
+    "ja": "ロケール",
+    "de": "Sprachen"
+  },
+  "missing": {
+    "source": "missing",
+    "comment": "Shown in the locale summary when a locale has no value",
+    "tags": ["browser"],
+    "es": "faltantes",
+    "fr-ca": "manquantes",
+    "ru": "отсутствуют",
+    "ja": "未設定",
+    "de": "fehlend"
+  },
+  "here": {
+    "source": "here",
+    "comment": "Pill marking the current folder in the context column tree",
+    "tags": ["browser"],
+    "es": "aquí",
+    "fr-ca": "ici",
+    "ru": "здесь",
+    "ja": "ここ",
+    "de": "hier"
+  },
+  "newEntry": {
+    "source": "new",
+    "comment": "Pill marking the entry about to be created in the context column tree",
+    "tags": ["browser"],
+    "es": "nueva",
+    "fr-ca": "nouvelle",
+    "ru": "новая",
+    "ja": "新規",
+    "de": "neu"
+  },
+  "editingEntry": {
+    "source": "editing",
+    "comment": "Pill marking the entry being edited in the context column tree",
+    "tags": ["browser"],
+    "es": "editando",
+    "fr-ca": "modification",
+    "ru": "редактирование",
+    "ja": "編集中",
+    "de": "bearbeiten"
+  },
+  "title": {
+    "source": "Context",
+    "comment": "Title of the disclosure that holds the context blocks on narrow viewports",
+    "tags": ["browser"],
+    "es": "Contexto",
+    "fr-ca": "Contexte",
+    "ru": "Контекст",
+    "ja": "コンテキスト",
+    "de": "Kontext"
+  },
+  "similarCountX": {
+    "source": "{count} similar",
+    "comment": "Summary clause counting similar existing values",
+    "tags": ["browser"],
+    "es": "{count} similares",
+    "fr-ca": "{count} similaires",
+    "ru": "{count} похожих",
+    "ja": "類似 {count} 件",
+    "de": "{count} ähnliche"
+  },
+  "autoAfterSave": {
+    "source": "auto after save",
+    "comment": "Locale summary note in create mode",
+    "tags": ["browser"],
+    "es": "automático al guardar",
+    "fr-ca": "auto après l’enregistrement",
+    "ru": "авто после сохранения",
+    "ja": "保存後に自動",
+    "de": "auto nach dem Speichern"
+  },
+  "moreEntriesX": {
+    "source": "… {count} more",
+    "comment": "Row that stands for the entries the context tree does not list",
+    "tags": ["browser"],
+    "es": "… {count} más",
+    "fr-ca": "… {count} de plus",
+    "ru": "… ещё {count}",
+    "ja": "… 他 {count} 件",
+    "de": "… {count} weitere"
+  },
+  "alreadyExists": {
+    "source": "Already exists in this folder",
+    "comment": "Context column line saying the full key is taken in the target folder",
+    "tags": ["browser"],
+    "es": "Ya existe en esta carpeta",
+    "fr-ca": "Existe déjà dans ce dossier",
+    "ru": "Уже существует в этой папке",
+    "ja": "このフォルダに既に存在します",
+    "de": "Existiert bereits in diesem Ordner"
+  },
+  "existsEntry": {
+    "source": "exists",
+    "comment": "Pill marking an entry in the context tree whose key is already taken",
+    "tags": ["browser"],
+    "es": "existe",
+    "fr-ca": "existe",
+    "ru": "существует",
+    "ja": "既存",
+    "de": "existiert"
+  },
+  "keyExists": {
+    "source": "key exists",
+    "comment": "Context disclosure summary clause when the key is already taken",
+    "tags": ["browser"],
+    "es": "clave existente",
+    "fr-ca": "clé existante",
+    "ru": "ключ существует",
+    "ja": "キーが存在",
+    "de": "Schlüssel existiert"
+  },
+  "similarExactX": {
+    "source": "The exact text already exists under {key}. Reuse that key instead of adding a duplicate.",
+    "comment": "Caption under the similar values block when one hit carries the identical text",
+    "tags": ["browser"],
+    "es": "El texto exacto ya existe en {key}. Reutilice esa clave en lugar de crear un duplicado.",
+    "fr-ca": "Le texte exact existe déjà sous {key}. Réutilisez cette clé au lieu d’ajouter un doublon.",
+    "ru": "Точно такой же текст уже есть в {key}. Используйте этот ключ повторно вместо создания дубликата.",
+    "ja": "まったく同じテキストが {key} に存在します。重複を追加せず、そのキーを再利用してください。",
+    "de": "Der exakte Text existiert bereits unter {key}. Verwenden Sie diesen Schlüssel wieder, statt ein Duplikat anzulegen."
+  },
+  "allUpToDate": {
+    "source": "All other locales are translated.",
+    "comment": "Muted line shown in the context column Locales block when no other locale needs work",
+    "tags": ["browser"],
+    "es": "Todos los demás idiomas están traducidos.",
+    "fr-ca": "Toutes les autres langues sont traduites.",
+    "ru": "Все остальные локали переведены.",
+    "ja": "他のすべてのロケールは翻訳済みです。",
+    "de": "Alle anderen Sprachen sind übersetzt."
+  }
+}

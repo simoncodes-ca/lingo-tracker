@@ -1,16 +1,17 @@
-import { Component, type OnInit, inject } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, type OnInit } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterModule } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { AppHeader } from './header/app-header';
-import { CollectionsStore } from './collections/store/collections.store';
 import { TRACKER_TOKENS } from '../i18n-types/tracker-resources';
+import { CollectionsStore } from './collections/store/collections.store';
+import { AppHeader } from './header/app-header';
 
 @Component({
   standalone: true,
   imports: [RouterModule, AppHeader, MatIconModule, TranslocoPipe],
   selector: 'lingo-tracker-app',
   templateUrl: './app.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
 })
 export class App implements OnInit {

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { join } from 'node:path';
 import * as fs from 'fs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { exportToXliff } from './export-to-xliff';
 import type { ExportOptions, FilteredResource } from './types';
 

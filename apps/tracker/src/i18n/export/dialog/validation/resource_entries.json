@@ -1,0 +1,62 @@
+{
+  "collectionsEmpty": {
+    "source": "Choose at least one collection.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Elige al menos una colección.",
+    "fr-ca": "Choisissez au moins une collection.",
+    "ru": "Выберите хотя бы одну коллекцию.",
+    "ja": "コレクションを1つ以上選択してください。",
+    "de": "Wähle mindestens eine Sammlung aus."
+  },
+  "localesEmpty": {
+    "source": "Choose at least one locale.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Elige al menos un idioma.",
+    "fr-ca": "Choisissez au moins une langue.",
+    "ru": "Выберите хотя бы один язык.",
+    "ja": "ロケールを1つ以上選択してください。",
+    "de": "Wähle mindestens eine Sprache aus."
+  },
+  "statusEmpty": {
+    "source": "Choose at least one status.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Elige al menos un estado.",
+    "fr-ca": "Choisissez au moins un statut.",
+    "ru": "Выберите хотя бы один статус.",
+    "ja": "ステータスを1つ以上選択してください。",
+    "de": "Wähle mindestens einen Status aus."
+  },
+  "patternLocale": {
+    "source": "Add '{locale}' or every locale writes the same file.",
+    "comment": "Literal file-name pattern token shown to the user; not an interpolation param. Keep the quoted braces.",
+    "tags": ["export"],
+    "es": "Agrega '{locale}' o todos los idiomas escribirán el mismo archivo.",
+    "fr-ca": "Ajoutez '{locale}' sinon toutes les langues écriront le même fichier.",
+    "ru": "Добавьте '{locale}', иначе все языки будут записаны в один и тот же файл.",
+    "ja": "'{locale}' を追加しないと、すべてのロケールが同じファイルに書き込まれます。",
+    "de": "Füge '{locale}' hinzu, sonst schreiben alle Sprachen dieselbe Datei."
+  },
+  "basePropertyReserved": {
+    "source": "Reserved. Pick another name.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Reservado. Elige otro nombre.",
+    "fr-ca": "Nom réservé. Choisissez-en un autre.",
+    "ru": "Зарезервировано. Выберите другое имя.",
+    "ja": "予約済みです。別の名前を選んでください。",
+    "de": "Reserviert. Wähle einen anderen Namen."
+  },
+  "folderNotWritable": {
+    "source": "This folder can't be written to.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "No se puede escribir en esta carpeta.",
+    "fr-ca": "Il est impossible d’écrire dans ce dossier.",
+    "ru": "В эту папку нельзя записывать.",
+    "ja": "このフォルダーには書き込めません。",
+    "de": "In diesen Ordner kann nicht geschrieben werden."
+  }
+}

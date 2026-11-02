@@ -1,19 +1,25 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { normalizeEntry } from './normalize-entry';
-import { cleanupEmptyFolders } from './cleanup-empty-folders';
-import { walkFolders } from './iterative-folder-walker';
-import type { ResourceEntries } from '../../resource/resource-entry';
-import type { TrackerMetadata } from '../../resource/tracker-metadata';
+import { checkStoredValue, describeStoredValueFinding, icuParseOptionsFor } from '@simoncodes-ca/domain';
+import type { Collection } from '../config/open-collection';
+import { ReadOnlyCollectionError } from '../errors/lingo-tracker-error';
+import type { CollectionFolderProblem } from '../resource/collection-folders';
+import { fullKeyOf, sweepCollection } from '../resource/collection-sweep';
+import { pruneEmptyFolders } from '../resource/folder-pruning';
+import { type ResourceFolder, translationLocales } from '../resource/resource-folder';
 
-export interface NormalizeParams {
-  readonly translationsFolder: string;
-  readonly baseLocale: string;
-  readonly locales: string[];
+export interface NormalizeOptions {
+  /** Report what would change without writing anything. */
   readonly dryRun?: boolean;
 }
 
+export interface NormalizeFinding {
+  readonly key: string;
+  readonly locale: string;
+  readonly kind: 'collapsed-case-body' | 'braced-placeholder';
+  readonly detail: string;
+}
+
 export interface NormalizeResult {
+  readonly findings: readonly NormalizeFinding[];
   readonly entriesProcessed: number;
   readonly localesAdded: number;
   readonly valuesConverted: number;
@@ -22,320 +28,34 @@ export interface NormalizeResult {
   readonly filesUpdated: number;
   readonly foldersRemoved: number;
   readonly dryRun: boolean;
+  /** Folders that could not be read or pruned; they were kept. */
+  readonly problems: CollectionFolderProblem[];
 }
 
-interface NormalizationCounters {
-  entriesProcessed: number;
-  localesAdded: number;
-  valuesConverted: number;
-  tagsNormalized: number;
-  filesCreated: number;
-  filesUpdated: number;
-}
-
-interface ResourceFiles {
-  readonly resourceEntries: ResourceEntries;
-  readonly trackerMetadata: TrackerMetadata;
-  readonly resourceEntriesExisted: boolean;
-  readonly trackerMetaExisted: boolean;
-}
-
-interface NormalizedFolderData {
-  readonly resourceEntries: ResourceEntries;
-  readonly trackerMetadata: TrackerMetadata;
-  readonly folderHadChanges: boolean;
-  readonly entriesProcessedCount: number;
-  readonly localesAddedCount: number;
-  readonly valuesConvertedCount: number;
-  readonly tagsNormalizedCount: number;
-}
-
-interface PersistResourcesParams {
-  readonly folderPath: string;
-  readonly resourceEntries: ResourceEntries;
-  readonly trackerMetadata: TrackerMetadata;
-  readonly resourceEntriesExisted: boolean;
-  readonly trackerMetaExisted: boolean;
-  readonly folderHadChanges: boolean;
-  readonly dryRun: boolean;
-}
-
-interface PersistResourcesResult {
-  readonly filesCreated: number;
-  readonly filesUpdated: number;
-}
-
-function loadResourceFiles(folderPath: string): ResourceFiles | null {
-  const resourceEntriesPath = path.join(folderPath, 'resource_entries.json');
-  const trackerMetaPath = path.join(folderPath, 'tracker_meta.json');
-
-  let resourceEntries: ResourceEntries = {};
-  let trackerMetadata: TrackerMetadata = {};
-  let resourceEntriesExisted = false;
-  let trackerMetaExisted = false;
-
-  if (fs.existsSync(resourceEntriesPath)) {
-    try {
-      const content = fs.readFileSync(resourceEntriesPath, 'utf8');
-      resourceEntries = JSON.parse(content);
-      resourceEntriesExisted = true;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('\n⚠️  Skipping folder due to invalid JSON:', folderPath);
-      console.error('    Error in file: resource_entries.json');
-      console.error('    Parse error:', errorMessage);
-      console.error('    Please fix the JSON syntax manually.\n');
-      return null;
-    }
-  }
-
-  if (fs.existsSync(trackerMetaPath)) {
-    try {
-      const content = fs.readFileSync(trackerMetaPath, 'utf8');
-      trackerMetadata = JSON.parse(content);
-      trackerMetaExisted = true;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('\n⚠️  Skipping folder due to invalid JSON:', folderPath);
-      console.error('    Error in file: tracker_meta.json');
-      console.error('    Parse error:', errorMessage);
-      console.error('    Please fix the JSON syntax manually.\n');
-      return null;
-    }
-  }
-
-  return {
-    resourceEntries,
-    trackerMetadata,
-    resourceEntriesExisted,
-    trackerMetaExisted,
-  };
-}
-
-interface NormalizeAllEntriesParams {
-  readonly resourceEntries: ResourceEntries;
-  readonly trackerMetadata: TrackerMetadata;
-  readonly baseLocale: string;
-  readonly locales: string[];
-}
-
-function normalizeAllEntriesInFolder(params: NormalizeAllEntriesParams): NormalizedFolderData {
-  const { resourceEntries, trackerMetadata, baseLocale, locales } = params;
-
-  const entryKeys = Object.keys(resourceEntries);
-  if (entryKeys.length === 0) {
-    return {
-      resourceEntries,
-      trackerMetadata,
-      folderHadChanges: false,
-      entriesProcessedCount: 0,
-      localesAddedCount: 0,
-      valuesConvertedCount: 0,
-      tagsNormalizedCount: 0,
-    };
-  }
-
-  let folderHadChanges = false;
-  let entriesProcessedCount = 0;
-  let localesAddedCount = 0;
-  let valuesConvertedCount = 0;
-  let tagsNormalizedCount = 0;
-
-  const updatedResourceEntries = { ...resourceEntries };
-  const updatedTrackerMetadata = { ...trackerMetadata };
-
-  for (const entryKey of entryKeys) {
-    const resourceEntry = resourceEntries[entryKey];
-    const entryMetadata = trackerMetadata[entryKey] || {};
-
-    const result = normalizeEntry({
-      entryKey,
-      resourceEntry,
-      metadata: entryMetadata,
-      baseLocale,
-      locales,
-    });
-
-    updatedResourceEntries[entryKey] = result.resourceEntry;
-    updatedTrackerMetadata[entryKey] = result.metadata;
-
-    entriesProcessedCount++;
-    localesAddedCount += result.changes.localesAdded;
-    valuesConvertedCount += result.changes.valuesConverted;
-    tagsNormalizedCount += result.changes.tagsNormalized;
-
-    if (
-      result.changes.localesAdded > 0 ||
-      result.changes.checksumsUpdated > 0 ||
-      result.changes.statusesChanged > 0 ||
-      result.changes.valuesConverted > 0 ||
-      result.changes.tagsNormalized > 0
-    ) {
-      folderHadChanges = true;
-    }
-  }
-
-  return {
-    resourceEntries: updatedResourceEntries,
-    trackerMetadata: updatedTrackerMetadata,
-    folderHadChanges,
-    entriesProcessedCount,
-    localesAddedCount,
-    valuesConvertedCount,
-    tagsNormalizedCount,
-  };
-}
-
-function writeResourceFile(filePath: string, content: ResourceEntries | TrackerMetadata): void {
-  fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf8');
-}
-
-function persistFolderResources(params: PersistResourcesParams): PersistResourcesResult {
-  const {
-    folderPath,
-    resourceEntries,
-    trackerMetadata,
-    resourceEntriesExisted,
-    trackerMetaExisted,
-    folderHadChanges,
-    dryRun,
-  } = params;
-
-  const resourceEntriesPath = path.join(folderPath, 'resource_entries.json');
-  const trackerMetaPath = path.join(folderPath, 'tracker_meta.json');
-
-  let filesCreated = 0;
-  let filesUpdated = 0;
-
-  if (!dryRun) {
-    if (!resourceEntriesExisted) {
-      writeResourceFile(resourceEntriesPath, resourceEntries);
-      filesCreated++;
-    } else if (folderHadChanges) {
-      writeResourceFile(resourceEntriesPath, resourceEntries);
-      filesUpdated++;
-    }
-
-    if (!trackerMetaExisted) {
-      writeResourceFile(trackerMetaPath, trackerMetadata);
-      filesCreated++;
-    } else if (folderHadChanges) {
-      writeResourceFile(trackerMetaPath, trackerMetadata);
-      filesUpdated++;
-    }
-  } else {
-    if (!resourceEntriesExisted) {
-      filesCreated++;
-    } else if (folderHadChanges) {
-      filesUpdated++;
-    }
-
-    if (!trackerMetaExisted) {
-      filesCreated++;
-    } else if (folderHadChanges) {
-      filesUpdated++;
-    }
-  }
-
-  return { filesCreated, filesUpdated };
-}
-
-interface NormalizeFolderParams {
-  readonly folderPath: string;
-  readonly baseLocale: string;
-  readonly locales: string[];
-  readonly dryRun: boolean;
-  readonly counters: NormalizationCounters;
-}
-
-function normalizeFolderResources(params: NormalizeFolderParams): void {
-  const { folderPath, baseLocale, locales, dryRun, counters } = params;
-
-  const resourceFiles = loadResourceFiles(folderPath);
-
-  // Skip this folder if there was a JSON parsing error
-  if (resourceFiles === null) {
-    return;
-  }
-
-  const normalizedData = normalizeAllEntriesInFolder({
-    resourceEntries: resourceFiles.resourceEntries,
-    trackerMetadata: resourceFiles.trackerMetadata,
-    baseLocale,
-    locales,
-  });
-
-  if (normalizedData.entriesProcessedCount === 0) {
-    return;
-  }
-
-  counters.entriesProcessed += normalizedData.entriesProcessedCount;
-  counters.localesAdded += normalizedData.localesAddedCount;
-  counters.valuesConverted += normalizedData.valuesConvertedCount;
-  counters.tagsNormalized += normalizedData.tagsNormalizedCount;
-
-  const persistResult = persistFolderResources({
-    folderPath,
-    resourceEntries: normalizedData.resourceEntries,
-    trackerMetadata: normalizedData.trackerMetadata,
-    resourceEntriesExisted: resourceFiles.resourceEntriesExisted,
-    trackerMetaExisted: resourceFiles.trackerMetaExisted,
-    folderHadChanges: normalizedData.folderHadChanges,
-    dryRun,
-  });
-
-  counters.filesCreated += persistResult.filesCreated;
-  counters.filesUpdated += persistResult.filesUpdated;
-}
-
-interface NormalizeAllFoldersParams {
-  readonly rootPath: string;
-  readonly baseLocale: string;
-  readonly locales: string[];
-  readonly dryRun: boolean;
-  readonly counters: NormalizationCounters;
-}
-
-async function normalizeAllFolders(params: NormalizeAllFoldersParams): Promise<void> {
-  const { rootPath, baseLocale, locales, dryRun, counters } = params;
-
-  const foldersByDepth = new Map<number, string[]>();
-  for (const visit of walkFolders(rootPath, { skipHidden: false })) {
-    const group = foldersByDepth.get(visit.depth) ?? [];
-    group.push(visit.absolutePath);
-    foldersByDepth.set(visit.depth, group);
-  }
-
-  const depths = [...foldersByDepth.keys()].sort((a, b) => a - b);
-  for (const depth of depths) {
-    // Concurrency safety: folders at the same depth share the `counters` object. This is safe
-    // because normalizeFolderResources contains no await points — all I/O (fs.readFileSync,
-    // fs.writeFileSync) is synchronous, so mutations to `counters` are never interleaved.
-    await Promise.all(
-      (foldersByDepth.get(depth) ?? []).map((folderPath) =>
-        normalizeFolderResources({ folderPath, baseLocale, locales, dryRun, counters }),
-      ),
-    );
-  }
-}
+type Counters = {
+  -readonly [K in Exclude<keyof NormalizeResult, 'dryRun' | 'foldersRemoved' | 'problems' | 'findings'>]: number;
+};
 
 /**
- * Normalizes all translation resources in a translations folder by:
- * - Ensuring resource_entries.json and tracker_meta.json exist at every level
- * - Recomputing checksums for all entries
- * - Adding missing locale entries
- * - Updating translation statuses based on base value changes
- * - Removing empty folders after normalization
+ * Normalizes every folder of a writable collection's Collection Sweep (hidden folders are not
+ * part of the collection and are left alone):
+ * - makes `resource_entries.json` and `tracker_meta.json` exist wherever there are entries,
+ * - converts Transloco `{{ x }}` syntax to ICU and normalizes tags through `ResourceFolder.normalizeEntry`,
+ * - recomputes checksums, re-applies the Staleness rule and seeds the collection's missing
+ *   target locales, through `ResourceFolder.normalizeEntry`,
+ * - removes empty folders afterwards.
  *
- * This operation is non-destructive: it preserves existing values, comments, and tags.
+ * Non-destructive: existing values, comments and tags are kept. A folder that cannot be read is
+ * skipped and returned in `problems`; the caller reports it.
  *
- * @param params - Normalization parameters including folder path and locale configuration
- * @returns Summary of normalization results with counts of changes made
+ * @throws {ReadOnlyCollectionError} The collection is read-only.
  */
-export async function normalize(params: NormalizeParams): Promise<NormalizeResult> {
-  const { translationsFolder, baseLocale, locales, dryRun = false } = params;
-
-  const counters: NormalizationCounters = {
+export async function normalize(collection: Collection, options: NormalizeOptions = {}): Promise<NormalizeResult> {
+  if (collection.readOnly) {
+    throw new ReadOnlyCollectionError(collection.name);
+  }
+  const dryRun = options.dryRun ?? false;
+  const counters: Counters = {
     entriesProcessed: 0,
     localesAdded: 0,
     valuesConverted: 0,
@@ -344,37 +64,71 @@ export async function normalize(params: NormalizeParams): Promise<NormalizeResul
     filesUpdated: 0,
   };
 
-  if (!fs.existsSync(translationsFolder)) {
-    return {
-      entriesProcessed: 0,
-      localesAdded: 0,
-      valuesConverted: 0,
-      tagsNormalized: 0,
-      filesCreated: 0,
-      filesUpdated: 0,
-      foldersRemoved: 0,
-      dryRun,
-    };
+  const problems: CollectionFolderProblem[] = [];
+  const findings: NormalizeFinding[] = [];
+
+  // Normalize JSON saves were silent at HEAD; only successful pruning reports mutations.
+  for (const { folder, folderPath, problem } of sweepCollection(collection, { unreported: true })) {
+    if (problem) {
+      problems.push(problem);
+    } else {
+      normalizeFolder(folder, folderPath, collection, dryRun, counters, findings);
+    }
   }
 
-  await normalizeAllFolders({
-    rootPath: translationsFolder,
-    baseLocale,
-    locales,
-    dryRun,
-    counters,
-  });
+  const pruning = pruneEmptyFolders(collection, { dryRun });
+  for (const problem of pruning.problems) {
+    if (!problems.some((existing) => existing.absolutePath === problem.absolutePath)) problems.push(problem);
+  }
+  const foldersRemoved = pruning.removed.length;
+  return { ...counters, foldersRemoved, dryRun, problems, findings };
+}
 
-  const cleanupResult = cleanupEmptyFolders(translationsFolder, dryRun);
+function normalizeFolder(
+  folder: ResourceFolder,
+  folderPath: string,
+  collection: Collection,
+  dryRun: boolean,
+  counters: Counters,
+  findings: NormalizeFinding[],
+): void {
+  if (folder.isEmpty()) {
+    return;
+  }
 
-  return {
-    entriesProcessed: counters.entriesProcessed,
-    localesAdded: counters.localesAdded,
-    valuesConverted: counters.valuesConverted,
-    tagsNormalized: counters.tagsNormalized,
-    filesCreated: counters.filesCreated,
-    filesUpdated: counters.filesUpdated,
-    foldersRemoved: cleanupResult.foldersRemoved,
-    dryRun,
-  };
+  let folderChanged = false;
+  for (const key of folder.keys()) {
+    const entry = folder.get(key)?.entry;
+    if (entry) {
+      for (const prop of ['source', ...translationLocales(entry)]) {
+        const value = entry[prop];
+        if (typeof value !== 'string') continue;
+        const address = { key: fullKeyOf(folderPath, key), locale: prop === 'source' ? collection.baseLocale : prop };
+        for (const found of checkStoredValue(value, {
+          rules: ['collapsed-case-body', 'braced-placeholder'],
+          ...icuParseOptionsFor(collection.runtime),
+        })) {
+          if (found.kind === 'collapsed-case-body' || found.kind === 'braced-placeholder') {
+            findings.push({ ...address, kind: found.kind, detail: describeStoredValueFinding(found) });
+          }
+        }
+      }
+    }
+    const report = folder.normalizeEntry(key, collection.targetLocales);
+
+    counters.entriesProcessed++;
+    counters.localesAdded += report.localesAdded;
+    counters.valuesConverted += report.valuesConverted;
+    counters.tagsNormalized += report.tagsNormalized;
+    if (report.changed) folderChanged = true;
+  }
+
+  // Normalize guarantees both files exist, so a missing file is written even without changes.
+  if (!folderChanged && !folder.hasMissingFiles()) {
+    return;
+  }
+
+  const { written, created } = folder.save({ dryRun });
+  counters.filesCreated += created.length;
+  counters.filesUpdated += written.length - created.length;
 }

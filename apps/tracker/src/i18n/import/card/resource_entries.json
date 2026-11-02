@@ -1,0 +1,22 @@
+{
+  "menuItem": {
+    "source": "Import…",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Importar…",
+    "fr-ca": "Importer…",
+    "ru": "Импорт…",
+    "ja": "インポート…",
+    "de": "Importieren…"
+  },
+  "readOnlyTooltip": {
+    "source": "Read-only collection. Nothing can be imported into it.",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Colección de solo lectura. No se puede importar nada en ella.",
+    "fr-ca": "Collection en lecture seule. Rien ne peut y être importé.",
+    "ru": "Коллекция только для чтения. Импорт в неё невозможен.",
+    "ja": "読み取り専用のコレクションです。インポートはできません。",
+    "de": "Schreibgeschützte Sammlung. Es kann nichts importiert werden."
+  }
+}

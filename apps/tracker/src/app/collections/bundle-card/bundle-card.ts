@@ -4,7 +4,11 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
-import type { BundleEntry, BundleRunState } from '../store/features/with-bundles.feature';
+import { RunResultStrip } from '../../shared/components/run-result-strip/run-result-strip';
+import { bundleSummary } from '../run-strip-summary/bundle-summary';
+import { injectStripTranslate } from '../run-strip-summary/inject-strip-translate';
+import type { BundleRunState } from '../store/bundle-runs';
+import type { BundleEntry } from '../store/features/with-bundles.feature';
 
 const LOCALE_PLACEHOLDER = '{locale}';
 
@@ -32,7 +36,7 @@ export interface OutputPathView {
 @Component({
   selector: 'app-bundle-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, MatMenuModule, MatTooltipModule, TranslocoPipe],
+  imports: [MatIconModule, MatMenuModule, MatTooltipModule, RunResultStrip, TranslocoPipe],
   templateUrl: './bundle-card.html',
   styleUrl: './bundle-card.scss',
   host: {
@@ -102,43 +106,20 @@ export class BundleCard {
   readonly isCompleted = computed(() => this.status() === 'completed' && this.run()?.result !== undefined);
   readonly isFailed = computed(() => this.status() === 'failed');
 
-  readonly progress = computed(() => this.run()?.progress);
-  readonly progressPercent = computed(() => {
-    const progress = this.progress();
-    if (!progress || progress.total <= 0) return 0;
-    return Math.min(100, Math.round((progress.current / progress.total) * 100));
+  readonly #translateSummary = injectStripTranslate();
+  readonly summary = computed(() => {
+    return bundleSummary(
+      this.run(),
+      this.entry().definition.bundleName,
+      this.entry().name,
+      this.baseLocale(),
+      this.#translateSummary,
+    );
   });
-  readonly currentFileName = computed(() => {
-    const file = this.progress()?.currentFile;
-    return file ? (file.split('/').pop() ?? file) : undefined;
-  });
-
-  readonly result = computed(() => this.run()?.result);
-  readonly filesCount = computed(() => this.result()?.filesGenerated.length ?? 0);
-  readonly warningsCount = computed(() => this.result()?.warnings.length ?? 0);
-  readonly hasWarnings = computed(() => this.warningsCount() > 0);
-
-  /** Keys in the base locale's file, falling back to the largest file when the base is unknown. */
-  readonly keysPerLocale = computed(() => {
-    const counts = this.result()?.keysPerLocale;
-    if (!counts) return 0;
-    const base = this.baseLocale();
-    if (base && counts[base] !== undefined) return counts[base];
-    return Math.max(0, ...Object.values(counts));
-  });
-
-  readonly resultFiles = computed<readonly BundleRunFileView[]>(() => {
-    const result = this.result();
-    if (!result) return [];
-    const { bundleName } = this.entry().definition;
-    const locales = result.localesProcessed.length > 0 ? result.localesProcessed : Object.keys(result.keysPerLocale);
-
-    return locales.map((locale) => {
-      const expected = `${bundleName.replace(LOCALE_PLACEHOLDER, locale)}.json`;
-      const written = result.filesGenerated.find((path) => path.endsWith(expected));
-      return { locale, file: written ?? expected, keys: result.keysPerLocale[locale] };
-    });
-  });
+  readonly result = computed(() => this.summary()?.details.result);
+  readonly keysPerLocale = computed(() => this.summary()?.details.keysPerLocale ?? 0);
+  readonly resultFiles = computed(() => this.summary()?.details.files ?? []);
+  readonly hasWarnings = computed(() => (this.summary()?.details.warningsCount ?? 0) > 0);
 
   readonly detailsId = computed(() => `bundle-run-details-${this.entry().name}`);
 

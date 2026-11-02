@@ -31,31 +31,31 @@
   },
   "keyRenamingNotSupported": {
     "en": {
-      "checksum": "575ba68788d69e22ad6e2d4ecdb01755"
+      "checksum": "e11fe5fb8a66d4ecc6bb4f98ddc2a174"
     },
     "es": {
-      "checksum": "5b3ebac94b42ba189596e80457b94852",
-      "baseChecksum": "575ba68788d69e22ad6e2d4ecdb01755",
+      "checksum": "622043a00fb3621bc03aa4db2d25a81b",
+      "baseChecksum": "e11fe5fb8a66d4ecc6bb4f98ddc2a174",
       "status": "translated"
     },
     "fr-ca": {
-      "checksum": "90d61297c3b4fbac388c4be2b71bcc64",
-      "baseChecksum": "575ba68788d69e22ad6e2d4ecdb01755",
+      "checksum": "aeeb9f2d4762a3054836dabf8201378d",
+      "baseChecksum": "e11fe5fb8a66d4ecc6bb4f98ddc2a174",
       "status": "translated"
     },
     "ru": {
-      "checksum": "2bb377f62e8cd28ed1f101cf11565bb0",
-      "baseChecksum": "575ba68788d69e22ad6e2d4ecdb01755",
+      "checksum": "1c4ed40bacf41d7d83aeff77cd2907b8",
+      "baseChecksum": "e11fe5fb8a66d4ecc6bb4f98ddc2a174",
       "status": "translated"
     },
     "ja": {
-      "checksum": "fb129524f433be0cb204402f3e85e9e1",
-      "baseChecksum": "575ba68788d69e22ad6e2d4ecdb01755",
+      "checksum": "3c90e9949d2068edf6f10183c142b8f4",
+      "baseChecksum": "e11fe5fb8a66d4ecc6bb4f98ddc2a174",
       "status": "translated"
     },
     "de": {
-      "checksum": "440299bfba3af128ac1d34ee956a2488",
-      "baseChecksum": "575ba68788d69e22ad6e2d4ecdb01755",
+      "checksum": "99bfdba4b9384c681345682e3d12545e",
+      "baseChecksum": "e11fe5fb8a66d4ecc6bb4f98ddc2a174",
       "status": "translated"
     }
   },
@@ -206,6 +206,36 @@
     "de": {
       "checksum": "e0f85585eb6819ac437502fe5c29d871",
       "baseChecksum": "9789e322478c6f2d59e93d020808642a",
+      "status": "translated"
+    }
+  },
+  "keyExistsInFolderX": {
+    "en": {
+      "checksum": "93bdfaa463db82f9696f5a0ca1a3a125"
+    },
+    "es": {
+      "checksum": "3fc497f0f6a700f27a8572d7afaad38d",
+      "baseChecksum": "93bdfaa463db82f9696f5a0ca1a3a125",
+      "status": "translated"
+    },
+    "fr-ca": {
+      "checksum": "a43f2935c5b55ae084c625609ce4d5ee",
+      "baseChecksum": "93bdfaa463db82f9696f5a0ca1a3a125",
+      "status": "translated"
+    },
+    "ru": {
+      "checksum": "a343023ceddb68ac3409d12788552151",
+      "baseChecksum": "93bdfaa463db82f9696f5a0ca1a3a125",
+      "status": "translated"
+    },
+    "ja": {
+      "checksum": "59f1e469cdaab1f4013902ebbf061ad6",
+      "baseChecksum": "93bdfaa463db82f9696f5a0ca1a3a125",
+      "status": "translated"
+    },
+    "de": {
+      "checksum": "a18f6a39f7c6594694804aadf9a46ad7",
+      "baseChecksum": "93bdfaa463db82f9696f5a0ca1a3a125",
       "status": "translated"
     }
   }

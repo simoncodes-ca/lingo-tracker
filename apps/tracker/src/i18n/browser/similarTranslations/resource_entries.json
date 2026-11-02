@@ -48,5 +48,15 @@
     "ru": "Показать ещё {count}",
     "ja": "他 {count} 件を表示",
     "de": "{count} weitere anzeigen"
+  },
+  "similarityX": {
+    "source": "{percent}% similar",
+    "comment": "Screen-reader label for the similarity percentage shown beside a similar value (e.g. 85% similar)",
+    "tags": ["browser"],
+    "es": "{percent} % similar",
+    "fr-ca": "{percent} % semblable",
+    "ru": "Сходство {percent} %",
+    "ja": "類似度 {percent}%",
+    "de": "{percent} % ähnlich"
   }
 }

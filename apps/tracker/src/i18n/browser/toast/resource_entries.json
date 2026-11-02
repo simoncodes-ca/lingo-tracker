@@ -90,8 +90,8 @@
     "de": "Alle Standorte sind bereits auf dem neuesten Stand."
   },
   "skippedLocalesX": {
-    "source": "Skipped locales (ICU format): {locales}",
-    "comment": "Snackbar warning when some locales were skipped because they use ICU format",
+    "source": "Auto-translation skipped for {locales}",
+    "comment": "Snackbar warning listing locales skipped after a row's auto-translate. Skips can have several causes (complex ICU the provider cannot handle, a lost placeholder, a dropped protected term, or the value changing while translating), so the text does not name one.",
     "tags": ["browser"],
     "es": "Configuraciones regionales omitidas (formato ICU): {locales}",
     "fr-ca": "Paramètres régionaux ignorés (format ICU) : {locales}",
@@ -110,8 +110,8 @@
     "de": "Ressource erfolgreich erstellt"
   },
   "autoTranslationSkippedX": {
-    "source": "Auto-translation skipped for {locales} (ICU format not supported)",
-    "comment": "Snackbar warning when auto-translation was skipped for some locales due to ICU format",
+    "source": "Auto-translation skipped for {locales}",
+    "comment": "Snackbar warning when the editor's auto-translation skipped some locales. Skips can have several causes (complex ICU the provider cannot handle, a lost placeholder, a dropped protected term, or the value changing while translating), so the text does not name one.",
     "tags": ["browser"],
     "es": "Se omitió la traducción automática para {locales} (formato ICU no compatible)",
     "fr-ca": "Traduction automatique ignorée pour {locales} (format ICU non pris en charge)",

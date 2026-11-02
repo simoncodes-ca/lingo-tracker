@@ -1,5 +1,5 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { TRACKER_TOKENS } from '../../../i18n-types/tracker-resources';
@@ -23,8 +23,8 @@ export class TagList {
   readonly TOKENS = TRACKER_TOKENS;
 
   /** Array of explicit (per-resource) tag strings to display */
-  tags = input.required<string[]>();
+  tags = input.required<readonly string[]>();
 
   /** Tags inherited from the parent collection; shown with a distinct style and tooltip */
-  inheritedTags = input<string[]>([]);
+  inheritedTags = input<readonly string[]>([]);
 }

@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { MatSnackBar, type MatSnackBarConfig } from '@angular/material/snack-bar';
 import { NotificationComponent } from './notification.component';
 import { NOTIFICATION_DURATIONS, type NotificationData, type NotificationSeverity } from './notification.constants';

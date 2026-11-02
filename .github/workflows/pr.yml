@@ -4,10 +4,13 @@ on:
   pull_request:
     branches:
       - develop
+  push:
+    branches:
+      - develop
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:
@@ -23,7 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24 # API Jest needs Node >=24.9 to load ESM-only NestJS 12
           package-manager-cache: false
 
       - name: Install pnpm
@@ -55,10 +58,142 @@ jobs:
 
       - name: Derive NX_BASE
         id: nx-base
-        run: echo "NX_BASE=origin/${{ github.event.pull_request.base.ref }}" >> "$GITHUB_OUTPUT"
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          # Pull requests compare with the target branch. Pushes compare with the previous tip.
+          if [ "$EVENT_NAME" = pull_request ]; then
+            echo "NX_BASE=origin/$BASE_REF" >> "$GITHUB_OUTPUT"
+          elif git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            echo "NX_BASE=$BEFORE_SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "NX_BASE=HEAD~1" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Test (affected)
         run: pnpm nx affected -t test --base=${{ steps.nx-base.outputs.NX_BASE }}
 
+      - name: Typecheck (affected)
+        run: pnpm nx affected -t typecheck --base=${{ steps.nx-base.outputs.NX_BASE }}
+
       - name: Build (affected)
         run: pnpm nx affected -t build --base=${{ steps.nx-base.outputs.NX_BASE }}
+
+      - name: E2E (affected)
+        run: pnpm nx affected -t e2e --base=${{ steps.nx-base.outputs.NX_BASE }} --exclude=tracker-e2e
+
+      - name: Test summary
+        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d # v6.6.1
+        with:
+          report_paths: dist/test-results/**/junit.xml
+          check_name: Unit test results
+          annotate_only: true
+          detailed_summary: true
+          require_tests: false
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: dist/test-results/
+          if-no-files-found: ignore
+
+  # Test engines minimums, including require(esm) of ESM-only NestJS 12.
+  runtime-smoke:
+    name: runtime-smoke (${{ matrix.node }})
+    runs-on: ${{ vars.RUN_ON_VPS == 'true' && 'self-hosted' || 'ubuntu-latest' }}
+    strategy:
+      matrix:
+        node: ["24.15.0", "26.0.0"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24 # build toolchain; the runtime Node is set after the build
+          package-manager-cache: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Get pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build CLI and API on Node 24
+        run: pnpm nx run-many -t build -p cli api
+
+      - name: Setup runtime Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+
+      - name: Smoke test published runtime
+        shell: bash
+        run: |
+          test "$(node --version)" = "v${{ matrix.node }}"
+          runtime_dir=$(mktemp -d)
+          export LINGO_TRACKER_PORT=$((20000 + RANDOM % 40000))
+          (cd "$runtime_dir" && exec node "$GITHUB_WORKSPACE/dist/apps/api/main.js") > "$runtime_dir/api.log" 2>&1 &
+          api_pid=$!
+          # Print the server log whenever the step fails, then stop the server.
+          trap 'status=$?; [ "$status" -ne 0 ] && cat "$runtime_dir/api.log"; kill "$api_pid" 2>/dev/null || true; wait "$api_pid" 2>/dev/null || true; rm -rf "$runtime_dir"' EXIT
+
+          for _ in $(seq 30); do
+            kill -0 "$api_pid" 2>/dev/null || { echo "API exited during startup"; exit 1; }
+            [ "$(curl --silent --max-time 1 --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:$LINGO_TRACKER_PORT/api/health")" = 200 ] && break
+            sleep 1
+          done
+          [ "$(curl --silent --max-time 1 --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:$LINGO_TRACKER_PORT/api/health")" = 200 ]
+
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const response = await fetch(`http://127.0.0.1:${process.env.LINGO_TRACKER_PORT}/api/config`);
+          assert.equal(response.status, 404);
+          assert.match(response.headers.get('content-type') ?? '', /application\/json/);
+          const body = await response.json();
+          assert.match(body.message, /Configuration file not found/);
+          NODE
+
+          # Exercise multipart uploads (multer) on this Node line: one accepted file, then the file-count limit.
+          cat > "$runtime_dir/.lingo-tracker.json" <<'JSON'
+          { "baseLocale": "en", "locales": ["en"], "importFolder": "imports", "collections": { "smoke": { "translationsFolder": "translations" } } }
+          JSON
+          RUNTIME_DIR="$runtime_dir" node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const url = `http://127.0.0.1:${process.env.LINGO_TRACKER_PORT}/api/imports/sources?collection=smoke`;
+          const upload = async (count) => {
+            const form = new FormData();
+            for (let i = 0; i < count; i++) form.append('files', new Blob(['{"greeting":"hi"}']), `smoke-${i}.json`);
+            return fetch(url, { method: 'POST', body: form });
+          };
+          const accepted = await upload(1);
+          assert.equal(accepted.status, 201);
+          assert.deepEqual((await accepted.json()).files.map((file) => file.name), ['smoke-0.json']);
+          assert.equal(readFileSync(`${process.env.RUNTIME_DIR}/imports/smoke-0.json`, 'utf8'), '{"greeting":"hi"}');
+          const tooMany = await upload(11);
+          assert.equal(tooMany.status, 400);
+          assert.deepEqual((await tooMany.json()).errors, ['Invalid multipart fields or limits exceeded.']);
+          NODE
+
+          node "$GITHUB_WORKSPACE/dist/apps/cli/main.cjs" --version

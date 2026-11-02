@@ -1,7 +1,18 @@
-import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { parseCollectionArg, substituteSkillTemplate, readPatternsMdTemplate, getTemplatesDir } from './install-skill';
+import prompts from 'prompts';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { isInteractiveTerminal } from '../runner/terminal';
+import {
+  getTemplatesDir,
+  installSkillCommand,
+  parseCollectionArg,
+  readPatternsMdTemplate,
+  substituteSkillTemplate,
+} from './install-skill';
+
+vi.mock('prompts');
+vi.mock('../runner/terminal', () => ({ isInteractiveTerminal: vi.fn(() => false) }));
 
 // ---------------------------------------------------------------------------
 // parseCollectionArg
@@ -84,6 +95,21 @@ describe('substituteSkillTemplate (single collection)', () => {
     expect(substituteSkillTemplate(template, singleCollection)).toContain(
       'npx lingo-tracker find-similar --collection myCol',
     );
+  });
+
+  it('contains the preferred-terminology list, add and remove commands', () => {
+    const output = substituteSkillTemplate(template, singleCollection);
+    expect(output).toContain('npx lingo-tracker preferred-terminology --list');
+    expect(output).toContain(
+      'npx lingo-tracker preferred-terminology --add "<discouraged term>" --preferred "<preferred term>"',
+    );
+    expect(output).toContain('npx lingo-tracker preferred-terminology --remove "<discouraged term>"');
+  });
+
+  it('emits a project-wide validation command without collection filtering', () => {
+    const output = substituteSkillTemplate(template, singleCollection);
+    expect(output).toContain('npx lingo-tracker validate\n');
+    expect(output).not.toContain('validate --collection');
   });
 
   it('contains the bundle command with the correct bundle name', () => {
@@ -178,5 +204,78 @@ describe('readPatternsMdTemplate', () => {
 
   it('uses the generic TOKEN_CONSTANT placeholder', async () => {
     expect(await readPatternsMdTemplate()).toContain('TOKEN_CONSTANT');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// installSkillCommand (runner outcome)
+// ---------------------------------------------------------------------------
+
+describe('installSkillCommand', () => {
+  // Stubbed so a regression can never write real `.claude/…` files.
+  let mkdir: ReturnType<typeof vi.spyOn>;
+  let writeFile: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.INIT_CWD = '/project';
+    process.exitCode = undefined;
+    vi.mocked(isInteractiveTerminal).mockReturnValue(false);
+    mkdir = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+    writeFile = vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    process.exitCode = undefined;
+    writeFile.mockRestore();
+  });
+
+  it('exits 1 without --collection in non-interactive mode', async () => {
+    await installSkillCommand({});
+
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('❌ Missing required option in non-interactive mode: --collection'),
+    );
+    expect(mkdir).not.toHaveBeenCalled();
+    expect(writeFile).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('exits 1 on a malformed --collection spec', async () => {
+    await installSkillCommand({ collection: ['only:three:parts'] });
+
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('❌ Invalid collection spec "only:three:parts"'),
+    );
+    expect(mkdir).not.toHaveBeenCalled();
+    expect(writeFile).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  it('cancelling the first interactive question writes nothing and exits 0', async () => {
+    vi.mocked(isInteractiveTerminal).mockReturnValue(true);
+    vi.mocked(prompts).mockImplementationOnce(async (_questions, options) => {
+      options?.onCancel?.({ type: 'select', name: 'value', message: 'dir' }, {});
+      return {};
+    });
+
+    await installSkillCommand({});
+
+    expect(console.error).toHaveBeenCalledWith('❌ Install skill cancelled.');
+    expect(mkdir).not.toHaveBeenCalled();
+    expect(writeFile).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(0);
+  });
+
+  it('writes the skill under --dir, resolved against the project root', async () => {
+    await installSkillCommand({ collection: ['app:core:APP_TOKENS:src/tokens.ts'], dir: '.agents' });
+
+    expect(mkdir).toHaveBeenCalledWith('/project/.agents/skills/lingo-tracker/references', { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith(
+      '/project/.agents/skills/lingo-tracker/SKILL.md',
+      expect.stringContaining('APP_TOKENS'),
+      'utf-8',
+    );
+    expect(process.exitCode).toBe(0);
   });
 });

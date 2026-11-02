@@ -1,0 +1,112 @@
+{
+  "description": {
+    "source": "Shape of the JSON files.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Estructura de los archivos JSON.",
+    "fr-ca": "Structure des fichiers JSON.",
+    "ru": "Структура файлов JSON.",
+    "ja": "JSON ファイルの構造です。",
+    "de": "Aufbau der JSON-Dateien."
+  },
+  "structureLabel": {
+    "source": "Structure",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Estructura",
+    "fr-ca": "Structure",
+    "ru": "Структура",
+    "ja": "構造",
+    "de": "Struktur"
+  },
+  "hierarchical": {
+    "source": "Hierarchical",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Jerárquica",
+    "fr-ca": "Hiérarchique",
+    "ru": "Иерархическая",
+    "ja": "階層",
+    "de": "Hierarchisch"
+  },
+  "flat": {
+    "source": "Flat",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Plana",
+    "fr-ca": "Plate",
+    "ru": "Плоская",
+    "ja": "フラット",
+    "de": "Flach"
+  },
+  "richLabel": {
+    "source": "Rich entries",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Entradas enriquecidas",
+    "fr-ca": "Entrées enrichies",
+    "ru": "Расширенные записи",
+    "ja": "リッチエントリ",
+    "de": "Erweiterte Einträge"
+  },
+  "richHint": {
+    "source": "Write each entry as an object with a value field instead of a plain string, so metadata fits.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Escribe cada entrada como un objeto con un campo value en lugar de una cadena simple, para que quepan los metadatos.",
+    "fr-ca": "Écrit chaque entrée comme un objet avec un champ value plutôt qu’une simple chaîne, pour y loger les métadonnées.",
+    "ru": "Записывает каждую запись как объект с полем value вместо простой строки, чтобы поместились метаданные.",
+    "ja": "メタデータを含められるよう、各エントリを単純な文字列ではなく value フィールドを持つオブジェクトとして書き出します。",
+    "de": "Schreibt jeden Eintrag als Objekt mit einem value-Feld statt als einfachen String, damit Metadaten Platz haben."
+  },
+  "includeBase": {
+    "source": "Include base value",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Incluir valor base",
+    "fr-ca": "Inclure la valeur de base",
+    "ru": "Включить базовое значение",
+    "ja": "ベース値を含める",
+    "de": "Basiswert einbeziehen"
+  },
+  "basePropertyLabel": {
+    "source": "Property name",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Nombre de la propiedad",
+    "fr-ca": "Nom de la propriété",
+    "ru": "Имя свойства",
+    "ja": "プロパティ名",
+    "de": "Eigenschaftsname"
+  },
+  "includeStatus": {
+    "source": "Include status",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Incluir estado",
+    "fr-ca": "Inclure le statut",
+    "ru": "Включить статус",
+    "ja": "ステータスを含める",
+    "de": "Status einbeziehen"
+  },
+  "includeComment": {
+    "source": "Include comment",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Incluir comentario",
+    "fr-ca": "Inclure le commentaire",
+    "ru": "Включить комментарий",
+    "ja": "コメントを含める",
+    "de": "Kommentar einbeziehen"
+  },
+  "includeTags": {
+    "source": "Include tags",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Incluir etiquetas",
+    "fr-ca": "Inclure les étiquettes",
+    "ru": "Включить теги",
+    "ja": "タグを含める",
+    "de": "Tags einbeziehen"
+  }
+}

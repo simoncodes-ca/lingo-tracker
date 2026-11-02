@@ -1,22 +1,33 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConsoleFormatter } from './console-formatter';
 
 describe('ConsoleFormatter', () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   describe('error', () => {
-    it('should format error message with ❌ prefix', () => {
+    it('should format error message with ❌ prefix on stderr', () => {
       ConsoleFormatter.error('Something went wrong');
-      expect(consoleLogSpy).toHaveBeenCalledWith('❌ Something went wrong');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Something went wrong');
+      expect(consoleLogSpy).not.toHaveBeenCalled();
+    });
+
+    it('prints its detail lines under it, indented, on stderr', () => {
+      ConsoleFormatter.error('Errors (2):', ['- first', 'second\ncontinued']);
+      expect(consoleErrorSpy.mock.calls).toEqual([['❌ Errors (2):'], ['  - first'], ['  second\n  continued']]);
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -28,10 +39,28 @@ describe('ConsoleFormatter', () => {
   });
 
   describe('warning', () => {
-    it('should format warning message with ⚠️ prefix', () => {
+    it('should format warning message with ⚠️ prefix on stderr', () => {
       ConsoleFormatter.warning('Be careful');
-      expect(consoleLogSpy).toHaveBeenCalledWith('⚠️  Be careful');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('⚠️  Be careful');
+      expect(consoleLogSpy).not.toHaveBeenCalled();
     });
+
+    it('prints its detail lines under it, indented, on stderr', () => {
+      ConsoleFormatter.warning('Warnings (1):', ['- one']);
+      expect(consoleErrorSpy.mock.calls).toEqual([['⚠️  Warnings (1):'], ['  - one']]);
+      expect(consoleLogSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  it('writes success, info, progress, section, indent and keyValue to stdout only', () => {
+    ConsoleFormatter.success('s');
+    ConsoleFormatter.info('i');
+    ConsoleFormatter.progress('p');
+    ConsoleFormatter.section('t');
+    ConsoleFormatter.indent('x');
+    ConsoleFormatter.keyValue('k', 1);
+    expect(consoleLogSpy).toHaveBeenCalled();
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 
   describe('info', () => {

@@ -1,35 +1,25 @@
-import type { TranslationStatus } from './translation-status';
+import type { ResourceSummary, ResourceSummaryTarget } from '@simoncodes-ca/domain';
 
 export interface ResourceTreeDto {
   /** Current folder path (dot-delimited, empty string for root) */
   path: string;
 
-  /** Resources in this folder */
+  /** Resources in this folder (with `includeNested`, also every resource below it) */
   resources: ResourceSummaryDto[];
 
   /** Child folders (loaded or unloaded based on depth) */
   children: FolderNodeDto[];
 }
 
-export interface ResourceSummaryDto {
-  /** Entry key within folder (not full path) */
-  key: string;
+/**
+ * One resource entry: explicit address (`fullKey`, `folderPath`, `entryKey`), the base
+ * value, and one row per target locale of the collection (in collection order) with
+ * `needsWork` and `sameAsBase` already decided. Declared once, in domain (Resource Summary).
+ */
+export type ResourceSummaryDto = ResourceSummary;
 
-  /** Translation values per locale (includes source locale) */
-  translations: Record<string, string>;
-
-  /** Translation status per locale (undefined for base locale) */
-  status: Record<string, TranslationStatus | undefined>;
-
-  /** Optional comment/note for translators */
-  comment?: string;
-
-  /** Optional tags for categorization/filtering */
-  tags?: string[];
-
-  /** Tags inherited from the parent collection config (read-only on the resource) */
-  inheritedTags?: string[];
-}
+/** One target locale of a {@link ResourceSummaryDto}. */
+export type ResourceSummaryTargetDto = ResourceSummaryTarget;
 
 export interface FolderNodeDto {
   /** Folder name (single segment, not full path) */

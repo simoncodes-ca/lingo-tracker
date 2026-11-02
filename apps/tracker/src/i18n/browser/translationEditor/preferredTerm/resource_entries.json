@@ -1,0 +1,22 @@
+{
+  "messageX": {
+    "source": "Preferred terminology: consider “{preferred}” instead of “{discouraged}”.",
+    "comment": "Advisory under the base-locale value in the resource editor. {{ preferred }} is the configured preferred term, {{ discouraged }} the discouraged term found in the value. Keep the curly quotes around the terms.",
+    "tags": ["browser"],
+    "es": "Preferred terminology: consider “{preferred}” instead of “{discouraged}”.",
+    "fr-ca": "Preferred terminology: consider “{preferred}” instead of “{discouraged}”.",
+    "ru": "Preferred terminology: consider “{preferred}” instead of “{discouraged}”.",
+    "ja": "Preferred terminology: consider “{preferred}” instead of “{discouraged}”.",
+    "de": "Preferred terminology: consider “{preferred}” instead of “{discouraged}”."
+  },
+  "useX": {
+    "source": "Use “{preferred}”",
+    "comment": "Button in the preferred-terminology advisory that replaces the discouraged term in the base value with {{ preferred }}. Does not save.",
+    "tags": ["browser"],
+    "es": "Use “{preferred}”",
+    "fr-ca": "Use “{preferred}”",
+    "ru": "Use “{preferred}”",
+    "ja": "Use “{preferred}”",
+    "de": "Use “{preferred}”"
+  }
+}

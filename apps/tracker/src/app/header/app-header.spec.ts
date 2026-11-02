@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import type { ComponentFixture } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
 import { createComponentFactory, type Spectator } from '@ngneat/spectator/vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,7 +25,7 @@ describe('AppHeader', () => {
 
   const createComponent = createComponentFactory({
     component: AppHeader,
-    imports: [NoopAnimationsModule, getTranslocoTestingModule()],
+    imports: [getTranslocoTestingModule()],
     providers: [
       provideRouter([
         { path: 'settings', component: BlankRoute },

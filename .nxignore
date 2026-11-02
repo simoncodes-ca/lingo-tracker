@@ -1,0 +1,2 @@
+# Docusaurus site: its own npm install and workflow (docs.yml), outside the pnpm workspace.
+docs-site

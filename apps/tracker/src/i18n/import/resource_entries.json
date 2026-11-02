@@ -1,0 +1,22 @@
+{
+  "button": {
+    "source": "Import…",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Importar…",
+    "fr-ca": "Importer…",
+    "ru": "Импорт…",
+    "ja": "インポート…",
+    "de": "Importieren…"
+  },
+  "buttonBusy": {
+    "source": "Importing…",
+    "comment": "Import dialog text",
+    "tags": ["import"],
+    "es": "Importando…",
+    "fr-ca": "Importation en cours…",
+    "ru": "Импорт…",
+    "ja": "インポート中…",
+    "de": "Wird importiert…"
+  }
+}

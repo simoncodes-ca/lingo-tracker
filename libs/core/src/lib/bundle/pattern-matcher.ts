@@ -1,3 +1,4 @@
+import { isFolderPathUnder } from '@simoncodes-ca/domain';
 /**
  * Pattern matching utilities for entry selection in bundles
  */
@@ -27,7 +28,9 @@ export function matchesPattern(key: string, pattern: string): boolean {
   // Handle prefix pattern (e.g., "apps.*")
   if (pattern.endsWith('.*')) {
     const prefix = pattern.slice(0, -2); // Remove ".*"
-    return key === prefix || key.startsWith(`${prefix}.`);
+    // An empty pattern prefix is not the folder root; only the explicit '*' matches all keys.
+    if (prefix === '') return key === '' || key.startsWith('.');
+    return isFolderPathUnder(prefix, key);
   }
 
   return false;

@@ -13,4 +13,11 @@ export interface SearchTranslationsDto {
    * Default: 100, Max: 500
    */
   maxResults?: number;
+
+  /**
+   * `text` (default): the query in keys and values of every locale.
+   * `similar`: base values similar to the query (Resource Search's similar-value rule), ranked by similarity.
+   * Any other value is a text search.
+   */
+  mode?: 'text' | 'similar';
 }

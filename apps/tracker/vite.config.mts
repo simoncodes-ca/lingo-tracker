@@ -1,15 +1,14 @@
 /// <reference types='vitest' />
 
 import angular from '@analogjs/vite-plugin-angular';
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => ({
-  root: __dirname,
+  root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/apps/tracker',
-  plugins: [angular(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
+  plugins: [angular()],
   resolve: {
+    tsconfigPaths: true,
     dedupe: [
       '@angular/core',
       '@angular/core/testing',
@@ -31,7 +30,7 @@ export default defineConfig(() => ({
     environment: 'jsdom',
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     setupFiles: ['src/test-setup.ts'],
-    reporters: ['default'],
+    reporters: ['default', ['junit', { outputFile: '../../dist/test-results/apps/tracker/junit.xml' }]],
     server: {
       deps: {
         inline: ['@ngneat/spectator'],

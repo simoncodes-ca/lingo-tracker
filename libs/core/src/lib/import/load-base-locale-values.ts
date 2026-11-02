@@ -1,9 +1,7 @@
-import { resolve, join } from 'node:path';
+import type { Collection } from '../config/open-collection';
+import { groupByFolder } from '../resource/folder-grouping';
+import { openReadonlyResourceFolder } from '../resource/resource-folder';
 import type { ImportedResource } from './types';
-import type { ResourceEntries } from '../../resource/resource-entry';
-import { splitResolvedKey } from '@simoncodes-ca/domain';
-import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
-import { readJsonFile } from '../file-io/json-file-operations';
 
 /**
  * Loads base locale values for all imported resources from existing resource files.
@@ -12,48 +10,22 @@ import { readJsonFile } from '../file-io/json-file-operations';
  * for ICU auto-fixing during import operations.
  *
  * @param resources - Array of imported resources to load base values for
- * @param translationsFolder - Path to the translations directory
- * @param cwd - Current working directory for resolving absolute paths
+ * @param collection - The opened collection
  * @returns Map of resource keys to their base locale values
  */
-export function loadBaseLocaleValues(
-  resources: ImportedResource[],
-  translationsFolder: string,
-  cwd: string,
-): Map<string, string> {
+export function loadBaseLocaleValues(resources: ImportedResource[], collection: Collection): Map<string, string> {
   const baseValues = new Map<string, string>();
 
-  // Group by folder to minimize file reads
-  const folderToKeys = new Map<string, Array<{ key: string; entryKey: string }>>();
-
-  for (const resource of resources) {
-    const { folderPath: pathSegments, entryKey } = splitResolvedKey(resource.key);
-
-    const fullFolderPath = pathSegments.length ? join(translationsFolder, ...pathSegments) : translationsFolder;
-
-    let folderKeys = folderToKeys.get(fullFolderPath);
-    if (!folderKeys) {
-      folderKeys = [];
-      folderToKeys.set(fullFolderPath, folderKeys);
-    }
-
-    folderKeys.push({ key: resource.key, entryKey });
-  }
-
-  // Load base values from each folder
-  for (const [folderPath, keys] of folderToKeys.entries()) {
-    const entryResourcePath = resolve(cwd, folderPath, RESOURCE_ENTRIES_FILENAME);
-
+  // This read phase is separate from the later import write phase.
+  for (const { folderPath, members } of groupByFolder(collection, resources, (resource) => resource.key)) {
     try {
-      const resourceEntries = readJsonFile<ResourceEntries>({
-        filePath: entryResourcePath,
-        defaultValue: {} as ResourceEntries,
-      });
+      // This reader never saves resource files.
+      const folder = openReadonlyResourceFolder(folderPath, collection);
 
-      for (const { key, entryKey } of keys) {
-        const entry = resourceEntries[entryKey];
-        if (entry?.source) {
-          baseValues.set(key, entry.source);
+      for (const { key, entryKey } of members) {
+        const source = folder.get(entryKey)?.entry.source;
+        if (source) {
+          baseValues.set(key, source);
         }
       }
     } catch {

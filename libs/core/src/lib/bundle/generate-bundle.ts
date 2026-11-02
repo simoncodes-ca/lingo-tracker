@@ -1,30 +1,22 @@
 /**
- * Core bundle generation logic
+ * Bundle generation: writes a bundle's JSON file per locale (and the debug-keys file and the type
+ * file when asked) from the Bundle Selection.
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { effectiveTags, hasUnbundlableBranchBody, icuToTransloco, validateICUSyntax } from '@simoncodes-ca/domain';
-import {
-  type BundleDefinition,
-  type CollectionBundleDefinition,
-  type EntrySelectionRule,
-  hasTypeDistConfigured,
-  type TokenCasing,
-} from '../../config/bundle-definition';
+import { buildKeyTree, bundleOutputFile, hasTypeDistConfigured, type TokenCasing } from '@simoncodes-ca/domain';
 import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
-import type { ResourceEntries } from '../../resource/resource-entry';
-import { buildHierarchy } from './hierarchy-builder';
-import { matchesPattern } from './pattern-matcher';
-import { type FlatResource, loadCollectionResources } from './resource-loader';
-import { matchesTags } from './tag-filter';
-import { type GenerateTypesResult, generateBundleTypes } from './type-generation/generate-types';
+import { BundleHierarchicalConflictError } from '../errors/internal';
+import type { RunOutcome } from '../run-outcome';
+import { type BundleFindings, bundleFindings } from './bundle-findings';
+import { bundleRunConflicts, bundleRunWarnings, type PreparedBundleRun } from './prepare-bundle-run';
+import { type GenerateBundleTypesParams, generateBundleTypes } from './type-generation/generate-types';
 
 export interface GenerateBundleParams {
   readonly bundleKey: string;
-  readonly bundleDefinition: BundleDefinition;
   readonly config: LingoTrackerConfig;
-  readonly locales?: string[];
+  readonly locales?: readonly string[];
   /** CLI-level override for token casing. Takes precedence over all config values. */
   readonly tokenCasing?: TokenCasing;
   /**
@@ -46,344 +38,186 @@ export interface GenerateBundleParams {
    */
   readonly debugKeysLocale?: string;
   /**
-   * Called at the start of each locale iteration (the debug-keys locale, when
+   * Called before selecting each locale, before any output write (the debug-keys locale, when
    * requested, is included in `total` and emitted last).
    */
   readonly onProgress?: (event: BundleProgressEvent) => void;
+  /**
+   * The project directory (holding `.lingo-tracker.json`): translations folders, `dist` and
+   * `typeDistFile` resolve against it. Default: `process.cwd()`.
+   */
+  readonly cwd?: string;
 }
 
 export interface BundleProgressEvent {
-  /** Locale about to be processed (the debug-keys locale code for the debug file). */
+  /** Locale about to be selected (the debug-keys locale code for the debug file). */
   readonly locale: string;
   /** 1-based position of this locale in the run. */
   readonly index: number;
   /** Total number of files this run will attempt, including the debug-keys file. */
   readonly total: number;
-  /** Output path of the file about to be written. */
+  /** Output path for the locale being selected. */
   readonly file: string;
 }
 
 export interface GenerateBundleResult {
+  readonly outcome: RunOutcome;
   readonly bundleKey: string;
   readonly filesGenerated: number;
-  readonly warnings: string[];
+  /** Every successfully written file, in write order, relative to `cwd` with `/` separators. An output outside `cwd` begins with `../`. */
+  readonly writtenFiles: string[];
+  readonly findings: BundleFindings;
   readonly localesProcessed: string[];
   /** Number of keys written per processed locale (empty locales are omitted). */
   readonly keysPerLocale: Record<string, number>;
-  readonly typeGenerationResult?: GenerateTypesResult;
 }
 
-/**
- * Optional trace collected while merging collections into a bundle.
- * Used by the dry-run planner to report key conflicts and winning origins.
- */
-export interface BundleKeyTrace {
-  /** Final (prefixed) keys that were defined by more than one resource. */
-  readonly conflicts: Set<string>;
-  /** Winning origin per final key. */
-  readonly origins: Map<string, BundleKeyOrigin>;
+export interface BundleWarning {
+  readonly origin: 'generation' | 'config' | 'type';
+  readonly message: string;
 }
 
-export interface BundleKeyOrigin {
-  readonly collectionName: string;
-  readonly sourceKey: string;
+export type BundleTypeOutcome =
+  | { readonly status: 'written'; readonly path: string; readonly keysCount: number }
+  | { readonly status: 'skipped'; readonly reason: 'empty-bundle' }
+  | { readonly status: 'failed'; readonly reason: string }
+  | { readonly status: 'not-configured' };
+
+/** Returns the outcome detail without status words, bundle key or output framing. */
+export function bundleTypeOutcomeDetail(outcome: BundleTypeOutcome): string {
+  switch (outcome.status) {
+    case 'written':
+      return `${outcome.path} (${outcome.keysCount} keys)`;
+    case 'skipped': {
+      const { reason } = outcome;
+      switch (reason) {
+        case 'empty-bundle':
+          return 'bundle is empty';
+        default: {
+          const unhandledReason: never = reason;
+          throw new Error(`Unknown bundle type skip reason: ${unhandledReason}`);
+        }
+      }
+    }
+    case 'not-configured':
+      return 'no typeDistFile configured';
+    case 'failed':
+      return outcome.reason;
+    default: {
+      const unhandled: never = outcome;
+      throw new Error(`Unknown bundle type outcome: ${unhandled}`);
+    }
+  }
 }
 
-/**
- * Generates translation bundle files for specified bundle configuration
- *
- * @param params - Bundle generation parameters
- * @returns Result with count of files generated and any warnings
- */
-export async function generateBundle(params: GenerateBundleParams): Promise<GenerateBundleResult> {
-  const {
-    bundleKey,
-    bundleDefinition,
-    config,
-    locales,
-    tokenCasing: tokenCasingOverride,
-    tokenConstantName,
-    transformICUToTransloco: transformICUToTranslocoOverride,
-    debugKeysLocale,
-    onProgress,
-  } = params;
-  const warnings: string[] = [];
+/** Presentation-free warning for a failed or skipped type result; successful results have none. */
+function describeTypeOutcome(bundleKey: string, outcome: BundleTypeOutcome): string | undefined {
+  switch (outcome.status) {
+    case 'failed':
+    case 'skipped':
+      return `Type generation ${outcome.status} for '${bundleKey}': ${bundleTypeOutcomeDetail(outcome)}`;
+    case 'written':
+    case 'not-configured':
+      return undefined;
+    default: {
+      const unhandled: never = outcome;
+      throw new Error(`Unknown bundle type outcome: ${unhandled}`);
+    }
+  }
+}
+
+/** The job service and run coordinator use an already prepared run. */
+export async function generatePreparedBundle(
+  prepared: PreparedBundleRun,
+  options: Pick<GenerateBundleParams, 'debugKeysLocale' | 'onProgress'> = {},
+): Promise<GenerateBundleResult> {
+  const { bundleKey, cwd } = prepared;
+  const { debugKeysLocale, onProgress } = options;
+  const bundleDefinition = prepared.definition;
+  const { tokenCasing } = prepared.settings;
+  const total = prepared.locales.length + (debugKeysLocale ? 1 : 0);
+  const progress = (locale: string, index: number): void =>
+    onProgress?.({ locale, index, total, file: bundleOutputFile(bundleDefinition, locale) });
+  const content = prepared.content({
+    onLocale: progress,
+    onBase: debugKeysLocale ? () => progress(debugKeysLocale, total) : undefined,
+  });
+  const conflicts = bundleRunConflicts(prepared, content, options);
+  if (conflicts.length > 0) throw new BundleHierarchicalConflictError(bundleKey, conflicts);
+  const warnings: BundleWarning[] = bundleRunWarnings(prepared, content, options).map((message) => ({
+    origin: 'generation',
+    message,
+  }));
+  const { baseKeys } = content;
+
   const localesProcessed: string[] = [];
+  const writtenFiles: string[] = [];
   const keysPerLocale: Record<string, number> = {};
 
-  // Resolve token casing: CLI override → bundle config → global config → default
-  const resolvedTokenCasing: TokenCasing =
-    tokenCasingOverride ?? bundleDefinition.tokenCasing ?? config.tokenCasing ?? 'upperCase';
-
-  // Resolve ICU transformation: CLI override → bundle config → global config → default (true)
-  const resolvedTransformICUToTransloco: boolean =
-    transformICUToTranslocoOverride ??
-    bundleDefinition.transformICUToTransloco ??
-    config.transformICUToTransloco ??
-    true;
-
-  const targetLocales = locales ?? config.locales;
-  let filesGenerated = 0;
-  const resourceCache = new Map<string, ResourceEntries>();
-  const totalFiles = targetLocales.length + (debugKeysLocale ? 1 : 0);
-  let progressIndex = 0;
-
-  for (const locale of targetLocales) {
-    progressIndex++;
-    onProgress?.({
-      locale,
-      index: progressIndex,
-      total: totalFiles,
-      file: getBundleOutputPath(bundleDefinition, locale),
-    });
-
-    const bundleData = collectBundleData(
-      bundleDefinition,
-      config,
-      locale,
-      warnings,
-      resolvedTransformICUToTransloco,
-      resourceCache,
-    );
-
-    if (Object.keys(bundleData).length === 0) {
-      warnings.push(`Bundle '${bundleKey}' for locale '${locale}' is empty`);
-      continue;
-    }
-
-    const hierarchicalData = buildHierarchy(bundleData);
-
-    const outputPath = getBundleOutputPath(bundleDefinition, locale);
-    writeBundleFile(outputPath, hierarchicalData);
-
-    filesGenerated++;
+  const write = (locale: string, data: Record<string, unknown>, keysCount: number): void => {
+    const outputFile = bundleOutputFile(bundleDefinition, locale);
+    writeBundleFile(path.resolve(cwd, outputFile), data);
+    writtenFiles.push(toProjectRelative(outputFile, cwd));
     localesProcessed.push(locale);
-    keysPerLocale[locale] = Object.keys(bundleData).length;
-  }
+    keysPerLocale[locale] = keysCount;
+  };
+
+  content.locales.forEach(({ locale, selection, tree }) => {
+    if (selection.entries.size === 0) {
+      return;
+    }
+    write(locale, tree, selection.entries.size);
+  });
 
   if (debugKeysLocale) {
-    progressIndex++;
-    onProgress?.({
-      locale: debugKeysLocale,
-      index: progressIndex,
-      total: totalFiles,
-      file: getBundleOutputPath(bundleDefinition, debugKeysLocale),
-    });
-
-    const debugBaseData = collectBundleData(
-      bundleDefinition,
-      config,
-      config.baseLocale,
-      warnings,
-      false,
-      resourceCache,
-    );
-
-    const debugData: Record<string, string> = {};
-    for (const key of Object.keys(debugBaseData)) {
-      debugData[key] = key;
-    }
-
-    if (Object.keys(debugData).length === 0) {
-      warnings.push(`Bundle '${bundleKey}' debug bundle is empty`);
-    } else {
-      const hierarchicalData = buildHierarchy(debugData);
-      const outputPath = getBundleOutputPath(bundleDefinition, debugKeysLocale);
-      writeBundleFile(outputPath, hierarchicalData);
-      filesGenerated++;
-      localesProcessed.push(debugKeysLocale);
-      keysPerLocale[debugKeysLocale] = Object.keys(debugData).length;
+    const keys = baseKeys;
+    if (keys.length > 0) {
+      write(debugKeysLocale, buildKeyTree(keys.map((key) => [key, key] as const)).tree, keys.length);
     }
   }
 
-  // Generate types if configured
-  let typeGenerationResult: GenerateTypesResult | undefined;
-  if (hasTypeDistConfigured(bundleDefinition)) {
-    try {
-      typeGenerationResult = await generateBundleTypes(
-        bundleKey,
-        config,
-        resolvedTokenCasing,
-        tokenConstantName,
-        bundleDefinition,
-      );
-      if (typeGenerationResult.fileGenerated) {
-        // We don't increment filesGenerated here as it tracks bundle JSON files
-        // But we could add a note to warnings or a new field if needed
-      } else if (typeGenerationResult.skippedReason === 'empty-bundle') {
-        warnings.push(`Type generation skipped for '${bundleKey}': Bundle is empty`);
-      }
-    } catch (error) {
-      warnings.push(
-        `Type generation failed for '${bundleKey}': ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
+  const typeOutcome = hasTypeDistConfigured(bundleDefinition)
+    ? generateTypes(
+        {
+          bundleKey,
+          definition: prepared.definition,
+          tokenCasing,
+          tokenConstantName: prepared.tokenConstantNameOverride,
+          cwd,
+        },
+        baseKeys,
+      )
+    : { status: 'not-configured' as const };
+
+  if (typeOutcome.status === 'written') writtenFiles.push(typeOutcome.path);
+
+  warnings.push(...prepared.warnings);
+  const typeOutcomeWarning = describeTypeOutcome(bundleKey, typeOutcome);
+  if (typeOutcomeWarning) warnings.push({ origin: 'type', message: typeOutcomeWarning });
 
   return {
+    outcome: typeOutcome.status === 'failed' ? 'failed' : 'succeeded',
     bundleKey,
-    filesGenerated,
-    warnings,
+    filesGenerated: localesProcessed.length,
+    writtenFiles,
+    findings: bundleFindings(warnings, typeOutcome),
     localesProcessed,
     keysPerLocale,
-    typeGenerationResult,
   };
 }
 
-/**
- * Collects all bundle data for a locale by processing collections.
- *
- * When a `trace` is supplied, key conflicts and the winning origin of each
- * final key are recorded so callers (e.g. the dry-run planner) can report them.
- */
-export function collectBundleData(
-  bundleDefinition: BundleDefinition,
-  config: LingoTrackerConfig,
-  locale: string,
-  warnings: string[],
-  transformICUToTransloco: boolean,
-  cache: Map<string, ResourceEntries>,
-  trace?: BundleKeyTrace,
-): Record<string, string> {
-  const bundleData: Record<string, string> = {};
-
-  const baseLocale = config.baseLocale;
-
-  if (bundleDefinition.collections === 'All') {
-    for (const [collectionName, collectionConfig] of Object.entries(config.collections)) {
-      const collectionBundleDef: CollectionBundleDefinition = {
-        name: collectionName,
-        entriesSelectionRules: 'All',
-      };
-      processCollection(
-        collectionBundleDef,
-        collectionConfig.translationsFolder,
-        locale,
-        baseLocale,
-        bundleData,
-        transformICUToTransloco,
-        warnings,
-        cache,
-        collectionConfig.tags,
-        trace,
-      );
-    }
-  } else {
-    for (const collectionBundleDef of bundleDefinition.collections) {
-      const collectionConfig = config.collections[collectionBundleDef.name];
-
-      if (!collectionConfig) {
-        warnings.push(`Collection '${collectionBundleDef.name}' not found in config`);
-        continue;
-      }
-
-      processCollection(
-        collectionBundleDef,
-        collectionConfig.translationsFolder,
-        locale,
-        baseLocale,
-        bundleData,
-        transformICUToTransloco,
-        warnings,
-        cache,
-        collectionConfig.tags,
-        trace,
-      );
-    }
-  }
-
-  return bundleData;
-}
-
-/**
- * Processes a single collection and adds its entries to bundle data
- */
-function processCollection(
-  collectionDef: CollectionBundleDefinition,
-  translationsFolder: string,
-  locale: string,
-  baseLocale: string,
-  bundleData: Record<string, string>,
-  transformICUToTransloco: boolean,
-  warnings: string[],
-  cache: Map<string, ResourceEntries>,
-  collectionTags?: string[],
-  trace?: BundleKeyTrace,
-): void {
-  const resources = loadCollectionResources(translationsFolder, locale, baseLocale, cache, collectionTags);
-  const filteredResources = filterResources(resources, collectionDef);
-  const mergeStrategy = collectionDef.mergeStrategy ?? 'merge';
-
-  for (const resource of filteredResources) {
-    const finalKey = collectionDef.bundledKeyPrefix
-      ? `${collectionDef.bundledKeyPrefix}.${resource.key}`
-      : resource.key;
-
-    let finalValue = resource.value;
-    if (transformICUToTransloco) {
-      if (resource.value.includes('{') && !validateICUSyntax(resource.value)) {
-        warnings.push(`Key '${resource.key}': value has malformed ICU syntax and was included as-is`);
-      }
-      if (hasUnbundlableBranchBody(resource.value)) {
-        warnings.push(
-          `Key '${resource.key}': a branch body cannot be carried to a Transloco runtime, so the bundled ` +
-            'value does not render as written. A branch body survives only as a plain parameter name — ' +
-            'not an argument carrying a format, and not a run that is no parameter name. Give the branch ' +
-            'body text beside the argument, or move the format out of the branch:\n' +
-            '  {count, plural, =1 {{n, number} item} other {# items}}\n' +
-            `  value: ${resource.value}`,
-        );
-      }
-      finalValue = icuToTransloco(resource.value);
-    }
-
-    if (finalKey in bundleData) {
-      trace?.conflicts.add(finalKey);
-      if (mergeStrategy === 'override') {
-        bundleData[finalKey] = finalValue;
-        trace?.origins.set(finalKey, { collectionName: collectionDef.name, sourceKey: resource.key });
-      }
-      // merge (default) - keep existing (first wins)
-      // Skip to next resource since key already exists
-    } else {
-      // New key - add it
-      bundleData[finalKey] = finalValue;
-      trace?.origins.set(finalKey, { collectionName: collectionDef.name, sourceKey: resource.key });
-    }
+/** Reports type-file failures through the structured outcome. */
+function generateTypes(params: Omit<GenerateBundleTypesParams, 'keys'>, keys: readonly string[]): BundleTypeOutcome {
+  try {
+    return generateBundleTypes({ ...params, keys });
+  } catch (error) {
+    return { status: 'failed', reason: error instanceof Error ? error.message : String(error) };
   }
 }
 
-/**
- * Filters resources based on entry selection rules
- */
-function filterResources(resources: FlatResource[], collectionDef: CollectionBundleDefinition): FlatResource[] {
-  if (collectionDef.entriesSelectionRules === 'All') {
-    return resources;
-  }
-
-  // Apply selection rules (TypeScript knows it's EntrySelectionRule[] here)
-  const rules = collectionDef.entriesSelectionRules;
-  return resources.filter((resource) => matchesAnyRule(resource, rules));
-}
-
-/**
- * Checks if resource matches any of the selection rules
- */
-function matchesAnyRule(resource: FlatResource, rules: EntrySelectionRule[]): boolean {
-  const tags = effectiveTags(resource.collectionTags, resource.tags);
-  return rules.some((rule) => {
-    const patternMatch = matchesPattern(resource.key, rule.matchingPattern);
-    const tagMatch = matchesTags(tags.length > 0 ? tags : undefined, rule.matchingTags, rule.matchingTagOperator);
-    return patternMatch && tagMatch;
-  });
-}
-
-/**
- * Determines output file path for bundle
- */
-export function getBundleOutputPath(bundleDefinition: BundleDefinition, locale: string): string {
-  const fileName = bundleDefinition.bundleName.replace('{locale}', locale);
-  return path.join(bundleDefinition.dist, `${fileName}.json`);
+function toProjectRelative(filePath: string, cwd: string): string {
+  const relative = path.relative(cwd, path.resolve(cwd, filePath));
+  return relative.split(path.sep).join('/');
 }
 
 /**

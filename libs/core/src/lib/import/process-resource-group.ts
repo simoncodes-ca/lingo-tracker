@@ -1,12 +1,16 @@
-import { existsSync } from 'node:fs';
-import { readJsonFile, writeJsonFile } from '../file-io/json-file-operations';
-import type { ImportOptions, ImportChange, ImportedResource } from './types';
-import type { ResourceEntries, ResourceEntry } from '../../resource/resource-entry';
-import type { TrackerMetadata } from '../../resource/tracker-metadata';
-import { calculateChecksum } from '../../resource/checksum';
-import { findProtectedTermViolations, type LocaleMetadata, type TranslationStatus } from '@simoncodes-ca/domain';
-import type { ResourceGroup } from './resource-grouping';
-import { shouldUseSourceStatus, determineNewResourceStatus, determineUpdatedResourceStatus } from './determine-status';
+import {
+  admitValue,
+  honouredImportSourceStatus,
+  icuParseOptionsFor,
+  importStrategyPolicy,
+  resolveImportStatus,
+  type TranslationStatus,
+} from '@simoncodes-ca/domain';
+import type { ProjectTerms } from '../config/project-terms';
+import type { FolderGroup } from '../resource/folder-grouping';
+import { openUnreportedResourceFolder, type ResourceFolder } from '../resource/resource-folder';
+import { type ImportSession, type ResolvedImportOptions, recordImportIssues } from './import-session';
+import type { ImportChange, ImportedResource } from './types';
 
 // ---------------------------------------------------------------------------
 // Internal context shared across all handlers in one processResourceGroup call
@@ -15,9 +19,8 @@ import { shouldUseSourceStatus, determineNewResourceStatus, determineUpdatedReso
 interface GroupContext {
   readonly locale: string;
   readonly baseLocale: string;
-  readonly options: ImportOptions;
-  resourceEntries: ResourceEntries;
-  trackerMeta: TrackerMetadata;
+  readonly options: ResolvedImportOptions;
+  readonly folder: ResourceFolder;
   dataModified: boolean;
 }
 
@@ -25,42 +28,34 @@ interface GroupContext {
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-function applyCommentUpdate(entry: ResourceEntry, resource: ImportedResource, options: ImportOptions): boolean {
-  if (!options.updateComments || resource.comment === undefined) return false;
-
-  if (resource.comment) {
-    if (entry.comment !== resource.comment) {
-      entry.comment = resource.comment;
-      return true;
-    }
-  } else if (entry.comment !== undefined) {
-    delete entry.comment;
-    return true;
-  }
-
-  return false;
+function applyCommentUpdate(ctx: GroupContext, entryKey: string, resource: ImportedResource): boolean {
+  if (!ctx.options.updateComments || resource.comment === undefined) return false;
+  // An empty comment in the import removes the stored comment.
+  return ctx.folder.setDetails(entryKey, { comment: resource.comment || null });
 }
 
-function applyTagsUpdate(entry: ResourceEntry, resource: ImportedResource, options: ImportOptions): boolean {
-  if (!options.updateTags || resource.tags === undefined) return false;
+function applyTagsUpdate(ctx: GroupContext, entryKey: string, resource: ImportedResource): boolean {
+  if (!ctx.options.updateTags || resource.tags === undefined) return false;
+  if (resource.tags.length === 0) return ctx.folder.setDetails(entryKey, { tags: null });
 
-  if (resource.tags.length > 0) {
-    if (JSON.stringify([...(entry.tags ?? [])].sort()) !== JSON.stringify([...(resource.tags ?? [])].sort())) {
-      entry.tags = resource.tags;
-      return true;
-    }
-  } else if (entry.tags !== undefined) {
-    delete entry.tags;
-    return true;
-  }
+  // Tag order is not significant: an import with the same tags in another order is not a change.
+  const currentTags = ctx.folder.get(entryKey)?.entry.tags ?? [];
+  if (JSON.stringify([...currentTags].sort()) === JSON.stringify([...resource.tags].sort())) return false;
 
-  return false;
+  return ctx.folder.setDetails(entryKey, { tags: resource.tags });
 }
 
-function ensureEntryMeta(trackerMeta: TrackerMetadata, entryKey: string): void {
-  if (!trackerMeta[entryKey]) {
-    trackerMeta[entryKey] = {};
-  }
+function applyDetailUpdates(ctx: GroupContext, entryKey: string, resource: ImportedResource): void {
+  if (applyCommentUpdate(ctx, entryKey, resource)) ctx.dataModified = true;
+  if (applyTagsUpdate(ctx, entryKey, resource)) ctx.dataModified = true;
+}
+
+/** Comment and tags for a resource created by the import (empty values are not stored). */
+function createdDetails(resource: ImportedResource): { comment?: string; tags?: string[] } {
+  return {
+    comment: resource.comment || undefined,
+    tags: resource.tags && resource.tags.length > 0 ? resource.tags : undefined,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -73,17 +68,11 @@ function handleNewResource(
   entryKey: string,
   isBaseLocaleImport: boolean,
 ): ImportChange {
-  const { locale, baseLocale, options, resourceEntries, trackerMeta } = ctx;
+  const { locale, options, folder } = ctx;
 
   if (isBaseLocaleImport) {
-    const newEntry: ResourceEntry = { source: resource.value };
-    if (resource.comment) newEntry.comment = resource.comment;
-    if (resource.tags && resource.tags.length > 0) newEntry.tags = resource.tags;
-
-    resourceEntries[entryKey] = newEntry;
-
-    ensureEntryMeta(trackerMeta, entryKey);
-    trackerMeta[entryKey][baseLocale] = { checksum: calculateChecksum(resource.value) };
+    folder.setBase(entryKey, resource.value);
+    folder.setDetails(entryKey, createdDetails(resource));
 
     ctx.dataModified = true;
     return { key: resource.key, type: 'created', oldValue: '', newValue: resource.value };
@@ -97,19 +86,12 @@ function handleNewResource(
     };
   }
 
-  const newEntry: ResourceEntry = { source: resource.baseValue, [locale]: resource.value };
-  if (resource.comment) newEntry.comment = resource.comment;
-  if (resource.tags && resource.tags.length > 0) newEntry.tags = resource.tags;
+  const createdStatus =
+    honouredImportSourceStatus(options.strategy, options.preserveStatus, resource.status) ?? 'translated';
 
-  resourceEntries[entryKey] = newEntry;
-
-  const newChecksum = calculateChecksum(resource.value);
-  const baseChecksum = calculateChecksum(resource.baseValue);
-  const createdStatus = determineNewResourceStatus(options, resource);
-
-  ensureEntryMeta(trackerMeta, entryKey);
-  trackerMeta[entryKey][baseLocale] = { checksum: baseChecksum };
-  trackerMeta[entryKey][locale] = { checksum: newChecksum, baseChecksum, status: createdStatus };
+  folder.setBase(entryKey, resource.baseValue);
+  folder.setTranslation(entryKey, locale, resource.value, createdStatus);
+  folder.setDetails(entryKey, createdDetails(resource));
 
   ctx.dataModified = true;
   return { key: resource.key, type: 'created', oldValue: '', newValue: resource.value, newStatus: createdStatus };
@@ -120,28 +102,14 @@ function handleNewResource(
 // ---------------------------------------------------------------------------
 
 function handleBaseLocaleUpdate(ctx: GroupContext, resource: ImportedResource, entryKey: string): ImportChange {
-  const { baseLocale, options, resourceEntries, trackerMeta } = ctx;
-  const entry = resourceEntries[entryKey];
-
-  const oldValue = entry.source ?? '';
+  const oldValue = ctx.folder.get(entryKey)?.entry.source ?? '';
   const valueChanged = oldValue !== resource.value;
 
-  if (valueChanged) {
-    entry.source = resource.value;
-    ctx.dataModified = true;
-  }
+  // setBase applies the Staleness rule: when the base value changes, every translation becomes
+  // 'stale' (or 'new' when it is an untranslated copy of the new base value).
+  if (ctx.folder.setBase(entryKey, resource.value)) ctx.dataModified = true;
 
-  if (applyCommentUpdate(entry, resource, options)) ctx.dataModified = true;
-  if (applyTagsUpdate(entry, resource, options)) ctx.dataModified = true;
-
-  const newChecksum = calculateChecksum(resource.value);
-  ensureEntryMeta(trackerMeta, entryKey);
-
-  const existingBaseChecksum = trackerMeta[entryKey][baseLocale]?.checksum;
-  if (existingBaseChecksum !== newChecksum) {
-    trackerMeta[entryKey][baseLocale] = { checksum: newChecksum };
-    ctx.dataModified = true;
-  }
+  applyDetailUpdates(ctx, entryKey, resource);
 
   return {
     key: resource.key,
@@ -156,12 +124,11 @@ function handleBaseLocaleUpdate(ctx: GroupContext, resource: ImportedResource, e
 // ---------------------------------------------------------------------------
 
 function handleTargetLocaleUpdate(ctx: GroupContext, resource: ImportedResource, entryKey: string): ImportChange {
-  const { locale, baseLocale, options, resourceEntries, trackerMeta } = ctx;
-  const entry = resourceEntries[entryKey];
-  const entryMeta = trackerMeta[entryKey];
+  const { locale, options, folder } = ctx;
+  const entry = folder.get(entryKey)?.entry;
 
-  const oldValue = (entry[locale] as string) ?? '';
-  const oldStatus = entryMeta?.[locale]?.status;
+  const oldValue = (entry?.[locale] as string | undefined) ?? '';
+  const oldStatus = folder.get(entryKey)?.meta?.[locale]?.status;
   const valueChanged = oldValue !== resource.value;
 
   // Strategy-specific handling for unchanged values.
@@ -169,23 +136,22 @@ function handleTargetLocaleUpdate(ctx: GroupContext, resource: ImportedResource,
   // locale write: when `entry[locale]` is undefined, `oldValue` resolves to `''`, which
   // means first-time writes correctly fall through to the value-changed path below.
   if (!valueChanged && oldValue !== '') {
-    return handleUnchangedTargetLocaleValue(ctx, resource, entryKey, entry, entryMeta, oldValue, oldStatus);
+    return handleUnchangedTargetLocaleValue(ctx, resource, entryKey, oldValue, oldStatus);
   }
 
   // Value is new or first-time write for this locale — update entry and metadata.
-  entry[locale] = resource.value;
+  const newStatus = resolveImportStatus({
+    strategy: options.strategy,
+    oldStatus,
+    incomingStatus: honouredImportSourceStatus(options.strategy, options.preserveStatus, resource.status),
+    valueChanged: true,
+    baseChecksumChanged: false,
+  });
+
+  folder.setTranslation(entryKey, locale, resource.value, newStatus);
   ctx.dataModified = true;
 
-  if (applyCommentUpdate(entry, resource, options)) ctx.dataModified = true;
-  if (applyTagsUpdate(entry, resource, options)) ctx.dataModified = true;
-
-  const newChecksum = calculateChecksum(resource.value);
-  const baseChecksum = entryMeta?.[baseLocale]?.checksum ?? calculateChecksum(entry.source);
-  const newStatus = determineUpdatedResourceStatus(options, resource, oldStatus);
-
-  ensureEntryMeta(trackerMeta, entryKey);
-  const newMetadata: LocaleMetadata = { checksum: newChecksum, baseChecksum, status: newStatus };
-  trackerMeta[entryKey][locale] = newMetadata;
+  applyDetailUpdates(ctx, entryKey, resource);
 
   return {
     key: resource.key,
@@ -201,44 +167,17 @@ function handleUnchangedTargetLocaleValue(
   ctx: GroupContext,
   resource: ImportedResource,
   entryKey: string,
-  entry: ResourceEntry,
-  entryMeta: TrackerMetadata[string],
   oldValue: string,
   oldStatus: TranslationStatus | undefined,
 ): ImportChange {
-  const { locale, baseLocale, options, trackerMeta } = ctx;
-
-  if (options.strategy === 'update') {
-    return {
-      key: resource.key,
-      type: 'updated',
-      oldValue,
-      newValue: resource.value,
-      oldStatus,
-      newStatus: oldStatus ?? 'translated',
-    };
-  }
-
-  const resolvedStatus: TranslationStatus = shouldUseSourceStatus(options, resource)
-    ? resource.status
-    : options.strategy === 'verification'
-      ? 'verified'
-      : (oldStatus ?? 'translated');
-
-  if (resolvedStatus !== oldStatus) {
-    ensureEntryMeta(trackerMeta, entryKey);
-
-    if (!trackerMeta[entryKey][locale]) {
-      trackerMeta[entryKey][locale] = {
-        checksum: entryMeta?.[locale]?.checksum ?? calculateChecksum(oldValue),
-        baseChecksum: entryMeta?.[baseLocale]?.checksum ?? calculateChecksum(entry.source),
-        status: resolvedStatus,
-      };
-    } else {
-      trackerMeta[entryKey][locale].status = resolvedStatus;
-    }
-    ctx.dataModified = true;
-  }
+  const { locale, options, folder } = ctx;
+  const result = folder.reconfirmTranslation(
+    entryKey,
+    locale,
+    options.strategy,
+    honouredImportSourceStatus(options.strategy, options.preserveStatus, resource.status),
+  );
+  if (result.changed) ctx.dataModified = true;
 
   return {
     key: resource.key,
@@ -246,86 +185,94 @@ function handleUnchangedTargetLocaleValue(
     oldValue,
     newValue: resource.value,
     oldStatus,
-    newStatus: resolvedStatus,
+    newStatus: result.status,
   };
 }
 
 // ---------------------------------------------------------------------------
-// Public entry point
+// Preferred terminology (base-locale imports only)
 // ---------------------------------------------------------------------------
 
 /**
- * Processes a group of resources that belong to the same folder.
- *
- * This function is the core of the import operation. It handles batch processing of resources
- * that share the same resource_entries.json and tracker_meta.json files, minimizing file I/O
- * by loading and saving files once per folder instead of per resource.
- *
- * The function performs these operations for each resource in the group:
- * 1. **Resource Creation**: Creates new resources when `createMissing` is enabled and resource
- *    doesn't exist. Requires baseValue to be present (or value for base locale imports).
- * 2. **Base Value Validation**: Compares imported baseValue against existing source values
- *    and warns on mismatches (when validateBase is enabled).
- * 3. **Value Change Detection**: Determines if translation value has changed.
- * 4. **Strategy-Specific Status Handling**:
- *    - `verification`: Sets status to 'verified' (even for unchanged values)
- *    - `update`: Preserves existing status
- *    - `translation-service`: Sets status to 'translated'
- *    - `migration`: Uses source status when present and `preserveStatus` is not `false`,
- *      otherwise defaults to 'translated'
- * 5. **Metadata Updates**: Updates comment and tags when corresponding flags are enabled.
- * 6. **Checksum Calculation**: Computes checksums for change tracking and stale detection.
- * 7. **File Writing**: Atomically writes both resource_entries.json and tracker_meta.json
- *    when changes are detected (unless in dry-run mode).
- *
- * @param group - The resource group containing all resources in the same folder with their
- *                file paths and entry keys
- * @param locale - Target locale code (e.g., 'es', 'fr', 'de') or base locale for migration imports
- * @param baseLocale - Source locale code (typically 'en')
- * @param options - Import configuration including strategy, flags, and validation settings
- * @param dryRun - When true, performs all operations except file writes
- * @param isBaseLocaleImport - Whether this is a base locale import (migration strategy only)
- * @param filesModified - Set that accumulates paths of all modified files (for summary reporting)
- * @param warnings - Array that accumulates non-fatal warnings (e.g., base value mismatches)
- * @param errors - Optional array that accumulates fatal error messages (e.g., protected-term violations)
- * @returns Array of ImportChange objects describing all changes made to resources in this group
+ * Adds one warning per discouraged term in a base value this import wrote, or would
+ * write in a dry run. Advisory: the value is imported regardless.
  */
-export function processResourceGroup(
-  group: ResourceGroup,
-  locale: string,
-  baseLocale: string,
-  options: ImportOptions,
-  dryRun: boolean,
-  isBaseLocaleImport: boolean,
-  filesModified: Set<string>,
-  warnings: string[],
-  errors?: string[],
-): ImportChange[] {
-  const changes: ImportChange[] = [];
+function warnAboutPreferredTerminology(change: ImportChange, terms: ProjectTerms, warnings: string[]): void {
+  if (change.newValue === undefined) return;
+  if (change.type === 'failed' || change.type === 'skipped') return;
 
-  const exists = existsSync(group.entryResourcePath) && existsSync(group.entryMetaPath);
+  for (const { message, reason } of terms.checkBaseValue(change.key, change.newValue).findings) {
+    warnings.push(`Preferred terminology: key "${change.key}" — ${message}${reason ? `. ${reason}` : ''}`);
+  }
+}
 
-  let resourceEntries: ResourceEntries = {};
-  let trackerMeta: TrackerMetadata = {};
+// ---------------------------------------------------------------------------
+// Entry point (internal to the import module)
+// ---------------------------------------------------------------------------
 
-  if (exists) {
-    try {
-      resourceEntries = readJsonFile<ResourceEntries>({ filePath: group.entryResourcePath, defaultValue: {} });
-      trackerMeta = readJsonFile<TrackerMetadata>({ filePath: group.entryMetaPath, defaultValue: {} });
-    } catch (error) {
-      for (const { resource } of group.resources) {
-        changes.push({ key: resource.key, type: 'failed', reason: `Failed to read resource files: ${error}` });
-      }
-      return changes;
+/**
+ * Applies the resources of one folder to that folder, and records the outcome in the session.
+ *
+ * The folder's `resource_entries.json` and `tracker_meta.json` are loaded once and saved once
+ * (only when something changed, and never in a dry run). For each resource:
+ * 1. **Missing resource**: skipped unless `createMissing`; a target-locale creation needs a
+ *    `baseValue`.
+ * 2. **Base-locale import** (migration only): writes the base value; the Staleness rule updates
+ *    every translation. Values written are checked against the preferred terminology.
+ * 3. **Target-locale import**: warns on a `baseValue` mismatch (unless `validateBase` is false),
+ *    fails an entry whose value violates its source's argument or protected-term contract, and
+ *    otherwise writes the value with the status from `resolveImportStatus` (strategy, old status, source status).
+ * 4. **Comment and tags**: updated when `updateComments` / `updateTags` are set.
+ *
+ * Appends one change per resource to `session.changes`; warnings, errors (value
+ * violations) and written files go to the session too.
+ */
+export function processResourceGroup(session: ImportSession, group: FolderGroup<ImportedResource>): void {
+  const { options, terms, isBaseLocaleImport, changes, warnings } = session;
+  const { baseLocale } = session.collection;
+  const resolvesReferences = importStrategyPolicy(options.strategy).resolvesReferences;
+
+  let folder: ResourceFolder;
+  try {
+    // Import resource saves were unreported at HEAD.
+    folder = openUnreportedResourceFolder(group.folderPath, {
+      baseLocale,
+      translationsFolder: session.collection.translationsFolder,
+      runtime: session.collection.runtime,
+    });
+  } catch (error) {
+    for (const { item: resource } of group.members) {
+      changes.push({ key: resource.key, type: 'failed', reason: `Failed to read resource files: ${error}` });
     }
+    return;
   }
 
-  const ctx: GroupContext = { locale, baseLocale, options, resourceEntries, trackerMeta, dataModified: false };
+  const ctx: GroupContext = { locale: options.locale, baseLocale, options, folder, dataModified: false };
 
-  for (const { resource, entryKey } of group.resources) {
-    const resourceExists = entryKey in resourceEntries;
+  function failedValueCheck(source: string | undefined, resource: ImportedResource): boolean {
+    // Value Admission remains the backstop after ICU auto-fix. Reference imports
+    // retain their exception for unresolved placeholders.
+    const admission = admitValue(
+      source,
+      resource.value,
+      {
+        name: 'import',
+        referencesResolved: resolvesReferences,
+        protectedTerms: terms.protectedTerms,
+      },
+      icuParseOptionsFor(session.collection.runtime),
+    );
+    if (admission.admitted === true) return false;
 
-    if (!resourceExists) {
+    const reason = admission.violations.map((violation) => violation.description).join('; ');
+    recordImportIssues(session, { key: resource.key, type: 'failed', reason, error: `"${resource.key}" ${reason}` });
+    return true;
+  }
+
+  for (const { item: resource, entryKey } of group.members) {
+    const stored = folder.get(entryKey);
+
+    if (!stored) {
       if (!options.createMissing) {
         changes.push({
           key: resource.key,
@@ -334,18 +281,24 @@ export function processResourceGroup(
         });
         continue;
       }
-      changes.push(handleNewResource(ctx, resource, entryKey, isBaseLocaleImport));
+      // This imported baseValue becomes the stored source when the resource is created.
+      if (!isBaseLocaleImport && failedValueCheck(resource.baseValue, resource)) continue;
+      const created = handleNewResource(ctx, resource, entryKey, isBaseLocaleImport);
+      if (isBaseLocaleImport) warnAboutPreferredTerminology(created, terms, warnings);
+      changes.push(created);
       continue;
     }
 
     if (isBaseLocaleImport) {
-      changes.push(handleBaseLocaleUpdate(ctx, resource, entryKey));
+      const updated = handleBaseLocaleUpdate(ctx, resource, entryKey);
+      warnAboutPreferredTerminology(updated, terms, warnings);
+      changes.push(updated);
       continue;
     }
 
     // Validate baseValue mismatch before dispatching to target locale handler
     if (resource.baseValue && options.validateBase !== false) {
-      const existingBase = resourceEntries[entryKey].source;
+      const existingBase = stored.entry.source;
       if (existingBase !== resource.baseValue) {
         warnings.push(
           `Base value mismatch for "${resource.key}": import has "${resource.baseValue}", ` +
@@ -354,19 +307,7 @@ export function processResourceGroup(
       }
     }
 
-    // Verify protected terms from the stored source appear verbatim in the incoming value.
-    // Base-locale imports never reach here (they are handled by the base-locale branch above).
-    const terms = options.protectedTerms ?? [];
-    if (terms.length > 0) {
-      const storedSource = resourceEntries[entryKey].source ?? '';
-      const violations = findProtectedTermViolations(storedSource, resource.value, terms);
-      if (violations.length > 0) {
-        const reason = `Protected term(s) altered: ${violations.join(', ')}`;
-        errors?.push(`"${resource.key}" ${reason}`);
-        changes.push({ key: resource.key, type: 'failed', reason });
-        continue;
-      }
-    }
+    if (failedValueCheck(stored.entry.source, resource)) continue;
 
     changes.push(handleTargetLocaleUpdate(ctx, resource, entryKey));
   }
@@ -374,13 +315,10 @@ export function processResourceGroup(
   // Write files once for the entire group, but only when in-memory state was actually mutated.
   // Logging an 'updated' change (e.g. update strategy with unchanged value) does not imply a
   // disk write is needed — `dataModified` is the authoritative signal for that.
-  if (!dryRun && ctx.dataModified) {
-    writeJsonFile({ filePath: group.entryResourcePath, data: resourceEntries, ensureDirectory: true });
-    writeJsonFile({ filePath: group.entryMetaPath, data: trackerMeta });
-
-    filesModified.add(group.entryResourcePath);
-    filesModified.add(group.entryMetaPath);
+  if (ctx.dataModified) {
+    for (const filePath of folder.save({ dryRun: options.dryRun }).written) {
+      session.filesAffected.add(filePath);
+      if (!options.dryRun) session.filesModified.add(filePath);
+    }
   }
-
-  return changes;
 }

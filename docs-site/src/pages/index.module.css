@@ -1,0 +1,150 @@
+.hero {
+  padding: 5rem 0 3rem;
+  text-align: center;
+}
+
+.headline {
+  max-width: 22ch;
+  margin: 0 auto 1rem;
+  font-size: clamp(2rem, 1.2rem + 3vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.subtitle {
+  max-width: 48ch;
+  margin: 0 auto 2rem;
+  color: var(--ifm-font-color-secondary);
+  font-size: 1.25rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+/* A darker coral than --ifm-color-primary, so white text meets 4.5:1. */
+.primary {
+  --ifm-button-background-color: var(--ifm-color-primary-darker);
+  --ifm-button-border-color: var(--ifm-color-primary-darker);
+  --ifm-button-color: #fff;
+}
+
+.primary:hover {
+  --ifm-button-background-color: var(--ifm-color-primary-darkest);
+  --ifm-button-border-color: var(--ifm-color-primary-darkest);
+  color: #fff;
+}
+
+[data-theme='dark'] .primary {
+  --ifm-button-background-color: var(--ifm-color-primary);
+  --ifm-button-border-color: var(--ifm-color-primary);
+  --ifm-button-color: #141210;
+}
+
+[data-theme='dark'] .primary:hover {
+  --ifm-button-background-color: var(--ifm-color-primary-light);
+  --ifm-button-border-color: var(--ifm-color-primary-light);
+  color: #141210;
+}
+
+.secondary {
+  --ifm-button-background-color: transparent;
+  --ifm-button-border-color: var(--ifm-color-emphasis-400);
+  --ifm-button-color: var(--ifm-font-color-base);
+}
+
+.secondary:hover {
+  --ifm-button-background-color: var(--ifm-background-surface-color);
+  color: var(--ifm-font-color-base);
+}
+
+.install {
+  max-width: 28rem;
+  margin: 2rem auto 0;
+  text-align: left;
+}
+
+.install > div {
+  margin-bottom: 0;
+}
+
+.screenshotSection {
+  padding-bottom: 4rem;
+}
+
+.frame {
+  max-width: 1100px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.75rem;
+  box-shadow: var(--ifm-global-shadow-md);
+}
+
+.screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.benefits {
+  padding: 3rem 0 5rem;
+  border-top: 1px solid var(--ifm-color-emphasis-300);
+  background-color: var(--ifm-background-surface-color);
+}
+
+.benefitsHeading {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.benefitGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.benefit h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1.15rem;
+}
+
+.benefit p {
+  margin: 0;
+  color: var(--ifm-font-color-secondary);
+}
+
+@media (max-width: 996px) {
+  .hero {
+    padding: 3rem 0 2rem;
+  }
+
+  /* Keeps the whole install command visible on a 390px screen. */
+  .install code {
+    font-size: 0.8rem;
+  }
+
+  .screenshotSection {
+    padding-bottom: 2.5rem;
+  }
+}
+
+/* On phones, show the top-right of the UI (status chips and first rows) at a readable size. */
+@media (max-width: 600px) {
+  .frame {
+    aspect-ratio: 4 / 5;
+  }
+
+  .screenshot {
+    height: 100%;
+    object-fit: cover;
+    object-position: top right;
+  }
+}

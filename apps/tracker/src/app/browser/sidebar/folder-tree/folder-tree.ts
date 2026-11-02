@@ -1,40 +1,30 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  DestroyRef,
-  inject,
-  input,
-  output,
-  effect,
-  signal,
-  viewChild,
-  type ElementRef,
-  computed,
-} from '@angular/core';
+import { type CdkDrag, type CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialog } from '@angular/material/dialog';
+import { TranslocoPipe } from '@jsverse/transloco';
+import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
+import { folderPathLeaf } from '@simoncodes-ca/domain';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
+import { SearchInput } from '../../../shared/components/search-input';
+import { injectConfirmedWrite } from '../../../shared/confirmed-write';
+import { injectMidpointFlip } from '../../../shared/timed-transients';
+import { injectFeedback } from '../../feedback';
+import { BrowserStore } from '../../store/browser.store';
+import { folderDrop } from '../../store/folder-drop';
+import { navigateTree, SIDEBAR_NAVIGATION } from '../../store/tree-navigation';
+import type { DragData } from '../../types/drag-data';
+import { DragAutoScroll } from './drag-auto-scroll.directive';
 import { FolderNode } from './folder-node/folder-node';
 import { InlineFolderInput } from './inline-folder-input/inline-folder-input';
-import { BrowserStore } from '../../store/browser.store';
-import type { FolderNodeDto } from '@simoncodes-ca/data-transfer';
-import { TRACKER_TOKENS } from '../../../../i18n-types/tracker-resources';
-import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
-import { SearchInput } from '../../../shared/components/search-input';
-import { MatIconModule } from '@angular/material/icon';
-import { CdkDropList, type CdkDrag, type CdkDragDrop } from '@angular/cdk/drag-drop';
-import type { DragData } from '../../types/drag-data';
-import { extractFolderNameFromPath } from '../../utils/folder-path.utils';
 
 const NESTED_ANIMATION_DURATION_MS = 250;
-const SCROLL_EDGE_THRESHOLD_PX = 50;
-const SCROLL_SPEED_PX = 15;
-const SCROLL_INTERVAL_MS = 50;
 
 /**
  * FolderTree component for hierarchical folder navigation.
@@ -46,7 +36,8 @@ const SCROLL_INTERVAL_MS = 50;
  *   list every resource across every folder
  * - Folder selection
  * - Toggle between current folder and nested resources view
- * - Disabled state during search
+ * - Disabled while the store says so (`isDisabled`: a search is shown or a move is in flight). It
+ *   is derived, so remounting the tree (re-entering the collection mid-search) keeps it disabled.
  */
 @Component({
   selector: 'app-folder-tree',
@@ -63,21 +54,19 @@ const SCROLL_INTERVAL_MS = 50;
     TranslocoPipe,
     SearchInput,
     CdkDropList,
+    DragAutoScroll,
   ],
   templateUrl: './folder-tree.html',
   styleUrl: './folder-tree.scss',
 })
 export class FolderTree {
   readonly store = inject(BrowserStore);
-  readonly #dialog = inject(MatDialog);
+  readonly #write = injectConfirmedWrite();
   readonly TOKENS = TRACKER_TOKENS;
-  readonly #transloco = inject(TranslocoService);
+  readonly #feedback = injectFeedback();
 
   /** Name of the collection to browse */
   readonly collectionName = input.required<string>();
-
-  /** Whether the tree is disabled (e.g., during translation search) */
-  readonly disabled = input<boolean>(false);
 
   /** Active drag data from parent (may come from translation items) */
   readonly activeDragDataFromParent = input<DragData | null>(null);
@@ -100,19 +89,20 @@ export class FolderTree {
   /** True while a drag hovers the root row, for drop-target styling */
   readonly isRootHoveredDuringDrag = signal(false);
 
-  /** Root accepts folders only: a resource is moved between folders, never onto the collection. */
-  readonly isValidRootDropTarget = computed(() => {
-    const dragData = this.activeDragData();
-    if (!dragData || dragData.type !== 'folder' || !dragData.path) return false;
-    // A folder already sitting at root has nowhere to go.
-    return dragData.path.includes('.');
+  /** The refusal of the last create typed into the tree, as the store decided it. */
+  readonly folderWriteError = computed(() => {
+    const feedback = this.store.folderCreateError();
+    return feedback ? this.#feedback.text(feedback) : null;
   });
 
-  /** Drives the icon flip animation — true for one animation frame when toggled */
-  readonly isNestedToggleFlipping = signal(false);
+  /** Root accepts folders only: a resource is moved between folders, never onto the collection. */
+  readonly #rootDropDecision = computed(() => folderDrop(this.activeDragData(), '', this.store.effectiveDisabled()));
 
-  #nestedFlipMidTimeout: ReturnType<typeof setTimeout> | undefined;
-  #nestedFlipEndTimeout: ReturnType<typeof setTimeout> | undefined;
+  readonly isValidRootDropTarget = computed(() => this.#rootDropDecision().canLand);
+
+  /** Drives the icon flip animation — true for one animation frame when toggled */
+  readonly #nestedFlip = injectMidpointFlip(NESTED_ANIMATION_DURATION_MS);
+  readonly isNestedToggleFlipping = this.#nestedFlip.active;
 
   /** Signal exposing whether a folder is being added */
   readonly isAddingFolder = this.store.isAddingFolder;
@@ -122,9 +112,6 @@ export class FolderTree {
 
   readonly #searchSubject = new Subject<string>();
 
-  /** Reference to the scrollable folder list container */
-  readonly folderListRef = viewChild<ElementRef<HTMLDivElement>>('folderList');
-
   /** Signal tracking the currently dragged item from folder nodes */
   readonly #localActiveDragData = signal<DragData | null>(null);
 
@@ -133,32 +120,10 @@ export class FolderTree {
     return this.#localActiveDragData() || this.activeDragDataFromParent();
   });
 
-  /** Auto-scroll interval handle */
-  #autoScrollInterval: ReturnType<typeof setInterval> | undefined;
-
-  /** Direction currently being auto-scrolled */
-  #autoScrollDirection: 'up' | 'down' | undefined;
-
-  /** Last recorded mouse Y position */
-  #lastMouseY = 0;
-
-  readonly #destroyRef = inject(DestroyRef);
-
   constructor() {
-    // Sync disabled state to store
-    effect(() => {
-      this.store.setDisabled(this.disabled());
-    });
-
     // Debounce search input
     this.#searchSubject.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed()).subscribe((value) => {
       this.store.setFolderTreeFilter(value);
-    });
-
-    this.#destroyRef.onDestroy(() => {
-      if (this.#nestedFlipMidTimeout) clearTimeout(this.#nestedFlipMidTimeout);
-      if (this.#nestedFlipEndTimeout) clearTimeout(this.#nestedFlipEndTimeout);
-      this.#stopAutoScroll();
     });
   }
 
@@ -167,15 +132,12 @@ export class FolderTree {
    * Single click selects the folder and shows its translations.
    */
   onFolderClick(folder: FolderNodeDto): void {
-    this.store.selectFolder(folder.fullPath);
-    this.folderSelected.emit(folder.fullPath);
+    if (this.store.selectFolder(folder.fullPath)) this.folderSelected.emit(folder.fullPath);
   }
 
   /** Selects the collection root, whose resource list spans every folder. */
   onRootClick(): void {
-    if (this.store.isDisabled()) return;
-    this.store.selectFolder('');
-    this.folderSelected.emit('');
+    if (this.store.selectFolder('')) this.folderSelected.emit('');
   }
 
   /** Flips one folder open or shut from its chevron. */
@@ -191,22 +153,29 @@ export class FolderTree {
   /** Flips the root row itself, hiding or revealing the whole tree. */
   onToggleRootExpanded(event: Event): void {
     event.stopPropagation();
-    if (this.store.isDisabled()) return;
-    this.store.toggleRootExpanded();
+    this.store.setRootExpanded();
   }
 
-  /** ArrowRight on the root row opens it. */
-  onRootExpandKeydown(event: Event): void {
-    if (this.store.isDisabled() || this.store.isRootExpanded()) return;
-    event.preventDefault();
-    this.store.toggleRootExpanded();
-  }
-
-  /** ArrowLeft on the root row shuts it. */
-  onRootCollapseKeydown(event: Event): void {
-    if (this.store.isDisabled() || !this.store.isRootExpanded()) return;
-    event.preventDefault();
-    this.store.toggleRootExpanded();
+  onRootTreeKeydown(event: Event, key: string): void {
+    const next = navigateTree(
+      { focusedPath: '', expanded: this.store.isRootExpanded(), hasChildren: false, hasRows: true },
+      key,
+      SIDEBAR_NAVIGATION,
+    );
+    switch (next.intent.kind) {
+      case 'select':
+        this.onRootClick();
+        break;
+      case 'expand':
+        if (this.store.setRootExpanded(true) && next.preventDefault) event.preventDefault();
+        break;
+      case 'collapse':
+        if (this.store.setRootExpanded(false) && next.preventDefault) event.preventDefault();
+        break;
+      case 'focus':
+      case 'none':
+        break;
+    }
   }
 
   /**
@@ -215,20 +184,12 @@ export class FolderTree {
    */
   onToggleExpandAll(event: Event): void {
     event.stopPropagation();
-    if (this.store.isDisabled()) return;
-
-    if (this.store.areAllFoldersExpanded()) this.store.collapseAllFolders();
-    else this.store.expandAllFolders();
+    this.store.toggleAllFoldersExpanded();
   }
 
   /** Predicate for the root drop list: folders only, and only ones not already at root. */
   canDropOnRoot = (drag: CdkDrag<DragData>): boolean => {
-    if (this.store.isReadOnly()) return false;
-
-    const dragData = drag.data;
-    if (!dragData || dragData.type !== 'folder' || !dragData.path) return false;
-
-    return dragData.path.includes('.');
+    return this.#rootDropDecisionFor(drag.data).canLand;
   };
 
   /** Moves a folder dropped on the root row out to the top level. */
@@ -236,9 +197,17 @@ export class FolderTree {
     this.isRootHoveredDuringDrag.set(false);
 
     const dragData = event.item.data as DragData;
+    const decision = this.#rootDropDecisionFor(dragData);
+    if (!decision.canLand) return;
     if (dragData.type !== 'folder' || !dragData.path) return;
 
-    this.store.moveFolder({ sourceFolderPath: dragData.path, destinationFolderPath: '' });
+    this.confirmMoveFolder(dragData.path, '');
+  }
+
+  #rootDropDecisionFor(dragData: DragData) {
+    return dragData === this.activeDragData()
+      ? this.#rootDropDecision()
+      : folderDrop(dragData, '', this.store.effectiveDisabled());
   }
 
   /**
@@ -254,28 +223,17 @@ export class FolderTree {
    * when the element is edge-on and invisible, so the new icon is never seen rotating.
    */
   setNestedResources(value: boolean): void {
-    if (this.#nestedFlipMidTimeout) clearTimeout(this.#nestedFlipMidTimeout);
-    if (this.#nestedFlipEndTimeout) clearTimeout(this.#nestedFlipEndTimeout);
-
-    this.isNestedToggleFlipping.set(true);
-
-    this.#nestedFlipMidTimeout = setTimeout(() => {
-      this.store.setNestedResources(value);
-      this.#nestedFlipMidTimeout = undefined;
-    }, NESTED_ANIMATION_DURATION_MS / 2);
-
-    this.#nestedFlipEndTimeout = setTimeout(() => {
-      this.isNestedToggleFlipping.set(false);
-      this.#nestedFlipEndTimeout = undefined;
-    }, NESTED_ANIMATION_DURATION_MS);
+    this.#nestedFlip.trigger(() => this.store.setNestedResources(value));
   }
 
   /**
    * Handles confirmation of folder name from inline input.
-   * Calls the store to create the folder.
+   * The store closes the draft and keeps a refusal for the inline error; a toast shows the rest.
    */
-  onFolderConfirm(folderName: string): void {
-    this.store.createFolder(folderName);
+  onFolderConfirm(folderName: string, parentPath: string | null = this.store.addFolderParentPath()): void {
+    this.store
+      .confirmFolderDraft(folderName, parentPath)
+      .subscribe((outcome) => this.#feedback.toast(outcome.feedback));
   }
 
   /**
@@ -300,25 +258,31 @@ export class FolderTree {
    * Opens confirmation dialog and deletes folder if confirmed.
    */
   onDeleteFolder(folderPath: string): void {
-    const folderName = extractFolderNameFromPath(folderPath);
-
-    import('../../../shared/components/confirmation-dialog/confirmation-dialog').then((m) => {
-      const dialogRef = this.#dialog.open(m.ConfirmationDialog, {
-        data: {
-          title: this.#transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETEFOLDER.TITLE),
-          message: this.#transloco.translate(TRACKER_TOKENS.BROWSER.DIALOG.DELETEFOLDER.MESSAGEX, { name: folderName }),
-          confirmButtonText: this.#transloco.translate(TRACKER_TOKENS.COMMON.ACTIONS.DELETE),
-          actionType: 'destructive',
-        },
-        width: '400px',
-      });
-
-      dialogRef.afterClosed().subscribe((confirmed) => {
-        if (confirmed === true) {
-          this.store.deleteFolder(folderPath);
-        }
-      });
+    const name = folderPathLeaf(folderPath);
+    const confirm = this.#write.confirmDestructive({
+      title: TRACKER_TOKENS.BROWSER.DIALOG.DELETEFOLDER.TITLE,
+      message: { token: TRACKER_TOKENS.BROWSER.DIALOG.DELETEFOLDER.MESSAGEX, params: { name } },
+      width: '400px',
     });
+    void this.#write.runWrite(this.store.requestFolderDelete(folderPath, confirm));
+  }
+
+  /** Confirms a folder move before handing the write to the store. */
+  confirmMoveFolder(sourceFolderPath: string, destinationFolderPath: string): void {
+    const confirm = this.#write.confirmWrite({
+      title: TRACKER_TOKENS.BROWSER.DIALOG.MOVEFOLDER.TITLE,
+      message: {
+        token: TRACKER_TOKENS.BROWSER.DIALOG.MOVEFOLDER.MESSAGEX,
+        params: {
+          name: folderPathLeaf(sourceFolderPath),
+          dest: destinationFolderPath || { token: TRACKER_TOKENS.BROWSER.FOLDERPICKER.ROOTLABEL },
+        },
+      },
+      confirmButtonText: TRACKER_TOKENS.COMMON.ACTIONS.MOVE,
+      actionType: 'standard',
+      width: '400px',
+    });
+    void this.#write.runWrite(this.store.requestFolderMove({ sourceFolderPath, destinationFolderPath }, confirm));
   }
 
   /**
@@ -333,10 +297,12 @@ export class FolderTree {
       return;
     }
 
-    this.store.moveResource({
-      sourceKey: dragData.key,
-      destinationFolderPath: targetFolderPath,
-    });
+    this.store
+      .moveResource({
+        sourceKey: dragData.key,
+        destinationFolderPath: targetFolderPath,
+      })
+      .subscribe((outcome) => this.#feedback.toast(outcome.feedback));
   }
 
   /**
@@ -351,10 +317,7 @@ export class FolderTree {
       return;
     }
 
-    this.store.moveFolder({
-      sourceFolderPath: dragData.path,
-      destinationFolderPath: targetFolderPath,
-    });
+    this.confirmMoveFolder(dragData.path, targetFolderPath);
   }
 
   /**
@@ -372,76 +335,6 @@ export class FolderTree {
    */
   onDragEnded(): void {
     this.#localActiveDragData.set(null);
-    this.#stopAutoScroll();
     this.dragEnded.emit();
-  }
-
-  /**
-   * Handles mouse move events during drag.
-   * Checks if near edges and triggers auto-scroll.
-   */
-  onDragMoved(event: MouseEvent): void {
-    this.#lastMouseY = event.clientY;
-    this.#checkAutoScroll();
-  }
-
-  /**
-   * Checks if mouse is near top or bottom edge and triggers auto-scroll.
-   */
-  #checkAutoScroll(): void {
-    const folderList = this.folderListRef()?.nativeElement;
-    if (!folderList) return;
-
-    const rect = folderList.getBoundingClientRect();
-    const distanceFromTop = this.#lastMouseY - rect.top;
-    const distanceFromBottom = rect.bottom - this.#lastMouseY;
-
-    // Check if near top edge
-    if (distanceFromTop < SCROLL_EDGE_THRESHOLD_PX && distanceFromTop > 0) {
-      this.#startAutoScroll('up');
-      return;
-    }
-
-    // Check if near bottom edge
-    if (distanceFromBottom < SCROLL_EDGE_THRESHOLD_PX && distanceFromBottom > 0) {
-      this.#startAutoScroll('down');
-      return;
-    }
-
-    // Not near any edge, stop auto-scroll
-    this.#stopAutoScroll();
-  }
-
-  /**
-   * Starts auto-scrolling in the specified direction.
-   * If already scrolling in the same direction, this is a no-op.
-   * If scrolling in the opposite direction, the existing interval is stopped first.
-   */
-  #startAutoScroll(direction: 'up' | 'down'): void {
-    if (this.#autoScrollDirection === direction) return;
-    if (this.#autoScrollInterval) this.#stopAutoScroll();
-
-    this.#autoScrollDirection = direction;
-    this.#autoScrollInterval = setInterval(() => {
-      const folderList = this.folderListRef()?.nativeElement;
-      if (!folderList) {
-        this.#stopAutoScroll();
-        return;
-      }
-
-      const scrollAmount = direction === 'up' ? -SCROLL_SPEED_PX : SCROLL_SPEED_PX;
-      folderList.scrollBy({ top: scrollAmount, behavior: 'auto' });
-    }, SCROLL_INTERVAL_MS);
-  }
-
-  /**
-   * Stops auto-scrolling and resets direction tracking.
-   */
-  #stopAutoScroll(): void {
-    if (this.#autoScrollInterval) {
-      clearInterval(this.#autoScrollInterval);
-      this.#autoScrollInterval = undefined;
-    }
-    this.#autoScrollDirection = undefined;
   }
 }

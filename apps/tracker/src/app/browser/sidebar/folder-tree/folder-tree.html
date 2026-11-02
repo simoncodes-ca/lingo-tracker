@@ -51,10 +51,9 @@
 
   @if (!store.error() && !(store.isFolderTreeLoading() && store.rootFolders().length === 0)) {
     <div
-      #folderList
       class="folder-list"
       role="tree"
-      (mousemove)="activeDragData() ? onDragMoved($event) : null"
+      [appDragAutoScroll]="activeDragData() !== null"
     >
       <!-- Collection root: the one node that lists every resource across every folder -->
       <div
@@ -78,10 +77,10 @@
           [attr.aria-label]="TOKENS.BROWSER.FOLDERTREE.ROOTFOLDERARIALABELX | transloco : { name: collectionName() }"
           [attr.aria-expanded]="store.isRootExpanded()"
           [attr.aria-selected]="isRootSelected()"
-          (keydown.enter)="onRootClick()"
-          (keydown.space)="onRootClick()"
-          (keydown.arrowright)="onRootExpandKeydown($event)"
-          (keydown.arrowleft)="onRootCollapseKeydown($event)"
+          (keydown.enter)="onRootTreeKeydown($event, 'Enter')"
+          (keydown.space)="onRootTreeKeydown($event, ' ')"
+          (keydown.arrowright)="onRootTreeKeydown($event, 'ArrowRight')"
+          (keydown.arrowleft)="onRootTreeKeydown($event, 'ArrowLeft')"
         >
           <button
             type="button"
@@ -114,7 +113,9 @@
           @if (isAddingFolder() && addFolderParentPath() === null) {
             <app-inline-folder-input
               [parentPath]="null"
+              [error]="folderWriteError()"
               (confirm)="onFolderConfirm($event)"
+              (edited)="store.dismissFolderCreateError()"
               (cancelInput)="onFolderCancel()"
             />
           }
@@ -144,6 +145,7 @@
               (deleteFolder)="onDeleteFolder($event)"
               (resourceDropped)="onResourceDropped($event)"
               (folderDropped)="onFolderDropped($event)"
+              (createFolder)="onFolderConfirm($event.folderName, $event.parentPath)"
               (dragStarted)="onDragStarted($event)"
               (dragEnded)="onDragEnded()"
             />

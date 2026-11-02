@@ -41,7 +41,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24 # API Jest needs Node >=24.9 to load ESM-only NestJS 12
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
 
@@ -74,6 +74,9 @@ jobs:
 
       - name: Test
         run: pnpm run test
+
+      - name: CLI smoke tests
+        run: pnpm nx run cli-e2e:e2e
 
       - name: Release
         env:
@@ -116,7 +119,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24 # API Jest needs Node >=24.9 to load ESM-only NestJS 12
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
 

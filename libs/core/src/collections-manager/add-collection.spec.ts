@@ -1,202 +1,99 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { noop } from 'lodash';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
+import type { LingoTrackerConfig } from '../config/lingo-tracker-config';
+import { CONFIG_FILENAME } from '../constants';
+import { loadConfig } from '../lib/config/config-file-operations';
+import { CollectionAlreadyExistsError, ConfigChangedError } from '../lib/errors/lingo-tracker-error';
+import { useTempDir } from '../testing/temp-dir.spec-helpers';
 import { addCollection } from './add-collection';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import type { SafeAny } from '../constants';
 
-vi.mock('node:fs');
-
+/** The write path only; what the record contains is specified in `lib/config/collection-entry.spec.ts`. */
 describe('addCollection', () => {
-  const baseConfig = {
+  const tempDir = useTempDir();
+
+  const config: LingoTrackerConfig = {
     exportFolder: 'dist/lingo-export',
     importFolder: 'dist/lingo-import',
     baseLocale: 'en',
     locales: ['en'],
-    collections: {},
-  } as SafeAny;
+    collections: { existing: { translationsFolder: './existing' } },
+  };
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(fs.existsSync).mockReturnValue(true);
-  });
+  const readConfig = (): LingoTrackerConfig => JSON.parse(readFileSync(join(tempDir(), CONFIG_FILENAME), 'utf8'));
 
-  it('adds a minimal collection (only translationsFolder) and preserves root config', () => {
-    const config = { ...baseConfig };
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(noop);
+  it('writes the minimal record next to the existing collections', () => {
+    writeFileSync(join(tempDir(), CONFIG_FILENAME), JSON.stringify(config));
 
-    const result = addCollection('myCollection', { translationsFolder: '  ./src/i18n  ' }, { cwd: '/test' });
-
-    expect(result.message).toBe('Collection "myCollection" added successfully');
-
-    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-    // Path should be resolved with cwd and config filename
-    expect(writeCall[0]).toBe(path.resolve('/test', '.lingo-tracker.json'));
-
-    const writtenConfig = JSON.parse(writeCall[1] as string);
-    expect(writtenConfig).toMatchObject({
-      exportFolder: baseConfig.exportFolder,
-      importFolder: baseConfig.importFolder,
-      baseLocale: baseConfig.baseLocale,
-      locales: baseConfig.locales,
+    const result = addCollection({ projectRoot: tempDir(), sourceConfig: loadConfig({ cwd: tempDir() }) }, 'admin', {
+      translationsFolder: '  ./admin  ',
+      baseLocale: 'en',
+      locales: ['en'],
+      tags: ['Team X'],
     });
 
-    expect(writtenConfig.collections.myCollection).toEqual({
-      translationsFolder: './src/i18n',
-    });
-  });
-
-  it('includes only properties that differ from the root config', () => {
-    const config = {
-      ...baseConfig,
-      collections: {},
-    };
-
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(noop);
-
-    addCollection(
-      'diffs',
-      {
-        translationsFolder: './folder',
-        exportFolder: baseConfig.exportFolder, // same -> should be omitted
-        importFolder: 'custom/import', // different -> include
-        baseLocale: 'fr', // different -> include
-        locales: ['en'], // same -> should be omitted
-      },
-      { cwd: '/test' },
-    );
-
-    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-    const writtenConfig = JSON.parse(writeCall[1] as string);
-    expect(writtenConfig.collections.diffs).toEqual({
-      translationsFolder: './folder',
-      importFolder: 'custom/import',
-      baseLocale: 'fr',
-    });
-    expect(writtenConfig.collections.diffs.exportFolder).toBeUndefined();
-    expect(writtenConfig.collections.diffs.locales).toBeUndefined();
-  });
-
-  it('persists readOnly when true and omits it when false', () => {
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ...baseConfig }, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(noop);
-
-    addCollection('ro', { translationsFolder: './a', readOnly: true }, { cwd: '/test' });
-    addCollection('rw', { translationsFolder: './b', readOnly: false }, { cwd: '/test' });
-
-    const calls = vi.mocked(fs.writeFileSync).mock.calls;
-    const roConfig = JSON.parse(calls[0][1] as string);
-    const rwConfig = JSON.parse(calls[1][1] as string);
-
-    expect(roConfig.collections.ro.readOnly).toBe(true);
-    expect(rwConfig.collections.rw.readOnly).toBeUndefined();
-  });
-
-  it('throws when collection already exists', () => {
-    const config = {
-      ...baseConfig,
-      collections: {
-        existing: { translationsFolder: './x' },
-      },
-    };
-
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-
-    expect(() => addCollection('existing', { translationsFolder: './new' }, { cwd: '/test' })).toThrow(
-      'Collection "existing" already exists',
-    );
-  });
-
-  it('throws when translationsFolder is missing or blank', () => {
-    const config = { ...baseConfig };
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-
-    expect(() => addCollection('blank', { translationsFolder: '   ' }, { cwd: '/test' })).toThrow(
-      'translationsFolder is required',
-    );
-  });
-
-  it('throws on invalid config file (read/parse failure)', () => {
-    vi.mocked(fs.readFileSync).mockImplementation(() => {
-      throw new Error('ENOENT');
-    });
-
-    expect(() => addCollection('x', { translationsFolder: './t' }, { cwd: '/bad' })).toThrow(
-      'Failed to read or parse configuration file',
-    );
-  });
-
-  it('uses default cwd when not provided', () => {
-    const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue('/default-cwd');
-    const config = { ...baseConfig, collections: {} };
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(noop);
-
-    const result = addCollection('default', { translationsFolder: './t' });
-
-    expect(result.message).toBe('Collection "default" added successfully');
-    expect(cwdSpy).toHaveBeenCalled();
-
-    const readCall = vi.mocked(fs.readFileSync).mock.calls[0];
-    expect(readCall[0]).toBe(path.resolve('/default-cwd', '.lingo-tracker.json'));
-
-    cwdSpy.mockRestore();
-  });
-
-  it('throws when writing the config fails', () => {
-    const config = { ...baseConfig, collections: {} };
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(() => {
-      throw new Error('EACCES');
-    });
-
-    expect(() => addCollection('x', { translationsFolder: './t' }, { cwd: '/test' })).toThrow(
-      'Failed to write configuration file',
-    );
-  });
-
-  it('preserves existing collections when adding a new one', () => {
-    const config = {
-      ...baseConfig,
+    expect(result.message).toBe('Collection "admin" added successfully');
+    expect(readConfig()).toEqual({
+      ...config,
       collections: {
         existing: { translationsFolder: './existing' },
+        admin: { translationsFolder: './admin', tags: ['team-x'] },
       },
-    };
-
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(noop);
-
-    addCollection('newOne', { translationsFolder: './new' }, { cwd: '/test' });
-
-    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-    const writtenConfig = JSON.parse(writeCall[1] as string);
-    expect(writtenConfig.collections).toEqual({
-      existing: { translationsFolder: './existing' },
-      newOne: { translationsFolder: './new' },
     });
   });
 
-  it('persists normalized tags when provided', () => {
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ...baseConfig }, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(noop);
+  it('reports one reindex for the normalized translations folder after writing config', () => {
+    writeFileSync(join(tempDir(), CONFIG_FILENAME), JSON.stringify(config));
+    const onMutation = vi.fn(() =>
+      expect(readConfig().collections['admin']).toEqual({ translationsFolder: './admin' }),
+    );
 
-    addCollection('tagged', { translationsFolder: './t', tags: ['Team X', 'feature-a', 'Team X'] }, { cwd: '/test' });
+    addCollection(
+      { ...{ projectRoot: tempDir(), sourceConfig: loadConfig({ cwd: tempDir() }) }, onMutation },
+      'admin',
+      { translationsFolder: '  ./admin  ' },
+      {},
+    );
 
-    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-    const writtenConfig = JSON.parse(writeCall[1] as string);
-    expect(writtenConfig.collections.tagged.tags).toEqual(['team-x', 'feature-a']);
+    expect(onMutation).toHaveBeenCalledTimes(1);
+    expect(onMutation).toHaveBeenCalledWith({
+      kind: 'reindex',
+      translationsFolder: join(tempDir(), 'admin'),
+    });
   });
 
-  it('omits tags field when tags array is empty', () => {
-    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify({ ...baseConfig }, null, 2) as SafeAny);
-    vi.mocked(fs.writeFileSync).mockImplementation(noop);
+  it('does not report a mutation when registration fails', () => {
+    writeFileSync(join(tempDir(), CONFIG_FILENAME), JSON.stringify(config));
+    const onMutation = vi.fn();
+    expect(() =>
+      addCollection(
+        { ...{ projectRoot: tempDir(), sourceConfig: loadConfig({ cwd: tempDir() }) }, onMutation },
+        'existing',
+        { translationsFolder: './new' },
+        {},
+      ),
+    ).toThrow(CollectionAlreadyExistsError);
+    expect(onMutation).not.toHaveBeenCalled();
+  });
 
-    addCollection('noTags', { translationsFolder: './t', tags: [] }, { cwd: '/test' });
+  it('leaves the file untouched when the name is taken', () => {
+    const written = JSON.stringify(config);
+    writeFileSync(join(tempDir(), CONFIG_FILENAME), written);
 
-    const writeCall = vi.mocked(fs.writeFileSync).mock.calls[0];
-    const writtenConfig = JSON.parse(writeCall[1] as string);
-    expect(writtenConfig.collections.noTags.tags).toBeUndefined();
+    expect(() =>
+      addCollection({ projectRoot: tempDir(), sourceConfig: loadConfig({ cwd: tempDir() }) }, 'existing', {
+        translationsFolder: './new',
+      }),
+    ).toThrow(CollectionAlreadyExistsError);
+    expect(readFileSync(join(tempDir(), CONFIG_FILENAME), 'utf8')).toBe(written);
+  });
+
+  it('refuses a stale project and keeps the other writer’s bytes', () => {
+    writeFileSync(join(tempDir(), CONFIG_FILENAME), JSON.stringify(config));
+    const project = { projectRoot: tempDir(), sourceConfig: loadConfig({ cwd: tempDir() }) };
+    const other = `${JSON.stringify(config)}\n`;
+    writeFileSync(join(tempDir(), CONFIG_FILENAME), other);
+    expect(() => addCollection(project, 'admin', { translationsFolder: './admin' })).toThrow(ConfigChangedError);
+    expect(readFileSync(join(tempDir(), CONFIG_FILENAME), 'utf8')).toBe(other);
   });
 });

@@ -1,5 +1,5 @@
+import { formatISODate, formatMarkdownList } from '../summary-utils';
 import type { ExportOptions, ExportResult } from './types';
-import { formatMarkdownList, formatISODate } from '../summary-utils';
 
 /**
  * Generates a markdown summary of the export operation.

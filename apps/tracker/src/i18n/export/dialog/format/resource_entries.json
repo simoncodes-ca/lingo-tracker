@@ -1,0 +1,62 @@
+{
+  "description": {
+    "source": "What the files are for.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Para qué sirven los archivos.",
+    "fr-ca": "À quoi servent les fichiers.",
+    "ru": "Для чего нужны файлы.",
+    "ja": "ファイルの用途です。",
+    "de": "Wofür die Dateien gedacht sind."
+  },
+  "xliff": {
+    "source": "XLIFF 1.2",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "XLIFF 1.2",
+    "fr-ca": "XLIFF 1.2",
+    "ru": "XLIFF 1.2",
+    "ja": "XLIFF 1.2",
+    "de": "XLIFF 1.2"
+  },
+  "xliffHint": {
+    "source": "For translation tools and vendors. One file per locale with source, target and notes.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Para herramientas de traducción y proveedores. Un archivo por idioma con origen, destino y notas.",
+    "fr-ca": "Pour les outils de traduction et les fournisseurs. Un fichier par langue avec source, cible et notes.",
+    "ru": "Для инструментов перевода и подрядчиков. Один файл на язык: оригинал, перевод и примечания.",
+    "ja": "翻訳ツールやベンダー向けです。ロケールごとに1ファイルで、原文、訳文、メモを含みます。",
+    "de": "Für Übersetzungstools und Dienstleister. Eine Datei pro Sprache mit Quelle, Ziel und Notizen."
+  },
+  "json": {
+    "source": "JSON",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "JSON",
+    "fr-ca": "JSON",
+    "ru": "JSON",
+    "ja": "JSON",
+    "de": "JSON"
+  },
+  "jsonHint": {
+    "source": "For scripts and runtime consumers. One file per locale; shape and metadata under JSON options.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Para scripts y consumidores en tiempo de ejecución. Un archivo por idioma; la estructura y los metadatos se configuran en las opciones de JSON.",
+    "fr-ca": "Pour les scripts et les consommateurs à l’exécution. Un fichier par langue; la structure et les métadonnées se règlent dans les options JSON.",
+    "ru": "Для скриптов и потребителей во время выполнения. Один файл на язык; структура и метаданные настраиваются в параметрах JSON.",
+    "ja": "スクリプトやランタイムでの利用向けです。ロケールごとに1ファイルで、構造とメタデータは JSON オプションで設定します。",
+    "de": "Für Skripte und Laufzeit-Verbraucher. Eine Datei pro Sprache; Struktur und Metadaten unter JSON-Optionen."
+  },
+  "protectedNote": {
+    "source": "Protected terms are written as do-not-translate notes. Turn this off under Output.",
+    "comment": "Export dialog text",
+    "tags": ["export"],
+    "es": "Los términos protegidos se escriben como notas de «no traducir». Puedes desactivarlo en Salida.",
+    "fr-ca": "Les termes protégés sont écrits sous forme de notes « ne pas traduire ». Désactivez cette option sous Sortie.",
+    "ru": "Защищённые термины записываются как примечания «не переводить». Это можно отключить в разделе «Вывод».",
+    "ja": "保護された用語は「翻訳しない」メモとして書き出されます。「出力」でオフにできます。",
+    "de": "Geschützte Begriffe werden als Notizen „Nicht übersetzen“ geschrieben. Unter Ausgabe lässt sich das abschalten."
+  }
+}

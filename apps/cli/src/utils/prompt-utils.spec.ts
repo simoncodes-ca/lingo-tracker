@@ -1,410 +1,351 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { DEFAULT_CONFIG } from '@simoncodes-ca/core';
+import { describe, expect, it, vi } from 'vitest';
+import { type Ask, CommandCancelledError } from '../runner/command-runner';
+import type { InitOptions } from '../types/init-options';
 import {
-  ALL_ITEMS_SENTINEL,
-  processMultiselectWithAll,
-  multiselectResultToString,
-  isInteractiveTerminal,
-  executePromptsWithFallback,
+  collectionSetupQuestions,
+  confirmOrCancel,
+  missingTextQuestions,
+  parseListSelection,
+  parseNameSelection,
+  requiredText,
+  type Selection,
+  selectionNames,
+  selectionPrompt,
 } from './prompt-utils';
 
-// Mock prompts module
-vi.mock('prompts', () => ({
-  default: vi.fn(),
-}));
+const ALL_ITEMS_SENTINEL = '__ALL__';
 
-import prompts from 'prompts';
-
-describe('ALL_ITEMS_SENTINEL', () => {
+describe('selectionPrompt', () => {
   it('should have the correct sentinel value', () => {
-    expect(ALL_ITEMS_SENTINEL).toBe('__ALL__');
+    expect(
+      selectionPrompt({ mode: 'single', name: 'items', message: 'Select items', choices: [], allTitle: 'All items' }),
+    ).toMatchObject({
+      choices: [{ title: 'All items', value: '__ALL__' }],
+    });
   });
 });
 
-describe('processMultiselectWithAll', () => {
-  const allAvailableItems = ['en', 'fr', 'de', 'es'];
-
+describe('prompt selections', () => {
   it('should return selected items when specific items are chosen', () => {
-    const result = processMultiselectWithAll(['en', 'fr'], allAvailableItems);
+    const result = selectionNames(parseListSelection(undefined, ['en', 'fr']));
     expect(result).toEqual(['en', 'fr']);
   });
 
   it('should return undefined when __ALL__ is selected', () => {
-    const result = processMultiselectWithAll([ALL_ITEMS_SENTINEL], allAvailableItems);
+    const result = selectionNames(parseListSelection(undefined, [ALL_ITEMS_SENTINEL]));
     expect(result).toBeUndefined();
   });
 
   it('should return undefined when __ALL__ plus other items are selected (All takes precedence)', () => {
-    const result = processMultiselectWithAll([ALL_ITEMS_SENTINEL, 'en', 'fr'], allAvailableItems);
+    const result = selectionNames(parseListSelection(undefined, [ALL_ITEMS_SENTINEL, 'en', 'fr']));
     expect(result).toBeUndefined();
   });
 
   it('should return undefined when __ALL__ is in the middle of selections', () => {
-    const result = processMultiselectWithAll(['en', ALL_ITEMS_SENTINEL, 'fr'], allAvailableItems);
+    const result = selectionNames(parseListSelection(undefined, ['en', ALL_ITEMS_SENTINEL, 'fr']));
     expect(result).toBeUndefined();
   });
 
   it('should return undefined for empty array', () => {
-    const result = processMultiselectWithAll([], allAvailableItems);
+    const result = selectionNames(parseListSelection(undefined, []));
     expect(result).toBeUndefined();
   });
 
   it('should return undefined for undefined input', () => {
-    const result = processMultiselectWithAll(undefined, allAvailableItems);
+    const result = selectionNames(parseListSelection(undefined, undefined));
     expect(result).toBeUndefined();
   });
 
   it('should return single item in array when one item is selected', () => {
-    const result = processMultiselectWithAll(['en'], allAvailableItems);
+    const result = selectionNames(parseListSelection(undefined, ['en']));
     expect(result).toEqual(['en']);
   });
 
   it('should return all items when all are manually selected (no __ALL__)', () => {
-    const result = processMultiselectWithAll(['en', 'fr', 'de', 'es'], allAvailableItems);
+    const result = selectionNames(parseListSelection(undefined, ['en', 'fr', 'de', 'es']));
     expect(result).toEqual(['en', 'fr', 'de', 'es']);
   });
 
   it('should preserve order of selected items', () => {
-    const result = processMultiselectWithAll(['es', 'en', 'de'], allAvailableItems);
+    const result = selectionNames(parseListSelection(undefined, ['es', 'en', 'de']));
     expect(result).toEqual(['es', 'en', 'de']);
   });
 
   it('should handle empty available items list', () => {
-    const result = processMultiselectWithAll(['en', 'fr'], []);
+    const result = selectionNames(parseListSelection(undefined, ['en', 'fr']));
     expect(result).toEqual(['en', 'fr']);
   });
 
   it('should return undefined when __ALL__ is selected with empty available items', () => {
-    const result = processMultiselectWithAll([ALL_ITEMS_SENTINEL], []);
+    const result = selectionNames(parseListSelection(undefined, [ALL_ITEMS_SENTINEL]));
     expect(result).toBeUndefined();
   });
 });
 
-describe('multiselectResultToString', () => {
+describe('name filters', () => {
   it('should return undefined for undefined input', () => {
-    const result = multiselectResultToString(undefined);
+    const result = selectionNames(parseListSelection(undefined, undefined));
     expect(result).toBeUndefined();
   });
 
   it('should return undefined for empty array', () => {
-    const result = multiselectResultToString([]);
+    const result = selectionNames(parseListSelection(undefined, []));
     expect(result).toBeUndefined();
   });
 
-  it('should return single item without comma', () => {
-    const result = multiselectResultToString(['en']);
-    expect(result).toBe('en');
+  it('should resolve a single name', () => {
+    const result = selectionNames(parseListSelection(undefined, ['en']));
+    expect(result).toEqual(['en']);
   });
 
-  it('should return comma-separated string for multiple items', () => {
-    const result = multiselectResultToString(['en', 'fr', 'de']);
-    expect(result).toBe('en,fr,de');
+  it('should resolve multiple names', () => {
+    const result = selectionNames(parseListSelection(undefined, ['en', 'fr', 'de']));
+    expect(result).toEqual(['en', 'fr', 'de']);
   });
 
   it('should preserve order of items', () => {
-    const result = multiselectResultToString(['es', 'en', 'de']);
-    expect(result).toBe('es,en,de');
+    const result = selectionNames(parseListSelection(undefined, ['es', 'en', 'de']));
+    expect(result).toEqual(['es', 'en', 'de']);
   });
 
   it('should handle items with special characters', () => {
-    const result = multiselectResultToString(['en-US', 'fr-FR']);
-    expect(result).toBe('en-US,fr-FR');
+    const result = selectionNames(parseListSelection(undefined, ['en-US', 'fr-FR']));
+    expect(result).toEqual(['en-US', 'fr-FR']);
   });
 
   it('should handle many items', () => {
-    const result = multiselectResultToString(['a', 'b', 'c', 'd', 'e', 'f']);
-    expect(result).toBe('a,b,c,d,e,f');
+    const result = selectionNames(parseListSelection(undefined, ['a', 'b', 'c', 'd', 'e', 'f']));
+    expect(result).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
   });
 });
 
-describe('isInteractiveTerminal', () => {
-  let originalStdinIsTTY: boolean | undefined;
-  let originalStdoutIsTTY: boolean | undefined;
+describe('parseListSelection', () => {
+  const cases: { label: string; flag?: string; answer?: unknown; expected: Selection | undefined }[] = [
+    { label: 'flag only', flag: ' en, fr, ,', expected: { kind: 'some', names: ['en', 'fr'] } },
+    { label: 'answer only', answer: 'main', expected: { kind: 'some', names: ['main'] } },
+    { label: 'multiple answers', answer: ['en', 'fr'], expected: { kind: 'some', names: ['en', 'fr'] } },
+    { label: 'single sentinel', answer: '__ALL__', expected: { kind: 'all' } },
+    { label: 'sentinel with names', answer: ['en', '__ALL__', 'fr'], expected: { kind: 'all' } },
+    { label: 'empty list', answer: [], expected: undefined },
+    { label: 'empty flag', flag: '', expected: undefined },
+    { label: 'empty answer', answer: '', expected: undefined },
+    { label: 'no input', expected: undefined },
+    { label: 'both supplied', flag: 'en', answer: ['fr'], expected: { kind: 'some', names: ['en'] } },
+    { label: 'flag over sentinel', flag: 'en', answer: '__ALL__', expected: { kind: 'some', names: ['en'] } },
+    { label: 'empty flag over answer', flag: '', answer: 'main', expected: undefined },
+    { label: 'sentinel spelling in flag is a name', flag: '__ALL__', expected: { kind: 'some', names: ['__ALL__'] } },
+    { label: 'comma-only flag', flag: ' , ', expected: undefined },
+    { label: 'prompt list parsing', answer: [' en, fr ', '', 1], expected: { kind: 'some', names: ['en', 'fr'] } },
+  ];
 
-  beforeEach(() => {
-    // Save original values
-    originalStdinIsTTY = process.stdin.isTTY;
-    originalStdoutIsTTY = process.stdout.isTTY;
+  for (const { label, flag, answer, expected } of cases) {
+    it(label, () => {
+      expect(parseListSelection(flag, answer)).toEqual(expected);
+    });
+  }
+
+  it('keeps single-name flags literal for normalize and glossary', () => {
+    expect(parseNameSelection(' main, admin ')).toEqual({
+      kind: 'some',
+      names: [' main, admin '],
+    });
   });
 
-  afterEach(() => {
-    // Restore original values
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: originalStdinIsTTY,
-      configurable: true,
-    });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: originalStdoutIsTTY,
-      configurable: true,
+  it('builds the existing multiselect prompt with all first and selected', () => {
+    expect(
+      selectionPrompt({
+        name: 'collections',
+        message: 'Select collections to export',
+        choices: ['main'],
+        allTitle: 'All Collections',
+        mode: 'multiple',
+      }),
+    ).toEqual({
+      type: 'multiselect',
+      name: 'collections',
+      message: 'Select collections to export',
+      choices: [
+        { title: 'All Collections', value: '__ALL__', selected: true },
+        { title: 'main', value: 'main' },
+      ],
+      min: 1,
+      hint: 'Space to select. Return to submit',
+      instructions: false,
     });
   });
 
-  it('should return true when both stdin and stdout are TTY', () => {
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: true,
-      configurable: true,
+  it('builds a single selection without an all choice', () => {
+    expect(
+      selectionPrompt({ mode: 'single', name: 'collection', message: 'Select collection', choices: ['main'] }),
+    ).toEqual({
+      type: 'select',
+      name: 'collection',
+      message: 'Select collection',
+      choices: [{ title: 'main', value: 'main' }],
     });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: true,
-      configurable: true,
-    });
-
-    expect(isInteractiveTerminal()).toBe(true);
-  });
-
-  it('should return false when stdin is not TTY', () => {
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: false,
-      configurable: true,
-    });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: true,
-      configurable: true,
-    });
-
-    expect(isInteractiveTerminal()).toBe(false);
-  });
-
-  it('should return false when stdout is not TTY', () => {
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: true,
-      configurable: true,
-    });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: false,
-      configurable: true,
-    });
-
-    expect(isInteractiveTerminal()).toBe(false);
-  });
-
-  it('should return false when both stdin and stdout are not TTY', () => {
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: false,
-      configurable: true,
-    });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: false,
-      configurable: true,
-    });
-
-    expect(isInteractiveTerminal()).toBe(false);
-  });
-
-  it('should return false when stdin.isTTY is undefined', () => {
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: undefined,
-      configurable: true,
-    });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: true,
-      configurable: true,
-    });
-
-    expect(isInteractiveTerminal()).toBe(false);
-  });
-
-  it('should return false when stdout.isTTY is undefined', () => {
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: true,
-      configurable: true,
-    });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: undefined,
-      configurable: true,
-    });
-
-    expect(isInteractiveTerminal()).toBe(false);
   });
 });
 
-describe('executePromptsWithFallback', () => {
-  let originalStdinIsTTY: boolean | undefined;
-  let originalStdoutIsTTY: boolean | undefined;
+describe('parseNameSelection', () => {
+  const cases: { label: string; flag?: string; answer?: unknown; expected: Selection | undefined }[] = [
+    { label: 'flag only', flag: ' main, admin ', expected: { kind: 'some', names: [' main, admin '] } },
+    { label: 'answer only', answer: 'main', expected: { kind: 'some', names: ['main'] } },
+    { label: 'sentinel', answer: '__ALL__', expected: { kind: 'all' } },
+    { label: 'empty flag', flag: '', expected: undefined },
+    { label: 'empty answer', answer: '', expected: undefined },
+    { label: 'both supplied', flag: 'main', answer: 'admin', expected: { kind: 'some', names: ['main'] } },
+    { label: 'flag beats all answer', flag: 'main', answer: '__ALL__', expected: { kind: 'some', names: ['main'] } },
+    { label: 'empty flag beats answer', flag: '', answer: 'main', expected: undefined },
+  ];
+  for (const { label, flag, answer, expected } of cases) {
+    it(label, () => {
+      expect(parseNameSelection(flag, answer)).toEqual(expected);
+    });
+  }
+});
 
-  beforeEach(() => {
-    // Save original values
-    originalStdinIsTTY = process.stdin.isTTY;
-    originalStdoutIsTTY = process.stdout.isTTY;
-    vi.clearAllMocks();
+describe('missingTextQuestions', () => {
+  it.each([
+    { label: 'absent', options: {}, expected: [{ type: 'text', name: 'value', message: 'Value' }] },
+    {
+      label: 'undefined',
+      options: { value: undefined },
+      expected: [{ type: 'text', name: 'value', message: 'Value' }],
+    },
+    { label: 'present', options: { value: 'provided' }, expected: [] },
+    { label: 'empty string', options: { value: '' }, expected: [{ type: 'text', name: 'value', message: 'Value' }] },
+    { label: 'whitespace flag', options: { value: ' ' }, expected: [] },
+  ])('$label option', ({ options, expected }) => {
+    expect(missingTextQuestions<{ value?: string }>(options, [{ name: 'value', message: 'Value' }])).toEqual(expected);
   });
 
-  afterEach(() => {
-    // Restore original values
-    Object.defineProperty(process.stdin, 'isTTY', {
-      value: originalStdinIsTTY,
-      configurable: true,
-    });
-    Object.defineProperty(process.stdout, 'isTTY', {
-      value: originalStdoutIsTTY,
-      configurable: true,
-    });
+  it.each([
+    { value: '', expected: 'Required' },
+    { value: '  ', expected: 'Required' },
+    { value: 'valid', expected: true },
+    { value: ' valid ', expected: true },
+  ])('validates required text "$value"', ({ value, expected }) => {
+    const questions = missingTextQuestions<{ value?: string }>({}, [
+      { name: 'value', message: 'Value', required: true },
+    ]);
+    expect(questions[0]?.validate).toBe(requiredText);
+    expect(requiredText(value)).toBe(expected);
   });
 
-  describe('when no questions are provided', () => {
-    it('should return current values without prompting', async () => {
-      const currentValues = { key: 'test', value: 'hello' };
-      const result = await executePromptsWithFallback({
-        questions: [],
-        currentValues,
-      });
+  it('keeps field order, initial values and custom validation', () => {
+    const validate = (value: string) => value === 'allowed' || 'Not allowed';
+    expect(
+      missingTextQuestions({ first: undefined, supplied: 'flag', last: undefined }, [
+        { name: 'first', message: 'First', initial: 'default', required: true },
+        { name: 'supplied', message: 'Supplied' },
+        { name: 'last', message: 'Last', required: true, validate },
+      ]),
+    ).toEqual([
+      { type: 'text', name: 'first', message: 'First', initial: 'default', validate: requiredText },
+      { type: 'text', name: 'last', message: 'Last', validate },
+    ]);
+  });
+});
 
-      expect(result).toEqual(currentValues);
-    });
+describe('collectionSetupQuestions', () => {
+  it.each([
+    { label: 'add-collection', defaults: {}, nameInitial: {} },
+    { label: 'init', defaults: { collectionName: 'Main' }, nameInitial: { initial: 'Main' } },
+  ])('preserves $label messages, order and defaults', ({ defaults, nameInitial }) => {
+    expect(collectionSetupQuestions({}, defaults)).toEqual([
+      { type: 'text', name: 'collectionName', message: 'Collection name', ...nameInitial, validate: requiredText },
+      { type: 'text', name: 'translationsFolder', message: 'Path to translations folder', validate: requiredText },
+      { type: 'text', name: 'exportFolder', message: 'Export folder', initial: DEFAULT_CONFIG.exportFolder },
+      { type: 'text', name: 'importFolder', message: 'Import folder', initial: DEFAULT_CONFIG.importFolder },
+      {
+        type: 'text',
+        name: 'baseLocale',
+        message: 'Base locale',
+        initial: DEFAULT_CONFIG.baseLocale,
+        validate: requiredText,
+      },
+      {
+        type: 'list',
+        name: 'locales',
+        message: 'Supported locales (comma-separated)',
+        initial: '',
+        separator: ',',
+      },
+    ]);
   });
 
-  describe('in interactive mode (TTY)', () => {
-    beforeEach(() => {
-      Object.defineProperty(process.stdin, 'isTTY', {
-        value: true,
-        configurable: true,
-      });
-      Object.defineProperty(process.stdout, 'isTTY', {
-        value: true,
-        configurable: true,
-      });
+  const cases: { label: string; options: InitOptions; names: string[] }[] = [
+    {
+      label: 'all supplied',
+      options: {
+        collectionName: 'main',
+        translationsFolder: 'translations',
+        exportFolder: 'export',
+        importFolder: 'import',
+        baseLocale: 'fr',
+        locales: ['fr'],
+      },
+      names: [],
+    },
+    {
+      label: 'empty text flags',
+      options: { collectionName: '', translationsFolder: '', exportFolder: '', importFolder: '', baseLocale: '' },
+      names: ['collectionName', 'translationsFolder', 'exportFolder', 'importFolder', 'baseLocale', 'locales'],
+    },
+    {
+      label: 'partial flags',
+      options: { collectionName: 'main', baseLocale: 'fr' },
+      names: ['translationsFolder', 'exportFolder', 'importFolder', 'locales'],
+    },
+    {
+      label: 'empty locale array is supplied',
+      options: { locales: [] },
+      names: ['collectionName', 'translationsFolder', 'exportFolder', 'importFolder', 'baseLocale'],
+    },
+  ];
+  it.each(cases)('$label', ({ options, names }) => {
+    expect(collectionSetupQuestions(options).map((question) => question.name)).toEqual(names);
+  });
+});
+
+describe('confirmOrCancel', () => {
+  it.each([
+    { label: 'confirmed', answer: { confirmed: true }, cancelled: false },
+    { label: 'declined', answer: { confirmed: false }, cancelled: true },
+    { label: 'missing answer', answer: {}, cancelled: true },
+    { label: 'truthy answer is not consent', answer: { confirmed: 'yes' }, cancelled: true },
+  ])('$label', async ({ answer, cancelled }) => {
+    const ask = vi.fn<Ask>().mockResolvedValue(answer);
+    const beforeAsk = vi.fn();
+    const result = confirmOrCancel({ ask, interactive: true, message: 'Are you sure?', beforeAsk });
+    if (cancelled) await expect(result).rejects.toBeInstanceOf(CommandCancelledError);
+    else await expect(result).resolves.toBeUndefined();
+    expect(ask).toHaveBeenCalledExactlyOnceWith({
+      type: 'confirm',
+      name: 'confirmed',
+      message: 'Are you sure?',
+      initial: false,
     });
-
-    it('should show prompts and merge with current values', async () => {
-      const currentValues = { existing: 'value' };
-      const promptResponse = { key: 'newkey', value: 'newvalue' };
-
-      vi.mocked(prompts).mockResolvedValue(promptResponse);
-
-      const questions = [
-        { type: 'text', name: 'key', message: 'Enter key' },
-        { type: 'text', name: 'value', message: 'Enter value' },
-      ];
-
-      const result = await executePromptsWithFallback({
-        questions,
-        currentValues,
-      });
-
-      expect(result).toEqual({
-        existing: 'value',
-        key: 'newkey',
-        value: 'newvalue',
-      });
-    });
-
-    it('should throw error with operation name when cancelled', async () => {
-      vi.mocked(prompts).mockImplementation(async (_questions: any, options: any) => {
-        options.onCancel();
-        return {};
-      });
-
-      const questions = [{ type: 'text', name: 'key', message: 'Enter key' }];
-
-      await expect(
-        executePromptsWithFallback({
-          questions,
-          currentValues: {},
-          operationName: 'Add resource',
-        }),
-      ).rejects.toThrow('Add resource cancelled');
-    });
-
-    it('should use default operation name when cancelled without operationName', async () => {
-      vi.mocked(prompts).mockImplementation(async (_questions: any, options: any) => {
-        options.onCancel();
-        return {};
-      });
-
-      const questions = [{ type: 'text', name: 'key', message: 'Enter key' }];
-
-      await expect(
-        executePromptsWithFallback({
-          questions,
-          currentValues: {},
-        }),
-      ).rejects.toThrow('Operation cancelled');
-    });
+    expect(beforeAsk).toHaveBeenCalledOnce();
+    expect(beforeAsk.mock.invocationCallOrder[0]).toBeLessThan(ask.mock.invocationCallOrder[0]);
   });
 
-  describe('in non-interactive mode (non-TTY)', () => {
-    beforeEach(() => {
-      Object.defineProperty(process.stdin, 'isTTY', {
-        value: false,
-        configurable: true,
-      });
-      Object.defineProperty(process.stdout, 'isTTY', {
-        value: true,
-        configurable: true,
-      });
-    });
+  it.each([
+    { label: '--yes', interactive: true, yes: true },
+    { label: 'non-interactive', interactive: false, yes: false },
+    { label: 'non-interactive with --yes', interactive: false, yes: true },
+  ])('skips $label confirmation and explanation', async ({ interactive, yes }) => {
+    const ask = vi.fn<Ask>();
+    const beforeAsk = vi.fn();
+    await expect(confirmOrCancel({ ask, interactive, yes, message: 'Confirm', beforeAsk })).resolves.toBeUndefined();
+    expect(ask).not.toHaveBeenCalled();
+    expect(beforeAsk).not.toHaveBeenCalled();
+  });
 
-    it('should return current values when all required fields are present', async () => {
-      const currentValues = { key: 'test', value: 'hello', collection: 'main' };
-      const questions = [
-        { type: 'text', name: 'key', message: 'Enter key' },
-        { type: 'text', name: 'value', message: 'Enter value' },
-      ];
-
-      const result = await executePromptsWithFallback({
-        questions,
-        currentValues,
-        requiredFields: ['key', 'value'],
-      });
-
-      expect(result).toEqual(currentValues);
-    });
-
-    it('should throw error when required fields are missing', async () => {
-      const currentValues = { key: 'test' };
-      const questions = [
-        { type: 'text', name: 'key', message: 'Enter key' },
-        { type: 'text', name: 'value', message: 'Enter value' },
-      ];
-
-      await expect(
-        executePromptsWithFallback({
-          questions,
-          currentValues,
-          requiredFields: ['key', 'value', 'collection'],
-        }),
-      ).rejects.toThrow('Missing required options in non-interactive mode: --value, --collection');
-    });
-
-    it('should throw error listing all missing fields', async () => {
-      const currentValues = {};
-      const questions = [{ type: 'text', name: 'key', message: 'Enter key' }];
-
-      await expect(
-        executePromptsWithFallback({
-          questions,
-          currentValues,
-          requiredFields: ['key', 'value', 'collection'],
-        }),
-      ).rejects.toThrow('Missing required options in non-interactive mode: --key, --value, --collection');
-    });
-
-    it('should return current values when no required fields specified', async () => {
-      const currentValues = { key: 'test' };
-      const questions = [{ type: 'text', name: 'value', message: 'Enter value' }];
-
-      const result = await executePromptsWithFallback({
-        questions,
-        currentValues,
-      });
-
-      expect(result).toEqual(currentValues);
-    });
-
-    it('should handle falsy values correctly (0, empty string)', async () => {
-      const currentValues = { count: 0, name: '' };
-      const questions = [
-        { type: 'number', name: 'count', message: 'Enter count' },
-        { type: 'text', name: 'name', message: 'Enter name' },
-      ];
-
-      const result = await executePromptsWithFallback({
-        questions,
-        currentValues,
-        requiredFields: ['count', 'name'],
-      });
-
-      // Should not throw - empty string and 0 are valid values
-      expect(result).toEqual({ count: 0, name: '' });
-    });
+  it('propagates a prompt cancellation from the runner', async () => {
+    const error = new CommandCancelledError();
+    const ask = vi.fn<Ask>().mockRejectedValue(error);
+    await expect(confirmOrCancel({ ask, interactive: true, yes: false, message: 'Confirm' })).rejects.toBe(error);
   });
 });

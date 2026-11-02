@@ -1,10 +1,9 @@
-import { describe, it, expect } from 'vitest';
+// Mock fs to avoid file writes
+import { describe, expect, it, vi } from 'vitest';
 import { exportToJson } from './export-to-json';
 import { exportToXliff } from './export-to-xliff';
 import type { ExportOptions, FilteredResource } from './types';
 
-// Mock fs to avoid file writes
-import { vi } from 'vitest';
 vi.mock('fs');
 vi.mock('xliff', () => ({
   jsToXliff12: (_obj: unknown, _opt: unknown, cb: (err: Error | null, result: string) => void) =>

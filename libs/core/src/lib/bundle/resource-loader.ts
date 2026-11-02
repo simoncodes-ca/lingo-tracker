@@ -1,86 +1,65 @@
 /**
- * Utilities for loading translation resources from collections
+ * The bundle's view of a collection: one value per key for one locale, read through the
+ * Collection Reader.
  */
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { RESOURCE_ENTRIES_FILENAME } from '../../constants';
-import { walkFolders } from '../normalize/iterative-folder-walker';
-import type { ResourceEntries } from '../../resource/resource-entry';
-import { readJsonFile } from '../file-io/json-file-operations';
+import type { Collection } from '../config/open-collection';
+import { describeFolderProblem } from '../resource/collection-folders';
+import { type CollectionRead, readCollection } from '../resource/read-collection';
 
 export interface FlatResource {
   readonly key: string;
   readonly value: string;
-  readonly tags?: string[];
-  readonly collectionTags?: string[];
+  /** The entry's effective tags (collection tags united with its own), from the Collection Reader. */
+  readonly tags?: readonly string[];
 }
 
 /**
- * Loads all resources from a collection's translations folder.
+ * Stands in for a locale: "each collection's own base locale". The base data of a run (debug keys,
+ * the plan's key set) reads every collection's base value, whatever the global base locale is.
+ */
+export const COLLECTION_BASE_LOCALE: unique symbol = Symbol('collection base locale');
+
+/** A locale code, or {@link COLLECTION_BASE_LOCALE}. */
+export type BundleLocale = string | typeof COLLECTION_BASE_LOCALE;
+
+/**
+ * Collections already read in one bundle run, by collection name. Create one per run and discard
+ * it afterwards, so every locale of a run reads the same data without reading the disk again.
+ */
+export type CollectionReadCache = Map<string, CollectionRead>;
+
+/**
+ * Lists a collection's values for `locale`: the base value (`source`) when `locale` is the
+ * collection's base locale (or {@link COLLECTION_BASE_LOCALE}), otherwise the stored translation.
+ * An entry with no value for `locale` is left out.
  *
- * Returns a flat list of resources with full keys. When a `cache` map is
- * provided, parsed `ResourceEntries` objects are stored in it by file path
- * so subsequent calls for the same folder (e.g., different locales in the
- * same bundle generation) avoid redundant disk reads and JSON parsing.
- * The cache is intentionally short-lived: callers should create it per
- * invocation and discard it afterwards to avoid stale data.
- *
- * @param translationsFolder - Path to collection's translations folder
- * @param locale - Target locale to extract values for
- * @param baseLocale - Base locale (source values use 'source' property)
- * @param cache - Optional per-invocation cache of parsed ResourceEntries by file path
- * @returns Array of flat resources with keys, values, and tags
+ * Folders the reader could not read are reported once per collection and run: pushed to
+ * the required `warnings` channel. Core does not log them.
  */
 export function loadCollectionResources(
-  translationsFolder: string,
-  locale: string,
-  baseLocale: string,
-  cache?: Map<string, ResourceEntries>,
-  collectionTags?: string[],
+  collection: Collection,
+  locale: BundleLocale,
+  cache: CollectionReadCache | undefined,
+  warnings: string[],
 ): FlatResource[] {
-  const resources: FlatResource[] = [];
-
-  if (!fs.existsSync(translationsFolder)) {
-    return resources;
+  let read = cache?.get(collection.name);
+  if (!read) {
+    read = readCollection(collection);
+    cache?.set(collection.name, read);
+    for (const problem of read.problems) {
+      warnings.push(describeFolderProblem(problem, { collectionName: collection.name }));
+    }
   }
 
-  for (const visit of walkFolders(translationsFolder, { skipHidden: false })) {
-    const resourceEntriesPath = path.join(visit.absolutePath, RESOURCE_ENTRIES_FILENAME);
+  const isBase = locale === COLLECTION_BASE_LOCALE || locale === collection.baseLocale;
+  const resources: FlatResource[] = [];
 
-    if (!fs.existsSync(resourceEntriesPath)) continue;
+  for (const { fullKey, entry, effectiveTags } of read.resources) {
+    const value = isBase ? entry.source : entry.translations[locale];
+    if (typeof value !== 'string') continue;
 
-    try {
-      let entries: ResourceEntries;
-
-      const cached = cache?.get(resourceEntriesPath);
-      if (cached) {
-        entries = cached;
-      } else {
-        entries = readJsonFile<ResourceEntries>({ filePath: resourceEntriesPath });
-        cache?.set(resourceEntriesPath, entries);
-      }
-
-      for (const [entryKey, entry] of Object.entries(entries)) {
-        const fullKey = visit.keyPrefix ? `${visit.keyPrefix}.${entryKey}` : entryKey;
-
-        // For base locale, use 'source' property; for others, use locale key
-        const value = locale === baseLocale ? entry.source : entry[locale];
-
-        // Extract translation value (skip if missing)
-        if (typeof value === 'string') {
-          resources.push({
-            key: fullKey,
-            value,
-            tags: entry.tags,
-            collectionTags,
-          });
-        }
-      }
-    } catch {
-      // Skip invalid JSON files
-      console.warn(`⚠️  Skipping invalid JSON: ${resourceEntriesPath}`);
-    }
+    resources.push({ key: fullKey, value, tags: effectiveTags });
   }
 
   return resources;

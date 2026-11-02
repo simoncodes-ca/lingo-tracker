@@ -5,14 +5,9 @@ sidebar_position: 1
 
 # Bundle Type Generation
 
-LingoTracker can automatically generate TypeScript type definitions for your translation bundles. This provides compile-time type safety, autocomplete, and refactoring support for your translation keys.
+When a bundle has a `typeDistFile`, `lingo-tracker bundle` also writes a TypeScript file that exports a constant tree of your translation keys. Reference keys through the constant instead of typing strings, and a wrong or deleted key becomes a compile error with autocomplete along the way.
 
-## Features
-
-- **Type Safety**: Catch missing or typo'd keys at compile time.
-- **Autocomplete**: Discover available translation keys in your IDE.
-- **Refactoring**: Safely rename keys and update all usages automatically.
-- **Zero Config Integration**: Works seamlessly with the existing `bundle` command.
+The constant holds the key strings, not the translations, so it is small and safe to import anywhere.
 
 ## Configuration
 
@@ -49,7 +44,7 @@ Generated files export a constant object with the structure of your translation 
 
 ### `upperCase` (default)
 
-Keys are converted to `SCREAMING_SNAKE_CASE`.
+Each key segment is upper-cased and hyphens become underscores. Segments are not split on inner capitals: `docsLabel` becomes `DOCSLABEL`, not `DOCS_LABEL`. Use hyphenated or lowercase segments in keys if you want readable upper-case tokens.
 
 **Example Translation Key**: `common.buttons.ok`
 
@@ -58,13 +53,17 @@ Keys are converted to `SCREAMING_SNAKE_CASE`.
 ```typescript
 // src/generated/common-tokens.ts
 export const COMMON_TOKENS = {
-  BUTTONS: {
-    OK: 'common.buttons.ok',
+  COMMON: {
+    BUTTONS: {
+      OK: 'common.buttons.ok',
+    },
   },
 } as const;
 
 export type CommonTokens = typeof COMMON_TOKENS;
 ```
+
+Every key segment becomes a level, including the first one.
 
 **Usage in Code**:
 
@@ -72,7 +71,7 @@ export type CommonTokens = typeof COMMON_TOKENS;
 import { COMMON_TOKENS } from '@/generated/common-tokens';
 
 // Type-safe reference
-const key = COMMON_TOKENS.BUTTONS.OK; // "common.buttons.ok"
+const key = COMMON_TOKENS.COMMON.BUTTONS.OK; // "common.buttons.ok"
 ```
 
 ### `camelCase`
@@ -86,8 +85,10 @@ Keys are converted to `camelCase`. Note that the const name remains `SCREAMING_S
 ```typescript
 // src/generated/common-tokens.ts
 export const COMMON_TOKENS = {
-  buttons: {
-    ok: 'common.buttons.ok',
+  common: {
+    buttons: {
+      ok: 'common.buttons.ok',
+    },
   },
 } as const;
 
@@ -105,6 +106,7 @@ lingo-tracker bundle --token-casing camelCase
 | Translation Key | `upperCase` (default) | `camelCase` |
 |---|---|---|
 | `file-upload` | `FILE_UPLOAD` | `fileUpload` |
+| `docsLabel` | `DOCSLABEL` | `docsLabel` |
 | `common.buttons.ok` | `COMMON` → `BUTTONS` → `OK` | `common` → `buttons` → `ok` |
 
 ## Token Casing Precedence
@@ -140,8 +142,10 @@ The value must be a valid JavaScript identifier using only ASCII characters (let
 
 ```typescript
 export const MY_KEYS = {
-  BUTTONS: {
-    OK: 'common.buttons.ok',
+  COMMON: {
+    BUTTONS: {
+      OK: 'common.buttons.ok',
+    },
   },
 } as const;
 
@@ -167,11 +171,12 @@ lingo-tracker bundle --name common --token-constant-name MY_KEYS
 
 - **Const Name**: By default, `SCREAMING_SNAKE_CASE` with `_TOKENS` suffix (e.g., `common` -> `COMMON_TOKENS`). Can be overridden with `tokenConstantName`.
 - **Type Name**: Always PascalCase, derived from the constant name (e.g., `COMMON_TOKENS` -> `CommonTokens`).
-- **Key Segments (upperCase)**: Converted to `SCREAMING_SNAKE_CASE` (e.g., `buttons` -> `BUTTONS`, `file-upload` -> `FILE_UPLOAD`).
-- **Key Segments (camelCase)**: Converted to `camelCase` (e.g., `buttons` -> `buttons`, `file-upload` -> `fileUpload`).
-- **Numeric Segments**: Preserved as-is (e.g., `steps.1.title` -> `STEPS.1.TITLE` or `steps.1.title`).
-- **Mixed nodes** (a key that is both a leaf and a parent, e.g., `buttons` and `buttons.ok` both exist): the leaf value is dropped and only the children are emitted. Standard i18n usage does not produce such keys.
-- **Empty bundles**: if the bundle resolves to zero keys, type generation is skipped and a warning is printed. No `.ts` file is written.
+- **Key Segments (upperCase)**: upper-cased with hyphens turned into underscores (`buttons` -> `BUTTONS`, `file-upload` -> `FILE_UPLOAD`, `docsLabel` -> `DOCSLABEL`).
+- **Key Segments (camelCase)**: kept as written unless they contain hyphens (`file-upload` -> `fileUpload`).
+- **Numeric Segments**: preserved (`steps.1.title` -> `STEPS.1.TITLE`).
+- **Colliding tokens**: two keys that map to the same token path, such as `fileUpload` and `fileupload` under `upperCase`, fail the bundle with a conflict error.
+- **Hierarchical conflicts**: a key that is both a value and a parent (`buttons` and `buttons.ok`) fails the bundle before anything is written, because nested JSON and a nested constant cannot hold both.
+- **Empty bundles**: when a bundle resolves to zero keys, no `.ts` file is written and a warning is printed.
 
 ## Integration
 

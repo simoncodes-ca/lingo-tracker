@@ -1,66 +1,27 @@
-// Export types
+// The import module: runImport handles a source file; importResources applies parsed resources.
+
+export { assertImportableLocale } from './assert-importable-locale';
+export { detectImportFormat } from './import-common';
+export { inspectImportSource, type ImportSourceInspection } from './inspect-import-source';
+export { importResources } from './import-resources';
+export { generateImportSummary } from './import-summary';
+export { parseJsonImport } from './parse-json-import';
+export { parseXliffImport } from './parse-xliff-import';
+export type { ImportRunWarning, RunImportOptions, RunImportResult } from './run-import';
+export { runImport } from './run-import';
+export type { ImportRunTotals } from './summarize-import-runs';
+export { summarizeImportRuns } from './summarize-import-runs';
 export type {
-  ImportFormat,
-  ImportStrategy,
-  ImportOptions,
-  ImportedResource,
-  ImportChangeType,
-  ImportChange,
-  StatusTransition,
-  ImportResult,
   ICUAutoFix,
   ICUAutoFixError,
+  ImportChange,
+  ImportChangeType,
+  ImportedResource,
+  ImportFormat,
+  ImportParseOptions,
+  ImportResult,
+  ImportRunOptions,
+  ImportSummaryOptions,
+  ParsedImport,
+  StatusTransition,
 } from './types';
-
-// Export import format detection and strategy defaults
-export { detectImportFormat, getStrategyDefaults } from './import-common';
-
-// Export import functions
-export {
-  importFromJson,
-  detectJsonStructure,
-  extractFromFlat,
-  extractFromHierarchical,
-} from './import-from-json';
-
-export { importFromXliff, extractFromXliff } from './import-from-xliff';
-
-// Export reference resolution utilities
-export {
-  hasReferences,
-  extractReferences,
-  resolveReferences,
-  resolveAllReferences,
-} from './reference-resolver';
-
-// Export summary generation
-export { generateImportSummary } from './import-summary';
-
-// Export resource grouping utilities
-export type { ResourceGroup } from './resource-grouping';
-export { groupResourcesByFolder } from './resource-grouping';
-
-// Export resource processing utilities
-export { processResourceGroup } from './process-resource-group';
-
-// Export statistics calculation utilities
-export {
-  calculateImportStatistics,
-  calculateStatusTransitions,
-} from './import-statistics';
-
-// Export validation utilities
-export type { ValidationConfig, ValidationResult } from './import-validation';
-export { validateImportResources } from './import-validation';
-
-// Export workflow utilities
-export type { ImportWorkflowConfig } from './import-workflow';
-export { setupImportWorkflow, buildImportResult } from './import-workflow';
-
-// Export Transloco syntax normalization
-export { normalizeTranslocoSyntax } from './normalize-transloco-syntax';
-
-export {
-  applyICUAutoFixToResource,
-  applyICUAutoFixToResources,
-} from './apply-icu-auto-fix';

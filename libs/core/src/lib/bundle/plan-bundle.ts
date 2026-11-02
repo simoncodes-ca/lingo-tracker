@@ -9,30 +9,40 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { detectHierarchicalConflicts } from '@simoncodes-ca/domain';
-import { type BundleDefinition, hasTypeDistConfigured, type TokenCasing } from '../../config/bundle-definition';
-import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
-import type { ResourceEntries } from '../../resource/resource-entry';
-import { type BundleKeyTrace, collectBundleData, getBundleOutputPath } from './generate-bundle';
 import {
-  bundleKeyToConstantName,
-  segmentToPropertyName,
-  splitKeyIntoSegments,
-} from './type-generation/key-transformer';
+  type BundleDefinition,
+  bundleOutputFile,
+  hasTypeDistConfigured,
+  type TokenCasing,
+} from '@simoncodes-ca/domain';
+import type { LingoTrackerConfig } from '../../config/lingo-tracker-config';
+import type { BundleSelection } from './bundle-selection';
+import {
+  type BundleRunOutputOptions,
+  bundleRunConflicts,
+  bundleRunWarnings,
+  type PreparedBundleRun,
+  prepareBundleRun,
+} from './prepare-bundle-run';
+import { bundleTypeOutputFile } from './type-generation/generate-types';
+import { segmentToPropertyName, splitKeyIntoSegments } from './type-generation/key-transformer';
 
-export interface PlanBundleParams {
+export interface PlanBundleParams extends BundleRunOutputOptions {
   readonly bundleKey: string;
   readonly bundleDefinition: BundleDefinition;
   readonly config: LingoTrackerConfig;
   /** Subset of locales to plan for (defaults to `config.locales`). */
-  readonly locales?: string[];
+  readonly locales?: readonly string[];
   /** Override for token casing; same precedence as `generateBundle`. */
   readonly tokenCasing?: TokenCasing;
   /** Override for the generated constant name; same precedence as `generateBundle`. */
   readonly tokenConstantName?: string;
   /** Override for ICU → Transloco transformation; same precedence as `generateBundle`. */
   readonly transformICUToTransloco?: boolean;
-  /** Base directory used to resolve relative paths for `exists` checks (default: `process.cwd()`). */
+  /**
+   * The project directory (holding `.lingo-tracker.json`): translations folders and the planned
+   * files resolve against it. Default: `process.cwd()`.
+   */
   readonly cwd?: string;
 }
 
@@ -50,6 +60,7 @@ export interface BundlePlanFile {
   readonly keysCount: number;
 }
 
+/** One bundled key, to show where a resource lands: the first key the selection produced. */
 export interface BundlePlanExampleKey {
   readonly collectionName: string;
   readonly sourceKey: string;
@@ -69,113 +80,57 @@ export interface BundlePlan {
   /** Keys defined by more than one collection. */
   readonly conflictKeys: string[];
   /**
-   * Base-locale keys that are both a leaf and a parent, e.g. `buttons.ok`
+   * Selected locale or base keys that are both a leaf and a parent, e.g. `buttons.ok`
    * alongside `buttons.ok.label`. Generation cannot build a hierarchy from
    * these, so a plan that reports any of them describes a bundle that would
    * fail. Each one is also echoed in `warnings`.
    */
   readonly hierarchicalConflicts: string[];
+  /**
+   * The first key the selection produced, in collection then folder order (from every collection's
+   * base values). Absent when the bundle has no keys.
+   */
   readonly exampleKey?: BundlePlanExampleKey;
   readonly warnings: string[];
 }
 
 /**
- * Plans a bundle run without writing anything.
+ * Plans a bundle run without writing anything. Core trims the supplied bundle key before validation.
  */
 export function planBundle(params: PlanBundleParams): BundlePlan {
-  const {
-    bundleKey,
-    bundleDefinition,
-    config,
-    locales,
-    tokenCasing: tokenCasingOverride,
-    tokenConstantName: tokenConstantNameOverride,
-    transformICUToTransloco: transformICUToTranslocoOverride,
-  } = params;
-  const cwd = params.cwd ?? process.cwd();
+  return planPreparedBundle(prepareBundleRun({ ...params, source: 'supplied' }), params);
+}
 
-  const resolvedTokenCasing: TokenCasing =
-    tokenCasingOverride ?? bundleDefinition.tokenCasing ?? config.tokenCasing ?? 'upperCase';
-  const resolvedTransformICUToTransloco: boolean =
-    transformICUToTranslocoOverride ??
-    bundleDefinition.transformICUToTransloco ??
-    config.transformICUToTransloco ??
-    true;
-  const resolvedConstantName =
-    tokenConstantNameOverride ?? bundleDefinition.tokenConstantName ?? bundleKeyToConstantName(bundleKey);
-
-  const targetLocales = locales ?? config.locales;
-  const warnings: string[] = [];
+/** Describes the exact selections that generation will consume. */
+export function planPreparedBundle(prepared: PreparedBundleRun, options: BundleRunOutputOptions = {}): BundlePlan {
+  const { bundleKey, cwd } = prepared;
+  const { definition: bundleDefinition, settings, locales: targetLocales } = prepared;
+  const content = prepared.content();
+  const warnings = bundleRunWarnings(prepared, content, options);
   const keysPerLocale: Record<string, number> = {};
   const files: BundlePlanFile[] = [];
-  const resourceCache = new Map<string, ResourceEntries>();
-
-  // Trace only the base locale: conflicts are a property of the key set, which
-  // is identical across locales, so tracing every locale would duplicate work.
-  const trace: BundleKeyTrace = { conflicts: new Set(), origins: new Map() };
-  let baseLocaleData: Record<string, string> | undefined;
-
-  for (const locale of targetLocales) {
-    const isBaseLocale = locale === config.baseLocale;
-    const bundleData = collectBundleData(
-      bundleDefinition,
-      config,
-      locale,
-      warnings,
-      resolvedTransformICUToTransloco,
-      resourceCache,
-      isBaseLocale ? trace : undefined,
-    );
-
-    if (isBaseLocale) {
-      baseLocaleData = bundleData;
-    }
-
-    const keysCount = Object.keys(bundleData).length;
+  for (const { locale, selection } of content.locales) {
+    const keysCount = selection.entries.size;
     keysPerLocale[locale] = keysCount;
-
-    if (keysCount === 0) {
-      warnings.push(`Bundle '${bundleKey}' for locale '${locale}' is empty`);
+    if (keysCount > 0) {
+      files.push(describeFile(bundleOutputFile(bundleDefinition, locale), 'bundle', keysCount, cwd, locale));
     }
-
-    const outputPath = getBundleOutputPath(bundleDefinition, locale);
-    files.push(describeFile(outputPath, 'bundle', keysCount, cwd, locale));
   }
-
-  // The base locale drives conflict detection and the example key. When it is
-  // not among the target locales, collect it once without recording a file.
-  if (!baseLocaleData) {
-    baseLocaleData = collectBundleData(
-      bundleDefinition,
-      config,
-      config.baseLocale,
-      warnings,
-      resolvedTransformICUToTransloco,
-      resourceCache,
-      trace,
-    );
+  const { base, baseKeys } = content;
+  if (options.debugKeysLocale && baseKeys.length > 0) {
+    const locale = options.debugKeysLocale;
+    keysPerLocale[locale] = baseKeys.length;
+    files.push(describeFile(bundleOutputFile(bundleDefinition, locale), 'bundle', baseKeys.length, cwd, locale));
   }
-
   const typesConfigured = hasTypeDistConfigured(bundleDefinition);
-  const baseKeysCount = Object.keys(baseLocaleData).length;
-
-  if (typesConfigured && bundleDefinition.typeDistFile) {
-    files.push(describeFile(bundleDefinition.typeDistFile, 'types', baseKeysCount, cwd));
+  const typeFile = bundleTypeOutputFile(bundleDefinition);
+  if (typesConfigured && typeFile && baseKeys.length > 0) {
+    files.push(describeFile(typeFile, 'types', baseKeys.length, cwd));
   }
+  const conflictKeys = [...base.conflicts].sort();
+  const hierarchicalConflicts = bundleRunConflicts(prepared, content, options);
 
-  const conflictKeys = Array.from(trace.conflicts).sort();
-
-  // A key that is both a leaf and a parent makes `buildHierarchy` throw during
-  // generation, so surface it in the plan rather than letting the run explode.
-  const hierarchicalConflicts = detectHierarchicalConflicts(Object.keys(baseLocaleData)).sort();
-  for (const key of hierarchicalConflicts) {
-    warnings.push(
-      `Hierarchical conflict: bundled key '${key}' has a value and child keys; generation would fail. ` +
-        `Remove the entry or its children from bundle '${bundleKey}'.`,
-    );
-  }
-
-  const exampleKey = pickExampleKey(baseLocaleData, trace, typesConfigured, resolvedConstantName, resolvedTokenCasing);
+  const exampleKey = pickExampleKey(base, typesConfigured, settings.tokenConstantName, settings.tokenCasing);
 
   return {
     bundleKey,
@@ -209,22 +164,17 @@ function describeFile(
 }
 
 function pickExampleKey(
-  baseLocaleData: Record<string, string>,
-  trace: BundleKeyTrace,
+  base: BundleSelection,
   typesConfigured: boolean,
   constantName: string,
   tokenCasing: TokenCasing,
 ): BundlePlanExampleKey | undefined {
-  const [firstKey] = Object.keys(baseLocaleData);
-  if (firstKey === undefined) {
+  const [first] = base.entries;
+  if (first === undefined) {
     return undefined;
   }
 
-  const origin = trace.origins.get(firstKey);
-  if (!origin) {
-    return undefined;
-  }
-
+  const [firstKey, { origin }] = first;
   const example: BundlePlanExampleKey = {
     collectionName: origin.collectionName,
     sourceKey: origin.sourceKey,

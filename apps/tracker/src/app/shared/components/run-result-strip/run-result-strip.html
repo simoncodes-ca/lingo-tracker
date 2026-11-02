@@ -1,0 +1,82 @@
+<div
+  class="result"
+  [class.result--run]="isRunning()"
+  [class.result--ok]="isCompleted()"
+  [class.result--warn]="isCompleted() && hasWarnings()"
+  [class.result--failed]="isFailed()"
+  [class.result--open]="detailsOpen()"
+  [attr.role]="isFailed() ? 'alert' : 'status'"
+  [attr.aria-live]="isRunning() ? 'polite' : null"
+>
+  @if (isRunning()) {
+    <span class="spinner" aria-hidden="true"></span>
+    <span class="result-text">
+      <span class="fig"><b>{{ headline() }}</b></span>
+      @if (currentItem(); as item) {
+        <span class="fig">{{ currentItemLabel() }} <code class="mono">{{ item }}</code></span>
+      }
+      @if (progressLabel(); as label) {
+        <span class="fig num">{{ label }}</span>
+      }
+    </span>
+    <span class="bar" aria-hidden="true"><i [style.width.%]="progressPercent()"></i></span>
+  } @else {
+    <div class="result-line">
+      <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+      <span class="result-text">
+        <span class="fig"><b>{{ headline() }}</b></span>
+        @if (isFailed()) {
+          @if (error(); as message) {
+            <span class="fig fig--prose">{{ message }}</span>
+          }
+        } @else {
+          @for (clause of clauseViews(); track $index) {
+            @if (clause.kind === 'mono') {
+              <span class="fig fig--mono"
+                ><code class="mono">@for (part of clause.parts; track $index) {<span>{{ part }}</span><wbr />}</code></span
+              >
+            } @else {
+              <span class="fig" [class.num]="clause.kind === 'figure'">{{ clause.text }}</span>
+            }
+          }
+        }
+      </span>
+
+      @if (isFailed() && retryLabel()) {
+        <button type="button" class="btn btn--outline btn--sm" (click)="retry.emit()">{{ retryLabel() }}</button>
+      }
+
+      <!-- Details and dismiss travel together, pinned to the strip's top-right, so they
+           stay one cluster instead of two controls drifting apart when the copy wraps.
+           Each control renders only when the caller names it, so none is ever unlabelled. -->
+      @if (detailsLabel() || dismissAriaLabel()) {
+        <div class="result-controls">
+          @if (detailsLabel(); as label) {
+            <button
+              type="button"
+              class="details-toggle"
+              (click)="detailsToggle.emit()"
+              [attr.aria-expanded]="detailsOpen()"
+              [attr.aria-controls]="detailsId()"
+              [attr.aria-label]="detailsAriaLabel()"
+            >
+              {{ label }}
+              <mat-icon class="chevron" aria-hidden="true">expand_more</mat-icon>
+            </button>
+          }
+          @if (dismissAriaLabel(); as label) {
+            <button type="button" class="dismiss" (click)="dismiss.emit()" [attr.aria-label]="label">
+              <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    @if (detailsOpen() && detailsLabel()) {
+      <div class="result-details" [attr.id]="detailsId()">
+        <ng-content />
+      </div>
+    }
+  }
+</div>

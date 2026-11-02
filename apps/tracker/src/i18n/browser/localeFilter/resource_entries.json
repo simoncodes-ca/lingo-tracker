@@ -8,5 +8,25 @@
     "ru": "Фильтр по языкам. В данный момент отображается: {text}",
     "ja": "地域をフィルタリングします。現在表示中: {text}",
     "de": "Gebietsschemas filtern. Aktuell angezeigt: { text }"
+  },
+  "allLocales": {
+    "source": "All locales",
+    "comment": "Locale filter trigger text shown when every locale is selected (or none is selected)",
+    "tags": ["browser"],
+    "es": "Todas las regiones",
+    "fr-ca": "Tous les paramètres régionaux",
+    "ru": "Все языки",
+    "de": "Alle Gebietsschemas",
+    "ja": "すべての地域"
+  },
+  "localesCountX": {
+    "source": "{ count, plural, =1 {1 locale} other {{count} locales} }",
+    "comment": "Locale filter trigger text when several (but not all) locales are selected. {count} is the number of selected locales.",
+    "tags": ["browser"],
+    "es": "{ count, plural, =1 {1 región} other {{count} regiones} }",
+    "fr-ca": "{ count, plural, =1 {1 paramètre régional} other {{count} paramètres régionaux} }",
+    "ru": "{ count, plural, one {{count} язык} few {{count} языка} many {{count} языков} other {{count} языка} }",
+    "de": "{ count, plural, =1 {1 Gebietsschema} other {{count} Gebietsschemas} }",
+    "ja": "{ count, plural, other {{count} 件の地域} }"
   }
 }

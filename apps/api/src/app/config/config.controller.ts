@@ -1,47 +1,49 @@
-import { basename } from 'node:path';
-import { Body, Controller, Get, HttpException, HttpStatus, Put } from '@nestjs/common';
-import { resolveProtectedTermsForConfig, setGlobalProtectedTerms } from '@simoncodes-ca/core';
+import { Controller, Get, Put } from '@nestjs/common';
+import { type OpenedProject, readProjectTermsView, updateProjectTerms } from '@simoncodes-ca/core';
 import type { LingoTrackerConfigDto, UpdateConfigDto } from '@simoncodes-ca/data-transfer';
-import { mapConfigToDto, mapDtoToConfigUpdate } from '../mappers/config.mapper';
-import { ConfigService } from './config.service';
+import { mapConfigToDto } from '../mappers/config.mapper';
+import { updateConfigBody } from '../validation/dto-schemas';
+import { ValidBody } from '../validation/valid-body';
+import { RouteProject } from './route-project';
 
 @Controller('config')
 export class ConfigController {
-  constructor(private readonly configService: ConfigService) {}
-
   @Get()
-  getConfig(): LingoTrackerConfigDto {
-    const config = this.configService.getConfig();
-    return mapConfigToDto(config, resolveProtectedTermsForConfig(config), basename(process.cwd()));
+  getConfig(@RouteProject() project: OpenedProject): LingoTrackerConfigDto {
+    const snapshot = readProjectTermsView(project);
+    return mapConfigToDto(snapshot.forConfig());
   }
 
   /**
    * Updates supported top-level config fields. Only the fields carried by
    * `UpdateConfigDto` are writable — `collections`, `locales`, and `baseLocale`
    * are never touched by this endpoint.
+   *
+   * Every submitted field is validated before anything is written, so a bad
+   * preferred-terminology list never lands alongside a half-applied protected-terms
+   * change. Invalid rules throw `PreferredTerminologyValidationError`, which the global
+   * exception filter answers with 400 and `{ message, errors }`, `errors` indexed by row
+   * of the submitted list. Other core errors (a missing directory, for example) reach the
+   * filter too.
    */
   @Put()
-  updateConfig(@Body() dto: UpdateConfigDto): { message: string } {
-    try {
-      const protectedTerms = dto?.protectedTerms;
-      if (
-        protectedTerms !== undefined &&
-        (!Array.isArray(protectedTerms) || protectedTerms.some((t) => typeof t !== 'string'))
-      ) {
-        throw new HttpException('protectedTerms must be an array of strings', HttpStatus.BAD_REQUEST);
-      }
-      const update = mapDtoToConfigUpdate(dto ?? {});
-      const terms = update.protectedTerms;
-      if (terms !== undefined) {
-        setGlobalProtectedTerms(terms);
-      }
+  updateConfig(
+    @ValidBody(updateConfigBody) dto: UpdateConfigDto | undefined,
+    @RouteProject() project: OpenedProject,
+  ): { message: string } {
+    const update = dto ?? {};
+    if (update.protectedTerms === undefined && update.preferredTerminology === undefined) {
       return { message: 'Configuration updated successfully' };
-    } catch (error: unknown) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      const errorMessage = error instanceof Error ? error.message : 'Error updating configuration';
-      throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
     }
+    const outcome = updateProjectTerms(project, {
+      ...(update.protectedTerms !== undefined && {
+        protectedTerms: { target: {}, change: { kind: 'replace', replace: update.protectedTerms } },
+      }),
+      ...(update.preferredTerminology !== undefined && {
+        preferredTerminology: { set: update.preferredTerminology },
+      }),
+    });
+    if (outcome.status === 'failed' || outcome.status === 'refused') throw outcome.error;
+    return { message: 'Configuration updated successfully' };
   }
 }

@@ -1,21 +1,9 @@
 // biome-ignore-all lint/suspicious/noExplicitAny: Expected
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SafeAny = any;
 
-/**
- * Configuration file name for Lingo Tracker
- */
-export const CONFIG_FILENAME = '.lingo-tracker.json';
-
-/**
- * Default values for configuration
- */
-export const DEFAULT_CONFIG = {
-  exportFolder: 'dist/lingo-export',
-  importFolder: 'dist/lingo-import',
-  baseLocale: 'en',
-  locales: [] as string[],
-} as const;
+export { CONFIG_FILENAME, DEFAULT_CONFIG } from '@simoncodes-ca/domain';
 
 /**
  * Resource entries JSON file name
