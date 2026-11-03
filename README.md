@@ -17,9 +17,9 @@ LingoTracker stores a status next to every translation in your Git repo. A chang
 
 ## Watch it
 
-[![LingoTracker 1.0 release tour](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.jpg)](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4)
+https://github.com/user-attachments/assets/e798cf3c-e11f-4666-8521-e48338831ba7
 
-[LingoTracker 1.0](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4) is a 2½-minute tour of the workflow. [LingoTracker in 30 seconds](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-guardrails-cinematic.mp4) covers the guardrails, from ICU checks to the CI gate.
+A 90-second tour of LingoTracker 1.0. Want more detail? Watch the [2½-minute version](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4) or [LingoTracker in 30 seconds](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-guardrails-cinematic.mp4).
 
 ## Why use it
 
