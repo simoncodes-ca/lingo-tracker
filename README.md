@@ -92,17 +92,17 @@ The [Getting Started guide](https://simoncodes-ca.github.io/lingo-tracker/docs/g
 
 The full documentation is at [simoncodes-ca.github.io/lingo-tracker](https://simoncodes-ca.github.io/lingo-tracker/).
 
-| Page | Covers |
-|---|---|
-| [Getting Started](docs/getting-started.md) | Install, init, first resource, first bundle |
-| [Concepts](docs/concepts.md) | Keys, folders, the two files, statuses and checksums |
-| [Configuration](docs/configuration.md) | Every field of `.lingo-tracker.json` |
-| [CLI Reference](docs/cli.md) | Every command, flag and exit code |
-| [API Reference](docs/api.md) | Every endpoint of `lingo-tracker-app`, with Swagger UI at `/api` |
-| [Tracker UI](docs/tracker-ui.md) | The web application |
-| [Guides](docs/guides/) | Bundling, translation workflow, CI/CD, migration, normalize, AI assistant |
-| [Features](docs/features/) | Validate, export, import, type generation, terminology, glossary |
-| [Changelog](CHANGELOG.md) | Release history |
+| Page                                       | Covers                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
+| [Getting Started](docs/getting-started.md) | Install, init, first resource, first bundle                               |
+| [Concepts](docs/concepts.md)               | Keys, folders, the two files, statuses and checksums                      |
+| [Configuration](docs/configuration.md)     | Every field of `.lingo-tracker.json`                                      |
+| [CLI Reference](docs/cli.md)               | Every command, flag and exit code                                         |
+| [API Reference](docs/api.md)               | Every endpoint of `lingo-tracker-app`, with Swagger UI at `/api`          |
+| [Tracker UI](docs/tracker-ui.md)           | The web application                                                       |
+| [Guides](docs/guides/)                     | Bundling, translation workflow, CI/CD, migration, normalize, AI assistant |
+| [Features](docs/features/)                 | Validate, export, import, type generation, terminology, glossary          |
+| [Changelog](CHANGELOG.md)                  | Release history                                                           |
 
 For contributors, [architecture-docs](architecture-docs/README.md) describes the monorepo, data model and application layers.
 
