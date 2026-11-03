@@ -1,0 +1,71 @@
+WEBVTT
+
+00:00:00.650 --> 00:00:06.450
+Change one source string, and nothing tells you
+the French, German and Japanese versions are now wrong.
+
+00:00:06.450 --> 00:00:08.100
+So they ship anyway.
+
+00:00:09.850 --> 00:00:14.600
+LingoTracker keeps a status next to every translation,
+right in your Git repo.
+
+00:00:14.650 --> 00:00:19.850
+One package gives you a CLI, a REST API,
+and a local web UI.
+
+00:00:19.850 --> 00:00:21.900
+No hosted service. No account.
+
+00:00:23.850 --> 00:00:27.400
+Change a source value, and its translations turn stale.
+
+00:00:27.400 --> 00:00:29.400
+Untranslated ones stay new.
+
+00:00:30.840 --> 00:00:33.050
+Then one command gates the release.
+
+00:00:33.050 --> 00:00:37.400
+Validate fails your build on anything
+missing, stale, or unreviewed.
+
+00:00:37.940 --> 00:00:42.600
+LingoTracker supports ICU messages,
+and checks them under each locale,
+
+00:00:42.600 --> 00:00:45.900
+so a broken plural is caught before it renders blank.
+
+00:00:47.540 --> 00:00:50.550
+The web UI runs on that same API.
+
+00:00:50.550 --> 00:00:54.300
+Browse the tree, filter by status, and search everything.
+
+00:00:55.640 --> 00:01:00.400
+Translators get exactly what needs work, as XLIFF or JSON.
+
+00:01:00.400 --> 00:01:04.100
+Import their files back,
+and renamed placeholders are repaired.
+
+00:01:05.650 --> 00:01:09.950
+Bundle writes JSON for each locale, and can emit typed keys.
+
+00:01:09.950 --> 00:01:12.200
+So a mistyped key fails to compile.
+
+00:01:13.630 --> 00:01:16.900
+Install the skill, and your AI assistant
+finds hardcoded strings,
+
+00:01:16.900 --> 00:01:20.900
+reuses keys, and updates your components.
+
+00:01:22.300 --> 00:01:24.200
+One thousand commits later.
+
+00:01:24.700 --> 00:01:27.400
+This is LingoTracker 1.0.

@@ -1,4 +1,5 @@
 import Link from '@docusaurus/Link';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import darkScreenshot from '@site/../docs/images/translation-browser-dark.png';
 import lightScreenshot from '@site/../docs/images/translation-browser-light.png';
@@ -7,6 +8,8 @@ import Layout from '@theme/Layout';
 import ThemedImage from '@theme/ThemedImage';
 import type { ReactNode } from 'react';
 import styles from './index.module.css';
+
+const tourVideo = 'https://github.com/user-attachments/assets/e798cf3c-e11f-4666-8521-e48338831ba7';
 
 const headline = 'Catch stale and unreviewed translations in CI, not in production.';
 
@@ -39,6 +42,8 @@ const benefits: { title: string; body: ReactNode }[] = [
 
 export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext();
+  const tourPoster = useBaseUrl('/img/lingotracker-1.0-tour.jpg');
+  const tourCaptions = useBaseUrl('/video/lingotracker-1.0-tour.en.vtt');
 
   return (
     <Layout title={siteConfig.tagline} description={siteConfig.tagline}>
@@ -72,6 +77,20 @@ export default function Home(): ReactNode {
                 alt="LingoTracker translation browser: fr-ca translations for the checkout keys of a storefront collection, with stale, new, translated and verified statuses"
                 sources={{ light: lightScreenshot, dark: darkScreenshot }}
               />
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.videoSection} aria-labelledby="tour">
+          <div className="container">
+            <h2 id="tour" className={styles.videoHeading}>
+              LingoTracker 1.0 in 90 seconds
+            </h2>
+            <div className={styles.frame}>
+              <video className={styles.video} controls preload="none" playsInline poster={tourPoster} src={tourVideo}>
+                <track kind="captions" src={tourCaptions} srcLang="en" label="English" />
+                <a href={tourVideo}>Watch the LingoTracker 1.0 tour</a>
+              </video>
             </div>
           </div>
         </section>

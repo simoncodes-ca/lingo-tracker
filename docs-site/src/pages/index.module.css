@@ -92,6 +92,23 @@
   height: auto;
 }
 
+.videoSection {
+  padding-bottom: 4rem;
+}
+
+.videoHeading {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background-color: #faf8f5;
+}
+
 .benefits {
   padding: 3rem 0 5rem;
   border-top: 1px solid var(--ifm-color-emphasis-300);
