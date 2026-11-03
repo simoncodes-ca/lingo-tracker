@@ -17,9 +17,9 @@ LingoTracker stores a status next to every translation in your Git repo. A chang
 
 ## Watch it
 
-[![LingoTracker 1.0 release tour](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.jpg)](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4)
+https://github.com/user-attachments/assets/e798cf3c-e11f-4666-8521-e48338831ba7
 
-[LingoTracker 1.0](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4) is a 2½-minute tour of the workflow. [LingoTracker in 30 seconds](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-guardrails-cinematic.mp4) covers the guardrails, from ICU checks to the CI gate.
+A 90-second tour of LingoTracker 1.0. Want more detail? Watch the [2½-minute version](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-1.0-release.mp4) or [LingoTracker in 30 seconds](https://github.com/simoncodes-ca/lingo-tracker/releases/download/v1.0.0/lingotracker-guardrails-cinematic.mp4).
 
 ## Why use it
 
@@ -92,17 +92,17 @@ The [Getting Started guide](https://simoncodes-ca.github.io/lingo-tracker/docs/g
 
 The full documentation is at [simoncodes-ca.github.io/lingo-tracker](https://simoncodes-ca.github.io/lingo-tracker/).
 
-| Page | Covers |
-|---|---|
-| [Getting Started](docs/getting-started.md) | Install, init, first resource, first bundle |
-| [Concepts](docs/concepts.md) | Keys, folders, the two files, statuses and checksums |
-| [Configuration](docs/configuration.md) | Every field of `.lingo-tracker.json` |
-| [CLI Reference](docs/cli.md) | Every command, flag and exit code |
-| [API Reference](docs/api.md) | Every endpoint of `lingo-tracker-app`, with Swagger UI at `/api` |
-| [Tracker UI](docs/tracker-ui.md) | The web application |
-| [Guides](docs/guides/) | Bundling, translation workflow, CI/CD, migration, normalize, AI assistant |
-| [Features](docs/features/) | Validate, export, import, type generation, terminology, glossary |
-| [Changelog](CHANGELOG.md) | Release history |
+| Page                                       | Covers                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
+| [Getting Started](docs/getting-started.md) | Install, init, first resource, first bundle                               |
+| [Concepts](docs/concepts.md)               | Keys, folders, the two files, statuses and checksums                      |
+| [Configuration](docs/configuration.md)     | Every field of `.lingo-tracker.json`                                      |
+| [CLI Reference](docs/cli.md)               | Every command, flag and exit code                                         |
+| [API Reference](docs/api.md)               | Every endpoint of `lingo-tracker-app`, with Swagger UI at `/api`          |
+| [Tracker UI](docs/tracker-ui.md)           | The web application                                                       |
+| [Guides](docs/guides/)                     | Bundling, translation workflow, CI/CD, migration, normalize, AI assistant |
+| [Features](docs/features/)                 | Validate, export, import, type generation, terminology, glossary          |
+| [Changelog](CHANGELOG.md)                  | Release history                                                           |
 
 For contributors, [architecture-docs](architecture-docs/README.md) describes the monorepo, data model and application layers.
 
