@@ -1,0 +1,107 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", ":dependencyDashboard", "helpers:pinGitHubActionDigests"],
+  "baseBranchPatterns": ["develop"],
+  "timezone": "America/Toronto",
+  "schedule": ["before 6am on monday"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "rangeStrategy": "bump",
+  "postUpdateOptions": ["pnpmDedupe"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"]
+  },
+  "packageRules": [
+    {
+      "description": "Nx and Angular majors need `nx migrate`; handle them by hand",
+      "matchPackageNames": [
+        "nx",
+        "@nx/**",
+        "@angular/**",
+        "@angular-devkit/**",
+        "@schematics/angular",
+        "angular-eslint"
+      ],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "groupName": "Nx",
+      "matchPackageNames": ["nx", "@nx/**"]
+    },
+    {
+      "groupName": "Angular",
+      "matchPackageNames": [
+        "@angular/**",
+        "@angular-devkit/**",
+        "@schematics/angular",
+        "@analogjs/**",
+        "angular-eslint",
+        "zone.js"
+      ]
+    },
+    {
+      "groupName": "NestJS",
+      "matchPackageNames": ["@nestjs/**"]
+    },
+    {
+      "groupName": "Vitest",
+      "matchPackageNames": ["vitest", "@vitest/**"]
+    },
+    {
+      "groupName": "Jest",
+      "matchPackageNames": ["jest", "jest-*", "ts-jest", "@types/jest"]
+    },
+    {
+      "groupName": "ESLint",
+      "matchPackageNames": ["eslint", "@eslint/**", "typescript-eslint", "@typescript-eslint/**", "eslint-*"]
+    },
+    {
+      "groupName": "semantic-release",
+      "matchPackageNames": ["semantic-release", "@semantic-release/**"]
+    },
+    {
+      "groupName": "commitlint",
+      "matchPackageNames": ["@commitlint/**", "commitizen", "cz-conventional-changelog"]
+    },
+    {
+      "groupName": "Transloco",
+      "matchPackageNames": ["@jsverse/**"]
+    },
+    {
+      "groupName": "SWC",
+      "matchPackageNames": ["@swc/**", "@swc-node/**"]
+    },
+    {
+      "groupName": "Playwright",
+      "matchPackageNames": ["@playwright/test", "eslint-plugin-playwright"]
+    },
+    {
+      "description": "Keep @types/node on the Node 24 line used by engines and CI",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<25"
+    },
+    {
+      "groupName": "GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"]
+    },
+    {
+      "description": "Automerge non-major devDependency and Actions updates once CI passes",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
+      "automerge": true
+    }
+  ]
+}
